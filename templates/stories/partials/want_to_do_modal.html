@@ -1,0 +1,61 @@
+<div class="p-6 max-w-3xl">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-semibold text-white">Great choice! Here's your path:</h3>
+        <button onclick="document.getElementById('modal-container').classList.add('hidden')"
+                class="text-gray-400 hover:text-white text-2xl leading-none">
+            ✕
+        </button>
+    </div>
+
+    {% if related_jobs %}
+    <div class="mb-6">
+        <h4 class="text-sm font-medium text-gray-400 uppercase mb-3">1. Similar Roles</h4>
+        <div class="space-y-3">
+            {% for job in related_jobs %}
+            <a href="{{ job.get_absolute_url }}"
+               class="block p-4 rounded-xl bg-gray-800 border border-gray-700 hover:border-lime-400/50 transition"
+               onclick="document.getElementById('modal-container').classList.add('hidden')">
+                <div class="font-medium text-white">{{ job.title }}</div>
+                <div class="text-sm text-gray-400">{{ job.organization.name }} · {{ job.location }}</div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if related_sprints %}
+    <div class="mb-6">
+        <h4 class="text-sm font-medium text-gray-400 uppercase mb-3">2. Build Your Proof</h4>
+        <div class="space-y-3">
+            {% for sprint in related_sprints %}
+            <a href="{% url 'jobs:sprint_detail' sprint.id %}"
+               class="block p-4 rounded-xl bg-lime-400/10 border border-lime-400/30 hover:bg-lime-400/20 transition"
+               onclick="document.getElementById('modal-container').classList.add('hidden')">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="font-medium text-lime-400">{{ sprint.title }}</span>
+                    <span class="text-xs text-gray-400">⏱️ {{ sprint.time_estimate_minutes }} mins</span>
+                </div>
+                <div class="text-sm text-gray-300">{{ sprint.organization.name }}</div>
+                <div class="text-xs text-gray-400 mt-1">🏅 Earn an Impact Card</div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if similar_stories %}
+    <div>
+        <h4 class="text-sm font-medium text-gray-400 uppercase mb-3">3. More Stories Like This</h4>
+        <div class="space-y-3">
+            {% for s in similar_stories %}
+            <a href="{% url 'jobs:story_detail' s.id %}"
+               class="block p-3 rounded-xl bg-gray-800 hover:bg-gray-700 transition"
+               onclick="document.getElementById('modal-container').classList.add('hidden')">
+                <div class="text-sm text-gray-300 line-clamp-2">"{{ s.content|truncatewords:20 }}"</div>
+                <div class="text-xs text-gray-500 mt-2">{{ s.author_name }} · {{ s.organization.name }}</div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>

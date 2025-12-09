@@ -1,0 +1,33 @@
+<div class="rounded-3xl border border-white/10 bg-card-gradient backdrop-blur p-8 space-y-6">
+    <div>
+        <h1 class="text-4xl md:text-5xl font-semibold leading-tight mb-2 text-white">{{ job.title }}</h1>
+        <p class="text-2xl text-white/80">{{ job.organization.name }}</p>
+    </div>
+    <div class="grid gap-6 text-white/80 text-sm">
+        <div class="flex flex-wrap items-center gap-3">
+            {% if job.category %}
+            <span class="px-4 py-1 rounded-full text-xs font-semibold bg-white/10 border border-white/20">{{ job.category.name }}</span>
+            {% endif %}
+            <span class="text-xs uppercase tracking-[0.4em] text-white/60">{{ job.get_job_type_display }}</span>
+            {% if job.is_featured %}
+            <span class="px-4 py-1 rounded-full text-xs font-semibold bg-brand-500/20 text-neon border border-brand-500/40">Featured</span>
+            {% endif %}
+        </div>
+        <div class="grid sm:grid-cols-2 gap-6 text-white">
+            <div>
+                <p class="text-xs uppercase tracking-[0.3em] text-white/60 mb-1">Location</p>
+                <p class="text-lg">{{ job.location|default:"Remote" }}</p>
+            </div>
+            <div>
+                <p class="text-xs uppercase tracking-[0.3em] text-white/60 mb-1">Posted</p>
+                <p class="text-lg">{{ job.posted_at|date:"M d, Y" }}</p>
+            </div>
+            {% if job.salary_min and job.salary_max %}
+            <div>
+                <p class="text-xs uppercase tracking-[0.3em] text-white/60 mb-1">Compensation</p>
+                <p class="text-lg">{{ job.salary_currency }} {{ job.salary_min|floatformat:0 }} – {{ job.salary_max|floatformat:0 }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>

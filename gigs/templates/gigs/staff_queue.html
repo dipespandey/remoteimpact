@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Queue{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 pt-16 pb-20">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Staff queue</h1>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+                <h2 class="text-lg font-semibold text-gray-900 mb-6">Organizations pending verification</h2>
+                <div class="space-y-4">
+                    {% for org in orgs_pending %}
+                    <div class="flex items-center justify-between py-4 px-4 border-b border-gray-100 last:border-0">
+                        <div>
+                            <p class="font-semibold text-gray-900">{{ org.name }}</p>
+                            <p class="text-sm text-gray-500">{{ org.website }}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="verify_org">
+                                <input type="hidden" name="org_id" value="{{ org.id }}">
+                                <button class="px-4 py-2 rounded-full bg-brand-500 text-white text-sm font-semibold hover:bg-brand-600 transition">
+                                    Verify
+                                </button>
+                            </form>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="reject_org">
+                                <input type="hidden" name="org_id" value="{{ org.id }}">
+                                <button class="px-4 py-2 rounded-full border border-red-200 text-red-700 text-sm font-semibold hover:border-red-300 hover:bg-red-50 transition">
+                                    Reject
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-center py-8">No orgs pending.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+                <h2 class="text-lg font-semibold text-gray-900 mb-6">Gigs pending review</h2>
+                <div class="space-y-4">
+                    {% for gig in gigs_pending %}
+                    <div class="flex items-center justify-between py-4 px-4 border-b border-gray-100 last:border-0">
+                        <div>
+                            <p class="font-semibold text-gray-900">{{ gig.title }}</p>
+                            <p class="text-sm text-gray-500">{{ gig.organization.name }}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="approve_gig">
+                                <input type="hidden" name="gig_id" value="{{ gig.id }}">
+                                <button class="px-4 py-2 rounded-full bg-brand-500 text-white text-sm font-semibold hover:bg-brand-600 transition">
+                                    Approve
+                                </button>
+                            </form>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="close_gig">
+                                <input type="hidden" name="gig_id" value="{{ gig.id }}">
+                                <button class="px-4 py-2 rounded-full border border-red-200 text-red-700 text-sm font-semibold hover:border-red-300 hover:bg-red-50 transition">
+                                    Close
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-center py-8">No gigs pending.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

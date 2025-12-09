@@ -1,0 +1,29 @@
+[project]
+name = "remoteimpact"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "bs4>=0.0.2",
+    "django>=5.2.8",
+    "django-allauth>=65.3.0",
+    "django-extensions>=4.1",
+    "django-countries>=7.6",
+    "pyjwt>=2.9.0",
+    "cryptography>=42.0.0",
+    "openai>=2.8.1",
+    "mistralai>=1.0.0",
+    "pillow>=12.0.0",
+    "requests>=2.32.3",
+    "airtable-scraper>=0.0.3",
+    "stripe>=11.0.0",
+    "ipython>=9.8.0",
+    "googlesearch-python>=1.2.0",
+    "duckduckgo-search>=8.1.1",
+    "ddgs>=9.10.0",
+    "python-dotenv>=1.2.1",
+    "gunicorn>=23.0.0",
+    "whitenoise>=6.11.0",
+    "psycopg2-binary>=2.9.11",
+]

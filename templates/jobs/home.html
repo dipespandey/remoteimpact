@@ -1,0 +1,628 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Remote Impact Jobs{% endblock %}
+
+{% block content %}
+<style>
+    .featured-card-rotate {
+        position: relative;
+        overflow: hidden;
+        border-color: rgba(255, 255, 255, 0.18);
+        transition: transform 0.45s ease, opacity 0.45s ease;
+        will-change: transform, opacity;
+        min-height: clamp(360px, 50vh, 420px);
+        max-height: clamp(360px, 50vh, 420px);
+        display: flex;
+        padding: clamp(1.5rem, 3vw, 2.25rem);
+    }
+
+    .featured-card-rotate::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .featured-card-rotate::after {
+        content: '';
+        position: absolute;
+        inset: -15%;
+        border-radius: 2rem;
+        background:
+            radial-gradient(circle at top, rgba(230, 255, 100, 0.12), transparent 60%),
+            radial-gradient(circle at bottom, rgba(88, 246, 199, 0.07), transparent 55%);
+        opacity: 0.4;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .featured-card-rotate::after,
+    .featured-card-rotate::before {
+        mask-image: linear-gradient(#000, #000);
+    }
+
+    .featured-card-rotate::before {
+        background: transparent;
+    }
+
+    .featured-card-rotate>* {
+        position: relative;
+        z-index: 1;
+    }
+
+    .featured-card-rotate.is-swapping {
+        transform: translateY(-8px);
+        opacity: 0.35;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .featured-card-rotate {
+            transition: none;
+        }
+
+        .featured-card-rotate.is-swapping {
+            transform: none;
+            opacity: 1;
+        }
+    }
+
+    .featured-card-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        flex: 1;
+    }
+
+    .featured-card-head {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        flex: 1;
+    }
+
+    .featured-card-title {
+        font-size: clamp(1.8rem, 3vw, 2.2rem);
+        line-height: 1.18;
+        word-break: break-word;
+        hyphens: auto;
+        text-wrap: balance;
+        display: block;
+        overflow: visible;
+        max-height: none;
+    }
+
+    .featured-card-org {
+        color: rgba(255, 255, 255, 0.75);
+        line-height: 1.35;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        font-size: 0.95rem;
+    }
+
+    .featured-card-meta {
+        margin-top: auto;
+    }
+
+    .featured-meta-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .featured-meta-value {
+        max-width: 55%;
+        text-align: right;
+        white-space: normal;
+        overflow: visible;
+        word-break: break-word;
+    }
+
+    .card-meta-time {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .featured-card-rotate .featured-streak,
+    .featured-card-rotate .featured-streak span {
+        position: absolute;
+        pointer-events: none;
+    }
+
+    .featured-card-rotate .featured-streak {
+        inset: 0;
+        border-radius: 1.5rem;
+        z-index: 0;
+        overflow: hidden;
+    }
+
+    .featured-card-rotate .featured-streak span {
+        display: block;
+        background: linear-gradient(90deg, transparent, rgba(230, 255, 100, 0.9), transparent);
+        height: 1px;
+        width: 160%;
+        top: 0;
+        left: -30%;
+        border-radius: 999px;
+        animation: streakOrbit 6s linear infinite;
+    }
+
+    .featured-card-rotate .featured-streak span:nth-child(2) {
+        width: 1px;
+        height: 160%;
+        background: linear-gradient(180deg, transparent, rgba(88, 246, 199, 0.9), transparent);
+        top: -30%;
+        left: 0;
+        animation-delay: 3s;
+    }
+
+    @keyframes streakOrbit {
+        0% {
+            transform: translate(0, 0);
+        }
+
+        25% {
+            transform: translate(0, calc(100% - 2px));
+        }
+
+        50% {
+            transform: translate(calc(100% - 2px), calc(100% - 2px));
+        }
+
+        75% {
+            transform: translate(calc(100% - 2px), 0);
+        }
+
+        100% {
+            transform: translate(0, 0);
+        }
+    }
+
+    .timezone-pill {
+        padding: 0.5rem 1.25rem;
+        border-radius: 9999px;
+        border: 1px solid rgba(15, 23, 42, 0.2);
+        background-color: rgba(255, 255, 255, 0.6);
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: rgba(15, 23, 42, 0.8);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+<!-- Hero Section -->
+<section class="relative overflow-hidden bg-hero-gradient text-white pt-24 pb-28">
+    <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute -top-32 right-0 w-[600px] h-[600px] bg-brand-500/30 blur-[180px]"></div>
+        <div class="absolute top-10 left-10 w-32 h-32 border border-white/20 rounded-full animate-pulse"></div>
+    </div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-16 items-center">
+        <div>
+            <p class="uppercase text-sm tracking-[0.5em] text-white/70 mb-6">Remote · Purpose-led · Verified</p>
+            <h1 class="text-4xl md:text-6xl font-display font-semibold leading-tight mb-8">
+                Build your career around <span>real-world impact</span>.
+            </h1>
+            <p class="text-lg text-white/70 mb-10 max-w-xl">
+                We remove the noise and bring you curated opportunities from climate innovators, civic technologists,
+                and social ventures building equitable futures.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <a href="{% url 'jobs:job_list' %}"
+                    class="inline-flex items-center justify-center px-8 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold text-lg shadow-glow hover:bg-brand-400 transition">
+                    Browse roles
+                    <svg class="w-5 h-5 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M5 12h14m0 0-6-6m6 6-6 6" />
+                    </svg>
+                </a>
+                <a href="{% url 'gigs:gig_list' %}"
+                class="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-gray-300 text-gray-900 font-semibold text-lg hover:border-brand-500 hover:text-brand-600 transition">
+                    Gig opportunities
+                </a>
+            </div>
+            <div class="mt-12 grid grid-cols-2 gap-6 text-white/70">
+                <div>
+                    <p class="text-4xl font-semibold text-white">1000+</p>
+                    <p class="uppercase text-xs tracking-[0.4em]">Active roles</p>
+                </div>
+                <div>
+                    <p class="text-4xl font-semibold text-white">70+</p>
+                    <p class="uppercase text-xs tracking-[0.4em]">Impact verticals</p>
+                </div>
+            </div>
+        </div>
+        <div class="relative">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="rounded-3xl border border-white/10 bg-card-gradient backdrop-blur featured-card-rotate"
+                    data-featured-card>
+                    <span class="featured-streak">
+                        <span></span>
+                        <span></span>
+                    </span>
+                    <div class="featured-card-content">
+                        <div class="featured-card-head">
+                            <p class="text-sm uppercase tracking-[0.4em] text-white/60">Featured now</p>
+                            <p class="featured-card-title font-semibold" data-featured-title>Strategy Lead</p>
+                            <p class="featured-card-org text-sm" data-featured-org>Impact Lab · Remote Europe</p>
+                        </div>
+                        <div class="featured-card-meta space-y-3 text-sm text-white/70">
+                            <div class="featured-meta-row">
+                                <span>Scope</span>
+                                <span class="text-white featured-meta-value" data-featured-scope>Full-time</span>
+                            </div>
+                            <div class="featured-meta-row">
+                                <span>Focus</span>
+                                <span class="text-white featured-meta-value" data-featured-focus>Climate finance</span>
+                            </div>
+                            <div class="featured-meta-row">
+                                <span>Posted</span>
+                                <span class="text-white featured-meta-value" data-featured-posted>2 days ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="rounded-3xl border border-white/10 bg-card-gradient p-6 backdrop-blur flex flex-col justify-between min-h-[360px] max-h-[420px]">
+                    <div class="space-y-4">
+                        <p class="text-sm uppercase tracking-[0.4em] text-white/60">How we curate</p>
+                        <div class="space-y-1">
+                            <p class="text-3xl font-semibold">AI vetted with human oversight</p>
+                            <p class="text-white/70 text-sm">Every role is reviewed by our team before it goes live.</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <span class="timezone-pill">Human-vetted</span>
+                            <span class="timezone-pill">AI summaries</span>
+                            <span class="timezone-pill">Organic fit</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- <div class="rounded-3xl border border-white/10 bg-card-gradient p-6 backdrop-blur md:col-span-2 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-2">Impact Monitor</p>
+                        <p class="text-2xl font-semibold">Every role is verified with the hiring team.</p>
+                    </div>
+                    <span class="text-4xl">✶</span>
+                </div> -->
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Trust signals -->
+<section class="py-16 border-b border-white/5 bg-gradient-to-b from-twilight-900 to-twilight-900/40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <p class="text-center text-white/50 uppercase tracking-[0.6em] text-xs mb-8">Featured partners</p>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-8 text-white/70 text-lg font-semibold text-center">
+            <span>Open Climate</span>
+            <span>GovTech Labs</span>
+            <span>Humanity Forward</span>
+            <span>Future Work Fund</span>
+            <span>Oceans 2050</span>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+{% if categories %}
+<section id="categories" class="py-24 bg-twilight-900">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
+            <div>
+                <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-2">Impact domains</p>
+                <h2 class="text-4xl font-semibold">Find the mission that aligns with your craft.</h2>
+            </div>
+            <a href="{% url 'jobs:all_domains' %}" class="inline-flex items-center text-neon font-semibold">
+                View all domains
+                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M5 12h14m0 0-6-6m6 6-6 6" />
+                </svg>
+            </a>
+        </div>
+        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {% for category in categories|slice:":6" %}
+            <a href="{% url 'jobs:job_list' %}?category={{ category.slug }}"
+                class="group relative overflow-hidden rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-white/30 transition">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="text-4xl">{{ category.icon|default:"🌍" }}</div>
+                    <span
+                        class="text-sm uppercase tracking-[0.4em] text-white/50 group-hover:text-white/80 transition">Remote</span>
+                </div>
+                <h3 class="text-2xl font-semibold mb-4">{{ category.name }}</h3>
+                <p class="text-white/60 text-sm">Roles curated weekly from orgs delivering measurable change in {{category.name }}.</p>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Featured Jobs Section -->
+{% if featured_jobs %}
+<section class="py-24 bg-gradient-to-b from-twilight-900 to-twilight-800" id="featured">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-12">
+            <div>
+                <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-2">Highlighted searches</p>
+                <h2 class="text-4xl font-semibold">Featured opportunities</h2>
+            </div>
+            <a href="{% url 'jobs:job_list' %}"
+                class="inline-flex items-center px-6 py-3 rounded-full border border-white/20 hover:border-white text-white transition">
+                View all roles
+            </a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for job in featured_jobs %}
+            <div
+                class="rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/60 transition shadow-lg shadow-black/20">
+                <div class="flex items-start justify-between mb-6">
+                    <div>
+                        <p class="text-sm uppercase tracking-[0.4em] text-white/50">{{ job.get_job_type_display }}</p>
+                        <h3 class="text-2xl font-semibold mt-2 mb-1">
+                            <a href="{{ job.get_absolute_url }}" class="hover:text-neon transition">
+                                {{ job.title }}
+                            </a>
+                        </h3>
+                        <p class="text-white/70">{{ job.organization.name }}</p>
+                    </div>
+                    {% if job.category %}
+                    <span class="px-4 py-2 rounded-full text-xs font-semibold bg-white/10 border border-white/10">{{job.category.name }}</span>
+                    {% endif %}
+                </div>
+                <p class="text-white/70 text-sm mb-8 line-clamp-3">{{ job.description|truncatewords:25 }}</p>
+                <div class="flex items-center justify-between text-sm text-white/60">
+                    <span>{{ job.location|default:"Remote" }}</span>
+                    <a href="{{ job.get_absolute_url }}"
+                        class="inline-flex items-center text-neon font-semibold">Details
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M5 12h14m0 0-6-6m6 6-6 6" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Impact Metrics -->
+<!-- <section id="success" class="py-24 bg-twilight-900">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-16 items-center">
+        <div>
+            <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-2">Why Remote Impact</p>
+            <h2 class="text-4xl font-semibold mb-6">We operate like a product team for your career.</h2>
+            <p class="text-white/70 mb-8">We interview every partner, audit culture, and map real responsibilities so you can spend more time evaluating fit instead of verifying legitimacy.</p>
+            <ul class="space-y-4 text-white/80">
+                <li class="flex items-start space-x-4">
+                    <span class="text-neon text-xl mt-1">✺</span>
+                    <div>
+                        <h3 class="text-lg font-semibold">Curated and human-vetted</h3>
+                        <p class="text-white/60">Every listing is reviewed by our team and backed by transparent compensation ranges.</p>
+                    </div>
+                </li>
+                <li class="flex items-start space-x-4">
+                    <span class="text-neon text-xl mt-1">✺</span>
+                    <div>
+                        <h3 class="text-lg font-semibold">Timezone aware</h3>
+                        <p class="text-white/60">Filters designed for async teams so you can stay aligned with life outside work.</p>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="grid gap-6">
+            <div class="rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur">
+                <p class="text-5xl font-semibold text-white mb-2">72%</p>
+                <p class="text-white/60">of talent hired through Remote Impact identify as underrepresented in tech.</p>
+            </div>
+            <div class="rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur">
+                <p class="text-5xl font-semibold text-white mb-2">14 days</p>
+                <p class="text-white/60">Average time from listing to first interview.</p>
+            </div>
+        </div>
+    </div>
+</section> -->
+
+<!-- Recent Jobs Section -->
+{% if recent_jobs %}
+<section class="py-24 bg-gradient-to-b from-twilight-900 via-twilight-800 to-twilight-900">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-12">
+            <div>
+                <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-2">Fresh drops</p>
+                <h2 class="text-4xl font-semibold">Latest opportunities</h2>
+            </div>
+            <a href="{% url 'jobs:job_list' %}" class="inline-flex items-center text-neon font-semibold">
+                Explore all
+                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M5 12h14m0 0-6-6m6 6-6 6" />
+                </svg>
+            </a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for job in recent_jobs %}
+            <div
+                class="rounded-3xl border border-white/10 bg-card-gradient p-6 backdrop-blur hover:border-white/30 transition">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.4em] text-white/50">{{ job.get_job_type_display }}</p>
+                        <h3 class="text-xl font-semibold text-white mt-2">
+                            <a href="{{ job.get_absolute_url }}" class="hover:text-neon transition">
+                                {{ job.title }}
+                            </a>
+                        </h3>
+                        <p class="text-white/70 text-sm">{{ job.organization.name }}</p>
+                    </div>
+                    <span class="text-white/60 text-sm card-meta-time">{{ job.posted_at|timesince }} ago</span>
+                </div>
+                <div class="flex items-center justify-between text-sm text-white/60">
+                    <span>{{ job.location|default:"Remote" }}</span>
+                    <a href="{{ job.get_absolute_url }}" class="text-neon font-semibold">Details →</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- CTA Section -->
+<section class="py-24 bg-hero-gradient">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <p class="text-sm uppercase tracking-[0.4em] text-white/70 mb-4">Stay ahead</p>
+        <h2 class="text-4xl md:text-5xl font-semibold mb-6">Get the weekly drop of verified impact roles.</h2>
+        <p class="text-white/70 mb-10 text-lg">No spam. Just meaningful, remote opportunities paired with context,
+            salary data, and hiring manager insights.</p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% url 'jobs:job_list' %}"
+                class="inline-flex items-center justify-center px-8 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold text-lg hover:bg-brand-400 transition shadow-glow">
+                Find a role
+            </a>
+            <a href="mailto:hello@remoteimpact.org"
+                class="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-gray-300 text-gray-900 font-semibold text-lg hover:border-brand-500 hover:text-brand-600 transition">
+                Partner with us
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+{% with rotation_source=featured_jobs|default:recent_jobs %}
+<script type="application/json" id="hero-featured-data">
+[
+{% for job in rotation_source %}
+    {
+        "title": "{{ job.title|escapejs }}",
+        "organization": "{% if job.organization %}{{ job.organization.name|escapejs }}{% else %}Remote Impact{% endif %}",
+        "location": "{{ job.location|default:'Remote'|escapejs }}",
+        "job_type": "{{ job.get_job_type_display|escapejs }}",
+        "focus": "{% if job.category %}{{ job.category.name|escapejs }}{% else %}Impact{% endif %}",
+        "posted": "{{ job.posted_at|timesince|default:'Recently'|escapejs }}"
+    }{% if not forloop.last %},{% endif %}
+{% empty %}
+{% endfor %}
+]
+</script>
+<script>
+    function fitTitleToTwoLines(titleEl) {
+        if (!titleEl) return;
+        titleEl.style.fontSize = '';
+        const rootFont = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+        let fontPx = parseFloat(getComputedStyle(titleEl).fontSize) || 32;
+        const minPx = 1.2 * rootFont;
+        const maxLines = 2;
+        const updateMaxHeight = () => {
+            const lineHeight = parseFloat(getComputedStyle(titleEl).lineHeight) || (1.18 * fontPx);
+            titleEl.style.maxHeight = `${lineHeight * maxLines}px`;
+        };
+        updateMaxHeight();
+        let guard = 0;
+        while (titleEl.scrollHeight > titleEl.clientHeight + 1 && fontPx > minPx && guard < 40) {
+            fontPx -= 1;
+            titleEl.style.fontSize = `${fontPx}px`;
+            updateMaxHeight();
+            guard += 1;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const dataElement = document.getElementById('hero-featured-data');
+        const card = document.querySelector('[data-featured-card]');
+        if (!dataElement || !card) {
+            return;
+        }
+
+        const raw = (dataElement.textContent || '').trim();
+        let jobs = [];
+        if (raw) {
+            try {
+                jobs = JSON.parse(raw);
+            } catch (error) {
+                console.error('Unable to parse featured job data', error);
+            }
+        }
+
+        const fallbackJobs = [
+            {
+                title: 'Impact Partnerships Lead',
+                organization: 'Nello Climate',
+                location: 'Remote · Global',
+                job_type: 'Full-time',
+                focus: 'Climate collaborations',
+                posted: 'Recently'
+            },
+            {
+                title: 'Data Operations Manager',
+                organization: 'Civic Signals',
+                location: 'Remote · AMER',
+                job_type: 'Full-time',
+                focus: 'Civic tech',
+                posted: '3 days ago'
+            },
+            {
+                title: 'Programs Lead',
+                organization: 'Blue Carbon Fund',
+                location: 'Remote · EMEA',
+                job_type: 'Contract',
+                focus: 'Climate finance',
+                posted: '1 week ago'
+            }
+        ];
+
+        if (jobs.length < 2) {
+            jobs = jobs.concat(fallbackJobs);
+        }
+
+        if (!jobs.length) {
+            return;
+        }
+
+        const titleEl = card.querySelector('[data-featured-title]');
+        const orgEl = card.querySelector('[data-featured-org]');
+        const scopeEl = card.querySelector('[data-featured-scope]');
+        const focusEl = card.querySelector('[data-featured-focus]');
+        const postedEl = card.querySelector('[data-featured-posted]');
+        if (!titleEl || !orgEl || !scopeEl || !focusEl || !postedEl) {
+            return;
+        }
+
+        let index = 0;
+        const renderJob = (job) => {
+            const locationLabel = job.location ? ` · ${job.location}` : '';
+            titleEl.textContent = job.title;
+            orgEl.textContent = `${job.organization}${locationLabel}`;
+            scopeEl.textContent = job.job_type || 'Remote';
+            focusEl.textContent = job.focus || 'Impact';
+            postedEl.textContent = job.posted || 'Recently';
+            fitTitleToTwoLines(titleEl);
+        };
+
+        const rotateCard = () => {
+            card.classList.add('is-swapping');
+            setTimeout(() => {
+                index = (index + 1) % jobs.length;
+                renderJob(jobs[index]);
+                card.classList.remove('is-swapping');
+            }, 250);
+        };
+
+        renderJob(jobs[0]);
+        if (jobs.length > 1) {
+            setInterval(rotateCard, 3000);
+        }
+    });
+</script>
+{% endwith %}
+{% endblock %}

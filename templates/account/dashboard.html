@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}Account - Remote Impact{% endblock %}
+
+{% block content %}
+<section class="bg-[#F3F2EE] min-h-screen py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+
+        {% if is_employer %}
+        <!-- ================= EMPLOYER DASHBOARD ================= -->
+        <header
+            class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-gray-200 pb-8">
+            <div>
+                <p class="text-xs uppercase tracking-widest text-gray-500 font-bold mb-1">Hiring Dashboard</p>
+                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">{% if organization %}{{ organization.name}}{% else %}Your Company{% endif %}</h1>
+                <p class="text-gray-600 mt-2">Manage your job listings and applicants.</p>
+            </div>
+            <div class="flex gap-4">
+                <a href="{% url 'jobs:post_job' %}"
+                    class="px-6 py-2.5 rounded-full bg-brand-300 text-gray-900 font-medium hover:bg-brand-400 transition shadow-sm flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Post a Job
+                </a>
+            </div>
+        </header>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Stats Overview (Placeholder logic) -->
+            <div class="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white p-6 rounded-3xl border border-gray-100">
+                    <p class="text-gray-500 text-sm font-medium">Active Jobs</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-2">{{ posted_jobs.count }}</p>
+                </div>
+                <div class="bg-white p-6 rounded-3xl border border-gray-100">
+                    <p class="text-gray-500 text-sm font-medium">Total Candidates</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-2">0</p>
+                </div>
+            </div>
+
+            <!-- Main Content: Jobs List -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                        <h2 class="text-lg font-bold text-gray-900">Your Job Postings</h2>
+                    </div>
+                    {% if posted_jobs %}
+                    <div class="divide-y divide-gray-100">
+                        {% for job in posted_jobs %}
+                        <div class="p-6 hover:bg-gray-50 transition">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div>
+                                    <div class="flex items-center gap-3 mb-1">
+                                        <a href="{{ job.get_absolute_url }}"
+                                            class="font-bold text-gray-900 text-lg hover:text-brand-600">{{ job.title
+                                            }}</a>
+                                        {% if job.is_active %}
+                                        <span
+                                            class="px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium">Active</span>
+                                        {% else %}
+                                        <span
+                                            class="px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-medium">Draft</span>
+                                        {% endif %}
+                                    </div>
+                                    <p class="text-sm text-gray-500">Posted {{ job.posted_at|date:"M d, Y" }}</p>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    {% if job.is_paid %}
+                                    <a href="#"
+                                        class="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5 hover:bg-gray-100 rounded-lg transition">Edit</a>
+                                    <a href="#"
+                                        class="text-sm font-bold text-brand-600 hover:text-brand-700 px-3 py-1.5 bg-brand-50 hover:bg-brand-100 rounded-lg transition">View
+                                        Applicants (0)</a>
+                                    {% else %}
+                                    <a href="{% url 'jobs:post_job' %}"
+                                        class="text-sm font-bold text-white bg-green-600 px-4 py-2 rounded-xl hover:bg-green-700 transition">Finish
+                                        & Pay</a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="p-12 text-center">
+                        <div
+                            class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900">No jobs posted yet</h3>
+                        <p class="text-gray-500 mt-2 mb-6">Create your first listing to start finding talent.</p>
+                        <a href="{% url 'jobs:post_job' %}"
+                            class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-gray-900 bg-brand-300 hover:bg-brand-400">
+                            Create Job Posting
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Sidebar: Organization Settings -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-3xl border border-gray-100 p-6">
+                    <div class="flex items-center gap-4 mb-4">
+                        {% if organization.logo %}
+                        <img src="{{ organization.logo.url }}" class="w-12 h-12 rounded-xl object-contain bg-gray-50"
+                            alt="">
+                        {% else %}
+                        <div
+                            class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 text-xl font-bold">
+                            {{ organization.name|slice:":1" }}
+                        </div>
+                        {% endif %}
+                        <div>
+                            <h3 class="font-bold text-gray-900">{{ organization.name }}</h3>
+                            <a href="{{ organization.website }}" target="_blank"
+                                class="text-sm text-gray-500 hover:text-brand-600">{{
+                                organization.website|truncatechars:20 }}</a>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-6">{{ organization.description|truncatewords:20 }}</p>
+                    <a href="{% url 'jobs:onboarding_employer' %}"
+                        class="block w-full text-center px-4 py-2 border border-gray-200 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition text-sm">
+                        Edit Company Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% elif is_seeker %}
+        <!-- ================= JOB SEEKER DASHBOARD ================= -->
+        <header
+            class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-gray-200 pb-8">
+            <div>
+                <p class="text-xs uppercase tracking-widest text-gray-500 font-bold mb-1">My Career</p>
+                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Welcome, {{ request.user.first_name|default:request.user.username }}</h1>
+                <p class="text-gray-600 mt-2">{{ profile.headline|default:"Let's find your next impact role." }}</p>
+            </div>
+            <div class="flex gap-4">
+                <a href="{% url 'jobs:job_list' %}"
+                    class="px-6 py-2.5 rounded-full bg-brand-300 text-gray-900 font-medium hover:bg-brand-400 transition shadow-sm">
+                    Find Matches
+                </a>
+            </div>
+        </header>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Sidebar: Profile -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white rounded-3xl border border-gray-100 p-6 sticky top-6">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4">Your Profile</h2>
+
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Headline</p>
+                            <p class="text-gray-900">{{ profile.headline|default:"Not set" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Bio</p>
+                            <p class="text-gray-700 text-sm leading-relaxed">{{ profile.bio|default:"Tell employers about yourself..." }}</p>
+                        </div>
+                        {% if profile.linkedin_url %}
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">LinkedIn</p>
+                            <a href="{{ profile.linkedin_url }}" target="_blank"
+                                class="text-brand-600 text-sm hover:underline">View Profile</a>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-gray-100">
+                        <a href="{% url 'jobs:onboarding_seeker' %}"
+                            class="block w-full text-center px-4 py-2 border border-gray-200 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition text-sm">
+                            Edit Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content: Applications & Saved -->
+            <div class="lg:col-span-2 space-y-8">
+
+                <!-- Applications -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-bold text-gray-900">Your Applications</h2>
+                    {% if applications %}
+                    <div
+                        class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-100">
+                        {% for app in applications %}
+                        <div class="p-6 hover:bg-gray-50 transition">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h3 class="font-bold text-gray-900 text-lg">{{ app.job.title }}</h3>
+                                    <p class="text-sm text-gray-600">{{ app.job.organization.name }}</p>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
+                                    {% if app.status == 'applied' %}bg-blue-50 text-blue-600
+                                    {% elif app.status == 'rejected' %}bg-red-50 text-red-600
+                                    {% elif app.status == 'offer' %}bg-green-50 text-green-600
+                                    {% else %}bg-gray-100 text-gray-600{% endif %}">
+                                    {{ app.get_status_display }}
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-2">Applied {{ app.applied_at|date:"M d, Y" }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="bg-white rounded-3xl border border-gray-100 p-8 text-center">
+                        <p class="text-gray-500 mb-4">You haven't applied to any jobs yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Saved Jobs -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-bold text-gray-900">Saved Jobs</h2>
+                    {% if saved_jobs %}
+                    <div
+                        class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-100">
+                        {% for saved in saved_jobs %}
+                        <div class="p-6 hover:bg-gray-50 transition flex justify-between items-center group">
+                            <div>
+                                <a href="{{ saved.job.get_absolute_url }}"
+                                    class="font-bold text-gray-900 hover:text-brand-600 transition">{{ saved.job.title
+                                    }}</a>
+                                <p class="text-sm text-gray-600">{{ saved.job.organization.name }}</p>
+                            </div>
+                            <a href="{{ saved.job.get_absolute_url }}"
+                                class="text-brand-600 font-medium text-sm hover:underline">View Role</a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="bg-white rounded-3xl border border-gray-100 p-8 text-center">
+                        <p class="text-gray-500 mb-4">No saved jobs yet.</p>
+                        <a href="{% url 'jobs:job_list' %}" class="text-brand-600 font-medium hover:underline">Browse
+                            job board</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</section>
+{% endblock %}

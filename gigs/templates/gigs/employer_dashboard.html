@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Employer Dashboard{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 pt-16 pb-20">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Employer dashboard</h1>
+                <p class="text-gray-600">{{ organization.name }}</p>
+            </div>
+            <a href="{% url 'gigs:gig_create' %}" class="px-5 py-2 rounded-full text-sm font-semibold bg-brand-300 text-gray-900 hover:bg-brand-400 transition shadow-glow">
+                Post a gig
+            </a>
+        </div>
+
+        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Your gigs</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Title</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Trial fee</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Applications</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for gig in gigs %}
+                        <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                            <td class="py-4 px-4 text-gray-900">{{ gig.title }}</td>
+                            <td class="py-4 px-4">
+                                <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-medium border border-gray-200">{{ gig.get_status_display }}</span>
+                            </td>
+                            <td class="py-4 px-4 text-gray-600">$ {% widthratio gig.trial_fee_cents 100 1 %}</td>
+                            <td class="py-4 px-4 text-gray-600">{{ gig.applications.count }}</td>
+                            <td class="py-4 px-4">
+                                <a href="{% url 'gigs:gig_applications' gig.id %}" class="px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-gray-700 hover:border-brand-300 hover:text-brand-600 transition">
+                                    View applicants
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="py-8 px-4 text-center text-gray-500">No gigs yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Recent applications</h2>
+            <div class="space-y-4">
+                {% for app in pending_applications %}
+                <div class="flex items-center justify-between py-4 px-4 border-b border-gray-100 last:border-0">
+                    <div>
+                        <p class="font-semibold text-gray-900">{{ app.seeker.email }}</p>
+                        <p class="text-sm text-gray-600">for <em>{{ app.gig.title }}</em></p>
+                        <p class="text-xs text-gray-500 mt-1">Status: {{ app.get_status_display }}</p>
+                    </div>
+                    <a href="{% url 'gigs:employer_application' app.id %}" class="px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-gray-700 hover:border-brand-300 hover:text-brand-600 transition">
+                        Review
+                    </a>
+                </div>
+                {% empty %}
+                <p class="text-gray-500 text-center py-8">No applications yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

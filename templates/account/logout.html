@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Sign out - Remote Impact{% endblock %}
+
+{% block content %}
+<section class="bg-hero-gradient min-h-screen flex items-center py-16 text-white">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div class="rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur shadow-glow space-y-6">
+            <div class="space-y-2">
+                <p class="text-sm uppercase tracking-[0.35em] text-white/60">Sign out</p>
+                <h1 class="text-3xl md:text-4xl font-semibold leading-tight">Ready to sign out?</h1>
+                <p class="text-white/70 text-lg">You can sign back in anytime with Google to keep your saved roles and postings in sync.</p>
+            </div>
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                {% if redirect_field_value %}
+                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+                {% endif %}
+                <div class="flex gap-3">
+                    <button type="submit" class="px-6 py-3 rounded-full bg-brand-300 text-twilight-900 font-semibold hover:bg-neon transition shadow-glow">
+                        Sign out
+                    </button>
+                    <a href="{% url 'jobs:home' %}" class="px-5 py-3 rounded-full border border-white/20 text-white/80 hover:text-white hover:border-white transition font-semibold">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

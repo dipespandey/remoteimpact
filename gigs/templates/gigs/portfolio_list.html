@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Portfolio{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 pt-16 pb-20">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Portfolio</h1>
+            <a href="{% url 'gigs:portfolio_create' %}" class="px-5 py-2 rounded-full text-sm font-semibold bg-brand-300 text-gray-900 hover:bg-brand-400 transition shadow-glow">
+                Add item
+            </a>
+        </div>
+
+        <div class="space-y-4">
+            {% for item in items %}
+            <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <h3 class="text-lg font-semibold text-gray-900">{{ item.title }}</h3>
+                            <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-medium border border-gray-200">{{ item.get_visibility_display }}</span>
+                        </div>
+                        <p class="text-gray-600 mb-2">{{ item.summary }}</p>
+                        {% if item.links %}
+                        <p class="text-sm text-gray-500">Links: {{ item.links|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="flex gap-2">
+                        <a href="{% url 'gigs:portfolio_edit' item.id %}" class="px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-gray-700 hover:border-brand-300 hover:text-brand-600 transition">
+                            Edit
+                        </a>
+                        <a href="{% url 'gigs:portfolio_delete' item.id %}" class="px-4 py-2 rounded-full border border-red-200 text-sm font-semibold text-red-700 hover:border-red-300 hover:bg-red-50 transition">
+                            Delete
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="bg-white rounded-3xl border border-gray-100 p-8 text-center">
+                <p class="text-gray-500">No portfolio items yet.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

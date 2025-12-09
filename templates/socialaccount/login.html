@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Sign in via {{ provider.name }} - Remote Impact{% endblock %}
+
+{% block content %}
+<section class="bg-[#F3F2EE] min-h-screen flex items-center py-16">
+    <div class="max-w-md mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div class="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+            <div class="space-y-3 mb-6 text-center">
+                <p class="text-xs uppercase tracking-[0.3em] text-gray-500">Sign In Via {{ provider.name }}</p>
+                <h1 class="text-2xl font-semibold text-gray-900">Confirm {{ provider.name }} sign in</h1>
+                <p class="text-gray-600">You are about to sign in using your {{ provider.name }} account.</p>
+            </div>
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="w-full px-6 py-3 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition">
+                    Continue with {{ provider.name }}
+                </button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

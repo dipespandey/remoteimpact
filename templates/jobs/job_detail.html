@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+
+{% block title %}{{ job.title }} - Remote Impact Jobs{% endblock %}
+
+{% load job_extras %}
+{% block content %}
+<!-- Align with nav -->
+<!-- Align with nav -->
+<section class="bg-gray-50 pt-16 pb-12">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <nav class="text-sm text-gray-500 flex items-center space-x-3">
+            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
+            <span>•</span>
+            <a href="{% url 'jobs:job_list' %}" class="hover:text-brand-600 transition">Jobs</a>
+            <span>•</span>
+            <span class="text-gray-900 line-clamp-1">{{ job.title }}</span>
+        </nav>
+    </div>
+</section>
+
+<section class="bg-gray-50 pb-20">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[2fr,1fr] gap-10">
+        <article class="space-y-10">
+            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+                <div
+                    class="flex flex-wrap items-center gap-3 mb-6 text-xs uppercase tracking-[0.05em] text-gray-500 font-semibold">
+                    {% if job.category %}
+                    <span
+                        class="tracking-normal px-3 py-1 rounded-full bg-brand-50 text-brand-700 border border-brand-100 normal-case">{{job.category.name}}</span>
+                    {% endif %}
+                    <span>{{ job.get_job_type_display }}</span>
+                </div>
+                <div class="space-y-4 mb-8">
+                    <h1 class="text-4xl md:text-5xl font-bold leading-tight text-gray-900">{{ job.title }}</h1>
+                    <p class="text-2xl text-gray-600">{{ job.organization.name }}</p>
+                </div>
+                <div class="grid sm:grid-cols-3 gap-6 text-sm text-gray-600">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-1">Location</p>
+                        <p class="text-lg text-gray-900 font-medium">{{ job.location|default:"Remote" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-1">Type</p>
+                        <p class="text-lg text-gray-900 font-medium">{{ job.get_job_type_display }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-1">Posted</p>
+                        <p class="text-lg text-gray-900 font-medium">{{ job.posted_at|date:"M d, Y" }}</p>
+                    </div>
+                    {% if job.salary_min and job.salary_max %}
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-1">Compensation</p>
+                        <p class="text-lg text-gray-900 font-medium">{{ job.salary_currency }}
+                            {{job.salary_min|floatformat:0 }} – {{ job.salary_max|floatformat:0 }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+                <h2 class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">Mission</h2>
+                <p class="text-2xl font-bold text-gray-900 mb-6">What you will drive</p>
+                <div class="text-gray-600 leading-relaxed prose prose-gray max-w-none">
+                    {{ job.description|render_html }}
+                </div>
+            </div>
+
+            {% if job.impact %}
+            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+                <h2 class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">Impact</h2>
+                <p class="text-2xl font-bold text-gray-900 mb-6">The difference you'll make</p>
+                <div class="text-gray-600 leading-relaxed prose prose-gray max-w-none">
+                    {{ job.impact|render_html }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if job.requirements %}
+            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+                <h2 class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">Profile</h2>
+                <p class="text-2xl font-bold text-gray-900 mb-6">What makes you a great fit</p>
+                <div class="text-gray-600 leading-relaxed prose prose-gray max-w-none">
+                    {{ job.requirements|render_html }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if job.benefits %}
+            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+                <h2 class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">Benefits</h2>
+                <p class="text-2xl font-bold text-gray-900 mb-6">What's in it for you</p>
+                <div class="text-gray-600 leading-relaxed prose prose-gray max-w-none">
+                    {{ job.benefits|render_html }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if job.company_description or job.organization.description %}
+            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">About</h2>
+                        <p class="text-2xl font-bold text-gray-900">Inside {{ job.organization.name }}</p>
+                    </div>
+                    {% if job.organization.website %}
+                    <a href="{{ job.organization.website }}" target="_blank" rel="noopener noreferrer"
+                        class="px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-gray-600 hover:border-gray-300 hover:text-gray-900 transition bg-white">
+                        Visit site →
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="text-gray-600 leading-relaxed prose prose-gray max-w-none">
+                    {% if job.company_description %}
+                        {{ job.company_description|render_html }}
+                    {% else %}
+                        {{ job.organization.description|render_html }}
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </article>
+
+        <aside class="space-y-6">
+            <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm sticky top-28 space-y-6">
+                <div class="space-y-3">
+                    <p class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold">Apply</p>
+                    <h3 class="text-xl font-bold text-gray-900">Ready to move?</h3>
+                    <p class="text-gray-500 text-sm">Remote Impact verifies every role with the hiring team. Submissions
+                        go directly to {{ job.organization.name }}.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    {% if user.is_authenticated %}
+                    <button id="save-job-btn" data-url="{% url 'jobs:save_job' slug=job.slug %}"
+                        data-saved="{{ saved|yesno:'true,false' }}"
+                        class="flex-1 px-4 py-3 rounded-full border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition text-sm font-semibold">
+                        {% if saved %}Saved ✓{% else %}Save job{% endif %}
+                    </button>
+                    {% else %}
+                    <a href="{% url 'account_login' %}?next={{ request.path }}"
+                        class="flex-1 px-4 py-3 rounded-full border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition text-sm font-semibold text-center">
+                        Sign in to save
+                    </a>
+                    {% endif %}
+                </div>
+                {% if job.application_url %}
+                <a href="{{ job.application_url }}" target="_blank" rel="noopener noreferrer"
+                    class="block w-full text-center px-6 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition shadow-lg shadow-brand-300/30">
+                    Apply on site
+                </a>
+                {% elif job.application_email %}
+                <a href="mailto:{{ job.application_email }}?subject=Application for {{ job.title }}"
+                    class="block w-full text-center px-6 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition shadow-lg shadow-brand-300/30">
+                    Apply via email
+                </a>
+                {% endif %}
+                <div class="rounded-2xl border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
+                    <p class="font-semibold text-gray-900 mb-1">Need context?</p>
+                    <p>Reply to this email and our team can share culture notes & interview prep.</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+</section>
+
+{% if related_jobs %}
+<section class="py-16 job-related-section">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-10">
+            <div>
+                <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-2">More like this</p>
+                <h2 class="text-3xl font-semibold text-white">Similar opportunities</h2>
+            </div>
+            <a href="{% url 'jobs:job_list' %}"
+                class="px-5 py-2 rounded-full border border-white/20 text-white/80 hover:border-white hover:text-white transition text-sm font-semibold">
+                View all roles
+            </a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for related_job in related_jobs %}
+            <div
+                class="rounded-3xl border border-white/10 bg-card-gradient p-6 backdrop-blur hover:border-neon/60 transition">
+                <p class="text-xs uppercase tracking-[0.4em] text-white/50">{{ related_job.get_job_type_display }}</p>
+                <h3 class="text-xl font-semibold text-white mt-3 mb-2">
+                    <a href="{{ related_job.get_absolute_url }}" class="hover:text-neon transition">
+                        {{ related_job.title }}
+                    </a>
+                </h3>
+                <p class="text-white/70 text-sm mb-4">{{ related_job.organization.name }}</p>
+                <div class="flex items-center justify-between text-sm text-white/60">
+                    <span>{{ related_job.location|default:"Remote" }}</span>
+                    <a href="{{ related_job.get_absolute_url }}" class="text-neon font-semibold">View →</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% if user.is_authenticated %}
+<script>
+    (function () {
+        const btn = document.getElementById('save-job-btn');
+        if (!btn) return;
+        const csrfToken = document.querySelector('input[name=csrfmiddlewaretoken]')?.value ||
+            document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+
+        btn.addEventListener('click', async () => {
+            const url = btn.dataset.url;
+            const saved = btn.dataset.saved === 'true';
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken || '',
+                        'Accept': 'application/json',
+                    },
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                btn.dataset.saved = data.saved ? 'true' : 'false';
+                btn.textContent = data.saved ? 'Saved ✓' : 'Save job';
+            } catch (e) {
+                console.error('Could not save job', e);
+            }
+        });
+    })();
+</script>
+{% endif %}
+{% endblock %}

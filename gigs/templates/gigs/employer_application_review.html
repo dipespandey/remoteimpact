@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Review Application{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 pt-16 pb-20">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{{ gig.title }}</h1>
+                <p class="text-gray-600">{{ application.seeker.email }}</p>
+            </div>
+            <a href="{% url 'gigs:gig_applications' gig.id %}" class="px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-gray-700 hover:border-brand-300 hover:text-brand-600 transition">
+                Back to list
+            </a>
+        </div>
+
+        <div class="grid lg:grid-cols-[2fr,1fr] gap-10">
+            <div class="space-y-6">
+                <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Application</h2>
+                    <p class="text-gray-600 mb-4 leading-relaxed">{{ application.motivation }}</p>
+                    <div>
+                        <strong class="text-gray-900">Portfolio items:</strong>
+                        <ul class="mt-2 space-y-2 text-gray-600">
+                            {% for item in application.selected_portfolio_items.all %}
+                            <li class="flex items-start">
+                                <span class="text-brand-600 mr-2">•</span>
+                                <span>{{ item.title }} — {{ item.summary|truncatewords:12 }}</span>
+                            </li>
+                            {% empty %}
+                            <li class="text-gray-400">No portfolio selected.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Trial funding</h2>
+                    <p class="text-gray-600 mb-4 text-sm">Paid trials are mandatory. Enter reference for manual funding.</p>
+                    <form method="post" class="space-y-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="fund">
+                        <div class="flex gap-3">
+                            <div class="flex-1">
+                                {{ funding_form.payment_reference }}
+                            </div>
+                            <button type="submit" class="px-6 py-3 rounded-full bg-brand-500 text-white font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/30">
+                                Mark funded
+                            </button>
+                        </div>
+                    </form>
+                    {% if trial %}
+                    <p class="text-sm text-gray-600 mt-4">Current status: {{ trial.get_funding_status_display }}</p>
+                    {% else %}
+                    <p class="text-sm text-gray-400 mt-4">Trial not yet created.</p>
+                    {% endif %}
+                </div>
+
+                <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Review & decision</h2>
+                    <form method="post" class="space-y-6">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="review">
+                        {% for field in review_form %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}<p class="text-xs text-gray-500 mt-1">{{ field.help_text }}</p>{% endif %}
+                        </div>
+                        {% endfor %}
+                        <button type="submit" class="px-6 py-4 rounded-full bg-brand-500 text-white font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/30">
+                            Save review
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="space-y-6">
+                <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm sticky top-28">
+                    <h3 class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold mb-4">Trial</h3>
+                    {% if trial %}
+                    <div class="space-y-2 text-sm">
+                        <p><strong class="text-gray-900">Fee:</strong> <span class="text-gray-600">$ {% widthratio trial.fee_cents 100 1 %} {{ trial.currency }}</span></p>
+                        <p><strong class="text-gray-900">Hours cap:</strong> <span class="text-gray-600">{{ gig.trial_hours_cap }}</span></p>
+                        <p><strong class="text-gray-900">Due:</strong> <span class="text-gray-600">{{ trial.due_at|default:"TBD" }}</span></p>
+                    </div>
+                    {% else %}
+                    <p class="text-gray-400 text-sm">Trial record will be created when the seeker applies.</p>
+                    {% endif %}
+                </div>
+                {% if trial and trial.submission %}
+                <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+                    <h3 class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold mb-4">Submission</h3>
+                    <div class="space-y-3 text-sm">
+                        <p><strong class="text-gray-900">Links:</strong> <span class="text-gray-600">{{ trial.submission.artifact_links|join:", " }}</span></p>
+                        {% if trial.submission.artifact_files %}
+                        <a href="{{ trial.submission.artifact_files.url }}" class="inline-block px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-gray-700 hover:border-brand-300 hover:text-brand-600 transition">
+                            Download file
+                        </a>
+                        {% endif %}
+                        <p class="text-gray-600">{{ trial.submission.notes }}</p>
+                    </div>
+                </div>
+                {% else %}
+                <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+                    <p class="text-gray-500 text-center">No submission yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

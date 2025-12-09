@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Post a Role - Remote Impact{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-[#F3F2EE] pt-20 pb-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <div class="space-y-12">
+            <!-- Header -->
+            <div class="text-center max-w-2xl mx-auto">
+                <h1 class="text-4xl font-bold text-gray-900 tracking-tight mb-4">Post a Role</h1>
+                <p class="text-xl text-gray-600">Reach thousands of purpose-driven professionals.</p>
+            </div>
+
+            <!-- Pricing & Features -->
+            <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-10">
+                        <svg class="w-32 h-32" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                                d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z">
+                            </path>
+                        </svg>
+                    </div>
+                    <div class="relative z-10">
+                        <h2 class="text-2xl font-bold mb-2 text-gray-900">Standard Posting</h2>
+                        <div class="flex items-baseline mb-4">
+                            <span class="text-5xl font-extrabold text-brand-600">$100</span>
+                            <span class="ml-2 text-gray-400">/ post</span>
+                        </div>
+                        <ul class="space-y-3 mb-6">
+                            <li class="flex items-start">
+                                <svg class="w-6 h-6 text-brand-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span class="text-gray-600">Active for <strong class="text-gray-900">30
+                                        days</strong></span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-6 h-6 text-brand-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span class="text-gray-600">Featured in our <strong class="text-gray-900">weekly
+                                        newsletter</strong> (15k+
+                                    subs)</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-6 h-6 text-brand-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span class="text-gray-600">Shared on our social channels</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="w-6 h-6 text-brand-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span class="text-gray-600">Smart matching with relevant candidates</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-center">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-semibold text-gray-900 mb-1">How long does approval take?</h4>
+                            <p class="text-gray-600 text-sm">Most jobs are reviewed and approved within 2-4 hours during
+                                business days.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 mb-1">What if I need to edit my post?</h4>
+                            <p class="text-gray-600 text-sm">You can edit your job at any time from your dashboard even
+                                after it's live.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 mb-1">Do you offer bulk discounts?</h4>
+                            <p class="text-gray-600 text-sm">Yes! Contact us for packages if you're hiring for 3+ roles.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <form method="post" class="space-y-6 max-w-4xl mx-auto">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-lg">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">There were errors with your submission</h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                {{ form.non_field_errors }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Organization -->
+                <div class="climate-card p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600">
+                            <span class="font-bold">1</span>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-900">Organization Details</h2>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label for="{{ form.organization_name.id_for_label }}" class="climate-label">Organization
+                                Name</label>
+                            {{ form.organization_name }}
+                            {% if form.organization_name.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.organization_name.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label for="{{ form.organization_website.id_for_label }}"
+                                class="climate-label">Website</label>
+                            {{ form.organization_website }}
+                            {% if form.organization_website.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.organization_website.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label for="{{ form.organization_description.id_for_label }}" class="climate-label">About
+                                the Organization</label>
+                            {{ form.organization_description }}
+                            <p class="text-xs text-gray-500 mt-2">Brief mission statement or bio.</p>
+                            {% if form.organization_description.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.organization_description.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Role Basics -->
+                <div class="climate-card p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600">
+                            <span class="font-bold">2</span>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-900">The Role</h2>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label for="{{ form.title.id_for_label }}" class="climate-label">Job Title</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.title.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="{{ form.category.id_for_label }}" class="climate-label">Category</label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                <p class="text-red-500 text-xs mt-1">{{ form.category.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label for="{{ form.job_type.id_for_label }}" class="climate-label">Job Type</label>
+                                {{ form.job_type }}
+                            </div>
+                        </div>
+                        <div>
+                            <label for="{{ form.location.id_for_label }}" class="climate-label">Location</label>
+                            {{ form.location }}
+                            <p class="text-xs text-gray-500 mt-2">e.g. "Remote", "London, UK", "New York (Hybrid)"</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Role Details -->
+                <div class="climate-card p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600">
+                            <span class="font-bold">3</span>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-900">Role Details</h2>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label for="{{ form.description.id_for_label }}" class="climate-label">Mission /
+                                Description</label>
+                            {{ form.description }}
+                            <p class="text-xs text-gray-500 mt-2">What will this person be responsible for? (Markdown
+                                supported)</p>
+                        </div>
+
+                        <div>
+                            <label for="{{ form.requirements.id_for_label }}" class="climate-label">Requirements /
+                                Profile</label>
+                            {{ form.requirements }}
+                            <p class="text-xs text-gray-500 mt-2">Skills and experience needed.</p>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="{{ form.impact.id_for_label }}" class="climate-label">Impact
+                                    (Optional)</label>
+                                {{ form.impact }}
+                                <p class="text-xs text-gray-500 mt-2">Specific outcomes they will drive.</p>
+                            </div>
+                            <div>
+                                <label for="{{ form.benefits.id_for_label }}" class="climate-label">Benefits
+                                    (Optional)</label>
+                                {{ form.benefits }}
+                                <p class="text-xs text-gray-500 mt-2">Perks, culture, insurance, etc.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Compensation -->
+                <div class="climate-card p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600">
+                            <span class="font-bold">4</span>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-900">Compensation</h2>
+                    </div>
+
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <div>
+                            <label for="{{ form.salary_currency.id_for_label }}" class="climate-label">Currency</label>
+                            {{ form.salary_currency }}
+                        </div>
+                        <div>
+                            <label for="{{ form.salary_min.id_for_label }}" class="climate-label">Min</label>
+                            {{ form.salary_min }}
+                        </div>
+                        <div>
+                            <label for="{{ form.salary_max.id_for_label }}" class="climate-label">Max</label>
+                            {{ form.salary_max }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Application -->
+                <div class="climate-card p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600">
+                            <span class="font-bold">5</span>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-900">Application Flow</h2>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label for="{{ form.application_url.id_for_label }}" class="climate-label">Application
+                                Link</label>
+                            {{ form.application_url }}
+                        </div>
+                        <div>
+                            <label for="{{ form.application_email.id_for_label }}" class="climate-label">Or
+                                Email</label>
+                            {{ form.application_email }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-6 pb-20">
+                    <button type="submit"
+                        class="bg-brand-300 hover:bg-brand-400 text-gray-900 text-xl font-bold py-4 px-12 rounded-full shadow-lg transform transition hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-brand-200">
+                        Proceed to Payment ($100)
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% for story in stories %}
+    {% include 'stories/partials/story_card.html' with story=story resonated_ids=resonated_ids %}
+{% empty %}
+    <div class="text-center py-12 text-gray-400">
+        <p>No stories yet. Check back soon!</p>
+    </div>
+{% endfor %}

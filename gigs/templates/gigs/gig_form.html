@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Post an Impact Gig{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 pt-16 pb-20">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
+            <a href="{% url 'gigs:employer_dashboard' %}" class="hover:text-brand-600 transition">Dashboard</a>
+            <span>•</span>
+            <span class="text-gray-900">Post a gig</span>
+        </nav>
+
+        <div class="grid lg:grid-cols-[2fr,1fr] gap-10">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Post an Impact Gig</h1>
+                <p class="text-gray-600 mb-6">Tightly scope deliverables, definition of done, and paid trial. Gigs publish after staff review if your org is not verified yet.</p>
+                <form method="post" class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm space-y-6">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div>
+                        {% if field.name == 'nda_required' or field.name == 'requires_field_verification' or field.name == 'is_featured' %}
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            {{ field }}
+                            <span class="text-sm font-medium text-gray-700">{{ field.label }}</span>
+                        </label>
+                        {% else %}
+                        <label class="block text-sm font-medium text-gray-700 mb-2" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% endif %}
+                        {% if field.help_text %}<p class="text-xs text-gray-500 mt-1">{{ field.help_text }}</p>{% endif %}
+                        {% if field.errors %}<div class="text-sm text-red-600 mt-1">{{ field.errors.0 }}</div>{% endif %}
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="px-6 py-4 rounded-full bg-brand-500 text-white font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/30">
+                        Save gig
+                    </button>
+                </form>
+            </div>
+            <div>
+                <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm sticky top-28">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Posting guardrails</h3>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li>Paid trials mandatory for new work (>= $50)</li>
+                        <li>Include capped hours + due date + rubric</li>
+                        <li>Country-restricted gigs require eligible countries</li>
+                        <li>Field gigs need ID + phone verification</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load socialaccount %}
+{% load form_tags %}
+
+{% block title %}Sign in - Remote Impact{% endblock %}
+
+{% block content %}
+<section class="bg-hero-gradient min-h-screen flex items-center py-16 text-white">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div class="grid lg:grid-cols-2 gap-10 items-center">
+            <div class="space-y-6">
+                <p class="text-sm uppercase tracking-[0.4em] text-white/60">Welcome back</p>
+                <h1 class="text-4xl md:text-5xl font-semibold leading-tight">Sign in to continue</h1>
+                <p class="text-white/70 text-lg">Save roles, keep your shortlist in sync, and post opportunities for your team. Browsing stays open to everyone.</p>
+                <div class="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+                    <p class="text-sm font-semibold text-white mb-2">Need an account?</p>
+                    <p class="text-white/70 text-sm">Create one in seconds with Google and start saving roles immediately.</p>
+                </div>
+            </div>
+
+            <div class="rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur shadow-glow">
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="rounded-2xl border border-red-400/60 bg-red-900/30 px-4 py-3 text-sm text-red-100">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <div class="space-y-4">
+                        <label class="block space-y-2">
+                            <span class="text-sm text-white/80">Email</span>
+                            {{ form.login|add_class:"w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-brand-300" }}
+                            {% if form.login.errors %}
+                                <span class="text-sm text-red-200">{{ form.login.errors|striptags }}</span>
+                            {% endif %}
+                        </label>
+                        <label class="block space-y-2">
+                            <span class="text-sm text-white/80">Password</span>
+                            {{ form.password|add_class:"w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-brand-300" }}
+                            {% if form.password.errors %}
+                                <span class="text-sm text-red-200">{{ form.password.errors|striptags }}</span>
+                            {% endif %}
+                        </label>
+                        <div class="flex items-center justify-between text-sm text-white/70">
+                            <label class="flex items-center gap-2">
+                                {{ form.remember|add_class:"w-4 h-4 rounded border-white/40 bg-white/10" }}
+                                <span>{{ form.remember.label|default:"Remember me" }}</span>
+                            </label>
+                            <a href="{% url 'account_reset_password' %}" class="text-brand-300 hover:text-neon">Forgot password?</a>
+                        </div>
+                    </div>
+
+                    {% if redirect_field_value %}
+                        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+                    {% endif %}
+
+                    <button type="submit" class="w-full px-6 py-4 rounded-full bg-brand-300 text-twilight-900 font-semibold hover:bg-neon transition shadow-glow">
+                        Sign in
+                    </button>
+                </form>
+
+                <div class="my-6 flex items-center gap-3 text-white/50 text-sm">
+                    <div class="flex-1 h-px bg-white/10"></div>
+                    <span>or</span>
+                    <div class="flex-1 h-px bg-white/10"></div>
+                </div>
+
+                <a href="{% provider_login_url 'google' %}"
+                   class="w-full inline-flex items-center justify-center gap-3 px-6 py-4 rounded-full border border-white/20 text-white/90 hover:border-white hover:text-white transition">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" class="w-5 h-5">
+                    Continue with Google
+                </a>
+
+                <p class="text-center text-white/70 text-sm mt-6">
+                    New here? <a href="{% url 'account_signup' %}{% if redirect_field_value %}?next={{ redirect_field_value }}{% endif %}" class="text-brand-300 hover:text-neon font-semibold">Create an account</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

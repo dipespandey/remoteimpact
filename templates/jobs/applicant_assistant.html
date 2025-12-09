@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Applicant Assistant - Remote Impact
+{% endblock %}
+
+{% block content %}
+  <style>
+    .panel {
+      border: 1px solid rgba(15, 23, 42, 0.1);
+      background: linear-gradient(135deg, #ffffff, #faf7f2);
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+      border-radius: 1rem;
+    }
+    .input-base {
+      background: #ffffff;
+      border: 1px solid rgba(15, 23, 42, 0.15);
+    }
+    .input-base:focus {
+      outline: none;
+      border-color: #6EAA1C;
+      box-shadow: 0 0 0 3px rgba(110, 170, 28, 0.2);
+    }
+    .spinner {
+      border: 3px solid rgba(110, 170, 28, 0.2);
+      border-top-color: #6EAA1C;
+      border-radius: 9999px;
+      width: 28px;
+      height: 28px;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    .modal-overlay {
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(6px);
+    }
+    .mode-btn {
+      transition: all 0.15s ease;
+    }
+    .mode-btn:hover {
+      transform: translateY(-1px);
+    }
+  </style>
+
+  <section class="relative py-16 bg-[#F3F2EE]">
+    <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div class="space-y-3">
+        <p class="uppercase text-xs tracking-[0.3em] text-gray-500">Applicant Assistant</p>
+        <h1 class="text-3xl md:text-4xl font-semibold text-gray-900 leading-tight">AI-powered application tools</h1>
+        <p class="text-gray-600 max-w-2xl">Drop a job URL or paste the description. Get a tailored cover letter or interview prep questions.</p>
+      </div>
+
+      <div class="hidden">
+        {% csrf_token %}
+      </div>
+      <div class="panel p-6 space-y-6">
+        <div class="grid lg:grid-cols-3 gap-6 items-start">
+          <div class="lg:col-span-2 space-y-4">
+            <div class="grid md:grid-cols-3 gap-4">
+              <div class="md:col-span-2">
+                <label class="block text-sm font-semibold text-gray-700 mb-2" for="aa-joburl">Job URL (optional)</label>
+                <input id="aa-joburl" type="url" class="w-full px-4 py-3 rounded-xl input-base text-gray-900 placeholder-gray-400" placeholder="https://..." />
+                <p class="text-xs text-gray-500 mt-1">We'll fetch and parse the JD if provided.</p>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2" for="aa-mode">Generate</label>
+                <div class="grid grid-cols-1 gap-2">
+                  <button type="button" class="mode-btn px-4 py-3 rounded-xl bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition" onclick="requestGeneration('cover_letter')">Cover letter</button>
+                  <button type="button" class="mode-btn px-4 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition" onclick="requestGeneration('interview_prep')">Interview prep</button>
+                </div>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2" for="aa-jobdesc">Job description (paste or leave blank to fetch)</label>
+              <textarea id="aa-jobdesc" rows="10" class="w-full px-4 py-3 rounded-xl input-base text-gray-900 placeholder-gray-400" placeholder="Paste the JD here or provide a URL above."></textarea>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2" for="aa-resume">Your highlights (optional)</label>
+              <textarea id="aa-resume" rows="6" class="w-full px-4 py-3 rounded-xl input-base text-gray-900 placeholder-gray-400" placeholder="- Shipped X...&#10;- Improved Y..."></textarea>
+            </div>
+          </div>
+          <div class="lg:sticky lg:top-24">
+            <div class="rounded-2xl bg-gray-50 border border-gray-200 p-4 space-y-3 h-full">
+              <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900">Output</h3>
+                <div class="flex items-center space-x-2">
+                  <button type="button" class="px-3 py-2 rounded-full border border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-900 transition text-sm" onclick="copyOutput(this)">Copy</button>
+                  <button type="button" class="px-3 py-2 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition text-sm" onclick="openModal()">Expand</button>
+                </div>
+              </div>
+              <div class="relative">
+                <textarea id="aa-output" rows="16" class="w-full px-3 py-3 rounded-xl bg-white border border-gray-200 text-gray-900 text-sm" readonly placeholder="Choose a mode to generate."></textarea>
+                <div id="aa-spinner" class="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl hidden">
+                  <div class="spinner"></div>
+                </div>
+              </div>
+              <p id="aa-status" class="text-sm text-gray-500">Generated text appears here.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modal viewer -->
+  <div id="aa-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 modal-overlay" onclick="closeModal()"></div>
+    <div class="relative max-w-3xl mx-auto mt-16 px-4 sm:px-6">
+      <div class="bg-white rounded-2xl border border-gray-200 p-5 space-y-4 shadow-xl">
+        <div class="flex items-center justify-between">
+          <div class="space-y-1">
+            <p class="text-xs uppercase tracking-[0.2em] text-gray-500">Output</p>
+            <div class="flex items-center space-x-3">
+              <span id="aa-modal-mode" class="px-3 py-1 rounded-full bg-gray-100 text-xs uppercase tracking-wide text-gray-600">Generated</span>
+              <p id="aa-modal-status" class="text-xs text-gray-500"></p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button type="button" class="px-3 py-2 rounded-full border border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-900 transition text-sm" onclick="copyOutput(this)">Copy</button>
+            <button type="button" class="px-3 py-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition text-sm" onclick="closeModal()">Close</button>
+          </div>
+        </div>
+        <div class="relative">
+          <textarea id="aa-modal-output" rows="18" class="w-full px-3 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 text-sm" readonly placeholder="Generated text will appear here."></textarea>
+          <div id="aa-modal-spinner" class="absolute inset-0 flex items-center justify-center bg-gray-50/80 rounded-xl hidden">
+            <div class="spinner"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    const endpoint = "{% url 'jobs:applicant_assistant_generate' %}"
+    
+    function getCookie(name) {
+      let cookieValue = null
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';')
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim()
+          if (cookie.substring(0, name.length + 1) === name + '=') {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1))
+            break
+          }
+        }
+      }
+      return cookieValue
+    }
+    
+    function requestGeneration(type) {
+      const output = document.getElementById('aa-output')
+      const status = document.getElementById('aa-status')
+      const spinner = document.getElementById('aa-spinner')
+      const modalOutput = document.getElementById('aa-modal-output')
+      const modalStatus = document.getElementById('aa-modal-status')
+      const modalSpinner = document.getElementById('aa-modal-spinner')
+      const modalMode = document.getElementById('aa-modal-mode')
+
+      modalMode.textContent = type.replace('_', ' ')
+      status.textContent = 'Generating...'
+      output.value = ''
+      modalOutput.value = ''
+      modalStatus.textContent = 'Generating...'
+      spinner.classList.remove('hidden')
+      modalSpinner.classList.remove('hidden')
+
+      const payload = {
+        job_url: document.getElementById('aa-joburl').value,
+        job_description: document.getElementById('aa-jobdesc').value,
+        resume: document.getElementById('aa-resume').value,
+        request_type: type
+      }
+    
+      fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(payload)
+      })
+        .then((resp) => resp.json().then((data) => ({ status: resp.status, data })))
+        .then(({ status: httpStatus, data }) => {
+          if (httpStatus >= 400) {
+            output.value = ''
+            status.textContent = data.error || 'Something went wrong.'
+            modalOutput.value = ''
+            modalStatus.textContent = data.error || 'Something went wrong.'
+            return
+          }
+          output.value = data.result || 'No content returned.'
+          status.textContent = 'Generated. Review and personalize before sending.'
+          modalOutput.value = data.result || 'No content returned.'
+          modalStatus.textContent = 'Generated. Review and personalize before sending.'
+          openModal()
+        })
+        .catch(() => {
+          status.textContent = 'Request failed. Check your network or server logs.'
+          modalStatus.textContent = 'Request failed. Check your network or server logs.'
+        })
+        .finally(() => {
+          spinner.classList.add('hidden')
+          modalSpinner.classList.add('hidden')
+        })
+    }
+
+    function copyOutput(btn) {
+      const output = document.getElementById('aa-output')
+      const modalOutput = document.getElementById('aa-modal-output')
+      const source = modalOutput && !modalOutput.closest('.hidden') ? modalOutput : output
+      if (!output.value) {
+        btn.textContent = 'Nothing to copy'
+        setTimeout(() => (btn.textContent = 'Copy'), 1400)
+        return
+      }
+      navigator.clipboard
+        .writeText(source.value || output.value)
+        .then(() => {
+          const original = btn.textContent
+          btn.textContent = 'Copied!'
+          setTimeout(() => (btn.textContent = original), 1400)
+        })
+        .catch(() => {
+          btn.textContent = 'Copy failed'
+          setTimeout(() => (btn.textContent = 'Copy'), 1400)
+        })
+    }
+
+    function openModal() {
+      const modal = document.getElementById('aa-modal')
+      modal.classList.remove('hidden')
+      document.body.classList.add('overflow-hidden')
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('aa-modal')
+      modal.classList.add('hidden')
+      document.body.classList.remove('overflow-hidden')
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal()
+      }
+    })
+  </script>
+{% endblock %}

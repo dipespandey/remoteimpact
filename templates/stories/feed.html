@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}Impact Stories{% endblock %}
+
+{% block content %}
+<div class="stories-page max-w-2xl mx-auto px-4 py-8">
+
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold mb-2 text-gray-900">Real impact from real people</h1>
+        <p class="text-gray-600">See what meaningful work actually looks like</p>
+    </div>
+
+    <div class="space-y-3 mb-8 max-w-2xl mx-auto">
+        <div id="pill-row" class="flex flex-wrap gap-2 justify-center items-center">
+            {% if current_category_slugs %}
+            {% for cat in categories %}
+            {% if cat.slug in current_category_slugs %}
+            <button type="button" data-slug="{{ cat.slug }}"
+                class="cat-toggle px-4 py-2 rounded-full text-sm font-medium transition bg-brand-300 text-gray-900 hover:bg-brand-400">
+                {{ cat.icon }} {{ cat.name }} ✕
+            </button>
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+           
+            {% if current_category_slugs %}
+            <a href="{% url 'jobs:stories_feed' %}"
+                class="px-4 py-2 rounded-full text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition">
+                Clear all
+            </a>
+            {% endif %}
+        </div>
+        {% if current_category_slugs %}
+        <div class="flex flex-wrap gap-2 justify-center items-center">
+            {% for cat in categories %}
+            {% if cat.slug not in current_category_slugs and forloop.counter0 < 5 %} <button type="button"
+                data-slug="{{ cat.slug }}"
+                class="cat-toggle px-4 py-2 rounded-full text-sm font-medium transition bg-white border border-gray-200 text-gray-700 hover:bg-gray-50">
+                {{ cat.icon }} {{ cat.name }}
+                </button>
+                {% endif %}
+                {% endfor %}
+        </div>
+        {% else %}
+        <div class="flex flex-wrap gap-2 justify-center items-center">
+            {% for cat in categories|slice:":5" %}
+            <button type="button" data-slug="{{ cat.slug }}"
+                class="cat-toggle px-4 py-2 rounded-full text-sm font-medium transition bg-white border border-gray-200 text-gray-700 hover:bg-gray-50">
+                {{ cat.icon }} {{ cat.name }}
+            </button>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div class="relative">
+            <input id="category-filter" type="text" placeholder="Search or pick a cause…"
+                class="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder-gray-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none">
+            <div id="category-dropdown"
+                class="absolute mt-2 w-full max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl hidden z-10">
+                {% for cat in categories %}
+                <button type="button" data-slug="{{ cat.slug }}" data-label="{{ cat.name|lower }}"
+                    class="category-option w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                    {{ cat.icon }} {{ cat.name }}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="flex justify-center items-center gap-3">
+            <button id="toggle-categories"
+                class="px-4 py-2 rounded-full text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition">
+                More categories
+            </button>
+        </div>
+    </div>
+
+    <div id="stories-container" class="space-y-6">
+        {% include 'stories/partials/story_list.html' %}
+    </div>
+
+    {% if stories.has_next %}
+    <div hx-get="{% url 'jobs:stories_feed' %}?page={{ stories.next_page_number }}{% if current_category_slugs %}{% for slug in current_category_slugs %}&category={{ slug }}{% endfor %}{% endif %}"
+        hx-trigger="revealed" hx-target="#stories-container" hx-swap="beforeend" class="py-8 flex justify-center">
+        <span class="animate-pulse text-gray-400">Loading more...</span>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ current_category_slugs|json_script:"currentCats" }}
+<script>
+    const categoriesToggleBtn = document.getElementById('toggle-categories');
+    const dropdown = document.getElementById('category-dropdown');
+    const input = document.getElementById('category-filter');
+    const baseUrl = "{% url 'jobs:stories_feed' %}";
+    const selected = new Set(JSON.parse(document.getElementById('currentCats').textContent || '[]'));
+
+    function buildUrl() {
+        if (selected.size === 0) return baseUrl;
+        const params = Array.from(selected).map(slug => 'category=' + encodeURIComponent(slug)).join('&');
+        return baseUrl + '?' + params;
+    }
+
+    function syncClasses() {
+        document.querySelectorAll('.cat-toggle, .category-option').forEach((el) => {
+            const slug = el.dataset.slug;
+            const isActive = selected.has(slug);
+            el.classList.toggle('bg-brand-300', isActive);
+            el.classList.toggle('text-gray-900', isActive);
+            el.classList.toggle('hover:bg-brand-400', isActive);
+
+            el.classList.toggle('bg-white', !isActive);
+            el.classList.toggle('border', !isActive);
+            el.classList.toggle('border-gray-200', !isActive);
+            el.classList.toggle('text-gray-700', !isActive);
+            el.classList.toggle('hover:bg-gray-50', !isActive);
+        });
+    }
+
+    document.querySelectorAll('.cat-toggle, .category-option').forEach((el) => {
+        el.addEventListener('click', (e) => {
+            e.preventDefault();
+            const slug = el.dataset.slug;
+            if (selected.has(slug)) {
+                selected.delete(slug);
+            } else {
+                selected.add(slug);
+            }
+            window.location.href = buildUrl();
+        });
+    });
+
+    categoriesToggleBtn?.addEventListener('click', () => {
+        dropdown.classList.toggle('hidden');
+        input.focus();
+        categoriesToggleBtn.textContent = dropdown.classList.contains('hidden') ? 'More categories' : 'Hide categories';
+    });
+
+    input?.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        dropdown.querySelectorAll('.category-option').forEach((el) => {
+            const text = (el.dataset.label || el.textContent).toLowerCase();
+            const isMatch = text.includes(term);
+            el.classList.toggle('hidden', !isMatch);
+            el.classList.toggle('bg-brand-50/50', isMatch);
+        });
+        if (term && dropdown.classList.contains('hidden')) {
+            dropdown.classList.remove('hidden');
+            categoriesToggleBtn.textContent = 'Hide categories';
+        }
+    });
+
+    input?.addEventListener('focus', () => {
+        dropdown.classList.remove('hidden');
+        categoriesToggleBtn.textContent = 'Hide categories';
+    });
+
+    input?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const firstVisible = Array.from(dropdown.querySelectorAll('.category-option')).find((el) => !el.classList.contains('hidden'));
+            if (firstVisible) firstVisible.click();
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target) && e.target !== input && e.target !== categoriesToggleBtn) {
+            dropdown.classList.add('hidden');
+            categoriesToggleBtn.textContent = 'More categories';
+        }
+    });
+
+    syncClasses();
+</script>
+{% endblock %}

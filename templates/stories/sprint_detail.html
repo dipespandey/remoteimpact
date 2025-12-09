@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ sprint.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-8">
+
+    <a href="{% url 'jobs:sprints_list' %}"
+        class="inline-flex items-center text-gray-500 hover:text-gray-900 mb-6 transition">
+        ← Back to Sprints
+    </a>
+
+    <div class="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
+
+        <div class="flex items-start justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">{{ sprint.title }}</h1>
+                <p class="text-gray-500">{{ sprint.organization.name }}</p>
+            </div>
+            <div class="text-right">
+                <div class="px-3 py-1 rounded-full bg-brand-50 text-brand-600 text-sm font-medium mb-2">
+                    {{ sprint.difficulty }}
+                </div>
+                <div class="text-sm text-gray-500">⏱️ {{ sprint.time_estimate_minutes }} minutes</div>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-3">About this task</h2>
+            <p class="text-gray-700 leading-relaxed">{{ sprint.description }}</p>
+        </div>
+
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-3">Why it matters</h2>
+            <p class="text-gray-700 leading-relaxed">{{ sprint.impact_statement }}</p>
+        </div>
+
+        <div class="mb-8">
+            <h2 class="text-lg font-semibold text-gray-900 mb-3">Instructions</h2>
+            <div class="prose prose-gray max-w-none text-gray-700">
+                {{ sprint.instructions|linebreaks }}
+            </div>
+        </div>
+
+        {% if sprint.task_url %}
+        <a href="{{ sprint.task_url }}" target="_blank"
+            class="block w-full py-4 bg-brand-300 text-gray-900 font-medium rounded-xl hover:bg-brand-400 transition text-center">
+            Start Sprint →
+        </a>
+        {% else %}
+        <div class="text-center text-gray-500">
+            <p>Task link will be available soon</p>
+        </div>
+        {% endif %}
+
+    </div>
+
+</div>
+{% endblock %}

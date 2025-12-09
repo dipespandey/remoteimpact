@@ -1,0 +1,29 @@
+{% for category in categories %}
+<div
+    class="bg-white rounded-3xl p-8 shadow-sm hover:shadow-md transition border border-gray-100 flex flex-col h-full animate-in fade-in duration-300">
+    <div class="flex justify-between items-start mb-6">
+        <span class="text-4xl">{{ category.icon|default:"🌍" }}</span>
+        <!-- Optional: <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Remote</span> -->
+    </div>
+
+    <h3 class="text-xl font-bold text-gray-900 mb-3">{{ category.name }}</h3>
+
+    <p class="text-gray-500 text-sm leading-relaxed mb-6 flex-grow">
+        {% if category.description %}
+        {{ category.description }}
+        {% else %}
+        Roles curated weekly from orgs delivering measurable change in {{ category.name }}.
+        {% endif %}
+    </p>
+
+    <a href="{% url 'jobs:job_list' %}?category={{ category.slug }}"
+        class="inline-flex items-center text-sm font-medium text-brand-600 hover:text-brand-700 transition mt-auto group">
+        View opportunities
+        <span class="ml-1 group-hover:translate-x-1 transition-transform">→</span>
+    </a>
+</div>
+{% empty %}
+<div class="col-span-full text-center py-12">
+    <p class="text-gray-500 text-lg">No domains found matching "{{ search_query }}"</p>
+</div>
+{% endfor %}

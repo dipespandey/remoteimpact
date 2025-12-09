@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Applications - {{ gig.title }}{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 pt-16 pb-20">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{{ gig.title }}</h1>
+                <p class="text-gray-600">Applications</p>
+            </div>
+            <a href="{% url 'gigs:employer_dashboard' %}" class="px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-gray-700 hover:border-brand-300 hover:text-brand-600 transition">
+                Back
+            </a>
+        </div>
+
+        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Seeker</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Motivation</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for application in applications %}
+                        <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                            <td class="py-4 px-4 text-gray-900">{{ application.seeker.email }}</td>
+                            <td class="py-4 px-4">
+                                <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-medium border border-gray-200">{{ application.get_status_display }}</span>
+                            </td>
+                            <td class="py-4 px-4 text-sm text-gray-600">{{ application.motivation|truncatewords:20 }}</td>
+                            <td class="py-4 px-4">
+                                <a href="{% url 'gigs:employer_application' application.id %}" class="px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-gray-700 hover:border-brand-300 hover:text-brand-600 transition">
+                                    Review
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="py-8 px-4 text-center text-gray-500">No applications yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

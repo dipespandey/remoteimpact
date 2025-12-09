@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv sync:*)",
+      "Bash(uv run python:*)",
+      "Bash(uv add:*)",
+      "WebFetch(domain:jobs.probablygood.org)",
+      "Bash(curl:*)",
+      "Bash(DJANGO_SETTINGS_MODULE=jobboard.settings uv run python:*)",
+      "WebSearch",
+      "WebFetch(domain:console.groq.com)"
+    ]
+  }
+}

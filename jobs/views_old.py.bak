@@ -1,0 +1,1077 @@
+import json
+import re
+
+import requests
+
+from bs4 import BeautifulSoup
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404, redirect
+from django.db.models import Q
+from django.core.paginator import Paginator
+from django.utils import timezone
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.http import require_POST
+from django.template.loader import render_to_string
+from .forms import JobSubmissionForm
+from .models import (
+    Job,
+    Category,
+    Organization,
+    Story,
+    StoryResonance,
+    Sprint,
+    SprintCompletion,
+    UserPath,
+    SavedJob,
+    Application,
+    UserProfile,
+    Organization,
+)
+from .forms import (
+    JobSubmissionForm,
+    OnboardingTypeForm,
+    EmployerOnboardingForm,
+    SeekerOnboardingForm,
+)
+from .utils import unique_slug
+from .services.ai import AIClient
+
+
+def job_list(request):
+    """Display list of all active jobs with filtering and search"""
+    jobs = Job.objects.filter(is_active=True).select_related("organization", "category")
+
+    # Filter by category
+    category_slug = request.GET.get("category")
+    current_category_obj = None
+    if category_slug:
+        jobs = jobs.filter(category__slug=category_slug)
+        try:
+            current_category_obj = Category.objects.get(slug=category_slug)
+        except Category.DoesNotExist:
+            pass
+
+    # Filter by job type
+    job_type = request.GET.get("type")
+    if job_type:
+        jobs = jobs.filter(job_type=job_type)
+
+    # Organization filter
+    organization_query = request.GET.get("organization")
+    if organization_query:
+        jobs = jobs.filter(organization__name__icontains=organization_query)
+
+    # Location filters
+    country_query = request.GET.get("country")
+    if country_query:
+        jobs = jobs.filter(location__icontains=country_query)
+
+    city_query = request.GET.get("city")
+    if city_query:
+        jobs = jobs.filter(location__icontains=city_query)
+
+    # Salary minimum
+    salary_min_query = request.GET.get("salary_min")
+    if salary_min_query:
+        try:
+            salary_value = float(salary_min_query)
+            jobs = jobs.filter(
+                Q(salary_min__gte=salary_value) | Q(salary_max__gte=salary_value)
+            )
+        except (TypeError, ValueError):
+            pass
+
+    # Experience / education / skills heuristics
+    experience_query = request.GET.get("experience")
+    if experience_query:
+        jobs = jobs.filter(
+            Q(description__icontains=experience_query)
+            | Q(requirements__icontains=experience_query)
+        )
+
+    education_query = request.GET.get("education")
+    if education_query:
+        jobs = jobs.filter(
+            Q(description__icontains=education_query)
+            | Q(requirements__icontains=education_query)
+        )
+
+    skill_query = request.GET.get("skillset")
+    if skill_query:
+        jobs = jobs.filter(
+            Q(description__icontains=skill_query)
+            | Q(requirements__icontains=skill_query)
+        )
+
+    # Search query
+    search_query = request.GET.get("q")
+    if search_query:
+        jobs = jobs.filter(
+            Q(title__icontains=search_query)
+            | Q(description__icontains=search_query)
+            | Q(organization__name__icontains=search_query)
+        )
+
+    # Filter out expired jobs
+    jobs = jobs.filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now()))
+
+    # Pagination
+    paginator = Paginator(jobs, 12)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    categories = Category.objects.all()
+    organizations = Organization.objects.order_by("name")
+    locations = [
+        loc for loc in Job.objects.values_list("location", flat=True).distinct() if loc
+    ]
+    countries = sorted(
+        {
+            part.strip()
+            for loc in locations
+            for part in loc.split("·")[1:]
+            if part.strip()
+        }
+    )
+    cities = sorted({loc.split("·")[0].strip() for loc in locations if "·" in loc})
+
+    context = {
+        "jobs": page_obj,
+        "categories": categories,
+        "current_category": category_slug,
+        "current_category_obj": current_category_obj,
+        "current_type": job_type,
+        "search_query": search_query,
+        "organizations": organizations,
+        "countries": countries,
+        "cities": cities,
+        "knowledge_filters": {
+            "experience_levels": ["Junior", "Mid", "Senior", "Director"],
+            "education_levels": ["Bachelor", "Master", "PhD", "Certificate"],
+            "skill_labels": [
+                "Operations",
+                "Strategy",
+                "Design",
+                "Engineering",
+                "Fundraising",
+                "Marketing",
+            ],
+        },
+        "filters": {
+            "organization": organization_query or "",
+            "country": country_query or "",
+            "city": city_query or "",
+            "salary_min": salary_min_query or "",
+            "experience": experience_query or "",
+            "education": education_query or "",
+            "skillset": skill_query or "",
+        },
+    }
+
+    return render(request, "jobs/job_list.html", context)
+
+
+def job_detail(request, slug):
+    """Display detailed view of a single job"""
+    job = get_object_or_404(
+        Job.objects.select_related("organization", "category"),
+        slug=slug,
+        is_active=True,
+    )
+
+    # Get related jobs from same organization or category
+    related_jobs = (
+        Job.objects.filter(
+            Q(organization=job.organization) | Q(category=job.category), is_active=True
+        )
+        .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now()))
+        .exclude(id=job.id)[:4]
+    )
+
+    saved = False
+    if request.user.is_authenticated:
+        saved = SavedJob.objects.filter(user=request.user, job=job).exists()
+
+    context = {
+        "job": job,
+        "related_jobs": related_jobs,
+        "saved": saved,
+    }
+
+    return render(request, "jobs/job_detail.html", context)
+
+
+# ============================================================================
+# ONBOARDING VIEWS
+# ============================================================================
+
+
+@login_required
+def start_onboarding(request):
+    """Traffic cop for onboarding flow."""
+    try:
+        profile = request.user.profile
+    except UserProfile.DoesNotExist:
+        return redirect("jobs:onboarding_select_type")
+
+    if profile.account_type == UserProfile.AccountType.EMPLOYER:
+        # Check if they have an org
+        if not request.user.organizations.exists():
+            return redirect("jobs:onboarding_employer")
+    elif profile.account_type == UserProfile.AccountType.SEEKER:
+        # Check if profile is complete (e.g. has headline)
+        if not profile.headline:
+            return redirect("jobs:onboarding_seeker")
+
+    return redirect("jobs:account")
+
+
+@login_required
+def onboarding_select_type(request):
+    if request.method == "POST":
+        form = OnboardingTypeForm(request.POST)
+        if form.is_valid():
+            account_type = form.cleaned_data["account_type"]
+            UserProfile.objects.update_or_create(
+                user=request.user, defaults={"account_type": account_type}
+            )
+            return redirect("jobs:start_onboarding")
+    else:
+        form = OnboardingTypeForm()
+
+    return render(request, "jobs/onboarding/select_type.html", {"form": form})
+
+
+@login_required
+def onboarding_employer(request):
+    user = request.user
+    # Ensure they are allowed here
+    try:
+        if user.profile.account_type != UserProfile.AccountType.EMPLOYER:
+            return redirect("jobs:start_onboarding")
+    except UserProfile.DoesNotExist:
+        return redirect("jobs:start_onboarding")
+
+    if request.method == "POST":
+        form = EmployerOnboardingForm(request.POST)
+        if form.is_valid():
+            org = form.save(commit=False)
+            org.slug = unique_slug(Organization, org.name)
+            org.save()
+            org.members.add(user)
+            return redirect("jobs:account")
+    else:
+        form = EmployerOnboardingForm()
+
+    return render(request, "jobs/onboarding/employer_form.html", {"form": form})
+
+
+@login_required
+def onboarding_seeker(request):
+    user = request.user
+    try:
+        profile = user.profile
+        if profile.account_type != UserProfile.AccountType.SEEKER:
+            return redirect("jobs:start_onboarding")
+    except UserProfile.DoesNotExist:
+        return redirect("jobs:start_onboarding")
+
+    if request.method == "POST":
+        form = SeekerOnboardingForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            return redirect("jobs:account")
+    else:
+        form = SeekerOnboardingForm(instance=profile)
+
+    return render(request, "jobs/onboarding/seeker_form.html", {"form": form})
+
+
+# ============================================================================
+# PUBLIC VIEWS
+# ============================================================================
+
+
+def home(request):
+    """Homepage with featured jobs and categories"""
+    featured_jobs = (
+        Job.objects.filter(is_featured=True, is_active=True)
+        .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now()))
+        .select_related("organization", "category")[:6]
+    )
+
+    recent_jobs = (
+        Job.objects.filter(is_active=True)
+        .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now()))
+        .select_related("organization", "category")[:8]
+    )
+
+    categories = Category.objects.all()[:8]
+
+    context = {
+        "featured_jobs": featured_jobs,
+        "recent_jobs": recent_jobs,
+        "categories": categories,
+    }
+
+    return render(request, "jobs/home.html", context)
+
+
+def all_domains(request):
+    """List all impact domains (categories)."""
+    query = request.GET.get("q", "")
+    categories = Category.objects.all()
+
+    if query:
+        categories = categories.filter(
+            Q(name__icontains=query) | Q(description__icontains=query)
+        )
+
+    context = {
+        "categories": categories,
+        "search_query": query,
+    }
+
+    if request.headers.get("HX-Request"):
+        return render(request, "jobs/partials/domains_grid.html", context)
+
+    return render(request, "jobs/domains_list.html", context)
+
+
+@login_required
+def post_job(request):
+    """Allow organizations to submit a new job directly from the site."""
+    if request.method == "POST":
+        form = JobSubmissionForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+
+            org_name = data["organization_name"].strip()
+            org = Organization.objects.filter(name__iexact=org_name).first()
+
+            if org:
+                org_updates = False
+                if (
+                    data.get("organization_website")
+                    and org.website != data["organization_website"]
+                ):
+                    org.website = data["organization_website"]
+                    org_updates = True
+                if (
+                    data.get("organization_description")
+                    and org.description != data["organization_description"]
+                ):
+                    org.description = data["organization_description"]
+                    org_updates = True
+                if not org.slug:
+                    org.slug = unique_slug(Organization, org_name)
+                    org_updates = True
+                if org_updates:
+                    org.save()
+            else:
+                org = Organization.objects.create(
+                    name=org_name,
+                    slug=unique_slug(Organization, org_name),
+                    website=data.get("organization_website") or "",
+                    description=data.get("organization_description") or "",
+                )
+
+            job_slug = unique_slug(Job, f"{data['title']} {org.name}")
+            job = Job.objects.create(
+                title=data["title"],
+                slug=job_slug,
+                organization=org,
+                category=data["category"],
+                description=data["description"],
+                requirements=data["requirements"],
+                location=data.get("location") or "Remote",
+                job_type=data["job_type"],
+                application_url=data["application_url"],
+                application_email=data.get("application_email") or "",
+                salary_min=data.get("salary_min"),
+                salary_max=data.get("salary_max"),
+                salary_currency=data.get("salary_currency") or "USD",
+                source=Job.Source.MANUAL,
+                # New fields
+                impact=data.get("impact") or "",
+                benefits=data.get("benefits") or "",
+                how_to_apply_text=data.get("how_to_apply") or "",
+                company_description=data.get("contact_email")
+                or "",  # Wait, contact email is internal, not description.
+                # Actually form has 'contact_email' -> 'internal_contact' in raw_data previously.
+                # And 'start_timeline' -> 'start_timeline'.
+                # company_description is not in form? organization_description is.
+            )
+
+            # We still might want to save some things in raw_data if they don't have fields
+            raw_payload = {
+                "internal_contact": data.get("contact_email"),
+                "start_timeline": data.get("start_timeline"),
+            }
+            raw_payload = {k: v for k, v in raw_payload.items() if v}
+            job.raw_data = raw_payload
+
+            # Deactivate until paid
+            job.is_active = False
+            job.is_paid = False
+            job.poster = request.user
+            job.save()
+
+            # --- STRIPE CHECKOUT ---
+            import stripe
+            from django.conf import settings
+
+            stripe.api_key = settings.STRIPE_SECRET_KEY
+            domain_url = request.build_absolute_uri("/")[:-1]  # Remove trailing slash
+
+            try:
+                checkout_session = stripe.checkout.Session.create(
+                    payment_method_types=["card"],
+                    line_items=[
+                        {
+                            "price_data": {
+                                "currency": "usd",
+                                "unit_amount": 10000,  # $100.00
+                                "product_data": {
+                                    "name": f"Job Posting: {job.title}",
+                                    "description": "30-day job listing on Remote Impact",
+                                },
+                            },
+                            "quantity": 1,
+                        },
+                    ],
+                    mode="payment",
+                    success_url=domain_url
+                    + "/jobs/payment/success/?session_id={CHECKOUT_SESSION_ID}&job_id="
+                    + str(job.id),
+                    cancel_url=domain_url
+                    + "/jobs/payment/cancel/?job_id="
+                    + str(job.id),
+                    metadata={"job_id": job.id},
+                )
+                return redirect(checkout_session.url)
+            except Exception as e:
+                # If Stripe fails, log it and just redirect to home with error?
+                # Or maybe detail page but inactive.
+                messages.error(request, f"Error creating payment session: {str(e)}")
+                return redirect("jobs:home")
+    else:
+        form = JobSubmissionForm()
+
+    context = {
+        "form": form,
+    }
+    return render(request, "jobs/post_job.html", context)
+
+
+def payment_success(request):
+    import stripe
+    from django.conf import settings
+
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    session_id = request.GET.get("session_id")
+    job_id = request.GET.get("job_id")
+
+    if not session_id or not job_id:
+        messages.error(request, "Invalid payment session.")
+        return redirect("jobs:home")
+
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+        if session.payment_status == "paid":
+            job = Job.objects.get(id=job_id)
+            if not job.is_paid:
+                job.is_paid = True
+                job.is_active = True
+                job.stripe_payment_intent = session.payment_intent
+                job.save()
+                messages.success(request, "Payment successful! Your job is now live.")
+            return redirect("jobs:job_detail", slug=job.slug)
+    except Exception as e:
+        messages.error(request, f"Error verifying payment: {str(e)}")
+
+    return redirect("jobs:home")
+
+
+def payment_cancel(request):
+    messages.warning(request, "Payment cancelled. Your job has been saved as a draft.")
+    return redirect("jobs:home")
+
+
+@login_required
+@require_POST
+def save_job(request, slug):
+    job = get_object_or_404(
+        Job.objects.filter(is_active=True).select_related("organization"),
+        slug=slug,
+    )
+    saved, created = SavedJob.objects.get_or_create(user=request.user, job=job)
+    if not created:
+        saved.delete()
+        is_saved = False
+    else:
+        is_saved = True
+    return JsonResponse({"saved": is_saved})
+
+
+@login_required
+def account(request):
+    try:
+        profile = request.user.profile
+    except UserProfile.DoesNotExist:
+        return redirect("jobs:start_onboarding")
+
+    context = {}
+
+    if profile.account_type == UserProfile.AccountType.EMPLOYER:
+        context["is_employer"] = True
+        context["posted_jobs"] = request.user.posted_jobs.all().order_by("-posted_at")
+        context["organization"] = request.user.organizations.first()
+
+    elif profile.account_type == UserProfile.AccountType.SEEKER:
+        context["is_seeker"] = True
+        context["saved_jobs"] = request.user.saved_jobs.select_related(
+            "job", "job__organization"
+        )
+        context["applications"] = request.user.applications.select_related(
+            "job", "job__organization"
+        ).order_by("-applied_at")
+        context["profile"] = profile
+
+    return render(request, "account/dashboard.html", context)
+
+
+def resources(request):
+    """Resource hub for finding remote impact roles beyond this board."""
+    resource_sections = [
+        {
+            "title": "Impact-first job boards",
+            "items": [
+                {
+                    "name": "80,000 Hours",
+                    "url": "https://80000hours.org/jobs/",
+                    "focus": "High-impact roles (policy, AI safety, biosecurity, global health) with mission vetting.",
+                },
+                {
+                    "name": "Idealist",
+                    "url": "https://www.idealist.org/en/",
+                    "focus": "Nonprofit and social impact roles worldwide; strong NGO coverage; filters for remote.",
+                },
+                {
+                    "name": "Tech Jobs for Good",
+                    "url": "https://techjobsforgood.com/",
+                    "focus": "US-heavy tech roles in climate, civic, health, justice; remote and hybrid filters.",
+                },
+                {
+                    "name": "Climatebase",
+                    "url": "https://climatebase.org/jobs",
+                    "focus": "Climate and clean tech roles across stages; remote filters; includes fellowships.",
+                },
+                {
+                    "name": "B Work (B Corp jobs)",
+                    "url": "https://jobs.bwork.com/",
+                    "focus": "Certified B Corps hiring across functions; social enterprise friendly.",
+                },
+                {
+                    "name": "Escape the City",
+                    "url": "https://www.escapethecity.org/",
+                    "focus": "Mission-led startups and social ventures; curated, mainly UK/EU.",
+                },
+                {
+                    "name": "Devex",
+                    "url": "https://www.devex.com/jobs",
+                    "focus": "Global development and humanitarian roles; consultancies and contracts included.",
+                },
+                {
+                    "name": "ReliefWeb",
+                    "url": "https://reliefweb.int/jobs",
+                    "focus": "Humanitarian and crisis response jobs; NGOs, multilaterals; contract-heavy.",
+                },
+            ],
+        },
+        {
+            "title": "Communities & fellowships",
+            "items": [
+                {
+                    "name": "Work on Climate",
+                    "url": "https://workonclimate.org/",
+                    "focus": "Slack community, job channels, and founder circles for climate talent.",
+                },
+                {
+                    "name": "Net Impact",
+                    "url": "https://netimpact.org/",
+                    "focus": "Chapters + resources for students and professionals pursuing impact careers.",
+                },
+                {
+                    "name": "On Deck Impact / Climate",
+                    "url": "https://www.beondeck.com/",
+                    "focus": "Fellowship-style cohorts with curated roles and founder/investing tracks.",
+                },
+                {
+                    "name": "MovingWorlds",
+                    "url": "https://movingworlds.org/",
+                    "focus": "Experteering projects and social enterprise placements; great for portfolio building.",
+                },
+                {
+                    "name": "DemocracyLab",
+                    "url": "https://www.democracylab.org/",
+                    "focus": "Open-source civic tech projects; volunteer-to-paid pathways for product/engineering.",
+                },
+                {
+                    "name": "Catchafire",
+                    "url": "https://www.catchafire.org/",
+                    "focus": "Skills-based volunteering; useful for first impact proof-points.",
+                },
+            ],
+        },
+        {
+            "title": "General remote boards with impact filters",
+            "items": [
+                {
+                    "name": "Otta",
+                    "url": "https://otta.com/jobs",
+                    "focus": "Startup roles with mission-driven filter; remote and time-zone filters.",
+                },
+                {
+                    "name": "Wellfound (AngelList)",
+                    "url": "https://wellfound.com/",
+                    "focus": "Startup roles; use tags like climate, civic tech, education, health.",
+                },
+                {
+                    "name": "Remotive",
+                    "url": "https://remotive.com/remote-jobs",
+                    "focus": "Remote-first roles; search for 'nonprofit', 'climate', 'social impact' tags.",
+                },
+                {
+                    "name": "Remote OK",
+                    "url": "https://remoteok.com/",
+                    "focus": "Remote tech roles; filter by keywords like 'impact', 'ngo', 'climate'.",
+                },
+                {
+                    "name": "We Work Remotely",
+                    "url": "https://weworkremotely.com/",
+                    "focus": "Remote tech/creative roles; search for nonprofit/social keywords.",
+                },
+                {
+                    "name": "PowerToFly",
+                    "url": "https://powertofly.com/jobs",
+                    "focus": "Inclusive hiring focus; good for social impact tech and ops roles.",
+                },
+            ],
+        },
+        {
+            "title": "Newsletters & intel",
+            "items": [
+                {
+                    "name": "Impact Opportunities by 80k",
+                    "url": "https://80000hours.org/subscribe/",
+                    "focus": "Weekly curated high-impact roles and career articles.",
+                },
+                {
+                    "name": "Work on Climate Weekly",
+                    "url": "https://workonclimate.org/newsletter",
+                    "focus": "Climate roles, founder spotlights, and community calls.",
+                },
+                {
+                    "name": "Future of Good",
+                    "url": "https://futureofgood.co/",
+                    "focus": "Social sector trends; Canada-heavy but globally relevant insights.",
+                },
+                {
+                    "name": "Tech Jobs for Good newsletter",
+                    "url": "https://techjobsforgood.com/newsletter",
+                    "focus": "Weekly mission-driven tech roles across categories.",
+                },
+            ],
+        },
+    ]
+
+    playbook = [
+        "Define your non-negotiables: mission areas, time zones, contract type, and minimum compensation.",
+        "Curate a shortlist of organizations and set alerts (RSS/email) on their career pages and key boards above.",
+        "Rewrite your resume and LinkedIn headline to mirror the language of the missions you target.",
+        "Show impact proof: 3–5 bullet case studies with metrics (reach, revenue saved, emissions reduced).",
+        "Ship a fast portfolio artifact: one-pager, Loom walkthrough, or GitHub repo tailored to the org's problem.",
+        "Warm outreach: find hiring managers on LinkedIn, send a concise problem/solution note plus artifact link.",
+        "Be timezone explicit in your header and cover note to remove friction for global teams.",
+        "For grants/NGOs, highlight compliance/funder experience; for startups, emphasize speed and ambiguity handling.",
+    ]
+
+    outreach_templates = [
+        "One-line hook → 2 bullets on relevant outcomes → link to artifact → ask for a 10-minute vibe check.",
+        "Send a teardown (product, ops, comms) with 2 prioritized recommendations tailored to their mission.",
+        "If coming from the private sector, map your metrics to impact outcomes (cost per beneficiary, uptime for field ops, etc.).",
+    ]
+
+    context = {
+        "resource_sections": resource_sections,
+        "playbook": playbook,
+        "outreach_templates": outreach_templates,
+    }
+    return render(request, "jobs/resources.html", context)
+
+
+def applicant_assistant(request):
+    """UI for AI-assisted CV/cover letter drafting."""
+    return render(request, "jobs/applicant_assistant.html")
+
+
+def _call_llm(prompt: str, ai_client: AIClient | None = None):
+    """Call AI service; injectable for testing or alternate providers."""
+    client = ai_client or AIClient()
+    try:
+        return client.generate(prompt)
+    except Exception as exc:  # pragma: no cover - passthrough for runtime issues
+        return f"LLM call failed: {exc}"
+
+
+def _fetch_job_description(job_url: str) -> str:
+    """Best-effort fetch of job description text from a URL."""
+    if not requests or not job_url:
+        return ""
+    try:
+        resp = requests.get(
+            job_url, timeout=10, headers={"User-Agent": "RemoteImpactBot/1.0"}
+        )
+        resp.raise_for_status()
+        text_content = resp.text
+        if BeautifulSoup:
+            soup = BeautifulSoup(text_content, "html.parser")
+            # remove scripts/styles
+            for tag in soup(["script", "style", "noscript"]):
+                tag.decompose()
+            text = soup.get_text("\n", strip=True)
+        else:
+            # quick tag strip fallback
+            text = re.sub(r"<[^>]+>", " ", text_content)
+            text = re.sub(r"\s+", " ", text).strip()
+        # take a reasonable slice
+        return "\n".join(text.splitlines()[:400])
+    except Exception:
+        return ""
+
+
+@require_POST
+def applicant_assistant_generate(request):
+    """Backend endpoint to generate AI output for applicant materials."""
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON payload."}, status=400)
+
+    job_url = (payload.get("job_url") or "").strip()
+    job_description = (payload.get("job_description") or "").strip()
+    resume = (payload.get("resume") or "").strip()
+    request_type = (payload.get("request_type") or "cover_letter").strip()
+
+    if not job_description and job_url:
+        fetched = _fetch_job_description(job_url)
+        job_description = job_description or fetched
+
+    if not job_description:
+        if job_url:
+            job_description = f"Job URL (content could not be fetched): {job_url}"
+        else:
+            return JsonResponse(
+                {"error": "Job description or job URL is required."}, status=400
+            )
+
+    instructions = {
+        "cover_letter": "Write a concise, high-signal cover letter (<= 220 words) with a 2-sentence hook, 3 bullet proof points with metrics, and a short closing. Include time zone if provided.",
+        "resume": "Rewrite CV bullets. Return 4-6 bullets ordered by impact, each with metrics and verbs. Include a one-line header summary.",
+        "summary": "Return a 4-sentence summary: mission alignment, top achievements w/ metrics, tools/skills, and time zone/availability.",
+    }
+    instruction = instructions.get(request_type, instructions["cover_letter"])
+
+    prompt = f"""
+You are helping a candidate apply to a remote, impact-focused role.
+
+Job description:
+{job_description}
+
+Candidate CV highlights (if any):
+{resume if resume else "Not provided. Infer likely strengths from the JD and request clarifying details if critical."}
+
+Task: {instruction}
+
+Voice: confident, concise, specific. Avoid filler. Show measurable outcomes. Keep to the point and avoid repeating the JD verbatim.
+"""
+
+    content = _call_llm(prompt)
+    return JsonResponse({"result": content})
+
+
+# ============================================================================
+# IMPACT STORIES VIEWS
+# ============================================================================
+
+
+def stories_feed(request):
+    """Main stories feed with infinite scroll"""
+    stories = (
+        Story.objects.filter(status="published")
+        .select_related("organization")
+        .prefetch_related("categories")
+    )
+
+    category_slugs = request.GET.getlist("category")
+    if category_slugs:
+        stories = stories.filter(categories__slug__in=category_slugs).distinct()
+
+    paginator = Paginator(stories, 10)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+
+    resonated_ids = _get_resonated_story_ids(request)
+
+    if request.headers.get("HX-Request") and page_number != "1":
+        html = render_to_string(
+            "stories/partials/story_list.html",
+            {"stories": page_obj, "resonated_ids": resonated_ids},
+            request=request,
+        )
+        return JsonResponse({"html": html})
+
+    categories = Category.objects.all()
+
+    context = {
+        "stories": page_obj,
+        "categories": categories,
+        "current_category_slugs": category_slugs,
+        "resonated_ids": resonated_ids,
+    }
+
+    return render(request, "stories/feed.html", context)
+
+
+def story_detail(request, story_id):
+    """Single story detail page"""
+    story = get_object_or_404(
+        Story.objects.select_related("organization").prefetch_related("categories"),
+        id=story_id,
+        status="published",
+    )
+
+    story.increment_views()
+
+    related_jobs = story.related_jobs.filter(is_active=True)[:5]
+    if not related_jobs.exists():
+        related_jobs = Job.objects.filter(
+            category__in=story.categories.all(), is_active=True
+        )[:5]
+
+    similar_stories = (
+        Story.objects.filter(categories__in=story.categories.all(), status="published")
+        .exclude(id=story.id)
+        .distinct()[:3]
+    )
+
+    context = {
+        "story": story,
+        "related_jobs": related_jobs,
+        "similar_stories": similar_stories,
+    }
+
+    return render(request, "stories/detail.html", context)
+
+
+@require_POST
+def resonate(request, story_id):
+    """HTMX: Show resonance modal"""
+    story = get_object_or_404(Story, id=story_id, status="published")
+
+    if _has_resonated(request, story):
+        html = render_to_string(
+            "stories/partials/resonate_button.html",
+            {"story": story, "already_resonated": True},
+            request=request,
+        )
+        return JsonResponse({"html": html})
+
+    resonance_choices = StoryResonance.ResonanceType.choices
+
+    html = render_to_string(
+        "stories/partials/resonate_modal.html",
+        {"story": story, "resonance_choices": resonance_choices},
+        request=request,
+    )
+
+    return JsonResponse({"html": html})
+
+
+@require_POST
+def save_resonance(request, story_id):
+    """HTMX: Save resonance and update button"""
+    story = get_object_or_404(Story, id=story_id, status="published")
+    resonance_type = request.POST.get("resonance_type", "outcome")
+
+    if _has_resonated(request, story):
+        html = render_to_string(
+            "stories/partials/resonate_button.html",
+            {"story": story, "already_resonated": True},
+            request=request,
+        )
+        return JsonResponse({"html": html})
+
+    session_key = _get_or_create_session(request)
+    user = request.user if request.user.is_authenticated else None
+
+    StoryResonance.objects.create(
+        story=story,
+        session_key=session_key if not user else "",
+        user=user,
+        resonance_type=resonance_type,
+    )
+
+    story.increment_resonates()
+
+    if not user:
+        _update_user_path(session_key, story, resonance_type)
+
+    html = render_to_string(
+        "stories/partials/resonate_button.html",
+        {"story": story, "already_resonated": True},
+        request=request,
+    )
+
+    return HttpResponse(html)
+
+
+@require_POST
+def want_to_do_this(request, story_id):
+    """HTMX: Show 'I want to do this' modal"""
+    story = get_object_or_404(Story, id=story_id, status="published")
+
+    related_jobs = story.related_jobs.filter(is_active=True)[:5]
+    if not related_jobs.exists():
+        related_jobs = Job.objects.filter(
+            category__in=story.categories.all(), is_active=True
+        )[:5]
+
+    related_sprints = Sprint.objects.filter(
+        categories__in=story.categories.all(), is_active=True
+    )[:3]
+
+    similar_stories = (
+        Story.objects.filter(categories__in=story.categories.all(), status="published")
+        .exclude(id=story.id)
+        .distinct()[:3]
+    )
+
+    html = render_to_string(
+        "stories/partials/want_to_do_modal.html",
+        {
+            "story": story,
+            "related_jobs": related_jobs,
+            "related_sprints": related_sprints,
+            "similar_stories": similar_stories,
+        },
+        request=request,
+    )
+
+    return HttpResponse(html)
+
+
+def sprints_list(request):
+    """List of available sprints"""
+    sprints = (
+        Sprint.objects.filter(is_active=True)
+        .select_related("organization")
+        .prefetch_related("categories")
+    )
+
+    category_slug = request.GET.get("category")
+    if category_slug:
+        sprints = sprints.filter(categories__slug=category_slug)
+
+    difficulty = request.GET.get("difficulty")
+    if difficulty:
+        sprints = sprints.filter(difficulty=difficulty)
+
+    categories = Category.objects.all()
+
+    context = {
+        "sprints": sprints,
+        "categories": categories,
+        "current_category": category_slug,
+        "current_difficulty": difficulty,
+    }
+
+    return render(request, "stories/sprints_list.html", context)
+
+
+def sprint_detail(request, sprint_id):
+    """Sprint detail and start page"""
+    sprint = get_object_or_404(
+        Sprint.objects.select_related("organization").prefetch_related("categories"),
+        id=sprint_id,
+        is_active=True,
+    )
+
+    completion = None
+    if request.user.is_authenticated:
+        completion = SprintCompletion.objects.filter(
+            sprint=sprint, user=request.user
+        ).first()
+
+    context = {
+        "sprint": sprint,
+        "completion": completion,
+    }
+
+    return render(request, "stories/sprint_detail.html", context)
+
+
+# Helper functions
+
+
+def _get_or_create_session(request):
+    """Ensure session exists and return key"""
+    if not request.session.session_key:
+        request.session.create()
+    return request.session.session_key
+
+
+def _get_resonated_story_ids(request):
+    """Get list of story IDs user has resonated with"""
+    if request.user.is_authenticated:
+        return list(
+            StoryResonance.objects.filter(user=request.user).values_list(
+                "story_id", flat=True
+            )
+        )
+    session_key = request.session.session_key
+    if not session_key:
+        return []
+    return list(
+        StoryResonance.objects.filter(session_key=session_key).values_list(
+            "story_id", flat=True
+        )
+    )
+
+
+def _has_resonated(request, story):
+    """Check if user/session already resonated with story"""
+    if request.user.is_authenticated:
+        return StoryResonance.objects.filter(user=request.user, story=story).exists()
+    session_key = request.session.session_key
+    if not session_key:
+        return False
+    return StoryResonance.objects.filter(session_key=session_key, story=story).exists()
+
+
+def _update_user_path(session_key, story, resonance_type):
+    """Update anonymous user path tracking"""
+    user_path, _ = UserPath.objects.get_or_create(session_key=session_key)
+
+    if str(story.id) not in user_path.resonated_stories:
+        user_path.resonated_stories.append(str(story.id))
+
+    for category in story.categories.all():
+        slug = category.slug
+        user_path.category_interactions[slug] = (
+            user_path.category_interactions.get(slug, 0) + 1
+        )
+
+    user_path.save()

@@ -1,0 +1,15 @@
+{% if already_resonated %}
+<button disabled
+    class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-50 border border-brand-200 text-brand-600 text-sm cursor-not-allowed">
+    <span>💚</span>
+    <span>{{ story.resonate_count }}</span>
+    <span class="text-xs">resonated</span>
+</button>
+{% else %}
+<button hx-post="{% url 'jobs:resonate' story.id %}" hx-target="#modal-content" hx-swap="innerHTML"
+    class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-500 text-sm hover:border-brand-500 hover:text-brand-600 transition">
+    <span>🤍</span>
+    <span>{{ story.resonate_count }}</span>
+    <span class="text-xs">resonates</span>
+</button>
+{% endif %}
