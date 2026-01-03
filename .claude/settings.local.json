@@ -10,7 +10,11 @@
       "WebSearch",
       "WebFetch(domain:console.groq.com)",
       "Bash(sshpass -p \"0000\" ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password -o PubkeyAuthentication=no dipesh@31.97.122.250 \"echo ''0000'' | sudo -S cat /etc/dokploy/.env 2>/dev/null | grep -i github || echo ''No GitHub config found''\")",
-      "Bash(sshpass:*)"
+      "Bash(sshpass:*)",
+      "Bash(cat:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)"
     ]
   }
 }
