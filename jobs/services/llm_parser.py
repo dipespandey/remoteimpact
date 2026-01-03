@@ -83,22 +83,22 @@ PROVIDERS = {
         "base_url": "https://api.deepseek.com",
         "model": "deepseek-chat",
         "env_key": "DEEPSEEK_API_KEY",
-        "max_concurrent": 10,  # DeepSeek has generous rate limits
-        "batch_delay": 1,
+        "max_concurrent": 50,  # DeepSeek has very generous rate limits
+        "batch_delay": 0.5,
     },
     "groq": {
         "base_url": "https://api.groq.com/openai/v1",
         "model": "llama-3.1-8b-instant",  # Fast and free
         "env_key": "GROQ_API_KEY",
-        "max_concurrent": 5,
-        "batch_delay": 2,
+        "max_concurrent": 20,  # Groq is fast
+        "batch_delay": 1,
     },
     "mistral": {
         "base_url": None,  # Uses native Mistral client
         "model": "mistral-small-latest",
         "env_key": "MISTRAL_API_KEY",
-        "max_concurrent": 3,
-        "batch_delay": 5,
+        "max_concurrent": 10,
+        "batch_delay": 2,
     },
 }
 
