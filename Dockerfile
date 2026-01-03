@@ -31,7 +31,7 @@ RUN uv run python manage.py collectstatic --noinput
 RUN echo '#!/bin/bash\n\
 source /app/.env.cron\n\
 cd /app\n\
-/usr/local/bin/uv run python manage.py import_remote_jobs --new-only --use-ai --provider deepseek\n\
+/usr/local/bin/uv run python manage.py import_remote_jobs --new-only --use-ai --provider deepseek --batch-size 20\n\
 ' > /app/run_import.sh && chmod +x /app/run_import.sh
 
 # Setup cron job for daily imports (6 AM UTC)
