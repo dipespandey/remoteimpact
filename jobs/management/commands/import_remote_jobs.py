@@ -165,13 +165,13 @@ class Command(BaseCommand):
 
         if source in ("all", "jobboards"):
             self.stdout.write("Starting import from job boards (Greenhouse/Lever/Ashby)...")
-            # First, find new job URLs via Google search
+            # First, find new job URLs via Google Custom Search
             summaries["jobboards"] = await importers.import_google_search(
                 boards=["greenhouse", "lever", "ashby"],
                 limit=limit,
                 dry_run=dry_run,
                 use_ai=False,  # URLs only, no content yet
-                backend="duckduckgo",  # Free, no API key needed
+                backend="google_cse",  # Use Google Programmable Search
                 skip_existing=new_only,
             )
 
