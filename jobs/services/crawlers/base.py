@@ -256,8 +256,8 @@ async def crawl_jobs_async(
     """
     from . import crawl_greenhouse_job, crawl_lever_job, crawl_ashby_job
 
-    # Build query
-    queryset = Job.objects.filter(
+    # Build query with organization pre-fetched
+    queryset = Job.objects.select_related('organization').filter(
         raw_data__needs_crawling=True,
         is_active=True,
     )
@@ -342,16 +342,18 @@ async def crawl_jobs_async(
             logger.info(f"Running AI enrichment on {len(active_jobs)} jobs...")
             from jobs.services.importers.common import batch_process_with_ai
 
-            # Convert jobs to payloads for AI processing
-            payloads = []
-            for job in active_jobs:
-                payloads.append({
+            # Convert jobs to payloads for AI processing (org already prefetched)
+            def build_payloads(jobs_list):
+                return [{
                     "job_id": job.id,
                     "title": job.title,
                     "description": job.description,
                     "requirements": job.requirements or "",
-                    "organization_name": job.organization.name if job.organization else "",
-                })
+                    "organization_name": job.organization.name if job.organization_id else "",
+                } for job in jobs_list]
+
+            build_payloads_async = sync_to_async(build_payloads, thread_sensitive=True)
+            payloads = await build_payloads_async(active_jobs)
 
             # Process with AI
             enriched = await batch_process_with_ai(
