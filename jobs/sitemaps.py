@@ -9,13 +9,10 @@ class JobSitemap(Sitemap):
     limit = 1000  # Paginate: max 1000 URLs per sitemap page
 
     def items(self):
-        return Job.objects.filter(is_active=True).order_by('-posted_at')
+        return Job.objects.filter(is_active=True).values_list('slug', flat=True)
 
-    def lastmod(self, obj):
-        return obj.posted_at
-
-    def location(self, obj):
-        return reverse('jobs:job_detail', args=[obj.slug])
+    def location(self, slug):
+        return reverse('jobs:job_detail', args=[slug])
 
 
 class CategorySitemap(Sitemap):
