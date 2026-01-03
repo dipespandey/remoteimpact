@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import asyncio
 
+from asgiref.sync import sync_to_async
 from django.core.management.base import BaseCommand, CommandError
 
-from jobs.services import importers
+from jobs.services import importers, crawlers
 
 
 class Command(BaseCommand):
@@ -13,9 +14,9 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             "--source",
-            choices=["all", "80000hours", "idealist", "reliefweb", "climatebase", "probablygood"],
+            choices=["all", "80000hours", "idealist", "reliefweb", "climatebase", "probablygood", "jobboards"],
             default="all",
-            help="Limit imports to a single upstream source.",
+            help="Limit imports to a single upstream source. 'jobboards' = Greenhouse/Lever/Ashby via Google.",
         )
         parser.add_argument(
             "--limit",
@@ -161,5 +162,31 @@ class Command(BaseCommand):
                 provider=provider,
                 skip_existing=new_only,
             )
+
+        if source in ("all", "jobboards"):
+            self.stdout.write("Starting import from job boards (Greenhouse/Lever/Ashby)...")
+            # First, find new job URLs via Google search
+            summaries["jobboards"] = await importers.import_google_search(
+                boards=["greenhouse", "lever", "ashby"],
+                limit=limit,
+                dry_run=dry_run,
+                use_ai=False,  # URLs only, no content yet
+                backend="duckduckgo",  # Free, no API key needed
+                skip_existing=new_only,
+            )
+
+            # Then crawl the job details from the APIs
+            if not dry_run and summaries["jobboards"]["created"] > 0:
+                self.stdout.write("Crawling job details from APIs...")
+                crawl_async = sync_to_async(crawlers.crawl_jobs_needing_update, thread_sensitive=True)
+                crawl_stats = await crawl_async(
+                    limit=limit,
+                    dry_run=dry_run,
+                    delay=0.5,
+                )
+                self.stdout.write(
+                    f"  Crawled: {crawl_stats['success']} updated, "
+                    f"{crawl_stats['failed']} failed"
+                )
 
         return summaries

@@ -599,6 +599,7 @@ async def import_google_search(
     use_date_binning: bool = True,
     unified: bool = False,
     progress_callback: Optional[Callable[[int, int], None]] = None,
+    skip_existing: bool = False,
 ) -> Dict[str, int]:
     """
     Import job URLs from Google Search for specified job boards.
@@ -663,6 +664,7 @@ async def import_google_search(
         use_ai=False,  # Force off - no content to parse yet
         batch_size=batch_size,
         progress_callback=progress_callback,
+        skip_existing=skip_existing,
     )
 
     return stats
