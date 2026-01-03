@@ -100,6 +100,26 @@ def job_exists_in_source(source: str, external_id: str) -> bool:
     return Job.objects.filter(source=source, external_id=str(external_id)).exists()
 
 
+def _sanitize_salary(value) -> float | None:
+    """
+    Sanitize salary value to prevent overflow in decimal(12,2) field.
+    Max valid value: 9,999,999,999.99
+    """
+    if value is None:
+        return None
+    try:
+        val = float(value)
+        # Cap at 10 million - anything higher is likely an error
+        if val > 10_000_000:
+            logger.warning(f"Salary value {val} too large, setting to None")
+            return None
+        if val < 0:
+            return None
+        return val
+    except (ValueError, TypeError):
+        return None
+
+
 def _get_or_create_org(
     name: str, website: str = "", description: str = ""
 ) -> Organization:
@@ -171,8 +191,8 @@ def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
         "job_type": payload.get("job_type", "full-time"),
         "application_url": payload.get("application_url", ""),
         "application_email": payload.get("application_email", ""),
-        "salary_min": payload.get("salary_min"),
-        "salary_max": payload.get("salary_max"),
+        "salary_min": _sanitize_salary(payload.get("salary_min")),
+        "salary_max": _sanitize_salary(payload.get("salary_max")),
         "salary_currency": payload.get("salary_currency", "USD"),
         "impact": payload.get("impact", ""),
         "benefits": payload.get("benefits", ""),
