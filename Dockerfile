@@ -18,11 +18,14 @@ RUN uv sync --frozen --no-dev
 # Copy application code
 COPY . .
 
+# Create data directory for persistent storage
+RUN mkdir -p /data
+
 # Collect static files
 RUN uv run python manage.py collectstatic --noinput
 
 # Expose port
 EXPOSE 8000
 
-# Run with gunicorn
-CMD ["uv", "run", "gunicorn", "jobboard.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2"]
+# Run migrations then start gunicorn
+CMD uv run python manage.py migrate --noinput && uv run gunicorn jobboard.wsgi:application --bind 0.0.0.0:8000 --workers 2
