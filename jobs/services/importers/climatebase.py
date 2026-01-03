@@ -93,7 +93,7 @@ def _pick_application_url(hit: Dict) -> str:
     # Fallback: construct Climatebase job page URL from ID
     job_id = hit.get("id") or hit.get("objectID")
     if job_id:
-        return f"https://climatebase.org/jobs/{job_id}"
+        return f"https://climatebase.org/job/{job_id}"
 
     return ""
 
