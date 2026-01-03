@@ -26,17 +26,30 @@ load_dotenv(BASE_DIR / ".env")
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-=n&5^u0k_37en98tutnqe50ag^c-2(*qkjjp29wg!9!i@7(d1$")
+SECRET_KEY = os.getenv(
+    "SECRET_KEY", "django-insecure-=n&5^u0k_37en98tutnqe50ag^c-2(*qkjjp29wg!9!i@7(d1$"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes")
 
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    if h.strip()
+]
 
 # CSRF trusted origins for production
-CSRF_TRUSTED_ORIGINS = [f"https://{h}" for h in ALLOWED_HOSTS if h and not h.startswith("localhost") and not h.startswith("127.")]
+CSRF_TRUSTED_ORIGINS = [
+    f"https://{h}"
+    for h in ALLOWED_HOSTS
+    if h and not h.startswith("localhost") and not h.startswith("127.")
+]
 if DEBUG:
     CSRF_TRUSTED_ORIGINS.append("http://localhost:8000")
+
+# Trust X-Forwarded-Proto header from reverse proxy (for HTTPS detection)
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
 # Application definition
@@ -99,7 +112,7 @@ WSGI_APPLICATION = "jobboard.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": Path(os.getenv("DATABASE_PATH", BASE_DIR / "db.sqlite3")),
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
