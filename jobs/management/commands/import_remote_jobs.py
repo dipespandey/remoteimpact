@@ -39,6 +39,12 @@ class Command(BaseCommand):
             default=5,
             help="Number of jobs per AI batch when using --use-ai (default: 5, max concurrent: 3).",
         )
+        parser.add_argument(
+            "--provider",
+            choices=["deepseek", "groq", "mistral"],
+            default=None,
+            help="LLM provider to use for AI parsing (default: auto-detect based on available API keys).",
+        )
 
     def handle(self, *args, **options):
         dry_run = options["dry_run"]
@@ -46,10 +52,11 @@ class Command(BaseCommand):
         source = options["source"]
         use_ai = options["use_ai"]
         batch_size = options["batch_size"]
+        provider = options["provider"]
 
         # Run the async import
         summaries = asyncio.run(
-            self._run_imports(source, limit, dry_run, use_ai, batch_size)
+            self._run_imports(source, limit, dry_run, use_ai, batch_size, provider)
         )
 
         if not summaries:
@@ -69,6 +76,7 @@ class Command(BaseCommand):
         dry_run: bool,
         use_ai: bool,
         batch_size: int,
+        provider: str | None,
     ) -> dict:
         """Run imports asynchronously."""
         summaries = {}
@@ -93,6 +101,7 @@ class Command(BaseCommand):
                 use_ai=use_ai,
                 batch_size=batch_size,
                 progress_callback=make_progress_callback("80000hours") if use_ai else None,
+                provider=provider,
             )
 
         if source in ("all", "idealist"):
@@ -103,6 +112,7 @@ class Command(BaseCommand):
                 use_ai=use_ai,
                 batch_size=batch_size,
                 progress_callback=make_progress_callback("idealist") if use_ai else None,
+                provider=provider,
             )
 
         if source in ("all", "reliefweb"):
@@ -113,6 +123,7 @@ class Command(BaseCommand):
                 use_ai=use_ai,
                 batch_size=batch_size,
                 progress_callback=make_progress_callback("reliefweb") if use_ai else None,
+                provider=provider,
             )
 
         if source in ("all", "climatebase"):
@@ -123,6 +134,7 @@ class Command(BaseCommand):
                 use_ai=use_ai,
                 batch_size=batch_size,
                 progress_callback=make_progress_callback("climatebase") if use_ai else None,
+                provider=provider,
             )
 
         if source in ("all", "probablygood"):
@@ -133,6 +145,7 @@ class Command(BaseCommand):
                 use_ai=use_ai,
                 batch_size=batch_size,
                 progress_callback=make_progress_callback("probablygood") if use_ai else None,
+                provider=provider,
             )
 
         return summaries

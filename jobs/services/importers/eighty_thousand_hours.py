@@ -116,6 +116,7 @@ async def import_80000_hours(
     use_ai: bool = False,
     batch_size: int = 20,
     progress_callback: Optional[Callable[[int, int], None]] = None,
+    provider: Optional[str] = None,
 ) -> Dict[str, int]:
     """
     Import remote jobs from 80,000 Hours.
@@ -126,6 +127,7 @@ async def import_80000_hours(
         use_ai: If True, use AI to enrich job descriptions
         batch_size: Number of concurrent AI requests (default: 20)
         progress_callback: Optional callback(completed, total) for progress updates
+        provider: LLM provider ('deepseek', 'groq', 'mistral', or None for auto)
 
     Returns:
         Dict with keys: fetched, created, updated
@@ -160,5 +162,6 @@ async def import_80000_hours(
         use_ai=use_ai,
         batch_size=batch_size,
         progress_callback=progress_callback,
+        provider=provider,
     )
     return stats

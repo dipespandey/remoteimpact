@@ -213,6 +213,7 @@ async def batch_upsert_jobs(
     batch_size: int = 20,
     progress_callback: Optional[Callable[[int, int], None]] = None,
     skip_duplicates: bool = True,
+    provider: Optional[str] = None,
 ) -> Dict[str, int]:
     """
     Upsert multiple jobs with optional batch AI processing.
@@ -223,6 +224,7 @@ async def batch_upsert_jobs(
         batch_size: Number of concurrent AI requests (default: 20)
         progress_callback: Optional callback(completed, total) for progress updates
         skip_duplicates: Skip jobs that already exist with same title+org from different source
+        provider: LLM provider to use ('deepseek', 'groq', 'mistral', or None for auto)
 
     Returns:
         Dict with keys: created, updated, fetched, skipped
@@ -256,8 +258,9 @@ async def batch_upsert_jobs(
         try:
             from jobs.services.llm_parser import JobParser
 
-            logger.info(f"Processing {len(payloads)} jobs with AI (batch_size={batch_size})...")
-            parser = JobParser()
+            provider_info = f" with {provider}" if provider else ""
+            logger.info(f"Processing {len(payloads)} jobs with AI{provider_info} (batch_size={batch_size})...")
+            parser = JobParser(provider=provider)
             payloads = await parser.parse_batch(
                 payloads,
                 batch_size=batch_size,
