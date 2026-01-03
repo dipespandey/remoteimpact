@@ -21,6 +21,11 @@ logger = logging.getLogger(__name__)
 _IMPACT_AREA_BY_SLUG = {area["slug"]: area for area in IMPACT_AREAS}
 
 
+async def _async_return(value):
+    """Simple async wrapper that returns a value unchanged."""
+    return value
+
+
 def _timestamp_to_datetime(value: Optional[float]) -> datetime:
     if not value:
         return timezone.now()
@@ -335,7 +340,7 @@ async def batch_upsert_jobs(
                     if len(desc) >= 50:
                         tasks.append(parser._parse_and_enrich(payload, title, org, desc))
                     else:
-                        tasks.append(asyncio.coroutine(lambda p=payload: p)())
+                        tasks.append(_async_return(payload))
 
                 # Run all AI calls in parallel
                 batch = await asyncio.gather(*tasks, return_exceptions=True)
@@ -420,7 +425,7 @@ async def batch_process_with_ai(
                 ai_payload = {**payload}
                 tasks.append(_enrich_single_job(parser, ai_payload, title, org, desc))
             else:
-                tasks.append(asyncio.coroutine(lambda p=payload: p)())
+                tasks.append(_async_return(payload))
 
         # Run all AI calls in parallel
         try:
