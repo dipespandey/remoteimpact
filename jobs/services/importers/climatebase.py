@@ -70,6 +70,7 @@ def _parse_date(value: Optional[object]) -> datetime:
 
 
 def _pick_application_url(hit: Dict) -> str:
+    # Check common URL fields first
     for key in (
         "application_url",
         "apply_url",
@@ -83,6 +84,17 @@ def _pick_application_url(hit: Dict) -> str:
     ):
         if hit.get(key):
             return hit[key]
+
+    # Check if how_to_apply contains a URL
+    how_to_apply = hit.get("how_to_apply", "")
+    if how_to_apply and how_to_apply.startswith("http"):
+        return how_to_apply
+
+    # Fallback: construct Climatebase job page URL from ID
+    job_id = hit.get("id") or hit.get("objectID")
+    if job_id:
+        return f"https://climatebase.org/jobs/{job_id}"
+
     return ""
 
 
@@ -145,6 +157,12 @@ def _transform_climatebase_hit(hit: Dict) -> Optional[Dict]:
         or ""
     )
 
+    # Extract application email from how_to_apply if it's an email
+    how_to_apply = hit.get("how_to_apply", "")
+    application_email = ""
+    if how_to_apply and "@" in how_to_apply and not how_to_apply.startswith("http"):
+        application_email = how_to_apply.strip()
+
     return {
         "source": Job.Source.CLIMATEBASE,
         "external_id": str(hit.get("id")),
@@ -154,7 +172,7 @@ def _transform_climatebase_hit(hit: Dict) -> Optional[Dict]:
         "location": location,
         "job_type": _map_job_type(job_type_label),
         "application_url": _pick_application_url(hit),
-        "application_email": "",
+        "application_email": application_email,
         "salary_min": salary_min,
         "salary_max": salary_max,
         "salary_currency": salary_currency,
