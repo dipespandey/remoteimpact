@@ -6,6 +6,7 @@ from .models import Job, Category
 class JobSitemap(Sitemap):
     changefreq = "daily"
     priority = 0.8
+    limit = 1000  # Paginate: max 1000 URLs per sitemap page
 
     def items(self):
         return Job.objects.filter(is_active=True).order_by('-posted_at')
