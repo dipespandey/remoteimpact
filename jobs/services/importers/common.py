@@ -90,6 +90,16 @@ def is_duplicate_job(application_url: str, source: str = None) -> bool:
     return query.exists()
 
 
+def job_exists_in_source(source: str, external_id: str) -> bool:
+    """
+    Check if a job with this source + external_id already exists.
+    Used for incremental imports to skip already-imported jobs.
+    """
+    if not source or not external_id:
+        return False
+    return Job.objects.filter(source=source, external_id=str(external_id)).exists()
+
+
 def _get_or_create_org(
     name: str, website: str = "", description: str = ""
 ) -> Organization:
@@ -213,6 +223,7 @@ async def batch_upsert_jobs(
     batch_size: int = 50,
     progress_callback: Optional[Callable[[int, int], None]] = None,
     skip_duplicates: bool = True,
+    skip_existing: bool = False,
     provider: Optional[str] = None,
 ) -> Dict[str, int]:
     """
@@ -225,7 +236,8 @@ async def batch_upsert_jobs(
         use_ai: Whether to use AI to enrich job descriptions
         batch_size: Number of jobs per batch (default: 50)
         progress_callback: Optional callback(completed, total) for progress updates
-        skip_duplicates: Skip jobs that already exist with same title+org from different source
+        skip_duplicates: Skip jobs that already exist with same URL from different source
+        skip_existing: Skip jobs that already exist in the same source (for incremental imports)
         provider: LLM provider to use ('deepseek', 'groq', 'mistral', or None for auto)
 
     Returns:
@@ -236,7 +248,22 @@ async def batch_upsert_jobs(
 
     stats = {"fetched": len(payloads), "created": 0, "updated": 0, "skipped": 0}
 
-    # Filter out duplicates before AI processing (saves API costs)
+    # Skip jobs that already exist in the same source (for incremental imports)
+    if skip_existing:
+        check_exists = sync_to_async(job_exists_in_source, thread_sensitive=True)
+        filtered_payloads = []
+        for payload in payloads:
+            source = payload.get("source", "")
+            external_id = payload.get("external_id", "")
+            if source and external_id and await check_exists(source, external_id):
+                stats["skipped"] += 1
+            else:
+                filtered_payloads.append(payload)
+        payloads = filtered_payloads
+        if stats["skipped"] > 0:
+            logger.info(f"Skipped {stats['skipped']} existing jobs (already imported)")
+
+    # Filter out duplicates from other sources before AI processing (saves API costs)
     if skip_duplicates:
         check_duplicate = sync_to_async(is_duplicate_job, thread_sensitive=True)
         filtered_payloads = []

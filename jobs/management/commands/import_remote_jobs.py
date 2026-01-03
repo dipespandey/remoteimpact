@@ -45,6 +45,11 @@ class Command(BaseCommand):
             default=None,
             help="LLM provider to use for AI parsing (default: auto-detect based on available API keys).",
         )
+        parser.add_argument(
+            "--new-only",
+            action="store_true",
+            help="Only import new jobs, skip already-imported jobs (for incremental/daily imports).",
+        )
 
     def handle(self, *args, **options):
         dry_run = options["dry_run"]
@@ -53,10 +58,11 @@ class Command(BaseCommand):
         use_ai = options["use_ai"]
         batch_size = options["batch_size"]
         provider = options["provider"]
+        new_only = options["new_only"]
 
         # Run the async import
         summaries = asyncio.run(
-            self._run_imports(source, limit, dry_run, use_ai, batch_size, provider)
+            self._run_imports(source, limit, dry_run, use_ai, batch_size, provider, new_only)
         )
 
         if not summaries:
@@ -64,9 +70,11 @@ class Command(BaseCommand):
 
         for key, summary in summaries.items():
             status = "DRY-RUN " if dry_run else ""
+            skipped = summary.get('skipped', 0)
+            skipped_str = f", skipped {skipped}" if skipped else ""
             self.stdout.write(
                 f"{status}{key}: fetched {summary['fetched']} jobs "
-                f"(created {summary['created']}, updated {summary['updated']})"
+                f"(created {summary['created']}, updated {summary['updated']}{skipped_str})"
             )
 
     async def _run_imports(
@@ -77,6 +85,7 @@ class Command(BaseCommand):
         use_ai: bool,
         batch_size: int,
         provider: str | None,
+        new_only: bool = False,
     ) -> dict:
         """Run imports asynchronously."""
         summaries = {}
@@ -102,6 +111,7 @@ class Command(BaseCommand):
                 batch_size=batch_size,
                 progress_callback=make_progress_callback("80000hours") if use_ai else None,
                 provider=provider,
+                skip_existing=new_only,
             )
 
         if source in ("all", "idealist"):
@@ -113,6 +123,7 @@ class Command(BaseCommand):
                 batch_size=batch_size,
                 progress_callback=make_progress_callback("idealist") if use_ai else None,
                 provider=provider,
+                skip_existing=new_only,
             )
 
         if source in ("all", "reliefweb"):
@@ -124,6 +135,7 @@ class Command(BaseCommand):
                 batch_size=batch_size,
                 progress_callback=make_progress_callback("reliefweb") if use_ai else None,
                 provider=provider,
+                skip_existing=new_only,
             )
 
         if source in ("all", "climatebase"):
@@ -135,6 +147,7 @@ class Command(BaseCommand):
                 batch_size=batch_size,
                 progress_callback=make_progress_callback("climatebase") if use_ai else None,
                 provider=provider,
+                skip_existing=new_only,
             )
 
         if source in ("all", "probablygood"):
@@ -146,6 +159,7 @@ class Command(BaseCommand):
                 batch_size=batch_size,
                 progress_callback=make_progress_callback("probablygood") if use_ai else None,
                 provider=provider,
+                skip_existing=new_only,
             )
 
         return summaries

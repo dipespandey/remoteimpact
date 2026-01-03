@@ -560,6 +560,7 @@ async def import_probablygood(
     delay: float = 1.0,
     progress_callback: Optional[Callable[[int, int], None]] = None,
     provider: Optional[str] = None,
+    skip_existing: bool = False,
 ) -> Dict[str, int]:
     """
     Import remote jobs from Probably Good.
@@ -574,6 +575,7 @@ async def import_probablygood(
         delay: Delay between page requests
         progress_callback: Optional callback(completed, total)
         provider: LLM provider ('deepseek', 'groq', 'mistral', or None for auto)
+        skip_existing: If True, skip jobs already imported (for incremental imports)
 
     Returns:
         Dict with keys: fetched, created, updated
@@ -615,6 +617,7 @@ async def import_probablygood(
         batch_size=batch_size,
         progress_callback=progress_callback,
         provider=provider,
+        skip_existing=skip_existing,
     )
 
     return stats
