@@ -371,6 +371,90 @@ async def batch_upsert_jobs(
     return stats
 
 
+def _get_ai_parser(provider: Optional[str] = None):
+    """Get an AI parser instance, or None if unavailable."""
+    try:
+        from jobs.services.llm_parser import JobParser
+        return JobParser(provider=provider)
+    except Exception as e:
+        logger.error(f"Failed to initialize AI parser: {e}")
+        return None
+
+
+async def batch_process_with_ai(
+    payloads: List[Dict],
+    batch_size: int = 20,
+    provider: Optional[str] = None,
+) -> List[Dict]:
+    """
+    Process job payloads with AI enrichment.
+
+    Args:
+        payloads: List of dicts with job_id, title, description, etc.
+        batch_size: Number of concurrent AI requests
+        provider: LLM provider to use
+
+    Returns:
+        List of enriched payloads with job_id preserved
+    """
+    parser = _get_ai_parser(provider)
+    if not parser:
+        logger.warning("No AI parser available, returning original payloads")
+        return payloads
+
+    enriched = []
+    total = len(payloads)
+
+    for batch_start in range(0, total, batch_size):
+        batch_end = min(batch_start + batch_size, total)
+        batch = payloads[batch_start:batch_end]
+
+        tasks = []
+        for payload in batch:
+            title = payload.get("title", "Untitled")
+            org = payload.get("organization_name", "Unknown")
+            desc = payload.get("description", "")
+
+            if len(desc) >= 50:
+                # Create a modified payload for AI processing
+                ai_payload = {**payload}
+                tasks.append(_enrich_single_job(parser, ai_payload, title, org, desc))
+            else:
+                tasks.append(asyncio.coroutine(lambda p=payload: p)())
+
+        # Run all AI calls in parallel
+        try:
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            for i, result in enumerate(results):
+                if isinstance(result, Exception):
+                    logger.error(f"AI enrichment failed: {result}")
+                    enriched.append(batch[i])
+                else:
+                    enriched.append(result)
+        except Exception as e:
+            logger.error(f"AI batch processing failed: {e}")
+            enriched.extend(batch)
+
+        logger.info(f"AI enriched batch: {batch_end}/{total} jobs")
+
+    return enriched
+
+
+async def _enrich_single_job(
+    parser, payload: Dict, title: str, org: str, desc: str
+) -> Dict:
+    """Enrich a single job with AI."""
+    try:
+        enriched = await parser._parse_and_enrich(payload, title, org, desc)
+        # Preserve the job_id
+        if "job_id" in payload:
+            enriched["job_id"] = payload["job_id"]
+        return enriched
+    except Exception as e:
+        logger.error(f"Error enriching job {title}: {e}")
+        return payload
+
+
 def _algolia_headers(app_id: str, api_key: str) -> Dict[str, str]:
     return {
         "Content-Type": "application/json",

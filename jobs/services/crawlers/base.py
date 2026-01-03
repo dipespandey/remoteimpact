@@ -3,13 +3,16 @@ Base crawler utilities for fetching job details from job board APIs.
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor
 from html import unescape
 from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import urlparse
 
+from asgiref.sync import sync_to_async
 from django.db import transaction
 from django.utils import timezone
 
@@ -225,3 +228,163 @@ def crawl_jobs_needing_update(
         progress_callback(len(jobs), len(jobs))
 
     return stats
+
+
+async def crawl_jobs_async(
+    source: Optional[str] = None,
+    limit: Optional[int] = None,
+    dry_run: bool = False,
+    batch_size: int = 20,
+    use_ai: bool = False,
+    provider: Optional[str] = None,
+    progress_callback: Optional[Callable[[int, int], None]] = None,
+) -> Dict[str, int]:
+    """
+    Crawl jobs in parallel with optional AI enrichment.
+
+    Args:
+        source: Filter by source (greenhouse, lever, ashby)
+        limit: Maximum jobs to crawl
+        dry_run: If True, don't save changes
+        batch_size: Number of concurrent API requests
+        use_ai: If True, run AI enrichment on descriptions
+        provider: LLM provider for AI enrichment
+        progress_callback: Callback(completed, total) for progress updates
+
+    Returns:
+        Dict with success, failed, skipped counts
+    """
+    from . import crawl_greenhouse_job, crawl_lever_job, crawl_ashby_job
+
+    # Build query
+    queryset = Job.objects.filter(
+        raw_data__needs_crawling=True,
+        is_active=True,
+    )
+
+    if source:
+        queryset = queryset.filter(source=source)
+
+    # Get jobs that need crawling
+    get_jobs = sync_to_async(lambda: list(queryset[:limit] if limit else queryset), thread_sensitive=True)
+    jobs = await get_jobs()
+
+    stats = {"success": 0, "failed": 0, "skipped": 0, "total": len(jobs)}
+
+    if not jobs:
+        return stats
+
+    logger.info(f"Found {len(jobs)} jobs to crawl in parallel (batch_size={batch_size})")
+
+    crawlers = {
+        "greenhouse": crawl_greenhouse_job,
+        "lever": crawl_lever_job,
+        "ashby": crawl_ashby_job,
+    }
+
+    def crawl_single_job(job: Job) -> tuple[Job, Optional[Job], Optional[str]]:
+        """Crawl a single job synchronously. Returns (original_job, updated_job, error)."""
+        crawler = crawlers.get(job.source)
+        if not crawler:
+            return job, None, f"No crawler for source: {job.source}"
+
+        try:
+            updated_job = crawler(job)
+            return job, updated_job, None
+        except Exception as e:
+            return job, None, str(e)
+
+    # Process in batches using ThreadPoolExecutor
+    completed = 0
+    jobs_to_save = []
+
+    for i in range(0, len(jobs), batch_size):
+        batch = jobs[i:i + batch_size]
+
+        # Run batch in parallel using threads (for I/O-bound API calls)
+        loop = asyncio.get_event_loop()
+        with ThreadPoolExecutor(max_workers=batch_size) as executor:
+            results = await loop.run_in_executor(
+                None,
+                lambda b=batch: list(executor.map(crawl_single_job, b))
+            )
+
+        # Process results
+        for original_job, updated_job, error in results:
+            if error:
+                if "No crawler" in error:
+                    stats["skipped"] += 1
+                else:
+                    stats["failed"] += 1
+                    logger.error(f"Error crawling {original_job.application_url}: {error}")
+            elif updated_job:
+                if updated_job.is_active:
+                    jobs_to_save.append(updated_job)
+                    stats["success"] += 1
+                else:
+                    # Job was marked inactive (404)
+                    jobs_to_save.append(updated_job)
+                    stats["failed"] += 1
+            else:
+                stats["failed"] += 1
+
+            completed += 1
+
+        if progress_callback:
+            progress_callback(completed, len(jobs))
+
+        logger.info(f"Crawled batch {i // batch_size + 1}: {completed}/{len(jobs)} jobs")
+
+    # AI enrichment if requested
+    if use_ai and jobs_to_save:
+        active_jobs = [j for j in jobs_to_save if j.is_active and j.description]
+        if active_jobs:
+            logger.info(f"Running AI enrichment on {len(active_jobs)} jobs...")
+            from jobs.services.importers.common import batch_process_with_ai
+
+            # Convert jobs to payloads for AI processing
+            payloads = []
+            for job in active_jobs:
+                payloads.append({
+                    "job_id": job.id,
+                    "title": job.title,
+                    "description": job.description,
+                    "requirements": job.requirements or "",
+                    "organization_name": job.organization.name if job.organization else "",
+                })
+
+            # Process with AI
+            enriched = await batch_process_with_ai(
+                payloads,
+                batch_size=batch_size,
+                provider=provider,
+            )
+
+            # Update jobs with enriched data
+            enriched_map = {e["job_id"]: e for e in enriched if "job_id" in e}
+            for job in active_jobs:
+                if job.id in enriched_map:
+                    e = enriched_map[job.id]
+                    if e.get("description"):
+                        job.description = e["description"]
+                    if e.get("requirements"):
+                        job.requirements = e["requirements"]
+                    if e.get("impact"):
+                        job.impact = e["impact"]
+                    if e.get("benefits"):
+                        job.benefits = e["benefits"]
+
+    # Save all jobs
+    if not dry_run and jobs_to_save:
+        save_jobs = sync_to_async(_save_jobs_batch, thread_sensitive=True)
+        await save_jobs(jobs_to_save)
+        logger.info(f"Saved {len(jobs_to_save)} jobs")
+
+    return stats
+
+
+def _save_jobs_batch(jobs: List[Job]) -> None:
+    """Save a batch of jobs in a single transaction."""
+    with transaction.atomic():
+        for job in jobs:
+            job.save()

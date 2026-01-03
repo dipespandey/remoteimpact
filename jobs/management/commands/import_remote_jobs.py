@@ -175,18 +175,21 @@ class Command(BaseCommand):
                 skip_existing=new_only,
             )
 
-            # Then crawl the job details from the APIs
+            # Then crawl the job details from the APIs (parallel with optional AI)
             if not dry_run and summaries["jobboards"]["created"] > 0:
-                self.stdout.write("Crawling job details from APIs...")
-                crawl_async = sync_to_async(crawlers.crawl_jobs_needing_update, thread_sensitive=True)
-                crawl_stats = await crawl_async(
+                self.stdout.write(f"Crawling job details from APIs (batch_size={batch_size})...")
+                crawl_stats = await crawlers.crawl_jobs_async(
                     limit=limit,
                     dry_run=dry_run,
-                    delay=0.5,
+                    batch_size=batch_size,
+                    use_ai=use_ai,
+                    provider=provider,
+                    progress_callback=make_progress_callback("jobboards-crawl") if use_ai else None,
                 )
+                ai_str = " with AI" if use_ai else ""
                 self.stdout.write(
-                    f"  Crawled: {crawl_stats['success']} updated, "
-                    f"{crawl_stats['failed']} failed"
+                    f"  Crawled{ai_str}: {crawl_stats['success']} updated, "
+                    f"{crawl_stats['failed']} failed, {crawl_stats['skipped']} skipped"
                 )
 
         return summaries
