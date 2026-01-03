@@ -6,13 +6,12 @@ from .models import Job, Category
 class JobSitemap(Sitemap):
     changefreq = "daily"
     priority = 0.8
-    limit = 1000  # Paginate: max 1000 URLs per sitemap page
 
     def items(self):
-        return Job.objects.filter(is_active=True).values_list('slug', flat=True)
+        return Job.objects.filter(is_active=True).only('slug')
 
-    def location(self, slug):
-        return reverse('jobs:job_detail', args=[slug])
+    def location(self, obj):
+        return reverse('jobs:job_detail', args=[obj.slug])
 
 
 class CategorySitemap(Sitemap):
