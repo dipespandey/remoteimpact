@@ -198,8 +198,8 @@ SERPER_API_KEY = os.getenv("SERPER_API_KEY", "")
 # Google Custom Search API (100 free queries/day)
 # Get your API key at: https://console.cloud.google.com/apis/credentials
 # Create a Custom Search Engine at: https://cse.google.com/cse/
-GOOGLE_CSE_API_KEY = os.getenv("GOOGLE_CSE_API_KEY", "")
-GOOGLE_CSE_CX = os.getenv("GOOGLE_CSE_CX", "")
+GOOGLE_CSE_API_KEY = os.getenv("GOOGLE_CSE_API_KEY", "AIzaSyB80R9QJjZLxw_tQqxUj82f49Rn4JQBQo")
+GOOGLE_CSE_CX = os.getenv("GOOGLE_CSE_CX", "d29e1be4453804e08")
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
