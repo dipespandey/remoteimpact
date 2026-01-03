@@ -1,7 +1,54 @@
 {% extends 'base.html' %}
 
+{% block title %}{{ job.title }} at {{ job.organization.name }} - Remote Impact Jobs{% endblock %}
 
-{% block title %}{{ job.title }} - Remote Impact Jobs{% endblock %}
+{% block meta_description %}{{ job.title }} at {{ job.organization.name }}. {{ job.location|default:"Remote" }} {{ job.get_job_type_display }} position. Apply now on Remote Impact.{% endblock %}
+
+{% block canonical %}https://remoteimpact.org{% url 'jobs:job_detail' job.slug %}{% endblock %}
+
+{% block og_type %}article{% endblock %}
+{% block og_title %}{{ job.title }} at {{ job.organization.name }}{% endblock %}
+{% block og_description %}{{ job.location|default:"Remote" }} {{ job.get_job_type_display }} position at {{ job.organization.name }}. Apply now!{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    "title": "{{ job.title|escapejs }}",
+    "description": "{{ job.description|striptags|truncatechars:500|escapejs }}",
+    "datePosted": "{{ job.posted_at|date:'c' }}",
+    {% if job.expires_at %}"validThrough": "{{ job.expires_at|date:'c' }}",{% endif %}
+    "employmentType": "{{ job.get_job_type_display|upper }}",
+    "hiringOrganization": {
+        "@type": "Organization",
+        "name": "{{ job.organization.name|escapejs }}",
+        "sameAs": "{{ job.organization.website|default:'' }}"
+    },
+    "jobLocation": {
+        "@type": "Place",
+        "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "{{ job.location|default:'Remote'|escapejs }}"
+        }
+    },
+    "jobLocationType": "TELECOMMUTE",
+    {% if job.salary_min and job.salary_max %}
+    "baseSalary": {
+        "@type": "MonetaryAmount",
+        "currency": "{{ job.salary_currency|default:'USD' }}",
+        "value": {
+            "@type": "QuantitativeValue",
+            "minValue": {{ job.salary_min }},
+            "maxValue": {{ job.salary_max }},
+            "unitText": "YEAR"
+        }
+    },
+    {% endif %}
+    "directApply": true
+}
+</script>
+{% endblock %}
 
 {% load job_extras %}
 {% block content %}

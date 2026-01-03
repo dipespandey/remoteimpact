@@ -17,12 +17,34 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.sitemaps.views import sitemap
+from django.http import HttpResponse
 from django.urls import include, path
+from django.views.decorators.cache import cache_page
+
+from jobs.sitemaps import JobSitemap, CategorySitemap, StaticSitemap
+
+
+def robots_txt(request):
+    content = """User-agent: *
+Allow: /
+
+Sitemap: https://remoteimpact.org/sitemap.xml
+"""
+    return HttpResponse(content, content_type="text/plain")
+
+sitemaps = {
+    'jobs': JobSitemap,
+    'categories': CategorySitemap,
+    'static': StaticSitemap,
+}
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls")),
     path("gigs/", include("gigs.urls")),
+    path("robots.txt", robots_txt, name='robots_txt'),
+    path("sitemap.xml", sitemap, {'sitemaps': sitemaps}, name='sitemap'),
     path("", include("jobs.urls")),
 ]
 

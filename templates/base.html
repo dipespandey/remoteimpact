@@ -6,9 +6,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Remote Impact Jobs - Find Your Purpose{% endblock %}</title>
 
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="{% block meta_description %}Find remote jobs that make a difference. Browse 4,000+ impact-focused positions in climate, AI safety, global health, and more.{% endblock %}">
+    <meta name="keywords" content="remote jobs, impact jobs, climate jobs, AI safety careers, effective altruism, nonprofit jobs, social impact careers">
+    <meta name="author" content="Remote Impact">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{% block canonical %}https://remoteimpact.org{% endblock %}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}https://remoteimpact.org{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}Remote Impact Jobs - Find Your Purpose{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Find remote jobs that make a difference. Browse 4,000+ impact-focused positions in climate, AI safety, global health, and more.{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}https://remoteimpact.org/static/og-image.png{% endblock %}">
+    <meta property="og:site_name" content="Remote Impact">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}Remote Impact Jobs{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Find remote jobs that make a difference.{% endblock %}">
+
     <!-- Favicon -->
     {% load static %}
     <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+
+    <!-- Structured Data - Organization -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Remote Impact",
+        "url": "https://remoteimpact.org",
+        "logo": "https://remoteimpact.org/static/favicon.svg",
+        "description": "Remote Impact connects purpose-driven professionals with impactful remote careers in climate, AI safety, global health, and social good.",
+        "sameAs": []
+    }
+    </script>
+    {% block structured_data %}{% endblock %}
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
