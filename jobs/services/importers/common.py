@@ -210,7 +210,7 @@ def _upsert_job_sync(payload: Dict) -> Tuple[Job, bool]:
 async def batch_upsert_jobs(
     payloads: List[Dict],
     use_ai: bool = False,
-    batch_size: int = 20,
+    batch_size: int = 50,
     progress_callback: Optional[Callable[[int, int], None]] = None,
     skip_duplicates: bool = True,
     provider: Optional[str] = None,
@@ -218,10 +218,12 @@ async def batch_upsert_jobs(
     """
     Upsert multiple jobs with optional batch AI processing.
 
+    Processes and saves jobs in batches for better performance and incremental saving.
+
     Args:
         payloads: List of job payload dicts from importers
         use_ai: Whether to use AI to enrich job descriptions
-        batch_size: Number of concurrent AI requests (default: 20)
+        batch_size: Number of jobs per batch (default: 50)
         progress_callback: Optional callback(completed, total) for progress updates
         skip_duplicates: Skip jobs that already exist with same title+org from different source
         provider: LLM provider to use ('deepseek', 'groq', 'mistral', or None for auto)
@@ -253,37 +255,72 @@ async def batch_upsert_jobs(
     if not payloads:
         return stats
 
-    # Enrich payloads with AI if requested
+    total = len(payloads)
+    completed = 0
+    upsert_async = sync_to_async(_upsert_job_sync, thread_sensitive=True)
+
+    # Initialize parser once if using AI
+    parser = None
     if use_ai:
         try:
             from jobs.services.llm_parser import JobParser
-
-            provider_info = f" with {provider}" if provider else ""
-            logger.info(f"Processing {len(payloads)} jobs with AI{provider_info} (batch_size={batch_size})...")
             parser = JobParser(provider=provider)
-            payloads = await parser.parse_batch(
-                payloads,
-                batch_size=batch_size,
-                progress_callback=progress_callback,
-            )
-            logger.info("AI processing complete")
+            provider_info = f" with {provider}" if provider else f" with {parser.provider_name}"
+            logger.info(f"Processing {total} jobs with AI{provider_info} (batch_size={batch_size})...")
         except Exception as e:
-            logger.error(f"Failed to run batch AI parser: {e}")
-            # Continue with original payloads
+            logger.error(f"Failed to initialize AI parser: {e}")
+            use_ai = False
 
-    # Upsert all jobs using sync_to_async to handle Django ORM in async context
-    upsert_async = sync_to_async(_upsert_job_sync, thread_sensitive=True)
+    # Process in batches - AI parse and save each batch immediately
+    for batch_start in range(0, total, batch_size):
+        batch_end = min(batch_start + batch_size, total)
+        batch = payloads[batch_start:batch_end]
 
-    for payload in payloads:
-        try:
-            job, created = await upsert_async(payload)
-            if created:
-                stats["created"] += 1
+        # AI process this batch if enabled
+        if use_ai and parser:
+            try:
+                # Process batch with high concurrency
+                tasks = []
+                for payload in batch:
+                    title = payload.get("title", "Untitled")
+                    org = payload.get("organization_name", "Unknown")
+                    desc = payload.get("description", "")
+                    if len(desc) >= 50:
+                        tasks.append(parser._parse_and_enrich(payload, title, org, desc))
+                    else:
+                        tasks.append(asyncio.coroutine(lambda p=payload: p)())
+
+                # Run all AI calls in parallel
+                batch = await asyncio.gather(*tasks, return_exceptions=True)
+                batch = [b if not isinstance(b, Exception) else payloads[batch_start + i]
+                        for i, b in enumerate(batch)]
+            except Exception as e:
+                logger.error(f"AI batch processing failed: {e}")
+                # Continue with original batch
+
+        # Save this batch to database immediately
+        save_tasks = [upsert_async(payload) for payload in batch]
+        results = await asyncio.gather(*save_tasks, return_exceptions=True)
+
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                logger.error(f"Failed to save job: {result}")
             else:
-                stats["updated"] += 1
-        except Exception as e:
-            logger.error(f"Failed to upsert job '{payload.get('title', 'unknown')}': {e}")
+                job, created = result
+                if created:
+                    stats["created"] += 1
+                else:
+                    stats["updated"] += 1
 
+            completed += 1
+            if progress_callback:
+                progress_callback(completed, total)
+
+        # Brief delay between batches to avoid overwhelming the system
+        if batch_end < total:
+            await asyncio.sleep(0.1)
+
+    logger.info(f"Import complete: {stats['created']} created, {stats['updated']} updated")
     return stats
 
 
