@@ -1,0 +1,52 @@
+<!-- Step 1: Welcome -->
+<div class="text-center">
+    <div class="w-20 h-20 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg class="w-10 h-10 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+        </svg>
+    </div>
+
+    <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        Let's Discover Your Impact Path
+    </h1>
+
+    <p class="text-lg text-gray-600 mb-8 max-w-lg mx-auto">
+        This takes about 5 minutes and helps us find roles that truly fit you. We'll learn about your causes, skills, and preferences to show you your best matches.
+    </p>
+
+    <div class="bg-gray-50 rounded-2xl p-6 mb-8 text-left max-w-md mx-auto">
+        <h3 class="font-semibold text-gray-900 mb-4">What we'll cover:</h3>
+        <ul class="space-y-3">
+            <li class="flex items-center gap-3 text-gray-600">
+                <span class="w-6 h-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-sm font-bold">1</span>
+                Impact areas that excite you
+            </li>
+            <li class="flex items-center gap-3 text-gray-600">
+                <span class="w-6 h-6 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-sm font-bold">2</span>
+                Your skills and experience
+            </li>
+            <li class="flex items-center gap-3 text-gray-600">
+                <span class="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-sm font-bold">3</span>
+                Work preferences & what matters to you
+            </li>
+            <li class="flex items-center gap-3 text-gray-600">
+                <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold">4</span>
+                Your story and motivation
+            </li>
+        </ul>
+    </div>
+
+    <form hx-post="{% url 'jobs:impact_wizard_step' 'welcome' %}"
+          hx-target="#wizard-content"
+          hx-swap="innerHTML">
+        {% csrf_token %}
+        <button type="submit"
+                class="bg-brand-300 hover:bg-brand-400 text-gray-900 text-lg font-bold py-4 px-12 rounded-full shadow-lg transform transition hover:-translate-y-1 hover:shadow-xl">
+            Let's Start
+            <svg class="inline-block w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+            </svg>
+        </button>
+    </form>
+</div>

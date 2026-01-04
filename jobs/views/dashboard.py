@@ -1,7 +1,7 @@
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
-from ..models import UserProfile
+from ..models import UserProfile, SeekerProfile
 from ..services.onboarding_service import OnboardingService
 
 
@@ -39,5 +39,13 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 "job", "job__organization"
             ).order_by("-applied_at")
             context["profile"] = profile
+
+            # Check for Impact Profile (SeekerProfile)
+            try:
+                seeker_profile = user.seeker_profile
+                context["seeker_profile"] = seeker_profile
+                context["has_impact_profile"] = seeker_profile.wizard_completed
+            except SeekerProfile.DoesNotExist:
+                context["has_impact_profile"] = False
 
         return context

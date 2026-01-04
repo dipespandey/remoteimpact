@@ -147,6 +147,47 @@
             </div>
         </header>
 
+        <!-- Impact Profile CTA -->
+        {% if not has_impact_profile %}
+        <div class="bg-gradient-to-r from-brand-50 to-purple-50 rounded-3xl p-6 md:p-8 border border-brand-100">
+            <div class="flex flex-col md:flex-row md:items-center gap-6">
+                <div class="flex-shrink-0">
+                    <div class="w-16 h-16 bg-brand-100 rounded-2xl flex items-center justify-center">
+                        <svg class="w-8 h-8 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Build Your Impact Profile</h3>
+                    <p class="text-gray-600 mb-4 md:mb-0">Take 5 minutes to tell us about your skills, causes, and preferences. We'll match you with roles that truly fit.</p>
+                </div>
+                <div class="flex-shrink-0">
+                    <a href="{% url 'jobs:impact_wizard' %}"
+                       class="inline-flex items-center px-6 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-full shadow-lg transition transform hover:-translate-y-0.5">
+                        Get Started
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% elif seeker_profile and seeker_profile.profile_completeness < 100 %}
+        <div class="bg-white rounded-3xl p-6 border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="font-bold text-gray-900">Your Impact Profile</h3>
+                    <p class="text-sm text-gray-500">{{ seeker_profile.profile_completeness }}% complete</p>
+                </div>
+                <a href="{% url 'jobs:impact_profile' %}" class="text-brand-600 font-medium text-sm hover:underline">View Profile</a>
+            </div>
+            <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full bg-brand-500 rounded-full transition-all" style="width: {{ seeker_profile.profile_completeness }}%"></div>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="grid lg:grid-cols-3 gap-8">
             <!-- Sidebar: Profile -->
             <div class="lg:col-span-1 space-y-6">

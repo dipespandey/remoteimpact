@@ -1,0 +1,125 @@
+<!-- Step 8: Quick Assessment (Optional) -->
+<div>
+    <div class="text-center mb-8">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+            Quick Assessment
+            <span class="text-base font-normal text-gray-500 ml-2">(Optional)</span>
+        </h2>
+        <p class="text-gray-600">Answer a few questions to unlock even better matches</p>
+    </div>
+
+    <form hx-post="{% url 'jobs:impact_wizard_step' 'assessment' %}"
+          hx-target="#wizard-content"
+          hx-swap="innerHTML">
+        {% csrf_token %}
+
+        <!-- Question 1: Time Horizon -->
+        <div class="mb-8 p-5 bg-gray-50 rounded-xl">
+            <p class="font-medium text-gray-900 mb-4">
+                What type of impact appeals more to you?
+            </p>
+            <div class="space-y-2">
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="radio" name="time_horizon" value="future"
+                           {% if profile.assessment_answers.time_horizon == 'future' %}checked{% endif %}
+                           class="w-4 h-4 text-brand-500 border-gray-300 focus:ring-brand-500">
+                    <span class="text-gray-700">Preventing future catastrophes (long-term thinking)</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="radio" name="time_horizon" value="present"
+                           {% if profile.assessment_answers.time_horizon == 'present' %}checked{% endif %}
+                           class="w-4 h-4 text-brand-500 border-gray-300 focus:ring-brand-500">
+                    <span class="text-gray-700">Helping people suffering today (immediate impact)</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="radio" name="time_horizon" value="both"
+                           {% if profile.assessment_answers.time_horizon == 'both' %}checked{% endif %}
+                           class="w-4 h-4 text-brand-500 border-gray-300 focus:ring-brand-500">
+                    <span class="text-gray-700">Both equally</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Question 2: Org Size -->
+        <div class="mb-8 p-5 bg-gray-50 rounded-xl">
+            <p class="font-medium text-gray-900 mb-4">
+                What type of organization do you prefer?
+            </p>
+            <div class="space-y-2">
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="radio" name="org_size" value="startup"
+                           {% if profile.assessment_answers.org_size == 'startup' %}checked{% endif %}
+                           class="w-4 h-4 text-brand-500 border-gray-300 focus:ring-brand-500">
+                    <span class="text-gray-700">Small, scrappy startup (move fast, wear many hats)</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="radio" name="org_size" value="established"
+                           {% if profile.assessment_answers.org_size == 'established' %}checked{% endif %}
+                           class="w-4 h-4 text-brand-500 border-gray-300 focus:ring-brand-500">
+                    <span class="text-gray-700">Large, established organization (stability, resources)</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="radio" name="org_size" value="either"
+                           {% if profile.assessment_answers.org_size == 'either' %}checked{% endif %}
+                           class="w-4 h-4 text-brand-500 border-gray-300 focus:ring-brand-500">
+                    <span class="text-gray-700">Either is fine</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Question 3: Risk Tolerance -->
+        <div class="mb-8 p-5 bg-gray-50 rounded-xl">
+            <p class="font-medium text-gray-900 mb-4">
+                How do you feel about career risk?
+            </p>
+            <div class="space-y-2">
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="radio" name="risk_tolerance" value="high"
+                           {% if profile.assessment_answers.risk_tolerance == 'high' %}checked{% endif %}
+                           class="w-4 h-4 text-brand-500 border-gray-300 focus:ring-brand-500">
+                    <span class="text-gray-700">I'm willing to take risks for potentially higher impact</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="radio" name="risk_tolerance" value="moderate"
+                           {% if profile.assessment_answers.risk_tolerance == 'moderate' %}checked{% endif %}
+                           class="w-4 h-4 text-brand-500 border-gray-300 focus:ring-brand-500">
+                    <span class="text-gray-700">I prefer a balance of risk and stability</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="radio" name="risk_tolerance" value="low"
+                           {% if profile.assessment_answers.risk_tolerance == 'low' %}checked{% endif %}
+                           class="w-4 h-4 text-brand-500 border-gray-300 focus:ring-brand-500">
+                    <span class="text-gray-700">I prefer stable, lower-risk opportunities</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center pt-4 border-t border-gray-100">
+            <a href="{% url 'jobs:impact_wizard_step' 'story' %}"
+               hx-get="{% url 'jobs:impact_wizard_step' 'story' %}"
+               hx-target="#wizard-content"
+               hx-swap="innerHTML"
+               class="text-gray-500 hover:text-gray-700 font-medium">
+                <svg class="inline-block w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path>
+                </svg>
+                Back
+            </a>
+            <div class="flex gap-3">
+                <a hx-post="{% url 'jobs:impact_wizard_skip' 'assessment' %}"
+                   hx-target="#wizard-content"
+                   hx-swap="innerHTML"
+                   class="text-gray-500 hover:text-gray-700 font-medium py-3 px-6 cursor-pointer">
+                    Skip
+                </a>
+                <button type="submit"
+                        class="bg-brand-300 hover:bg-brand-400 text-gray-900 font-bold py-3 px-8 rounded-full shadow-lg transition">
+                    Continue
+                    <svg class="inline-block w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

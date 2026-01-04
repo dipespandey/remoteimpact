@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Build Your Impact Profile - Remote Impact{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-[#F3F2EE] py-8 md:py-16">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Progress Bar -->
+        <div class="mb-8">
+            <div class="flex justify-between text-sm text-gray-500 mb-2">
+                <span>Step {{ step_index|add:1 }} of {{ steps|length }}</span>
+                <span>{{ current_step.progress }}% complete</span>
+            </div>
+            <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div class="h-full bg-brand-500 rounded-full transition-all duration-500"
+                     style="width: {{ current_step.progress }}%"></div>
+            </div>
+        </div>
+
+        <!-- Wizard Content Container -->
+        <div id="wizard-content"
+             hx-get="{% url 'jobs:impact_wizard_step' current_step.slug %}"
+             hx-trigger="load"
+             hx-swap="innerHTML"
+             class="bg-white rounded-3xl shadow-xl p-6 md:p-10">
+            <!-- Step content loaded here via HTMX -->
+            <div class="flex items-center justify-center py-12">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+            </div>
+        </div>
+
+        <!-- Step indicators -->
+        <div class="mt-8 flex justify-center">
+            <div class="flex items-center gap-2">
+                {% for step in steps %}
+                <div class="w-2 h-2 rounded-full {% if forloop.counter0 <= step_index %}bg-brand-500{% else %}bg-gray-300{% endif %}"></div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

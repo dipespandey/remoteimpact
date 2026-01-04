@@ -1,0 +1,85 @@
+<!-- Step 7: Your Story -->
+<div>
+    <div class="text-center mb-8">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+            What draws you to impact work?
+        </h2>
+        <p class="text-gray-600">Share your motivation in 2-3 sentences. This helps organizations understand you better.</p>
+    </div>
+
+    {% if errors.impact_statement %}
+    <div class="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-center">
+        {{ errors.impact_statement }}
+    </div>
+    {% endif %}
+
+    <form hx-post="{% url 'jobs:impact_wizard_step' 'story' %}"
+          hx-target="#wizard-content"
+          hx-swap="innerHTML">
+        {% csrf_token %}
+
+        <div class="mb-6">
+            <textarea name="impact_statement"
+                      id="impact_statement"
+                      rows="5"
+                      maxlength="500"
+                      placeholder="I'm passionate about [cause] because... I want to use my skills in [area] to... My goal is to..."
+                      class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition resize-none"
+                      oninput="updateCharCount()">{{ profile.impact_statement }}</textarea>
+            <div class="flex justify-end mt-2">
+                <span id="char-count" class="text-sm text-gray-400">
+                    {{ profile.impact_statement|length|default:0 }}/500
+                </span>
+            </div>
+        </div>
+
+        <!-- Prompts to help -->
+        <div class="bg-gray-50 rounded-xl p-4 mb-8">
+            <p class="text-sm font-medium text-gray-700 mb-3">Need inspiration? Try answering:</p>
+            <ul class="text-sm text-gray-600 space-y-2">
+                <li class="flex items-start gap-2">
+                    <span class="text-brand-500">•</span>
+                    What problem in the world keeps you up at night?
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-brand-500">•</span>
+                    What unique perspective or skill can you bring?
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-brand-500">•</span>
+                    What impact do you want to have in the next 5 years?
+                </li>
+            </ul>
+        </div>
+
+        <div class="flex justify-between items-center pt-4 border-t border-gray-100">
+            <a href="{% url 'jobs:impact_wizard_step' 'preferences' %}"
+               hx-get="{% url 'jobs:impact_wizard_step' 'preferences' %}"
+               hx-target="#wizard-content"
+               hx-swap="innerHTML"
+               class="text-gray-500 hover:text-gray-700 font-medium">
+                <svg class="inline-block w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path>
+                </svg>
+                Back
+            </a>
+            <button type="submit"
+                    class="bg-brand-300 hover:bg-brand-400 text-gray-900 font-bold py-3 px-8 rounded-full shadow-lg transition">
+                Continue
+                <svg class="inline-block w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function updateCharCount() {
+    const textarea = document.getElementById('impact_statement');
+    const count = textarea.value.length;
+    const countEl = document.getElementById('char-count');
+    countEl.textContent = count + '/500';
+    countEl.className = count > 450 ? 'text-sm text-orange-500' : 'text-sm text-gray-400';
+}
+</script>

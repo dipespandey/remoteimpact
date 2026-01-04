@@ -1,0 +1,70 @@
+<!-- Step 2: Impact Areas -->
+<div>
+    <div class="text-center mb-8">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+            What causes light you up?
+        </h2>
+        <p class="text-gray-600">Select up to 5 impact areas that excite you most</p>
+    </div>
+
+    {% if errors.impact_areas %}
+    <div class="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-center">
+        {{ errors.impact_areas }}
+    </div>
+    {% endif %}
+
+    <form hx-post="{% url 'jobs:impact_wizard_step' 'impact-areas' %}"
+          hx-target="#wizard-content"
+          hx-swap="innerHTML"
+          id="impact-form">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
+            {% for category in categories %}
+            <label class="relative cursor-pointer group">
+                <input type="checkbox"
+                       name="impact_areas"
+                       value="{{ category.id }}"
+                       {% if category.id in selected_areas %}checked{% endif %}
+                       class="peer sr-only impact-checkbox"
+                       onchange="updateSelectionCount()">
+                <div class="h-full p-4 bg-gray-50 rounded-xl border-2 border-transparent peer-checked:border-brand-500 peer-checked:bg-brand-50 transition-all hover:bg-gray-100 text-center">
+                    <div class="text-2xl mb-2">{{ category.icon|default:"🎯" }}</div>
+                    <span class="text-sm font-medium text-gray-700">{{ category.name }}</span>
+                </div>
+            </label>
+            {% endfor %}
+        </div>
+
+        <div class="text-center text-sm text-gray-500 mb-6">
+            <span id="selection-count">{{ selected_areas|length }}</span> of 5 selected
+        </div>
+
+        <div class="flex justify-between items-center pt-4 border-t border-gray-100">
+            <a href="{% url 'jobs:impact_wizard_step' 'welcome' %}"
+               hx-get="{% url 'jobs:impact_wizard_step' 'welcome' %}"
+               hx-target="#wizard-content"
+               hx-swap="innerHTML"
+               class="text-gray-500 hover:text-gray-700 font-medium">
+                <svg class="inline-block w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path>
+                </svg>
+                Back
+            </a>
+            <button type="submit"
+                    class="bg-brand-300 hover:bg-brand-400 text-gray-900 font-bold py-3 px-8 rounded-full shadow-lg transition">
+                Continue
+                <svg class="inline-block w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function updateSelectionCount() {
+    const checked = document.querySelectorAll('.impact-checkbox:checked').length;
+    document.getElementById('selection-count').textContent = checked;
+}
+</script>

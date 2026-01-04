@@ -1,0 +1,65 @@
+<!-- Step 4: Experience Level -->
+<div>
+    <div class="text-center mb-8">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+            Where are you in your career?
+        </h2>
+        <p class="text-gray-600">This helps us find roles at the right level for you</p>
+    </div>
+
+    {% if errors.experience_level %}
+    <div class="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-center">
+        {{ errors.experience_level }}
+    </div>
+    {% endif %}
+
+    <form hx-post="{% url 'jobs:impact_wizard_step' 'experience' %}"
+          hx-target="#wizard-content"
+          hx-swap="innerHTML">
+        {% csrf_token %}
+
+        <div class="space-y-3 mb-8">
+            {% for value, label in experience_levels %}
+            <label class="relative cursor-pointer block group">
+                <input type="radio"
+                       name="experience_level"
+                       value="{{ value }}"
+                       {% if profile.experience_level == value %}checked{% endif %}
+                       class="peer sr-only">
+                <div class="p-5 bg-gray-50 rounded-xl border-2 border-transparent peer-checked:border-brand-500 peer-checked:bg-brand-50 transition-all hover:bg-gray-100 flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-gray-200 text-gray-600 peer-checked:bg-brand-500 peer-checked:text-white font-bold">
+                        {% if value == 'early' %}1-2
+                        {% elif value == 'mid' %}3-6
+                        {% elif value == 'senior' %}7+
+                        {% elif value == 'leadership' %}12+
+                        {% else %}*{% endif %}
+                    </div>
+                    <div class="flex-1">
+                        <span class="font-semibold text-gray-900">{{ label }}</span>
+                    </div>
+                </div>
+            </label>
+            {% endfor %}
+        </div>
+
+        <div class="flex justify-between items-center pt-4 border-t border-gray-100">
+            <a href="{% url 'jobs:impact_wizard_step' 'work-style' %}"
+               hx-get="{% url 'jobs:impact_wizard_step' 'work-style' %}"
+               hx-target="#wizard-content"
+               hx-swap="innerHTML"
+               class="text-gray-500 hover:text-gray-700 font-medium">
+                <svg class="inline-block w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path>
+                </svg>
+                Back
+            </a>
+            <button type="submit"
+                    class="bg-brand-300 hover:bg-brand-400 text-gray-900 font-bold py-3 px-8 rounded-full shadow-lg transition">
+                Continue
+                <svg class="inline-block w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+            </button>
+        </div>
+    </form>
+</div>

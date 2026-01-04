@@ -544,3 +544,365 @@ class UserPath(models.Model):
         return (
             f"Path: {self.session_key[:8]} ({len(self.resonated_stories)} resonances)"
         )
+
+
+# =============================================================================
+# Impact Match - Seeker Profile & Matching Models
+# =============================================================================
+
+
+class SeekerProfile(models.Model):
+    """Extended profile for job seekers with matching data.
+
+    This is the core profile used for AI-powered job matching.
+    Built through the onboarding wizard.
+    """
+
+    class WorkStyle(models.TextChoices):
+        BUILDER = "builder", "Building things (engineering, product, design)"
+        STRATEGIST = "strategist", "Moving ideas (strategy, communications, policy)"
+        OPERATOR = "operator", "Running operations (ops, finance, HR, admin)"
+        DIRECT = "direct", "Direct service (program delivery, field work)"
+        RESEARCHER = "researcher", "Research & analysis"
+
+    class ExperienceLevel(models.TextChoices):
+        EARLY = "early", "Early career (0-2 years)"
+        MID = "mid", "Mid-level (3-6 years)"
+        SENIOR = "senior", "Senior (7-12 years)"
+        LEADERSHIP = "leadership", "Leadership (12+ years)"
+        CAREER_CHANGER = "career_changer", "Career changer"
+
+    class RemotePreference(models.TextChoices):
+        REMOTE = "remote", "Fully remote"
+        HYBRID = "hybrid", "Hybrid"
+        ONSITE = "onsite", "On-site"
+        FLEXIBLE = "flexible", "Flexible"
+
+    class Visibility(models.TextChoices):
+        PUBLIC = "public", "Public - visible to all orgs"
+        MATCHING = "matching", "Visible to matching orgs only"
+        HIDDEN = "hidden", "Hidden from talent search"
+
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="seeker_profile"
+    )
+
+    # -------------------------------------------------------------------------
+    # Core profile data (from wizard)
+    # -------------------------------------------------------------------------
+
+    # Impact areas they care about (M2M to existing Category)
+    impact_areas = models.ManyToManyField(
+        Category, blank=True, related_name="interested_seekers"
+    )
+
+    # Work style preference
+    work_style = models.CharField(
+        max_length=20, choices=WorkStyle.choices, blank=True
+    )
+
+    # Experience level
+    experience_level = models.CharField(
+        max_length=20, choices=ExperienceLevel.choices, blank=True
+    )
+
+    # Skills (JSON array of skill slugs from taxonomy)
+    skills = models.JSONField(
+        default=list, help_text="List of skill slugs, e.g. ['python', 'data-analysis']"
+    )
+
+    # -------------------------------------------------------------------------
+    # Preferences
+    # -------------------------------------------------------------------------
+
+    remote_preference = models.CharField(
+        max_length=20, choices=RemotePreference.choices, blank=True
+    )
+
+    # Location preferences - list of country codes or "anywhere"
+    location_preferences = models.JSONField(
+        default=list, help_text="ISO country codes or regions, e.g. ['US', 'GB', 'europe']"
+    )
+
+    salary_min = models.PositiveIntegerField(
+        null=True, blank=True, help_text="Minimum expected salary (USD)"
+    )
+    salary_max = models.PositiveIntegerField(
+        null=True, blank=True, help_text="Maximum expected salary (USD)"
+    )
+
+    # Job types interested in
+    job_types = models.JSONField(
+        default=list, help_text="e.g. ['full-time', 'contract', 'part-time']"
+    )
+
+    # -------------------------------------------------------------------------
+    # Story & Motivation
+    # -------------------------------------------------------------------------
+
+    impact_statement = models.TextField(
+        max_length=500, blank=True,
+        help_text="2-3 sentences on what draws them to impact work"
+    )
+
+    # -------------------------------------------------------------------------
+    # Optional Assessment
+    # -------------------------------------------------------------------------
+
+    assessment_answers = models.JSONField(
+        default=dict,
+        help_text="Answers to optional assessment questions, e.g. {'time_horizon': 'future', 'org_size': 'startup'}"
+    )
+
+    # -------------------------------------------------------------------------
+    # Visibility & Search
+    # -------------------------------------------------------------------------
+
+    visibility = models.CharField(
+        max_length=20, choices=Visibility.choices, default=Visibility.PUBLIC
+    )
+    is_actively_looking = models.BooleanField(
+        default=True, help_text="Currently seeking opportunities"
+    )
+
+    # -------------------------------------------------------------------------
+    # Wizard Progress
+    # -------------------------------------------------------------------------
+
+    wizard_completed = models.BooleanField(default=False)
+    wizard_step = models.PositiveIntegerField(
+        default=0, help_text="Current step in onboarding wizard (0 = not started)"
+    )
+    profile_completeness = models.PositiveIntegerField(
+        default=0, help_text="Profile completeness percentage 0-100"
+    )
+
+    # -------------------------------------------------------------------------
+    # Metadata
+    # -------------------------------------------------------------------------
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Seeker Profile"
+        verbose_name_plural = "Seeker Profiles"
+
+    def __str__(self):
+        return f"Seeker: {self.user.email}"
+
+    def calculate_completeness(self):
+        """Calculate and update profile completeness percentage."""
+        score = 0
+        max_score = 100
+
+        # Impact areas (20 points)
+        if self.impact_areas.exists():
+            score += 20
+
+        # Work style (15 points)
+        if self.work_style:
+            score += 15
+
+        # Experience level (15 points)
+        if self.experience_level:
+            score += 15
+
+        # Skills (20 points) - need at least 3
+        if len(self.skills) >= 3:
+            score += 20
+        elif len(self.skills) >= 1:
+            score += 10
+
+        # Remote preference (5 points)
+        if self.remote_preference:
+            score += 5
+
+        # Salary expectations (5 points)
+        if self.salary_min or self.salary_max:
+            score += 5
+
+        # Impact statement (15 points)
+        if self.impact_statement and len(self.impact_statement) >= 50:
+            score += 15
+        elif self.impact_statement:
+            score += 7
+
+        # Assessment (5 points bonus)
+        if self.assessment_answers:
+            score += 5
+
+        self.profile_completeness = min(score, max_score)
+        return self.profile_completeness
+
+
+class JobMatch(models.Model):
+    """Cached match scores between seekers and jobs.
+
+    Pre-computed for performance. Updated when seeker profile
+    or job changes.
+    """
+
+    seeker = models.ForeignKey(
+        SeekerProfile, on_delete=models.CASCADE, related_name="matches"
+    )
+    job = models.ForeignKey(
+        "Job", on_delete=models.CASCADE, related_name="seeker_matches"
+    )
+
+    # Overall match score (0-100)
+    score = models.PositiveIntegerField(db_index=True)
+
+    # Score breakdown by factor
+    breakdown = models.JSONField(
+        default=dict,
+        help_text="{'impact': 85, 'skills': 70, 'experience': 100, 'location': 80, 'salary': 60}"
+    )
+
+    # Human-readable match reasons
+    reasons = models.JSONField(
+        default=list,
+        help_text="['Climate focus matches', '8 of 10 required skills', ...]"
+    )
+
+    # Skill gaps identified
+    gaps = models.JSONField(
+        default=list,
+        help_text="['Terraform', 'AWS', ...] - skills job wants that seeker lacks"
+    )
+
+    computed_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ["seeker", "job"]
+        indexes = [
+            models.Index(fields=["seeker", "-score"]),
+            models.Index(fields=["job", "-score"]),
+        ]
+        ordering = ["-score"]
+
+    def __str__(self):
+        return f"{self.seeker.user.email} ↔ {self.job.title}: {self.score}%"
+
+
+class TalentInvitation(models.Model):
+    """Tracks org invitations to candidates to apply for a job."""
+
+    class Status(models.TextChoices):
+        SENT = "sent", "Sent"
+        VIEWED = "viewed", "Viewed"
+        APPLIED = "applied", "Applied"
+        DECLINED = "declined", "Declined"
+
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name="talent_invitations"
+    )
+    job = models.ForeignKey(
+        "Job", on_delete=models.CASCADE, related_name="talent_invitations"
+    )
+    seeker = models.ForeignKey(
+        SeekerProfile, on_delete=models.CASCADE, related_name="invitations_received"
+    )
+
+    # Personalized message from org
+    message = models.TextField()
+
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.SENT
+    )
+
+    sent_at = models.DateTimeField(auto_now_add=True)
+    viewed_at = models.DateTimeField(null=True, blank=True)
+    responded_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ["job", "seeker"]
+        ordering = ["-sent_at"]
+
+    def __str__(self):
+        return f"Invite: {self.organization.name} → {self.seeker.user.email} for {self.job.title}"
+
+
+class OrgSubscription(models.Model):
+    """Organization subscription tier for premium features."""
+
+    class Tier(models.TextChoices):
+        FREE = "free", "Free"
+        PRO = "pro", "Pro ($149/mo)"
+        GROWTH = "growth", "Growth ($299/mo)"
+        ENTERPRISE = "enterprise", "Enterprise"
+
+    organization = models.OneToOneField(
+        Organization, on_delete=models.CASCADE, related_name="subscription"
+    )
+
+    tier = models.CharField(
+        max_length=20, choices=Tier.choices, default=Tier.FREE
+    )
+
+    # Stripe integration
+    stripe_subscription_id = models.CharField(max_length=100, blank=True)
+    stripe_customer_id = models.CharField(max_length=100, blank=True)
+
+    # Usage tracking
+    invites_used_this_month = models.PositiveIntegerField(default=0)
+    invites_reset_at = models.DateTimeField(null=True, blank=True)
+
+    started_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Organization Subscription"
+        verbose_name_plural = "Organization Subscriptions"
+
+    def __str__(self):
+        return f"{self.organization.name}: {self.tier}"
+
+    @property
+    def invite_limit(self):
+        """Monthly invite limit based on tier."""
+        limits = {
+            self.Tier.FREE: 0,
+            self.Tier.PRO: 10,
+            self.Tier.GROWTH: 50,
+            self.Tier.ENTERPRISE: 999,
+        }
+        return limits.get(self.tier, 0)
+
+    @property
+    def invites_remaining(self):
+        return max(0, self.invite_limit - self.invites_used_this_month)
+
+    def can_use_talent_search(self):
+        return self.tier in [self.Tier.PRO, self.Tier.GROWTH, self.Tier.ENTERPRISE]
+
+    def can_send_invites(self):
+        return self.tier in [self.Tier.GROWTH, self.Tier.ENTERPRISE]
+
+
+class CoverLetter(models.Model):
+    """AI-generated cover letters for job applications."""
+
+    seeker = models.ForeignKey(
+        SeekerProfile, on_delete=models.CASCADE, related_name="cover_letters"
+    )
+    job = models.ForeignKey(
+        "Job", on_delete=models.CASCADE, related_name="cover_letters"
+    )
+
+    # AI-generated text
+    generated_text = models.TextField()
+
+    # Final text after user edits (if any)
+    final_text = models.TextField(blank=True)
+
+    # Whether it was used in an application
+    used_in_application = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Cover letter: {self.seeker.user.email} → {self.job.title}"

@@ -1,0 +1,107 @@
+<!-- Step 5: Skills -->
+<div>
+    <div class="text-center mb-6">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+            What are your superpowers?
+        </h2>
+        <p class="text-gray-600">Select 3-15 skills that you bring to the table</p>
+    </div>
+
+    {% if errors.skills %}
+    <div class="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-center">
+        {{ errors.skills }}
+    </div>
+    {% endif %}
+
+    <form hx-post="{% url 'jobs:impact_wizard_step' 'skills' %}"
+          hx-target="#wizard-content"
+          hx-swap="innerHTML"
+          id="skills-form">
+        {% csrf_token %}
+
+        <!-- Search/filter -->
+        <div class="mb-6">
+            <input type="text"
+                   id="skill-search"
+                   placeholder="Search skills..."
+                   class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition"
+                   onkeyup="filterSkills(this.value)">
+        </div>
+
+        <!-- Skills by category (scrollable) -->
+        <div class="max-h-80 overflow-y-auto mb-6 space-y-6 pr-2" id="skills-container">
+            {% for category_label, skills in categorized_skills.items %}
+            <div class="skill-category" data-category="{{ category_label }}">
+                <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">{{ category_label }}</h4>
+                <div class="flex flex-wrap gap-2">
+                    {% for slug, label in skills %}
+                    <label class="skill-item cursor-pointer" data-skill="{{ label|lower }}">
+                        <input type="checkbox"
+                               name="skills"
+                               value="{{ slug }}"
+                               {% if slug in selected_skills %}checked{% endif %}
+                               class="peer sr-only skill-checkbox"
+                               onchange="updateSkillCount()">
+                        <span class="inline-block px-3 py-1.5 text-sm rounded-full border-2 border-gray-200 bg-white peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 hover:bg-gray-50 transition">
+                            {{ label }}
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center text-sm mb-6">
+            <span id="skill-count" class="{% if selected_skills|length < 3 or selected_skills|length > 15 %}text-red-500{% else %}text-gray-500{% endif %}">
+                {{ selected_skills|length }} skills selected
+            </span>
+            <span class="text-gray-400">(3-15 required)</span>
+        </div>
+
+        <div class="flex justify-between items-center pt-4 border-t border-gray-100">
+            <a href="{% url 'jobs:impact_wizard_step' 'experience' %}"
+               hx-get="{% url 'jobs:impact_wizard_step' 'experience' %}"
+               hx-target="#wizard-content"
+               hx-swap="innerHTML"
+               class="text-gray-500 hover:text-gray-700 font-medium">
+                <svg class="inline-block w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path>
+                </svg>
+                Back
+            </a>
+            <button type="submit"
+                    class="bg-brand-300 hover:bg-brand-400 text-gray-900 font-bold py-3 px-8 rounded-full shadow-lg transition">
+                Continue
+                <svg class="inline-block w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function filterSkills(query) {
+    query = query.toLowerCase();
+    document.querySelectorAll('.skill-item').forEach(item => {
+        const skill = item.dataset.skill;
+        item.style.display = skill.includes(query) ? '' : 'none';
+    });
+    document.querySelectorAll('.skill-category').forEach(cat => {
+        const visibleSkills = cat.querySelectorAll('.skill-item[style=""]').length +
+                             cat.querySelectorAll('.skill-item:not([style])').length;
+        const hasVisible = Array.from(cat.querySelectorAll('.skill-item')).some(
+            item => item.style.display !== 'none'
+        );
+        cat.style.display = hasVisible ? '' : 'none';
+    });
+}
+
+function updateSkillCount() {
+    const count = document.querySelectorAll('.skill-checkbox:checked').length;
+    const countEl = document.getElementById('skill-count');
+    countEl.textContent = count + ' skills selected';
+    countEl.className = (count < 3 || count > 15) ? 'text-red-500' : 'text-gray-500';
+}
+</script>

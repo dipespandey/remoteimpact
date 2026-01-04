@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Your Impact Profile - Remote Impact{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-[#F3F2EE] py-8 md:py-16">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Your Impact Profile</h1>
+                <p class="text-gray-600 mt-1">This is what helps us match you with the right roles</p>
+            </div>
+            <a href="{% url 'jobs:impact_wizard' %}"
+               class="text-brand-600 hover:text-brand-700 font-medium flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                </svg>
+                Edit Profile
+            </a>
+        </div>
+
+        <!-- Profile Completeness -->
+        <div class="bg-white rounded-2xl p-6 border border-gray-100 mb-6">
+            <div class="flex items-center justify-between mb-3">
+                <span class="font-semibold text-gray-900">Profile Completeness</span>
+                <span class="text-brand-600 font-bold">{{ profile.profile_completeness }}%</span>
+            </div>
+            <div class="h-3 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-brand-400 to-brand-600 rounded-full transition-all"
+                     style="width: {{ profile.profile_completeness }}%"></div>
+            </div>
+            {% if profile.profile_completeness < 100 %}
+            <p class="text-sm text-gray-500 mt-3">Complete your profile to unlock better matches and appear in talent search.</p>
+            {% endif %}
+        </div>
+
+        <!-- Profile Sections -->
+        <div class="space-y-6">
+
+            <!-- Impact Areas -->
+            <div class="bg-white rounded-2xl p-6 border border-gray-100">
+                <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <span class="text-xl">🎯</span> Impact Areas
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                    {% for area in profile.impact_areas.all %}
+                    <span class="inline-flex items-center px-4 py-2 bg-purple-50 text-purple-700 rounded-full font-medium">
+                        {{ area.icon|default:"" }} {{ area.name }}
+                    </span>
+                    {% empty %}
+                    <span class="text-gray-400">No impact areas selected</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Work Style & Experience -->
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-2xl p-6 border border-gray-100">
+                    <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <span class="text-xl">💼</span> Work Style
+                    </h3>
+                    <p class="text-gray-700">{{ profile.get_work_style_display|default:"Not set" }}</p>
+                </div>
+                <div class="bg-white rounded-2xl p-6 border border-gray-100">
+                    <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <span class="text-xl">📈</span> Experience Level
+                    </h3>
+                    <p class="text-gray-700">{{ profile.get_experience_level_display|default:"Not set" }}</p>
+                </div>
+            </div>
+
+            <!-- Skills -->
+            <div class="bg-white rounded-2xl p-6 border border-gray-100">
+                <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <span class="text-xl">💪</span> Skills ({{ skill_labels|length }})
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                    {% for skill in skill_labels %}
+                    <span class="inline-block px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
+                        {{ skill }}
+                    </span>
+                    {% empty %}
+                    <span class="text-gray-400">No skills selected</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Preferences -->
+            <div class="bg-white rounded-2xl p-6 border border-gray-100">
+                <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <span class="text-xl">📍</span> Preferences
+                </h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Remote Preference</p>
+                        <p class="text-gray-900 font-medium">{{ profile.get_remote_preference_display|default:"Not set" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Job Types</p>
+                        <p class="text-gray-900 font-medium">
+                            {% if profile.job_types %}
+                            {{ profile.job_types|join:", "|title }}
+                            {% else %}
+                            Any
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Salary Range</p>
+                        <p class="text-gray-900 font-medium">
+                            {% if profile.salary_min and profile.salary_max %}
+                            ${{ profile.salary_min|floatformat:0 }} - ${{ profile.salary_max|floatformat:0 }}/year
+                            {% elif profile.salary_min %}
+                            ${{ profile.salary_min|floatformat:0 }}+/year
+                            {% else %}
+                            Not specified
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Locations</p>
+                        <p class="text-gray-900 font-medium">
+                            {% if profile.location_preferences %}
+                            {{ profile.location_preferences|join:", " }}
+                            {% else %}
+                            Anywhere
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Your Story -->
+            {% if profile.impact_statement %}
+            <div class="bg-white rounded-2xl p-6 border border-gray-100">
+                <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <span class="text-xl">✨</span> Your Story
+                </h3>
+                <p class="text-gray-700 italic leading-relaxed">"{{ profile.impact_statement }}"</p>
+            </div>
+            {% endif %}
+
+            <!-- Assessment Answers -->
+            {% if profile.assessment_answers %}
+            <div class="bg-white rounded-2xl p-6 border border-gray-100">
+                <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <span class="text-xl">🧭</span> Assessment Insights
+                </h3>
+                <div class="grid md:grid-cols-2 gap-4 text-sm">
+                    {% if profile.assessment_answers.time_horizon %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <p class="text-gray-500 mb-1">Impact Focus</p>
+                        <p class="text-gray-900 font-medium">
+                            {% if profile.assessment_answers.time_horizon == 'future' %}Future-oriented
+                            {% elif profile.assessment_answers.time_horizon == 'present' %}Present-focused
+                            {% else %}Balanced{% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+                    {% if profile.assessment_answers.org_size %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <p class="text-gray-500 mb-1">Org Preference</p>
+                        <p class="text-gray-900 font-medium">
+                            {% if profile.assessment_answers.org_size == 'startup' %}Startups
+                            {% elif profile.assessment_answers.org_size == 'established' %}Established orgs
+                            {% else %}Flexible{% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+                    {% if profile.assessment_answers.risk_tolerance %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <p class="text-gray-500 mb-1">Risk Tolerance</p>
+                        <p class="text-gray-900 font-medium">
+                            {% if profile.assessment_answers.risk_tolerance == 'high' %}High
+                            {% elif profile.assessment_answers.risk_tolerance == 'moderate' %}Moderate
+                            {% else %}Low{% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% url 'jobs:job_list' %}"
+               class="inline-flex items-center justify-center px-8 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-full shadow-lg transition">
+                View My Matches
+                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+            </a>
+            <a href="{% url 'jobs:account' %}"
+               class="inline-flex items-center justify-center px-8 py-3 border border-gray-300 text-gray-700 font-medium rounded-full hover:bg-gray-50 transition">
+                Back to Dashboard
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

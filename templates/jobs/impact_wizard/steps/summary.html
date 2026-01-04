@@ -1,0 +1,128 @@
+<!-- Step 9: Summary -->
+<div>
+    <div class="text-center mb-8">
+        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+        </div>
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+            Here's Your Impact Profile!
+        </h2>
+        <p class="text-gray-600">Review your profile and start finding your perfect match</p>
+    </div>
+
+    <!-- Profile Summary Card -->
+    <div class="bg-gray-50 rounded-2xl p-6 mb-8 space-y-6">
+
+        <!-- Impact Areas -->
+        <div>
+            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span class="text-xl">🎯</span> Top Causes
+            </h4>
+            <div class="flex flex-wrap gap-2">
+                {% for area in selected_areas %}
+                <span class="inline-block px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-full">
+                    {{ area.icon|default:"" }} {{ area.name }}
+                </span>
+                {% empty %}
+                <span class="text-gray-400 text-sm">None selected</span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Skills -->
+        <div>
+            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span class="text-xl">💪</span> Superpowers
+            </h4>
+            <div class="flex flex-wrap gap-2">
+                {% for skill in skill_labels|slice:":8" %}
+                <span class="inline-block px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-full">
+                    {{ skill }}
+                </span>
+                {% empty %}
+                <span class="text-gray-400 text-sm">None selected</span>
+                {% endfor %}
+                {% if skill_labels|length > 8 %}
+                <span class="inline-block px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-full">
+                    +{{ skill_labels|length|add:"-8" }} more
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Preferences -->
+        <div>
+            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span class="text-xl">📍</span> Seeking
+            </h4>
+            <div class="flex flex-wrap gap-3 text-sm text-gray-700">
+                {% if profile.remote_preference %}
+                <span class="flex items-center gap-1">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                    {{ profile.get_remote_preference_display }}
+                </span>
+                {% endif %}
+                {% if profile.job_types %}
+                <span>•</span>
+                <span>{{ profile.job_types|join:", "|title }}</span>
+                {% endif %}
+                {% if profile.salary_min and profile.salary_max %}
+                <span>•</span>
+                <span>${{ profile.salary_min|floatformat:0 }}k - ${{ profile.salary_max|floatformat:0 }}k</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Work Style & Experience -->
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Style</h4>
+                <p class="text-gray-700">{{ profile.get_work_style_display|default:"Not set" }}</p>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Experience</h4>
+                <p class="text-gray-700">{{ profile.get_experience_level_display|default:"Not set" }}</p>
+            </div>
+        </div>
+
+        <!-- Story -->
+        {% if profile.impact_statement %}
+        <div>
+            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span class="text-xl">✨</span> Your Story
+            </h4>
+            <p class="text-gray-700 italic">"{{ profile.impact_statement }}"</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <form hx-post="{% url 'jobs:impact_wizard_step' 'summary' %}"
+          hx-target="#wizard-content"
+          hx-swap="innerHTML">
+        {% csrf_token %}
+
+        <div class="flex justify-between items-center pt-4 border-t border-gray-100">
+            <a href="{% url 'jobs:impact_wizard_step' 'assessment' %}"
+               hx-get="{% url 'jobs:impact_wizard_step' 'assessment' %}"
+               hx-target="#wizard-content"
+               hx-swap="innerHTML"
+               class="text-gray-500 hover:text-gray-700 font-medium">
+                <svg class="inline-block w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path>
+                </svg>
+                Back
+            </a>
+            <button type="submit"
+                    class="bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:-translate-y-0.5">
+                Find My Matches
+                <svg class="inline-block w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                </svg>
+            </button>
+        </div>
+    </form>
+</div>

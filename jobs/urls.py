@@ -31,6 +31,27 @@ urlpatterns = [
         views.OnboardingSeekerView.as_view(),
         name="onboarding_seeker",
     ),
+    # Impact Profile Wizard
+    path(
+        "impact-profile/wizard/",
+        views.ImpactWizardView.as_view(),
+        name="impact_wizard",
+    ),
+    path(
+        "impact-profile/wizard/<slug:step_slug>/",
+        views.ImpactWizardStepView.as_view(),
+        name="impact_wizard_step",
+    ),
+    path(
+        "impact-profile/wizard/<slug:step_slug>/skip/",
+        views.ImpactWizardSkipStepView.as_view(),
+        name="impact_wizard_skip",
+    ),
+    path(
+        "impact-profile/",
+        views.ImpactProfileView.as_view(),
+        name="impact_profile",
+    ),
     # Payment
     path(
         "payment/success/", views.PaymentSuccessView.as_view(), name="payment_success"

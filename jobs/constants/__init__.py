@@ -1,11 +1,7 @@
-"""
-Standard impact areas for job categorization.
+# Re-export from original constants module (now merged)
+# These are used by importers and LLM parser
 
-These are the canonical categories used across the platform.
-AI parsing maps job descriptions to one of these categories.
-"""
-
-# Standard impact areas - ordered by priority/commonality
+# Standard impact areas for job categorization
 IMPACT_AREAS = [
     {
         "slug": "ai-safety",
@@ -112,4 +108,17 @@ IMPACT_AREA_NAMES = [area["name"] for area in IMPACT_AREAS]
 # For AI prompt - formatted list with slugs
 IMPACT_AREAS_FOR_PROMPT = "\n".join(
     f"  - \"{area['slug']}\": {area['name']}" for area in IMPACT_AREAS
+)
+
+# Export skills module
+from .skills import (
+    SKILLS,
+    SKILL_CATEGORIES,
+    SKILLS_BY_SLUG,
+    SKILLS_BY_CATEGORY,
+    get_skill_label,
+    get_skills_for_category,
+    get_all_skill_choices,
+    get_categorized_skill_choices,
+    search_skills,
 )
