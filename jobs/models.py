@@ -151,6 +151,11 @@ class Job(models.Model):
         blank=True, help_text="Specific application instructions"
     )
 
+    # Skills extracted from job requirements (for matching)
+    skills = models.JSONField(
+        default=list, blank=True, help_text="AI-extracted skill slugs from job"
+    )
+
     source = models.CharField(
         max_length=50, choices=Source.choices, default=Source.MANUAL
     )

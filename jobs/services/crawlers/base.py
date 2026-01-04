@@ -375,6 +375,8 @@ async def crawl_jobs_async(
                         job.impact = e["impact"]
                     if e.get("benefits"):
                         job.benefits = e["benefits"]
+                    if e.get("skills") and isinstance(e["skills"], list):
+                        job.skills = e["skills"]
 
     # Save all jobs
     if not dry_run and jobs_to_save:

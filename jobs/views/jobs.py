@@ -7,10 +7,11 @@ from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 
-from ..models import Job, Category
+from ..models import Job, Category, SeekerProfile
 from ..forms import JobSubmissionForm
 from ..services.job_service import JobService
 from ..services.payment_service import PaymentService
+from ..services.matching_service import MatchingService
 
 
 class JobListView(ListView):
@@ -32,6 +33,7 @@ class JobListView(ListView):
         context["current_category"] = current_category
         context["current_type"] = self.request.GET.get("type")
         context["search_query"] = self.request.GET.get("q", "")
+        context["sort"] = self.request.GET.get("sort", "")
 
         # Get category object for display
         if current_category:
@@ -62,6 +64,46 @@ class JobListView(ListView):
             "education_levels": ["High School", "Associate", "Bachelor's", "Master's", "PhD"],
         }
 
+        # Match scores for authenticated users with seeker profiles
+        context["match_scores"] = {}
+        context["seeker_profile"] = None
+        if self.request.user.is_authenticated:
+            try:
+                seeker = SeekerProfile.objects.get(user=self.request.user)
+                if seeker.wizard_completed:
+                    context["seeker_profile"] = seeker
+                    jobs = list(context.get("object_list", []))
+
+                    # Calculate match scores for all jobs
+                    for job in jobs:
+                        match = MatchingService.get_or_calculate_match(seeker, job)
+                        context["match_scores"][job.id] = match
+
+                    # Sort by match score if requested
+                    sort = self.request.GET.get("sort")
+                    if sort == "best-match":
+                        jobs.sort(
+                            key=lambda j: context["match_scores"].get(j.id, {}).get("total", 0),
+                            reverse=True
+                        )
+                        context["jobs"] = jobs
+                        context["object_list"] = jobs
+            except SeekerProfile.DoesNotExist:
+                pass
+
+        # Handle other sort options
+        sort = self.request.GET.get("sort")
+        if sort == "salary-high":
+            jobs = list(context.get("object_list", []))
+            jobs.sort(key=lambda j: j.salary_max or 0, reverse=True)
+            context["jobs"] = jobs
+            context["object_list"] = jobs
+        elif sort == "salary-low":
+            jobs = list(context.get("object_list", []))
+            jobs.sort(key=lambda j: j.salary_min or float("inf"))
+            context["jobs"] = jobs
+            context["object_list"] = jobs
+
         return context
 
 
@@ -71,7 +113,26 @@ class JobDetailView(DetailView):
     context_object_name = "job"
 
     def get_queryset(self):
-        return Job.objects.filter(is_active=True).select_related("organization")
+        return Job.objects.filter(is_active=True).select_related("organization", "category")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Match score for authenticated users with seeker profiles
+        context["match_data"] = None
+        context["seeker_profile"] = None
+        if self.request.user.is_authenticated:
+            try:
+                seeker = SeekerProfile.objects.get(user=self.request.user)
+                if seeker.wizard_completed:
+                    context["seeker_profile"] = seeker
+                    context["match_data"] = MatchingService.get_or_calculate_match(
+                        seeker, self.object
+                    )
+            except SeekerProfile.DoesNotExist:
+                pass
+
+        return context
 
 
 class PostJobView(LoginRequiredMixin, FormView):

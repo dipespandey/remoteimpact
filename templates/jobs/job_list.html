@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load job_extras %}
 
 {% block title %}All Jobs - Remote Impact Jobs{% endblock %}
 
@@ -113,6 +114,17 @@
             <div>
                 Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} roles
             </div>
+            <div class="flex items-center gap-3">
+                <span class="text-white/50">Sort by:</span>
+                <select id="sort-select" name="sort" class="border border-white/10 bg-white/5 rounded-lg py-2 px-3 focus:ring-brand-300 focus:border-transparent text-white text-sm">
+                    <option value="" {% if not sort %}selected{% endif %}>Newest</option>
+                    {% if seeker_profile %}
+                    <option value="best-match" {% if sort == 'best-match' %}selected{% endif %}>Best match</option>
+                    {% endif %}
+                    <option value="salary-high" {% if sort == 'salary-high' %}selected{% endif %}>Salary (high to low)</option>
+                    <option value="salary-low" {% if sort == 'salary-low' %}selected{% endif %}>Salary (low to high)</option>
+                </select>
+            </div>
         </div>
 
         <section class="space-y-3 md:space-y-4">
@@ -155,7 +167,20 @@
                         {% endif %}
                     </div>
                     <div class="text-right text-white/70 text-xs md:text-sm flex flex-col gap-2 md:gap-3 justify-between items-end shrink-0">
+                        {% if match_scores and job.id in match_scores %}
+                        {% with match=match_scores|get_item:job.id %}
+                        <div class="flex items-center gap-1.5">
+                            <span class="px-2 py-1 md:px-3 md:py-1.5 rounded-full text-xs md:text-sm font-bold
+                                {% if match.total >= 80 %}bg-green-500/20 text-green-300 border border-green-400/30
+                                {% elif match.total >= 60 %}bg-yellow-500/20 text-yellow-300 border border-yellow-400/30
+                                {% else %}bg-gray-500/20 text-gray-300 border border-gray-400/30{% endif %}">
+                                {{ match.total }}% match
+                            </span>
+                        </div>
+                        {% endwith %}
+                        {% else %}
                         <span class="whitespace-nowrap">{{ job.posted_at|timesince|slice:":8" }}</span>
+                        {% endif %}
                         <a href="{{ job.get_absolute_url }}" class="text-neon font-semibold inline-flex items-center gap-1">
                             <span class="hidden sm:inline">Details</span>
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 5 7 7-7 7"/></svg>
@@ -202,6 +227,21 @@
             filtersSection.classList.toggle('hidden');
             filtersSection.classList.toggle('block');
             filterChevron.classList.toggle('rotate-180');
+        });
+    }
+
+    // Sort select handler
+    const sortSelect = document.getElementById('sort-select');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+            const url = new URL(window.location.href);
+            if (this.value) {
+                url.searchParams.set('sort', this.value);
+            } else {
+                url.searchParams.delete('sort');
+            }
+            url.searchParams.delete('page'); // Reset to first page on sort change
+            window.location.href = url.toString();
         });
     }
 </script>

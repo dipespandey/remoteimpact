@@ -24,6 +24,7 @@ from typing import Any
 
 from django.conf import settings
 from jobs.constants import IMPACT_AREAS_FOR_PROMPT
+from jobs.constants.skills import SKILLS_FOR_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -62,10 +63,16 @@ Choose the BEST match based on the organization's mission and role focus. Use "o
 
 12. **salary_currency**: Currency code like "USD", "EUR", "GBP", or null
 
+13. **skills**: Array of skill slugs required/preferred for this role. Select 3-10 from this list:
+{skills_list}
+
+Use exact slugs from the list. Only include skills explicitly mentioned or strongly implied by the requirements.
+
 ## GUIDELINES:
 - Format text sections as HTML (<p> for paragraphs, <ul>/<li> for lists)
 - Extract salary even if given as hourly/monthly (convert to annual)
 - For impact_area, consider the organization's PRIMARY focus, not the job function
+- For skills, focus on technical skills, tools, and domain expertise mentioned in requirements
 - Return valid JSON only
 
 Job Title: {title}
@@ -74,7 +81,7 @@ Organization: {organization}
 Raw Description:
 {description}
 
-Return JSON with keys: mission, profile, impact, benefits, about_org, impact_area, location, job_type, experience_level, salary_min, salary_max, salary_currency
+Return JSON with keys: mission, profile, impact, benefits, about_org, impact_area, location, job_type, experience_level, salary_min, salary_max, salary_currency, skills
 """
 
 # Provider configurations
@@ -158,6 +165,7 @@ class JobParser:
             organization=organization,
             description=description,
             impact_areas=IMPACT_AREAS_FOR_PROMPT,
+            skills_list=SKILLS_FOR_PROMPT,
         )
 
         async with self._semaphore:
@@ -198,6 +206,7 @@ class JobParser:
             organization=organization,
             description=description,
             impact_areas=IMPACT_AREAS_FOR_PROMPT,
+            skills_list=SKILLS_FOR_PROMPT,
         )
 
         async with self._semaphore:
@@ -335,6 +344,10 @@ class JobParser:
                 enriched["salary_max"] = parsed["salary_max"]
             if parsed.get("salary_currency") and not enriched.get("salary_currency"):
                 enriched["salary_currency"] = parsed["salary_currency"]
+
+            # Skills (for matching)
+            if parsed.get("skills") and isinstance(parsed["skills"], list):
+                enriched["skills"] = parsed["skills"]
 
         return enriched
 

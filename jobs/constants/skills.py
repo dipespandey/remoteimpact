@@ -261,3 +261,9 @@ def search_skills(query: str) -> List[Skill]:
     """Search skills by label (case-insensitive)."""
     query = query.lower()
     return [s for s in SKILLS if query in s.label.lower() or query in s.slug]
+
+
+# Format skills for LLM extraction prompt (used by llm_parser.py)
+SKILLS_FOR_PROMPT = "\n".join(
+    f"- {skill.slug}: {skill.label}" for skill in SKILLS
+)

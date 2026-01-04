@@ -5,6 +5,14 @@ from django.template.defaultfilters import linebreaks_filter
 register = template.Library()
 
 
+@register.filter(name="get_item")
+def get_item(dictionary, key):
+    """Get an item from a dictionary using a variable key."""
+    if dictionary is None:
+        return None
+    return dictionary.get(key)
+
+
 @register.filter(name="render_html")
 def render_html(value):
     """
