@@ -27,7 +27,7 @@
         </div>
 
         <!-- Skills by category (scrollable) -->
-        <div class="max-h-80 overflow-y-auto mb-6 space-y-6 pr-2" id="skills-container">
+        <div class="max-h-[50vh] md:max-h-96 overflow-y-auto mb-6 space-y-6 pr-2 scroll-smooth" id="skills-container">
             {% for category_label, skills in categorized_skills.items %}
             <div class="skill-category" data-category="{{ category_label|slugify }}">
                 <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">{{ category_label }}</h4>
@@ -106,8 +106,16 @@
         if (countEl) countEl.className = (count < 3 || count > 15) ? 'text-red-500' : 'text-gray-500';
     }
 
-    document.querySelectorAll('.skill-checkbox').forEach(function(cb) {
-        cb.addEventListener('change', updateCount);
+    // Prevent scroll jump when clicking labels
+    document.querySelectorAll('.skill-item').forEach(function(label) {
+        label.addEventListener('click', function(e) {
+            e.preventDefault();
+            var cb = this.querySelector('.skill-checkbox');
+            if (cb) {
+                cb.checked = !cb.checked;
+                updateCount();
+            }
+        });
     });
 
     updateCount();
