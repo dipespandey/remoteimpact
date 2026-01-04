@@ -171,9 +171,9 @@
                         {% with match=match_scores|get_item:job.id %}
                         <div class="flex items-center gap-1.5">
                             <span class="px-2 py-1 md:px-3 md:py-1.5 rounded-full text-xs md:text-sm font-bold
-                                {% if match.total >= 80 %}bg-green-500/20 text-green-300 border border-green-400/30
-                                {% elif match.total >= 60 %}bg-yellow-500/20 text-yellow-300 border border-yellow-400/30
-                                {% else %}bg-gray-500/20 text-gray-300 border border-gray-400/30{% endif %}">
+                                {% if match.total >= 80 %}bg-green-100 text-green-800 border border-green-300
+                                {% elif match.total >= 60 %}bg-yellow-100 text-yellow-800 border border-yellow-300
+                                {% else %}bg-gray-100 text-gray-700 border border-gray-300{% endif %}">
                                 {{ match.total }}% match
                             </span>
                         </div>
