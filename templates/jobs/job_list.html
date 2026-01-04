@@ -20,79 +20,91 @@
         </header>
 
         <form method="get" action="{% url 'jobs:job_list' %}" class="bg-card-gradient text-white rounded-2xl md:rounded-3xl border border-white/10 shadow-xl p-4 md:p-6 space-y-4 md:space-y-5 backdrop-blur">
-            <div class="flex flex-col md:flex-row gap-4">
+            <!-- Search bar - always visible -->
+            <div class="flex flex-col md:flex-row gap-3 md:gap-4">
                 <div class="flex-1 relative">
-                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-white/40">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m21 21-4.35-4.35m0 0A7.5 7.5 0 1 0 5.64 5.64 7.5 7.5 0 0 0 16.65 16.65Z"/></svg>
+                    <span class="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-white/40">
+                        <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m21 21-4.35-4.35m0 0A7.5 7.5 0 1 0 5.64 5.64 7.5 7.5 0 0 0 16.65 16.65Z"/></svg>
                     </span>
-                    <input type="text" name="q" value="{{ search_query|default:'' }}" placeholder="Search by keywords, team, mission..." class="w-full border border-white/10 bg-white/5 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-white/50 focus:ring-2 focus:ring-brand-300 focus:border-transparent">
+                    <input type="text" name="q" value="{{ search_query|default:'' }}" placeholder="Search keywords..." class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-3 md:py-4 pl-10 md:pl-12 pr-4 text-sm md:text-base text-white placeholder-white/50 focus:ring-2 focus:ring-brand-300 focus:border-transparent">
                 </div>
-                <button type="submit" class="px-6 py-3 rounded-2xl bg-brand-300 text-black-900 font-semibold hover:bg-neon transition shadow-glow">Search roles</button>
+                <div class="flex gap-2">
+                    <!-- Mobile filter toggle -->
+                    <button type="button" id="filter-toggle-btn" class="md:hidden flex-1 px-4 py-3 rounded-xl border border-white/20 text-white/80 font-medium text-sm flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75"/></svg>
+                        <span>Filters</span>
+                        <svg id="filter-chevron" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9-7 7-7-7"/></svg>
+                    </button>
+                    <button type="submit" class="flex-1 md:flex-none px-5 md:px-6 py-3 rounded-xl md:rounded-2xl bg-brand-300 text-gray-900 font-semibold text-sm md:text-base hover:bg-neon transition shadow-glow">Search</button>
+                </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                <div>
-                    <label class="text-white/70 font-medium mb-2 block">Areas</label>
-                    <select name="category" class="w-full border border-white/10 bg-white/5 rounded-2xl py-3 px-4 focus:ring-brand-300 focus:border-transparent text-white">
-                        <option value="">All areas</option>
-                        {% for category in categories %}
-                        <option value="{{ category.slug }}" {% if current_category == category.slug %}selected{% endif %}>{{ category.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="text-white/70 font-medium mb-2 block">Country / Region</label>
-                    <select name="country" class="w-full border border-white/10 bg-white/5 rounded-2xl py-3 px-4 focus:ring-brand-300 focus:border-transparent text-white">
-                        <option value="">Anywhere</option>
-                        {% for country in countries %}
-                        <option value="{{ country }}" {% if filters.country == country %}selected{% endif %}>{{ country }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="text-white/70 font-medium mb-2 block">Organisation</label>
-                    <select name="organization" class="w-full border border-white/10 bg-white/5 rounded-2xl py-3 px-4 focus:ring-brand-300 focus:border-transparent text-white">
-                        <option value="">All orgs</option>
-                        {% for org in organizations %}
-                        <option value="{{ org.name }}" {% if filters.organization == org.name %}selected{% endif %}>{{ org.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="text-white/70 font-medium mb-2 block">Annual salary (min)</label>
-                    <input type="number" name="salary_min" value="{{ filters.salary_min }}" placeholder="USD" class="w-full border border-white/10 bg-white/5 rounded-2xl py-3 px-4 focus:ring-brand-300 focus:border-transparent text-white placeholder-white/40">
-                </div>
-                <div>
-                    <label class="text-white/70 font-medium mb-2 block">Annual salary (max)</label>
-                    <input type="number" name="salary_max" value="{{ filters.salary_max }}" placeholder="USD" class="w-full border border-white/10 bg-white/5 rounded-2xl py-3 px-4 focus:ring-brand-300 focus:border-transparent text-white placeholder-white/40">
-                </div>
-                <div>
-                    <label class="text-white/70 font-medium mb-2 block">Experience</label>
-                    <select name="experience" class="w-full border border-white/10 bg-white/5 rounded-2xl py-3 px-4 focus:ring-brand-300 focus:border-transparent text-white">
-                        <option value="">Any</option>
-                        {% for level in knowledge_filters.experience_levels %}
-                        <option value="{{ level }}" {% if filters.experience == level %}selected{% endif %}>{{ level }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="text-white/70 font-medium mb-2 block">Education</label>
-                    <select name="education" class="w-full border border-white/10 bg-white/5 rounded-2xl py-3 px-4 focus:ring-brand-300 focus:border-transparent text-white">
-                        <option value="">Any</option>
-                        {% for level in knowledge_filters.education_levels %}
-                        <option value="{{ level }}" {% if filters.education == level %}selected{% endif %}>{{ level }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="text-white/70 font-medium mb-2 block">Role type</label>
-                    <select name="type" class="w-full border border-white/10 bg-white/5 rounded-2xl py-3 px-4 focus:ring-brand-300 focus:border-transparent text-white">
-                        <option value="">All</option>
-                        <option value="full-time" {% if current_type == 'full-time' %}selected{% endif %}>Full-time</option>
-                        <option value="part-time" {% if current_type == 'part-time' %}selected{% endif %}>Part-time</option>
-                        <option value="contract" {% if current_type == 'contract' %}selected{% endif %}>Contract</option>
-                        <option value="freelance" {% if current_type == 'freelance' %}selected{% endif %}>Freelance</option>
-                    </select>
+            <!-- Filters - collapsible on mobile -->
+            <div id="filters-section" class="hidden md:block">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 text-sm">
+                    <div>
+                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Areas</label>
+                        <select name="category" class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 focus:ring-brand-300 focus:border-transparent text-white text-sm">
+                            <option value="">All areas</option>
+                            {% for category in categories %}
+                            <option value="{{ category.slug }}" {% if current_category == category.slug %}selected{% endif %}>{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Country / Region</label>
+                        <select name="country" class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 focus:ring-brand-300 focus:border-transparent text-white text-sm">
+                            <option value="">Anywhere</option>
+                            {% for country in countries %}
+                            <option value="{{ country }}" {% if filters.country == country %}selected{% endif %}>{{ country }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Organisation</label>
+                        <select name="organization" class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 focus:ring-brand-300 focus:border-transparent text-white text-sm">
+                            <option value="">All orgs</option>
+                            {% for org in organizations %}
+                            <option value="{{ org.name }}" {% if filters.organization == org.name %}selected{% endif %}>{{ org.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Role type</label>
+                        <select name="type" class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 focus:ring-brand-300 focus:border-transparent text-white text-sm">
+                            <option value="">All</option>
+                            <option value="full-time" {% if current_type == 'full-time' %}selected{% endif %}>Full-time</option>
+                            <option value="part-time" {% if current_type == 'part-time' %}selected{% endif %}>Part-time</option>
+                            <option value="contract" {% if current_type == 'contract' %}selected{% endif %}>Contract</option>
+                            <option value="freelance" {% if current_type == 'freelance' %}selected{% endif %}>Freelance</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Salary (min)</label>
+                        <input type="number" name="salary_min" value="{{ filters.salary_min }}" placeholder="USD" class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 focus:ring-brand-300 focus:border-transparent text-white placeholder-white/40 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Salary (max)</label>
+                        <input type="number" name="salary_max" value="{{ filters.salary_max }}" placeholder="USD" class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 focus:ring-brand-300 focus:border-transparent text-white placeholder-white/40 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Experience</label>
+                        <select name="experience" class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 focus:ring-brand-300 focus:border-transparent text-white text-sm">
+                            <option value="">Any</option>
+                            {% for level in knowledge_filters.experience_levels %}
+                            <option value="{{ level }}" {% if filters.experience == level %}selected{% endif %}>{{ level }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Education</label>
+                        <select name="education" class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 focus:ring-brand-300 focus:border-transparent text-white text-sm">
+                            <option value="">Any</option>
+                            {% for level in knowledge_filters.education_levels %}
+                            <option value="{{ level }}" {% if filters.education == level %}selected{% endif %}>{{ level }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
             </div>
         </form>
@@ -176,4 +188,21 @@
         {% endif %}
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Filter toggle for mobile
+    const filterToggleBtn = document.getElementById('filter-toggle-btn');
+    const filtersSection = document.getElementById('filters-section');
+    const filterChevron = document.getElementById('filter-chevron');
+
+    if (filterToggleBtn && filtersSection) {
+        filterToggleBtn.addEventListener('click', function() {
+            filtersSection.classList.toggle('hidden');
+            filtersSection.classList.toggle('block');
+            filterChevron.classList.toggle('rotate-180');
+        });
+    }
+</script>
 {% endblock %}
