@@ -52,6 +52,11 @@ urlpatterns = [
         views.ImpactProfileView.as_view(),
         name="impact_profile",
     ),
+    path(
+        "my-matches/",
+        views.MyMatchesView.as_view(),
+        name="my_matches",
+    ),
     # Payment
     path(
         "payment/success/", views.PaymentSuccessView.as_view(), name="payment_success"

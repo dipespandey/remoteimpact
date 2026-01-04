@@ -155,3 +155,35 @@ class SaveJobView(LoginRequiredMixin, View):
     def post(self, request, slug):
         saved = JobService.toggle_save_job(request.user, slug)
         return JsonResponse({"saved": saved})
+
+
+class MyMatchesView(LoginRequiredMixin, ListView):
+    """Shows top matched jobs for the authenticated seeker."""
+
+    template_name = "jobs/my_matches.html"
+    context_object_name = "matches"
+
+    def get_queryset(self):
+        return []  # We'll populate in get_context_data
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        try:
+            seeker = SeekerProfile.objects.get(user=self.request.user)
+            if not seeker.wizard_completed:
+                context["needs_profile"] = True
+                return context
+
+            context["seeker_profile"] = seeker
+
+            # Get top 10 matches
+            matches = MatchingService.get_matches_for_seeker(
+                seeker, min_score=0, limit=10
+            )
+            context["matches"] = matches
+
+        except SeekerProfile.DoesNotExist:
+            context["needs_profile"] = True
+
+        return context

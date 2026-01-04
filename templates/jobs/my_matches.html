@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}My Top Matches - Remote Impact{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-[#F3F2EE] py-8 md:py-16">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Your Top Matches</h1>
+                <p class="text-gray-600 mt-1">Jobs ranked by how well they fit your Impact Profile</p>
+            </div>
+            <a href="{% url 'jobs:impact_profile' %}"
+               class="text-brand-600 hover:text-brand-700 font-medium flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Back to Profile
+            </a>
+        </div>
+
+        {% if needs_profile %}
+        <!-- No Profile CTA -->
+        <div class="bg-white rounded-2xl p-8 border border-gray-100 text-center">
+            <div class="text-5xl mb-4">🎯</div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Complete Your Impact Profile</h2>
+            <p class="text-gray-600 mb-6">Tell us about your skills, interests, and preferences to see personalized job matches.</p>
+            <a href="{% url 'jobs:impact_wizard' %}"
+               class="inline-flex items-center px-6 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-full transition">
+                Build Your Profile
+                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+            </a>
+        </div>
+
+        {% elif matches %}
+        <!-- Match List -->
+        <div class="space-y-4">
+            {% for match in matches %}
+            <div class="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition">
+                <div class="flex items-start justify-between gap-4">
+                    <!-- Job Info -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-3 mb-2">
+                            <!-- Match Score Badge -->
+                            <span class="px-3 py-1.5 rounded-full text-sm font-bold
+                                {% if match.total >= 80 %}bg-green-100 text-green-800 border border-green-300
+                                {% elif match.total >= 60 %}bg-yellow-100 text-yellow-800 border border-yellow-300
+                                {% else %}bg-gray-100 text-gray-700 border border-gray-300{% endif %}">
+                                {{ match.total }}% match
+                            </span>
+                            <span class="text-sm text-gray-500">#{{ forloop.counter }}</span>
+                        </div>
+
+                        <h3 class="text-xl font-bold text-gray-900 mb-1">
+                            <a href="{{ match.job.get_absolute_url }}" class="hover:text-brand-600 transition">
+                                {{ match.job.title }}
+                            </a>
+                        </h3>
+
+                        {% if match.job.organization %}
+                        <p class="text-gray-600 mb-3">{{ match.job.organization.name }}</p>
+                        {% endif %}
+
+                        <!-- Match Reasons -->
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            {% for reason in match.reasons %}
+                            <span class="inline-flex items-center text-xs text-green-700 bg-green-50 px-2 py-1 rounded-full">
+                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                {{ reason }}
+                            </span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Skill Gaps -->
+                        {% if match.gaps %}
+                        <div class="text-sm text-gray-500">
+                            <span class="font-medium">Skills to develop:</span>
+                            {{ match.gaps|join:", " }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Action -->
+                    <div class="shrink-0">
+                        <a href="{{ match.job.get_absolute_url }}"
+                           class="inline-flex items-center px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-full text-sm transition">
+                            View Job
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Score Breakdown (collapsible) -->
+                <details class="mt-4 pt-4 border-t border-gray-100">
+                    <summary class="text-sm text-gray-500 cursor-pointer hover:text-gray-700">View score breakdown</summary>
+                    <div class="mt-3 grid grid-cols-5 gap-2 text-center text-xs">
+                        <div class="bg-gray-50 rounded-lg p-2">
+                            <div class="font-bold text-gray-900">{{ match.breakdown.impact }}%</div>
+                            <div class="text-gray-500">Impact</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2">
+                            <div class="font-bold text-gray-900">{{ match.breakdown.skills }}%</div>
+                            <div class="text-gray-500">Skills</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2">
+                            <div class="font-bold text-gray-900">{{ match.breakdown.experience }}%</div>
+                            <div class="text-gray-500">Experience</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2">
+                            <div class="font-bold text-gray-900">{{ match.breakdown.location }}%</div>
+                            <div class="text-gray-500">Location</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-2">
+                            <div class="font-bold text-gray-900">{{ match.breakdown.salary }}%</div>
+                            <div class="text-gray-500">Salary</div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- View All Link -->
+        <div class="mt-8 text-center">
+            <a href="{% url 'jobs:job_list' %}?sort=best-match"
+               class="inline-flex items-center text-brand-600 hover:text-brand-700 font-medium">
+                View all jobs sorted by match
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+            </a>
+        </div>
+
+        {% else %}
+        <!-- No Matches -->
+        <div class="bg-white rounded-2xl p-8 border border-gray-100 text-center">
+            <div class="text-5xl mb-4">🔍</div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">No Matches Yet</h2>
+            <p class="text-gray-600 mb-6">We're still finding jobs that match your profile. Check back soon!</p>
+            <a href="{% url 'jobs:job_list' %}"
+               class="inline-flex items-center px-6 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-full transition">
+                Browse All Jobs
+            </a>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
