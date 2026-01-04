@@ -10,7 +10,7 @@
 # 1. Imports jobs from aggregator APIs (80000hours, idealist, reliefweb, climatebase, probablygood)
 # 2. Imports job URLs from Google Search (greenhouse, lever, ashby)
 # 3. Crawls the Google Search URLs to fetch full job details
-# 4. Uses Groq for AI parsing (free tier - good for daily incremental imports)
+# 4. Uses DeepSeek for AI parsing (cheapest option ~$0.10/day)
 #
 
 set -e
@@ -18,7 +18,7 @@ set -e
 # Configuration
 PROJECT_DIR="${PROJECT_DIR:-/path/to/remoteimpact}"
 USE_AI="${USE_AI:-true}"  # Default to using AI for daily imports
-AI_PROVIDER="${AI_PROVIDER:-groq}"  # Default to Groq (free tier)
+AI_PROVIDER="${AI_PROVIDER:-deepseek}"  # Default to DeepSeek (cheapest)
 LOG_DATE=$(date +%Y-%m-%d_%H-%M-%S)
 
 # Change to project directory
@@ -30,13 +30,13 @@ echo "Started: $(date)"
 echo "AI Provider: $AI_PROVIDER"
 echo "========================================"
 
-# Step 1: Import from aggregator APIs
+# Step 1: Import from aggregator APIs (new jobs only)
 echo ""
-echo "[Step 1/4] Importing from aggregator APIs..."
+echo "[Step 1/4] Importing from aggregator APIs (new only)..."
 if [ "$USE_AI" = "true" ]; then
-    uv run python manage.py import_remote_jobs --use-ai --provider "$AI_PROVIDER" --batch-size 5
+    uv run python manage.py import_remote_jobs --new-only --use-ai --provider "$AI_PROVIDER" --batch-size 20
 else
-    uv run python manage.py import_remote_jobs
+    uv run python manage.py import_remote_jobs --new-only
 fi
 
 # Step 2: Import job URLs from Google Search (if configured)
@@ -44,10 +44,14 @@ echo ""
 echo "[Step 2/4] Importing URLs from Google Search..."
 uv run python manage.py import_google_jobs --unified --num-results 100 2>/dev/null || echo "  (Skipped - Google Search not configured)"
 
-# Step 3: Crawl newly discovered jobs (uses APIs, no AI needed)
+# Step 3: Crawl newly discovered jobs with AI enrichment
 echo ""
 echo "[Step 3/4] Crawling job details from discovered URLs..."
-uv run python manage.py crawl_jobs --limit 200 2>/dev/null || echo "  (No pending jobs to crawl)"
+if [ "$USE_AI" = "true" ]; then
+    uv run python manage.py crawl_jobs --limit 200 --use-ai --provider "$AI_PROVIDER" 2>/dev/null || echo "  (No pending jobs to crawl)"
+else
+    uv run python manage.py crawl_jobs --limit 200 2>/dev/null || echo "  (No pending jobs to crawl)"
+fi
 
 # Step 4: Clean up expired/stale jobs
 echo ""
