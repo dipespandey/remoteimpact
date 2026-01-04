@@ -13,15 +13,12 @@
     </div>
     {% endif %}
 
-    <form id="skills-form"
-          hx-post="{% url 'jobs:impact_wizard_step' 'skills' %}"
-          hx-target="#wizard-content"
-          hx-swap="innerHTML"
-          hx-trigger="submit">
+    <!-- Using regular form, not HTMX, to avoid checkbox interaction issues -->
+    <form id="skills-form" method="post" action="{% url 'jobs:impact_wizard_step' 'skills' %}">
         {% csrf_token %}
 
         <!-- Search/filter -->
-        <div class="mb-6" hx-disable>
+        <div class="mb-6">
             <input type="text"
                    id="skill-search"
                    placeholder="Search skills..."
@@ -30,7 +27,7 @@
         </div>
 
         <!-- Skills by category (scrollable) -->
-        <div class="max-h-80 overflow-y-auto mb-6 space-y-6 pr-2" id="skills-container" hx-disable>
+        <div class="max-h-80 overflow-y-auto mb-6 space-y-6 pr-2" id="skills-container">
             {% for category_label, skills in categorized_skills.items %}
             <div class="skill-category" data-category="{{ category_label|slugify }}">
                 <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">{{ category_label }}</h4>
@@ -83,11 +80,9 @@
 
 <script>
 (function() {
-    // Search/filter functionality
     var searchInput = document.getElementById('skill-search');
     if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            e.stopPropagation();
+        searchInput.addEventListener('input', function() {
             var query = this.value.toLowerCase();
             document.querySelectorAll('.skill-item').forEach(function(item) {
                 var skill = item.getAttribute('data-skill') || '';
@@ -103,26 +98,18 @@
         });
     }
 
-    // Skill count update
     function updateCount() {
         var count = document.querySelectorAll('.skill-checkbox:checked').length;
-        var countEl = document.getElementById('skill-count');
         var countNum = document.getElementById('count-number');
+        var countEl = document.getElementById('skill-count');
         if (countNum) countNum.textContent = count;
-        if (countEl) {
-            countEl.className = (count < 3 || count > 15) ? 'text-red-500' : 'text-gray-500';
-        }
+        if (countEl) countEl.className = (count < 3 || count > 15) ? 'text-red-500' : 'text-gray-500';
     }
 
-    // Attach change listeners to all checkboxes
     document.querySelectorAll('.skill-checkbox').forEach(function(cb) {
-        cb.addEventListener('change', function(e) {
-            e.stopPropagation();
-            updateCount();
-        });
+        cb.addEventListener('change', updateCount);
     });
 
-    // Initial count
     updateCount();
 })();
 </script>

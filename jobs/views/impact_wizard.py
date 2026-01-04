@@ -83,6 +83,7 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
         """Process step submission and return next step."""
         profile = get_or_create_seeker_profile(request.user)
         step_index = self._get_step_index(step_slug)
+        is_htmx = request.headers.get("HX-Request")
 
         if step_index is None:
             return JsonResponse({"error": "Invalid step"}, status=400)
@@ -96,6 +97,12 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
             context = self._get_step_context(profile, step_index, current_step)
             context["errors"] = errors
             template = f"jobs/impact_wizard/steps/{step_slug.replace('-', '_')}.html"
+
+            # For non-HTMX requests, render full page
+            if not is_htmx:
+                return redirect(
+                    reverse("jobs:impact_wizard_step", kwargs={"step_slug": step_slug})
+                )
             return TemplateResponse(request, template, context)
 
         # Move to next step
@@ -108,7 +115,7 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
             profile.save()
 
             # Check if this is an HTMX request
-            if request.headers.get("HX-Request"):
+            if is_htmx:
                 response = TemplateResponse(
                     request,
                     "jobs/impact_wizard/steps/complete.html",
@@ -124,16 +131,20 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
 
         # Return next step
         next_step = WIZARD_STEPS[next_index]
+
+        # For non-HTMX requests (like skills form), redirect to wizard
+        if not is_htmx:
+            return redirect("jobs:impact_wizard")
+
         context = self._get_step_context(profile, next_index, next_step)
         template = f"jobs/impact_wizard/steps/{next_step['slug'].replace('-', '_')}.html"
 
         response = TemplateResponse(request, template, context)
 
         # Update URL for browser history
-        if request.headers.get("HX-Request"):
-            response["HX-Push-Url"] = reverse(
-                "jobs:impact_wizard_step", kwargs={"step_slug": next_step["slug"]}
-            )
+        response["HX-Push-Url"] = reverse(
+            "jobs:impact_wizard_step", kwargs={"step_slug": next_step["slug"]}
+        )
 
         return response
 
