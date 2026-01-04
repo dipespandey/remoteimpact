@@ -124,13 +124,13 @@ class MatchingService:
     def _calculate_text_similarity(seeker_keywords: set, job_keywords: set) -> float:
         """Calculate Jaccard-like similarity with boost for impact keywords."""
         if not seeker_keywords or not job_keywords:
-            return 0.0
+            return 20.0  # Base score even with no data
 
         # Find overlap
         overlap = seeker_keywords & job_keywords
 
         if not overlap:
-            return 0.0
+            return 20.0  # Minimum base score
 
         # Count impact keyword matches (weighted higher)
         impact_overlap = overlap & IMPACT_KEYWORDS
@@ -140,18 +140,17 @@ class MatchingService:
         weighted_overlap = len(regular_overlap) + (len(impact_overlap) * 2)
 
         # Use seeker keywords as denominator (what % of seeker interests are in job)
-        # This rewards jobs that contain what the seeker cares about
         similarity = weighted_overlap / (len(seeker_keywords) + 1)
 
         # Also consider what % of job keywords match (but lower weight)
         job_coverage = len(overlap) / (len(job_keywords) + 1)
 
-        # Combine: 70% seeker coverage, 30% job coverage
-        combined = (similarity * 0.7) + (job_coverage * 0.3)
+        # Combine: 60% seeker coverage, 40% job coverage
+        combined = (similarity * 0.6) + (job_coverage * 0.4)
 
-        # Scale to 0-100 with a reasonable max
-        # Typical good matches will have 0.1-0.3 combined score
-        score = min(100, combined * 300)
+        # Scale to 0-100 - boost the multiplier for better spread
+        # Add base score of 20 and scale the rest
+        score = 20 + min(80, combined * 400)
 
         return score
 
@@ -253,7 +252,7 @@ class MatchingService:
     def _score_impact_area(seeker: SeekerProfile, job: Job, reasons: list) -> int:
         """Score based on impact area alignment."""
         if not job.category:
-            return 30  # Low score if no category (penalize unknown)
+            return 40  # Neutral if no category
 
         seeker_areas = set(seeker.impact_areas.values_list("slug", flat=True))
 
@@ -266,8 +265,8 @@ class MatchingService:
             reasons.append(f"{job.category.name} matches your focus")
             return 100
         else:
-            # No match - low score to create variance
-            return 20
+            # No match - but not a hard penalty, some jobs may still be relevant
+            return 35
 
     @staticmethod
     def _score_skills(
@@ -277,7 +276,19 @@ class MatchingService:
         seeker_skills = set(seeker.skills or [])
 
         if not seeker_skills:
-            return 40, []  # No skills = low score
+            return 40, []  # No skills = neutral score
+
+        # Build seeker skill labels for keyword matching
+        seeker_skill_labels = set()
+        seeker_skill_words = set()
+        for slug in seeker_skills:
+            skill = SKILLS_BY_SLUG.get(slug)
+            if skill:
+                seeker_skill_labels.add(skill.label.lower())
+                # Also add individual words from multi-word skills
+                for word in skill.label.lower().split():
+                    if len(word) >= 3:
+                        seeker_skill_words.add(word)
 
         # Get job skills from stored data or extract from text
         job_skills = set()
@@ -291,28 +302,23 @@ class MatchingService:
         extracted_skills = MatchingService._extract_skills_from_text(job_text)
         job_skills.update(extracted_skills)
 
+        # Always do keyword matching as primary/fallback method
+        # Check how many seeker skill words appear in job keywords
+        keyword_matches = len(seeker_skill_words & job_keywords)
+
         if not job_skills:
-            # No job skills found - use keyword matching as fallback
-            seeker_skill_labels = set()
-            for slug in seeker_skills:
-                skill = SKILLS_BY_SLUG.get(slug)
-                if skill:
-                    seeker_skill_labels.add(skill.label.lower())
-
-            # Check how many seeker skill labels appear in job keywords
-            matches = sum(1 for label in seeker_skill_labels if any(
-                word in job_keywords for word in label.split()
-            ))
-
-            if matches >= 3:
-                reasons.append(f"{matches}+ skills mentioned")
-                return 80, []
-            elif matches >= 1:
-                reasons.append(f"Some skills match")
-                return 60, []
+            # No structured job skills found - use keyword matching only
+            if keyword_matches >= 5:
+                reasons.append(f"Skills keywords found")
+                return 85, []
+            elif keyword_matches >= 3:
+                reasons.append(f"Some skills mentioned")
+                return 70, []
+            elif keyword_matches >= 1:
+                return 55, []
             return 40, []
 
-        # Calculate overlap
+        # Calculate structured skill overlap
         overlap = seeker_skills & job_skills
         missing = job_skills - seeker_skills
 
@@ -321,7 +327,15 @@ class MatchingService:
         else:
             match_ratio = 0.5
 
+        # Base score from structured match
         score = int(match_ratio * 100)
+
+        # Boost from keyword matches if structured match is low
+        if score < 50 and keyword_matches >= 2:
+            score = max(score, 50 + keyword_matches * 5)
+
+        # Minimum score of 35 (some transferable skills likely)
+        score = max(35, score)
 
         # Boost if we have multiple matches
         if len(overlap) >= 5:
@@ -329,6 +343,8 @@ class MatchingService:
 
         if len(overlap) > 0:
             reasons.append(f"{len(overlap)} of {len(job_skills)} skills match")
+        elif keyword_matches >= 2:
+            reasons.append(f"Related skills found")
 
         # Convert missing skill slugs to labels for gaps
         gaps = []
