@@ -45,12 +45,17 @@ class ImpactWizardView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         profile = get_or_create_seeker_profile(request.user)
 
-        # If wizard already completed, go to dashboard
-        if profile.wizard_completed:
-            return redirect("jobs:account")
+        # Allow editing with ?edit=true, otherwise redirect if completed
+        edit_mode = request.GET.get("edit") == "true"
+        if profile.wizard_completed and not edit_mode:
+            return redirect("jobs:impact_profile")
 
-        # Resume from last step
-        step_index = min(profile.wizard_step, len(WIZARD_STEPS) - 1)
+        # In edit mode, start from beginning; otherwise resume from last step
+        if edit_mode:
+            step_index = 1  # Skip welcome, go straight to impact-areas
+        else:
+            step_index = min(profile.wizard_step, len(WIZARD_STEPS) - 1)
+
         current_step = WIZARD_STEPS[step_index]
 
         context = self.get_context_data(
@@ -58,6 +63,7 @@ class ImpactWizardView(LoginRequiredMixin, TemplateView):
             current_step=current_step,
             step_index=step_index,
             steps=WIZARD_STEPS,
+            edit_mode=edit_mode,
         )
         return self.render_to_response(context)
 
