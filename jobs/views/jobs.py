@@ -64,34 +64,17 @@ class JobListView(ListView):
             "education_levels": ["High School", "Associate", "Bachelor's", "Master's", "PhD"],
         }
 
-        # Match scores for authenticated users with seeker profiles
-        context["match_scores"] = {}
+        # Check if user has seeker profile for showing "My Matches" link
         context["seeker_profile"] = None
         if self.request.user.is_authenticated:
             try:
                 seeker = SeekerProfile.objects.get(user=self.request.user)
                 if seeker.wizard_completed:
                     context["seeker_profile"] = seeker
-                    jobs = list(context.get("object_list", []))
-
-                    # Calculate match scores for all jobs
-                    for job in jobs:
-                        match = MatchingService.get_or_calculate_match(seeker, job)
-                        context["match_scores"][job.id] = match
-
-                    # Sort by match score if requested
-                    sort = self.request.GET.get("sort")
-                    if sort == "best-match":
-                        jobs.sort(
-                            key=lambda j: context["match_scores"].get(j.id, {}).get("total", 0),
-                            reverse=True
-                        )
-                        context["jobs"] = jobs
-                        context["object_list"] = jobs
             except SeekerProfile.DoesNotExist:
                 pass
 
-        # Handle other sort options
+        # Handle sort options
         sort = self.request.GET.get("sort")
         if sort == "salary-high":
             jobs = list(context.get("object_list", []))

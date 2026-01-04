@@ -1,15 +1,18 @@
 """
 Matching Service for Impact Match.
 
-Calculates match scores between SeekerProfiles and Jobs.
+Calculates match scores between SeekerProfiles and Jobs using text similarity
+and structured data matching.
+
 Scoring weights:
-- Impact area alignment: 25%
-- Skills match: 30%
-- Experience level: 20%
-- Location/Remote: 15%
-- Salary fit: 10%
+- Text Relevance: 35% (keyword overlap between profile & job)
+- Impact Area: 25% (category alignment)
+- Skills Match: 20% (extracted skills comparison)
+- Experience Level: 10% (level compatibility)
+- Work Style: 10% (role type matching)
 """
 
+import re
 from typing import Optional
 from django.db.models import QuerySet
 
@@ -17,27 +20,140 @@ from jobs.models import Job, SeekerProfile, JobMatch, Category
 from jobs.constants.skills import SKILLS_BY_SLUG
 
 
-# Experience level compatibility matrix
-# Key: seeker level, Value: list of compatible job levels (inferred from title/description)
-EXPERIENCE_COMPATIBILITY = {
-    "early": ["entry", "junior", "associate", "early"],
-    "mid": ["mid", "intermediate", "associate", "senior"],
-    "senior": ["senior", "lead", "staff", "principal", "mid"],
-    "leadership": ["director", "head", "vp", "chief", "manager", "lead", "senior"],
-    "career_changer": ["entry", "junior", "associate", "mid", "early"],  # Flexible
+# Stopwords to filter out common words
+STOPWORDS = {
+    "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for", "of",
+    "with", "by", "from", "is", "are", "was", "were", "be", "been", "being",
+    "have", "has", "had", "do", "does", "did", "will", "would", "could", "should",
+    "may", "might", "must", "shall", "can", "need", "dare", "ought", "used",
+    "this", "that", "these", "those", "i", "you", "he", "she", "it", "we", "they",
+    "what", "which", "who", "whom", "where", "when", "why", "how", "all", "each",
+    "every", "both", "few", "more", "most", "other", "some", "such", "no", "nor",
+    "not", "only", "own", "same", "so", "than", "too", "very", "just", "also",
+    "now", "here", "there", "then", "once", "if", "because", "as", "until",
+    "while", "about", "against", "between", "into", "through", "during", "before",
+    "after", "above", "below", "up", "down", "out", "off", "over", "under", "again",
+    "further", "any", "our", "your", "their", "its", "my", "his", "her",
+    "work", "job", "role", "position", "team", "company", "organization", "experience",
+    "looking", "seeking", "join", "opportunity", "responsibilities", "requirements",
+    "qualifications", "skills", "ability", "strong", "excellent", "good", "great",
+    "well", "year", "years", "including", "within", "across", "ensure", "support",
+    "help", "make", "take", "get", "give", "use", "new", "first", "last", "long",
+    "little", "own", "other", "old", "right", "big", "high", "different", "small",
+    "large", "next", "early", "young", "important", "public", "bad", "same",
 }
 
-# Keywords that indicate experience level in job titles/descriptions
+# Impact-related keywords that boost relevance
+IMPACT_KEYWORDS = {
+    "climate", "environment", "sustainability", "carbon", "renewable", "energy",
+    "ai", "artificial", "intelligence", "machine", "learning", "safety", "alignment",
+    "health", "medical", "healthcare", "disease", "public", "global",
+    "poverty", "development", "economic", "equality", "equity", "justice",
+    "education", "learning", "teaching", "students", "schools",
+    "policy", "government", "advocacy", "nonprofit", "ngo", "philanthropy",
+    "animal", "welfare", "rights", "protection",
+    "research", "science", "data", "analysis", "evidence",
+    "social", "community", "humanitarian", "impact", "mission", "purpose",
+    "effective", "altruism", "giving", "charity", "donation",
+}
+
+# Work style keywords mapping
+WORK_STYLE_KEYWORDS = {
+    "builder": [
+        "engineer", "developer", "software", "product", "design", "build", "create",
+        "architect", "technical", "code", "programming", "frontend", "backend",
+        "fullstack", "devops", "infrastructure", "platform", "ux", "ui",
+    ],
+    "strategist": [
+        "strategy", "communications", "marketing", "policy", "advocacy", "campaigns",
+        "partnerships", "business", "development", "growth", "brand", "content",
+        "storytelling", "media", "pr", "public", "relations", "outreach",
+    ],
+    "operator": [
+        "operations", "ops", "finance", "hr", "human", "resources", "admin",
+        "administrative", "logistics", "procurement", "legal", "compliance",
+        "accounting", "payroll", "office", "facilities", "coordinator",
+    ],
+    "direct": [
+        "program", "project", "field", "service", "delivery", "implementation",
+        "community", "outreach", "engagement", "training", "facilitation",
+        "volunteer", "case", "management", "social", "worker",
+    ],
+    "researcher": [
+        "research", "analyst", "analysis", "data", "scientist", "quantitative",
+        "qualitative", "evaluation", "assessment", "study", "survey", "statistics",
+        "modeling", "insights", "intelligence", "academic",
+    ],
+}
+
+# Experience level compatibility
+EXPERIENCE_COMPATIBILITY = {
+    "early": ["entry", "junior", "associate", "early", "graduate", "intern"],
+    "mid": ["mid", "intermediate", "associate", "senior"],
+    "senior": ["senior", "lead", "staff", "principal", "mid"],
+    "leadership": ["director", "head", "vp", "chief", "manager", "lead", "senior", "executive"],
+    "career_changer": ["entry", "junior", "associate", "mid", "early"],
+}
+
 LEVEL_KEYWORDS = {
-    "entry": ["entry", "junior", "graduate", "intern", "trainee"],
-    "mid": ["mid-level", "intermediate", "associate"],
-    "senior": ["senior", "lead", "staff", "principal", "sr.", "sr "],
-    "leadership": ["director", "head of", "vp", "chief", "manager", "cto", "ceo", "coo"],
+    "entry": ["entry", "junior", "graduate", "intern", "trainee", "early career"],
+    "mid": ["mid-level", "mid level", "intermediate", "associate", "2-5 years", "3-5 years"],
+    "senior": ["senior", "lead", "staff", "principal", "sr.", "sr ", "5+ years", "7+ years"],
+    "leadership": ["director", "head of", "vp", "chief", "manager", "cto", "ceo", "coo", "executive"],
 }
 
 
 class MatchingService:
     """Service for calculating match scores between seekers and jobs."""
+
+    @staticmethod
+    def _extract_keywords(text: str) -> set:
+        """Extract meaningful keywords from text."""
+        if not text:
+            return set()
+
+        # Lowercase and extract words
+        text = text.lower()
+        words = re.findall(r'\b[a-z]{3,}\b', text)
+
+        # Filter stopwords and short words
+        keywords = {w for w in words if w not in STOPWORDS and len(w) >= 3}
+        return keywords
+
+    @staticmethod
+    def _calculate_text_similarity(seeker_keywords: set, job_keywords: set) -> float:
+        """Calculate Jaccard-like similarity with boost for impact keywords."""
+        if not seeker_keywords or not job_keywords:
+            return 0.0
+
+        # Find overlap
+        overlap = seeker_keywords & job_keywords
+
+        if not overlap:
+            return 0.0
+
+        # Count impact keyword matches (weighted higher)
+        impact_overlap = overlap & IMPACT_KEYWORDS
+        regular_overlap = overlap - IMPACT_KEYWORDS
+
+        # Weighted overlap: impact keywords count 2x
+        weighted_overlap = len(regular_overlap) + (len(impact_overlap) * 2)
+
+        # Use seeker keywords as denominator (what % of seeker interests are in job)
+        # This rewards jobs that contain what the seeker cares about
+        similarity = weighted_overlap / (len(seeker_keywords) + 1)
+
+        # Also consider what % of job keywords match (but lower weight)
+        job_coverage = len(overlap) / (len(job_keywords) + 1)
+
+        # Combine: 70% seeker coverage, 30% job coverage
+        combined = (similarity * 0.7) + (job_coverage * 0.3)
+
+        # Scale to 0-100 with a reasonable max
+        # Typical good matches will have 0.1-0.3 combined score
+        score = min(100, combined * 300)
+
+        return score
 
     @staticmethod
     def calculate_match(seeker: SeekerProfile, job: Job) -> dict:
@@ -46,7 +162,7 @@ class MatchingService:
 
         Returns dict with:
         - total: overall score 0-100
-        - breakdown: {impact, skills, experience, location, salary}
+        - breakdown: {relevance, impact, skills, experience, work_style}
         - reasons: list of match reasons
         - gaps: list of skill gaps
         """
@@ -54,78 +170,147 @@ class MatchingService:
         reasons = []
         gaps = []
 
-        # 1. Impact Area Alignment (25%)
+        # Build seeker text profile
+        seeker_text_parts = []
+        if seeker.impact_statement:
+            seeker_text_parts.append(seeker.impact_statement)
+        if seeker.skills:
+            # Convert skill slugs to labels
+            for slug in seeker.skills:
+                skill = SKILLS_BY_SLUG.get(slug)
+                if skill:
+                    seeker_text_parts.append(skill.label)
+                else:
+                    seeker_text_parts.append(slug.replace("-", " "))
+        # Add impact areas
+        for area in seeker.impact_areas.all():
+            seeker_text_parts.append(area.name)
+
+        seeker_text = " ".join(seeker_text_parts)
+        seeker_keywords = MatchingService._extract_keywords(seeker_text)
+
+        # Build job text profile
+        job_text = f"{job.title} {job.description or ''} {job.requirements or ''}"
+        job_keywords = MatchingService._extract_keywords(job_text)
+
+        # 1. Text Relevance (35%)
+        scores["relevance"] = MatchingService._score_text_relevance(
+            seeker_keywords, job_keywords, reasons
+        )
+
+        # 2. Impact Area Alignment (25%)
         scores["impact"] = MatchingService._score_impact_area(seeker, job, reasons)
 
-        # 2. Skills Match (30%)
-        scores["skills"], skill_gaps = MatchingService._score_skills(seeker, job, reasons)
+        # 3. Skills Match (20%)
+        scores["skills"], skill_gaps = MatchingService._score_skills(
+            seeker, job, job_keywords, reasons
+        )
         gaps.extend(skill_gaps)
 
-        # 3. Experience Level (20%)
+        # 4. Experience Level (10%)
         scores["experience"] = MatchingService._score_experience(seeker, job, reasons)
 
-        # 4. Location/Remote (15%)
-        scores["location"] = MatchingService._score_location(seeker, job, reasons)
-
-        # 5. Salary Fit (10%)
-        scores["salary"] = MatchingService._score_salary(seeker, job, reasons)
+        # 5. Work Style (10%)
+        scores["work_style"] = MatchingService._score_work_style(
+            seeker, job_keywords, reasons
+        )
 
         # Calculate weighted total
         total = (
-            scores["impact"] * 0.25
-            + scores["skills"] * 0.30
-            + scores["experience"] * 0.20
-            + scores["location"] * 0.15
-            + scores["salary"] * 0.10
+            scores["relevance"] * 0.35
+            + scores["impact"] * 0.25
+            + scores["skills"] * 0.20
+            + scores["experience"] * 0.10
+            + scores["work_style"] * 0.10
         )
+
+        # Apply boost for high relevance matches
+        if scores["relevance"] >= 70 and scores["impact"] >= 80:
+            total = min(100, total * 1.1)  # 10% boost for strong matches
 
         return {
             "total": round(total),
             "breakdown": scores,
-            "reasons": reasons,
-            "gaps": gaps[:5],  # Top 5 gaps only
+            "reasons": reasons[:5],  # Top 5 reasons
+            "gaps": gaps[:5],
         }
+
+    @staticmethod
+    def _score_text_relevance(seeker_keywords: set, job_keywords: set, reasons: list) -> int:
+        """Score based on text similarity between seeker profile and job."""
+        score = MatchingService._calculate_text_similarity(seeker_keywords, job_keywords)
+
+        if score >= 70:
+            reasons.append("Strong keyword match with your profile")
+        elif score >= 50:
+            reasons.append("Good alignment with your interests")
+        elif score >= 30:
+            reasons.append("Some overlap with your background")
+
+        return int(score)
 
     @staticmethod
     def _score_impact_area(seeker: SeekerProfile, job: Job, reasons: list) -> int:
         """Score based on impact area alignment."""
         if not job.category:
-            return 50  # Neutral if no category
+            return 30  # Low score if no category (penalize unknown)
 
         seeker_areas = set(seeker.impact_areas.values_list("slug", flat=True))
+
+        if not seeker_areas:
+            return 50  # Neutral if seeker has no preference
+
         job_category_slug = job.category.slug
 
         if job_category_slug in seeker_areas:
-            reasons.append(f"{job.category.name} matches your interests")
+            reasons.append(f"{job.category.name} matches your focus")
             return 100
-        elif seeker_areas:
-            # Partial match - check for related areas
-            return 40
         else:
-            return 50  # No preference set
+            # No match - low score to create variance
+            return 20
 
     @staticmethod
-    def _score_skills(seeker: SeekerProfile, job: Job, reasons: list) -> tuple[int, list]:
+    def _score_skills(
+        seeker: SeekerProfile, job: Job, job_keywords: set, reasons: list
+    ) -> tuple[int, list]:
         """Score based on skills match. Returns (score, gaps)."""
         seeker_skills = set(seeker.skills or [])
 
-        # Get job skills from raw_data or extracted skills
+        if not seeker_skills:
+            return 40, []  # No skills = low score
+
+        # Get job skills from stored data or extract from text
         job_skills = set()
         if hasattr(job, "skills") and job.skills:
             job_skills = set(job.skills)
         elif job.raw_data and isinstance(job.raw_data, dict):
             job_skills = set(job.raw_data.get("skills", []))
 
-        # Also try to extract skills from requirements text
-        if not job_skills and job.requirements:
-            job_skills = MatchingService._extract_skills_from_text(job.requirements)
+        # Also extract skills from job text
+        job_text = f"{job.title} {job.description or ''} {job.requirements or ''}"
+        extracted_skills = MatchingService._extract_skills_from_text(job_text)
+        job_skills.update(extracted_skills)
 
         if not job_skills:
-            # No job skills to match against
-            if seeker_skills:
-                reasons.append("Your skills look relevant")
-                return 70, []
-            return 50, []
+            # No job skills found - use keyword matching as fallback
+            seeker_skill_labels = set()
+            for slug in seeker_skills:
+                skill = SKILLS_BY_SLUG.get(slug)
+                if skill:
+                    seeker_skill_labels.add(skill.label.lower())
+
+            # Check how many seeker skill labels appear in job keywords
+            matches = sum(1 for label in seeker_skill_labels if any(
+                word in job_keywords for word in label.split()
+            ))
+
+            if matches >= 3:
+                reasons.append(f"{matches}+ skills mentioned")
+                return 80, []
+            elif matches >= 1:
+                reasons.append(f"Some skills match")
+                return 60, []
+            return 40, []
 
         # Calculate overlap
         overlap = seeker_skills & job_skills
@@ -138,8 +323,12 @@ class MatchingService:
 
         score = int(match_ratio * 100)
 
+        # Boost if we have multiple matches
+        if len(overlap) >= 5:
+            score = min(100, score + 10)
+
         if len(overlap) > 0:
-            reasons.append(f"{len(overlap)} of {len(job_skills)} required skills")
+            reasons.append(f"{len(overlap)} of {len(job_skills)} skills match")
 
         # Convert missing skill slugs to labels for gaps
         gaps = []
@@ -172,7 +361,7 @@ class MatchingService:
     def _score_experience(seeker: SeekerProfile, job: Job, reasons: list) -> int:
         """Score based on experience level match."""
         if not seeker.experience_level:
-            return 50  # No preference
+            return 50  # Neutral if no preference
 
         # Infer job level from title and description
         job_level = MatchingService._infer_job_level(job)
@@ -180,19 +369,19 @@ class MatchingService:
         compatible_levels = EXPERIENCE_COMPATIBILITY.get(seeker.experience_level, [])
 
         if job_level in compatible_levels:
-            reasons.append(f"{seeker.get_experience_level_display()} level matches")
+            reasons.append(f"Experience level matches")
             return 100
         elif job_level:
-            # Some match but not ideal
-            return 60
+            # Mismatch
+            return 30
         else:
-            # Can't determine job level
-            return 70
+            # Can't determine job level - neutral
+            return 60
 
     @staticmethod
     def _infer_job_level(job: Job) -> Optional[str]:
         """Infer experience level required from job title/description."""
-        text = f"{job.title} {job.description[:500]}".lower()
+        text = f"{job.title} {(job.description or '')[:500]}".lower()
 
         for level, keywords in LEVEL_KEYWORDS.items():
             for keyword in keywords:
@@ -202,69 +391,29 @@ class MatchingService:
         return None
 
     @staticmethod
-    def _score_location(seeker: SeekerProfile, job: Job, reasons: list) -> int:
-        """Score based on location/remote preference match."""
-        # All jobs on this board are remote, so check remote preference
-        job_location = (job.location or "").lower()
+    def _score_work_style(seeker: SeekerProfile, job_keywords: set, reasons: list) -> int:
+        """Score based on work style match."""
+        if not seeker.work_style:
+            return 50  # Neutral if no preference
 
-        if not seeker.remote_preference:
-            return 80  # No preference, assume OK
+        style_keywords = WORK_STYLE_KEYWORDS.get(seeker.work_style, [])
 
-        if seeker.remote_preference == "remote":
-            if "remote" in job_location:
-                reasons.append("Fully remote")
-                return 100
-            return 70
+        if not style_keywords:
+            return 50
 
-        if seeker.remote_preference == "hybrid":
-            if "hybrid" in job_location or "flexible" in job_location:
-                reasons.append("Hybrid work available")
-                return 100
-            if "remote" in job_location:
-                return 80
+        # Count how many work style keywords appear in job
+        matches = sum(1 for kw in style_keywords if kw in job_keywords)
+
+        if matches >= 5:
+            reasons.append(f"Great fit for your work style")
+            return 100
+        elif matches >= 3:
+            reasons.append(f"Aligns with your work style")
+            return 80
+        elif matches >= 1:
             return 60
-
-        if seeker.remote_preference == "onsite":
-            if "onsite" in job_location or "office" in job_location:
-                reasons.append("On-site position")
-                return 100
-            return 50
-
-        # "flexible" preference
-        reasons.append("Remote work available")
-        return 90
-
-    @staticmethod
-    def _score_salary(seeker: SeekerProfile, job: Job, reasons: list) -> int:
-        """Score based on salary fit."""
-        if not seeker.salary_min and not seeker.salary_max:
-            return 70  # No preference
-
-        if not job.salary_min and not job.salary_max:
-            return 60  # Can't determine
-
-        job_min = float(job.salary_min or 0)
-        job_max = float(job.salary_max or job_min)
-        seeker_min = float(seeker.salary_min or 0)
-        seeker_max = float(seeker.salary_max or seeker_min * 1.5)
-
-        # Check for overlap
-        if job_max < seeker_min:
-            # Job pays less than seeker wants
-            diff_pct = ((seeker_min - job_max) / seeker_min) * 100
-            if diff_pct > 20:
-                return 30
-            reasons.append(f"Salary range is {int(diff_pct)}% below target")
-            return 50
-
-        if job_min > seeker_max:
-            # Job pays more (this is usually fine)
-            reasons.append("Salary exceeds your range")
-            return 90
-
-        # Overlap exists
-        reasons.append("Salary range matches")
-        return 100
+        else:
+            return 30
 
     @classmethod
     def get_matches_for_seeker(
@@ -324,12 +473,6 @@ class MatchingService:
     @classmethod
     def get_or_calculate_match(cls, seeker: SeekerProfile, job: Job) -> dict:
         """Get cached match or calculate fresh."""
-        cached = cls.get_cached_match(seeker, job)
-        if cached:
-            return {
-                "total": cached.score,
-                "breakdown": cached.breakdown,
-                "reasons": cached.reasons,
-                "gaps": cached.gaps,
-            }
+        # Always calculate fresh for now to reflect algorithm changes
+        # Can re-enable caching once algorithm is stable
         return cls.calculate_match(seeker, job)
