@@ -42,11 +42,17 @@ class HomeView(TemplateView):
             job_count=Count("jobs", filter=Q(jobs__is_active=True))
         ).order_by("name")
 
+        # Stats for hero section
+        active_jobs_count = Job.objects.filter(is_active=True).count()
+        categories_count = Category.objects.count()
+
         context.update(
             {
                 "featured_jobs": featured_jobs,
                 "recent_jobs": latest_jobs,
                 "categories": categories,
+                "active_jobs_count": active_jobs_count,
+                "categories_count": categories_count,
             }
         )
         return context
