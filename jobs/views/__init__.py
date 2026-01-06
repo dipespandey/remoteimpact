@@ -13,6 +13,8 @@ from .resources import (
     ResourcesView,
     ApplicantAssistantView,
     ApplicantAssistantGenerateView,
+    AssistantSubscribeView,
+    AssistantSubscribeSuccessView,
 )
 from .stories import (
     StoryFeedView,

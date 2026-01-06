@@ -73,6 +73,16 @@ urlpatterns = [
         views.ApplicantAssistantGenerateView.as_view(),
         name="applicant_assistant_generate",
     ),
+    path(
+        "resources/applicant-assistant/subscribe/",
+        views.AssistantSubscribeView.as_view(),
+        name="assistant_subscribe",
+    ),
+    path(
+        "resources/applicant-assistant/subscribe/success/",
+        views.AssistantSubscribeSuccessView.as_view(),
+        name="assistant_subscribe_success",
+    ),
     # Stories & Sprints
     path("stories/", views.StoryFeedView.as_view(), name="stories_feed"),
     path(

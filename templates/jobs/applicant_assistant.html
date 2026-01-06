@@ -44,19 +44,236 @@
     .mode-btn:hover {
       transform: translateY(-1px);
     }
+    .feature-card {
+      background: linear-gradient(135deg, #ffffff, #faf7f2);
+      border: 1px solid rgba(15, 23, 42, 0.1);
+      box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+    }
+    .pricing-card {
+      background: linear-gradient(135deg, #ffffff, #faf7f2);
+      border: 2px solid rgba(110, 170, 28, 0.3);
+      box-shadow: 0 4px 24px rgba(110, 170, 28, 0.12);
+    }
   </style>
 
+  {% if not user.is_authenticated %}
+  <!-- Landing Page for Non-Logged-In Users -->
+  <section class="relative py-16 bg-[#F3F2EE]">
+    <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Hero -->
+      <div class="text-center space-y-6 mb-16">
+        <p class="uppercase text-xs tracking-[0.3em] text-gray-500">Applicant Assistant</p>
+        <h1 class="text-4xl md:text-5xl font-semibold text-gray-900 leading-tight">
+          Land your dream impact job<br class="hidden md:block" /> with AI-powered applications
+        </h1>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          Generate tailored cover letters and interview prep questions in seconds.
+          Stand out from the crowd with personalized, high-quality applications.
+        </p>
+        <div class="pt-4">
+          <a href="{% url 'account_login' %}?next={{ request.path }}"
+             class="inline-flex items-center px-8 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition text-lg">
+            Get Started Free
+            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+          </a>
+        </div>
+        <p class="text-sm text-gray-500">First 3 generations free. No credit card required.</p>
+      </div>
+
+      <!-- Features -->
+      <div class="grid md:grid-cols-3 gap-6 mb-16">
+        <div class="feature-card rounded-2xl p-6 space-y-4">
+          <div class="w-12 h-12 rounded-xl bg-brand-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900">Cover Letters</h3>
+          <p class="text-gray-600 text-sm">
+            Generate tailored cover letters that highlight your relevant experience and align with the job requirements.
+          </p>
+        </div>
+
+        <div class="feature-card rounded-2xl p-6 space-y-4">
+          <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900">Interview Prep</h3>
+          <p class="text-gray-600 text-sm">
+            Get role-specific interview questions with hints on what interviewers are looking for.
+          </p>
+        </div>
+
+        <div class="feature-card rounded-2xl p-6 space-y-4">
+          <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900">Instant Results</h3>
+          <p class="text-gray-600 text-sm">
+            Just paste a job URL or description. Our AI analyzes the role and generates content in seconds.
+          </p>
+        </div>
+      </div>
+
+      <!-- How It Works -->
+      <div class="panel p-8 mb-16">
+        <h2 class="text-2xl font-semibold text-gray-900 text-center mb-8">How It Works</h2>
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="text-center space-y-3">
+            <div class="w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center mx-auto">1</div>
+            <h3 class="font-semibold text-gray-900">Paste the Job</h3>
+            <p class="text-sm text-gray-600">Drop a job URL or paste the description directly</p>
+          </div>
+          <div class="text-center space-y-3">
+            <div class="w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center mx-auto">2</div>
+            <h3 class="font-semibold text-gray-900">Add Your Highlights</h3>
+            <p class="text-sm text-gray-600">Optionally add your key achievements and skills</p>
+          </div>
+          <div class="text-center space-y-3">
+            <div class="w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center mx-auto">3</div>
+            <h3 class="font-semibold text-gray-900">Generate & Apply</h3>
+            <p class="text-sm text-gray-600">Get a tailored cover letter or interview questions</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing -->
+      <div class="text-center mb-8">
+        <h2 class="text-2xl font-semibold text-gray-900 mb-2">Simple Pricing</h2>
+        <p class="text-gray-600">Start free, upgrade when you need more</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+        <div class="feature-card rounded-2xl p-6 space-y-4">
+          <div class="space-y-1">
+            <h3 class="text-lg font-semibold text-gray-900">Free</h3>
+            <p class="text-3xl font-bold text-gray-900">$0</p>
+          </div>
+          <ul class="space-y-3 text-sm text-gray-600">
+            <li class="flex items-center">
+              <svg class="w-5 h-5 text-brand-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              3 generations included
+            </li>
+            <li class="flex items-center">
+              <svg class="w-5 h-5 text-brand-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              Cover letters & interview prep
+            </li>
+            <li class="flex items-center">
+              <svg class="w-5 h-5 text-brand-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              Job URL auto-fetch
+            </li>
+          </ul>
+          <a href="{% url 'account_login' %}?next={{ request.path }}"
+             class="block w-full text-center px-6 py-3 rounded-xl bg-gray-100 text-gray-900 font-semibold hover:bg-gray-200 transition">
+            Sign Up Free
+          </a>
+        </div>
+
+        <div class="pricing-card rounded-2xl p-6 space-y-4">
+          <div class="space-y-1">
+            <div class="flex items-center space-x-2">
+              <h3 class="text-lg font-semibold text-gray-900">Pro</h3>
+              <span class="px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-xs font-medium">Popular</span>
+            </div>
+            <p class="text-3xl font-bold text-gray-900">$5<span class="text-lg font-normal text-gray-500">/month</span></p>
+          </div>
+          <ul class="space-y-3 text-sm text-gray-600">
+            <li class="flex items-center">
+              <svg class="w-5 h-5 text-brand-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <strong>Unlimited</strong> generations
+            </li>
+            <li class="flex items-center">
+              <svg class="w-5 h-5 text-brand-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              Cover letters & interview prep
+            </li>
+            <li class="flex items-center">
+              <svg class="w-5 h-5 text-brand-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              Job URL auto-fetch
+            </li>
+            <li class="flex items-center">
+              <svg class="w-5 h-5 text-brand-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              Priority support
+            </li>
+          </ul>
+          <a href="{% url 'account_login' %}?next={{ request.path }}"
+             class="block w-full text-center px-6 py-3 rounded-xl bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition">
+            Get Started
+          </a>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="text-center mt-16">
+        <p class="text-gray-600 mb-4">Already have an account?</p>
+        <a href="{% url 'account_login' %}?next={{ request.path }}"
+           class="text-brand-600 font-semibold hover:text-brand-700 transition">
+          Log in to continue →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  {% else %}
+  <!-- Logged-In User View -->
   <section class="relative py-16 bg-[#F3F2EE]">
     <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-      <div class="space-y-3">
-        <p class="uppercase text-xs tracking-[0.3em] text-gray-500">Applicant Assistant</p>
-        <h1 class="text-3xl md:text-4xl font-semibold text-gray-900 leading-tight">AI-powered application tools</h1>
-        <p class="text-gray-600 max-w-2xl">Drop a job URL or paste the description. Get a tailored cover letter or interview prep questions.</p>
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="space-y-3">
+          <p class="uppercase text-xs tracking-[0.3em] text-gray-500">Applicant Assistant</p>
+          <h1 class="text-3xl md:text-4xl font-semibold text-gray-900 leading-tight">AI-powered application tools</h1>
+          <p class="text-gray-600 max-w-2xl">Drop a job URL or paste the description. Get a tailored cover letter or interview prep questions.</p>
+        </div>
+
+        <!-- Usage Status -->
+        <div class="shrink-0">
+          {% if subscription %}
+            {% if subscription.is_subscribed %}
+              <div id="usage-badge" class="inline-flex items-center px-4 py-2 rounded-full bg-brand-100 text-brand-700 text-sm font-medium">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Pro - Unlimited
+              </div>
+            {% else %}
+              <div class="text-right space-y-1">
+                <div id="usage-badge" class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-medium">
+                  <span id="uses-remaining">{{ subscription.free_uses_remaining }}</span> free generation<span id="uses-plural">{{ subscription.free_uses_remaining|pluralize }}</span> left
+                </div>
+                <p id="upgrade-hint" class="text-xs text-gray-500 {% if subscription.free_uses_remaining >= 3 %}hidden{% endif %}">
+                  <a href="#" onclick="showUpgradeModal(); return false;" class="text-brand-600 hover:text-brand-700 font-medium">Upgrade to Pro</a> for unlimited
+                </p>
+              </div>
+            {% endif %}
+          {% endif %}
+        </div>
       </div>
 
       <div class="hidden">
         {% csrf_token %}
       </div>
+
+      {% if can_use %}
+      <!-- Main Tool -->
       <div class="panel p-6 space-y-6">
         <div class="grid lg:grid-cols-3 gap-6 items-start">
           <div class="lg:col-span-2 space-y-4">
@@ -69,8 +286,8 @@
               <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-2" for="aa-mode">Generate</label>
                 <div class="grid grid-cols-1 gap-2">
-                  <button type="button" class="mode-btn px-4 py-3 rounded-xl bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition" onclick="requestGeneration('cover_letter')">Cover letter</button>
-                  <button type="button" class="mode-btn px-4 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition" onclick="requestGeneration('interview_prep')">Interview prep</button>
+                  <button type="button" class="mode-btn px-4 py-3 rounded-xl bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition" onclick="requestGeneration('cover_letter')" data-track="generate_cover_letter" data-track-category="ai_tools">Cover letter</button>
+                  <button type="button" class="mode-btn px-4 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition" onclick="requestGeneration('interview_prep')" data-track="generate_interview_prep" data-track-category="ai_tools">Interview prep</button>
                 </div>
               </div>
             </div>
@@ -103,8 +320,91 @@
           </div>
         </div>
       </div>
+
+      {% else %}
+      <!-- Out of Free Uses - Upgrade CTA -->
+      <div class="panel p-8 text-center space-y-6">
+        <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto">
+          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </div>
+        <div class="space-y-2">
+          <h2 class="text-2xl font-semibold text-gray-900">You've used all your free generations</h2>
+          <p class="text-gray-600 max-w-md mx-auto">
+            Upgrade to Pro for unlimited cover letters and interview prep questions.
+          </p>
+        </div>
+        <div class="pt-2">
+          <a href="{% url 'jobs:assistant_subscribe' %}"
+             class="inline-flex items-center px-8 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition text-lg">
+            Upgrade to Pro - $5/month
+          </a>
+        </div>
+        <p class="text-sm text-gray-500">Cancel anytime. No long-term commitment.</p>
+      </div>
+      {% endif %}
+
+      <!-- Past Generations -->
+      {% if past_generations %}
+      <div class="panel p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-gray-900">Recent Generations</h2>
+          <span class="text-sm text-gray-500">Last 10</span>
+        </div>
+        <div class="space-y-3">
+          {% for gen in past_generations %}
+          <div class="bg-white rounded-xl border border-gray-200 p-4 hover:border-gray-300 transition cursor-pointer" onclick="showGenerationModal({{ gen.id }})">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center space-x-2 mb-1">
+                  {% if gen.generation_type == 'cover_letter' %}
+                  <span class="px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-xs font-medium">Cover Letter</span>
+                  {% else %}
+                  <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">Interview Prep</span>
+                  {% endif %}
+                  <span class="text-xs text-gray-400">{{ gen.created_at|timesince }} ago</span>
+                </div>
+                {% if gen.job_url %}
+                <p class="text-sm text-gray-600 truncate">{{ gen.job_url }}</p>
+                {% elif gen.job_description %}
+                <p class="text-sm text-gray-600 truncate">{{ gen.job_description|truncatechars:80 }}</p>
+                {% endif %}
+              </div>
+              <button type="button" class="shrink-0 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition">
+                View
+              </button>
+            </div>
+          </div>
+          <!-- Hidden content for modal -->
+          <div id="gen-content-{{ gen.id }}" class="hidden">{{ gen.generated_content }}</div>
+          <div id="gen-type-{{ gen.id }}" class="hidden">{{ gen.generation_type }}</div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
     </div>
   </section>
+
+  <!-- Generation History Modal -->
+  <div id="history-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 modal-overlay" onclick="closeHistoryModal()"></div>
+    <div class="relative max-w-3xl mx-auto mt-16 px-4 sm:px-6">
+      <div class="bg-white rounded-2xl border border-gray-200 p-5 space-y-4 shadow-xl">
+        <div class="flex items-center justify-between">
+          <div class="space-y-1">
+            <p class="text-xs uppercase tracking-[0.2em] text-gray-500">Past Generation</p>
+            <span id="history-modal-type" class="px-3 py-1 rounded-full bg-gray-100 text-xs uppercase tracking-wide text-gray-600"></span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button type="button" class="px-3 py-2 rounded-full border border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-900 transition text-sm" onclick="copyHistoryOutput()">Copy</button>
+            <button type="button" class="px-3 py-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition text-sm" onclick="closeHistoryModal()">Close</button>
+          </div>
+        </div>
+        <textarea id="history-modal-content" rows="18" class="w-full px-3 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 text-sm" readonly></textarea>
+      </div>
+    </div>
+  </div>
 
   <!-- Modal viewer -->
   <div id="aa-modal" class="fixed inset-0 z-50 hidden">
@@ -133,12 +433,104 @@
       </div>
     </div>
   </div>
+
+  <!-- Upgrade Modal -->
+  <div id="upgrade-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 modal-overlay" onclick="closeUpgradeModal()"></div>
+    <div class="relative max-w-md mx-auto mt-24 px-4 sm:px-6">
+      <div class="bg-white rounded-2xl border border-gray-200 p-6 space-y-6 shadow-xl">
+        <div class="text-center space-y-2">
+          <h3 class="text-xl font-semibold text-gray-900">Upgrade to Pro</h3>
+          <p class="text-gray-600">Get unlimited access to the Applicant Assistant</p>
+        </div>
+        <div class="space-y-4">
+          <div class="flex items-center space-x-3">
+            <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span class="text-gray-700">Unlimited cover letters</span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span class="text-gray-700">Unlimited interview prep</span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span class="text-gray-700">Cancel anytime</span>
+          </div>
+        </div>
+        <div class="text-center">
+          <p class="text-3xl font-bold text-gray-900 mb-4">$5<span class="text-lg font-normal text-gray-500">/month</span></p>
+          <a href="{% url 'jobs:assistant_subscribe' %}"
+             class="block w-full text-center px-6 py-3 rounded-xl bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition">
+            Subscribe Now
+          </a>
+        </div>
+        <button type="button" onclick="closeUpgradeModal()" class="block w-full text-center text-sm text-gray-500 hover:text-gray-700">
+          Maybe later
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 {% endblock %}
 
 {% block extra_js %}
+  {% if user.is_authenticated %}
+  <!-- History modal functions (available even if can_use is false) -->
+  <script>
+    function showGenerationModal(id) {
+      const content = document.getElementById('gen-content-' + id)
+      const type = document.getElementById('gen-type-' + id)
+      const modal = document.getElementById('history-modal')
+      const modalContent = document.getElementById('history-modal-content')
+      const modalType = document.getElementById('history-modal-type')
+
+      if (content && modalContent) {
+        modalContent.value = content.textContent
+      }
+      if (type && modalType) {
+        modalType.textContent = type.textContent.replace('_', ' ')
+      }
+      modal.classList.remove('hidden')
+      document.body.classList.add('overflow-hidden')
+    }
+
+    function closeHistoryModal() {
+      const modal = document.getElementById('history-modal')
+      if (modal) {
+        modal.classList.add('hidden')
+        document.body.classList.remove('overflow-hidden')
+      }
+    }
+
+    function copyHistoryOutput() {
+      const content = document.getElementById('history-modal-content')
+      if (!content || !content.value) return
+      navigator.clipboard.writeText(content.value)
+        .then(() => {
+          const btn = event.target
+          const original = btn.textContent
+          btn.textContent = 'Copied!'
+          setTimeout(() => (btn.textContent = original), 1400)
+        })
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeHistoryModal()
+      }
+    })
+  </script>
+  {% endif %}
+  {% if user.is_authenticated and can_use %}
   <script>
     const endpoint = "{% url 'jobs:applicant_assistant_generate' %}"
-    
+
     function getCookie(name) {
       let cookieValue = null
       if (document.cookie && document.cookie !== '') {
@@ -153,7 +545,7 @@
       }
       return cookieValue
     }
-    
+
     function requestGeneration(type) {
       const output = document.getElementById('aa-output')
       const status = document.getElementById('aa-status')
@@ -177,7 +569,7 @@
         resume: document.getElementById('aa-resume').value,
         request_type: type
       }
-    
+
       fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -188,6 +580,16 @@
       })
         .then((resp) => resp.json().then((data) => ({ status: resp.status, data })))
         .then(({ status: httpStatus, data }) => {
+          if (httpStatus === 401 && data.requires_login) {
+            window.location.href = "{% url 'account_login' %}?next={{ request.path }}"
+            return
+          }
+          if (httpStatus === 403 && data.requires_upgrade) {
+            showUpgradeModal()
+            status.textContent = data.error
+            modalStatus.textContent = data.error
+            return
+          }
           if (httpStatus >= 400) {
             output.value = ''
             status.textContent = data.error || 'Something went wrong.'
@@ -200,6 +602,23 @@
           modalOutput.value = data.result || 'No content returned.'
           modalStatus.textContent = 'Generated. Review and personalize before sending.'
           openModal()
+
+          // Update usage count in UI
+          if (data.uses_remaining !== undefined && data.uses_remaining >= 0) {
+            const usesEl = document.getElementById('uses-remaining')
+            const pluralEl = document.getElementById('uses-plural')
+            const hintEl = document.getElementById('upgrade-hint')
+            if (usesEl) usesEl.textContent = data.uses_remaining
+            if (pluralEl) pluralEl.textContent = data.uses_remaining === 1 ? '' : 's'
+            if (hintEl) hintEl.classList.remove('hidden')
+
+            // If no uses left, show upgrade prompt after closing modal
+            if (data.uses_remaining === 0) {
+              setTimeout(() => {
+                showUpgradeModal()
+              }, 2000)
+            }
+          }
         })
         .catch(() => {
           status.textContent = 'Request failed. Check your network or server logs.'
@@ -245,10 +664,25 @@
       document.body.classList.remove('overflow-hidden')
     }
 
+    function showUpgradeModal() {
+      const modal = document.getElementById('upgrade-modal')
+      modal.classList.remove('hidden')
+      document.body.classList.add('overflow-hidden')
+    }
+
+    function closeUpgradeModal() {
+      const modal = document.getElementById('upgrade-modal')
+      modal.classList.add('hidden')
+      document.body.classList.remove('overflow-hidden')
+    }
+
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         closeModal()
+        closeUpgradeModal()
+        closeHistoryModal()
       }
     })
   </script>
+  {% endif %}
 {% endblock %}

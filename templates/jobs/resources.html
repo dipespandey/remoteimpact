@@ -1,145 +1,559 @@
 {% extends 'base.html' %}
 
 {% block title %}
-  Impact Career Resources - Remote Impact
+  Career Resources - Remote Impact
 {% endblock %}
 
 {% block content %}
-  <style>
-    .panel {
-      border: 1px solid rgba(15, 23, 42, 0.1);
-      background: linear-gradient(135deg, #ffffff, #faf7f2);
-      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
-      border-radius: 1rem;
-    }
-    .pillar-bullet {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #6EAA1C;
-      flex-shrink: 0;
-      margin-top: 0.5rem;
-    }
-    .input-base {
-      background: #ffffff;
-      border: 1px solid rgba(15, 23, 42, 0.15);
-    }
-    .input-base:focus {
-      outline: none;
-      border-color: #6EAA1C;
-      box-shadow: 0 0 0 3px rgba(110, 170, 28, 0.2);
-    }
-  </style>
+<style>
+  .resource-card {
+    background: linear-gradient(135deg, #ffffff, #faf7f2);
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+    transition: all 0.2s ease;
+  }
+  .resource-card:hover {
+    border-color: rgba(110, 170, 28, 0.4);
+    box-shadow: 0 4px 20px rgba(110, 170, 28, 0.12);
+    transform: translateY(-2px);
+  }
+  .section-card {
+    background: linear-gradient(135deg, #ffffff, #faf7f2);
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+  }
+  .tag {
+    background: rgba(110, 170, 28, 0.1);
+    color: #5A8B17;
+    font-size: 0.65rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+  .type-badge {
+    background: rgba(15, 23, 42, 0.06);
+    color: rgba(15, 23, 42, 0.7);
+    font-size: 0.65rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+  .step-number {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8AD425, #6EAA1C);
+    color: white;
+    font-weight: 600;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+</style>
 
-  {% comment %} <section class="relative overflow-hidden bg-hero-gradient text-white pt-24 pb-16">
-    <div class="absolute inset-0 pointer-events-none">
-      <div class="absolute -top-24 right-8 w-[520px] h-[520px] bg-brand-500/25 blur-[180px]"></div>
-      <div class="absolute top-8 left-6 w-40 h-40 border border-white/15 rounded-full"></div>
-    </div>
-    <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-      <p class="uppercase text-xs tracking-[0.5em] text-white/70">Remote impact careers</p>
-      <h1 class="text-4xl md:text-5xl font-display font-semibold leading-tight">Find remote, mission-driven work—faster.</h1>
-      <p class="text-lg text-white/75 max-w-3xl">A curated playbook for sourcing remote impact roles, plus a big list of trusted boards, communities, and newsletters. Use it to map your search, tailor outreach, and stand out with evidence of impact.</p>
+<!-- Hero Section -->
+<section class="relative py-16 bg-[#F3F2EE]">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl">
+      <p class="uppercase text-xs tracking-[0.3em] text-gray-500 mb-3">Career Resources</p>
+      <h1 class="text-4xl md:text-5xl font-semibold text-gray-900 leading-tight mb-4">
+        Everything you need to land your impact role
+      </h1>
+      <p class="text-lg text-gray-600 mb-8">
+        Curated job boards, communities, playbooks, and tools to accelerate your search for meaningful remote work.
+      </p>
       <div class="flex flex-wrap gap-4">
-        <a href="{% url 'jobs:job_list' %}" class="inline-flex items-center px-6 py-3 rounded-full bg-brand-300 text-twilight-900 font-semibold shadow-glow hover:bg-neon transition">
-          Browse Remote Impact jobs<svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14m0 0-6-6m6 6-6 6" />
+        <a href="{% url 'jobs:job_list' %}"
+           class="inline-flex items-center px-6 py-3 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition">
+          Browse Jobs
+          <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
           </svg>
         </a>
-        <!--  <a href="{% url 'jobs:post_job' %}" class="inline-flex items-center px-6 py-3 rounded-full border border-white/20 text-white font-semibold hover:border-white hover:text-neon transition">
-                Post a role
-            </a>  -->
+        <a href="{% url 'jobs:applicant_assistant' %}"
+           class="inline-flex items-center px-6 py-3 rounded-full border border-gray-300 text-gray-700 font-semibold hover:border-brand-500 hover:text-gray-900 transition">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+          </svg>
+          AI Application Tools
+        </a>
       </div>
     </div>
-  </section> {% endcomment %}
+  </div>
+</section>
 
-  <section class="relative py-16">
-    <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-      <div class="grid lg:grid-cols-3 gap-6 items-start">
-        <div class="lg:col-span-2 panel p-6 space-y-5">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-xs uppercase tracking-[0.3em] text-gray-500">Playbook</p>
-              <h2 class="text-xl font-semibold text-gray-900">How to run a focused search</h2>
-            </div>
-            <span class="px-3 py-1 rounded-full border border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-600">Do this weekly</span>
-          </div>
-          <ul class="space-y-3">
-            {% for step in playbook %}
-              <li class="flex gap-3">
-                <span class="pillar-bullet"></span>
-                <p class="text-gray-700 text-sm leading-relaxed">{{ step }}</p>
-              </li>
-            {% endfor %}
-          </ul>
-          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
-            <p class="text-sm text-gray-600">
-              <span class="text-brand-600 font-semibold">Tip:</span> Keep a simple tracker with org, contact, last touch, artifact link, and next action. Follow up every 7–10 days with something useful (insight, intro, or an iteration of your artifact).
-            </p>
-          </div>
-        </div>
-        <div class="space-y-4">
-          <div class="panel p-5 space-y-4">
-            <p class="text-xs uppercase tracking-[0.3em] text-gray-500">Outreach scripts</p>
-            <h3 class="text-lg font-semibold text-gray-900">Make the first touch count</h3>
-            <ul class="space-y-3">
-              {% for script in outreach_templates %}
-                <li class="flex gap-3">
-                  <span class="pillar-bullet"></span>
-                  <p class="text-gray-700 text-sm">{{ script }}</p>
-                </li>
-              {% endfor %}
-            </ul>
-          </div>
-          <div class="panel p-5 space-y-3">
-            <p class="text-xs uppercase tracking-[0.3em] text-gray-500">Stand out fast</p>
-            <ul class="space-y-3">
-              <li class="flex gap-3">
-                <span class="pillar-bullet"></span><p class="text-gray-700 text-sm">Ship a 1–2 page portfolio with problem → action → outcome and links to proof.</p>
-              </li>
-              <li class="flex gap-3">
-                <span class="pillar-bullet"></span><p class="text-gray-700 text-sm">Translate metrics into impact: uptime → field worker hours saved; funnel lift → more beneficiaries served; infra cost cuts → funds freed for programs.</p>
-              </li>
-              <li class="flex gap-3">
-                <span class="pillar-bullet"></span><p class="text-gray-700 text-sm">Lead with time zones, salary expectations, and start date to reduce back-and-forth.</p>
-              </li>
-              <li class="flex gap-3">
-                <span class="pillar-bullet"></span><p class="text-gray-700 text-sm">Ask for a "10-minute vibe check" instead of a full interview to increase reply rates.</p>
-              </li>
-            </ul>
-          </div>
-        </div>
+<!-- Quick Nav -->
+<section class="sticky top-16 md:top-20 z-20 bg-white/95 backdrop-blur border-b border-gray-200 py-3">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center gap-2 overflow-x-auto pb-1 -mb-1 scrollbar-hide">
+      <a href="#job-boards" class="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition whitespace-nowrap">Job Boards</a>
+      <a href="#communities" class="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition whitespace-nowrap">Communities</a>
+      <a href="#learning" class="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition whitespace-nowrap">Learning</a>
+      <a href="#newsletters" class="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition whitespace-nowrap">Newsletters</a>
+      <a href="#playbook" class="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition whitespace-nowrap">Playbook</a>
+      <a href="#salary" class="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition whitespace-nowrap">Salary Tools</a>
+    </div>
+  </div>
+</section>
+
+<!-- Job Boards Section -->
+<section id="job-boards" class="py-16 bg-[#F3F2EE]">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+      <div>
+        <p class="text-xs uppercase tracking-[0.3em] text-gray-500 mb-1">Resource Library</p>
+        <h2 class="text-2xl font-semibold text-gray-900">Impact Job Boards</h2>
+        <p class="text-gray-600 mt-1">{{ job_boards|length }} curated platforms to find meaningful work</p>
       </div>
+      <!-- Search -->
+      <div class="relative w-full md:w-80">
+        <input type="text" id="board-search" placeholder="Search job boards..."
+               class="w-full px-4 py-3 pl-10 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+    </div>
 
-      <div class="space-y-6">
-        <div>
-          <p class="text-xs uppercase tracking-[0.3em] text-gray-500 mb-1">Resource library</p>
-          <h2 class="text-2xl font-semibold text-gray-900">Impact job sources beyond Remote Impact</h2>
-          <p class="text-gray-600 mt-1">Curated boards, communities, and intel channels. Use filters/keywords to keep a focused remote pipeline.</p>
+    <!-- Category Filters -->
+    <div class="flex flex-wrap gap-2 mb-8">
+      {% for cat in job_board_categories %}
+      <button type="button"
+              class="category-filter px-4 py-2 rounded-full text-sm font-medium transition {% if cat.id == 'all' %}bg-brand-300 text-gray-900{% else %}bg-white border border-gray-200 text-gray-600 hover:border-brand-300 hover:text-gray-900{% endif %}"
+              data-category="{{ cat.id }}">
+        {{ cat.name }}
+        <span class="ml-1 text-xs opacity-70">({{ cat.count }})</span>
+      </button>
+      {% endfor %}
+    </div>
+
+    <!-- No results message -->
+    <div id="no-results" class="hidden text-center py-12">
+      <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <p class="text-gray-600 font-medium">No job boards found</p>
+      <p class="text-gray-500 text-sm mt-1">Try adjusting your search or filter</p>
+    </div>
+
+    <!-- Job Boards Grid -->
+    <div id="boards-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for board in job_boards %}
+      <a href="{{ board.url }}" target="_blank" rel="noopener"
+         class="resource-card rounded-2xl p-5 block board-item"
+         data-name="{{ board.name|lower }}"
+         data-description="{{ board.description|lower }}"
+         data-tags="{{ board.tags|join:','|lower }}"
+         data-category="{{ board.category }}"
+         data-track="visit_job_board" data-track-category="resources" data-track-label="{{ board.name }}">
+        <div class="flex items-start justify-between mb-3">
+          <h3 class="font-semibold text-gray-900">{{ board.name }}</h3>
+          <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
         </div>
-        <div class="grid md:grid-cols-2 gap-6">
-          {% for section in resource_sections %}
-            <div class="panel p-5 space-y-4">
-              <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">{{ section.title }}</h3>
-                <span class="px-3 py-1 rounded-full border border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-600">{{ section.items|length }} links</span>
-              </div>
-              <ul class="space-y-4">
-                {% for item in section.items %}
-                  <li class="space-y-1">
-                    <div class="flex items-center gap-2">
-                      <a href="{{ item.url }}" class="text-brand-600 font-semibold hover:text-brand-700 transition" target="_blank" rel="noopener">{{ item.name }}</a>
-                      <span class="text-gray-400">·</span>
-                      <span class="text-xs uppercase tracking-wide text-gray-500">Remote friendly</span>
-                    </div>
-                    <p class="text-sm text-gray-600">{{ item.focus }}</p>
-                  </li>
-                {% endfor %}
-              </ul>
-            </div>
+        <p class="text-sm text-gray-600 mb-3">{{ board.description }}</p>
+        <div class="flex flex-wrap gap-1.5">
+          {% for tag in board.tags %}
+          <span class="tag">{{ tag }}</span>
           {% endfor %}
         </div>
+      </a>
+      {% endfor %}
+    </div>
+
+    <!-- Load More Button -->
+    <div id="load-more-container" class="mt-8 text-center">
+      <button id="load-more-btn" type="button"
+              class="inline-flex items-center px-6 py-3 rounded-full border border-gray-300 text-gray-700 font-semibold hover:border-brand-400 hover:bg-brand-50 transition">
+        <span id="load-more-text">Show More</span>
+        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Results count -->
+    <p id="results-count" class="text-sm text-gray-500 mt-6 text-center">Showing <span id="visible-count">12</span> of <span id="filtered-count">{{ job_boards|length }}</span> job boards</p>
+
+    <!-- Attribution -->
+    {% if job_boards_maintainers %}
+    <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+      <p class="text-xs text-gray-500">
+        Job boards list curated by
+        <a href="{{ job_boards_maintainers.source_url }}" target="_blank" rel="noopener" class="text-brand-600 hover:text-brand-700 font-medium">{{ job_boards_maintainers.names }}</a>
+        <span class="mx-1">·</span>
+        <a href="{{ job_boards_maintainers.source_url }}" target="_blank" rel="noopener" class="text-gray-500 hover:text-gray-700 underline">View source spreadsheet</a>
+      </p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Communities Section -->
+<section id="communities" class="py-16 bg-white">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <p class="text-xs uppercase tracking-[0.3em] text-gray-500 mb-1">Connect</p>
+        <h2 class="text-2xl font-semibold text-gray-900">Communities & Networks</h2>
+        <p class="text-gray-600 mt-1">Where impact professionals share opportunities and advice</p>
       </div>
     </div>
-  </section>
+    <div class="grid md:grid-cols-2 gap-4">
+      {% for community in communities %}
+      <a href="{{ community.url }}" target="_blank" rel="noopener" class="resource-card rounded-2xl p-5 flex items-start gap-4">
+        <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
+          {% if community.type == "Slack" %}
+          <svg class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
+          </svg>
+          {% elif community.type == "Forum" %}
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/>
+          </svg>
+          {% else %}
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          {% endif %}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1">
+            <h3 class="font-semibold text-gray-900">{{ community.name }}</h3>
+            <span class="type-badge">{{ community.type }}</span>
+          </div>
+          <p class="text-sm text-gray-600">{{ community.description }}</p>
+        </div>
+        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+        </svg>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Learning Section -->
+<section id="learning" class="py-16 bg-[#F3F2EE]">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <p class="text-xs uppercase tracking-[0.3em] text-gray-500 mb-1">Upskill</p>
+        <h2 class="text-2xl font-semibold text-gray-900">Learning Resources</h2>
+        <p class="text-gray-600 mt-1">Courses and guides to prepare for impact careers</p>
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {% for resource in learning %}
+      <a href="{{ resource.url }}" target="_blank" rel="noopener" class="resource-card rounded-2xl p-5 block">
+        <div class="flex items-center justify-between mb-3">
+          <span class="type-badge">{{ resource.type }}</span>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
+        </div>
+        <h3 class="font-semibold text-gray-900 mb-2">{{ resource.name }}</h3>
+        <p class="text-sm text-gray-600">{{ resource.description }}</p>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Newsletters Section -->
+<section id="newsletters" class="py-16 bg-white">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <p class="text-xs uppercase tracking-[0.3em] text-gray-500 mb-1">Stay Updated</p>
+        <h2 class="text-2xl font-semibold text-gray-900">Newsletters</h2>
+        <p class="text-gray-600 mt-1">Get curated opportunities delivered to your inbox</p>
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {% for newsletter in newsletters %}
+      <a href="{{ newsletter.url }}" target="_blank" rel="noopener" class="resource-card rounded-2xl p-5 block">
+        <div class="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center mb-4">
+          <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <h3 class="font-semibold text-gray-900 mb-2">{{ newsletter.name }}</h3>
+        <p class="text-sm text-gray-600">{{ newsletter.description }}</p>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Playbook Section -->
+<section id="playbook" class="py-16 bg-[#F3F2EE]">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-5 gap-8">
+      <!-- Playbook -->
+      <div class="lg:col-span-3">
+        <div class="section-card rounded-2xl p-6 md:p-8">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <p class="text-xs uppercase tracking-[0.3em] text-gray-500 mb-1">Playbook</p>
+              <h2 class="text-xl font-semibold text-gray-900">How to Run a Focused Search</h2>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-brand-100 text-brand-700 text-xs font-semibold uppercase tracking-wide">Weekly routine</span>
+          </div>
+          <div class="space-y-4">
+            {% for step in playbook %}
+            <div class="flex gap-4">
+              <span class="step-number">{{ forloop.counter }}</span>
+              <p class="text-gray-700 text-sm leading-relaxed pt-0.5">{{ step }}</p>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Tips -->
+      <div class="lg:col-span-2 space-y-4">
+        <div class="section-card rounded-2xl p-6">
+          <p class="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4">Quick Tips</p>
+          <div class="space-y-4">
+            {% for tip in tips %}
+            <div class="flex gap-3">
+              <div class="w-2 h-2 rounded-full bg-brand-500 mt-2 flex-shrink-0"></div>
+              <div>
+                <h4 class="font-semibold text-gray-900 text-sm">{{ tip.title }}</h4>
+                <p class="text-gray-600 text-sm">{{ tip.description }}</p>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="section-card rounded-2xl p-6 bg-gradient-to-br from-brand-50 to-white border-brand-200">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-900 mb-1">Need help with applications?</h3>
+              <p class="text-sm text-gray-600 mb-3">Use our AI tools to generate tailored cover letters and interview prep questions.</p>
+              <a href="{% url 'jobs:applicant_assistant' %}" class="inline-flex items-center text-sm font-semibold text-brand-600 hover:text-brand-700">
+                Try Applicant Assistant
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Salary Tools Section -->
+<section id="salary" class="py-16 bg-white">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <p class="text-xs uppercase tracking-[0.3em] text-gray-500 mb-1">Negotiate</p>
+        <h2 class="text-2xl font-semibold text-gray-900">Salary & Compensation Tools</h2>
+        <p class="text-gray-600 mt-1">Research market rates before your next conversation</p>
+      </div>
+    </div>
+    <div class="grid md:grid-cols-3 gap-4">
+      {% for tool in salary_tools %}
+      <a href="{{ tool.url }}" target="_blank" rel="noopener" class="resource-card rounded-2xl p-5 flex items-start gap-4">
+        <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="font-semibold text-gray-900 mb-1">{{ tool.name }}</h3>
+          <p class="text-sm text-gray-600">{{ tool.description }}</p>
+        </div>
+        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+        </svg>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-16 bg-[#F3F2EE]">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <h2 class="text-3xl font-semibold text-gray-900 mb-4">Ready to find your impact role?</h2>
+    <p class="text-gray-600 mb-8 max-w-2xl mx-auto">
+      Browse thousands of remote positions from mission-driven organizations making real change.
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="{% url 'jobs:job_list' %}"
+         class="inline-flex items-center justify-center px-8 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold text-lg hover:bg-brand-400 transition">
+        Browse Jobs
+        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+        </svg>
+      </a>
+      <a href="{% url 'jobs:applicant_assistant' %}"
+         class="inline-flex items-center justify-center px-8 py-4 rounded-full border border-gray-300 text-gray-700 font-semibold text-lg hover:border-brand-500 hover:text-gray-900 transition">
+        Get AI Help
+      </a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        const offset = 100; // Account for sticky nav
+        const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - offset;
+        window.scrollTo({
+          top: targetPosition,
+          behavior: 'smooth'
+        });
+      }
+    });
+  });
+
+  // Job boards search, filtering, and pagination
+  (function() {
+    const searchInput = document.getElementById('board-search');
+    const boardsGrid = document.getElementById('boards-grid');
+    const boardItems = Array.from(document.querySelectorAll('.board-item'));
+    const categoryFilters = document.querySelectorAll('.category-filter');
+    const noResults = document.getElementById('no-results');
+    const visibleCount = document.getElementById('visible-count');
+    const filteredCount = document.getElementById('filtered-count');
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    const loadMoreContainer = document.getElementById('load-more-container');
+    const loadMoreText = document.getElementById('load-more-text');
+
+    const PAGE_SIZE = 12;
+    let currentCategory = 'all';
+    let searchQuery = '';
+    let currentPage = 1;
+    let filteredItems = [];
+
+    function getFilteredItems() {
+      const query = searchQuery.toLowerCase().trim();
+      return boardItems.filter(item => {
+        const name = item.dataset.name || '';
+        const description = item.dataset.description || '';
+        const tags = item.dataset.tags || '';
+        const category = item.dataset.category || '';
+
+        const matchesSearch = !query ||
+          name.includes(query) ||
+          description.includes(query) ||
+          tags.includes(query);
+
+        const matchesCategory = currentCategory === 'all' || category === currentCategory;
+
+        return matchesSearch && matchesCategory;
+      });
+    }
+
+    function renderBoards() {
+      filteredItems = getFilteredItems();
+      const totalFiltered = filteredItems.length;
+      const showCount = Math.min(currentPage * PAGE_SIZE, totalFiltered);
+
+      // Hide all boards first
+      boardItems.forEach(item => item.classList.add('hidden'));
+
+      // Show filtered boards up to current page
+      filteredItems.slice(0, showCount).forEach(item => {
+        item.classList.remove('hidden');
+      });
+
+      // Update counts
+      visibleCount.textContent = showCount;
+      filteredCount.textContent = totalFiltered;
+
+      // Show/hide load more button
+      if (showCount >= totalFiltered) {
+        loadMoreContainer.classList.add('hidden');
+      } else {
+        loadMoreContainer.classList.remove('hidden');
+        const remaining = totalFiltered - showCount;
+        loadMoreText.textContent = `Show More (${remaining} remaining)`;
+      }
+
+      // No results message
+      if (totalFiltered === 0) {
+        noResults.classList.remove('hidden');
+        boardsGrid.classList.add('hidden');
+        loadMoreContainer.classList.add('hidden');
+      } else {
+        noResults.classList.add('hidden');
+        boardsGrid.classList.remove('hidden');
+      }
+    }
+
+    // Search input handler
+    if (searchInput) {
+      searchInput.addEventListener('input', function(e) {
+        searchQuery = e.target.value;
+        currentPage = 1; // Reset to first page on search
+        renderBoards();
+      });
+    }
+
+    // Category filter handlers
+    categoryFilters.forEach(btn => {
+      btn.addEventListener('click', function() {
+        // Update active state
+        categoryFilters.forEach(b => {
+          b.classList.remove('bg-brand-300', 'text-gray-900');
+          b.classList.add('bg-white', 'border', 'border-gray-200', 'text-gray-600');
+        });
+        this.classList.remove('bg-white', 'border', 'border-gray-200', 'text-gray-600');
+        this.classList.add('bg-brand-300', 'text-gray-900');
+
+        currentCategory = this.dataset.category;
+        currentPage = 1; // Reset to first page on category change
+        renderBoards();
+      });
+    });
+
+    // Load more button handler
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener('click', function() {
+        currentPage++;
+        renderBoards();
+
+        // Scroll to show new items smoothly
+        const newFirstItem = filteredItems[(currentPage - 1) * PAGE_SIZE];
+        if (newFirstItem) {
+          setTimeout(() => {
+            newFirstItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 100);
+        }
+      });
+    }
+
+    // Initial render
+    renderBoards();
+  })();
+</script>
 {% endblock %}

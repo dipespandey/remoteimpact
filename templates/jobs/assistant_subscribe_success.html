@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Subscription Confirmed - Remote Impact
+{% endblock %}
+
+{% block content %}
+  <section class="relative py-24 bg-[#F3F2EE]">
+    <div class="relative max-w-lg mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div class="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg space-y-6">
+        <div class="w-20 h-20 rounded-full bg-brand-100 flex items-center justify-center mx-auto">
+          <svg class="w-10 h-10 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+
+        <div class="space-y-2">
+          <h1 class="text-2xl font-semibold text-gray-900">Welcome to Pro!</h1>
+          <p class="text-gray-600">
+            Your subscription is now active. You have unlimited access to the Applicant Assistant.
+          </p>
+        </div>
+
+        <div class="pt-4 space-y-3">
+          <a href="{% url 'jobs:applicant_assistant' %}"
+             class="block w-full px-6 py-3 rounded-xl bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition text-center">
+            Start Generating
+          </a>
+          <a href="{% url 'jobs:job_list' %}"
+             class="block w-full px-6 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition text-center">
+            Browse Jobs
+          </a>
+        </div>
+
+        <p class="text-sm text-gray-500">
+          You can manage your subscription in your account settings.
+        </p>
+      </div>
+    </div>
+  </section>
+{% endblock %}

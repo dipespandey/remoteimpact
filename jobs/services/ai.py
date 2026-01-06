@@ -34,7 +34,7 @@ class AIClient:
             base_url=self.base_url,
         )
 
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str, max_tokens: int = 1500) -> str:
         """Send prompt to chat completions API and return text output."""
         resp = self.client.chat.completions.create(
             model=self.model,
@@ -42,7 +42,7 @@ class AIClient:
                 {"role": "system", "content": "You are a helpful assistant for job applications."},
                 {"role": "user", "content": prompt},
             ],
-            max_tokens=800,
+            max_tokens=max_tokens,
             temperature=0.7,
         )
         content = resp.choices[0].message.content if resp.choices else None

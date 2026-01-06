@@ -911,3 +911,97 @@ class CoverLetter(models.Model):
 
     def __str__(self):
         return f"Cover letter: {self.seeker.user.email} → {self.job.title}"
+
+
+class AssistantSubscription(models.Model):
+    """Tracks user subscription and usage for the Applicant Assistant (cover letter writer)."""
+
+    user = models.OneToOneField(
+        get_user_model(), on_delete=models.CASCADE, related_name="assistant_subscription"
+    )
+
+    # Usage tracking
+    free_uses_remaining = models.PositiveIntegerField(default=3)
+    total_uses = models.PositiveIntegerField(default=0)
+
+    # Subscription status
+    is_subscribed = models.BooleanField(default=False)
+    stripe_subscription_id = models.CharField(max_length=100, blank=True)
+    stripe_customer_id = models.CharField(max_length=100, blank=True)
+
+    # Subscription dates
+    subscribed_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Assistant Subscription"
+        verbose_name_plural = "Assistant Subscriptions"
+
+    def __str__(self):
+        status = "Pro" if self.is_subscribed else f"Free ({self.free_uses_remaining} left)"
+        return f"{self.user.email}: {status}"
+
+    def can_use_assistant(self) -> bool:
+        """Check if user can use the assistant."""
+        if self.is_subscribed:
+            # Check if subscription is still active
+            if self.expires_at and self.expires_at < timezone.now():
+                return False
+            return True
+        return self.free_uses_remaining > 0
+
+    def record_usage(self):
+        """Record a usage of the assistant."""
+        self.total_uses += 1
+        if not self.is_subscribed and self.free_uses_remaining > 0:
+            self.free_uses_remaining -= 1
+        self.save()
+
+    @classmethod
+    def get_or_create_for_user(cls, user):
+        """Get or create subscription record for a user."""
+        subscription, _ = cls.objects.get_or_create(user=user)
+        return subscription
+
+
+class AssistantGeneration(models.Model):
+    """Stores past generations from the Applicant Assistant."""
+
+    class GenerationType(models.TextChoices):
+        COVER_LETTER = "cover_letter", "Cover Letter"
+        INTERVIEW_PREP = "interview_prep", "Interview Prep"
+
+    user = models.ForeignKey(
+        get_user_model(), on_delete=models.CASCADE, related_name="assistant_generations"
+    )
+    generation_type = models.CharField(
+        max_length=20,
+        choices=GenerationType.choices,
+        default=GenerationType.COVER_LETTER,
+    )
+
+    # Input data
+    job_url = models.URLField(blank=True)
+    job_description = models.TextField(blank=True)
+    user_highlights = models.TextField(blank=True)
+
+    # Output
+    generated_content = models.TextField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Assistant Generation"
+        verbose_name_plural = "Assistant Generations"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.get_generation_type_display()} - {self.user.email} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+
+    @property
+    def preview(self):
+        """Return first 100 chars of generated content."""
+        return self.generated_content[:100] + "..." if len(self.generated_content) > 100 else self.generated_content

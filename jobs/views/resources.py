@@ -1,6 +1,8 @@
 from django.views.generic import TemplateView, View
 from django.db.models import Count, Q
 from django.http import JsonResponse
+from django.shortcuts import redirect
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -11,6 +13,7 @@ from bs4 import BeautifulSoup
 
 from ..models import Job, Category
 from ..services.ai import AIClient
+from ..services.payment_service import PaymentService
 
 
 class HomeView(TemplateView):
@@ -64,51 +67,172 @@ class ResourcesView(TemplateView):
     template_name = "jobs/resources.html"
 
     def get_context_data(self, **kwargs):
+        from ..services.job_boards_service import get_job_boards, get_job_board_categories
+
         context = super().get_context_data(**kwargs)
-        # Static data from original view
-        context["resource_sections"] = [
+
+        # Job boards - fetched from Ethical Job Resources Board (maintained by Ted Fickes & Edward Saperia)
+        job_boards, maintainers = get_job_boards()
+        context["job_boards"] = job_boards
+        context["job_board_categories"] = get_job_board_categories(job_boards)
+        context["job_boards_maintainers"] = maintainers
+
+        # Communities & Networks
+        context["communities"] = [
             {
-                "title": "Impact-first job boards",
-                "items": [
-                    {
-                        "name": "80,000 Hours",
-                        "url": "https://80000hours.org/jobs/",
-                        "focus": "High-impact roles (policy, AI safety, biosecurity, global health) with mission vetting.",
-                    },
-                    {
-                        "name": "Idealist",
-                        "url": "https://www.idealist.org/en/",
-                        "focus": "Nonprofit and social impact roles worldwide; strong NGO coverage; filters for remote.",
-                    },
-                    {
-                        "name": "Tech Jobs for Good",
-                        "url": "https://techjobsforgood.com/",
-                        "focus": "US-heavy tech roles in climate, civic, health, justice; remote and hybrid filters.",
-                    },
-                    {
-                        "name": "Climatebase",
-                        "url": "https://climatebase.org/",
-                        "focus": "Climate-specific roles across all functions; huge database of climate tech companies.",
-                    },
-                    {
-                        "name": "All-in for Climate",
-                        "url": "https://www.allinforclimate.com/",
-                        "focus": "Curated climate roles often not listed elsewhere; focus on activism and advocacy.",
-                    },
-                    {
-                        "name": "PowerToFly",
-                        "url": "https://powertofly.com/jobs",
-                        "focus": "Inclusive hiring focus; good for social impact tech and ops roles.",
-                    },
-                ],
+                "name": "Work on Climate Slack",
+                "url": "https://workonclimate.org/",
+                "description": "12k+ climate professionals sharing jobs, advice, and referrals.",
+                "type": "Slack",
             },
-            # ... (truncated for brevity, would include all original data)
+            {
+                "name": "EA Forum Job Board",
+                "url": "https://forum.effectivealtruism.org/topics/job-board",
+                "description": "Effective altruism community job posts and career discussions.",
+                "type": "Forum",
+            },
+            {
+                "name": "Climate Tech VC Talent Collective",
+                "url": "https://www.climatetechvc.org/",
+                "description": "Connect with climate-focused VCs and their portfolio companies.",
+                "type": "Newsletter",
+            },
+            {
+                "name": "Impact Guild",
+                "url": "https://impactguild.com/",
+                "description": "Community for impact professionals with mentorship and events.",
+                "type": "Community",
+            },
         ]
+
+        # Learning resources
+        context["learning"] = [
+            {
+                "name": "Terra.do",
+                "url": "https://terra.do/",
+                "description": "Climate education with career placement support and cohort learning.",
+                "type": "Course",
+            },
+            {
+                "name": "80,000 Hours Career Guide",
+                "url": "https://80000hours.org/career-guide/",
+                "description": "Comprehensive guide to high-impact career planning.",
+                "type": "Guide",
+            },
+            {
+                "name": "Climate Draft",
+                "url": "https://climatedraft.org/",
+                "description": "Free course on climate careers with fellowship opportunities.",
+                "type": "Course",
+            },
+            {
+                "name": "My Climate Journey",
+                "url": "https://www.mcjcollective.com/",
+                "description": "Climate education platform with courses and community.",
+                "type": "Platform",
+            },
+        ]
+
+        # Newsletters
+        context["newsletters"] = [
+            {
+                "name": "Impactful",
+                "url": "https://impactful.substack.com/",
+                "description": "Weekly digest of impactful career opportunities and insights.",
+            },
+            {
+                "name": "Climate Tech Weekly",
+                "url": "https://climatetechweekly.substack.com/",
+                "description": "Climate technology news, funding, and job opportunities.",
+            },
+            {
+                "name": "Nonprofit Happy Hour",
+                "url": "https://nonprofithappyhour.substack.com/",
+                "description": "Nonprofit sector insights, jobs, and community stories.",
+            },
+            {
+                "name": "Good Jobs",
+                "url": "https://goodjobs.substack.com/",
+                "description": "Curated impact jobs delivered weekly to your inbox.",
+            },
+        ]
+
+        # Salary & compensation
+        context["salary_tools"] = [
+            {
+                "name": "Glassdoor",
+                "url": "https://glassdoor.com/",
+                "description": "Salary data with company reviews and interview insights.",
+            },
+            {
+                "name": "Levels.fyi",
+                "url": "https://levels.fyi/",
+                "description": "Tech salary data with compensation breakdowns by level.",
+            },
+            {
+                "name": "Candid (GuideStar)",
+                "url": "https://www.candid.org/",
+                "description": "Nonprofit salary data from Form 990 filings.",
+            },
+        ]
+
+        # Playbook steps
+        context["playbook"] = [
+            "Set up job alerts on 3-4 boards with specific keywords (role + cause area + 'remote').",
+            "Join 2 relevant Slack communities and introduce yourself with your background and goals.",
+            "Follow 10-15 target organizations on LinkedIn; engage with their content weekly.",
+            "Create a tracking spreadsheet: org name, contact, last touch, status, next action.",
+            "Reach out to 3-5 people per week for informational chats (15-20 min max).",
+            "Build a 1-page portfolio showing problem → action → outcome for 2-3 projects.",
+            "Follow up every 7-10 days with something useful: insight, intro, or iteration.",
+        ]
+
+        # Quick tips
+        context["tips"] = [
+            {
+                "title": "Lead with time zone",
+                "description": "Include your location and working hours upfront to reduce back-and-forth.",
+            },
+            {
+                "title": "Quantify your impact",
+                "description": "Translate metrics into outcomes: uptime → hours saved; funnel lift → beneficiaries served.",
+            },
+            {
+                "title": "Ask for a vibe check",
+                "description": "Request a '10-minute chat' instead of a formal interview to increase reply rates.",
+            },
+            {
+                "title": "Show, don't tell",
+                "description": "Link to actual work—a doc, repo, or case study beats any resume bullet.",
+            },
+        ]
+
         return context
 
 
 class ApplicantAssistantView(TemplateView):
     template_name = "jobs/applicant_assistant.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Check if user is authenticated and get subscription status
+        if self.request.user.is_authenticated:
+            from ..models import AssistantSubscription, AssistantGeneration
+            subscription = AssistantSubscription.get_or_create_for_user(self.request.user)
+            context["subscription"] = subscription
+            context["can_use"] = subscription.can_use_assistant()
+
+            # Get past generations (limit to 10 most recent)
+            context["past_generations"] = AssistantGeneration.objects.filter(
+                user=self.request.user
+            ).order_by("-created_at")[:10]
+        else:
+            context["subscription"] = None
+            context["can_use"] = False
+            context["past_generations"] = []
+
+        return context
 
 
 def _fetch_job_description(job_url: str) -> str:
@@ -149,6 +273,26 @@ def _call_llm(prompt: str, ai_client: AIClient | None = None) -> str:
 @method_decorator(csrf_exempt, name="dispatch")
 class ApplicantAssistantGenerateView(View):
     def post(self, request, *args, **kwargs):
+        from ..models import AssistantSubscription, AssistantGeneration
+
+        # Require authentication
+        if not request.user.is_authenticated:
+            return JsonResponse(
+                {"error": "Please log in to use the Applicant Assistant", "requires_login": True},
+                status=401
+            )
+
+        # Check usage limits
+        subscription = AssistantSubscription.get_or_create_for_user(request.user)
+        if not subscription.can_use_assistant():
+            return JsonResponse(
+                {
+                    "error": "You've used all your free generations. Upgrade to Pro for unlimited access.",
+                    "requires_upgrade": True
+                },
+                status=403
+            )
+
         try:
             data = json.loads(request.body)
             job_url = (data.get("job_url") or "").strip()
@@ -200,9 +344,63 @@ Voice: confident, concise, specific. Avoid filler. Show measurable outcomes. Kee
             ai_client = AIClient()
             content = _call_llm(prompt, ai_client)
 
-            return JsonResponse({"result": content})
+            # Check if LLM call failed
+            if content.startswith("LLM call failed:"):
+                return JsonResponse({"error": content}, status=500)
+
+            # Save the generation to history
+            AssistantGeneration.objects.create(
+                user=request.user,
+                generation_type=request_type,
+                job_url=job_url,
+                job_description=job_description[:5000],  # Limit stored description
+                user_highlights=user_resume[:2000],  # Limit stored highlights
+                generated_content=content,
+            )
+
+            # Record usage after successful generation
+            subscription.record_usage()
+
+            return JsonResponse({
+                "result": content,
+                "uses_remaining": subscription.free_uses_remaining if not subscription.is_subscribed else -1,
+                "is_subscribed": subscription.is_subscribed,
+            })
 
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON payload"}, status=400)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
+
+
+class AssistantSubscribeView(LoginRequiredMixin, View):
+    """Redirect to Stripe checkout for Assistant Pro subscription."""
+
+    def get(self, request, *args, **kwargs):
+        domain_url = request.build_absolute_uri("/").rstrip("/")
+        try:
+            checkout_url = PaymentService.create_assistant_subscription_session(
+                request.user, domain_url
+            )
+            return redirect(checkout_url)
+        except Exception as e:
+            # Log error and redirect back with error message
+            return redirect("jobs:applicant_assistant")
+
+
+class AssistantSubscribeSuccessView(LoginRequiredMixin, TemplateView):
+    """Handle successful subscription checkout."""
+
+    template_name = "jobs/assistant_subscribe_success.html"
+
+    def get(self, request, *args, **kwargs):
+        session_id = request.GET.get("session_id")
+        if session_id:
+            success, subscription = PaymentService.verify_assistant_subscription(
+                session_id, request.user
+            )
+            if success:
+                return super().get(request, *args, **kwargs)
+
+        # If verification failed, redirect to assistant page
+        return redirect("jobs:applicant_assistant")
