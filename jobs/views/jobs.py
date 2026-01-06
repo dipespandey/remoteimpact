@@ -160,9 +160,9 @@ class MyMatchesView(LoginRequiredMixin, ListView):
 
             context["seeker_profile"] = seeker
 
-            # Get top 10 matches
+            # Get top 25 matches (scan up to 2000 jobs for better coverage)
             matches = MatchingService.get_matches_for_seeker(
-                seeker, min_score=0, limit=10
+                seeker, min_score=0, limit=25, scan_limit=2000
             )
             context["matches"] = matches
 

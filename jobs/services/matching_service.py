@@ -437,10 +437,18 @@ class MatchingService:
         seeker: SeekerProfile,
         jobs: Optional[QuerySet] = None,
         min_score: int = 0,
-        limit: int = 100,
+        limit: int = 50,
+        scan_limit: int = 1000,
     ) -> list[dict]:
         """
-        Get all job matches for a seeker.
+        Get top job matches for a seeker.
+
+        Args:
+            seeker: The seeker profile to match against
+            jobs: Optional queryset of jobs to scan (defaults to all active)
+            min_score: Minimum score to include in results
+            limit: Maximum number of results to return
+            scan_limit: Maximum number of jobs to scan (for performance)
 
         Returns list of dicts with job and match data, sorted by score.
         """
@@ -450,14 +458,16 @@ class MatchingService:
             )
 
         matches = []
-        for job in jobs[:limit]:
+        for job in jobs[:scan_limit]:
             match_data = cls.calculate_match(seeker, job)
             if match_data["total"] >= min_score:
                 matches.append({"job": job, **match_data})
 
         # Sort by score descending
         matches.sort(key=lambda x: x["total"], reverse=True)
-        return matches
+
+        # Return top N matches
+        return matches[:limit]
 
     @classmethod
     def cache_match(cls, seeker: SeekerProfile, job: Job) -> JobMatch:
