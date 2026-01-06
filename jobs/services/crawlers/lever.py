@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 import re
+from datetime import datetime, timezone
 from typing import Optional
 from urllib.parse import urlparse
 
@@ -137,6 +138,15 @@ def parse_lever_job(data: dict) -> dict:
     # Team/department
     team = categories.get("team", "")
 
+    # Extract created date (epoch timestamp in milliseconds)
+    created_at_ms = data.get("createdAt")
+    created_at = None
+    if created_at_ms and isinstance(created_at_ms, (int, float)):
+        try:
+            created_at = datetime.fromtimestamp(created_at_ms / 1000, tz=timezone.utc)
+        except (ValueError, OSError):
+            pass
+
     return {
         "title": title,
         "description": description,
@@ -150,6 +160,7 @@ def parse_lever_job(data: dict) -> dict:
         "team": team,
         "hosted_url": data.get("hostedUrl", ""),
         "apply_url": data.get("applyUrl", ""),
+        "created_at": created_at,
     }
 
 
@@ -196,4 +207,5 @@ def crawl_lever_job(job: Job) -> Optional[Job]:
         salary_currency=parsed["salary_currency"],
         benefits=parsed["benefits"],
         raw_api_data=data,
+        posted_at=parsed.get("created_at"),
     )

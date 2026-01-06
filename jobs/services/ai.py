@@ -7,7 +7,7 @@ from django.conf import settings
 
 
 class AIClient:
-    """Light wrapper around OpenAI Responses API."""
+    """Light wrapper around DeepSeek/OpenAI-compatible chat API."""
 
     def __init__(
         self,
@@ -15,24 +15,35 @@ class AIClient:
         base_url: Optional[str] = None,
         model: Optional[str] = None,
     ):
-        self.api_key = settings.OPENAI_API_KEY
-        self.base_url = "https://api.openai.com/v1"
-        self.model = model or os.getenv("AI_MODEL", "gpt-5.1")
-        kwargs = {
-            "api_key": self.api_key,
-            "base_url": self.base_url,
-        }
+        # Use DeepSeek by default (cheapest), fallback to Groq, then OpenAI
+        if settings.DEEPSEEK_API_KEY:
+            self.api_key = settings.DEEPSEEK_API_KEY
+            self.base_url = "https://api.deepseek.com"
+            self.model = model or "deepseek-chat"
+        elif settings.GROQ_API_KEY:
+            self.api_key = settings.GROQ_API_KEY
+            self.base_url = "https://api.groq.com/openai/v1"
+            self.model = model or "llama-3.1-70b-versatile"
+        else:
+            self.api_key = settings.OPENAI_API_KEY
+            self.base_url = "https://api.openai.com/v1"
+            self.model = model or "gpt-4o-mini"
 
-        self.client = OpenAI(**kwargs)
+        self.client = OpenAI(
+            api_key=self.api_key,
+            base_url=self.base_url,
+        )
 
     def generate(self, prompt: str) -> str:
-        """Send prompt to Responses API and normalize text output."""
-        resp = self.client.responses.create(
+        """Send prompt to chat completions API and return text output."""
+        resp = self.client.chat.completions.create(
             model=self.model,
-            input=prompt,
-            max_output_tokens=600,
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant for job applications."},
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=800,
+            temperature=0.7,
         )
-        content = resp.output_text if hasattr(resp, "output_text") else None
-        if callable(content):
-            content = content()
+        content = resp.choices[0].message.content if resp.choices else None
         return (content or "No content returned from the model.").strip()

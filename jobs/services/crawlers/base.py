@@ -9,6 +9,7 @@ import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from html import unescape
+from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import urlparse
 
@@ -91,6 +92,7 @@ def update_job_from_crawl(
     requirements: Optional[str] = None,
     benefits: Optional[str] = None,
     raw_api_data: Optional[Dict] = None,
+    posted_at: Optional[Any] = None,
 ) -> Job:
     """
     Update a job record with crawled data.
@@ -107,6 +109,7 @@ def update_job_from_crawl(
         requirements: Job requirements
         benefits: Benefits text
         raw_api_data: Raw API response data
+        posted_at: Original publish date from source (datetime or ISO string)
 
     Returns:
         Updated Job instance
@@ -132,6 +135,18 @@ def update_job_from_crawl(
 
     if benefits:
         job.benefits = benefits
+
+    # Update posted_at from source if provided
+    if posted_at:
+        if isinstance(posted_at, datetime):
+            job.posted_at = posted_at
+        elif isinstance(posted_at, str):
+            try:
+                # Parse ISO format datetime string
+                parsed_date = datetime.fromisoformat(posted_at.replace("Z", "+00:00"))
+                job.posted_at = parsed_date
+            except (ValueError, AttributeError):
+                logger.warning(f"Could not parse posted_at: {posted_at}")
 
     # Update raw_data
     raw_data = job.raw_data or {}

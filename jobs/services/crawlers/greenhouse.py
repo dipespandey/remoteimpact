@@ -128,6 +128,9 @@ def parse_greenhouse_job(data: dict) -> dict:
     departments = data.get("departments", [])
     department_names = [d.get("name", "") for d in departments if d.get("name")]
 
+    # Extract date (updated_at is when the job was last modified)
+    updated_at = data.get("updated_at")
+
     return {
         "title": title,
         "description": description,
@@ -138,6 +141,7 @@ def parse_greenhouse_job(data: dict) -> dict:
         "salary_currency": salary_currency,
         "departments": department_names,
         "absolute_url": data.get("absolute_url", ""),
+        "updated_at": updated_at,
     }
 
 
@@ -182,4 +186,5 @@ def crawl_greenhouse_job(job: Job) -> Optional[Job]:
         salary_max=parsed["salary_max"],
         salary_currency=parsed["salary_currency"],
         raw_api_data=data,
+        posted_at=parsed.get("updated_at"),
     )

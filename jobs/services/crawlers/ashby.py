@@ -153,6 +153,9 @@ def parse_ashby_job(data: dict) -> dict:
     department = data.get("department", "")
     team = data.get("team", "")
 
+    # Extract publish date
+    published_at = data.get("publishedAt")
+
     return {
         "title": title,
         "description": description,
@@ -166,6 +169,7 @@ def parse_ashby_job(data: dict) -> dict:
         "is_remote": is_remote,
         "job_url": data.get("jobUrl", ""),
         "apply_url": data.get("applyUrl", ""),
+        "published_at": published_at,
     }
 
 
@@ -210,4 +214,5 @@ def crawl_ashby_job(job: Job) -> Optional[Job]:
         salary_max=parsed["salary_max"],
         salary_currency=parsed["salary_currency"],
         raw_api_data=data,
+        posted_at=parsed.get("published_at"),
     )
