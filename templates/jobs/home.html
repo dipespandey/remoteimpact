@@ -305,13 +305,11 @@
 <!-- Trust signals -->
 <section class="py-16 border-b border-white/5 bg-gradient-to-b from-twilight-900 to-twilight-900/40">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p class="text-center text-white/50 uppercase tracking-[0.6em] text-xs mb-8">Featured partners</p>
+        <p class="text-center text-white/50 uppercase tracking-[0.6em] text-xs mb-8">Organizations hiring</p>
         <div class="grid grid-cols-2 md:grid-cols-5 gap-8 text-white/70 text-lg font-semibold text-center">
-            <span>Open Climate</span>
-            <span>GovTech Labs</span>
-            <span>Humanity Forward</span>
-            <span>Future Work Fund</span>
-            <span>Oceans 2050</span>
+            {% for org in featured_orgs %}
+            <span>{{ org.name }}</span>
+            {% endfor %}
         </div>
     </div>
 </section>
