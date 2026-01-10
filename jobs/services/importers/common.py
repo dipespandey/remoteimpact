@@ -14,6 +14,7 @@ from django.utils import timezone
 from jobs.models import Category, Job, Organization
 from jobs.utils import unique_slug
 from jobs.constants import IMPACT_AREAS
+from jobs.services.location_normalizer import normalize_location
 
 logger = logging.getLogger(__name__)
 
@@ -187,12 +188,16 @@ def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
     if not category and payload.get("category_name"):
         category = _get_or_create_category(payload["category_name"])
 
+    # Normalize location to standard country/region value
+    raw_location = payload.get("location", "Remote")
+    normalized_location = normalize_location(raw_location)
+
     defaults = {
         "title": payload["title"],
         "description": payload.get("description", ""),
         "requirements": payload.get("requirements", "")
         or payload.get("description", ""),
-        "location": payload.get("location", "Remote"),
+        "location": normalized_location,
         "job_type": payload.get("job_type", "full-time"),
         "application_url": payload.get("application_url", ""),
         "application_email": payload.get("application_email", ""),

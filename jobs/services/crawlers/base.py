@@ -18,6 +18,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from jobs.models import Job
+from jobs.services.location_normalizer import normalize_location
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +119,8 @@ def update_job_from_crawl(
     job.description = description or job.description
 
     if location:
-        job.location = location
+        # Normalize location to standard country/region value
+        job.location = normalize_location(location)
 
     if job_type:
         job.job_type = job_type
