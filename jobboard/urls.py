@@ -27,7 +27,7 @@ from jobs.sitemaps import JobSitemap, CategorySitemap, StaticSitemap, Organizati
 
 def robots_txt(request):
     from django.conf import settings
-    site_url = getattr(settings, 'SITE_URL', 'https://www.remoteimpact.io')
+    site_url = getattr(settings, 'SITE_URL', 'https://remoteimpact.org')
     content = f"""User-agent: *
 Allow: /
 

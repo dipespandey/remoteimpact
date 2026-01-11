@@ -49,7 +49,7 @@ if DEBUG:
     CSRF_TRUSTED_ORIGINS.append("http://localhost:8000")
 
 # Site URL for SEO (canonical URLs, sitemaps, OG tags)
-SITE_URL = os.getenv("SITE_URL", "https://www.remoteimpact.io")
+SITE_URL = os.getenv("SITE_URL", "https://remoteimpact.org")
 SITE_NAME = "Remote Impact"
 
 # Trust X-Forwarded-Proto header from reverse proxy (for HTTPS detection)
