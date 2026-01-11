@@ -50,7 +50,7 @@ if DEBUG:
 
 # Site URL for SEO (canonical URLs, sitemaps, OG tags)
 SITE_URL = os.getenv("SITE_URL", "https://remoteimpact.org")
-SITE_NAME = "Remote Impact"
+SITE_NAME = "Remote Impact Jobs"  # Full brand name for SEO differentiation
 
 # Trust X-Forwarded-Proto header from reverse proxy (for HTTPS detection)
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
