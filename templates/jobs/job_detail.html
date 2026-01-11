@@ -4,7 +4,7 @@
 
 {% block meta_description %}{{ job.title }} at {{ job.organization.name }}. {{ job.location|default:"Remote" }} {{ job.get_job_type_display }} position. Apply now on Remote Impact.{% endblock %}
 
-{% block canonical %}https://remoteimpact.org{% url 'jobs:job_detail' job.slug %}{% endblock %}
+{% block canonical %}{{ SITE_URL }}{% url 'jobs:job_detail' job.slug %}{% endblock %}
 
 {% block og_type %}article{% endblock %}
 {% block og_title %}{{ job.title }} at {{ job.organization.name }}{% endblock %}
@@ -271,14 +271,14 @@
                 <div class="pt-4 border-t border-gray-100">
                     <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">Share this job</p>
                     <div class="flex items-center gap-2">
-                        <a href="https://twitter.com/intent/tweet?text={{ job.title|urlencode }}%20at%20{{ job.organization.name|urlencode }}&url=https://remoteimpact.org{{ job.get_absolute_url|urlencode }}&hashtags=remotejobs,impactjobs"
+                        <a href="https://twitter.com/intent/tweet?text={{ job.title|urlencode }}%20at%20{{ job.organization.name|urlencode }}&url={{ SITE_URL }}{{ job.get_absolute_url|urlencode }}&hashtags=remotejobs,impactjobs"
                            target="_blank" rel="noopener noreferrer"
                            class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition text-sm"
                            data-track="share_twitter" data-track-category="share" data-track-label="{{ job.slug }}">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                             <span>Tweet</span>
                         </a>
-                        <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://remoteimpact.org{{ job.get_absolute_url|urlencode }}"
+                        <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ SITE_URL }}{{ job.get_absolute_url|urlencode }}"
                            target="_blank" rel="noopener noreferrer"
                            class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition text-sm"
                            data-track="share_linkedin" data-track-category="share" data-track-label="{{ job.slug }}">

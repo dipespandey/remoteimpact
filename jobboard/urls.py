@@ -22,21 +22,30 @@ from django.http import HttpResponse
 from django.urls import include, path
 from django.views.decorators.cache import cache_page
 
-from jobs.sitemaps import JobSitemap, CategorySitemap, StaticSitemap
+from jobs.sitemaps import JobSitemap, CategorySitemap, StaticSitemap, OrganizationSitemap, LocationSitemap
 
 
 def robots_txt(request):
-    content = """User-agent: *
+    from django.conf import settings
+    site_url = getattr(settings, 'SITE_URL', 'https://www.remoteimpact.io')
+    content = f"""User-agent: *
 Allow: /
 
-Sitemap: https://remoteimpact.org/sitemap.xml
+# Disallow admin and account pages
+Disallow: /admin/
+Disallow: /accounts/
+
+# Sitemap
+Sitemap: {site_url}/sitemap.xml
 """
     return HttpResponse(content, content_type="text/plain")
 
 sitemaps = {
+    'static': StaticSitemap,
     'jobs': JobSitemap,
     'categories': CategorySitemap,
-    'static': StaticSitemap,
+    'organizations': OrganizationSitemap,
+    'locations': LocationSitemap,
 }
 
 urlpatterns = [

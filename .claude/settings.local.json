@@ -14,7 +14,11 @@
       "Bash(cat:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(ssh -o StrictHostKeyChecking=no dipesh@31.97.122.250 \"echo ''0000'' | sudo -S docker service ps genalize-project-remoteimpact-dbob6m --format ''table {{.Name}}\\\\t{{.CurrentState}}\\\\t{{.Error}}'' | head -5\")",
+      "WebFetch(domain:remoteimpact.work)",
+      "Bash(ssh:*)",
+      "Bash(find:*)"
     ]
   }
 }

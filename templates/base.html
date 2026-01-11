@@ -7,24 +7,27 @@
     <title>{% block title %}Remote Impact Jobs - Find Your Purpose{% endblock %}</title>
 
     <!-- SEO Meta Tags -->
-    <meta name="description" content="{% block meta_description %}Find remote jobs that make a difference. Browse 4,000+ impact-focused positions in climate, AI safety, global health, and more.{% endblock %}">
-    <meta name="keywords" content="remote jobs, impact jobs, climate jobs, AI safety careers, effective altruism, nonprofit jobs, social impact careers">
-    <meta name="author" content="Remote Impact">
+    <meta name="description" content="{% block meta_description %}Find remote jobs that make a difference. Browse 6,000+ impact-focused positions in climate, AI safety, global health, and more.{% endblock %}">
+    <meta name="keywords" content="remote jobs, impact jobs, climate jobs, AI safety careers, effective altruism, nonprofit jobs, social impact careers, remote work, work from home">
+    <meta name="author" content="{{ SITE_NAME }}">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="{% block canonical %}https://remoteimpact.org{% endblock %}">
+    <link rel="canonical" href="{% block canonical %}{{ SITE_URL }}{{ request.path }}{% endblock %}">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
-    <meta property="og:url" content="{% block og_url %}https://remoteimpact.org{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ SITE_URL }}{{ request.path }}{% endblock %}">
     <meta property="og:title" content="{% block og_title %}Remote Impact Jobs - Find Your Purpose{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}Find remote jobs that make a difference. Browse 4,000+ impact-focused positions in climate, AI safety, global health, and more.{% endblock %}">
-    <meta property="og:image" content="{% block og_image %}https://remoteimpact.org/static/og-image.png{% endblock %}">
-    <meta property="og:site_name" content="Remote Impact">
+    <meta property="og:description" content="{% block og_description %}Find remote jobs that make a difference. Browse 6,000+ impact-focused positions in climate, AI safety, global health, and more.{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ SITE_URL }}/static/og-image.png{% endblock %}">
+    <meta property="og:site_name" content="{{ SITE_NAME }}">
+    <meta property="og:locale" content="en_US">
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@remoteimpactio">
     <meta name="twitter:title" content="{% block twitter_title %}Remote Impact Jobs{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}Find remote jobs that make a difference.{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ SITE_URL }}/static/og-image.png{% endblock %}">
 
     <!-- Favicon -->
     {% load static %}
@@ -35,11 +38,28 @@
     {
         "@context": "https://schema.org",
         "@type": "Organization",
-        "name": "Remote Impact",
-        "url": "https://remoteimpact.org",
-        "logo": "https://remoteimpact.org/static/favicon.svg",
+        "name": "{{ SITE_NAME }}",
+        "url": "{{ SITE_URL }}",
+        "logo": "{{ SITE_URL }}/static/favicon.svg",
         "description": "Remote Impact connects purpose-driven professionals with impactful remote careers in climate, AI safety, global health, and social good.",
-        "sameAs": []
+        "sameAs": [
+            "https://twitter.com/remoteimpactio"
+        ]
+    }
+    </script>
+
+    <!-- Structured Data - Website (for sitelinks search) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "{{ SITE_NAME }}",
+        "url": "{{ SITE_URL }}",
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": "{{ SITE_URL }}/jobs/?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+        }
     }
     </script>
     {% block structured_data %}{% endblock %}
@@ -406,7 +426,7 @@
                     <div class="flex space-x-4 mt-4 md:mt-0">
                         <a href="#" class="hover:text-brand-600 transition">Privacy</a>
                         <a href="#" class="hover:text-brand-600 transition">Terms</a>
-                        <a href="mailto:hello@remoteimpact.org" class="hover:text-brand-600 transition">Contact</a>
+                        <a href="mailto:hello@remoteimpact.io" class="hover:text-brand-600 transition">Contact</a>
                     </div>
                 </div>
             </div>

@@ -48,6 +48,10 @@ CSRF_TRUSTED_ORIGINS = [
 if DEBUG:
     CSRF_TRUSTED_ORIGINS.append("http://localhost:8000")
 
+# Site URL for SEO (canonical URLs, sitemaps, OG tags)
+SITE_URL = os.getenv("SITE_URL", "https://www.remoteimpact.io")
+SITE_NAME = "Remote Impact"
+
 # Trust X-Forwarded-Proto header from reverse proxy (for HTTPS detection)
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
@@ -97,8 +101,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                # 'allauth.account.context_processors.account',
-                # 'allauth.socialaccount.context_processors.socialaccount',
+                "jobs.context_processors.site_settings",  # SEO settings
             ],
         },
     },
