@@ -47,10 +47,10 @@
                         <div class="flex items-center gap-3 mb-2">
                             <!-- Match Score Badge -->
                             <span class="px-3 py-1.5 rounded-full text-sm font-bold
-                                {% if match.total >= 80 %}bg-green-100 text-green-800 border border-green-300
-                                {% elif match.total >= 60 %}bg-yellow-100 text-yellow-800 border border-yellow-300
+                                {% if match.score >= 80 %}bg-green-100 text-green-800 border border-green-300
+                                {% elif match.score >= 60 %}bg-yellow-100 text-yellow-800 border border-yellow-300
                                 {% else %}bg-gray-100 text-gray-700 border border-gray-300{% endif %}">
-                                {{ match.total }}% match
+                                {{ match.score }}% match
                             </span>
                             <span class="text-sm text-gray-500">#{{ forloop.counter }}</span>
                         </div>
@@ -65,25 +65,24 @@
                         <p class="text-gray-600 mb-3">{{ match.job.organization.name }}</p>
                         {% endif %}
 
-                        <!-- Match Reasons -->
+                        <!-- Match Indicators -->
                         <div class="flex flex-wrap gap-2 mb-3">
-                            {% for reason in match.reasons %}
-                            <span class="inline-flex items-center text-xs text-green-700 bg-green-50 px-2 py-1 rounded-full">
-                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                {{ reason }}
+                            {% if match.job.category %}
+                            <span class="inline-flex items-center text-xs text-blue-700 bg-blue-50 px-2 py-1 rounded-full">
+                                {{ match.job.category.name }}
                             </span>
-                            {% endfor %}
+                            {% endif %}
+                            {% if match.job.job_type %}
+                            <span class="inline-flex items-center text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
+                                {{ match.job.get_job_type_display }}
+                            </span>
+                            {% endif %}
+                            {% if match.job.salary_min %}
+                            <span class="inline-flex items-center text-xs text-green-700 bg-green-50 px-2 py-1 rounded-full">
+                                ${{ match.job.salary_min|floatformat:0 }}+
+                            </span>
+                            {% endif %}
                         </div>
-
-                        <!-- Skill Gaps -->
-                        {% if match.gaps %}
-                        <div class="text-sm text-gray-500">
-                            <span class="font-medium">Skills to develop:</span>
-                            {{ match.gaps|join:", " }}
-                        </div>
-                        {% endif %}
                     </div>
 
                     <!-- Action -->
@@ -101,26 +100,14 @@
                 <!-- Score Breakdown (collapsible) -->
                 <details class="mt-4 pt-4 border-t border-gray-100">
                     <summary class="text-sm text-gray-500 cursor-pointer hover:text-gray-700">View score breakdown</summary>
-                    <div class="mt-3 grid grid-cols-5 gap-2 text-center text-xs">
+                    <div class="mt-3 grid grid-cols-2 gap-2 text-center text-xs">
                         <div class="bg-gray-50 rounded-lg p-2">
-                            <div class="font-bold text-gray-900">{{ match.breakdown.relevance }}%</div>
-                            <div class="text-gray-500">Relevance</div>
+                            <div class="font-bold text-gray-900">{{ match.semantic|floatformat:0 }}%</div>
+                            <div class="text-gray-500">Semantic Match</div>
                         </div>
                         <div class="bg-gray-50 rounded-lg p-2">
-                            <div class="font-bold text-gray-900">{{ match.breakdown.impact }}%</div>
-                            <div class="text-gray-500">Impact</div>
-                        </div>
-                        <div class="bg-gray-50 rounded-lg p-2">
-                            <div class="font-bold text-gray-900">{{ match.breakdown.skills }}%</div>
-                            <div class="text-gray-500">Skills</div>
-                        </div>
-                        <div class="bg-gray-50 rounded-lg p-2">
-                            <div class="font-bold text-gray-900">{{ match.breakdown.experience }}%</div>
-                            <div class="text-gray-500">Experience</div>
-                        </div>
-                        <div class="bg-gray-50 rounded-lg p-2">
-                            <div class="font-bold text-gray-900">{{ match.breakdown.work_style }}%</div>
-                            <div class="text-gray-500">Work Style</div>
+                            <div class="font-bold text-gray-900">{{ match.structured|floatformat:0 }}%</div>
+                            <div class="text-gray-500">Profile Match</div>
                         </div>
                     </div>
                 </details>

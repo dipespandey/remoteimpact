@@ -11,7 +11,7 @@ from ..models import Job, Category, SeekerProfile
 from ..forms import JobSubmissionForm
 from ..services.job_service import JobService
 from ..services.payment_service import PaymentService
-from ..services.matching_service import MatchingService
+from ..services.vector_search import search_jobs_for_seeker
 
 
 class JobListView(ListView):
@@ -160,10 +160,17 @@ class MyMatchesView(LoginRequiredMixin, ListView):
 
             context["seeker_profile"] = seeker
 
-            # Get top 25 matches (scan up to 2000 jobs for better coverage)
-            matches = MatchingService.get_matches_for_seeker(
-                seeker, min_score=0, limit=25, scan_limit=2000
-            )
+            # Vector-powered hybrid search
+            results = search_jobs_for_seeker(seeker, limit=25)
+            matches = [
+                {
+                    "job": job,
+                    "score": int(score * 100),
+                    "semantic": int(semantic * 100),
+                    "structured": int(structured * 100),
+                }
+                for job, score, semantic, fts, structured in results
+            ]
             context["matches"] = matches
 
         except SeekerProfile.DoesNotExist:
