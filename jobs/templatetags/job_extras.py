@@ -1,8 +1,42 @@
+from datetime import timedelta
+
 from django import template
+from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.template.defaultfilters import linebreaks_filter
 
 register = template.Library()
+
+
+@register.filter(name="add_days")
+def add_days(value, days):
+    """Add days to a date/datetime value."""
+    if value is None:
+        return None
+    try:
+        return value + timedelta(days=int(days))
+    except (TypeError, ValueError):
+        return value
+
+
+@register.filter(name="default_expiry")
+def default_expiry(job):
+    """Return expires_at or posted_at + 90 days for structured data."""
+    if job.expires_at:
+        return job.expires_at
+    return job.posted_at + timedelta(days=90)
+
+
+@register.filter(name="job_description_for_schema")
+def job_description_for_schema(job):
+    """Return the best available description for structured data schema."""
+    # Priority: description > requirements > impact > organization description
+    for field in [job.description, job.requirements, job.impact]:
+        if field and field.strip():
+            return field
+    if job.organization and job.organization.description:
+        return job.organization.description
+    return job.title  # Fallback to title if nothing else
 
 
 @register.filter(name="get_item")

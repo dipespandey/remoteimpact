@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load job_extras %}
 
 {% block title %}{{ job.title }} at {{ job.organization.name }} - Remote Impact Jobs{% endblock %}
 
@@ -16,9 +17,9 @@
     "@context": "https://schema.org",
     "@type": "JobPosting",
     "title": "{{ job.title|escapejs }}",
-    "description": "{{ job.description|striptags|truncatechars:500|escapejs }}",
+    "description": "{{ job|job_description_for_schema|striptags|truncatechars:5000|escapejs }}",
     "datePosted": "{{ job.posted_at|date:'c' }}",
-    {% if job.expires_at %}"validThrough": "{{ job.expires_at|date:'c' }}",{% endif %}
+    "validThrough": "{{ job|default_expiry|date:'c' }}",
     "employmentType": "{{ job.get_job_type_display|upper }}",
     "hiringOrganization": {
         "@type": "Organization",
@@ -33,14 +34,18 @@
         }
     },
     "jobLocationType": "TELECOMMUTE",
-    {% if job.salary_min and job.salary_max %}
+    "applicantLocationRequirements": {
+        "@type": "Country",
+        "name": "Worldwide"
+    },
+    {% if job.salary_min or job.salary_max %}
     "baseSalary": {
         "@type": "MonetaryAmount",
         "currency": "{{ job.salary_currency|default:'USD' }}",
         "value": {
             "@type": "QuantitativeValue",
-            "minValue": {{ job.salary_min }},
-            "maxValue": {{ job.salary_max }},
+            {% if job.salary_min and job.salary_max %}"minValue": {{ job.salary_min }},
+            "maxValue": {{ job.salary_max }},{% elif job.salary_min %}"value": {{ job.salary_min }},{% else %}"value": {{ job.salary_max }},{% endif %}
             "unitText": "YEAR"
         }
     },
@@ -50,7 +55,6 @@
 </script>
 {% endblock %}
 
-{% load job_extras %}
 {% block content %}
 <!-- Align with nav -->
 <!-- Align with nav -->
