@@ -32,3 +32,6 @@ dependencies = [
     "sentence-transformers>=5.2.0",
     "pgvector>=0.4.2",
 ]
+
+[tool.uv]
+extra-index-url = ["https://download.pytorch.org/whl/cpu"]
