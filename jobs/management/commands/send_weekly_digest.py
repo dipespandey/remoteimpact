@@ -69,8 +69,12 @@ class Command(BaseCommand):
         self.stdout.write(f"Found {total_users} users to send digests to")
 
         # Get active jobs for users without profiles
+        # Exclude jobs with placeholder titles or missing descriptions
         recent_jobs = list(
             Job.objects.filter(is_active=True)
+            .exclude(title__startswith="Job at ")
+            .exclude(description__isnull=True)
+            .exclude(description="")
             .select_related("organization", "category")
             .order_by("-posted_at")[:20]
         )

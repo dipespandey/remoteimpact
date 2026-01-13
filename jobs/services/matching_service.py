@@ -453,8 +453,12 @@ class MatchingService:
         Returns list of dicts with job and match data, sorted by score.
         """
         if jobs is None:
-            jobs = Job.objects.filter(is_active=True).select_related(
-                "organization", "category"
+            jobs = (
+                Job.objects.filter(is_active=True)
+                .exclude(title__startswith="Job at ")
+                .exclude(description__isnull=True)
+                .exclude(description="")
+                .select_related("organization", "category")
             )
 
         matches = []
