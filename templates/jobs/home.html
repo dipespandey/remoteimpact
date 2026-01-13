@@ -211,9 +211,15 @@
             <h1 class="text-4xl md:text-6xl font-display font-semibold leading-tight mb-8">
                 Build your career around <span>real-world impact</span>.
             </h1>
-            <p class="text-lg text-white/70 mb-10 max-w-xl">
+            <p class="text-lg text-white/70 mb-6 max-w-xl">
                 We remove the noise and bring you curated opportunities from climate innovators, civic technologists,
                 and social ventures building equitable futures.
+            </p>
+            <p class="text-sm text-white/50 mb-10 flex items-center gap-2">
+                <svg class="w-4 h-4 text-neon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span>Build your <a href="{% url 'jobs:impact_wizard' %}" class="text-neon hover:underline">Impact Profile</a> to get jobs ranked by how well they fit you</span>
             </p>
             <div class="flex flex-col sm:flex-row gap-4">
                 <a href="{% url 'jobs:job_list' %}"
@@ -481,6 +487,30 @@
     </div>
 </section>
 {% endif %}
+
+<!-- Personalized Matching CTA -->
+<section class="py-16 bg-twilight-900">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="rounded-3xl border border-white/10 bg-card-gradient p-8 md:p-12 backdrop-blur text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-neon/20 mb-6">
+                <svg class="w-8 h-8 text-neon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-semibold mb-4">Want personalized job matches?</h2>
+            <p class="text-white/70 mb-8 max-w-xl mx-auto">
+                Tell us your skills and impact goals. Our matching algorithm will rank opportunities by how well they fit your profile.
+            </p>
+            <a href="{% url 'jobs:impact_wizard' %}"
+                class="inline-flex items-center justify-center px-8 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold text-lg hover:bg-brand-400 transition shadow-glow">
+                Build Your Impact Profile
+                <svg class="w-5 h-5 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+</section>
 
 <!-- CTA Section -->
 <section class="py-24 bg-hero-gradient">
