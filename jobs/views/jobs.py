@@ -11,7 +11,7 @@ from ..models import Job, Category, SeekerProfile
 from ..forms import JobSubmissionForm
 from ..services.job_service import JobService
 from ..services.payment_service import PaymentService
-from ..services.vector_search import search_jobs_for_seeker
+from ..services.vector_search import search_jobs_for_seeker, compute_structured_score
 
 
 class JobListView(ListView):
@@ -109,9 +109,23 @@ class JobDetailView(DetailView):
                 seeker = SeekerProfile.objects.get(user=self.request.user)
                 if seeker.wizard_completed:
                     context["seeker_profile"] = seeker
-                    context["match_data"] = MatchingService.get_or_calculate_match(
-                        seeker, self.object
-                    )
+                    # Compute match score using vector search scoring
+                    job = self.object
+                    if seeker.embedding and job.embedding:
+                        from pgvector.django import CosineDistance
+                        from django.db.models import Value
+                        distance = Job.objects.filter(pk=job.pk).annotate(
+                            dist=CosineDistance('embedding', seeker.embedding)
+                        ).values_list('dist', flat=True).first() or 0
+                        semantic = 1 - distance
+                        structured = compute_structured_score(seeker, job)
+                        text_score = semantic * 0.6  # FTS not computed for single job
+                        final = (text_score * 0.6) + (structured * 0.4)
+                        context["match_data"] = {
+                            "score": int(final * 100),
+                            "semantic": int(semantic * 100),
+                            "structured": int(structured * 100),
+                        }
             except SeekerProfile.DoesNotExist:
                 pass
 
