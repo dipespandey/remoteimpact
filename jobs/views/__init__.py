@@ -31,3 +31,7 @@ from .impact_wizard import (
     ImpactWizardSkipStepView,
     ImpactProfileView,
 )
+from .newsletter import (
+    NewsletterUnsubscribeView,
+    NewsletterPreferencesView,
+)

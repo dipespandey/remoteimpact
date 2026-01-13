@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Unsubscribe - Remote Impact{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-[#F3F2EE] py-20">
+    <div class="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-3xl shadow-lg p-8 text-center">
+            {% if success %}
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900 mb-4">You've been unsubscribed</h1>
+            <p class="text-gray-600 mb-6">
+                <strong>{{ email }}</strong> will no longer receive weekly job digest emails.
+            </p>
+            <p class="text-sm text-gray-500 mb-8">
+                Changed your mind? You can always resubscribe from your account settings.
+            </p>
+            <a href="{% url 'jobs:home' %}" class="inline-block bg-brand-300 hover:bg-brand-400 text-gray-900 font-semibold py-3 px-6 rounded-full transition">
+                Back to Home
+            </a>
+            {% else %}
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900 mb-4">Unable to Unsubscribe</h1>
+            <p class="text-gray-600 mb-8">{{ error }}</p>
+            <a href="{% url 'jobs:home' %}" class="inline-block bg-brand-300 hover:bg-brand-400 text-gray-900 font-semibold py-3 px-6 rounded-full transition">
+                Back to Home
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

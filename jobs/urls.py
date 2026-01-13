@@ -109,4 +109,15 @@ urlpatterns = [
         views.SprintDetailView.as_view(),
         name="sprint_detail",
     ),
+    # Newsletter
+    path(
+        "newsletter/unsubscribe/<str:token>/",
+        views.NewsletterUnsubscribeView.as_view(),
+        name="newsletter_unsubscribe",
+    ),
+    path(
+        "newsletter/preferences/",
+        views.NewsletterPreferencesView.as_view(),
+        name="newsletter_preferences",
+    ),
 ]

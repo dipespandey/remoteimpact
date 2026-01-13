@@ -1,0 +1,33 @@
+Remote Impact Jobs - Your Weekly Digest
+========================================
+
+Hi{% if user.first_name %} {{ user.first_name }}{% endif %},
+
+{% if has_profile %}
+Here are this week's top jobs matched to your Impact Profile.
+{% else %}
+Here are this week's featured remote impact jobs. Complete your profile at {{ profile_url }} to get personalized matches!
+{% endif %}
+
+{% for item in jobs %}
+----------------------------------------
+{{ item.job.title }}
+{{ item.job.organization.name }}
+{{ item.job.location|default:"Remote" }} | {{ item.job.get_job_type_display }}{% if item.job.salary_min and item.job.salary_max %} | {{ item.job.salary_currency }}{{ item.job.salary_min|floatformat:0 }} - {{ item.job.salary_max|floatformat:0 }}{% endif %}
+{% if item.match_score %}Match Score: {{ item.match_score }}%{% endif %}
+
+View job: {{ site_url }}{{ item.job.get_absolute_url }}
+
+{% endfor %}
+----------------------------------------
+
+{% if has_profile %}
+Looking for more? Browse all jobs at {{ site_url }}/jobs/
+{% else %}
+Get personalized job matches by completing your Impact Profile: {{ profile_url }}
+{% endif %}
+
+---
+You're receiving this because you signed up for Remote Impact Jobs.
+Unsubscribe: {{ unsubscribe_url }}
+Visit: {{ site_url }}

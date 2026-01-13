@@ -230,6 +230,11 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
 
+# Resend API for sending emails (newsletter, transactional)
+# Get your API key at: https://resend.com/api-keys
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+DEFAULT_FROM_EMAIL = "Remote Impact <jobs@remoteimpact.org>"
+
 # Email settings for development
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 ACCOUNT_EMAIL_VERIFICATION = "none"

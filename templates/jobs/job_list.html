@@ -237,4 +237,31 @@
         });
     }
 </script>
+
+{% if not user.is_authenticated %}
+<!-- Login popup for anonymous users after 10 seconds -->
+<template id="login-popup-template">
+    {% include "jobs/partials/login_popup.html" %}
+</template>
+<script>
+(function() {
+    var POPUP_DELAY_MS = 10000;
+    var SESSION_KEY = 'ri_login_popup_shown';
+    if (sessionStorage.getItem(SESSION_KEY)) { return; }
+    setTimeout(function() {
+        sessionStorage.setItem(SESSION_KEY, 'true');
+        var popupTemplate = document.getElementById('login-popup-template');
+        var modalContent = document.getElementById('modal-content');
+        var modalContainer = document.getElementById('modal-container');
+        if (popupTemplate && modalContent && modalContainer) {
+            modalContent.innerHTML = popupTemplate.innerHTML;
+            modalContainer.classList.remove('hidden');
+        }
+    }, POPUP_DELAY_MS);
+    window.dismissLoginPopup = function() {
+        document.getElementById('modal-container').classList.add('hidden');
+    };
+})();
+</script>
+{% endif %}
 {% endblock %}

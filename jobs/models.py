@@ -62,6 +62,12 @@ class UserProfile(models.Model):
     years_experience = models.PositiveIntegerField(default=0)
     country = models.CharField(max_length=2, blank=True, help_text="ISO country code")
 
+    # Email preferences
+    email_newsletter = models.BooleanField(
+        default=True, help_text="Receive weekly job digest emails"
+    )
+    email_newsletter_unsubscribed_at = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

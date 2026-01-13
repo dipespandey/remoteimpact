@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Weekly Impact Jobs Digest</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+    <style>
+        /* Reset styles */
+        body, table, td, p, a, li { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+        body { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #f3f2ee; }
+
+        /* Typography */
+        .body-text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+
+        /* Responsive */
+        @media screen and (max-width: 600px) {
+            .container { width: 100% !important; }
+            .job-card { padding: 16px !important; }
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f2ee;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f3f2ee;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <!-- Main Container -->
+                <table role="presentation" class="container" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden;">
+
+                    <!-- Header -->
+                    <tr>
+                        <td style="background-color: #0f172a; padding: 32px; text-align: center;">
+                            <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 24px; font-weight: 700; color: #8AD425;">
+                                Remote Impact Jobs
+                            </h1>
+                            <p style="margin: 8px 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #94a3b8;">
+                                Your Weekly Job Digest
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Greeting -->
+                    <tr>
+                        <td style="padding: 32px 32px 16px;">
+                            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; color: #1e293b;">
+                                Hi{% if user.first_name %} {{ user.first_name }}{% endif %},
+                            </p>
+                            <p style="margin: 12px 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #64748b; line-height: 1.5;">
+                                {% if has_profile %}
+                                Here are this week's top jobs matched to your Impact Profile.
+                                {% else %}
+                                Here are this week's featured remote impact jobs. <a href="{{ profile_url }}" style="color: #6EAA1C; text-decoration: underline;">Complete your profile</a> to get personalized matches!
+                                {% endif %}
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Jobs List -->
+                    <tr>
+                        <td style="padding: 16px 32px 32px;">
+                            {% for item in jobs %}
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 16px;">
+                                <tr>
+                                    <td class="job-card" style="background-color: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0;">
+                                        <!-- Job Title & Match Score -->
+                                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                            <tr>
+                                                <td>
+                                                    <a href="{{ site_url }}{{ item.job.get_absolute_url }}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 600; color: #1e293b; text-decoration: none;">
+                                                        {{ item.job.title }}
+                                                    </a>
+                                                </td>
+                                                {% if item.match_score %}
+                                                <td width="60" align="right">
+                                                    <span style="display: inline-block; padding: 4px 10px; background-color: {% if item.match_score >= 80 %}#dcfce7{% elif item.match_score >= 60 %}#fef9c3{% else %}#f1f5f9{% endif %}; color: {% if item.match_score >= 80 %}#166534{% elif item.match_score >= 60 %}#854d0e{% else %}#475569{% endif %}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 600; border-radius: 20px;">
+                                                        {{ item.match_score }}%
+                                                    </span>
+                                                </td>
+                                                {% endif %}
+                                            </tr>
+                                        </table>
+
+                                        <!-- Organization -->
+                                        <p style="margin: 8px 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b;">
+                                            {{ item.job.organization.name }}
+                                        </p>
+
+                                        <!-- Meta -->
+                                        <p style="margin: 8px 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #94a3b8;">
+                                            {{ item.job.location|default:"Remote" }} &bull; {{ item.job.get_job_type_display }}
+                                            {% if item.job.salary_min and item.job.salary_max %}
+                                            &bull; {{ item.job.salary_currency }}{{ item.job.salary_min|floatformat:0 }} - {{ item.job.salary_max|floatformat:0 }}
+                                            {% endif %}
+                                        </p>
+
+                                        <!-- CTA -->
+                                        <p style="margin: 16px 0 0;">
+                                            <a href="{{ site_url }}{{ item.job.get_absolute_url }}" style="display: inline-block; padding: 10px 20px; background-color: #8AD425; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px;">
+                                                View Job
+                                            </a>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                            {% endfor %}
+                        </td>
+                    </tr>
+
+                    <!-- CTA Banner -->
+                    <tr>
+                        <td style="padding: 0 32px 32px;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                <tr>
+                                    <td style="background-color: #0f172a; border-radius: 12px; padding: 24px; text-align: center;">
+                                        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #f1f5f9;">
+                                            {% if has_profile %}
+                                            Looking for more? Browse all jobs on Remote Impact.
+                                            {% else %}
+                                            Get personalized job matches by completing your Impact Profile.
+                                            {% endif %}
+                                        </p>
+                                        <p style="margin: 16px 0 0;">
+                                            <a href="{% if has_profile %}{{ site_url }}/jobs/{% else %}{{ profile_url }}{% endif %}" style="display: inline-block; padding: 12px 24px; background-color: #8AD425; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px;">
+                                                {% if has_profile %}Browse All Jobs{% else %}Build Your Profile{% endif %}
+                                            </a>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8fafc; padding: 24px 32px; border-top: 1px solid #e2e8f0;">
+                            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #94a3b8; text-align: center;">
+                                You're receiving this because you signed up for Remote Impact Jobs.
+                            </p>
+                            <p style="margin: 8px 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #94a3b8; text-align: center;">
+                                <a href="{{ unsubscribe_url }}" style="color: #64748b; text-decoration: underline;">Unsubscribe</a>
+                                &bull;
+                                <a href="{{ site_url }}" style="color: #64748b; text-decoration: underline;">Visit Website</a>
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
