@@ -112,13 +112,25 @@ WSGI_APPLICATION = "jobboard.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# Use PostgreSQL if DATABASE_URL is set, otherwise SQLite for local dev
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": Path(os.getenv("DATABASE_PATH", BASE_DIR / "db.sqlite3")),
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL:
+    # PostgreSQL for production
+    # Format: postgres://user:password@host:port/dbname
+    import dj_database_url
+    DATABASES = {
+        "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
-}
+else:
+    # SQLite for local development
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": Path(os.getenv("DATABASE_PATH", BASE_DIR / "db.sqlite3")),
+        }
+    }
 
 
 # Password validation
