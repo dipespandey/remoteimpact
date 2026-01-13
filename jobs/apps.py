@@ -9,3 +9,4 @@ class JobsConfig(AppConfig):
     def ready(self):
         # Ensure custom template tags are discoverable
         import jobs.templatetags  # noqa: F401
+        import jobs.signals  # noqa: F401

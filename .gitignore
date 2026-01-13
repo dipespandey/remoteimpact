@@ -63,3 +63,4 @@ coverage.xml
 .dmypy.json
 dmypy.json
 remoteimpact_backup.json
+backups/

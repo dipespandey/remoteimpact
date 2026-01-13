@@ -1,9 +1,12 @@
 import uuid
 
 from django.contrib.auth import get_user_model
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from pgvector.django import HnswIndex, VectorField
 
 
 class Organization(models.Model):
@@ -170,6 +173,10 @@ class Job(models.Model):
     )
     raw_data = models.JSONField(default=dict, blank=True)
 
+    # Vector search fields
+    embedding = VectorField(dimensions=384, null=True, blank=True)
+    search_vector = SearchVectorField(null=True, blank=True)
+
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
 
@@ -191,6 +198,14 @@ class Job(models.Model):
             models.Index(fields=["is_active", "-posted_at"]),
             models.Index(fields=["category", "is_active"]),
             models.Index(fields=["source", "external_id"]),
+            GinIndex(fields=["search_vector"], name="job_search_idx"),
+            HnswIndex(
+                name="job_embedding_idx",
+                fields=["embedding"],
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_cosine_ops"],
+            ),
         ]
         constraints = [
             models.UniqueConstraint(
@@ -666,6 +681,13 @@ class SeekerProfile(models.Model):
     )
 
     # -------------------------------------------------------------------------
+    # Vector Search
+    # -------------------------------------------------------------------------
+
+    embedding = VectorField(dimensions=384, null=True, blank=True)
+    search_vector = SearchVectorField(null=True, blank=True)
+
+    # -------------------------------------------------------------------------
     # Visibility & Search
     # -------------------------------------------------------------------------
 
@@ -698,6 +720,16 @@ class SeekerProfile(models.Model):
     class Meta:
         verbose_name = "Seeker Profile"
         verbose_name_plural = "Seeker Profiles"
+        indexes = [
+            GinIndex(fields=["search_vector"], name="seeker_search_idx"),
+            HnswIndex(
+                name="seeker_embedding_idx",
+                fields=["embedding"],
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_cosine_ops"],
+            ),
+        ]
 
     def __str__(self):
         return f"Seeker: {self.user.email}"
