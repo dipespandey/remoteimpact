@@ -575,7 +575,79 @@
                 mobileMenu.classList.toggle('hidden');
             });
         }
+
+        // Login popup for anonymous users - cumulative time tracking across pages
+        {% if not user.is_authenticated %}
+        (function() {
+            var POPUP_THRESHOLD_MS = 10000; // 10 seconds total browsing time
+            var TIME_KEY = 'ri_browse_time';
+            var SHOWN_KEY = 'ri_login_popup_shown';
+            var pageStartTime = Date.now();
+
+            // Check if already shown this session
+            if (sessionStorage.getItem(SHOWN_KEY)) { return; }
+
+            // Get accumulated time
+            var accumulatedTime = parseInt(sessionStorage.getItem(TIME_KEY) || '0', 10);
+
+            // Check immediately if we've already exceeded threshold
+            if (accumulatedTime >= POPUP_THRESHOLD_MS) {
+                showLoginPopup();
+                return;
+            }
+
+            // Calculate remaining time needed
+            var remainingTime = POPUP_THRESHOLD_MS - accumulatedTime;
+
+            // Set timer for remaining time
+            var popupTimer = setTimeout(function() {
+                showLoginPopup();
+            }, remainingTime);
+
+            // Track time on page unload
+            window.addEventListener('beforeunload', function() {
+                if (!sessionStorage.getItem(SHOWN_KEY)) {
+                    var timeOnPage = Date.now() - pageStartTime;
+                    var newTotal = accumulatedTime + timeOnPage;
+                    sessionStorage.setItem(TIME_KEY, newTotal.toString());
+                }
+            });
+
+            // Also track on visibility change (tab switch)
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden && !sessionStorage.getItem(SHOWN_KEY)) {
+                    var timeOnPage = Date.now() - pageStartTime;
+                    var newTotal = accumulatedTime + timeOnPage;
+                    sessionStorage.setItem(TIME_KEY, newTotal.toString());
+                    accumulatedTime = newTotal;
+                    pageStartTime = Date.now();
+                }
+            });
+
+            function showLoginPopup() {
+                sessionStorage.setItem(SHOWN_KEY, 'true');
+                sessionStorage.removeItem(TIME_KEY); // Clean up
+                var modalContent = document.getElementById('modal-content');
+                var modalContainer = document.getElementById('modal-container');
+                if (modalContent && modalContainer) {
+                    modalContent.innerHTML = document.getElementById('login-popup-template').innerHTML;
+                    modalContainer.classList.remove('hidden');
+                }
+            }
+
+            window.dismissLoginPopup = function() {
+                document.getElementById('modal-container').classList.add('hidden');
+            };
+        })();
+        {% endif %}
     </script>
+
+    {% if not user.is_authenticated %}
+    <!-- Login popup template -->
+    <template id="login-popup-template">
+        {% include "jobs/partials/login_popup.html" %}
+    </template>
+    {% endif %}
 </body>
 
 </html>
