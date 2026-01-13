@@ -122,9 +122,11 @@ class JobDetailView(DetailView):
                         text_score = semantic * 0.6  # FTS not computed for single job
                         final = (text_score * 0.6) + (structured * 0.4)
                         context["match_data"] = {
-                            "score": int(final * 100),
-                            "semantic": int(semantic * 100),
-                            "structured": int(structured * 100),
+                            "total": int(final * 100),
+                            "breakdown": {
+                                "Semantic": int(semantic * 100),
+                                "Profile": int(structured * 100),
+                            },
                         }
             except SeekerProfile.DoesNotExist:
                 pass
