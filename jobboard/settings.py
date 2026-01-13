@@ -248,7 +248,7 @@ RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 # Use your verified domain, or Resend's free shared domain for testing
 # To verify your domain: https://resend.com/domains
 DEFAULT_FROM_EMAIL = os.getenv(
-    "DEFAULT_FROM_EMAIL", "Remote Impact <onboarding@resend.dev>"
+    "DEFAULT_FROM_EMAIL", "Remote Impact Jobs <hello@remoteimpact.org>"
 )
 
 # Email settings for development
