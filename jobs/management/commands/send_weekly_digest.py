@@ -96,7 +96,7 @@ class Command(BaseCommand):
                 except SeekerProfile.DoesNotExist:
                     pass
 
-                if has_profile and seeker_profile.embedding:
+                if has_profile and seeker_profile.embedding is not None:
                     # Get personalized matches via vector search
                     results = search_jobs_for_seeker(seeker_profile, limit=20)
                     if results:
