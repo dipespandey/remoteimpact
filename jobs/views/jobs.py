@@ -111,7 +111,7 @@ class JobDetailView(DetailView):
                     context["seeker_profile"] = seeker
                     # Compute match score using vector search scoring
                     job = self.object
-                    if seeker.embedding and job.embedding:
+                    if seeker.embedding is not None and job.embedding is not None:
                         from pgvector.django import CosineDistance
                         from django.db.models import Value
                         distance = Job.objects.filter(pk=job.pk).annotate(
