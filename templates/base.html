@@ -584,23 +584,32 @@
             var SHOWN_KEY = 'ri_login_popup_shown';
             var pageStartTime = Date.now();
 
+            console.log('[LoginPopup] Initialized - user not authenticated');
+
             // Check if already shown this session
-            if (sessionStorage.getItem(SHOWN_KEY)) { return; }
+            if (sessionStorage.getItem(SHOWN_KEY)) {
+                console.log('[LoginPopup] Already shown this session, skipping');
+                return;
+            }
 
             // Get accumulated time
             var accumulatedTime = parseInt(sessionStorage.getItem(TIME_KEY) || '0', 10);
+            console.log('[LoginPopup] Accumulated time:', accumulatedTime, 'ms');
 
             // Check immediately if we've already exceeded threshold
             if (accumulatedTime >= POPUP_THRESHOLD_MS) {
+                console.log('[LoginPopup] Threshold exceeded, showing popup immediately');
                 showLoginPopup();
                 return;
             }
 
             // Calculate remaining time needed
             var remainingTime = POPUP_THRESHOLD_MS - accumulatedTime;
+            console.log('[LoginPopup] Remaining time:', remainingTime, 'ms - setting timer');
 
             // Set timer for remaining time
             var popupTimer = setTimeout(function() {
+                console.log('[LoginPopup] Timer fired, showing popup');
                 showLoginPopup();
             }, remainingTime);
 
@@ -610,6 +619,7 @@
                     var timeOnPage = Date.now() - pageStartTime;
                     var newTotal = accumulatedTime + timeOnPage;
                     sessionStorage.setItem(TIME_KEY, newTotal.toString());
+                    console.log('[LoginPopup] Page unload - saved time:', newTotal);
                 }
             });
 
@@ -621,17 +631,26 @@
                     sessionStorage.setItem(TIME_KEY, newTotal.toString());
                     accumulatedTime = newTotal;
                     pageStartTime = Date.now();
+                    console.log('[LoginPopup] Tab hidden - saved time:', newTotal);
                 }
             });
 
             function showLoginPopup() {
+                console.log('[LoginPopup] showLoginPopup called');
                 sessionStorage.setItem(SHOWN_KEY, 'true');
                 sessionStorage.removeItem(TIME_KEY); // Clean up
+                var template = document.getElementById('login-popup-template');
                 var modalContent = document.getElementById('modal-content');
                 var modalContainer = document.getElementById('modal-container');
-                if (modalContent && modalContainer) {
-                    modalContent.innerHTML = document.getElementById('login-popup-template').innerHTML;
+                console.log('[LoginPopup] Elements found:', {
+                    template: !!template,
+                    modalContent: !!modalContent,
+                    modalContainer: !!modalContainer
+                });
+                if (template && modalContent && modalContainer) {
+                    modalContent.innerHTML = template.innerHTML;
                     modalContainer.classList.remove('hidden');
+                    console.log('[LoginPopup] Popup shown!');
                 }
             }
 
