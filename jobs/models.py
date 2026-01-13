@@ -20,7 +20,7 @@ class Organization(models.Model):
     description = models.TextField(
         blank=True, help_text="Brief description of the organization"
     )
-    website = models.URLField(blank=True)
+    website = models.TextField(blank=True)  # TextField to handle long/multi-language URLs
     logo = models.ImageField(upload_to="organizations/", blank=True, null=True)
     members = models.ManyToManyField(
         get_user_model(), related_name="organizations", blank=True
@@ -130,7 +130,7 @@ class Job(models.Model):
         max_length=20, choices=JOB_TYPE_CHOICES, default="full-time"
     )
 
-    application_url = models.URLField(help_text="URL to apply for this job")
+    application_url = models.TextField(help_text="URL to apply for this job")  # TextField for long URLs
     application_email = models.EmailField(
         blank=True, help_text="Alternative: email to apply"
     )
