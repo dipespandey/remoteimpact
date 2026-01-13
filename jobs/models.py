@@ -15,8 +15,8 @@ class Organization(models.Model):
         VERIFIED = "verified", "Verified"
         REJECTED = "rejected", "Rejected"
 
-    name = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
+    name = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True)
     description = models.TextField(
         blank=True, help_text="Brief description of the organization"
     )
@@ -79,7 +79,7 @@ class Category(models.Model):
     """Job categories (e.g., Education, Healthcare, Environment)"""
 
     name = models.CharField(max_length=100, unique=True)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(max_length=255, unique=True)
     description = models.TextField(blank=True)
     icon = models.CharField(max_length=50, blank=True, help_text="Emoji or icon name")
 
@@ -112,8 +112,8 @@ class Job(models.Model):
         ("freelance", "Freelance"),
     ]
 
-    title = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
+    title = models.CharField(max_length=500)
+    slug = models.SlugField(max_length=255, unique=True)
     organization = models.ForeignKey(
         Organization, on_delete=models.CASCADE, related_name="jobs"
     )
@@ -124,7 +124,7 @@ class Job(models.Model):
     description = models.TextField(help_text="Full job description")
     requirements = models.TextField(help_text="Job requirements and qualifications")
     location = models.CharField(
-        max_length=200, default="Remote", help_text="Always Remote for this board"
+        max_length=500, default="Remote", help_text="Always Remote for this board"
     )
     job_type = models.CharField(
         max_length=20, choices=JOB_TYPE_CHOICES, default="full-time"
@@ -406,8 +406,8 @@ class Sprint(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    title = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
+    title = models.CharField(max_length=500)
+    slug = models.SlugField(max_length=255, unique=True)
 
     organization = models.ForeignKey(
         Organization, on_delete=models.CASCADE, related_name="sprints"
