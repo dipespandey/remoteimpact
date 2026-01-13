@@ -11,7 +11,7 @@ import re
 import requests
 from bs4 import BeautifulSoup
 
-from ..models import Job, Category
+from ..models import Job, Category, SeekerProfile
 from ..services.ai import AIClient
 from ..services.payment_service import PaymentService
 
@@ -55,6 +55,15 @@ class HomeView(TemplateView):
             .order_by("name")[:5]
         )
 
+        # Check if user has completed impact profile
+        has_impact_profile = False
+        if self.request.user.is_authenticated:
+            try:
+                seeker = SeekerProfile.objects.get(user=self.request.user)
+                has_impact_profile = seeker.wizard_completed
+            except SeekerProfile.DoesNotExist:
+                pass
+
         context.update(
             {
                 "featured_jobs": featured_jobs,
@@ -63,6 +72,7 @@ class HomeView(TemplateView):
                 "active_jobs_count": active_jobs_rounded,
                 "categories_count": categories_count,
                 "featured_orgs": featured_orgs,
+                "has_impact_profile": has_impact_profile,
             }
         )
         return context

@@ -215,12 +215,21 @@
                 We remove the noise and bring you curated opportunities from climate innovators, civic technologists,
                 and social ventures building equitable futures.
             </p>
+            {% if not has_impact_profile %}
             <p class="text-sm text-white/50 mb-10 flex items-center gap-2">
                 <svg class="w-4 h-4 text-neon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                 </svg>
                 <span>Build your <a href="{% url 'jobs:impact_wizard' %}" class="text-neon hover:underline">Impact Profile</a> to get jobs ranked by how well they fit you</span>
             </p>
+            {% else %}
+            <p class="text-sm text-white/50 mb-10 flex items-center gap-2">
+                <svg class="w-4 h-4 text-neon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>Your Impact Profile is active. <a href="{% url 'jobs:my_matches' %}" class="text-neon hover:underline">View your top matches</a></span>
+            </p>
+            {% endif %}
             <div class="flex flex-col sm:flex-row gap-4">
                 <a href="{% url 'jobs:job_list' %}"
                     class="inline-flex items-center justify-center px-8 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold text-lg shadow-glow hover:bg-brand-400 transition"
@@ -489,6 +498,7 @@
 {% endif %}
 
 <!-- Personalized Matching CTA -->
+{% if not has_impact_profile %}
 <section class="py-16 bg-twilight-900">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="rounded-3xl border border-white/10 bg-card-gradient p-8 md:p-12 backdrop-blur text-center">
@@ -511,6 +521,7 @@
         </div>
     </div>
 </section>
+{% endif %}
 
 <!-- CTA Section -->
 <section class="py-24 bg-hero-gradient">
