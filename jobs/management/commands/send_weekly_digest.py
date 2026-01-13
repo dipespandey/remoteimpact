@@ -14,7 +14,7 @@ from django.core.management.base import BaseCommand
 
 from jobs.models import Job, SeekerProfile
 from jobs.services.email_service import email_service
-from jobs.services.matching_service import MatchingService
+from jobs.services.vector_search import search_jobs_for_seeker
 
 User = get_user_model()
 
@@ -96,21 +96,18 @@ class Command(BaseCommand):
                 except SeekerProfile.DoesNotExist:
                     pass
 
-                if has_profile:
-                    # Get personalized matches
-                    matches = MatchingService.get_matches_for_seeker(
-                        seeker_profile, limit=10, min_score=30
-                    )
-                    if matches:
-                        jobs = [m["job"] for m in matches]
-                        match_scores = {m["job"].id: m["total"] for m in matches}
+                if has_profile and seeker_profile.embedding:
+                    # Get personalized matches via vector search
+                    results = search_jobs_for_seeker(seeker_profile, limit=20)
+                    if results:
+                        jobs = [job for job, *_ in results]
+                        match_scores = {job.id: int(score * 100) for job, score, *_ in results}
                     else:
-                        # Fallback to recent jobs if no matches
-                        jobs = recent_jobs[:10]
+                        jobs = recent_jobs[:20]
                         match_scores = None
                 else:
-                    # No profile - use recent jobs
-                    jobs = recent_jobs[:10]
+                    # No profile or no embedding - use recent jobs
+                    jobs = recent_jobs[:20]
                     match_scores = None
 
                 if not jobs:
