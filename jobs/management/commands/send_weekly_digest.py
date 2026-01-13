@@ -56,11 +56,12 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(f"User not found: {specific_user}"))
                 return
         else:
-            # Get all users who are subscribed to newsletter
+            # Get users with completed impact profiles (seeker profiles with embeddings)
             users = User.objects.filter(
-                profile__email_newsletter=True,
+                seeker_profile__wizard_completed=True,
+                seeker_profile__embedding__isnull=False,
                 is_active=True,
-            ).select_related("profile")
+            ).select_related("seeker_profile")
 
         if limit:
             users = users[:limit]
