@@ -103,16 +103,29 @@ def parse_greenhouse_job(data: dict) -> dict:
     metadata = data.get("metadata") or []
     for meta in metadata:
         if meta.get("name", "").lower() in ["salary", "compensation"]:
-            # Try to parse salary from value
             value = meta.get("value", "")
-            # Simple pattern matching for salary ranges
-            salary_match = re.search(r"\$?([\d,]+)\s*[-–]\s*\$?([\d,]+)", value)
-            if salary_match:
+            value_type = meta.get("value_type", "")
+
+            # Handle structured currency_range format (dict with min_value, max_value, unit)
+            if isinstance(value, dict):
                 try:
-                    salary_min = float(salary_match.group(1).replace(",", ""))
-                    salary_max = float(salary_match.group(2).replace(",", ""))
-                except ValueError:
+                    if value.get("min_value"):
+                        salary_min = float(value["min_value"])
+                    if value.get("max_value"):
+                        salary_max = float(value["max_value"])
+                    if value.get("unit"):
+                        salary_currency = value["unit"]
+                except (ValueError, TypeError):
                     pass
+            elif isinstance(value, str) and value:
+                # Simple pattern matching for salary ranges in string format
+                salary_match = re.search(r"\$?([\d,]+)\s*[-–]\s*\$?([\d,]+)", value)
+                if salary_match:
+                    try:
+                        salary_min = float(salary_match.group(1).replace(",", ""))
+                        salary_max = float(salary_match.group(2).replace(",", ""))
+                    except ValueError:
+                        pass
 
     # Job type detection
     job_type = "full-time"
