@@ -11,7 +11,7 @@ from ..models import Job, Category, SeekerProfile
 from ..forms import JobSubmissionForm
 from ..services.job_service import JobService
 from ..services.payment_service import PaymentService
-from ..services.vector_search import search_jobs_for_seeker, compute_structured_score
+from ..services.unified_matching_service import UnifiedMatchingService
 
 
 class JobListView(ListView):
@@ -109,24 +109,29 @@ class JobDetailView(DetailView):
                 seeker = SeekerProfile.objects.get(user=self.request.user)
                 if seeker.wizard_completed:
                     context["seeker_profile"] = seeker
-                    # Compute match score using vector search scoring
                     job = self.object
                     if seeker.embedding is not None and job.embedding is not None:
+                        # Get semantic score via cosine distance
                         from pgvector.django import CosineDistance
-                        from django.db.models import Value
                         distance = Job.objects.filter(pk=job.pk).annotate(
                             dist=CosineDistance('embedding', seeker.embedding)
                         ).values_list('dist', flat=True).first() or 0
-                        semantic = 1 - distance
-                        structured = compute_structured_score(seeker, job)
-                        text_score = semantic * 0.6  # FTS not computed for single job
-                        final = (text_score * 0.6) + (structured * 0.4)
+                        semantic_score = (1 - distance) * 100
+
+                        # Get full match using unified service
+                        result = UnifiedMatchingService._score_candidate(
+                            seeker, job, semantic_score
+                        )
                         context["match_data"] = {
-                            "total": int(final * 100),
+                            "total": int(result.score),
                             "breakdown": {
-                                "Semantic": int(semantic * 100),
-                                "Profile": int(structured * 100),
+                                "Semantic": int(result.semantic_score),
+                                "Profile": int(result.profile_score),
+                                "Impact": int(result.impact_score),
                             },
+                            "impact_tier": result.impact_tier,
+                            "reasons": result.reasons,
+                            "impact_reasons": result.impact_reasons,
                         }
             except SeekerProfile.DoesNotExist:
                 pass
@@ -176,16 +181,22 @@ class MyMatchesView(LoginRequiredMixin, ListView):
 
             context["seeker_profile"] = seeker
 
-            # Vector-powered hybrid search
-            results = search_jobs_for_seeker(seeker, limit=25)
+            # Unified matching with 4-component scoring
+            results = UnifiedMatchingService.get_matches(seeker, limit=25)
             matches = [
                 {
-                    "job": job,
-                    "score": int(score * 100),
-                    "semantic": int(semantic * 100),
-                    "structured": int(structured * 100),
+                    "job": result.job,
+                    "score": int(result.score),
+                    "semantic": int(result.semantic_score),
+                    "lexical": int(result.lexical_score),
+                    "profile": int(result.profile_score),
+                    "impact": int(result.impact_score),
+                    "impact_tier": result.impact_tier,
+                    "reasons": result.reasons,
+                    "gaps": result.gaps,
+                    "impact_reasons": result.impact_reasons,
                 }
-                for job, score, semantic, fts, structured in results
+                for result in results
             ]
             context["matches"] = matches
 
