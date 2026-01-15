@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .feeds import LatestJobsFeed, CategoryJobsFeed
 
 app_name = "jobs"
 
@@ -130,4 +131,7 @@ urlpatterns = [
         views.NewsletterSubscribeView.as_view(),
         name="newsletter_subscribe",
     ),
+    # RSS Feeds
+    path("feed/jobs/", LatestJobsFeed(), name="jobs_feed"),
+    path("feed/jobs/category/<slug:slug>/", CategoryJobsFeed(), name="category_feed"),
 ]
