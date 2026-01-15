@@ -535,7 +535,7 @@
                 class="inline-flex items-center justify-center px-8 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold text-lg hover:bg-brand-400 transition shadow-glow">
                 Find a role
             </a>
-            <a href="mailto:hello@remoteimpact.org"
+            <a href="{% url 'account_signup' %}?next={% url 'jobs:onboarding_select_type' %}?intent=employer"
                 class="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-gray-300 text-gray-900 font-semibold text-lg hover:border-brand-500 hover:text-brand-600 transition">
                 Partner with us
             </a>

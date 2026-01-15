@@ -20,6 +20,7 @@ from .models import (
     CoverLetter,
     AssistantSubscription,
     AssistantGeneration,
+    NewsletterSubscriber,
 )
 
 
@@ -535,3 +536,14 @@ class AssistantGenerationAdmin(admin.ModelAdmin):
         ("Output", {"fields": ["generated_content"]}),
         ("Dates", {"fields": ["created_at"]}),
     ]
+
+
+@admin.register(NewsletterSubscriber)
+class NewsletterSubscriberAdmin(admin.ModelAdmin):
+    list_display = ["email", "confirmed", "unsubscribed", "source", "created_at"]
+    list_filter = ["confirmed", "unsubscribed", "source", "created_at"]
+    search_fields = ["email"]
+    readonly_fields = ["created_at", "confirmed_at", "unsubscribed_at"]
+    date_hierarchy = "created_at"
+    ordering = ["-created_at"]
+

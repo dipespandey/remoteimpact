@@ -120,4 +120,9 @@ urlpatterns = [
         views.NewsletterPreferencesView.as_view(),
         name="newsletter_preferences",
     ),
+    path(
+        "newsletter/subscribe/",
+        views.NewsletterSubscribeView.as_view(),
+        name="newsletter_subscribe",
+    ),
 ]

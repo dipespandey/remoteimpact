@@ -34,4 +34,5 @@ from .impact_wizard import (
 from .newsletter import (
     NewsletterUnsubscribeView,
     NewsletterPreferencesView,
+    NewsletterSubscribeView,
 )

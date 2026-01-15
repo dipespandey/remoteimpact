@@ -31,6 +31,16 @@ class OnboardingSelectTypeView(LoginRequiredMixin, FormView):
     template_name = "jobs/onboarding/select_type.html"
     form_class = OnboardingTypeForm
 
+    def get(self, request, *args, **kwargs):
+        # Auto-select employer if intent=employer is in URL (from Partner with us button)
+        intent = request.GET.get("intent", "")
+        if intent == "employer":
+            OnboardingService.set_account_type(
+                request.user, UserProfile.AccountType.EMPLOYER
+            )
+            return redirect(reverse("jobs:start_onboarding"))
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["next_url"] = self.request.GET.get("next", "")

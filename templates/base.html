@@ -414,12 +414,14 @@
                         <h3 class="text-sm uppercase tracking-[0.3em] text-gray-500 mb-4">Stay in sync</h3>
                         <p class="text-gray-600 mb-4 text-sm">Quarterly digest of mission-driven roles, founder
                             spotlights, and playbooks.</p>
-                        <div class="flex items-center space-x-2">
-                            <input type="email" placeholder="you@email.com"
+                        <form id="newsletter-form" class="flex items-center space-x-2">
+                            {% csrf_token %}
+                            <input type="email" name="email" id="newsletter-email" placeholder="you@email.com" required
                                 class="flex-1 px-4 py-3 rounded-full bg-white border border-gray-200 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-400">
-                            <button
+                            <button type="submit" id="newsletter-btn"
                                 class="px-5 py-3 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition">Join</button>
-                        </div>
+                        </form>
+                        <p id="newsletter-message" class="text-sm mt-2 hidden"></p>
                     </div>
                 </div>
                 <div
@@ -659,6 +661,56 @@
             };
         })();
         {% endif %}
+
+        // Newsletter subscription form
+        (function() {
+            const form = document.getElementById('newsletter-form');
+            const emailInput = document.getElementById('newsletter-email');
+            const btn = document.getElementById('newsletter-btn');
+            const message = document.getElementById('newsletter-message');
+
+            if (form) {
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+
+                    const email = emailInput.value.trim();
+                    if (!email) return;
+
+                    btn.disabled = true;
+                    btn.textContent = '...';
+
+                    try {
+                        const response = await fetch('{% url "jobs:newsletter_subscribe" %}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken')
+                            },
+                            body: JSON.stringify({ email: email })
+                        });
+
+                        const data = await response.json();
+
+                        message.classList.remove('hidden', 'text-red-600', 'text-green-600');
+                        if (data.success) {
+                            message.classList.add('text-green-600');
+                            message.textContent = data.message;
+                            emailInput.value = '';
+                        } else {
+                            message.classList.add('text-red-600');
+                            message.textContent = data.error || 'Something went wrong';
+                        }
+                    } catch (err) {
+                        message.classList.remove('hidden');
+                        message.classList.add('text-red-600');
+                        message.textContent = 'Network error. Please try again.';
+                    }
+
+                    btn.disabled = false;
+                    btn.textContent = 'Join';
+                });
+            }
+        })();
     </script>
 
     {% if not user.is_authenticated %}

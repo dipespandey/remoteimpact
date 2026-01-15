@@ -1043,3 +1043,28 @@ class AssistantGeneration(models.Model):
     def preview(self):
         """Return first 100 chars of generated content."""
         return self.generated_content[:100] + "..." if len(self.generated_content) > 100 else self.generated_content
+
+
+class NewsletterSubscriber(models.Model):
+    """Anonymous newsletter subscribers (not yet registered users)."""
+
+    email = models.EmailField(unique=True)
+    confirmed = models.BooleanField(default=False)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    unsubscribed = models.BooleanField(default=False)
+    unsubscribed_at = models.DateTimeField(null=True, blank=True)
+    source = models.CharField(
+        max_length=50,
+        default="footer",
+        help_text="Where they signed up (footer, homepage, etc.)",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        status = "confirmed" if self.confirmed else "unconfirmed"
+        if self.unsubscribed:
+            status = "unsubscribed"
+        return f"{self.email} ({status})"
