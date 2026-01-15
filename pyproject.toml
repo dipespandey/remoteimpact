@@ -31,7 +31,15 @@ dependencies = [
     "psycopg[binary]>=3.3.2",
     "sentence-transformers>=5.2.0",
     "pgvector>=0.4.2",
+    "torch>=2.7.0",
 ]
 
 [tool.uv]
-extra-index-url = ["https://download.pytorch.org/whl/cpu"]
+# Force CPU-only PyTorch to reduce Docker image size (~100MB vs ~2GB)
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
