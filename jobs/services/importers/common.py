@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 import requests
 from asgiref.sync import sync_to_async
-from django.db import transaction
+from django.db import close_old_connections, transaction
 from django.utils import timezone
 
 from jobs.models import Category, Job, Organization
@@ -86,6 +86,8 @@ def is_duplicate_job(application_url: str, source: str = None) -> bool:
     if not application_url:
         return False  # Can't detect duplicates without URL
 
+    # Reset stale connections before database query (important for long-running async imports)
+    close_old_connections()
     query = Job.objects.filter(
         application_url=application_url.strip(),
         is_active=True,
@@ -103,6 +105,8 @@ def job_exists_in_source(source: str, external_id: str) -> bool:
     """
     if not source or not external_id:
         return False
+    # Reset stale connections before database query (important for long-running async imports)
+    close_old_connections()
     return Job.objects.filter(source=source, external_id=str(external_id)).exists()
 
 
@@ -244,6 +248,8 @@ def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
 
 def _upsert_job_sync(payload: Dict) -> Tuple[Job, bool]:
     """Synchronous wrapper for _upsert_job with transaction."""
+    # Reset stale connections before database write (important for long-running async imports)
+    close_old_connections()
     with transaction.atomic():
         return _upsert_job(payload)
 

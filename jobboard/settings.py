@@ -121,7 +121,11 @@ if DATABASE_URL:
     # Format: postgres://user:password@host:port/dbname
     import dj_database_url
     DATABASES = {
-        "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=60,  # Shorter max age for long-running async imports
+            conn_health_checks=True,  # Check connection health before use (Django 4.1+)
+        )
     }
 else:
     # SQLite for local development
