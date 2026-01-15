@@ -4,6 +4,7 @@ from .onboarding import (
     StartOnboardingView,
     OnboardingSelectTypeView,
     OnboardingEmployerView,
+    OnboardingImpactProfileView,
     OnboardingSeekerView,
 )
 from .payments import PaymentSuccessView, PaymentCancelView

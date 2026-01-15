@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Complete Your Impact Profile - Remote Impact{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-[#F3F2EE] py-20">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10">
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 text-green-600 mb-4">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Complete Your Impact Profile</h1>
+            <p class="text-gray-600">Help job seekers understand your organization's impact. Complete profiles get more qualified applicants.</p>
+        </div>
+
+        {% if signals_summary.has_any %}
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <span class="mr-2">We found some info about {{ organization.name }}</span>
+                <span class="text-green-600">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                </span>
+            </h2>
+            <div class="space-y-3">
+                {% for signal in signals_summary.signals %}
+                <div class="flex items-center p-3 rounded-xl {% if signal.verified %}bg-green-50 border border-green-100{% else %}bg-gray-50 border border-gray-100{% endif %}">
+                    <span class="text-xl mr-3">{{ signal.icon }}</span>
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-900">{{ signal.label }}</div>
+                        <div class="text-sm text-gray-600">{{ signal.description }}</div>
+                    </div>
+                    {% if signal.verified %}
+                    <span class="text-green-600 text-xs font-medium bg-green-100 px-2 py-1 rounded-full">Verified</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-8">
+            <form method="post" class="space-y-8">
+                {% csrf_token %}
+
+                <!-- Organization Details Section -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Organization Details</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="{{ form.organization_type.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">
+                                {{ form.organization_type.label }}
+                            </label>
+                            {{ form.organization_type }}
+                            {% if form.organization_type.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.organization_type.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label for="{{ form.team_size.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">
+                                {{ form.team_size.label }}
+                            </label>
+                            {{ form.team_size }}
+                            {% if form.team_size.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.team_size.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label for="{{ form.founded_year.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">
+                                {{ form.founded_year.label }}
+                            </label>
+                            {{ form.founded_year }}
+                            {% if form.founded_year.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.founded_year.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label for="{{ form.remote_culture.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">
+                                {{ form.remote_culture.label }}
+                            </label>
+                            {{ form.remote_culture }}
+                            {% if form.remote_culture.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.remote_culture.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Impact Statement Section -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Impact Story</h3>
+                    <p class="text-sm text-gray-600 mb-4">Help candidates understand the change you're making in the world.</p>
+
+                    <div class="mb-4">
+                        <label for="{{ form.impact_statement.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">
+                            {{ form.impact_statement.label }}
+                        </label>
+                        {{ form.impact_statement }}
+                        {% if form.impact_statement.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.impact_statement.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="{{ form.impact_metric_name.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">
+                                {{ form.impact_metric_name.label }}
+                            </label>
+                            {{ form.impact_metric_name }}
+                            {% if form.impact_metric_name.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.impact_metric_name.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label for="{{ form.impact_metric_value.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">
+                                {{ form.impact_metric_value.label }}
+                            </label>
+                            {{ form.impact_metric_value }}
+                            {% if form.impact_metric_value.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ form.impact_metric_value.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transparency Section -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Transparency (Optional)</h3>
+                    <p class="text-sm text-gray-600 mb-4">Organizations that share their impact reports and financials attract more mission-aligned candidates.</p>
+
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5 mt-1">
+                                {{ form.has_public_impact_report }}
+                            </div>
+                            <div class="ml-3">
+                                <label for="{{ form.has_public_impact_report.id_for_label }}" class="text-sm font-medium text-gray-900">
+                                    {{ form.has_public_impact_report.label }}
+                                </label>
+                            </div>
+                        </div>
+                        <div id="impact-report-url-container" class="ml-8 {% if not form.instance.has_public_impact_report %}hidden{% endif %}">
+                            {{ form.impact_report_url }}
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5 mt-1">
+                                {{ form.has_public_financials }}
+                            </div>
+                            <div class="ml-3">
+                                <label for="{{ form.has_public_financials.id_for_label }}" class="text-sm font-medium text-gray-900">
+                                    {{ form.has_public_financials.label }}
+                                </label>
+                            </div>
+                        </div>
+                        <div id="financials-url-container" class="ml-8 {% if not form.instance.has_public_financials %}hidden{% endif %}">
+                            {{ form.financials_url }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                    <a href="{% url 'jobs:account' %}" class="text-gray-600 hover:text-gray-900 text-sm font-medium">
+                        Skip for now
+                    </a>
+                    <button type="submit"
+                        class="bg-brand-300 hover:bg-brand-400 text-gray-900 font-bold py-3 px-8 rounded-xl transition">
+                        Complete Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="mt-6 text-center">
+            <p class="text-sm text-gray-500">
+                Complete profiles rank higher in search results and get more qualified applicants.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle URL fields based on checkbox state
+    document.getElementById('{{ form.has_public_impact_report.id_for_label }}').addEventListener('change', function() {
+        document.getElementById('impact-report-url-container').classList.toggle('hidden', !this.checked);
+    });
+    document.getElementById('{{ form.has_public_financials.id_for_label }}').addEventListener('change', function() {
+        document.getElementById('financials-url-container').classList.toggle('hidden', !this.checked);
+    });
+</script>
+{% endblock %}

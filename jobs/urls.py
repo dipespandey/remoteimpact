@@ -27,6 +27,11 @@ urlpatterns = [
         name="onboarding_employer",
     ),
     path(
+        "onboarding/impact-profile/",
+        views.OnboardingImpactProfileView.as_view(),
+        name="onboarding_impact_profile",
+    ),
+    path(
         "onboarding/seeker/",
         views.OnboardingSeekerView.as_view(),
         name="onboarding_seeker",

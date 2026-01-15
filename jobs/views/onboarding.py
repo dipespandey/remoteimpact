@@ -2,12 +2,14 @@ from urllib.parse import urlencode
 
 from django.views.generic import FormView, RedirectView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
+from django.utils import timezone
 
-from ..forms import OnboardingTypeForm, EmployerOnboardingForm, SeekerOnboardingForm
-from ..models import UserProfile
+from ..forms import OnboardingTypeForm, EmployerOnboardingForm, SeekerOnboardingForm, OrgImpactProfileForm
+from ..models import UserProfile, Organization
 from ..services.onboarding_service import OnboardingService
+from ..services.org_signals_service import OrgSignalsService
 
 
 class StartOnboardingView(LoginRequiredMixin, RedirectView):
@@ -72,13 +74,61 @@ class OnboardingEmployerView(LoginRequiredMixin, FormView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
+        # After creating org, go to impact profile step
+        next_url = self.request.GET.get("next", "")
+        base_url = reverse("jobs:onboarding_impact_profile")
+        if next_url:
+            return f"{base_url}?next={next_url}"
+        return base_url
+
+    def form_valid(self, form):
+        org = OnboardingService.create_organization(self.request.user, form)
+        # Run auto-detection for org signals
+        OrgSignalsService.update_org_signals(org)
+        return super().form_valid(form)
+
+
+class OnboardingImpactProfileView(LoginRequiredMixin, FormView):
+    """Step 2 of employer onboarding: Complete organization impact profile."""
+
+    template_name = "jobs/onboarding/impact_profile.html"
+    form_class = OrgImpactProfileForm
+
+    def dispatch(self, request, *args, **kwargs):
+        profile = OnboardingService.get_user_profile(request.user)
+        if not profile or profile.account_type != UserProfile.AccountType.EMPLOYER:
+            return redirect("jobs:start_onboarding")
+        if not request.user.organizations.exists():
+            return redirect("jobs:onboarding_employer")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_organization(self):
+        return self.request.user.organizations.first()
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["instance"] = self.get_organization()
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        org = self.get_organization()
+        context["organization"] = org
+        context["next_url"] = self.request.GET.get("next", "")
+        # Get auto-detected signals for display
+        context["signals_summary"] = OrgSignalsService.get_signals_summary(org)
+        return context
+
+    def get_success_url(self):
         next_url = self.request.GET.get("next", "")
         if next_url:
             return next_url
         return reverse_lazy("jobs:account")
 
     def form_valid(self, form):
-        OnboardingService.create_organization(self.request.user, form)
+        org = form.save(commit=False)
+        org.impact_profile_completed_at = timezone.now()
+        org.save()
         return super().form_valid(form)
 
 

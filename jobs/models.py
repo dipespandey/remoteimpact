@@ -37,11 +37,123 @@ class Organization(models.Model):
     verification_notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # =========================================================================
+    # IMPACT PROFILE - Third-party signals (auto-detected)
+    # =========================================================================
+    is_80k_recommended = models.BooleanField(
+        default=False, help_text="Listed on 80,000 Hours job board"
+    )
+    is_givewell_top_charity = models.BooleanField(
+        default=False, help_text="GiveWell top or standout charity"
+    )
+    is_bcorp_certified = models.BooleanField(
+        default=False, help_text="Certified B Corporation"
+    )
+    bcorp_score = models.PositiveIntegerField(
+        null=True, blank=True, help_text="B Corp overall score (80-200+)"
+    )
+    bcorp_profile_url = models.URLField(blank=True)
+
+    # =========================================================================
+    # IMPACT PROFILE - Self-reported org details
+    # =========================================================================
+    class OrgType(models.TextChoices):
+        NONPROFIT = "nonprofit", "Nonprofit / NGO"
+        SOCIAL_ENTERPRISE = "social_enterprise", "Social Enterprise"
+        BCORP = "bcorp", "B Corporation"
+        GOVERNMENT = "government", "Government / Public Sector"
+        FOUNDATION = "foundation", "Foundation"
+        RESEARCH = "research", "Research Institution"
+        OTHER = "other", "Other"
+
+    class TeamSize(models.TextChoices):
+        TINY = "1-10", "1-10"
+        SMALL = "11-50", "11-50"
+        MEDIUM = "51-200", "51-200"
+        LARGE = "201-500", "201-500"
+        ENTERPRISE = "500+", "500+"
+
+    class RemoteCulture(models.TextChoices):
+        REMOTE_FIRST = "remote_first", "Remote-first"
+        HYBRID = "hybrid", "Hybrid"
+        OFFICE_FIRST = "office_first", "Office-first"
+
+    organization_type = models.CharField(
+        max_length=30, choices=OrgType.choices, blank=True
+    )
+    founded_year = models.PositiveIntegerField(null=True, blank=True)
+    team_size = models.CharField(
+        max_length=20, choices=TeamSize.choices, blank=True
+    )
+    remote_culture = models.CharField(
+        max_length=20, choices=RemoteCulture.choices, blank=True
+    )
+
+    # Impact transparency
+    has_public_impact_report = models.BooleanField(default=False)
+    impact_report_url = models.URLField(blank=True)
+    has_public_financials = models.BooleanField(default=False)
+    financials_url = models.URLField(blank=True)
+
+    # Impact metrics (self-reported)
+    impact_metric_name = models.CharField(
+        max_length=100, blank=True,
+        help_text="e.g., 'Lives saved', 'Trees planted', 'Students taught'"
+    )
+    impact_metric_value = models.CharField(
+        max_length=50, blank=True,
+        help_text="e.g., '50,000+', '1.2M', '10,000/year'"
+    )
+    impact_statement = models.TextField(
+        blank=True,
+        help_text="Brief statement about your organization's impact (2-3 sentences)"
+    )
+
+    # Profile tracking
+    impact_profile_completed_at = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         ordering = ["name"]
 
     def __str__(self):
         return self.name
+
+    @property
+    def impact_profile_completeness(self) -> int:
+        """Calculate profile completeness percentage (0-100)."""
+        fields = [
+            bool(self.description),
+            bool(self.website),
+            bool(self.logo),
+            bool(self.founded_year),
+            bool(self.team_size),
+            bool(self.organization_type),
+            bool(self.impact_statement),
+            bool(self.has_public_impact_report or self.has_public_financials),
+        ]
+        return int(sum(fields) / len(fields) * 100)
+
+    @property
+    def has_verified_signals(self) -> bool:
+        """Has at least one third-party verification."""
+        return any([
+            self.is_80k_recommended,
+            self.is_givewell_top_charity,
+            self.is_bcorp_certified,
+        ])
+
+    @property
+    def verified_signals_list(self) -> list:
+        """Return list of verified signal labels."""
+        signals = []
+        if self.is_80k_recommended:
+            signals.append("Recommended by 80,000 Hours")
+        if self.is_givewell_top_charity:
+            signals.append("GiveWell Top Charity")
+        if self.is_bcorp_certified:
+            score_str = f" (Score: {self.bcorp_score})" if self.bcorp_score else ""
+            signals.append(f"Certified B Corp{score_str}")
+        return signals
 
 
 class UserProfile(models.Model):

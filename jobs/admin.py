@@ -18,11 +18,105 @@ from .models import (
 
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
-    list_display = ["name", "website", "verification_status", "created_at"]
+    list_display = [
+        "name",
+        "organization_type",
+        "team_size",
+        "verification_status",
+        "impact_signals",
+        "profile_completeness",
+        "created_at",
+    ]
     prepopulated_fields = {"slug": ("name",)}
-    search_fields = ["name", "description"]
-    list_filter = ["verification_status", "created_at"]
-    actions = ["mark_verified", "mark_rejected"]
+    search_fields = ["name", "description", "impact_statement"]
+    list_filter = [
+        "verification_status",
+        "organization_type",
+        "is_80k_recommended",
+        "is_givewell_top_charity",
+        "is_bcorp_certified",
+        "has_public_impact_report",
+        "created_at",
+    ]
+    actions = ["mark_verified", "mark_rejected", "detect_signals"]
+
+    fieldsets = [
+        ("Basic Info", {"fields": ["name", "slug", "website", "description", "logo"]}),
+        ("Members", {"fields": ["members"]}),
+        ("Verification", {"fields": ["verification_status", "verification_notes"]}),
+        (
+            "Impact Signals (Auto-detected)",
+            {
+                "fields": [
+                    "is_80k_recommended",
+                    "is_givewell_top_charity",
+                    "is_bcorp_certified",
+                    "bcorp_score",
+                    "bcorp_profile_url",
+                ],
+                "classes": ["collapse"],
+            },
+        ),
+        (
+            "Organization Details",
+            {
+                "fields": [
+                    "organization_type",
+                    "founded_year",
+                    "team_size",
+                    "remote_culture",
+                ]
+            },
+        ),
+        (
+            "Impact Profile",
+            {
+                "fields": [
+                    "impact_statement",
+                    "impact_metric_name",
+                    "impact_metric_value",
+                ]
+            },
+        ),
+        (
+            "Transparency",
+            {
+                "fields": [
+                    "has_public_impact_report",
+                    "impact_report_url",
+                    "has_public_financials",
+                    "financials_url",
+                ],
+                "classes": ["collapse"],
+            },
+        ),
+    ]
+
+    def impact_signals(self, obj):
+        signals = []
+        if obj.is_80k_recommended:
+            signals.append("80K")
+        if obj.is_givewell_top_charity:
+            signals.append("GW")
+        if obj.is_bcorp_certified:
+            signals.append("BCorp")
+        return ", ".join(signals) if signals else "-"
+    impact_signals.short_description = "Signals"
+
+    def profile_completeness(self, obj):
+        pct = obj.impact_profile_completeness
+        if pct >= 75:
+            color = "green"
+        elif pct >= 50:
+            color = "orange"
+        else:
+            color = "gray"
+        return format_html(
+            '<span style="color: {};">{}</span>%',
+            color,
+            pct,
+        )
+    profile_completeness.short_description = "Profile %"
 
     @admin.action(description="Mark selected orgs verified")
     def mark_verified(self, request, queryset):
@@ -31,6 +125,15 @@ class OrganizationAdmin(admin.ModelAdmin):
     @admin.action(description="Mark selected orgs rejected")
     def mark_rejected(self, request, queryset):
         queryset.update(verification_status=Organization.VerificationStatus.REJECTED)
+
+    @admin.action(description="Detect signals for selected orgs")
+    def detect_signals(self, request, queryset):
+        from .services.org_signals_service import OrgSignalsService
+        count = 0
+        for org in queryset:
+            OrgSignalsService.update_org_signals(org)
+            count += 1
+        self.message_user(request, f"Detected signals for {count} organization(s).")
 
 
 @admin.register(Category)
