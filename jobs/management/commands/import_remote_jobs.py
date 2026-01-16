@@ -105,91 +105,115 @@ class Command(BaseCommand):
 
         if source in ("all", "80000hours"):
             self.stdout.write("Starting import from 80,000 Hours...")
-            summaries["80000hours"] = await importers.import_80000_hours(
-                limit=limit,
-                dry_run=dry_run,
-                use_ai=use_ai,
-                batch_size=batch_size,
-                progress_callback=make_progress_callback("80000hours") if use_ai else None,
-                provider=provider,
-                skip_existing=new_only,
-            )
+            try:
+                summaries["80000hours"] = await importers.import_80000_hours(
+                    limit=limit,
+                    dry_run=dry_run,
+                    use_ai=use_ai,
+                    batch_size=batch_size,
+                    progress_callback=make_progress_callback("80000hours") if use_ai else None,
+                    provider=provider,
+                    skip_existing=new_only,
+                )
+            except Exception as e:
+                self.stderr.write(f"80000hours import failed: {e}")
+                summaries["80000hours"] = {"fetched": 0, "created": 0, "updated": 0, "error": str(e)}
 
         if source in ("all", "idealist"):
             self.stdout.write("Starting import from Idealist...")
-            summaries["idealist"] = await importers.import_idealist(
-                limit=limit,
-                dry_run=dry_run,
-                use_ai=use_ai,
-                batch_size=batch_size,
-                progress_callback=make_progress_callback("idealist") if use_ai else None,
-                provider=provider,
-                skip_existing=new_only,
-            )
+            try:
+                summaries["idealist"] = await importers.import_idealist(
+                    limit=limit,
+                    dry_run=dry_run,
+                    use_ai=use_ai,
+                    batch_size=batch_size,
+                    progress_callback=make_progress_callback("idealist") if use_ai else None,
+                    provider=provider,
+                    skip_existing=new_only,
+                )
+            except Exception as e:
+                self.stderr.write(f"idealist import failed: {e}")
+                summaries["idealist"] = {"fetched": 0, "created": 0, "updated": 0, "error": str(e)}
 
         if source in ("all", "reliefweb"):
             self.stdout.write("Starting import from ReliefWeb...")
-            summaries["reliefweb"] = await importers.import_reliefweb(
-                limit=limit,
-                dry_run=dry_run,
-                use_ai=use_ai,
-                batch_size=batch_size,
-                progress_callback=make_progress_callback("reliefweb") if use_ai else None,
-                provider=provider,
-                skip_existing=new_only,
-            )
+            try:
+                summaries["reliefweb"] = await importers.import_reliefweb(
+                    limit=limit,
+                    dry_run=dry_run,
+                    use_ai=use_ai,
+                    batch_size=batch_size,
+                    progress_callback=make_progress_callback("reliefweb") if use_ai else None,
+                    provider=provider,
+                    skip_existing=new_only,
+                )
+            except Exception as e:
+                self.stderr.write(f"reliefweb import failed: {e}")
+                summaries["reliefweb"] = {"fetched": 0, "created": 0, "updated": 0, "error": str(e)}
 
         if source in ("all", "climatebase"):
             self.stdout.write("Starting import from Climatebase...")
-            summaries["climatebase"] = await importers.import_climatebase(
-                limit=limit,
-                dry_run=dry_run,
-                use_ai=use_ai,
-                batch_size=batch_size,
-                progress_callback=make_progress_callback("climatebase") if use_ai else None,
-                provider=provider,
-                skip_existing=new_only,
-            )
+            try:
+                summaries["climatebase"] = await importers.import_climatebase(
+                    limit=limit,
+                    dry_run=dry_run,
+                    use_ai=use_ai,
+                    batch_size=batch_size,
+                    progress_callback=make_progress_callback("climatebase") if use_ai else None,
+                    provider=provider,
+                    skip_existing=new_only,
+                )
+            except Exception as e:
+                self.stderr.write(f"climatebase import failed: {e}")
+                summaries["climatebase"] = {"fetched": 0, "created": 0, "updated": 0, "error": str(e)}
 
         if source in ("all", "probablygood"):
             self.stdout.write("Starting import from Probably Good...")
-            summaries["probablygood"] = await importers.import_probablygood(
-                limit=limit,
-                dry_run=dry_run,
-                use_ai=use_ai,
-                batch_size=batch_size,
-                progress_callback=make_progress_callback("probablygood") if use_ai else None,
-                provider=provider,
-                skip_existing=new_only,
-            )
+            try:
+                summaries["probablygood"] = await importers.import_probablygood(
+                    limit=limit,
+                    dry_run=dry_run,
+                    use_ai=use_ai,
+                    batch_size=batch_size,
+                    progress_callback=make_progress_callback("probablygood") if use_ai else None,
+                    provider=provider,
+                    skip_existing=new_only,
+                )
+            except Exception as e:
+                self.stderr.write(f"probablygood import failed: {e}")
+                summaries["probablygood"] = {"fetched": 0, "created": 0, "updated": 0, "error": str(e)}
 
         if source in ("all", "jobboards"):
             self.stdout.write("Starting import from job boards (Greenhouse/Lever/Ashby)...")
-            # First, find new job URLs via Google Custom Search
-            summaries["jobboards"] = await importers.import_google_search(
-                boards=["greenhouse", "lever", "ashby"],
-                limit=limit,
-                dry_run=dry_run,
-                use_ai=False,  # URLs only, no content yet
-                backend="google_cse",  # Use Google Programmable Search
-                skip_existing=new_only,
-            )
-
-            # Then crawl the job details from the APIs (parallel with optional AI)
-            if not dry_run and summaries["jobboards"]["created"] > 0:
-                self.stdout.write(f"Crawling job details from APIs (batch_size={batch_size})...")
-                crawl_stats = await crawlers.crawl_jobs_async(
+            try:
+                # First, find new job URLs via Google Custom Search
+                summaries["jobboards"] = await importers.import_google_search(
+                    boards=["greenhouse", "lever", "ashby"],
                     limit=limit,
                     dry_run=dry_run,
-                    batch_size=batch_size,
-                    use_ai=use_ai,
-                    provider=provider,
-                    progress_callback=make_progress_callback("jobboards-crawl") if use_ai else None,
+                    use_ai=False,  # URLs only, no content yet
+                    backend="google_cse",  # Use Google Programmable Search
+                    skip_existing=new_only,
                 )
-                ai_str = " with AI" if use_ai else ""
-                self.stdout.write(
-                    f"  Crawled{ai_str}: {crawl_stats['success']} updated, "
-                    f"{crawl_stats['failed']} failed, {crawl_stats['skipped']} skipped"
-                )
+
+                # Then crawl the job details from the APIs (parallel with optional AI)
+                if not dry_run and summaries["jobboards"]["created"] > 0:
+                    self.stdout.write(f"Crawling job details from APIs (batch_size={batch_size})...")
+                    crawl_stats = await crawlers.crawl_jobs_async(
+                        limit=limit,
+                        dry_run=dry_run,
+                        batch_size=batch_size,
+                        use_ai=use_ai,
+                        provider=provider,
+                        progress_callback=make_progress_callback("jobboards-crawl") if use_ai else None,
+                    )
+                    ai_str = " with AI" if use_ai else ""
+                    self.stdout.write(
+                        f"  Crawled{ai_str}: {crawl_stats['success']} updated, "
+                        f"{crawl_stats['failed']} failed, {crawl_stats['skipped']} skipped"
+                    )
+            except Exception as e:
+                self.stderr.write(f"jobboards import failed: {e}")
+                summaries["jobboards"] = {"fetched": 0, "created": 0, "updated": 0, "error": str(e)}
 
         return summaries

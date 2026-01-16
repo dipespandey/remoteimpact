@@ -63,10 +63,14 @@ def _fetch_reliefweb_detail(
     job_id: str, app_name: str, headers: Dict[str, str]
 ) -> Optional[Dict]:
     params = {"appname": app_name}
-    response = requests.get(
-        f"{API_URL}/{job_id}", params=params, headers=headers, timeout=30
-    )
-    response.raise_for_status()
+    try:
+        response = requests.get(
+            f"{API_URL}/{job_id}", params=params, headers=headers, timeout=30
+        )
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.warning("ReliefWeb job %s fetch failed: %s, skipping", job_id, e)
+        return None
     data = response.json()
     items = data.get("data") or []
     return items[0] if items else None
