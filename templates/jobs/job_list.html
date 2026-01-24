@@ -20,7 +20,7 @@
             <p class="text-white/60 text-sm">{{ page_obj.paginator.count }} role{{ page_obj.paginator.count|pluralize }} found</p>
         </header>
 
-        <form method="get" action="{% url 'jobs:job_list' %}" class="bg-card-gradient text-white rounded-2xl md:rounded-3xl border border-white/10 shadow-xl p-4 md:p-6 space-y-4 md:space-y-5 backdrop-blur">
+        <form method="get" action="{% url 'jobs:job_list' %}" class="bg-card-gradient text-white rounded-2xl md:rounded-3xl border border-white/10 shadow-xl p-4 md:p-6 space-y-4 md:space-y-5 backdrop-blur overflow-visible">
             <!-- Search bar - always visible -->
             <div class="flex flex-col md:flex-row gap-3 md:gap-4">
                 <div class="flex-1 relative">
@@ -41,8 +41,8 @@
             </div>
 
             <!-- Filters - collapsible on mobile -->
-            <div id="filters-section" class="hidden md:block">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 text-sm">
+            <div id="filters-section" class="hidden md:block overflow-visible">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 text-sm overflow-visible">
                     <!-- Areas / Categories - Multiselect -->
                     <div x-data="{ open: false, selected: [] }" x-init="selected = {{ current_categories|safe|default:'[]' }}" class="relative">
                         <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Areas</label>
