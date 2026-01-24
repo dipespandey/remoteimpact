@@ -6,33 +6,62 @@ from ..models import Job, Category, SavedJob, Organization
 
 class JobService:
     @staticmethod
-    def get_filtered_jobs(filters: dict):
+    def get_filtered_jobs(filters):
         """
         Filter jobs based on query parameters.
+        Supports both single values and multiple values (multiselect).
+
+        Args:
+            filters: QueryDict or dict-like object with filter parameters
         """
         jobs = Job.objects.filter(is_active=True).select_related(
             "organization", "category"
         )
 
-        # Category
-        if category_slug := filters.get("category"):
-            jobs = jobs.filter(category__slug=category_slug)
+        # Category - support multiple selections
+        # Use getlist if available (QueryDict), otherwise get single value
+        if hasattr(filters, "getlist"):
+            category_slugs = filters.getlist("category")
+        else:
+            category_slugs = [filters.get("category")] if filters.get("category") else []
+        category_slugs = [c for c in category_slugs if c]  # Remove empty values
+        if category_slugs:
+            jobs = jobs.filter(category__slug__in=category_slugs)
 
-        # Job Type
-        if job_type := filters.get("type"):
-            jobs = jobs.filter(job_type=job_type)
+        # Job Type - support multiple selections
+        if hasattr(filters, "getlist"):
+            job_types = filters.getlist("type")
+        else:
+            job_types = [filters.get("type")] if filters.get("type") else []
+        job_types = [t for t in job_types if t]
+        if job_types:
+            jobs = jobs.filter(job_type__in=job_types)
 
-        # Organization
-        if org_query := filters.get("organization"):
-            jobs = jobs.filter(organization__name__icontains=org_query)
+        # Organization - support multiple selections
+        if hasattr(filters, "getlist"):
+            org_queries = filters.getlist("organization")
+        else:
+            org_queries = [filters.get("organization")] if filters.get("organization") else []
+        org_queries = [o for o in org_queries if o]
+        if org_queries:
+            org_q = Q()
+            for org in org_queries:
+                org_q |= Q(organization__name__icontains=org)
+            jobs = jobs.filter(org_q)
 
-        # Location
-        if country := filters.get("country"):
-            jobs = jobs.filter(location__icontains=country)
-        if city := filters.get("city"):
-            jobs = jobs.filter(location__icontains=city)
+        # Country - support multiple selections (uses new country field + location fallback)
+        if hasattr(filters, "getlist"):
+            countries = filters.getlist("country")
+        else:
+            countries = [filters.get("country")] if filters.get("country") else []
+        countries = [c for c in countries if c]
+        if countries:
+            country_q = Q()
+            for country in countries:
+                country_q |= Q(country=country) | Q(location__icontains=country)
+            jobs = jobs.filter(country_q)
 
-        # Salary
+        # Salary min - filter jobs with salary >= value
         if salary_min := filters.get("salary_min"):
             try:
                 val = float(salary_min)
@@ -40,15 +69,51 @@ class JobService:
             except (TypeError, ValueError):
                 pass
 
-        # Text search (description/requirements)
-        if expr := filters.get("experience"):
-            jobs = jobs.filter(
-                Q(description__icontains=expr) | Q(requirements__icontains=expr)
-            )
-        if edu := filters.get("education"):
-            jobs = jobs.filter(
-                Q(description__icontains=edu) | Q(requirements__icontains=edu)
-            )
+        # Salary max - filter jobs with salary <= value
+        if salary_max := filters.get("salary_max"):
+            try:
+                val = float(salary_max)
+                jobs = jobs.filter(Q(salary_max__lte=val) | Q(salary_min__lte=val))
+            except (TypeError, ValueError):
+                pass
+
+        # Experience level - use new field with multiselect support
+        if hasattr(filters, "getlist"):
+            experience_levels = filters.getlist("experience")
+        else:
+            experience_levels = [filters.get("experience")] if filters.get("experience") else []
+        experience_levels = [e for e in experience_levels if e]
+        if experience_levels:
+            # Map display values to field values
+            level_map = {
+                "Entry Level": "entry",
+                "Mid Level": "mid",
+                "Senior": "senior",
+                "Executive": "executive",
+                "Internship": "internship",
+            }
+            mapped_levels = [level_map.get(e, e.lower()) for e in experience_levels]
+            jobs = jobs.filter(experience_level__in=mapped_levels)
+
+        # Education level - use new field with multiselect support
+        if hasattr(filters, "getlist"):
+            education_levels = filters.getlist("education")
+        else:
+            education_levels = [filters.get("education")] if filters.get("education") else []
+        education_levels = [e for e in education_levels if e]
+        if education_levels:
+            # Map display values to field values
+            edu_map = {
+                "High School": "high_school",
+                "Associate": "associate",
+                "Bachelor's": "bachelor",
+                "Master's": "master",
+                "PhD": "phd",
+            }
+            mapped_edu = [edu_map.get(e, e.lower()) for e in education_levels]
+            jobs = jobs.filter(education_level__in=mapped_edu)
+
+        # Skill search (text-based, keep backward compatibility)
         if skill := filters.get("skillset"):
             jobs = jobs.filter(
                 Q(description__icontains=skill) | Q(requirements__icontains=skill)

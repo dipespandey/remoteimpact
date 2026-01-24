@@ -28,41 +28,90 @@ class JobListView(ListView):
         categories = Category.objects.all()
         context["categories"] = categories
 
-        # Current filters
-        current_category = self.request.GET.get("category")
-        context["current_category"] = current_category
-        context["current_type"] = self.request.GET.get("type")
+        # Current filters - support multiple selections
+        context["current_categories"] = self.request.GET.getlist("category")
+        context["current_types"] = self.request.GET.getlist("type")
         context["search_query"] = self.request.GET.get("q", "")
         context["sort"] = self.request.GET.get("sort", "")
 
-        # Get category object for display
+        # For backward compatibility with single category display
+        current_category = self.request.GET.get("category")
+        context["current_category"] = current_category
         if current_category:
             context["current_category_obj"] = categories.filter(slug=current_category).first()
 
-        # Filter values from request
+        # Filter values from request - support multiple selections
         context["filters"] = {
-            "country": self.request.GET.get("country", ""),
-            "organization": self.request.GET.get("organization", ""),
+            "countries": self.request.GET.getlist("country"),
+            "organizations": self.request.GET.getlist("organization"),
             "salary_min": self.request.GET.get("salary_min", ""),
             "salary_max": self.request.GET.get("salary_max", ""),
+            "experiences": self.request.GET.getlist("experience"),
+            "educations": self.request.GET.getlist("education"),
+            # Keep single value versions for backward compatibility
+            "country": self.request.GET.get("country", ""),
+            "organization": self.request.GET.get("organization", ""),
             "experience": self.request.GET.get("experience", ""),
             "education": self.request.GET.get("education", ""),
         }
 
-        # Get distinct countries and organizations for dropdowns
+        # Get distinct countries from the new country field (normalized)
+        # Fall back to location if country field is not populated
         from ..models import Organization
-        context["countries"] = Job.objects.filter(is_active=True).exclude(
-            location__isnull=True
-        ).exclude(location="").values_list("location", flat=True).distinct().order_by("location")[:100]
+        countries_from_field = list(
+            Job.objects.filter(is_active=True)
+            .exclude(country__isnull=True)
+            .exclude(country="")
+            .values_list("country", flat=True)
+            .distinct()
+            .order_by("country")[:50]
+        )
+
+        # If no countries from field, fall back to location
+        if not countries_from_field:
+            countries_from_field = list(
+                Job.objects.filter(is_active=True)
+                .exclude(location__isnull=True)
+                .exclude(location="")
+                .values_list("location", flat=True)
+                .distinct()
+                .order_by("location")[:50]
+            )
+
+        context["countries"] = countries_from_field
         context["organizations"] = Organization.objects.filter(
             jobs__is_active=True
         ).distinct().order_by("name")[:100]
 
-        # Knowledge-based filters
+        # Knowledge-based filters with field value mappings
         context["knowledge_filters"] = {
-            "experience_levels": ["Entry Level", "Mid Level", "Senior", "Executive", "Internship"],
-            "education_levels": ["High School", "Associate", "Bachelor's", "Master's", "PhD"],
+            "experience_levels": [
+                {"display": "Entry Level", "value": "entry"},
+                {"display": "Mid Level", "value": "mid"},
+                {"display": "Senior", "value": "senior"},
+                {"display": "Executive", "value": "executive"},
+                {"display": "Internship", "value": "internship"},
+            ],
+            "education_levels": [
+                {"display": "High School", "value": "high_school"},
+                {"display": "Associate", "value": "associate"},
+                {"display": "Bachelor's", "value": "bachelor"},
+                {"display": "Master's", "value": "master"},
+                {"display": "PhD", "value": "phd"},
+            ],
+            # Keep simple lists for backward compatibility
+            "experience_levels_simple": ["Entry Level", "Mid Level", "Senior", "Executive", "Internship"],
+            "education_levels_simple": ["High School", "Associate", "Bachelor's", "Master's", "PhD"],
         }
+
+        # Job types for multiselect
+        context["job_types"] = [
+            {"display": "Full-time", "value": "full-time"},
+            {"display": "Part-time", "value": "part-time"},
+            {"display": "Contract", "value": "contract"},
+            {"display": "Freelance", "value": "freelance"},
+            {"display": "Internship", "value": "internship"},
+        ]
 
         # Check if user has seeker profile for showing "My Matches" link
         context["seeker_profile"] = None

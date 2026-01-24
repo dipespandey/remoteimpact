@@ -245,6 +245,44 @@ class Job(models.Model):
         max_length=20, choices=JOB_TYPE_CHOICES, default="full-time"
     )
 
+    # Structured fields for filtering (extracted from raw_data or AI)
+    EXPERIENCE_LEVEL_CHOICES = [
+        ("entry", "Entry Level"),
+        ("mid", "Mid Level"),
+        ("senior", "Senior"),
+        ("executive", "Executive"),
+        ("internship", "Internship"),
+    ]
+    experience_level = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        choices=EXPERIENCE_LEVEL_CHOICES,
+        help_text="Experience level required for this job",
+    )
+
+    EDUCATION_LEVEL_CHOICES = [
+        ("high_school", "High School"),
+        ("associate", "Associate"),
+        ("bachelor", "Bachelor's"),
+        ("master", "Master's"),
+        ("phd", "PhD"),
+    ]
+    education_level = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        choices=EDUCATION_LEVEL_CHOICES,
+        help_text="Minimum education level required",
+    )
+
+    country = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Normalized country name for filtering",
+    )
+
     application_url = models.TextField(help_text="URL to apply for this job")  # TextField for long URLs
     application_email = models.EmailField(
         blank=True, help_text="Alternative: email to apply"
