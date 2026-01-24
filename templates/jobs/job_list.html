@@ -76,13 +76,13 @@
                         selected: [],
                         search: '',
                         regions: {
-                            'Global / Remote': ['Remote', 'Global'],
-                            'Europe': ['United Kingdom', 'UK', 'Germany', 'France', 'Netherlands', 'Spain', 'Italy', 'Switzerland', 'Sweden', 'Belgium', 'Austria', 'Denmark', 'Ireland', 'Norway', 'Poland', 'Portugal', 'Finland', 'Czech Republic', 'Greece', 'Hungary', 'Romania'],
-                            'North America': ['United States', 'USA', 'Canada', 'Mexico'],
+                            'Global (Anywhere)': ['Global'],
+                            'Europe': ['UK', 'Germany', 'France', 'Netherlands', 'Spain', 'Italy', 'Switzerland', 'Sweden', 'Belgium', 'Austria', 'Denmark', 'Ireland', 'Norway', 'Poland', 'Portugal', 'Finland', 'Czechia', 'Czech Republic', 'Greece', 'Hungary', 'Romania', 'Bulgaria', 'Estonia'],
+                            'North America': ['USA', 'Canada', 'Mexico'],
                             'Asia Pacific': ['Australia', 'India', 'Japan', 'Singapore', 'New Zealand', 'China', 'South Korea', 'Hong Kong', 'Taiwan', 'Philippines', 'Malaysia', 'Thailand', 'Indonesia', 'Vietnam'],
-                            'Latin America': ['Brazil', 'Argentina', 'Colombia', 'Chile', 'Peru', 'Costa Rica'],
-                            'Africa': ['South Africa', 'Nigeria', 'Kenya', 'Egypt', 'Morocco', 'Ghana'],
-                            'Middle East': ['Israel', 'United Arab Emirates', 'UAE', 'Qatar', 'Saudi Arabia']
+                            'Latin America': ['Brazil', 'Argentina', 'Colombia', 'Chile', 'Peru', 'Ecuador'],
+                            'Africa': ['South Africa', 'Nigeria', 'Kenya', 'Uganda', 'Egypt', 'Morocco', 'Ghana'],
+                            'Middle East': ['Israel', 'UAE', 'Qatar', 'Saudi Arabia']
                         },
                         allCountries: [{% for country in countries %}'{{ country|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
                         toggleRegion(regionName) {
