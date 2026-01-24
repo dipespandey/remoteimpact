@@ -56,27 +56,26 @@ class JobListView(ListView):
         }
 
         # Get distinct countries from the new country field (normalized)
-        # Fall back to location if country field is not populated
+        # Filter out 2-letter codes except UK/USA, and ensure proper country names
         from ..models import Organization
-        countries_from_field = list(
+
+        # Valid short codes we want to keep
+        valid_short_codes = {"UK", "USA"}
+
+        countries_raw = (
             Job.objects.filter(is_active=True)
             .exclude(country__isnull=True)
             .exclude(country="")
             .values_list("country", flat=True)
             .distinct()
-            .order_by("country")[:50]
+            .order_by("country")
         )
 
-        # If no countries from field, fall back to location
-        if not countries_from_field:
-            countries_from_field = list(
-                Job.objects.filter(is_active=True)
-                .exclude(location__isnull=True)
-                .exclude(location="")
-                .values_list("location", flat=True)
-                .distinct()
-                .order_by("location")[:50]
-            )
+        # Filter: keep if length > 3, or if it's a valid short code (UK, USA)
+        countries_from_field = sorted(set(
+            c for c in countries_raw
+            if len(c) > 3 or c.upper() in valid_short_codes
+        ))[:100]
 
         context["countries"] = countries_from_field
         context["organizations"] = Organization.objects.filter(
