@@ -94,6 +94,8 @@ class Command(BaseCommand):
                 "salary_max": 0,
                 "job_type": 0,
                 "location": 0,
+                "posted_at": 0,
+                "expires_at": 0,
             },
         }
 
@@ -182,6 +184,26 @@ class Command(BaseCommand):
                             job.location = new_loc
                             update_fields.append("location")
                             stats["fields_updated"]["location"] += 1
+
+                    # Posted at (original posting date)
+                    if extracted.get("posted_at"):
+                        # Only update if we don't have it or it's clearly wrong
+                        # (e.g., posted_at is very recent but job is from older source)
+                        if not only_missing or job.posted_at is None:
+                            new_posted = extracted["posted_at"]
+                            if job.posted_at != new_posted:
+                                job.posted_at = new_posted
+                                update_fields.append("posted_at")
+                                stats["fields_updated"]["posted_at"] += 1
+
+                    # Expires at (deadline)
+                    if extracted.get("expires_at"):
+                        if not only_missing or job.expires_at is None:
+                            new_expires = extracted["expires_at"]
+                            if job.expires_at != new_expires:
+                                job.expires_at = new_expires
+                                update_fields.append("expires_at")
+                                stats["fields_updated"]["expires_at"] += 1
 
                     if update_fields:
                         updates.append((job, update_fields))

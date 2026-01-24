@@ -5,12 +5,13 @@ Extracts structured fields from the raw_data JSON for each job source.
 This is a NO-COST operation - pure Python parsing, no AI involved.
 
 Supports:
-- Climatebase: experience_levels, salary_from/to, countries, job_types
-- 80000hours: tags_exp_required, tags_degree_required, salary_limit
-- Idealist: salaryMinimum/Maximum, jobType, remoteCountry
+- Climatebase: experience_levels, salary_from/to, countries, job_types, dates
+- 80000hours: tags_exp_required, tags_degree_required, salary_limit, dates
+- Idealist: salaryMinimum/Maximum, jobType, remoteCountry, dates
 """
 
 import re
+from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
@@ -313,6 +314,8 @@ class RawDataExtractor:
         - salary_currency
         - job_type
         - location (enhanced)
+        - posted_at (datetime)
+        - expires_at (datetime)
         """
         if not raw_data:
             return {}
@@ -382,6 +385,15 @@ class RawDataExtractor:
                     result["country"] = "Global"
             elif "Hybrid" in remote_prefs and not result.get("location"):
                 result["location"] = "Hybrid"
+
+        # Dates - Climatebase uses ISO format
+        activation_date = raw_data.get("activation_date") or raw_data.get("created_at")
+        if activation_date:
+            result["posted_at"] = cls._parse_iso_date(activation_date)
+
+        expiration_date = raw_data.get("expiration_date")
+        if expiration_date:
+            result["expires_at"] = cls._parse_iso_date(expiration_date)
 
         return result
 
@@ -480,6 +492,15 @@ class RawDataExtractor:
                 if "salary_currency" in parsed:
                     result["salary_currency"] = parsed["salary_currency"]
 
+        # Dates - 80000hours uses Unix timestamps
+        posted_at = raw_data.get("posted_at")
+        if posted_at:
+            result["posted_at"] = cls._parse_unix_timestamp(posted_at)
+
+        closes_at = raw_data.get("closes_at")
+        if closes_at:
+            result["expires_at"] = cls._parse_unix_timestamp(closes_at)
+
         return result
 
     @classmethod
@@ -522,6 +543,13 @@ class RawDataExtractor:
             result["country"] = cls._normalize_country(remote_country)
         elif remote_country:
             result["country"] = cls._normalize_country(remote_country)
+
+        # Dates - Idealist uses Unix timestamps
+        published = raw_data.get("published")
+        if published:
+            result["posted_at"] = cls._parse_unix_timestamp(published)
+
+        # Idealist doesn't seem to have expiration date in raw_data
 
         return result
 
@@ -686,3 +714,41 @@ class RawDataExtractor:
                 pass
 
         return result if result else None
+
+    @classmethod
+    def _parse_unix_timestamp(cls, timestamp: Any) -> datetime | None:
+        """Parse a Unix timestamp (seconds since epoch) to datetime."""
+        if timestamp is None:
+            return None
+        try:
+            if isinstance(timestamp, str):
+                timestamp = int(timestamp)
+            return datetime.fromtimestamp(timestamp, tz=timezone.utc)
+        except (ValueError, TypeError, OSError):
+            return None
+
+    @classmethod
+    def _parse_iso_date(cls, date_str: str) -> datetime | None:
+        """Parse an ISO format date string to datetime."""
+        if not date_str:
+            return None
+        try:
+            # Handle various ISO formats
+            # "2025-12-17T01:19:50.878Z" or "2025-12-17T01:19:50Z"
+            if date_str.endswith("Z"):
+                date_str = date_str[:-1] + "+00:00"
+            # Handle milliseconds
+            if "." in date_str:
+                # Truncate to microseconds if more precision
+                parts = date_str.split(".")
+                if "+" in parts[1]:
+                    frac, tz = parts[1].split("+")
+                    frac = frac[:6]  # Max 6 digits for microseconds
+                    date_str = f"{parts[0]}.{frac}+{tz}"
+                elif "-" in parts[1]:
+                    frac, tz = parts[1].split("-")
+                    frac = frac[:6]
+                    date_str = f"{parts[0]}.{frac}-{tz}"
+            return datetime.fromisoformat(date_str)
+        except (ValueError, TypeError):
+            return None
