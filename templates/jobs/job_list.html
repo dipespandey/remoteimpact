@@ -20,7 +20,7 @@
             <p class="text-white/60 text-sm">{{ page_obj.paginator.count }} role{{ page_obj.paginator.count|pluralize }} found</p>
         </header>
 
-        <form method="get" action="{% url 'jobs:job_list' %}" class="bg-card-gradient text-white rounded-2xl md:rounded-3xl border border-white/10 shadow-xl p-4 md:p-6 space-y-4 md:space-y-5 backdrop-blur overflow-visible">
+        <form method="get" action="{% url 'jobs:job_list' %}" class="bg-card-gradient text-white rounded-2xl md:rounded-3xl border border-white/10 shadow-xl p-4 md:p-6 space-y-4 md:space-y-5 backdrop-blur overflow-visible relative z-20">
             <!-- Search bar - always visible -->
             <div class="flex flex-col md:flex-row gap-3 md:gap-4">
                 <div class="flex-1 relative">
@@ -223,7 +223,7 @@
             </div>
         </form>
 
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm text-white/70">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm text-white/70 relative z-10">
             <div>
                 Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} roles
             </div>
@@ -245,7 +245,7 @@
             </div>
         </div>
 
-        <section class="space-y-3 md:space-y-4">
+        <section class="space-y-3 md:space-y-4 relative z-10">
             {% if jobs %}
                 {% for job in jobs %}
                 <article class="rounded-xl md:rounded-2xl border border-white/10 bg-card-gradient backdrop-blur px-3 py-3 md:px-5 md:py-4 flex gap-3 md:gap-4 items-start">
