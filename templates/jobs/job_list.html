@@ -87,8 +87,11 @@
                         allCountries: [{% for country in countries %}'{{ country|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
                         toggleRegion(regionName) {
                             const regionCountries = this.regions[regionName] || [];
-                            const available = regionCountries.filter(c => this.allCountries.includes(c));
-                            const allSelected = available.every(c => this.selected.includes(c));
+                            // For Global region, always include even if not in allCountries
+                            const available = regionName === 'Global (Anywhere)'
+                                ? regionCountries
+                                : regionCountries.filter(c => this.allCountries.includes(c));
+                            const allSelected = available.length > 0 && available.every(c => this.selected.includes(c));
                             if (allSelected) {
                                 this.selected = this.selected.filter(c => !available.includes(c));
                             } else {
@@ -99,7 +102,10 @@
                         },
                         isRegionSelected(regionName) {
                             const regionCountries = this.regions[regionName] || [];
-                            const available = regionCountries.filter(c => this.allCountries.includes(c));
+                            // For Global region, always include
+                            const available = regionName === 'Global (Anywhere)'
+                                ? regionCountries
+                                : regionCountries.filter(c => this.allCountries.includes(c));
                             return available.length > 0 && available.every(c => this.selected.includes(c));
                         },
                         get filteredCountries() {
