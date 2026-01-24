@@ -239,12 +239,64 @@ class RawDataExtractor:
         "tw": "Taiwan",
         "hong kong": "Hong Kong",
         "hk": "Hong Kong",
-        # Remote variations
+        # Remote variations - keep generic Remote for now
         "remote": "Remote",
-        "global": "Remote",
-        "remote, global": "Remote",
         "anywhere": "Remote",
         "worldwide": "Remote",
+    }
+
+    # Regional remote mappings - for detecting region-based remote work
+    REGION_MAPPINGS = {
+        # Global patterns
+        "global": "Global",
+        "remote, global": "Global",
+        "remote - global": "Global",
+        "worldwide": "Global",
+        "anywhere": "Global",
+        "international": "Global",
+        # US patterns
+        "remote, usa": "USA",
+        "remote - usa": "USA",
+        "remote (us)": "USA",
+        "remote (usa)": "USA",
+        "us only": "USA",
+        "usa only": "USA",
+        "united states only": "USA",
+        # Europe patterns
+        "remote, europe": "Europe",
+        "remote - europe": "Europe",
+        "europe only": "Europe",
+        "eu only": "Europe",
+        "european union": "Europe",
+        "emea": "EMEA",
+        # UK patterns
+        "remote, uk": "UK",
+        "remote - uk": "UK",
+        "uk only": "UK",
+        # Americas
+        "americas": "Americas",
+        "north america": "North America",
+        "latin america": "Latin America",
+        "latam": "Latin America",
+        # APAC
+        "apac": "Asia Pacific",
+        "asia pacific": "Asia Pacific",
+        "asia": "Asia Pacific",
+    }
+
+    # Countries by region for inference
+    REGION_COUNTRIES = {
+        "Europe": ["UK", "Germany", "France", "Netherlands", "Spain", "Italy",
+                   "Switzerland", "Sweden", "Belgium", "Austria", "Denmark",
+                   "Ireland", "Norway", "Poland", "Portugal", "Finland",
+                   "Czech Republic", "Greece", "Hungary", "Romania"],
+        "North America": ["USA", "Canada", "Mexico"],
+        "Asia Pacific": ["Australia", "India", "Japan", "Singapore", "New Zealand",
+                        "China", "South Korea", "Hong Kong", "Taiwan", "Philippines",
+                        "Malaysia", "Thailand", "Indonesia", "Vietnam"],
+        "Latin America": ["Brazil", "Argentina", "Colombia", "Chile", "Peru", "Costa Rica"],
+        "Africa": ["South Africa", "Nigeria", "Kenya", "Egypt", "Morocco", "Ghana"],
+        "Middle East": ["Israel", "UAE", "Qatar", "Saudi Arabia"],
     }
 
     @classmethod
@@ -296,7 +348,7 @@ class RawDataExtractor:
         if job_types:
             result["job_type"] = cls._map_job_type(job_types[0])
 
-        # Country
+        # Country - first check countries array
         countries = raw_data.get("countries", [])
         if countries:
             result["country"] = cls._normalize_country(countries[0])
@@ -305,6 +357,11 @@ class RawDataExtractor:
         locations = raw_data.get("locations", [])
         if locations:
             result["location"] = locations[0]
+            # Try to extract country from location if not already set
+            if "country" not in result:
+                country = cls._extract_country_from_location(locations[0])
+                if country:
+                    result["country"] = country
 
         # Salary
         salary_from = raw_data.get("salary_from")
@@ -314,12 +371,16 @@ class RawDataExtractor:
         if salary_to is not None:
             result["salary_max"] = cls._parse_decimal(salary_to)
 
-        # Remote preferences
+        # Remote preferences - use to infer global remote
         remote_prefs = raw_data.get("remote_preferences", [])
-        if remote_prefs and not result.get("location"):
+        if remote_prefs:
             if "Remote" in remote_prefs:
-                result["location"] = "Remote"
-            elif "Hybrid" in remote_prefs:
+                if not result.get("location"):
+                    result["location"] = "Remote"
+                # If Remote preference but no countries specified, it's likely global
+                if "country" not in result and not countries:
+                    result["country"] = "Global"
+            elif "Hybrid" in remote_prefs and not result.get("location"):
                 result["location"] = "Hybrid"
 
         return result
@@ -357,24 +418,50 @@ class RawDataExtractor:
         if role_tags:
             result["job_type"] = cls._map_job_type(role_tags[0])
 
-        # Country from tags_country
-        country_tags = raw_data.get("tags_country", [])
-        if not country_tags:
-            highlight = raw_data.get("_highlightResult", {})
-            country_tags = [item.get("value", "") for item in highlight.get("tags_country", [])]
-
-        if country_tags:
-            # Filter out "Remote, Global" if there's a more specific country
-            specific_countries = [c for c in country_tags if c.lower() not in ["remote, global", "global"]]
-            if specific_countries:
-                result["country"] = cls._normalize_country(specific_countries[0])
-            else:
-                result["country"] = "Remote"
-
-        # Location from tags_location_80k
+        # Location and Country from tags_location_80k (most reliable source)
+        # Values like "Remote, Global", "Remote, USA", "San Francisco, USA"
         location_tags = raw_data.get("tags_location_80k", [])
         if location_tags:
             result["location"] = location_tags[0]
+            # Extract country/region from location tag
+            for loc_tag in location_tags:
+                loc_lower = loc_tag.lower().strip()
+                # Check for regional remote patterns
+                if loc_lower in cls.REGION_MAPPINGS:
+                    result["country"] = cls.REGION_MAPPINGS[loc_lower]
+                    break
+                # Check for "Remote, Country" pattern
+                if loc_lower.startswith("remote,"):
+                    region_part = loc_tag.split(",", 1)[1].strip()
+                    region_lower = region_part.lower()
+                    # Check if it's a region name
+                    if region_lower in cls.REGION_MAPPINGS:
+                        result["country"] = cls.REGION_MAPPINGS[region_lower]
+                    else:
+                        # It's a specific country
+                        result["country"] = cls._normalize_country(region_part)
+                    break
+                # Check for specific location "City, Country"
+                elif "," in loc_tag:
+                    parts = loc_tag.split(",")
+                    country_part = parts[-1].strip()
+                    result["country"] = cls._normalize_country(country_part)
+                    break
+
+        # Fallback to tags_country if no country found
+        if "country" not in result:
+            country_tags = raw_data.get("tags_country", [])
+            if not country_tags:
+                highlight = raw_data.get("_highlightResult", {})
+                country_tags = [item.get("value", "") for item in highlight.get("tags_country", [])]
+
+            if country_tags:
+                # Filter out generic remote tags
+                specific_countries = [c for c in country_tags if c.lower() not in ["remote, global", "global", "remote"]]
+                if specific_countries:
+                    result["country"] = cls._normalize_country(specific_countries[0])
+                else:
+                    result["country"] = "Global"
 
         # Salary - 80k has salary as string with currency and salary_limit as USD number
         salary_str = raw_data.get("salary", "")
@@ -417,14 +504,24 @@ class RawDataExtractor:
         if job_types:
             result["job_type"] = cls._map_job_type(job_types[0])
 
-        # Country
+        # Country and Region from remoteZone/remoteCountry
+        remote_zone = raw_data.get("remoteZone")
         remote_country = raw_data.get("remoteCountry")
-        if remote_country:
+        remote_state = raw_data.get("remoteState")
+
+        if remote_zone == "GLOBAL" or remote_zone == "ANYWHERE":
+            result["country"] = "Global"
+        elif remote_zone == "COUNTRY" and remote_country:
             result["country"] = cls._normalize_country(remote_country)
-        else:
-            remote_zone = raw_data.get("remoteZone")
-            if remote_zone == "COUNTRY":
-                result["country"] = "Remote"
+        elif remote_zone == "STATE" and remote_country:
+            # US state-based remote - still count as US
+            result["country"] = cls._normalize_country(remote_country)
+            if remote_state:
+                result["location"] = f"Remote ({remote_state}, {remote_country})"
+        elif remote_zone == "CITY" and remote_country:
+            result["country"] = cls._normalize_country(remote_country)
+        elif remote_country:
+            result["country"] = cls._normalize_country(remote_country)
 
         return result
 
