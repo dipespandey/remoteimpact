@@ -44,19 +44,19 @@
             <div id="filters-section" class="hidden md:block">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 text-sm">
                     <!-- Areas / Categories - Multiselect -->
-                    <div x-data="{ open: false, selected: {{ current_categories|safe|default:'[]' }} }" class="relative">
+                    <div x-data="{ open: false, selected: [] }" x-init="selected = {{ current_categories|safe|default:'[]' }}" class="relative">
                         <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Areas</label>
-                        <button type="button" @click="open = !open" @click.outside="open = false"
+                        <button type="button" @click="open = !open"
                             class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 text-white text-sm text-left flex justify-between items-center">
                             <span x-text="selected.length ? selected.length + ' selected' : 'All areas'"></span>
                             <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9-7 7-7-7"/></svg>
                         </button>
-                        <div x-show="open" x-transition class="absolute z-50 mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                        <div x-show="open" @click.outside="open = false" x-transition @click.stop class="absolute z-50 mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-xl max-h-60 overflow-y-auto">
                             {% for category in categories %}
-                            <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer">
+                            <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" @click.stop>
                                 <input type="checkbox" name="category" value="{{ category.slug }}"
-                                    x-model="selected"
-                                    {% if category.slug in current_categories %}checked{% endif %}
+                                    :checked="selected.includes('{{ category.slug }}')"
+                                    @change="selected.includes('{{ category.slug }}') ? selected = selected.filter(x => x !== '{{ category.slug }}') : selected.push('{{ category.slug }}')"
                                     class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
                                 <span class="text-white text-sm">{{ category.name }}</span>
                             </label>
@@ -65,19 +65,19 @@
                     </div>
 
                     <!-- Country / Region - Multiselect -->
-                    <div x-data="{ open: false, selected: {{ filters.countries|safe|default:'[]' }} }" class="relative">
+                    <div x-data="{ open: false, selected: [] }" x-init="selected = {{ filters.countries|safe|default:'[]' }}" class="relative">
                         <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Country / Region</label>
-                        <button type="button" @click="open = !open" @click.outside="open = false"
+                        <button type="button" @click="open = !open"
                             class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 text-white text-sm text-left flex justify-between items-center">
                             <span x-text="selected.length ? selected.length + ' selected' : 'Anywhere'"></span>
                             <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9-7 7-7-7"/></svg>
                         </button>
-                        <div x-show="open" x-transition class="absolute z-50 mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                        <div x-show="open" @click.outside="open = false" x-transition @click.stop class="absolute z-50 mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-xl max-h-60 overflow-y-auto">
                             {% for country in countries %}
-                            <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer">
+                            <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" @click.stop>
                                 <input type="checkbox" name="country" value="{{ country }}"
-                                    x-model="selected"
-                                    {% if country in filters.countries %}checked{% endif %}
+                                    :checked="selected.includes('{{ country }}')"
+                                    @change="selected.includes('{{ country }}') ? selected = selected.filter(x => x !== '{{ country }}') : selected.push('{{ country }}')"
                                     class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
                                 <span class="text-white text-sm">{{ country }}</span>
                             </label>
@@ -86,22 +86,22 @@
                     </div>
 
                     <!-- Organisation - Multiselect -->
-                    <div x-data="{ open: false, selected: {{ filters.organizations|safe|default:'[]' }}, search: '' }" class="relative">
+                    <div x-data="{ open: false, selected: [], search: '' }" x-init="selected = {{ filters.organizations|safe|default:'[]' }}" class="relative">
                         <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Organisation</label>
-                        <button type="button" @click="open = !open" @click.outside="open = false"
+                        <button type="button" @click="open = !open"
                             class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 text-white text-sm text-left flex justify-between items-center">
                             <span x-text="selected.length ? selected.length + ' selected' : 'All orgs'"></span>
                             <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9-7 7-7-7"/></svg>
                         </button>
-                        <div x-show="open" x-transition class="absolute z-50 mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                        <div x-show="open" @click.outside="open = false" x-transition @click.stop class="absolute z-50 mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-xl max-h-60 overflow-y-auto">
                             <div class="sticky top-0 p-2 bg-twilight-800 border-b border-white/10">
-                                <input type="text" x-model="search" placeholder="Search orgs..." class="w-full px-2 py-1 text-sm bg-white/5 border border-white/10 rounded text-white placeholder-white/40">
+                                <input type="text" x-model="search" @click.stop placeholder="Search orgs..." class="w-full px-2 py-1 text-sm bg-white/5 border border-white/10 rounded text-white placeholder-white/40">
                             </div>
                             {% for org in organizations %}
-                            <label x-show="!search || '{{ org.name|lower }}'.includes(search.toLowerCase())" class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer">
+                            <label x-show="!search || '{{ org.name|lower }}'.includes(search.toLowerCase())" class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" @click.stop>
                                 <input type="checkbox" name="organization" value="{{ org.name }}"
-                                    x-model="selected"
-                                    {% if org.name in filters.organizations %}checked{% endif %}
+                                    :checked="selected.includes('{{ org.name }}')"
+                                    @change="selected.includes('{{ org.name }}') ? selected = selected.filter(x => x !== '{{ org.name }}') : selected.push('{{ org.name }}')"
                                     class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
                                 <span class="text-white text-sm truncate">{{ org.name }}</span>
                             </label>
@@ -110,19 +110,19 @@
                     </div>
 
                     <!-- Role type - Multiselect -->
-                    <div x-data="{ open: false, selected: {{ current_types|safe|default:'[]' }} }" class="relative">
+                    <div x-data="{ open: false, selected: [] }" x-init="selected = {{ current_types|safe|default:'[]' }}" class="relative">
                         <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Role type</label>
-                        <button type="button" @click="open = !open" @click.outside="open = false"
+                        <button type="button" @click="open = !open"
                             class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 text-white text-sm text-left flex justify-between items-center">
                             <span x-text="selected.length ? selected.length + ' selected' : 'All types'"></span>
                             <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9-7 7-7-7"/></svg>
                         </button>
-                        <div x-show="open" x-transition class="absolute z-50 mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-xl">
+                        <div x-show="open" @click.outside="open = false" x-transition @click.stop class="absolute z-50 mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-xl">
                             {% for jt in job_types %}
-                            <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer">
+                            <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" @click.stop>
                                 <input type="checkbox" name="type" value="{{ jt.value }}"
-                                    x-model="selected"
-                                    {% if jt.value in current_types %}checked{% endif %}
+                                    :checked="selected.includes('{{ jt.value }}')"
+                                    @change="selected.includes('{{ jt.value }}') ? selected = selected.filter(x => x !== '{{ jt.value }}') : selected.push('{{ jt.value }}')"
                                     class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
                                 <span class="text-white text-sm">{{ jt.display }}</span>
                             </label>
@@ -143,19 +143,19 @@
                     </div>
 
                     <!-- Experience - Multiselect -->
-                    <div x-data="{ open: false, selected: {{ filters.experiences|safe|default:'[]' }} }" class="relative">
+                    <div x-data="{ open: false, selected: [] }" x-init="selected = {{ filters.experiences|safe|default:'[]' }}" class="relative">
                         <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Experience</label>
-                        <button type="button" @click="open = !open" @click.outside="open = false"
+                        <button type="button" @click="open = !open"
                             class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 text-white text-sm text-left flex justify-between items-center">
                             <span x-text="selected.length ? selected.length + ' selected' : 'Any'"></span>
                             <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9-7 7-7-7"/></svg>
                         </button>
-                        <div x-show="open" x-transition class="absolute z-50 mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-xl">
+                        <div x-show="open" @click.outside="open = false" x-transition @click.stop class="absolute z-50 mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-xl">
                             {% for level in knowledge_filters.experience_levels %}
-                            <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer">
+                            <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" @click.stop>
                                 <input type="checkbox" name="experience" value="{{ level.display }}"
-                                    x-model="selected"
-                                    {% if level.display in filters.experiences %}checked{% endif %}
+                                    :checked="selected.includes('{{ level.display }}')"
+                                    @change="selected.includes('{{ level.display }}') ? selected = selected.filter(x => x !== '{{ level.display }}') : selected.push('{{ level.display }}')"
                                     class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
                                 <span class="text-white text-sm">{{ level.display }}</span>
                             </label>
@@ -164,19 +164,19 @@
                     </div>
 
                     <!-- Education - Multiselect -->
-                    <div x-data="{ open: false, selected: {{ filters.educations|safe|default:'[]' }} }" class="relative">
+                    <div x-data="{ open: false, selected: [] }" x-init="selected = {{ filters.educations|safe|default:'[]' }}" class="relative">
                         <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Education</label>
-                        <button type="button" @click="open = !open" @click.outside="open = false"
+                        <button type="button" @click="open = !open"
                             class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 text-white text-sm text-left flex justify-between items-center">
                             <span x-text="selected.length ? selected.length + ' selected' : 'Any'"></span>
                             <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9-7 7-7-7"/></svg>
                         </button>
-                        <div x-show="open" x-transition class="absolute z-50 mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-xl">
+                        <div x-show="open" @click.outside="open = false" x-transition @click.stop class="absolute z-50 mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-xl">
                             {% for level in knowledge_filters.education_levels %}
-                            <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer">
+                            <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" @click.stop>
                                 <input type="checkbox" name="education" value="{{ level.display }}"
-                                    x-model="selected"
-                                    {% if level.display in filters.educations %}checked{% endif %}
+                                    :checked="selected.includes('{{ level.display }}')"
+                                    @change="selected.includes('{{ level.display }}') ? selected = selected.filter(x => x !== '{{ level.display }}') : selected.push('{{ level.display }}')"
                                     class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
                                 <span class="text-white text-sm">{{ level.display }}</span>
                             </label>
