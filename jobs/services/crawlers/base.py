@@ -183,7 +183,7 @@ def crawl_jobs_needing_update(
     Returns:
         Dict with success, failed, skipped counts
     """
-    from . import crawl_greenhouse_job, crawl_lever_job, crawl_ashby_job
+    from . import crawl_greenhouse_job, crawl_lever_job, crawl_ashby_job, crawl_probablygood_job
 
     # Build query
     queryset = Job.objects.filter(
@@ -205,6 +205,7 @@ def crawl_jobs_needing_update(
         "greenhouse": crawl_greenhouse_job,
         "lever": crawl_lever_job,
         "ashby": crawl_ashby_job,
+        "probablygood": crawl_probablygood_job,
     }
 
     for i, job in enumerate(jobs):
@@ -271,7 +272,7 @@ async def crawl_jobs_async(
     Returns:
         Dict with success, failed, skipped counts
     """
-    from . import crawl_greenhouse_job, crawl_lever_job, crawl_ashby_job
+    from . import crawl_greenhouse_job, crawl_lever_job, crawl_ashby_job, crawl_probablygood_job
 
     # Build query with organization pre-fetched
     queryset = Job.objects.select_related('organization').filter(
@@ -297,6 +298,7 @@ async def crawl_jobs_async(
         "greenhouse": crawl_greenhouse_job,
         "lever": crawl_lever_job,
         "ashby": crawl_ashby_job,
+        "probablygood": crawl_probablygood_job,
     }
 
     def crawl_single_job(job: Job) -> tuple[Job, Optional[Job], Optional[str]]:

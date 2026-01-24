@@ -23,7 +23,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             "--source",
-            choices=["greenhouse", "lever", "ashby"],
+            choices=["greenhouse", "lever", "ashby", "probablygood"],
             default=None,
             help="Crawl only jobs from this source.",
         )
