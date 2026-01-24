@@ -55,8 +55,8 @@
                             {% for category in categories %}
                             <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" @click.stop>
                                 <input type="checkbox" name="category" value="{{ category.slug }}"
-                                    :checked="selected.includes('{{ category.slug }}')"
-                                    @change="selected.includes('{{ category.slug }}') ? selected = selected.filter(x => x !== '{{ category.slug }}') : selected.push('{{ category.slug }}')"
+                                    :checked="selected.includes('{{ category.slug|escapejs }}')"
+                                    @change="selected.includes('{{ category.slug|escapejs }}') ? selected = selected.filter(x => x !== '{{ category.slug|escapejs }}') : selected.push('{{ category.slug|escapejs }}')"
                                     class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
                                 <span class="text-white text-sm">{{ category.name }}</span>
                             </label>
@@ -76,8 +76,8 @@
                             {% for country in countries %}
                             <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" @click.stop>
                                 <input type="checkbox" name="country" value="{{ country }}"
-                                    :checked="selected.includes('{{ country }}')"
-                                    @change="selected.includes('{{ country }}') ? selected = selected.filter(x => x !== '{{ country }}') : selected.push('{{ country }}')"
+                                    :checked="selected.includes('{{ country|escapejs }}')"
+                                    @change="selected.includes('{{ country|escapejs }}') ? selected = selected.filter(x => x !== '{{ country|escapejs }}') : selected.push('{{ country|escapejs }}')"
                                     class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
                                 <span class="text-white text-sm">{{ country }}</span>
                             </label>
@@ -98,10 +98,10 @@
                                 <input type="text" x-model="search" @click.stop placeholder="Search orgs..." class="w-full px-2 py-1 text-sm bg-white/5 border border-white/10 rounded text-white placeholder-white/40">
                             </div>
                             {% for org in organizations %}
-                            <label x-show="!search || '{{ org.name|lower }}'.includes(search.toLowerCase())" class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" @click.stop>
+                            <label x-show="!search || '{{ org.name|lower|escapejs }}'.includes(search.toLowerCase())" class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" @click.stop>
                                 <input type="checkbox" name="organization" value="{{ org.name }}"
-                                    :checked="selected.includes('{{ org.name }}')"
-                                    @change="selected.includes('{{ org.name }}') ? selected = selected.filter(x => x !== '{{ org.name }}') : selected.push('{{ org.name }}')"
+                                    :checked="selected.includes('{{ org.name|escapejs }}')"
+                                    @change="selected.includes('{{ org.name|escapejs }}') ? selected = selected.filter(x => x !== '{{ org.name|escapejs }}') : selected.push('{{ org.name|escapejs }}')"
                                     class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
                                 <span class="text-white text-sm truncate">{{ org.name }}</span>
                             </label>
@@ -121,8 +121,8 @@
                             {% for jt in job_types %}
                             <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" @click.stop>
                                 <input type="checkbox" name="type" value="{{ jt.value }}"
-                                    :checked="selected.includes('{{ jt.value }}')"
-                                    @change="selected.includes('{{ jt.value }}') ? selected = selected.filter(x => x !== '{{ jt.value }}') : selected.push('{{ jt.value }}')"
+                                    :checked="selected.includes('{{ jt.value|escapejs }}')"
+                                    @change="selected.includes('{{ jt.value|escapejs }}') ? selected = selected.filter(x => x !== '{{ jt.value|escapejs }}') : selected.push('{{ jt.value|escapejs }}')"
                                     class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
                                 <span class="text-white text-sm">{{ jt.display }}</span>
                             </label>
@@ -154,8 +154,8 @@
                             {% for level in knowledge_filters.experience_levels %}
                             <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" @click.stop>
                                 <input type="checkbox" name="experience" value="{{ level.display }}"
-                                    :checked="selected.includes('{{ level.display }}')"
-                                    @change="selected.includes('{{ level.display }}') ? selected = selected.filter(x => x !== '{{ level.display }}') : selected.push('{{ level.display }}')"
+                                    :checked="selected.includes('{{ level.display|escapejs }}')"
+                                    @change="selected.includes('{{ level.display|escapejs }}') ? selected = selected.filter(x => x !== '{{ level.display|escapejs }}') : selected.push('{{ level.display|escapejs }}')"
                                     class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
                                 <span class="text-white text-sm">{{ level.display }}</span>
                             </label>
@@ -175,8 +175,8 @@
                             {% for level in knowledge_filters.education_levels %}
                             <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" @click.stop>
                                 <input type="checkbox" name="education" value="{{ level.display }}"
-                                    :checked="selected.includes('{{ level.display }}')"
-                                    @change="selected.includes('{{ level.display }}') ? selected = selected.filter(x => x !== '{{ level.display }}') : selected.push('{{ level.display }}')"
+                                    :checked="selected.includes('{{ level.display|escapejs }}')"
+                                    @change="selected.includes('{{ level.display|escapejs }}') ? selected = selected.filter(x => x !== '{{ level.display|escapejs }}') : selected.push('{{ level.display|escapejs }}')"
                                     class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
                                 <span class="text-white text-sm">{{ level.display }}</span>
                             </label>
