@@ -70,8 +70,43 @@
                         </div>
                     </div>
 
-                    <!-- Country / Region - Multiselect -->
-                    <div x-data="{ open: false, selected: [] }" x-init="selected = {{ filters.countries|safe|default:'[]' }}" class="relative">
+                    <!-- Country / Region - Multiselect with search and regions -->
+                    <div x-data="{
+                        open: false,
+                        selected: [],
+                        search: '',
+                        regions: {
+                            'Global / Remote': ['Remote', 'Global'],
+                            'Europe': ['United Kingdom', 'UK', 'Germany', 'France', 'Netherlands', 'Spain', 'Italy', 'Switzerland', 'Sweden', 'Belgium', 'Austria', 'Denmark', 'Ireland', 'Norway', 'Poland', 'Portugal', 'Finland', 'Czech Republic', 'Greece', 'Hungary', 'Romania'],
+                            'North America': ['United States', 'USA', 'Canada', 'Mexico'],
+                            'Asia Pacific': ['Australia', 'India', 'Japan', 'Singapore', 'New Zealand', 'China', 'South Korea', 'Hong Kong', 'Taiwan', 'Philippines', 'Malaysia', 'Thailand', 'Indonesia', 'Vietnam'],
+                            'Latin America': ['Brazil', 'Argentina', 'Colombia', 'Chile', 'Peru', 'Costa Rica'],
+                            'Africa': ['South Africa', 'Nigeria', 'Kenya', 'Egypt', 'Morocco', 'Ghana'],
+                            'Middle East': ['Israel', 'United Arab Emirates', 'UAE', 'Qatar', 'Saudi Arabia']
+                        },
+                        allCountries: [{% for country in countries %}'{{ country|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+                        toggleRegion(regionName) {
+                            const regionCountries = this.regions[regionName] || [];
+                            const available = regionCountries.filter(c => this.allCountries.includes(c));
+                            const allSelected = available.every(c => this.selected.includes(c));
+                            if (allSelected) {
+                                this.selected = this.selected.filter(c => !available.includes(c));
+                            } else {
+                                available.forEach(c => {
+                                    if (!this.selected.includes(c)) this.selected.push(c);
+                                });
+                            }
+                        },
+                        isRegionSelected(regionName) {
+                            const regionCountries = this.regions[regionName] || [];
+                            const available = regionCountries.filter(c => this.allCountries.includes(c));
+                            return available.length > 0 && available.every(c => this.selected.includes(c));
+                        },
+                        get filteredCountries() {
+                            if (!this.search) return this.allCountries;
+                            return this.allCountries.filter(c => c.toLowerCase().includes(this.search.toLowerCase()));
+                        }
+                    }" x-init="selected = {{ filters.countries|safe|default:'[]' }}" class="relative">
                         <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Country / Region</label>
                         <button type="button" @click="open = !open"
                             class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 text-white text-sm text-left flex justify-between items-center">
@@ -79,20 +114,43 @@
                             <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9-7 7-7-7"/></svg>
                         </button>
                         <div x-show="open" @click.outside="open = false" x-transition class="absolute z-[100] mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-2xl max-h-72 overflow-y-scroll overscroll-contain">
-                            <div x-show="selected.length > 0" class="sticky top-0 p-2 bg-twilight-800 border-b border-white/10 z-10 flex justify-between items-center">
-                                <span class="text-white/60 text-xs"><span x-text="selected.length"></span> selected</span>
-                                <button type="button" @click.stop="selected = []" class="text-xs text-brand-300 hover:text-brand-200">Clear all</button>
+                            <div class="sticky top-0 p-2 bg-twilight-800 border-b border-white/10 z-10 space-y-2">
+                                <input type="text" x-model="search" @click.stop placeholder="Search countries..." class="w-full px-2 py-1 text-sm bg-white/5 border border-white/10 rounded text-white placeholder-white/40">
+                                <div x-show="selected.length > 0" class="flex justify-between items-center">
+                                    <span class="text-white/60 text-xs"><span x-text="selected.length"></span> selected</span>
+                                    <button type="button" @click.stop="selected = []" class="text-xs text-brand-300 hover:text-brand-200">Clear all</button>
+                                </div>
                             </div>
                             <div class="flex flex-col">
-                                {% for country in countries %}
-                                <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" :class="{ 'order-first bg-white/5': selected.includes('{{ country|escapejs }}') }" @click.stop>
-                                    <input type="checkbox" name="country" value="{{ country }}"
-                                        :checked="selected.includes('{{ country|escapejs }}')"
-                                        @change="selected.includes('{{ country|escapejs }}') ? selected = selected.filter(x => x !== '{{ country|escapejs }}') : selected.push('{{ country|escapejs }}')"
-                                        class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
-                                    <span class="text-white text-sm">{{ country }}</span>
-                                </label>
-                                {% endfor %}
+                                <!-- Region shortcuts -->
+                                <div x-show="!search" class="border-b border-white/10 py-1">
+                                    <div class="px-3 py-1 text-white/40 text-xs uppercase tracking-wide">Quick select</div>
+                                    <template x-for="(countries, regionName) in regions" :key="regionName">
+                                        <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" :class="{ 'bg-white/5': isRegionSelected(regionName) }" @click.stop>
+                                            <input type="checkbox" :checked="isRegionSelected(regionName)" @change="toggleRegion(regionName)"
+                                                class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
+                                            <span class="text-white text-sm font-medium" x-text="regionName"></span>
+                                        </label>
+                                    </template>
+                                </div>
+                                <!-- Selected countries on top -->
+                                <template x-for="country in selected" :key="'sel-'+country">
+                                    <label class="flex items-center px-3 py-2 bg-white/5 cursor-pointer" @click.stop>
+                                        <input type="checkbox" name="country" :value="country" checked
+                                            @change="selected = selected.filter(x => x !== country)"
+                                            class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
+                                        <span class="text-white text-sm" x-text="country"></span>
+                                    </label>
+                                </template>
+                                <!-- Filtered countries (not selected) -->
+                                <template x-for="country in filteredCountries.filter(c => !selected.includes(c))" :key="country">
+                                    <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" @click.stop>
+                                        <input type="checkbox" name="country" :value="country"
+                                            @change="selected.push(country)"
+                                            class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
+                                        <span class="text-white text-sm" x-text="country"></span>
+                                    </label>
+                                </template>
                             </div>
                         </div>
                     </div>
