@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
+from django.db.models import Q, Count
 
 from ..models import Job, Category, SeekerProfile
 from ..forms import JobSubmissionForm
@@ -78,9 +79,12 @@ class JobListView(ListView):
         ))[:100]
 
         context["countries"] = countries_from_field
+        # Top 500 orgs sorted by job count
         context["organizations"] = Organization.objects.filter(
             jobs__is_active=True
-        ).distinct().order_by("name")[:100]
+        ).annotate(
+            job_count=Count('jobs', filter=Q(jobs__is_active=True))
+        ).order_by('-job_count', 'name')[:500]
 
         # Knowledge-based filters with field value mappings
         context["knowledge_filters"] = {
@@ -252,3 +256,24 @@ class MyMatchesView(LoginRequiredMixin, ListView):
             context["needs_profile"] = True
 
         return context
+
+
+class OrganizationSearchView(View):
+    """API endpoint for searching all organizations."""
+
+    def get(self, request):
+        query = request.GET.get("q", "").strip()
+        if len(query) < 2:
+            return JsonResponse({"results": []})
+
+        from ..models import Organization
+
+        orgs = Organization.objects.filter(
+            jobs__is_active=True,
+            name__icontains=query
+        ).annotate(
+            job_count=Count('jobs', filter=Q(jobs__is_active=True))
+        ).order_by('-job_count', 'name').distinct()[:20]
+
+        results = [{"name": org.name, "job_count": org.job_count} for org in orgs]
+        return JsonResponse({"results": results})

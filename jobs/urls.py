@@ -14,6 +14,8 @@ urlpatterns = [
     path("jobs/post/", views.PostJobView.as_view(), name="post_job"),
     path("jobs/<slug:slug>/", views.JobDetailView.as_view(), name="job_detail"),
     path("jobs/<slug:slug>/save/", views.SaveJobView.as_view(), name="save_job"),
+    # API
+    path("api/organizations/search/", views.OrganizationSearchView.as_view(), name="organization_search"),
     # Account / Onboarding
     path("account/", views.DashboardView.as_view(), name="account"),
     path("onboarding/", views.StartOnboardingView.as_view(), name="start_onboarding"),
