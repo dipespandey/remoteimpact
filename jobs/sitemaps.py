@@ -1,7 +1,7 @@
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
 from django.utils import timezone
-from .models import Job, Category, Organization
+from .models import Job
 
 
 class JobSitemap(Sitemap):
@@ -20,42 +20,10 @@ class JobSitemap(Sitemap):
         return obj.updated_at
 
 
-class CategorySitemap(Sitemap):
-    """Sitemap for category/impact area pages."""
-    changefreq = "daily"
-    priority = 0.7
-
-    def items(self):
-        return Category.objects.all()
-
-    def location(self, obj):
-        return reverse('jobs:job_list') + f'?category={obj.slug}'
-
-    def lastmod(self, obj):
-        # Get the most recent job in this category
-        latest_job = Job.objects.filter(category=obj, is_active=True).order_by('-updated_at').first()
-        if latest_job:
-            return latest_job.updated_at
-        return timezone.now()
-
-
-class OrganizationSitemap(Sitemap):
-    """Sitemap for organization pages (if they have dedicated pages)."""
-    changefreq = "weekly"
-    priority = 0.5
-
-    def items(self):
-        # Only include organizations with active jobs
-        return Organization.objects.filter(jobs__is_active=True).distinct()
-
-    def location(self, obj):
-        return reverse('jobs:job_list') + f'?org={obj.slug}'
-
-    def lastmod(self, obj):
-        latest_job = obj.jobs.filter(is_active=True).order_by('-updated_at').first()
-        if latest_job:
-            return latest_job.updated_at
-        return obj.created_at
+# NOTE: CategorySitemap and OrganizationSitemap removed - they were filter URLs
+# (?category=x, ?org=x) that all canonicalize to /jobs/, causing Google to see
+# them as "alternate pages with proper canonical" and wasting crawl budget.
+# If we want these indexed, create dedicated URLs like /jobs/category/climate/
 
 
 class StaticSitemap(Sitemap):
@@ -87,22 +55,5 @@ class StaticSitemap(Sitemap):
         return timezone.now()
 
 
-class LocationSitemap(Sitemap):
-    """Sitemap for location-filtered job pages."""
-    changefreq = "daily"
-    priority = 0.6
-
-    def items(self):
-        # Get unique locations with active jobs
-        locations = Job.objects.filter(is_active=True).values_list('location', flat=True).distinct()
-        return list(locations)[:100]  # Limit to top 100 locations
-
-    def location(self, obj):
-        from urllib.parse import quote
-        return reverse('jobs:job_list') + f'?location={quote(obj)}'
-
-    def lastmod(self, obj):
-        latest_job = Job.objects.filter(location=obj, is_active=True).order_by('-updated_at').first()
-        if latest_job:
-            return latest_job.updated_at
-        return timezone.now()
+# NOTE: LocationSitemap also removed - same reason as above.
+# Filter URLs (?location=x) all canonicalize to /jobs/
