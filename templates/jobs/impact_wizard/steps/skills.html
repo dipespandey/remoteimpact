@@ -33,13 +33,14 @@
                 <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">{{ category_label }}</h4>
                 <div class="flex flex-wrap gap-2">
                     {% for slug, label in skills %}
-                    <label class="skill-item cursor-pointer inline-block" data-skill="{{ label|lower }}">
+                    <label class="skill-item cursor-pointer inline-flex items-center" data-skill="{{ label|lower }}">
                         <input type="checkbox"
                                name="skills"
                                value="{{ slug }}"
                                {% if slug in selected_skills %}checked{% endif %}
-                               class="peer sr-only skill-checkbox">
-                        <span class="inline-block px-3 py-1.5 text-sm rounded-full border-2 border-gray-200 bg-white peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 hover:bg-gray-50 transition cursor-pointer">
+                               class="skill-checkbox mr-2 h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                               onchange="updateSkillCount()">
+                        <span class="text-sm text-gray-700 hover:text-gray-900">
                             {{ label }}
                         </span>
                     </label>
@@ -79,7 +80,17 @@
 </div>
 
 <script>
+// Global function for updating skill count (called via onchange)
+function updateSkillCount() {
+    var count = document.querySelectorAll('.skill-checkbox:checked').length;
+    var countNum = document.getElementById('count-number');
+    var countEl = document.getElementById('skill-count');
+    if (countNum) countNum.textContent = count;
+    if (countEl) countEl.className = (count < 3 || count > 15) ? 'text-red-500' : 'text-gray-500';
+}
+
 (function() {
+    // Search/filter functionality
     var searchInput = document.getElementById('skill-search');
     if (searchInput) {
         searchInput.addEventListener('input', function() {
@@ -98,33 +109,7 @@
         });
     }
 
-    function updateCount() {
-        var count = document.querySelectorAll('.skill-checkbox:checked').length;
-        var countNum = document.getElementById('count-number');
-        var countEl = document.getElementById('skill-count');
-        if (countNum) countNum.textContent = count;
-        if (countEl) countEl.className = (count < 3 || count > 15) ? 'text-red-500' : 'text-gray-500';
-    }
-
-    // Handle clicks on skill items - toggle checkbox and update count
-    document.querySelectorAll('.skill-item').forEach(function(label) {
-        label.addEventListener('click', function(e) {
-            var cb = this.querySelector('.skill-checkbox');
-            if (cb) {
-                // Only toggle if the click wasn't directly on the checkbox
-                if (e.target !== cb) {
-                    cb.checked = !cb.checked;
-                }
-                updateCount();
-            }
-        });
-    });
-
-    // Also listen to direct checkbox changes (for accessibility)
-    document.querySelectorAll('.skill-checkbox').forEach(function(checkbox) {
-        checkbox.addEventListener('change', updateCount);
-    });
-
-    updateCount();
+    // Initial count
+    updateSkillCount();
 })();
 </script>
