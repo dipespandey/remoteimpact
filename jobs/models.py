@@ -772,9 +772,14 @@ class SeekerProfile(models.Model):
         Category, blank=True, related_name="interested_seekers"
     )
 
-    # Work style preference
+    # Work style preference (legacy single choice)
     work_style = models.CharField(
         max_length=20, choices=WorkStyle.choices, blank=True
+    )
+
+    # Work styles - multiple selections (new)
+    work_styles = models.JSONField(
+        default=list, help_text="List of work style values, e.g. ['builder', 'strategist']"
     )
 
     # Experience level

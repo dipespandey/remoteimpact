@@ -251,11 +251,13 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
             return True, None
 
         elif step_slug == "work-style":
-            work_style = data.get("work_style")
-            if not work_style:
-                return False, {"work_style": "Please select your work style."}
+            work_styles = data.getlist("work_styles")
+            if not work_styles:
+                return False, {"work_style": "Please select at least one work style."}
 
-            profile.work_style = work_style
+            profile.work_styles = work_styles
+            # Also set legacy field for backward compatibility
+            profile.work_style = work_styles[0] if work_styles else ""
             profile.save()
             return True, None
 

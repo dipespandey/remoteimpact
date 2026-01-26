@@ -4,7 +4,7 @@
         <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
             How do you like to create change?
         </h2>
-        <p class="text-gray-600">Choose the work style that best describes you</p>
+        <p class="text-gray-600">Select all work styles that describe you</p>
     </div>
 
     {% if errors.work_style %}
@@ -21,10 +21,10 @@
         <div class="space-y-3 mb-8">
             {% for value, label in work_styles %}
             <label class="relative cursor-pointer block group">
-                <input type="radio"
-                       name="work_style"
+                <input type="checkbox"
+                       name="work_styles"
                        value="{{ value }}"
-                       {% if profile.work_style == value %}checked{% endif %}
+                       {% if value in profile.work_styles %}checked{% endif %}
                        class="peer sr-only">
                 <div class="p-5 bg-gray-50 rounded-xl border-2 border-transparent peer-checked:border-brand-500 peer-checked:bg-brand-50 transition-all hover:bg-gray-100 flex items-center gap-4">
                     <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0
@@ -58,11 +58,6 @@
                     </div>
                     <div class="flex-1">
                         <span class="font-semibold text-gray-900">{{ label }}</span>
-                    </div>
-                    <div class="w-5 h-5 rounded-full border-2 border-gray-300 peer-checked:border-brand-500 peer-checked:bg-brand-500 flex items-center justify-center">
-                        <svg class="w-3 h-3 text-white hidden peer-checked:block" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                        </svg>
                     </div>
                 </div>
             </label>
