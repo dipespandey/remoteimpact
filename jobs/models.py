@@ -920,11 +920,9 @@ class SeekerProfile(models.Model):
         if self.salary_min or self.salary_max:
             score += 5
 
-        # Impact statement (15 points)
-        if self.impact_statement and len(self.impact_statement) >= 50:
+        # Impact statement (15 points) - full credit for any content
+        if self.impact_statement:
             score += 15
-        elif self.impact_statement:
-            score += 7
 
         # Assessment (5 points bonus)
         if self.assessment_answers:
