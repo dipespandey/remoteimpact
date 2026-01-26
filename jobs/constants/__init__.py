@@ -52,6 +52,12 @@ IMPACT_AREAS = [
         "keywords": ["human rights", "justice", "civil liberties", "democracy", "freedom", "equality", "discrimination", "refugee", "immigrant"],
     },
     {
+        "slug": "gender-equality-social-inclusion",
+        "name": "Gender Equality and Social Inclusion (GESI)",
+        "icon": "⚧️",
+        "keywords": ["gender equality", "gesi", "social inclusion", "women empowerment", "lgbtq", "disability inclusion", "equity", "diversity", "inclusion"],
+    },
+    {
         "slug": "humanitarian",
         "name": "Humanitarian & Disaster Relief",
         "icon": "🆘",
