@@ -83,10 +83,12 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
         current_step = WIZARD_STEPS[step_index]
         context = self._get_step_context(profile, step_index, current_step)
 
-        # For HTMX requests, return just the step fragment
+        # For HTMX requests, return step content + progress out-of-band updates
         if is_htmx:
-            template = f"jobs/impact_wizard/steps/{step_slug.replace('-', '_')}.html"
-            return TemplateResponse(request, template, context)
+            step_template = f"jobs/impact_wizard/steps/{step_slug.replace('-', '_')}.html"
+            context["step_template"] = step_template
+            context["steps"] = WIZARD_STEPS
+            return TemplateResponse(request, "jobs/impact_wizard/step_wrapper.html", context)
 
         # For direct access (non-HTMX), render full wizard layout
         # This ensures proper styling when redirected from non-HTMX form submissions
@@ -116,14 +118,18 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
             current_step = WIZARD_STEPS[step_index]
             context = self._get_step_context(profile, step_index, current_step)
             context["errors"] = errors
-            template = f"jobs/impact_wizard/steps/{step_slug.replace('-', '_')}.html"
+            step_template = f"jobs/impact_wizard/steps/{step_slug.replace('-', '_')}.html"
 
             # For non-HTMX requests, render full page
             if not is_htmx:
                 return redirect(
                     reverse("jobs:impact_wizard_step", kwargs={"step_slug": step_slug})
                 )
-            return TemplateResponse(request, template, context)
+
+            # Use wrapper to include progress out-of-band updates
+            context["step_template"] = step_template
+            context["steps"] = WIZARD_STEPS
+            return TemplateResponse(request, "jobs/impact_wizard/step_wrapper.html", context)
 
         # Move to next step
         next_index = step_index + 1
@@ -158,9 +164,11 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
             return redirect("jobs:impact_wizard_step", step_slug=next_step["slug"])
 
         context = self._get_step_context(profile, next_index, next_step)
-        template = f"jobs/impact_wizard/steps/{next_step['slug'].replace('-', '_')}.html"
+        step_template = f"jobs/impact_wizard/steps/{next_step['slug'].replace('-', '_')}.html"
+        context["step_template"] = step_template
+        context["steps"] = WIZARD_STEPS
 
-        response = TemplateResponse(request, template, context)
+        response = TemplateResponse(request, "jobs/impact_wizard/step_wrapper.html", context)
 
         # Update URL for browser history
         response["HX-Push-Url"] = reverse(

@@ -1,0 +1,19 @@
+<!-- Out-of-band progress updates -->
+<div id="wizard-progress" hx-swap-oob="true" class="mb-8">
+    <div class="flex justify-between text-sm text-gray-500 mb-2">
+        <span id="wizard-step-text">Step {{ step_index|add:1 }} of {{ steps|length }}</span>
+        <span id="wizard-percent-text">{{ current_step.progress }}% complete</span>
+    </div>
+    <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div id="wizard-progress-bar" class="h-full bg-brand-500 rounded-full transition-all duration-500"
+             style="width: {{ current_step.progress }}%"></div>
+    </div>
+</div>
+
+<div id="wizard-indicators" hx-swap-oob="true" class="mt-8 flex justify-center">
+    <div class="flex items-center gap-2">
+        {% for step in steps %}
+        <div class="w-2 h-2 rounded-full {% if forloop.counter0 <= step_index %}bg-brand-500{% else %}bg-gray-300{% endif %}"></div>
+        {% endfor %}
+    </div>
+</div>
