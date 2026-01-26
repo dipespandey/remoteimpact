@@ -898,8 +898,8 @@ class SeekerProfile(models.Model):
         if self.impact_areas.exists():
             score += 20
 
-        # Work style (15 points)
-        if self.work_style:
+        # Work style (15 points) - check both new and legacy fields
+        if self.work_styles or self.work_style:
             score += 15
 
         # Experience level (15 points)
