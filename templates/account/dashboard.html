@@ -137,7 +137,7 @@
             <div>
                 <p class="text-xs uppercase tracking-widest text-gray-500 font-bold mb-1">My Career</p>
                 <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Welcome, {{ request.user.first_name|default:request.user.username }}</h1>
-                <p class="text-gray-600 mt-2">{{ profile.headline|default:"Let's find your next impact role." }}</p>
+                <p class="text-gray-600 mt-2">{{ seeker_profile.headline|default:"Let's find your next impact role." }}</p>
             </div>
             <div class="flex gap-4">
                 <a href="{% url 'jobs:job_list' %}"
@@ -222,16 +222,16 @@
                     <div class="space-y-4">
                         <div>
                             <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Headline</p>
-                            <p class="text-gray-900">{{ profile.headline|default:"Not set" }}</p>
+                            <p class="text-gray-900">{{ seeker_profile.headline|default:"Not set" }}</p>
                         </div>
                         <div>
                             <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Bio</p>
-                            <p class="text-gray-700 text-sm leading-relaxed">{{ profile.bio|default:"Tell employers about yourself..." }}</p>
+                            <p class="text-gray-700 text-sm leading-relaxed">{{ seeker_profile.bio|default:"Tell employers about yourself..." }}</p>
                         </div>
-                        {% if profile.linkedin_url %}
+                        {% if seeker_profile.linkedin_url %}
                         <div>
                             <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold">LinkedIn</p>
-                            <a href="{{ profile.linkedin_url }}" target="_blank"
+                            <a href="{{ seeker_profile.linkedin_url }}" target="_blank"
                                 class="text-brand-600 text-sm hover:underline">View Profile</a>
                         </div>
                         {% endif %}
