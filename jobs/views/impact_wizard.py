@@ -311,21 +311,33 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
             locations = data.getlist("locations")
             profile.location_preferences = locations
 
+            # Country eligibility and LinkedIn
+            profile.country_eligibility = data.get("country_eligibility", "").strip()
+            profile.linkedin_url = data.get("linkedin_url", "").strip()
+
             profile.save()
             return True, None
 
         elif step_slug == "story":
-            impact_statement = data.get("impact_statement", "").strip()
-            if len(impact_statement) < 20:
-                return False, {
-                    "impact_statement": "Please write at least a few sentences about your motivation."
-                }
-            if len(impact_statement) > 500:
-                return False, {
-                    "impact_statement": "Please keep your story under 500 characters."
-                }
+            headline = data.get("headline", "").strip()
+            bio = data.get("bio", "").strip()
 
-            profile.impact_statement = impact_statement
+            # Validate headline
+            if not headline:
+                return False, {"headline": "Please enter a professional headline."}
+            if len(headline) > 150:
+                return False, {"headline": "Please keep your headline under 150 characters."}
+
+            # Validate bio
+            if not bio:
+                return False, {"bio": "Please write a short bio."}
+            if len(bio) > 2000:
+                return False, {"bio": "Please keep your bio under 2000 characters."}
+
+            profile.headline = headline
+            profile.bio = bio
+            # Also save to legacy field for backward compatibility
+            profile.impact_statement = bio[:500] if len(bio) > 500 else bio
             profile.save()
             return True, None
 

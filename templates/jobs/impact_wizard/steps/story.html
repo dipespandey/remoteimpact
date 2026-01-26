@@ -1,15 +1,21 @@
-<!-- Step 7: Your Story -->
+<!-- Step 7: Your Profile -->
 <div>
     <div class="text-center mb-8">
         <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-            What draws you to impact work?
+            Tell us about yourself
         </h2>
-        <p class="text-gray-600">Share your motivation in 2-3 sentences. This helps organizations understand you better.</p>
+        <p class="text-gray-600">Create your professional profile to stand out to organizations</p>
     </div>
 
-    {% if errors.impact_statement %}
+    {% if errors.headline %}
     <div class="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-center">
-        {{ errors.impact_statement }}
+        {{ errors.headline }}
+    </div>
+    {% endif %}
+
+    {% if errors.bio %}
+    <div class="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-center">
+        {{ errors.bio }}
     </div>
     {% endif %}
 
@@ -18,36 +24,65 @@
           hx-swap="innerHTML">
         {% csrf_token %}
 
+        <!-- Headline -->
         <div class="mb-6">
-            <textarea name="impact_statement"
-                      id="impact_statement"
-                      rows="5"
-                      maxlength="500"
-                      placeholder="I'm passionate about [cause] because... I want to use my skills in [area] to... My goal is to..."
-                      class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition resize-none"
-                      oninput="updateCharCount()">{{ profile.impact_statement }}</textarea>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                Professional Headline
+                <span class="text-gray-400 font-normal">(required)</span>
+            </label>
+            <p class="text-sm text-gray-500 mb-3">A short tagline that describes who you are professionally</p>
+            <input type="text"
+                   name="headline"
+                   id="headline"
+                   value="{{ profile.headline }}"
+                   maxlength="150"
+                   placeholder="e.g., Climate Policy Expert | Former UN Advisor | 10+ Years in Sustainability"
+                   class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition"
+                   oninput="updateHeadlineCount()">
             <div class="flex justify-end mt-2">
-                <span id="char-count" class="text-sm text-gray-400">
-                    {{ profile.impact_statement|length|default:0 }}/500
+                <span id="headline-count" class="text-sm text-gray-400">
+                    {{ profile.headline|length|default:0 }}/150
                 </span>
             </div>
         </div>
 
-        <!-- Prompts to help -->
+        <!-- Bio -->
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                Bio
+                <span class="text-gray-400 font-normal">(required)</span>
+            </label>
+            <p class="text-sm text-gray-500 mb-3">Tell organizations about your background, experience, and what you're looking for</p>
+            <textarea name="bio"
+                      id="bio"
+                      rows="6"
+                      maxlength="2000"
+                      placeholder="Share your professional background, key achievements, and what kind of impact you want to make..."
+                      class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition resize-none"
+                      oninput="updateBioCount()">{{ profile.bio }}</textarea>
+            <div class="flex justify-between mt-2">
+                <span class="text-sm text-gray-400">Up to 500 words</span>
+                <span id="bio-count" class="text-sm text-gray-400">
+                    {{ profile.bio|length|default:0 }}/2000
+                </span>
+            </div>
+        </div>
+
+        <!-- Tips -->
         <div class="bg-gray-50 rounded-xl p-4 mb-8">
-            <p class="text-sm font-medium text-gray-700 mb-3">Need inspiration? Try answering:</p>
+            <p class="text-sm font-medium text-gray-700 mb-3">Tips for a great profile:</p>
             <ul class="text-sm text-gray-600 space-y-2">
                 <li class="flex items-start gap-2">
                     <span class="text-brand-500">•</span>
-                    What problem in the world keeps you up at night?
+                    Mention your key skills and areas of expertise
                 </li>
                 <li class="flex items-start gap-2">
                     <span class="text-brand-500">•</span>
-                    What unique perspective or skill can you bring?
+                    Highlight relevant experience and achievements
                 </li>
                 <li class="flex items-start gap-2">
                     <span class="text-brand-500">•</span>
-                    What impact do you want to have in the next 5 years?
+                    Share what kind of impact you want to make
                 </li>
             </ul>
         </div>
@@ -75,11 +110,19 @@
 </div>
 
 <script>
-function updateCharCount() {
-    const textarea = document.getElementById('impact_statement');
+function updateHeadlineCount() {
+    const input = document.getElementById('headline');
+    const count = input.value.length;
+    const countEl = document.getElementById('headline-count');
+    countEl.textContent = count + '/150';
+    countEl.className = count > 130 ? 'text-sm text-orange-500' : 'text-sm text-gray-400';
+}
+
+function updateBioCount() {
+    const textarea = document.getElementById('bio');
     const count = textarea.value.length;
-    const countEl = document.getElementById('char-count');
-    countEl.textContent = count + '/500';
-    countEl.className = count > 450 ? 'text-sm text-orange-500' : 'text-sm text-gray-400';
+    const countEl = document.getElementById('bio-count');
+    countEl.textContent = count + '/2000';
+    countEl.className = count > 1800 ? 'text-sm text-orange-500' : 'text-sm text-gray-400';
 }
 </script>

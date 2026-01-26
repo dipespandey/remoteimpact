@@ -817,13 +817,38 @@ class SeekerProfile(models.Model):
         default=list, help_text="e.g. ['full-time', 'contract', 'part-time']"
     )
 
+    # LinkedIn profile URL
+    linkedin_url = models.URLField(
+        max_length=200, blank=True,
+        help_text="LinkedIn profile URL"
+    )
+
+    # Country of work eligibility
+    country_eligibility = models.CharField(
+        max_length=100, blank=True,
+        help_text="Country where user is eligible to work"
+    )
+
     # -------------------------------------------------------------------------
-    # Story & Motivation
+    # Story & Profile
     # -------------------------------------------------------------------------
 
+    # Legacy field - kept for backward compatibility
     impact_statement = models.TextField(
         max_length=500, blank=True,
-        help_text="2-3 sentences on what draws them to impact work"
+        help_text="Legacy: 2-3 sentences on what draws them to impact work"
+    )
+
+    # Professional headline (short tagline)
+    headline = models.CharField(
+        max_length=150, blank=True,
+        help_text="Short professional headline, e.g. 'Climate Policy Expert | Former UN Advisor'"
+    )
+
+    # Bio (longer description)
+    bio = models.TextField(
+        max_length=2000, blank=True,
+        help_text="Professional bio, up to 500 words"
     )
 
     # -------------------------------------------------------------------------
@@ -920,9 +945,13 @@ class SeekerProfile(models.Model):
         if self.salary_min or self.salary_max:
             score += 5
 
-        # Impact statement (15 points) - full credit for any content
-        if self.impact_statement:
-            score += 15
+        # Headline (7 points)
+        if self.headline:
+            score += 7
+
+        # Bio (8 points) - check both new bio and legacy impact_statement
+        if self.bio or self.impact_statement:
+            score += 8
 
         # Assessment (5 points bonus)
         if self.assessment_answers:
