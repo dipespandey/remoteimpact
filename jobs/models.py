@@ -915,47 +915,40 @@ class SeekerProfile(models.Model):
         return f"Seeker: {self.user.email}"
 
     def calculate_completeness(self):
-        """Calculate and update profile completeness percentage."""
+        """Calculate and update profile completeness percentage.
+
+        Only counts required fields toward completeness:
+        - Impact areas (required)
+        - Work style (required)
+        - Experience level (required)
+        - Skills (required, at least 3)
+        - Headline (required)
+
+        Optional fields (bio, assessment, salary, remote preference, etc.)
+        do not affect the completeness percentage.
+        """
         score = 0
         max_score = 100
 
-        # Impact areas (20 points)
+        # Impact areas (25 points) - required
         if self.impact_areas.exists():
-            score += 20
+            score += 25
 
-        # Work style (15 points) - check both new and legacy fields
+        # Work style (20 points) - required, check both new and legacy fields
         if self.work_styles or self.work_style:
-            score += 15
-
-        # Experience level (15 points)
-        if self.experience_level:
-            score += 15
-
-        # Skills (20 points) - need at least 3
-        if len(self.skills) >= 3:
             score += 20
-        elif len(self.skills) >= 1:
-            score += 10
 
-        # Remote preference (5 points)
-        if self.remote_preference:
-            score += 5
+        # Experience level (20 points) - required
+        if self.experience_level:
+            score += 20
 
-        # Salary expectations (5 points)
-        if self.salary_min or self.salary_max:
-            score += 5
+        # Skills (25 points) - required, need at least 3
+        if len(self.skills) >= 3:
+            score += 25
 
-        # Headline (7 points)
+        # Headline (10 points) - required
         if self.headline:
-            score += 7
-
-        # Bio (8 points) - check both new bio and legacy impact_statement
-        if self.bio or self.impact_statement:
-            score += 8
-
-        # Assessment (5 points bonus)
-        if self.assessment_answers:
-            score += 5
+            score += 10
 
         self.profile_completeness = min(score, max_score)
         return self.profile_completeness
