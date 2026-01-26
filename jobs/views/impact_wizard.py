@@ -75,6 +75,7 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
         """Render a specific step."""
         profile = get_or_create_seeker_profile(request.user)
         step_index = self._get_step_index(step_slug)
+        is_htmx = request.headers.get("HX-Request")
 
         if step_index is None:
             return JsonResponse({"error": "Invalid step"}, status=400)
@@ -82,8 +83,15 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
         current_step = WIZARD_STEPS[step_index]
         context = self._get_step_context(profile, step_index, current_step)
 
-        template = f"jobs/impact_wizard/steps/{step_slug.replace('-', '_')}.html"
-        return TemplateResponse(request, template, context)
+        # For HTMX requests, return just the step fragment
+        if is_htmx:
+            template = f"jobs/impact_wizard/steps/{step_slug.replace('-', '_')}.html"
+            return TemplateResponse(request, template, context)
+
+        # For direct access (non-HTMX), render full wizard layout
+        # This ensures proper styling when redirected from non-HTMX form submissions
+        context["steps"] = WIZARD_STEPS
+        return TemplateResponse(request, "jobs/impact_wizard/wizard.html", context)
 
     def post(self, request, step_slug):
         """Process step submission and return next step."""
