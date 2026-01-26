@@ -94,6 +94,12 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
         if step_index is None:
             return JsonResponse({"error": "Invalid step"}, status=400)
 
+        # If user is going through the wizard again (not at summary), reset completion flag
+        # This ensures they can complete the full flow again
+        if step_slug != "summary" and profile.wizard_completed:
+            profile.wizard_completed = False
+            profile.save(update_fields=["wizard_completed"])
+
         # Process the step data
         success, errors = self._process_step(request, profile, step_slug)
 
@@ -138,9 +144,10 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
         # Return next step
         next_step = WIZARD_STEPS[next_index]
 
-        # For non-HTMX requests (like skills form), redirect to wizard
+        # For non-HTMX requests (like skills form), redirect directly to next step
+        # This avoids issues where wizard_completed=True causes redirect away
         if not is_htmx:
-            return redirect("jobs:impact_wizard")
+            return redirect("jobs:impact_wizard_step", step_slug=next_step["slug"])
 
         context = self._get_step_context(profile, next_index, next_step)
         template = f"jobs/impact_wizard/steps/{next_step['slug'].replace('-', '_')}.html"
