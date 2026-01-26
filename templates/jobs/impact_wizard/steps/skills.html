@@ -106,8 +106,21 @@
         if (countEl) countEl.className = (count < 3 || count > 15) ? 'text-red-500' : 'text-gray-500';
     }
 
-    // Listen for checkbox changes directly - more reliable than intercepting label clicks
-    // Clicking on the label naturally toggles the checkbox, which fires the change event
+    // Handle clicks on skill items - toggle checkbox and update count
+    document.querySelectorAll('.skill-item').forEach(function(label) {
+        label.addEventListener('click', function(e) {
+            var cb = this.querySelector('.skill-checkbox');
+            if (cb) {
+                // Only toggle if the click wasn't directly on the checkbox
+                if (e.target !== cb) {
+                    cb.checked = !cb.checked;
+                }
+                updateCount();
+            }
+        });
+    });
+
+    // Also listen to direct checkbox changes (for accessibility)
     document.querySelectorAll('.skill-checkbox').forEach(function(checkbox) {
         checkbox.addEventListener('change', updateCount);
     });
