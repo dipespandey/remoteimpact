@@ -106,16 +106,10 @@
         if (countEl) countEl.className = (count < 3 || count > 15) ? 'text-red-500' : 'text-gray-500';
     }
 
-    // Prevent scroll jump when clicking labels
-    document.querySelectorAll('.skill-item').forEach(function(label) {
-        label.addEventListener('click', function(e) {
-            e.preventDefault();
-            var cb = this.querySelector('.skill-checkbox');
-            if (cb) {
-                cb.checked = !cb.checked;
-                updateCount();
-            }
-        });
+    // Listen for checkbox changes directly - more reliable than intercepting label clicks
+    // Clicking on the label naturally toggles the checkbox, which fires the change event
+    document.querySelectorAll('.skill-checkbox').forEach(function(checkbox) {
+        checkbox.addEventListener('change', updateCount);
     });
 
     updateCount();
