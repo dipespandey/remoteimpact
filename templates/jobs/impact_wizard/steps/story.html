@@ -50,22 +50,14 @@
         <div class="mb-6">
             <label class="block text-sm font-semibold text-gray-700 mb-2">
                 Bio
-                <span class="text-gray-400 font-normal">(required)</span>
+                <span class="text-gray-400 font-normal">(optional)</span>
             </label>
             <p class="text-sm text-gray-500 mb-3">Tell organizations about your background, experience, and what you're looking for</p>
             <textarea name="bio"
                       id="bio"
                       rows="6"
-                      maxlength="2000"
                       placeholder="Share your professional background, key achievements, and what kind of impact you want to make..."
-                      class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition resize-none"
-                      oninput="updateBioCount()">{{ profile.bio }}</textarea>
-            <div class="flex justify-between mt-2">
-                <span class="text-sm text-gray-400">Up to 500 words</span>
-                <span id="bio-count" class="text-sm text-gray-400">
-                    {{ profile.bio|length|default:0 }}/2000
-                </span>
-            </div>
+                      class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition resize-none">{{ profile.bio }}</textarea>
         </div>
 
         <!-- Tips -->
@@ -116,13 +108,5 @@ function updateHeadlineCount() {
     const countEl = document.getElementById('headline-count');
     countEl.textContent = count + '/150';
     countEl.className = count > 130 ? 'text-sm text-orange-500' : 'text-sm text-gray-400';
-}
-
-function updateBioCount() {
-    const textarea = document.getElementById('bio');
-    const count = textarea.value.length;
-    const countEl = document.getElementById('bio-count');
-    countEl.textContent = count + '/2000';
-    countEl.className = count > 1800 ? 'text-sm text-orange-500' : 'text-sm text-gray-400';
 }
 </script>

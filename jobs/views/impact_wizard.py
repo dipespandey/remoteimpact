@@ -328,11 +328,7 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
             if len(headline) > 150:
                 return False, {"headline": "Please keep your headline under 150 characters."}
 
-            # Validate bio
-            if not bio:
-                return False, {"bio": "Please write a short bio."}
-            if len(bio) > 2000:
-                return False, {"bio": "Please keep your bio under 2000 characters."}
+            # Bio is optional, no length limit
 
             profile.headline = headline
             profile.bio = bio

@@ -845,10 +845,10 @@ class SeekerProfile(models.Model):
         help_text="Short professional headline, e.g. 'Climate Policy Expert | Former UN Advisor'"
     )
 
-    # Bio (longer description)
+    # Bio (longer description, optional)
     bio = models.TextField(
-        max_length=2000, blank=True,
-        help_text="Professional bio, up to 500 words"
+        blank=True,
+        help_text="Professional bio (optional)"
     )
 
     # -------------------------------------------------------------------------
