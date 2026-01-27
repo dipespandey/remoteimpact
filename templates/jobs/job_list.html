@@ -267,26 +267,20 @@
                         </div>
                     </div>
 
-                    <!-- Salary Range Slider -->
+                    <!-- Minimum Salary Slider -->
                     <div x-data="{
-                        min: {{ filters.salary_min|default:'0' }},
-                        max: {{ filters.salary_max|default:max_salary }},
+                        val: {{ filters.salary_min|default:'0' }},
                         ceiling: {{ max_salary|default:'300000' }},
-                        format(val) {
-                            return '$' + Number(val).toLocaleString();
-                        }
+                        format(v) { return v == 0 ? 'Any' : '$' + Number(v).toLocaleString() + '+'; }
                     }">
-                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Salary Range (USD/year)</label>
+                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Minimum Salary (USD/year)</label>
                         <div class="px-1 pt-2 pb-1">
-                            <div class="flex items-center gap-3">
-                                <input type="range" name="salary_min" x-model="min" :max="max" min="0" :step="5000"
-                                       class="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-brand-300 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-brand-300 [&::-webkit-slider-thumb]:appearance-none">
-                                <input type="range" name="salary_max" x-model="max" :min="min" :max="ceiling" :step="5000"
-                                       class="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-brand-300 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-brand-300 [&::-webkit-slider-thumb]:appearance-none">
-                            </div>
+                            <input type="range" name="salary_min" x-model="val" min="0" :max="ceiling" step="5000"
+                                   class="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-brand-300 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-brand-300 [&::-webkit-slider-thumb]:appearance-none">
                             <div class="flex justify-between mt-2 text-xs text-white/50">
-                                <span x-text="format(min)"></span>
-                                <span x-text="format(max)"></span>
+                                <span>$0</span>
+                                <span class="text-white/80 font-medium" x-text="format(val)"></span>
+                                <span x-text="'$' + Number(ceiling).toLocaleString()"></span>
                             </div>
                         </div>
                     </div>
