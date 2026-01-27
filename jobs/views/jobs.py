@@ -74,7 +74,7 @@ class JobListView(ListView):
         from django.utils import timezone
         from datetime import timedelta
         now = timezone.now()
-        cutoff = now - timedelta(days=90)
+        cutoff = now - timedelta(days=180)
         countries_raw = (
             Job.objects.filter(is_active=True)
             .exclude(expires_at__lt=now)
@@ -165,7 +165,7 @@ class JobDetailView(DetailView):
         from django.utils import timezone
         from datetime import timedelta
         now = timezone.now()
-        cutoff = now - timedelta(days=90)
+        cutoff = now - timedelta(days=180)
         return Job.objects.filter(is_active=True).exclude(
             expires_at__lt=now,
         ).exclude(

@@ -16,7 +16,7 @@ class JobService:
         """
         from datetime import timedelta
         now = timezone.now()
-        cutoff = now - timedelta(days=90)
+        cutoff = now - timedelta(days=180)
         jobs = Job.objects.filter(
             is_active=True,
         ).exclude(
