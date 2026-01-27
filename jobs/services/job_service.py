@@ -136,25 +136,19 @@ class JobService:
             try:
                 days = int(posted)
                 if days == 29:
-                    # "More than 4 weeks ago"
+                    # "More than 4 weeks"
                     jobs = jobs.filter(posted_at__lt=now - timedelta(days=28))
-                elif days == 3:
-                    # "1-3 days ago"
-                    jobs = jobs.filter(posted_at__gte=now - timedelta(days=3))
                 elif days == 7:
-                    # "3-7 days ago"
-                    jobs = jobs.filter(
-                        posted_at__gte=now - timedelta(days=7),
-                        posted_at__lt=now - timedelta(days=3),
-                    )
+                    # "Less than 1 week"
+                    jobs = jobs.filter(posted_at__gte=now - timedelta(days=7))
                 elif days == 14:
-                    # "1-2 weeks ago"
+                    # "1-2 weeks"
                     jobs = jobs.filter(
                         posted_at__gte=now - timedelta(days=14),
                         posted_at__lt=now - timedelta(days=7),
                     )
                 elif days == 28:
-                    # "2-4 weeks ago"
+                    # "2-4 weeks"
                     jobs = jobs.filter(
                         posted_at__gte=now - timedelta(days=28),
                         posted_at__lt=now - timedelta(days=14),
