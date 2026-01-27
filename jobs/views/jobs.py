@@ -49,12 +49,20 @@ class JobListView(ListView):
             "salary_max": self.request.GET.get("salary_max", ""),
             "experiences": self.request.GET.getlist("experience"),
             "educations": self.request.GET.getlist("education"),
+            "posted": self.request.GET.get("posted", ""),
             # Keep single value versions for backward compatibility
             "country": self.request.GET.get("country", ""),
             "organization": self.request.GET.get("organization", ""),
             "experience": self.request.GET.get("experience", ""),
             "education": self.request.GET.get("education", ""),
         }
+
+        # Max salary across all active jobs for the salary slider ceiling
+        from django.db.models import Max
+        max_salary_val = Job.objects.filter(is_active=True).aggregate(
+            max_val=Max("salary_max")
+        )["max_val"]
+        context["max_salary"] = int(max_salary_val) if max_salary_val else 300000
 
         # Get distinct countries from the new country field (normalized)
         # Filter out 2-letter codes except UK/USA, and ensure proper country names

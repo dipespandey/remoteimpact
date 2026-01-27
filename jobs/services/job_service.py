@@ -131,6 +131,37 @@ class JobService:
                 Q(description__icontains=skill) | Q(requirements__icontains=skill)
             )
 
+        # Date posted filter
+        if posted := filters.get("posted"):
+            try:
+                days = int(posted)
+                if days == 29:
+                    # "More than 4 weeks ago"
+                    jobs = jobs.filter(posted_at__lt=now - timedelta(days=28))
+                elif days == 3:
+                    # "1-3 days ago"
+                    jobs = jobs.filter(posted_at__gte=now - timedelta(days=3))
+                elif days == 7:
+                    # "3-7 days ago"
+                    jobs = jobs.filter(
+                        posted_at__gte=now - timedelta(days=7),
+                        posted_at__lt=now - timedelta(days=3),
+                    )
+                elif days == 14:
+                    # "1-2 weeks ago"
+                    jobs = jobs.filter(
+                        posted_at__gte=now - timedelta(days=14),
+                        posted_at__lt=now - timedelta(days=7),
+                    )
+                elif days == 28:
+                    # "2-4 weeks ago"
+                    jobs = jobs.filter(
+                        posted_at__gte=now - timedelta(days=28),
+                        posted_at__lt=now - timedelta(days=14),
+                    )
+            except (TypeError, ValueError):
+                pass
+
         # Core Search
         if query := filters.get("q"):
             jobs = jobs.filter(
