@@ -14,7 +14,19 @@ class JobService:
         Args:
             filters: QueryDict or dict-like object with filter parameters
         """
-        jobs = Job.objects.filter(is_active=True).select_related(
+        from datetime import timedelta
+        now = timezone.now()
+        cutoff = now - timedelta(days=90)
+        jobs = Job.objects.filter(
+            is_active=True,
+        ).exclude(
+            # Exclude jobs with a past expiration date
+            expires_at__lt=now,
+        ).exclude(
+            # Exclude old jobs that never had an expiry date set
+            expires_at__isnull=True,
+            posted_at__lt=cutoff,
+        ).select_related(
             "organization", "category"
         )
 

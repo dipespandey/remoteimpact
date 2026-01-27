@@ -63,8 +63,14 @@ class JobListView(ListView):
         # Valid short codes we want to keep
         valid_short_codes = {"UK", "USA"}
 
+        from django.utils import timezone
+        from datetime import timedelta
+        now = timezone.now()
+        cutoff = now - timedelta(days=90)
         countries_raw = (
             Job.objects.filter(is_active=True)
+            .exclude(expires_at__lt=now)
+            .exclude(expires_at__isnull=True, posted_at__lt=cutoff)
             .exclude(country__isnull=True)
             .exclude(country="")
             .values_list("country", flat=True)
@@ -148,7 +154,16 @@ class JobDetailView(DetailView):
     context_object_name = "job"
 
     def get_queryset(self):
-        return Job.objects.filter(is_active=True).select_related("organization", "category")
+        from django.utils import timezone
+        from datetime import timedelta
+        now = timezone.now()
+        cutoff = now - timedelta(days=90)
+        return Job.objects.filter(is_active=True).exclude(
+            expires_at__lt=now,
+        ).exclude(
+            expires_at__isnull=True,
+            posted_at__lt=cutoff,
+        ).select_related("organization", "category")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
