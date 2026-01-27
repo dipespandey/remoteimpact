@@ -267,57 +267,81 @@
                         </div>
                     </div>
 
-                    <!-- Salary Range Slider (Logarithmic) -->
-                    <div x-data="salarySlider({{ filters.salary_min|default:'0' }}, {{ filters.salary_max|default:'1000000' }})">
-                        <!-- Label row -->
+                    <!-- Salary Range Slider (Logarithmic, dual native range inputs) -->
+                    <style>
+                        .salary-slider input[type=range] {
+                            -webkit-appearance: none;
+                            appearance: none;
+                            pointer-events: none;
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            background: transparent;
+                            margin: 0;
+                            padding: 0;
+                            z-index: 3;
+                        }
+                        .salary-slider input[type=range]::-webkit-slider-runnable-track {
+                            height: 6px;
+                            background: transparent;
+                            border: none;
+                        }
+                        .salary-slider input[type=range]::-moz-range-track {
+                            height: 6px;
+                            background: transparent;
+                            border: none;
+                        }
+                        .salary-slider input[type=range]::-webkit-slider-thumb {
+                            -webkit-appearance: none;
+                            pointer-events: all;
+                            width: 20px;
+                            height: 20px;
+                            border-radius: 50%;
+                            background: #22c55e;
+                            border: 2px solid #fff;
+                            box-shadow: 0 1px 6px rgba(0,0,0,0.3);
+                            cursor: grab;
+                            margin-top: -7px;
+                        }
+                        .salary-slider input[type=range]::-moz-range-thumb {
+                            pointer-events: all;
+                            width: 20px;
+                            height: 20px;
+                            border-radius: 50%;
+                            background: #22c55e;
+                            border: 2px solid #fff;
+                            box-shadow: 0 1px 6px rgba(0,0,0,0.3);
+                            cursor: grab;
+                        }
+                        .salary-slider input[type=range]:active::-webkit-slider-thumb { cursor: grabbing; }
+                        .salary-slider input[type=range]:active::-moz-range-thumb { cursor: grabbing; }
+                    </style>
+                    <div x-data="salarySlider({{ filters.salary_min|default:'0' }}, {{ filters.salary_max|default:'1000000' }})" class="salary-slider">
                         <div class="flex items-center justify-between mb-3">
                             <label class="text-white font-bold text-xs md:text-sm">Salary Range</label>
                             <span class="text-white/90 font-semibold text-xs" x-text="rangeLabel()"></span>
                         </div>
-
-                        <!-- Track + handles -->
-                        <div class="relative select-none" style="height: 36px; touch-action: none;"
-                             x-ref="track"
-                             @mousedown.prevent="startDrag($event)"
-                             @touchstart.prevent="startDrag($event)">
-
-                            <!-- Inactive track -->
-                            <div class="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[5px] rounded-full" style="background: rgba(255,255,255,0.15);"></div>
+                        <div class="relative h-6">
+                            <!-- Background track -->
+                            <div class="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[6px] rounded-full bg-white/15"></div>
                             <!-- Active track -->
-                            <div class="absolute top-1/2 -translate-y-1/2 h-[5px] rounded-full"
-                                 style="background: #22c55e;"
-                                 :style="'left:' + loPct() + '%; right:' + (100 - hiPct()) + '%'"></div>
-
-                            <!-- Lo tooltip -->
-                            <div x-show="dragging === 'lo'" x-cloak
-                                 class="absolute px-2 py-0.5 rounded text-[11px] font-bold text-white whitespace-nowrap z-30 transition-opacity duration-100"
-                                 style="background: #111827; top: -4px; transform: translate(-50%, -100%);"
-                                 :style="'left:' + loPct() + '%'"
-                                 x-text="fmt(loVal)"></div>
-                            <!-- Hi tooltip -->
-                            <div x-show="dragging === 'hi'" x-cloak
-                                 class="absolute px-2 py-0.5 rounded text-[11px] font-bold text-white whitespace-nowrap z-30 transition-opacity duration-100"
-                                 style="background: #111827; top: -4px; transform: translate(-50%, -100%);"
-                                 :style="'left:' + hiPct() + '%'"
-                                 x-text="fmt(hiVal)"></div>
-
-                            <!-- Lo handle -->
-                            <div class="absolute top-1/2 z-20 rounded-full cursor-grab active:cursor-grabbing transition-shadow duration-150"
-                                 style="width: 20px; height: 20px; background: #22c55e; border: 2px solid #fff; box-shadow: 0 1px 6px rgba(0,0,0,0.3); transform: translate(-50%, -50%);"
-                                 :style="'left:' + loPct() + '%'"></div>
-                            <!-- Hi handle -->
-                            <div class="absolute top-1/2 z-20 rounded-full cursor-grab active:cursor-grabbing transition-shadow duration-150"
-                                 style="width: 20px; height: 20px; background: #22c55e; border: 2px solid #fff; box-shadow: 0 1px 6px rgba(0,0,0,0.3); transform: translate(-50%, -50%);"
-                                 :style="'left:' + hiPct() + '%'"></div>
+                            <div class="absolute top-1/2 -translate-y-1/2 h-[6px] rounded-full bg-green-500"
+                                 :style="'left:' + loPct + '%; right:' + (100 - hiPct) + '%'"></div>
+                            <!-- Min range input -->
+                            <input type="range" min="0" max="1000" :value="loPos"
+                                   @input="loPos = +$event.target.value; if(loPos > hiPos) loPos = hiPos; updateVals()"
+                                   style="z-index: 4;">
+                            <!-- Max range input -->
+                            <input type="range" min="0" max="1000" :value="hiPos"
+                                   @input="hiPos = +$event.target.value; if(hiPos < loPos) hiPos = loPos; updateVals()"
+                                   style="z-index: 5;">
                         </div>
-
-                        <!-- Bottom labels -->
-                        <div class="flex justify-between text-[10px] text-white/40 mt-0.5">
+                        <div class="flex justify-between text-[10px] text-white/40 mt-1">
                             <span>$0</span>
                             <span>$1,000,000+</span>
                         </div>
-
-                        <!-- Hidden form inputs -->
                         <input type="hidden" name="salary_min" :value="loVal">
                         <input type="hidden" name="salary_max" :value="hiVal">
                     </div>
@@ -326,60 +350,38 @@
                         var MAX_LOG = Math.log(1000000);
                         function valToPos(v) {
                             if (v <= 0) return 0;
-                            if (v >= 1000000) return 1;
-                            return Math.log(Math.max(v, 1)) / MAX_LOG;
+                            if (v >= 1000000) return 1000;
+                            return (Math.log(Math.max(v, 1)) / MAX_LOG) * 1000;
                         }
                         function posToVal(p) {
                             if (p <= 0) return 0;
-                            if (p >= 1) return 1000000;
-                            var r = Math.exp(p * MAX_LOG);
+                            if (p >= 1000) return 1000000;
+                            var r = Math.exp((p / 1000) * MAX_LOG);
                             if (r < 10000) return Math.round(r / 1000) * 1000;
                             if (r < 100000) return Math.round(r / 5000) * 5000;
                             if (r < 500000) return Math.round(r / 10000) * 10000;
                             return Math.round(r / 50000) * 50000;
                         }
+                        function fmt(v) {
+                            v = +v;
+                            if (v <= 0) return '$0';
+                            if (v >= 1000000) return '$1M+';
+                            return '$' + Math.round(v / 1000) + 'k';
+                        }
                         return {
-                            loVal: initLo, hiVal: initHi, dragging: null,
-                            loPct() { return valToPos(this.loVal) * 100; },
-                            hiPct() { return valToPos(this.hiVal) * 100; },
-                            fmt(v) {
-                                v = +v;
-                                if (v <= 0) return '$0';
-                                if (v >= 1000000) return '$1M+';
-                                return '$' + Math.round(v / 1000) + 'k';
+                            loPos: valToPos(initLo),
+                            hiPos: valToPos(initHi),
+                            loVal: initLo,
+                            hiVal: initHi,
+                            get loPct() { return (this.loPos / 1000) * 100; },
+                            get hiPct() { return (this.hiPos / 1000) * 100; },
+                            updateVals() {
+                                this.loVal = posToVal(this.loPos);
+                                this.hiVal = posToVal(this.hiPos);
                             },
                             rangeLabel() {
-                                var lo = +this.loVal, hi = +this.hiVal;
-                                if (lo <= 0 && hi >= 1000000) return '$0 – $1M+';
-                                return this.fmt(lo) + ' – ' + this.fmt(hi);
-                            },
-                            getPos(e) {
-                                var r = this.$refs.track.getBoundingClientRect();
-                                var x = e.touches ? e.touches[0].clientX : e.clientX;
-                                return Math.max(0, Math.min(1, (x - r.left) / r.width));
-                            },
-                            startDrag(e) {
-                                var p = this.getPos(e);
-                                this.dragging = Math.abs(p - valToPos(this.loVal)) <= Math.abs(p - valToPos(this.hiVal)) ? 'lo' : 'hi';
-                                this.updateFromPos(p);
-                                var self = this;
-                                var mv = function(ev) { self.updateFromPos(self.getPos(ev)); };
-                                var up = function() {
-                                    self.dragging = null;
-                                    document.removeEventListener('mousemove', mv);
-                                    document.removeEventListener('mouseup', up);
-                                    document.removeEventListener('touchmove', mv);
-                                    document.removeEventListener('touchend', up);
-                                };
-                                document.addEventListener('mousemove', mv);
-                                document.addEventListener('mouseup', up);
-                                document.addEventListener('touchmove', mv);
-                                document.addEventListener('touchend', up);
-                            },
-                            updateFromPos(p) {
-                                var v = posToVal(p);
-                                if (this.dragging === 'lo') this.loVal = Math.min(v, this.hiVal);
-                                else this.hiVal = Math.max(v, this.loVal);
+                                if (this.loVal <= 0 && this.hiVal >= 1000000) return '$0 – $1M+';
+                                return fmt(this.loVal) + ' – ' + fmt(this.hiVal);
                             }
                         };
                     }
