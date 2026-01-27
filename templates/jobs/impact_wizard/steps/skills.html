@@ -27,23 +27,24 @@
         </div>
 
         <!-- Skills by category (scrollable) -->
-        <div class="max-h-[50vh] md:max-h-96 overflow-y-auto mb-6 space-y-6 pr-2 scroll-smooth" id="skills-container">
+        <div class="max-h-[50vh] md:max-h-96 overflow-y-auto mb-6 space-y-6 pr-2" id="skills-container">
             {% for category_label, skills in categorized_skills.items %}
             <div class="skill-category" data-category="{{ category_label|slugify }}">
                 <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">{{ category_label }}</h4>
                 <div class="flex flex-wrap gap-2">
                     {% for slug, label in skills %}
-                    <label class="skill-item cursor-pointer inline-block" data-skill="{{ label|lower }}">
+                    <div class="skill-item inline-block" data-skill="{{ label|lower }}">
                         <input type="checkbox"
                                name="skills"
                                value="{{ slug }}"
                                {% if slug in selected_skills %}checked{% endif %}
-                               class="peer sr-only skill-checkbox"
-                               onchange="updateSkillCount()">
-                        <span class="inline-block px-3 py-1.5 text-sm rounded-full border-2 border-gray-200 bg-white peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 hover:bg-gray-50 transition cursor-pointer">
+                               class="skill-checkbox"
+                               hidden>
+                        <span onclick="toggleSkill(this)"
+                              class="inline-block px-3 py-1.5 text-sm rounded-full border-2 cursor-pointer transition {% if slug in selected_skills %}border-brand-500 bg-brand-50 text-brand-700{% else %}border-gray-200 bg-white hover:bg-gray-50{% endif %}">
                             {{ label }}
                         </span>
-                    </label>
+                    </div>
                     {% endfor %}
                 </div>
             </div>
@@ -80,7 +81,17 @@
 </div>
 
 <script>
-// Global function for updating skill count (called via onchange)
+function toggleSkill(span) {
+    var checkbox = span.parentElement.querySelector('.skill-checkbox');
+    checkbox.checked = !checkbox.checked;
+    if (checkbox.checked) {
+        span.className = 'inline-block px-3 py-1.5 text-sm rounded-full border-2 cursor-pointer transition border-brand-500 bg-brand-50 text-brand-700';
+    } else {
+        span.className = 'inline-block px-3 py-1.5 text-sm rounded-full border-2 cursor-pointer transition border-gray-200 bg-white hover:bg-gray-50';
+    }
+    updateSkillCount();
+}
+
 function updateSkillCount() {
     var count = document.querySelectorAll('.skill-checkbox:checked').length;
     var countNum = document.getElementById('count-number');
@@ -90,7 +101,6 @@ function updateSkillCount() {
 }
 
 (function() {
-    // Search/filter functionality
     var searchInput = document.getElementById('skill-search');
     if (searchInput) {
         searchInput.addEventListener('input', function() {
@@ -108,8 +118,6 @@ function updateSkillCount() {
             });
         });
     }
-
-    // Initial count
     updateSkillCount();
 })();
 </script>
