@@ -271,62 +271,87 @@
                     <div x-data="{
                         lo: {{ filters.salary_min|default:'0' }},
                         hi: {{ filters.salary_max|default:'1000000' }},
-                        ceil: 1000000,
+                        dragging: null,
                         fmt(v) { return v >= 1000000 ? '$1M' : '$' + Math.round(v/1000) + 'k'; },
-                        pct(v) { return (v / this.ceil) * 100; },
+                        pct(v) { return (v / 1000000) * 100; },
                         clampLo() { if (+this.lo > +this.hi) this.lo = this.hi; },
                         clampHi() { if (+this.hi < +this.lo) this.hi = this.lo; },
-                        label() {
-                            if (+this.lo === 0 && +this.hi >= this.ceil) return 'Any';
+                        rangeLabel() {
+                            if (+this.lo === 0 && +this.hi >= 1000000) return '';
                             if (+this.lo === 0) return 'Up to ' + this.fmt(this.hi);
-                            if (+this.hi >= this.ceil) return this.fmt(this.lo) + '+';
-                            return this.fmt(this.lo) + ' \u2013 ' + this.fmt(this.hi);
+                            if (+this.hi >= 1000000) return this.fmt(this.lo) + '+';
+                            return this.fmt(this.lo) + ' – ' + this.fmt(this.hi);
                         }
                     }">
-                        <div class="flex items-center justify-between mb-1.5 md:mb-2">
-                            <label class="text-white/70 font-medium text-xs md:text-sm">Salary Range</label>
-                            <span class="text-white font-semibold text-xs md:text-sm" x-text="label()"></span>
+                        <div class="flex items-baseline gap-2 mb-3">
+                            <span class="text-white/70 font-medium text-xs md:text-sm">Salary Range</span>
+                            <span class="text-white font-bold text-sm" x-text="rangeLabel()"></span>
                         </div>
-                        <div class="px-2 pt-3 pb-1">
-                            <div class="relative h-2">
-                                <!-- Track background: light green -->
-                                <div class="absolute inset-0 rounded-full" style="background: #a5d6a7;"></div>
-                                <!-- Active range: dark green -->
-                                <div class="absolute h-full rounded-full" style="background: #2e7d32;"
-                                     :style="'left:' + pct(lo) + '%; right:' + (100 - pct(hi)) + '%'"></div>
-                                <!-- Min thumb -->
-                                <input type="range" name="salary_min" x-model="lo" min="0" max="1000000" step="10000"
-                                       @input="clampLo()"
-                                       class="salary-slider absolute inset-0 w-full appearance-none bg-transparent pointer-events-none">
-                                <!-- Max thumb -->
-                                <input type="range" name="salary_max" x-model="hi" min="0" max="1000000" step="10000"
-                                       @input="clampHi()"
-                                       class="salary-slider absolute inset-0 w-full appearance-none bg-transparent pointer-events-none">
-                            </div>
-                            <div class="flex justify-between mt-2 text-xs text-white/40">
-                                <span>$0</span>
-                                <span>$1M</span>
-                            </div>
+
+                        <!-- Slider track -->
+                        <div class="relative h-10 flex items-center" style="touch-action: none;">
+                            <!-- Track line -->
+                            <div class="absolute left-0 right-0 h-1 rounded-full" style="background: #c8e6c9;"></div>
+                            <!-- Active segment -->
+                            <div class="absolute h-1 rounded-full" style="background: #388e3c;"
+                                 :style="'left:' + pct(lo) + '%; right:' + (100 - pct(hi)) + '%'"></div>
+
+                            <!-- Tooltip for dragged thumb -->
+                            <div x-show="dragging === 'lo'" x-cloak
+                                 class="absolute -top-8 px-2 py-1 rounded text-xs font-bold text-white z-20"
+                                 style="background: #555; transform: translateX(-50%);"
+                                 :style="'left:' + pct(lo) + '%'"
+                                 x-text="fmt(lo)"></div>
+                            <div x-show="dragging === 'hi'" x-cloak
+                                 class="absolute -top-8 px-2 py-1 rounded text-xs font-bold text-white z-20"
+                                 style="background: #555; transform: translateX(-50%);"
+                                 :style="'left:' + pct(hi) + '%'"
+                                 x-text="fmt(hi)"></div>
+
+                            <!-- Min input -->
+                            <input type="range" name="salary_min" x-model="lo"
+                                   min="0" max="1000000" step="10000"
+                                   @input="clampLo()" @mousedown="dragging='lo'" @touchstart="dragging='lo'"
+                                   @mouseup="dragging=null" @touchend="dragging=null"
+                                   class="sal-range absolute left-0 w-full appearance-none bg-transparent pointer-events-none z-10"
+                                   :style="(+lo >= +hi - 10000) ? 'z-index:20' : ''">
+                            <!-- Max input -->
+                            <input type="range" name="salary_max" x-model="hi"
+                                   min="0" max="1000000" step="10000"
+                                   @input="clampHi()" @mousedown="dragging='hi'" @touchstart="dragging='hi'"
+                                   @mouseup="dragging=null" @touchend="dragging=null"
+                                   class="sal-range absolute left-0 w-full appearance-none bg-transparent pointer-events-none z-10">
+                        </div>
+
+                        <!-- Min / Max labels -->
+                        <div class="flex justify-between text-xs text-white/40 mt-1">
+                            <span>$0</span>
+                            <span>$1M+</span>
                         </div>
                     </div>
                     <style>
-                        .salary-slider::-webkit-slider-thumb {
+                        .sal-range { height: 40px; margin: 0; padding: 0; }
+                        .sal-range::-webkit-slider-runnable-track { height: 0; background: transparent; }
+                        .sal-range::-webkit-slider-thumb {
                             -webkit-appearance: none;
                             pointer-events: auto;
-                            width: 20px; height: 20px;
+                            width: 22px; height: 22px;
                             border-radius: 50%;
                             background: #2e7d32;
-                            border: 3px solid #fff;
-                            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                            border: none;
+                            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
                             cursor: pointer;
+                            position: relative;
+                            top: -11px;
                         }
-                        .salary-slider::-moz-range-thumb {
+                        .sal-range::-moz-range-track { height: 0; background: transparent; border: none; }
+                        .sal-range::-moz-range-thumb {
                             pointer-events: auto;
-                            width: 16px; height: 16px;
+                            width: 22px; height: 22px;
                             border-radius: 50%;
                             background: #2e7d32;
-                            border: 3px solid #fff;
-                            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                            border: none;
+                            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
                             cursor: pointer;
                         }
                     </style>
