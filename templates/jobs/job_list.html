@@ -270,36 +270,66 @@
                     <!-- Salary Range Slider -->
                     <div x-data="{
                         lo: {{ filters.salary_min|default:'0' }},
-                        hi: {{ filters.salary_max|default:max_salary }},
-                        ceil: {{ max_salary|default:'300000' }},
-                        fmt(v) { return '$' + Number(v).toLocaleString(); },
+                        hi: {{ filters.salary_max|default:'1000000' }},
+                        ceil: 1000000,
+                        fmt(v) { return v >= 1000000 ? '$1M' : '$' + Math.round(v/1000) + 'k'; },
                         pct(v) { return (v / this.ceil) * 100; },
                         clampLo() { if (+this.lo > +this.hi) this.lo = this.hi; },
-                        clampHi() { if (+this.hi < +this.lo) this.hi = this.lo; }
+                        clampHi() { if (+this.hi < +this.lo) this.hi = this.lo; },
+                        label() {
+                            if (+this.lo === 0 && +this.hi >= this.ceil) return 'Any';
+                            if (+this.lo === 0) return 'Up to ' + this.fmt(this.hi);
+                            if (+this.hi >= this.ceil) return this.fmt(this.lo) + '+';
+                            return this.fmt(this.lo) + ' \u2013 ' + this.fmt(this.hi);
+                        }
                     }">
-                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Salary Range (USD/year)</label>
-                        <div class="px-1 pt-4 pb-1">
-                            <div class="relative h-1.5">
+                        <div class="flex items-center justify-between mb-1.5 md:mb-2">
+                            <label class="text-white/70 font-medium text-xs md:text-sm">Salary Range</label>
+                            <span class="text-white font-semibold text-xs md:text-sm" x-text="label()"></span>
+                        </div>
+                        <div class="px-2 pt-3 pb-1">
+                            <div class="relative h-2">
                                 <!-- Track background -->
-                                <div class="absolute inset-0 bg-white/10 rounded-full"></div>
+                                <div class="absolute inset-0 bg-white/20 rounded-full"></div>
                                 <!-- Active range highlight -->
                                 <div class="absolute h-full bg-brand-300 rounded-full"
                                      :style="'left:' + pct(lo) + '%; right:' + (100 - pct(hi)) + '%'"></div>
                                 <!-- Min thumb -->
-                                <input type="range" name="salary_min" x-model="lo" min="0" :max="ceil" step="5000"
+                                <input type="range" name="salary_min" x-model="lo" min="0" max="1000000" step="10000"
                                        @input="clampLo()"
-                                       class="absolute inset-0 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-brand-400 [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-brand-400 [&::-moz-range-thumb]:cursor-pointer">
+                                       class="salary-slider absolute inset-0 w-full appearance-none bg-transparent pointer-events-none">
                                 <!-- Max thumb -->
-                                <input type="range" name="salary_max" x-model="hi" min="0" :max="ceil" step="5000"
+                                <input type="range" name="salary_max" x-model="hi" min="0" max="1000000" step="10000"
                                        @input="clampHi()"
-                                       class="absolute inset-0 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-brand-400 [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-brand-400 [&::-moz-range-thumb]:cursor-pointer">
+                                       class="salary-slider absolute inset-0 w-full appearance-none bg-transparent pointer-events-none">
                             </div>
-                            <div class="flex justify-between mt-3 text-xs text-white/70">
-                                <span x-text="fmt(lo)"></span>
-                                <span x-text="fmt(hi)"></span>
+                            <div class="flex justify-between mt-2 text-xs text-white/40">
+                                <span>$0</span>
+                                <span>$1M</span>
                             </div>
                         </div>
                     </div>
+                    <style>
+                        .salary-slider::-webkit-slider-thumb {
+                            -webkit-appearance: none;
+                            pointer-events: auto;
+                            width: 20px; height: 20px;
+                            border-radius: 50%;
+                            background: #d4e157;
+                            border: 3px solid #fff;
+                            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+                            cursor: pointer;
+                        }
+                        .salary-slider::-moz-range-thumb {
+                            pointer-events: auto;
+                            width: 16px; height: 16px;
+                            border-radius: 50%;
+                            background: #d4e157;
+                            border: 3px solid #fff;
+                            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+                            cursor: pointer;
+                        }
+                    </style>
 
                     <!-- Posted Date -->
                     <div x-data="{ open: false, selected: '{{ filters.posted|default:'' }}' }" class="relative">
