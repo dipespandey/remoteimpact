@@ -1,4 +1,4 @@
-from .jobs import JobListView, JobDetailView, PostJobView, SaveJobView, MyMatchesView, OrganizationSearchView
+from .jobs import JobListView, JobDetailView, PostJobView, SaveJobView, MyMatchesView, OrganizationSearchView, AppliedJobDetailView
 from .dashboard import DashboardView
 from .onboarding import (
     StartOnboardingView,

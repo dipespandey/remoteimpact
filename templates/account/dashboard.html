@@ -270,7 +270,11 @@
                                     {{ app.get_status_display }}
                                 </span>
                             </div>
-                            <p class="text-xs text-gray-400 mt-2">Applied {{ app.applied_at|date:"M d, Y" }}</p>
+                            <div class="flex items-center justify-between mt-2">
+                                <p class="text-xs text-gray-400">Applied {{ app.applied_at|date:"M d, Y" }}</p>
+                                <a href="{% url 'jobs:applied_job_detail' app.pk %}"
+                                   class="text-sm text-brand-600 font-medium hover:underline">View Job Posting</a>
+                            </div>
                         </div>
                         {% endfor %}
                     </div>

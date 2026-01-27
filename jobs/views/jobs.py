@@ -8,7 +8,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 from django.db.models import Q, Count
 
-from ..models import Job, Category, SeekerProfile
+from ..models import Job, Category, SeekerProfile, Application
 from ..forms import JobSubmissionForm
 from ..services.job_service import JobService
 from ..services.payment_service import PaymentService
@@ -292,3 +292,21 @@ class OrganizationSearchView(View):
 
         results = [{"name": org.name, "job_count": org.job_count} for org in orgs]
         return JsonResponse({"results": results})
+
+
+class AppliedJobDetailView(LoginRequiredMixin, DetailView):
+    """Show full job details for a job the user applied to, even if expired."""
+
+    model = Application
+    template_name = "jobs/applied_job_detail.html"
+    context_object_name = "application"
+
+    def get_queryset(self):
+        return Application.objects.filter(
+            applicant=self.request.user,
+        ).select_related("job", "job__organization", "job__category")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["job"] = self.object.job
+        return context

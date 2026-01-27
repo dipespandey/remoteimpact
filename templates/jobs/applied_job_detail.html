@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load job_extras %}
+
+{% block title %}{{ job.title }} at {{ job.organization.name }} - Applied Job{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 py-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Back link and actions -->
+        <div class="flex items-center justify-between mb-8 print:hidden">
+            <a href="{% url 'jobs:account' %}" class="text-gray-500 hover:text-gray-700 font-medium flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path>
+                </svg>
+                Back to Dashboard
+            </a>
+            <button onclick="window.print()"
+                    class="px-5 py-2.5 bg-brand-300 hover:bg-brand-400 text-gray-900 font-bold rounded-full shadow transition flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Save as PDF
+            </button>
+        </div>
+
+        <!-- Applied banner -->
+        <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-6 flex items-center gap-3 print:hidden">
+            <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p class="text-sm text-blue-700">
+                You applied to this role on <strong>{{ application.applied_at|date:"M d, Y" }}</strong>.
+                {% if job.is_expired %}
+                This listing has since expired.
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Job details card -->
+        <article class="space-y-8">
+            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+                <div class="flex flex-wrap items-center gap-3 mb-6 text-xs uppercase tracking-wide text-gray-500 font-semibold">
+                    {% if job.category %}
+                    <span class="px-3 py-1 rounded-full bg-brand-50 text-brand-700 border border-brand-100 normal-case">{{ job.category.name }}</span>
+                    {% endif %}
+                    <span>{{ job.get_job_type_display }}</span>
+                    {% if job.is_expired %}
+                    <span class="px-3 py-1 rounded-full bg-red-50 text-red-600 border border-red-100 normal-case">Expired</span>
+                    {% endif %}
+                </div>
+
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{{ job.title }}</h1>
+                <p class="text-xl text-gray-600 mb-6">{{ job.organization.name }}</p>
+
+                <div class="grid sm:grid-cols-3 gap-6 text-sm text-gray-600">
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-1">Location</p>
+                        <p class="text-lg text-gray-900 font-medium">{{ job.location|default:"Remote" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-1">Type</p>
+                        <p class="text-lg text-gray-900 font-medium">{{ job.get_job_type_display }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-1">Posted</p>
+                        <p class="text-lg text-gray-900 font-medium">{{ job.posted_at|date:"M d, Y" }}</p>
+                    </div>
+                    {% if job.salary_min and job.salary_max %}
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-1">Compensation</p>
+                        <p class="text-lg text-gray-900 font-medium">{{ job.salary_currency }} {{ job.salary_min|floatformat:0 }} - {{ job.salary_max|floatformat:0 }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+                <h2 class="text-sm uppercase tracking-wide text-gray-400 font-semibold mb-3">Description</h2>
+                <div class="text-gray-600 leading-relaxed prose prose-gray max-w-none">
+                    {{ job.description|render_html }}
+                </div>
+            </div>
+
+            {% if job.impact %}
+            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+                <h2 class="text-sm uppercase tracking-wide text-gray-400 font-semibold mb-3">Impact</h2>
+                <div class="text-gray-600 leading-relaxed prose prose-gray max-w-none">
+                    {{ job.impact|render_html }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if job.requirements %}
+            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+                <h2 class="text-sm uppercase tracking-wide text-gray-400 font-semibold mb-3">Requirements</h2>
+                <div class="text-gray-600 leading-relaxed prose prose-gray max-w-none">
+                    {{ job.requirements|render_html }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if job.benefits %}
+            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+                <h2 class="text-sm uppercase tracking-wide text-gray-400 font-semibold mb-3">Benefits</h2>
+                <div class="text-gray-600 leading-relaxed prose prose-gray max-w-none">
+                    {{ job.benefits|render_html }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if job.company_description or job.organization.description %}
+            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+                <h2 class="text-sm uppercase tracking-wide text-gray-400 font-semibold mb-3">About {{ job.organization.name }}</h2>
+                <div class="text-gray-600 leading-relaxed prose prose-gray max-w-none">
+                    {% if job.company_description %}
+                        {{ job.company_description|render_html }}
+                    {% else %}
+                        {{ job.organization.description|render_html }}
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </article>
+    </div>
+</section>
+
+<style>
+    @media print {
+        nav, footer, header, .print\:hidden { display: none !important; }
+        body { background: white !important; }
+        section { padding: 0 !important; }
+        .rounded-3xl { border-radius: 0 !important; border: none !important; box-shadow: none !important; }
+        .shadow-sm { box-shadow: none !important; }
+        article > div { padding-left: 0 !important; padding-right: 0 !important; }
+    }
+</style>
+{% endblock %}
