@@ -289,10 +289,10 @@
                         </div>
                         <div class="px-2 pt-3 pb-1">
                             <div class="relative h-2">
-                                <!-- Track background -->
-                                <div class="absolute inset-0 bg-white/20 rounded-full"></div>
-                                <!-- Active range highlight -->
-                                <div class="absolute h-full bg-brand-300 rounded-full"
+                                <!-- Track background: light green -->
+                                <div class="absolute inset-0 rounded-full" style="background: #a5d6a7;"></div>
+                                <!-- Active range: dark green -->
+                                <div class="absolute h-full rounded-full" style="background: #2e7d32;"
                                      :style="'left:' + pct(lo) + '%; right:' + (100 - pct(hi)) + '%'"></div>
                                 <!-- Min thumb -->
                                 <input type="range" name="salary_min" x-model="lo" min="0" max="1000000" step="10000"
@@ -315,18 +315,18 @@
                             pointer-events: auto;
                             width: 20px; height: 20px;
                             border-radius: 50%;
-                            background: #d4e157;
+                            background: #2e7d32;
                             border: 3px solid #fff;
-                            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+                            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
                             cursor: pointer;
                         }
                         .salary-slider::-moz-range-thumb {
                             pointer-events: auto;
                             width: 16px; height: 16px;
                             border-radius: 50%;
-                            background: #d4e157;
+                            background: #2e7d32;
                             border: 3px solid #fff;
-                            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+                            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
                             cursor: pointer;
                         }
                     </style>
