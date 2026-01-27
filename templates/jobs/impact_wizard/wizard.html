@@ -22,7 +22,7 @@
         <div id="wizard-content"
              hx-get="{% url 'jobs:impact_wizard_step' current_step.slug %}"
              hx-trigger="load"
-             hx-swap="innerHTML"
+             hx-swap="innerHTML show:window:top"
              class="bg-white rounded-3xl shadow-xl p-6 md:p-10">
             <!-- Step content loaded here via HTMX -->
             <div class="flex items-center justify-center py-12">
@@ -41,4 +41,12 @@
 
     </div>
 </div>
+
+<script>
+document.addEventListener('htmx:afterSwap', function(event) {
+    if (event.detail.target.id === 'wizard-content') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+});
+</script>
 {% endblock %}
