@@ -267,78 +267,85 @@
                         </div>
                     </div>
 
-                    <!-- Salary Range Slider (Logarithmic, dual native range inputs) -->
+                    <!-- Salary Range Slider (Logarithmic, dual handle) -->
                     <style>
-                        .salary-slider input[type=range] {
+                        .salary-slider { padding-left: 0.5rem; padding-right: 0.75rem; max-width: 500px; width: 100%; --salary-color: #70ac1d; }
+                        .salary-slider .range-input {
                             -webkit-appearance: none;
                             appearance: none;
                             pointer-events: none;
                             position: absolute;
-                            top: 0;
-                            left: 0;
+                            inset: 0;
                             width: 100%;
-                            height: 100%;
+                            height: 64px;
                             background: transparent;
                             margin: 0;
                             padding: 0;
-                            z-index: 3;
+                            z-index: 20;
+                            opacity: 0; /* hide native track background */
                         }
-                        .salary-slider input[type=range]::-webkit-slider-runnable-track {
-                            height: 6px;
-                            background: transparent;
-                            border: none;
-                        }
-                        .salary-slider input[type=range]::-moz-range-track {
-                            height: 6px;
-                            background: transparent;
-                            border: none;
-                        }
-                        .salary-slider input[type=range]::-webkit-slider-thumb {
+                        .salary-slider .range-input::-webkit-slider-thumb {
                             -webkit-appearance: none;
+                            appearance: none;
                             pointer-events: all;
-                            width: 20px;
-                            height: 20px;
-                            border-radius: 50%;
-                            background: #22c55e;
-                            border: 2px solid #fff;
-                            box-shadow: 0 1px 6px rgba(0,0,0,0.3);
-                            cursor: grab;
-                            margin-top: -7px;
+                            width: 34px;
+                            height: 34px;
+                            border-radius: 9999px;
+                            background: transparent;
                         }
-                        .salary-slider input[type=range]::-moz-range-thumb {
+                        .salary-slider .range-input::-moz-range-thumb {
                             pointer-events: all;
-                            width: 20px;
-                            height: 20px;
-                            border-radius: 50%;
-                            background: #22c55e;
-                            border: 2px solid #fff;
-                            box-shadow: 0 1px 6px rgba(0,0,0,0.3);
-                            cursor: grab;
+                            width: 36px;
+                            height: 36px;
+                            border-radius: 9999px;
+                            background: transparent;
+                            border: none;
                         }
-                        .salary-slider input[type=range]:active::-webkit-slider-thumb { cursor: grabbing; }
-                        .salary-slider input[type=range]:active::-moz-range-thumb { cursor: grabbing; }
+                        .salary-slider .range-input::-webkit-slider-runnable-track {
+                            height: 6px;
+                            background: transparent;
+                            border: none;
+                        }
+                        .salary-slider .range-input::-moz-range-track {
+                            height: 6px;
+                            background: transparent;
+                            border: none;
+                        }
                     </style>
                     <div x-data="salarySlider({{ filters.salary_min|default:'0' }}, {{ filters.salary_max|default:'1000000' }})" class="salary-slider">
-                        <div class="flex items-center justify-between mb-3">
-                            <label class="text-white font-bold text-xs md:text-sm">Salary Range</label>
-                            <span class="text-white/90 font-semibold text-xs" x-text="rangeLabel()"></span>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-white font-medium text-xs md:text-sm">Salary Range</label>
+                            <span class="text-white/90 font-medium text-xs uppercase tracking-wide" x-text="rangeLabel()"></span>
                         </div>
-                        <div class="relative h-6">
+                        <div class="relative h-16 select-none px-1 -mt-2" x-ref="salaryTrack">
                             <!-- Background track -->
-                            <div class="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[6px] rounded-full bg-white/15"></div>
+                            <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-2 rounded-full bg-white/10 shadow-inner shadow-black/10"></div>
                             <!-- Active track -->
-                            <div class="absolute top-1/2 -translate-y-1/2 h-[6px] rounded-full bg-green-500"
+                            <div class="absolute top-1/2 -translate-y-1/2 h-2 rounded-full"
+                                 style="background: linear-gradient(90deg, var(--salary-color), var(--salary-color)); box-shadow: 0 0 16px rgba(112,172,29,0.35);"
                                  :style="'left:' + loPct + '%; right:' + (100 - hiPct) + '%'"></div>
-                            <!-- Min range input -->
-                            <input type="range" min="0" max="1000" :value="loPos"
-                                   @input="loPos = +$event.target.value; if(loPos > hiPos) loPos = hiPos; updateVals()"
-                                   style="z-index: 4;">
-                            <!-- Max range input -->
-                            <input type="range" min="0" max="1000" :value="hiPos"
-                                   @input="hiPos = +$event.target.value; if(hiPos < loPos) hiPos = loPos; updateVals()"
-                                   style="z-index: 5;">
+
+                            <!-- Visible handles -->
+                            <div class="pointer-events-none absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center gap-1" :style="'left:' + loPct + '%'" aria-hidden="true">
+                                <div class="px-3 py-1 text-[11px] font-semibold rounded-full bg-white/15 border border-white/20 text-white shadow-lg backdrop-blur-sm" x-text="formatLabel(loVal)"></div>
+                                <div class="h-5 w-5 rounded-full border-2 border-white"
+                                     style="background: var(--salary-color); box-shadow: 0 6px 18px rgba(112,172,29,0.45);"></div>
+                            </div>
+                            <div class="pointer-events-none absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center gap-1" :style="'left:' + hiPct + '%'" aria-hidden="true">
+                                <div class="px-3 py-1 text-[11px] font-semibold rounded-full bg-white/15 border border-white/20 text-white shadow-lg backdrop-blur-sm" x-text="formatLabel(hiVal)"></div>
+                                <div class="h-5 w-5 rounded-full border-2 border-white"
+                                     style="background: var(--salary-color); box-shadow: 0 6px 18px rgba(112,172,29,0.45);"></div>
+                            </div>
+
+                            <!-- Hidden native range inputs that drive the values -->
+                            <input class="range-input" type="range" min="0" max="1000" :value="loPos" style="z-index: 31;"
+                                   @input="loPos = +$event.target.value; if(loPos > hiPos) loPos = hiPos; updateVals()">
+                            <input class="range-input" type="range" min="0" max="1000" :value="hiPos" style="z-index: 32;"
+                                   @input="hiPos = +$event.target.value; if(hiPos < loPos) hiPos = loPos; updateVals()">
+                            <!-- Click/drag overlay -->
+                            <div class="absolute inset-0 cursor-pointer" @pointerdown.prevent="startDrag($event)"></div>
                         </div>
-                        <div class="flex justify-between text-[10px] text-white/40 mt-1">
+                        <div class="flex justify-between text-[11px] text-white/50 mt-2">
                             <span>$0</span>
                             <span>$1,000,000+</span>
                         </div>
@@ -347,40 +354,75 @@
                     </div>
                     <script>
                     function salarySlider(initLo, initHi) {
-                        var MAX_LOG = Math.log(1000000);
+                        var MAX = 1000000;
                         function valToPos(v) {
-                            if (v <= 0) return 0;
-                            if (v >= 1000000) return 1000;
-                            return (Math.log(Math.max(v, 1)) / MAX_LOG) * 1000;
+                            v = Math.max(0, Math.min(MAX, v));
+                            return (v / MAX) * 1000;
                         }
                         function posToVal(p) {
-                            if (p <= 0) return 0;
-                            if (p >= 1000) return 1000000;
-                            var r = Math.exp((p / 1000) * MAX_LOG);
-                            if (r < 10000) return Math.round(r / 1000) * 1000;
-                            if (r < 100000) return Math.round(r / 5000) * 5000;
-                            if (r < 500000) return Math.round(r / 10000) * 10000;
-                            return Math.round(r / 50000) * 50000;
+                            p = Math.max(0, Math.min(1000, p));
+                            var v = (p / 1000) * MAX;
+                            // finer steps near the bottom for better UX
+                            if (v < 50000) return Math.round(v / 500) * 500;
+                            if (v < 200000) return Math.round(v / 2000) * 2000;
+                            if (v < 600000) return Math.round(v / 5000) * 5000;
+                            return Math.round(v / 10000) * 10000;
                         }
                         function fmt(v) {
                             v = +v;
                             if (v <= 0) return '$0';
-                            if (v >= 1000000) return '$1M+';
-                            return '$' + Math.round(v / 1000) + 'k';
+                            if (v >= MAX) return '$1M+';
+                            if (v >= 100000) return '$' + Math.round(v / 1000) + 'k';
+                            if (v >= 1000) return '$' + (v / 1000).toFixed(1).replace(/\\.0$/, '') + 'k';
+                            return '$' + v.toLocaleString('en-US');
                         }
+                        var initialLoPos = valToPos(initLo);
+                        var initialHiPos = valToPos(initHi);
                         return {
-                            loPos: valToPos(initLo),
-                            hiPos: valToPos(initHi),
-                            loVal: initLo,
-                            hiVal: initHi,
+                            loPos: initialLoPos,
+                            hiPos: initialHiPos,
+                            loVal: posToVal(initialLoPos),
+                            hiVal: posToVal(initialHiPos),
+                            dragging: null,
                             get loPct() { return (this.loPos / 1000) * 100; },
                             get hiPct() { return (this.hiPos / 1000) * 100; },
                             updateVals() {
                                 this.loVal = posToVal(this.loPos);
                                 this.hiVal = posToVal(this.hiPos);
                             },
+                            startDrag(evt) {
+                                this.setFromEvent(evt, true);
+                                const move = e => this.setFromEvent(e, false);
+                                const up = () => {
+                                    this.dragging = null;
+                                    window.removeEventListener('pointermove', move);
+                                    window.removeEventListener('pointerup', up);
+                                };
+                                window.addEventListener('pointermove', move);
+                                window.addEventListener('pointerup', up);
+                            },
+                            setFromEvent(evt, pickHandle) {
+                                if (!this.$refs.salaryTrack) return;
+                                const rect = this.$refs.salaryTrack.getBoundingClientRect();
+                                const pct = Math.min(1, Math.max(0, (evt.clientX - rect.left) / rect.width));
+                                const pos = pct * 1000;
+                                if (pickHandle || !this.dragging) {
+                                    const distLo = Math.abs(pos - this.loPos);
+                                    const distHi = Math.abs(pos - this.hiPos);
+                                    this.dragging = distLo <= distHi ? 'lo' : 'hi';
+                                }
+                                if (this.dragging === 'lo') {
+                                    this.loPos = Math.min(pos, this.hiPos);
+                                } else {
+                                    this.hiPos = Math.max(pos, this.loPos);
+                                }
+                                this.updateVals();
+                            },
+                            formatLabel(v) {
+                                return fmt(v);
+                            },
                             rangeLabel() {
-                                if (this.loVal <= 0 && this.hiVal >= 1000000) return '$0 – $1M+';
+                                if (this.loVal <= 0 && this.hiVal >= MAX) return '$0 – $1M+';
                                 return fmt(this.loVal) + ' – ' + fmt(this.hiVal);
                             }
                         };
