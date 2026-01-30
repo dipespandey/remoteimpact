@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ post.title }} — Remote Impact Blog{% endblock %}
+{% block meta_description %}{{ post.excerpt }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_title %}{{ post.title }}{% endblock %}
+{% block og_description %}{{ post.excerpt }}{% endblock %}
+{% if post.featured_image %}{% block og_image %}{{ SITE_URL }}{{ post.featured_image.url }}{% endblock %}{% endif %}
+{% block canonical %}{{ SITE_URL }}{{ post.get_absolute_url }}{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "{{ post.title|escapejs }}",
+    "description": "{{ post.excerpt|escapejs }}",
+    "author": {
+        "@type": "Person",
+        "name": "{{ post.author_name|escapejs }}"
+    },
+    "publisher": {
+        "@type": "Organization",
+        "name": "Remote Impact",
+        "url": "https://remoteimpact.org"
+    },
+    "datePublished": "{{ post.published_at|date:'c' }}",
+    "dateModified": "{{ post.updated_at|date:'c' }}",
+    "mainEntityOfPage": "{{ SITE_URL }}{{ post.get_absolute_url }}"
+    {% if post.featured_image %},"image": "{{ SITE_URL }}{{ post.featured_image.url }}"{% endif %}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<article class="max-w-3xl mx-auto px-4 py-12 sm:py-16">
+    <nav class="mb-8 text-sm text-gray-500">
+        <a href="{% url 'blog:post_list' %}" class="hover:text-brand-600 transition">&larr; Back to Blog</a>
+    </nav>
+
+    <header class="mb-10">
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">{{ post.title }}</h1>
+        <div class="mt-4 flex items-center space-x-3 text-sm text-gray-500">
+            <span>By {{ post.author_name }}</span>
+            <span>&middot;</span>
+            <time datetime="{{ post.published_at|date:'Y-m-d' }}">{{ post.published_at|date:"F d, Y" }}</time>
+        </div>
+    </header>
+
+    {% if post.featured_image %}
+    <img src="{{ post.featured_image.url }}" alt="{{ post.featured_image_alt }}" class="w-full rounded-2xl mb-10 shadow-sm">
+    {% endif %}
+
+    <div class="prose prose-lg prose-gray max-w-none
+        prose-headings:font-semibold prose-headings:text-gray-900
+        prose-a:text-brand-600 prose-a:no-underline hover:prose-a:underline
+        prose-img:rounded-xl">
+        {{ post.body|safe }}
+    </div>
+
+    <footer class="mt-16 pt-8 border-t border-gray-200">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <a href="{% url 'blog:post_list' %}" class="text-brand-600 hover:text-brand-700 font-medium">&larr; All Articles</a>
+            <a href="{% url 'jobs:job_list' %}" class="px-6 py-3 bg-brand-500 text-white rounded-full font-semibold hover:bg-brand-600 transition text-center">Browse Impact Jobs</a>
+        </div>
+    </footer>
+</article>
+{% endblock %}
