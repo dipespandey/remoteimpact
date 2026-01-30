@@ -45,3 +45,5 @@ from .invitations import InvitationInboxView, InvitationDeclineView
 from .visibility import VisibilitySettingsView
 
 from .applications import ApplicationCreateView, MyApplicationsView
+
+from .og_image import JobOGImageView

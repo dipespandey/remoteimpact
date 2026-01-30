@@ -14,6 +14,7 @@ urlpatterns = [
     path("jobs/post/", views.PostJobView.as_view(), name="post_job"),
     path("jobs/category/<slug:slug>/", views.CategoryLandingView.as_view(), name="category_landing"),
     path("jobs/<slug:slug>/", views.JobDetailView.as_view(), name="job_detail"),
+    path("jobs/<slug:slug>/og-image/", views.JobOGImageView.as_view(), name="job_og_image"),
     path("jobs/<slug:slug>/save/", views.SaveJobView.as_view(), name="save_job"),
     path("applications/<int:pk>/job/", views.AppliedJobDetailView.as_view(), name="applied_job_detail"),
     # API
@@ -139,6 +140,7 @@ urlpatterns = [
     path("talent/", views.TalentDirectoryView.as_view(), name="talent_directory"),
     path("talent/<int:user_id>/", views.TalentProfileView.as_view(), name="talent_profile"),
     path("talent/<int:user_id>/invite/", views.TalentInviteView.as_view(), name="talent_invite"),
+    path("jobs/<slug:slug>/apply/", views.ApplicationCreateView.as_view(), name="apply_job"),    path("applications/", views.MyApplicationsView.as_view(), name="my_applications"),
     # RSS Feeds
     path("feed/jobs/", LatestJobsFeed(), name="jobs_feed"),
     path("feed/jobs/category/<slug:slug>/", CategoryJobsFeed(), name="category_feed"),
