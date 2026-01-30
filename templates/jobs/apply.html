@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Apply: {{ job.title }} at {{ job.organization.name }} - Remote Impact{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 min-h-screen py-12">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+
+        <!-- Job Summary -->
+        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+            <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-2">Applying to</p>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ job.title }}</h1>
+            <p class="text-xl text-gray-600 mb-4">{{ job.organization.name }}</p>
+            <div class="flex flex-wrap gap-4 text-sm text-gray-500">
+                <span>📍 {{ job.location|default:"Remote" }}</span>
+                <span>💼 {{ job.get_job_type_display }}</span>
+                {% if job.salary_min and job.salary_max %}
+                <span>💰 {{ job.salary_currency }} {{ job.salary_min|floatformat:0 }} – {{ job.salary_max|floatformat:0 }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Application Form -->
+        <form method="post" enctype="multipart/form-data" class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm space-y-6">
+            {% csrf_token %}
+
+            {% if messages %}
+            <div class="space-y-2">
+                {% for message in messages %}
+                <div class="p-4 rounded-xl {% if message.tags == 'error' %}bg-red-50 text-red-700{% else %}bg-blue-50 text-blue-700{% endif %} text-sm">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div>
+                <label for="id_cover_letter" class="block text-sm font-semibold text-gray-900 mb-2">Cover Letter</label>
+                <p class="text-sm text-gray-500 mb-2">Optional — tell the organization why you're a great fit.</p>
+                {{ form.cover_letter }}
+                {% if form.cover_letter.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.cover_letter.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="id_resume" class="block text-sm font-semibold text-gray-900 mb-2">Resume</label>
+                <p class="text-sm text-gray-500 mb-2">{{ form.resume.help_text }}</p>
+                {{ form.resume }}
+                {% if form.resume.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.resume.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="pt-4 flex items-center gap-4">
+                <button type="submit"
+                    class="px-8 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition shadow-lg shadow-brand-300/30 text-lg">
+                    Submit Application
+                </button>
+                <a href="{{ job.get_absolute_url }}" class="text-gray-500 hover:text-gray-700 transition font-medium">Cancel</a>
+            </div>
+        </form>
+
+        <!-- AI Assistant hint -->
+        <div class="rounded-2xl border border-brand-100 bg-gradient-to-br from-brand-50 to-white p-6 text-sm">
+            <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-900 mb-1">Need help with your cover letter?</p>
+                    <p class="text-gray-600 mb-3">Use our AI assistant to generate a tailored cover letter for this role.</p>
+                    <a href="{% url 'jobs:applicant_assistant' %}?job_url={{ request.build_absolute_uri|urlencode }}&job_title={{ job.title|urlencode }}&org={{ job.organization.name|urlencode }}"
+                       class="inline-flex items-center px-4 py-2 rounded-full bg-brand-300 text-gray-900 font-semibold text-sm hover:bg-brand-400 transition">
+                        Generate with AI →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -417,8 +417,12 @@ class Application(models.Model):
     )
     cover_letter = models.TextField(blank=True, help_text="Optional cover note")
 
-    # We can add a resume field later if we enforce file uploads,
-    # for now we assume they might apply via external link but we track it here.
+    resume = models.FileField(
+        upload_to="applications/resumes/%Y/%m/",
+        blank=True,
+        null=True,
+        help_text="PDF or DOC resume (max 5 MB)",
+    )
 
     applied_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -821,6 +825,14 @@ class SeekerProfile(models.Model):
     linkedin_url = models.URLField(
         max_length=200, blank=True,
         help_text="LinkedIn profile URL"
+    )
+
+    # Resume (reusable across applications)
+    resume = models.FileField(
+        upload_to="seekers/resumes/%Y/%m/",
+        blank=True,
+        null=True,
+        help_text="PDF or DOC resume (max 5 MB)",
     )
 
     # Country of work eligibility

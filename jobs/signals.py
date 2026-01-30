@@ -62,6 +62,22 @@ def send_welcome_email(sender, instance, created, **kwargs):
         logger.error(f'Failed to send welcome email to {instance.email}: {e}')
 
 
+
+
+from jobs.models import TalentInvitation
+
+@receiver(post_save, sender=TalentInvitation)
+def send_invitation_email(sender, instance, created, **kwargs):
+    """Send email when a talent invitation is created."""
+    if not created:
+        return
+    try:
+        from jobs.services.email_service import email_service
+        email_service.send_talent_invitation_notification(instance)
+        logger.info(f"Invitation email sent to {instance.seeker.user.email} for {instance.job.title}")
+    except Exception as e:
+        logger.error(f"Failed to send invitation email: {e}")
+
 # =============================================================================
 # REFERRAL TRACKING
 # =============================================================================

@@ -234,6 +234,13 @@ class JobDetailView(DetailView):
             except SeekerProfile.DoesNotExist:
                 pass
 
+        # Check if user already applied
+        context["has_applied"] = False
+        if self.request.user.is_authenticated:
+            context["has_applied"] = Application.objects.filter(
+                job=self.object, applicant=self.request.user
+            ).exists()
+
         return context
 
 

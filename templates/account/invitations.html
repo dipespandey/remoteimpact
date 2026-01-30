@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Talent Invitations - Remote Impact{% endblock %}
+
+{% block content %}
+<section class="bg-[#F3F2EE] min-h-screen py-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Talent Invitations</h1>
+                <p class="text-gray-600 mt-1">Organizations that think you'd be a great fit</p>
+            </div>
+            <a href="{% url 'jobs:account' %}" class="text-brand-600 font-medium text-sm hover:underline">← Back to Dashboard</a>
+        </div>
+
+        {% if invitations %}
+        <div class="space-y-4">
+            {% for inv in invitations %}
+            <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2">
+                            <h3 class="text-lg font-bold text-gray-900">{{ inv.job.title }}</h3>
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide
+                                {% if inv.status == 'sent' %}bg-blue-50 text-blue-600
+                                {% elif inv.status == 'viewed' %}bg-yellow-50 text-yellow-600
+                                {% elif inv.status == 'applied' %}bg-green-50 text-green-600
+                                {% elif inv.status == 'declined' %}bg-gray-100 text-gray-500{% endif %}">
+                                {{ inv.get_status_display }}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-1">
+                            <span class="font-medium">{{ inv.organization.name }}</span> invited you
+                        </p>
+                        <p class="text-xs text-gray-400 mb-3">{{ inv.sent_at|date:"M d, Y" }}</p>
+                        {% if inv.message %}
+                        <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                            <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">Personal Message</p>
+                            <p class="text-gray-700 text-sm">{{ inv.message }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <a href="{{ inv.job.get_absolute_url }}"
+                           class="px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                            View Job
+                        </a>
+                        {% if inv.status != 'applied' and inv.status != 'declined' %}
+                        <a href="{{ inv.job.get_absolute_url }}"
+                           class="px-4 py-2 bg-brand-500 text-white rounded-full text-sm font-bold hover:bg-brand-600 transition">
+                            Apply
+                        </a>
+                        <form method="post" action="{% url 'jobs:invitation_decline' inv.pk %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="px-4 py-2 bg-white border border-red-200 text-red-600 rounded-full text-sm font-medium hover:bg-red-50 transition"
+                                    onclick="return confirm('Decline this invitation?')">
+                                Decline
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-white rounded-3xl border border-gray-100 p-12 text-center">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">💌</div>
+            <h3 class="text-lg font-medium text-gray-900">No invitations yet</h3>
+            <p class="text-gray-500 mt-2 mb-6">When organizations find your profile and want you to apply, invitations will appear here.</p>
+            <a href="{% url 'jobs:job_list' %}" class="text-brand-600 font-medium hover:underline">Browse Jobs</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

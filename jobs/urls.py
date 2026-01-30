@@ -135,6 +135,10 @@ urlpatterns = [
         views.NewsletterSubscribeView.as_view(),
         name="newsletter_subscribe",
     ),
+    # Talent Directory
+    path("talent/", views.TalentDirectoryView.as_view(), name="talent_directory"),
+    path("talent/<int:user_id>/", views.TalentProfileView.as_view(), name="talent_profile"),
+    path("talent/<int:user_id>/invite/", views.TalentInviteView.as_view(), name="talent_invite"),
     # RSS Feeds
     path("feed/jobs/", LatestJobsFeed(), name="jobs_feed"),
     path("feed/jobs/category/<slug:slug>/", CategoryJobsFeed(), name="category_feed"),
@@ -145,4 +149,9 @@ urlpatterns = [
     path("alerts/create/", views.JobAlertCreateView.as_view(), name="job_alert_create"),
     path("alerts/<int:pk>/delete/", views.JobAlertDeleteView.as_view(), name="job_alert_delete"),
     path("alerts/<int:pk>/toggle/", views.JobAlertToggleView.as_view(), name="job_alert_toggle"),
+    # Talent Invitations
+    path("invitations/", views.InvitationInboxView.as_view(), name="invitations"),
+    path("invitations/<int:pk>/decline/", views.InvitationDeclineView.as_view(), name="invitation_decline"),
+    # Visibility Settings
+    path("profile/visibility/", views.VisibilitySettingsView.as_view(), name="visibility_settings"),
 ]

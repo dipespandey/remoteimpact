@@ -79,6 +79,27 @@
                                     {% endif %}
                                 </div>
                             </div>
+
+                            <!-- Top Matching Candidates -->
+                            {% if job.top_candidates %}
+                            <div class="mt-4 pt-4 border-t border-gray-100">
+                                <p class="text-xs uppercase tracking-wide text-gray-500 font-bold mb-3">Top Matching Candidates</p>
+                                <div class="flex flex-wrap gap-3">
+                                    {% for match in job.top_candidates %}
+                                    <a href="{% url 'jobs:talent_profile' match.seeker.user_id %}"
+                                       class="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 hover:bg-brand-50 border border-gray-100 hover:border-brand-200 transition text-sm group">
+                                        <div class="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-xs flex-shrink-0">
+                                            {{ match.seeker.user.first_name|default:"?"|slice:":1" }}
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-900 group-hover:text-brand-600 text-xs">{{ match.seeker.headline|truncatewords:4|default:"Impact Pro" }}</p>
+                                            <p class="text-xs text-gray-400">{{ match.score }}% match</p>
+                                        </div>
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>
@@ -102,7 +123,7 @@
                 </div>
             </div>
 
-            <!-- Sidebar: Organization Settings -->
+            <!-- Sidebar: Organization Settings + Matching Candidates -->
             <div class="space-y-6">
                 <div class="bg-white rounded-3xl border border-gray-100 p-6">
                     <div class="flex items-center gap-4 mb-4">
@@ -125,6 +146,17 @@
                     <a href="{% url 'jobs:onboarding_employer' %}"
                         class="block w-full text-center px-4 py-2 border border-gray-200 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition text-sm">
                         Edit Company Profile
+                    </a>
+                </div>
+
+                <!-- Top Matching Candidates -->
+
+                <div class="bg-white rounded-3xl border border-gray-100 p-6">
+                    <h3 class="font-bold text-gray-900 text-sm mb-3">Discover Talent</h3>
+                    <p class="text-gray-500 text-sm mb-4">Browse our talent directory to find impact professionals.</p>
+                    <a href="{% url 'jobs:talent_directory' %}"
+                       class="block w-full text-center px-4 py-2 bg-brand-300 rounded-xl text-gray-900 font-medium hover:bg-brand-400 transition text-sm">
+                        Browse Talent
                     </a>
                 </div>
             </div>
@@ -213,7 +245,31 @@
         </div>
         {% endif %}
 
-        <div class="grid lg:grid-cols-3 gap-8">
+        
+        <!-- Seeker Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-0">
+            <div class="bg-white rounded-3xl border border-gray-100 p-6">
+                <p class="text-gray-500 text-sm font-medium">Profile Views This Week</p>
+                <p class="text-3xl font-bold text-gray-900 mt-2">{{ profile_views_week }}</p>
+            </div>
+            <a href="{% url 'jobs:invitations' %}" class="bg-white rounded-3xl border border-gray-100 p-6 hover:border-brand-200 transition group">
+                <p class="text-gray-500 text-sm font-medium">Talent Invitations</p>
+                <div class="flex items-center gap-2 mt-2">
+                    <p class="text-3xl font-bold text-gray-900">{{ invitation_count }}</p>
+                    {% if new_invitation_count > 0 %}
+                    <span class="px-2 py-0.5 rounded-full bg-red-100 text-red-600 text-xs font-bold">{{ new_invitation_count }} new</span>
+                    {% endif %}
+                </div>
+                <p class="text-xs text-brand-600 font-medium mt-1 group-hover:underline">View inbox →</p>
+            </a>
+            <a href="{% url 'jobs:visibility_settings' %}" class="bg-white rounded-3xl border border-gray-100 p-6 hover:border-brand-200 transition group">
+                <p class="text-gray-500 text-sm font-medium">Profile Visibility</p>
+                <p class="text-xl font-bold text-gray-900 mt-2 capitalize">{% if seeker_profile %}{{ seeker_profile.get_visibility_display }}{% else %}Not set{% endif %}</p>
+                <p class="text-xs text-brand-600 font-medium mt-1 group-hover:underline">Change setting →</p>
+            </a>
+        </div>
+
+<div class="grid lg:grid-cols-3 gap-8">
             <!-- Sidebar: Profile -->
             <div class="lg:col-span-1 space-y-6">
                 <div class="bg-white rounded-3xl border border-gray-100 p-6 sticky top-6">
@@ -244,11 +300,47 @@
                         </a>
                     </div>
                 </div>
-                <!-- Quick Links -->                <div class="bg-white rounded-3xl border border-gray-100 p-6">                    <h2 class="text-lg font-bold text-gray-900 mb-4">Quick Links</h2>                    <div class="space-y-3">                        <a href="{% url 'jobs:referral_dashboard' %}" class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition group">                            <div class="flex items-center gap-3">                                <span class="text-xl">🔗</span>                                <div>                                    <p class="font-medium text-gray-900 text-sm">Share &amp; Invite</p>                                    <p class="text-xs text-gray-500">{{ referral_count }} referral{{ referral_count|pluralize }}</p>                                </div>                            </div>                            <svg class="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>                        </a>                        <a href="{% url 'jobs:job_alerts' %}" class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition group">                            <div class="flex items-center gap-3">                                <span class="text-xl">🔔</span>                                <div>                                    <p class="font-medium text-gray-900 text-sm">Job Alerts</p>                                    <p class="text-xs text-gray-500">{{ alert_count }} active alert{{ alert_count|pluralize }}</p>                                </div>                            </div>                            <svg class="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>                        </a>                    </div>                </div>
+                <!-- Quick Links -->                <div class="bg-white rounded-3xl border border-gray-100 p-6">                    <h2 class="text-lg font-bold text-gray-900 mb-4">Quick Links</h2>                    <div class="space-y-3">                        <a href="{% url 'jobs:referral_dashboard' %}" class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition group">                            <div class="flex items-center gap-3">                                <span class="text-xl">🔗</span>                                <div>                                    <p class="font-medium text-gray-900 text-sm">Share &amp; Invite</p>                                    <p class="text-xs text-gray-500">{{ referral_count }} referral{{ referral_count|pluralize }}</p>                                </div>                            </div>                            <svg class="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>                        </a>                        <a href="{% url 'jobs:job_alerts' %}" class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition group">                            <div class="flex items-center gap-3">                                <span class="text-xl">🔔</span>                                <div>                                    <p class="font-medium text-gray-900 text-sm">Job Alerts</p>                                    <p class="text-xs text-gray-500">{{ alert_count }} active alert{{ alert_count|pluralize }}</p>                                </div>                            </div>                            <svg class="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>                        </a>                        <a href="{% url 'jobs:invitations' %}" class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition group">                            <div class="flex items-center gap-3">                                <span class="text-xl">💌</span>                                <div>                                    <p class="font-medium text-gray-900 text-sm">Talent Invitations</p>                                    <p class="text-xs text-gray-500">{{ invitation_count }} invitation{{ invitation_count|pluralize }}</p>                                </div>                            </div>                            <svg class="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>                        </a>                        <a href="{% url 'jobs:visibility_settings' %}" class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition group">                            <div class="flex items-center gap-3">                                <span class="text-xl">👁️</span>                                <div>                                    <p class="font-medium text-gray-900 text-sm">Visibility Settings</p>                                    <p class="text-xs text-gray-500">Currently: {% if seeker_profile %}{{ seeker_profile.get_visibility_display }}{% else %}Not set{% endif %}</p>                                </div>                            </div>                            <svg class="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>                        </a>                    </div>                </div>
             </div>
 
             <!-- Main Content: Applications & Saved -->
             <div class="lg:col-span-2 space-y-8">
+
+                <!-- Talent Invitations -->
+                {% if talent_invitations %}
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-bold text-gray-900">Invitations from Organizations</h2>
+                        {% if new_invitation_count %}
+                        <span class="px-2.5 py-0.5 rounded-full bg-brand-100 text-brand-700 text-xs font-bold">{{ new_invitation_count }} new</span>
+                        {% endif %}
+                    </div>
+                    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-100">
+                        {% for inv in talent_invitations %}
+                        <div class="p-6 hover:bg-gray-50 transition">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h3 class="font-bold text-gray-900 text-lg">{{ inv.job.title }}</h3>
+                                    <p class="text-sm text-gray-600">{{ inv.organization.name }}</p>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
+                                    {% if inv.status == 'sent' %}bg-blue-50 text-blue-600
+                                    {% elif inv.status == 'viewed' %}bg-yellow-50 text-yellow-600
+                                    {% elif inv.status == 'applied' %}bg-green-50 text-green-600
+                                    {% else %}bg-gray-100 text-gray-600{% endif %}">
+                                    {{ inv.get_status_display }}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-500 italic mb-2">"{{ inv.message|truncatewords:25 }}"</p>
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs text-gray-400">{{ inv.sent_at|date:"M d, Y" }}</p>
+                                <a href="{{ inv.job.get_absolute_url }}" class="text-sm text-brand-600 font-medium hover:underline">View Job →</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
 
                 <!-- Applications -->
                 <div class="space-y-4">

@@ -1,3 +1,4 @@
+import os
 from django import forms
 
 from django_countries.widgets import CountrySelectWidget
@@ -305,3 +306,40 @@ class JobAlertForm(forms.ModelForm):
         for name, field in self.fields.items():
             if name != "categories":
                 field.widget.attrs.update({"class": base_class})
+
+
+# ---------------------------------------------------------------------------
+# Application Form
+# ---------------------------------------------------------------------------
+
+class ApplicationForm(forms.Form):
+    """Form for on-platform job applications."""
+
+    cover_letter = forms.CharField(
+        widget=forms.Textarea(attrs={
+            "rows": 8,
+            "placeholder": "Tell the organization why you're a great fit for this role...",
+            "class": "w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition",
+        }),
+        required=False,
+        label="Cover Letter",
+    )
+    resume = forms.FileField(
+        required=False,
+        label="Resume",
+        help_text="PDF or DOC, max 5 MB",
+        widget=forms.ClearableFileInput(attrs={
+            "accept": ".pdf,.doc,.docx",
+            "class": "block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100",
+        }),
+    )
+
+    def clean_resume(self):
+        f = self.cleaned_data.get("resume")
+        if f:
+            if f.size > 5 * 1024 * 1024:
+                raise forms.ValidationError("Resume must be under 5 MB.")
+            ext = os.path.splitext(f.name)[1].lower()
+            if ext not in (".pdf", ".doc", ".docx"):
+                raise forms.ValidationError("Only PDF and DOC/DOCX files are allowed.")
+        return f

@@ -124,5 +124,36 @@ class EmailService:
         )
 
 
+
+    def send_talent_invitation_notification(self, invitation) -> bool:
+        """Send notification when a seeker receives a talent invitation."""
+        seeker_user = invitation.seeker.user
+        context = {
+            "organization_name": invitation.organization.name,
+            "job_title": invitation.job.title,
+            "message": invitation.message,
+            "site_url": self.site_url,
+        }
+        html = render_to_string("emails/talent_invitation.html", context)
+        subject = f"{invitation.organization.name} thinks you'd be great for {invitation.job.title}"
+        return self.send_email(to=seeker_user.email, subject=subject, html=html)
+
+    def send_seeker_weekly_digest(self, seeker_profile, profile_views: int, new_invitations: int) -> bool:
+        """Send weekly digest to a seeker with profile views and invitation counts."""
+        if profile_views == 0 and new_invitations == 0:
+            return False
+        user = seeker_profile.user
+        unsubscribe_url = self._get_unsubscribe_url(user.id)
+        context = {
+            "user": user,
+            "profile_views": profile_views,
+            "new_invitations": new_invitations,
+            "unsubscribe_url": unsubscribe_url,
+            "site_url": self.site_url,
+        }
+        html = render_to_string("emails/seeker_weekly_digest.html", context)
+        subject = f"You had {profile_views} profile views this week and {new_invitations} new invitations"
+        return self.send_email(to=user.email, subject=subject, html=html)
+
 # Singleton instance
 email_service = EmailService()

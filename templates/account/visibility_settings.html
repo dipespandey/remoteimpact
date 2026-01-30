@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Profile Visibility - Remote Impact{% endblock %}
+
+{% block content %}
+<section class="bg-[#F3F2EE] min-h-screen py-12">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Profile Visibility</h1>
+                <p class="text-gray-600 mt-1">Control who can see your Impact Profile</p>
+            </div>
+            <a href="{% url 'jobs:account' %}" class="text-brand-600 font-medium text-sm hover:underline">← Back to Dashboard</a>
+        </div>
+
+        {% if seeker_profile %}
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+
+            <label class="block bg-white rounded-3xl border-2 p-6 cursor-pointer transition
+                {% if seeker_profile.visibility == 'public' %}border-brand-400 ring-2 ring-brand-100{% else %}border-gray-100 hover:border-gray-200{% endif %}">
+                <div class="flex items-start gap-4">
+                    <input type="radio" name="visibility" value="public"
+                        {% if seeker_profile.visibility == 'public' %}checked{% endif %}
+                        class="mt-1 text-brand-500 focus:ring-brand-400">
+                    <div>
+                        <p class="font-bold text-gray-900 text-lg">🌍 Public</p>
+                        <p class="text-gray-600 text-sm mt-1">All organizations on RemoteImpact can find you in talent search and view your full profile. Best for maximizing opportunities.</p>
+                    </div>
+                </div>
+            </label>
+
+            <label class="block bg-white rounded-3xl border-2 p-6 cursor-pointer transition
+                {% if seeker_profile.visibility == 'matching' %}border-brand-400 ring-2 ring-brand-100{% else %}border-gray-100 hover:border-gray-200{% endif %}">
+                <div class="flex items-start gap-4">
+                    <input type="radio" name="visibility" value="matching"
+                        {% if seeker_profile.visibility == 'matching' %}checked{% endif %}
+                        class="mt-1 text-brand-500 focus:ring-brand-400">
+                    <div>
+                        <p class="font-bold text-gray-900 text-lg">🎯 Matching Only</p>
+                        <p class="text-gray-600 text-sm mt-1">Only organizations with jobs that match your profile can see you. Your profile stays hidden from general talent search.</p>
+                    </div>
+                </div>
+            </label>
+
+            <label class="block bg-white rounded-3xl border-2 p-6 cursor-pointer transition
+                {% if seeker_profile.visibility == 'hidden' %}border-brand-400 ring-2 ring-brand-100{% else %}border-gray-100 hover:border-gray-200{% endif %}">
+                <div class="flex items-start gap-4">
+                    <input type="radio" name="visibility" value="hidden"
+                        {% if seeker_profile.visibility == 'hidden' %}checked{% endif %}
+                        class="mt-1 text-brand-500 focus:ring-brand-400">
+                    <div>
+                        <p class="font-bold text-gray-900 text-lg">🔒 Hidden</p>
+                        <p class="text-gray-600 text-sm mt-1">Your profile is completely hidden from talent search. You can still apply to jobs, but orgs won't discover you proactively.</p>
+                    </div>
+                </div>
+            </label>
+
+            <div class="pt-4">
+                <button type="submit"
+                    class="w-full px-6 py-3 bg-brand-500 text-white font-bold rounded-full hover:bg-brand-600 transition shadow-sm">
+                    Save Visibility Setting
+                </button>
+            </div>
+        </form>
+        {% else %}
+        <div class="bg-white rounded-3xl border border-gray-100 p-12 text-center">
+            <p class="text-gray-500 mb-4">Complete your Impact Profile first to manage visibility.</p>
+            <a href="{% url 'jobs:impact_wizard' %}" class="text-brand-600 font-medium hover:underline">Build Profile</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

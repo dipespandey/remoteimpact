@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}My Applications - Remote Impact{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 min-h-screen py-12">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-xs uppercase tracking-widest text-gray-500 font-bold mb-1">Applications</p>
+                <h1 class="text-3xl font-bold text-gray-900">Your Applications</h1>
+            </div>
+            <a href="{% url 'jobs:job_list' %}"
+               class="px-5 py-2 rounded-full border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition text-sm font-semibold">
+                Browse Jobs
+            </a>
+        </div>
+
+        {% if applications %}
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+            <div class="divide-y divide-gray-100">
+                {% for app in applications %}
+                <a href="{% url 'jobs:applied_job_detail' pk=app.pk %}" class="block p-6 hover:bg-gray-50 transition">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-3 mb-1">
+                                <h3 class="font-bold text-gray-900 text-lg truncate">{{ app.job.title }}</h3>
+                                <span class="flex-shrink-0 px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if app.status == 'applied' %}bg-blue-100 text-blue-700
+                                    {% elif app.status == 'reviewed' %}bg-yellow-100 text-yellow-700
+                                    {% elif app.status == 'interview' %}bg-purple-100 text-purple-700
+                                    {% elif app.status == 'offer' %}bg-green-100 text-green-700
+                                    {% elif app.status == 'rejected' %}bg-red-100 text-red-700
+                                    {% endif %}">
+                                    {{ app.get_status_display }}
+                                </span>
+                            </div>
+                            <p class="text-gray-600">{{ app.job.organization.name }}</p>
+                        </div>
+                        <div class="text-sm text-gray-500 flex-shrink-0">
+                            Applied {{ app.applied_at|date:"M d, Y" }}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if is_paginated %}
+        <div class="flex justify-center gap-2">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium">← Previous</a>
+            {% endif %}
+            <span class="px-4 py-2 text-gray-500 text-sm">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium">Next →</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="bg-white rounded-3xl border border-gray-100 p-12 text-center shadow-sm">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No applications yet</h3>
+            <p class="text-gray-500 mb-6">Start applying to find your next impact role.</p>
+            <a href="{% url 'jobs:job_list' %}"
+               class="inline-flex items-center px-6 py-3 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition">
+                Browse Jobs
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

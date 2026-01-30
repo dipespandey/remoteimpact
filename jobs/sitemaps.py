@@ -1,7 +1,7 @@
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
 from django.utils import timezone
-from .models import Job, Category
+from .models import Job, Category, SeekerProfile
 
 
 class JobSitemap(Sitemap):
@@ -56,6 +56,7 @@ class StaticSitemap(Sitemap):
             ('jobs:applicant_assistant', 0.6, 'weekly'),
             ('jobs:post_job', 0.5, 'monthly'),
             ('gigs:gig_list', 0.8, 'daily'),
+            ('jobs:talent_directory', 0.8, 'daily'),
         ]
 
     def location(self, item):
@@ -70,6 +71,23 @@ class StaticSitemap(Sitemap):
     def lastmod(self, item):
         # Static pages - use current time for frequently changing pages
         return timezone.now()
+
+
+class TalentSitemap(Sitemap):
+    """Sitemap for public seeker profiles."""
+    changefreq = "weekly"
+    priority = 0.6
+
+    def items(self):
+        return SeekerProfile.objects.filter(
+            visibility='public', is_actively_looking=True, wizard_completed=True
+        ).select_related('user').order_by('-updated_at')
+
+    def location(self, obj):
+        return reverse('jobs:talent_profile', args=[obj.user_id])
+
+    def lastmod(self, obj):
+        return obj.updated_at
 
 
 # NOTE: LocationSitemap also removed - same reason as above.

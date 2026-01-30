@@ -482,3 +482,12 @@ class JobAlertAdmin(admin.ModelAdmin):
     list_filter = ["frequency", "is_active"]
     search_fields = ["user__email", "name", "keywords"]
     readonly_fields = ["created_at", "updated_at", "last_sent_at"]
+
+
+from .models import ProfileView
+
+@admin.register(ProfileView)
+class ProfileViewAdmin(admin.ModelAdmin):
+    list_display = ("seeker", "viewer", "viewed_at")
+    list_filter = ("viewed_at",)
+    raw_id_fields = ("seeker", "viewer")

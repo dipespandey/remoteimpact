@@ -39,3 +39,9 @@ from .newsletter import (
 )
 from .referral import ReferralDashboardView, ReferralLandingView
 from .job_alerts import JobAlertListView, JobAlertCreateView, JobAlertDeleteView, JobAlertToggleView
+from .talent import TalentDirectoryView, TalentProfileView, TalentInviteView
+
+from .invitations import InvitationInboxView, InvitationDeclineView
+from .visibility import VisibilitySettingsView
+
+from .applications import ApplicationCreateView, MyApplicationsView
