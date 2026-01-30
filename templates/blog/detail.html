@@ -6,7 +6,7 @@
 {% block og_type %}article{% endblock %}
 {% block og_title %}{{ post.title }}{% endblock %}
 {% block og_description %}{{ post.excerpt }}{% endblock %}
-{% if post.featured_image %}{% block og_image %}{{ SITE_URL }}{{ post.featured_image.url }}{% endblock %}{% endif %}
+{% block og_image %}{% if post.featured_image.name %}{{ SITE_URL }}{{ post.featured_image.url }}{% else %}{{ SITE_URL }}/static/og-image.png{% endif %}{% endblock %}
 {% block canonical %}{{ SITE_URL }}{{ post.get_absolute_url }}{% endblock %}
 
 {% block extra_head %}
@@ -28,7 +28,7 @@
     "datePublished": "{{ post.published_at|date:'c' }}",
     "dateModified": "{{ post.updated_at|date:'c' }}",
     "mainEntityOfPage": "{{ SITE_URL }}{{ post.get_absolute_url }}"
-    {% if post.featured_image %},"image": "{{ SITE_URL }}{{ post.featured_image.url }}"{% endif %}
+    {% if post.featured_image.name %},"image": "{{ SITE_URL }}{{ post.featured_image.url }}"{% endif %}
 }
 </script>
 {% endblock %}
@@ -48,7 +48,7 @@
         </div>
     </header>
 
-    {% if post.featured_image %}
+    {% if post.featured_image.name %}
     <img src="{{ post.featured_image.url }}" alt="{{ post.featured_image_alt }}" class="w-full rounded-2xl mb-10 shadow-sm">
     {% endif %}
 
