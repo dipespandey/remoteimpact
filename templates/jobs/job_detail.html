@@ -10,6 +10,10 @@
 {% block og_type %}article{% endblock %}
 {% block og_title %}{{ job.title }} at {{ job.organization.name }}{% endblock %}
 {% block og_description %}{{ job.location|default:"Remote" }} {{ job.get_job_type_display }} position at {{ job.organization.name }}. Apply now!{% endblock %}
+{% block og_image %}{{ SITE_URL }}{% url "jobs:job_og_image" job.slug %}{% endblock %}
+{% block twitter_title %}{{ job.title }} at {{ job.organization.name }}{% endblock %}
+{% block twitter_description %}{{ job.location|default:"Remote" }} {{ job.get_job_type_display }} position at {{ job.organization.name }}. Apply now!{% endblock %}
+{% block twitter_image %}{{ SITE_URL }}{% url "jobs:job_og_image" job.slug %}{% endblock %}
 
 {% block structured_data %}
 <script type="application/ld+json">
