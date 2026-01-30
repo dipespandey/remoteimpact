@@ -327,39 +327,6 @@
     </div>
 </section>
 
-<!-- Recently Added Jobs -->
-{% if recent_jobs %}
-<section class="py-20 bg-gradient-to-b from-twilight-900 to-twilight-900/80">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
-            <div>
-                <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-2">Just posted</p>
-                <h2 class="text-3xl md:text-4xl font-semibold">Recently added jobs</h2>
-            </div>
-            <a href="{% url 'jobs:job_list' %}" class="inline-flex items-center text-neon font-semibold hover:underline">
-                View all jobs
-                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14m0 0-6-6m6 6-6 6" />
-                </svg>
-            </a>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {% for job in recent_jobs|slice:":8" %}
-            <a href="{{ job.get_absolute_url }}"
-               class="group rounded-2xl border border-white/10 bg-card-gradient p-5 backdrop-blur hover:border-neon/40 transition flex flex-col">
-                <h3 class="text-lg font-semibold text-white group-hover:text-neon transition leading-snug line-clamp-2 mb-2">{{ job.title }}</h3>
-                <p class="text-white/70 text-sm mb-2">{{ job.organization.name }}</p>
-                {% if job.category %}
-                <span class="inline-block self-start px-3 py-1 rounded-full text-xs font-medium bg-white/10 border border-white/10 text-white/80 mb-3">{{ job.category.name }}</span>
-                {% endif %}
-                <p class="text-white/50 text-xs mt-auto">{{ job.posted_at|timesince }} ago</p>
-            </a>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-{% endif %}
-
 <!-- Trust signals -->
 <section class="py-16 border-b border-white/5 bg-gradient-to-b from-twilight-900 to-twilight-900/40">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
