@@ -25,11 +25,20 @@ logger = logging.getLogger(__name__)
 
 
 class TalentDirectoryView(LoginRequiredMixin, ListView):
-    """Talent directory — hidden from public for now (login required)."""
+    """Talent directory — employer-only for now."""
 
     template_name = "jobs/talent/directory.html"
     context_object_name = "seekers"
     paginate_by = 20
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            try:
+                if request.user.profile.account_type != UserProfile.AccountType.EMPLOYER and not request.user.is_staff:
+                    raise Http404
+            except UserProfile.DoesNotExist:
+                raise Http404
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         qs = SeekerProfile.objects.filter(
@@ -72,8 +81,17 @@ class TalentDirectoryView(LoginRequiredMixin, ListView):
         return ctx
 
 
-class TalentProfileView(DetailView):
-    """Public seeker profile page."""
+class TalentProfileView(LoginRequiredMixin, DetailView):
+    """Seeker profile page — employer-only for now."""
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            try:
+                if request.user.profile.account_type != UserProfile.AccountType.EMPLOYER and not request.user.is_staff:
+                    raise Http404
+            except UserProfile.DoesNotExist:
+                raise Http404
+        return super().dispatch(request, *args, **kwargs)
 
     template_name = "jobs/talent/profile.html"
     context_object_name = "seeker"
