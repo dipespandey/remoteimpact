@@ -1,5 +1,5 @@
 from django.shortcuts import redirect
-from ..models import UserProfile, Organization
+from ..models import UserProfile, Organization, SeekerProfile
 from ..utils import unique_slug
 
 
@@ -24,6 +24,18 @@ class OnboardingService:
         if profile.account_type == UserProfile.AccountType.EMPLOYER:
             if not user.organizations.exists():
                 return "jobs:onboarding_employer"
+
+        if profile.account_type == UserProfile.AccountType.SEEKER:
+            # Step 1: Basic seeker form (headline, bio, etc.)
+            if not profile.headline:
+                return "jobs:onboarding_seeker"
+            # Step 2: Impact Profile wizard
+            try:
+                seeker_profile = user.seeker_profile
+                if not seeker_profile.wizard_completed:
+                    return "jobs:impact_wizard"
+            except SeekerProfile.DoesNotExist:
+                return "jobs:impact_wizard"
 
         # Onboarding complete
         return None

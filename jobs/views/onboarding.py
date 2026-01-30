@@ -154,10 +154,12 @@ class OnboardingSeekerView(LoginRequiredMixin, FormView):
         return context
 
     def get_success_url(self):
+        # After seeker form, route to Impact Profile wizard
         next_url = self.request.GET.get("next", "")
+        base_url = reverse("jobs:impact_wizard")
         if next_url:
-            return next_url
-        return reverse_lazy("jobs:account")
+            return f"{base_url}?next={next_url}"
+        return base_url
 
     def form_valid(self, form):
         form.save()
