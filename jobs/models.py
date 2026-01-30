@@ -1220,6 +1220,29 @@ class AssistantGeneration(models.Model):
         return self.generated_content[:100] + "..." if len(self.generated_content) > 100 else self.generated_content
 
 
+class DripEmailLog(models.Model):
+    """Tracks which drip emails have been sent to each user."""
+
+    DRIP_TYPES = [
+        ('day2_profile', 'Day 2 – Complete Profile'),
+        ('day5_jobs', 'Day 5 – Top Jobs'),
+        ('day10_assistant', 'Day 10 – AI Assistant'),
+    ]
+
+    user = models.ForeignKey(
+        get_user_model(), on_delete=models.CASCADE, related_name='drip_emails'
+    )
+    drip_type = models.CharField(max_length=30, choices=DRIP_TYPES)
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'drip_type')
+        ordering = ['-sent_at']
+
+    def __str__(self):
+        return f'{self.user.email} – {self.drip_type} ({self.sent_at})'
+
+
 class NewsletterSubscriber(models.Model):
     """Anonymous newsletter subscribers (not yet registered users)."""
 

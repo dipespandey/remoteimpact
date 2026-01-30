@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.linkedin_oauth2",
     "django_extensions",
     "django_countries",
     "jobs",
@@ -229,7 +230,14 @@ SOCIALACCOUNT_PROVIDERS = {
         },
         "SCOPE": ["profile", "email"],
         "AUTH_PARAMS": {"access_type": "online"},
-    }
+    },
+    "linkedin_oauth2": {
+        "APP": {
+            "client_id": os.getenv("LINKEDIN_CLIENT_ID", ""),
+            "secret": os.getenv("LINKEDIN_CLIENT_SECRET", ""),
+        },
+        "SCOPE": ["openid", "profile", "email"],
+    },
 }
 
 

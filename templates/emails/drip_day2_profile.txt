@@ -1,0 +1,15 @@
+Hi {{ user.first_name|default:"there" }},
+
+You signed up for Remote Impact — awesome! But you haven't finished your Impact Profile yet.
+
+It takes about 2 minutes and unlocks:
+- Personalized job matches based on your skills & values
+- Weekly digest tailored to your impact areas
+- Visibility to mission-driven organizations
+
+Complete it here: {{ site_url }}/impact-profile/wizard/
+
+— The Remote Impact Team
+{{ site_url }}
+
+Unsubscribe: {{ unsubscribe_url }}

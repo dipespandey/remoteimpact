@@ -47,6 +47,20 @@ class HomeView(TemplateView):
         active_jobs_rounded = (active_jobs_count // 100) * 100
         categories_count = Category.objects.count()
 
+        # Organization count (rounded down to nearest 100)
+        from ..models import Organization
+        from django.utils import timezone
+        from datetime import timedelta
+        org_count = Organization.objects.filter(jobs__is_active=True).distinct().count()
+        org_count_rounded = (org_count // 100) * 100
+
+        # Professionals joined this month
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        now = timezone.now()
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        professionals_this_month = User.objects.filter(date_joined__gte=month_start).count()
+
         # Featured organizations (ones with active jobs)
         from ..models import Organization
         featured_orgs = (
@@ -71,6 +85,8 @@ class HomeView(TemplateView):
                 "categories": categories,
                 "active_jobs_count": active_jobs_rounded,
                 "categories_count": categories_count,
+                "organizations_count": org_count_rounded,
+                "professionals_this_month": professionals_this_month,
                 "featured_orgs": featured_orgs,
                 "has_impact_profile": has_impact_profile,
             }
@@ -241,6 +257,11 @@ class ApplicantAssistantView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        # Pre-populate from query params (linked from job detail pages)
+        context["prefill_job_url"] = self.request.GET.get("job_url", "")
+        context["prefill_job_title"] = self.request.GET.get("job_title", "")
+        context["prefill_org"] = self.request.GET.get("org", "")
 
         # Check if user is authenticated and get subscription status
         if self.request.user.is_authenticated:

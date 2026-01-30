@@ -1,0 +1,17 @@
+Hi {{ user.first_name|default:"there" }},
+
+Did you know Remote Impact has an AI Application Assistant?
+
+It helps you:
+- Generate tailored cover letters for any job posting
+- Highlight the skills that matter most to each role
+- Go from "interested" to "applied" in minutes
+
+You get 3 free uses — no credit card needed.
+
+Try it here: {{ site_url }}/assistant/
+
+— The Remote Impact Team
+{{ site_url }}
+
+Unsubscribe: {{ unsubscribe_url }}

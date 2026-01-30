@@ -1,0 +1,14 @@
+Hi {{ user.first_name|default:"there" }},
+
+{% if has_profile %}Based on your Impact Profile, here are some roles we think you'll love:{% else %}Here are some top remote impact jobs posted recently:{% endif %}
+
+{% for item in jobs %}• {{ item.job.title }} at {{ item.job.organization.name }}{% if item.match_score %} ({{ item.match_score }}% match){% endif %}
+  {{ site_url }}{{ item.job.get_absolute_url }}
+{% endfor %}
+
+Browse all jobs: {{ site_url }}/jobs/
+
+— The Remote Impact Team
+{{ site_url }}
+
+Unsubscribe: {{ unsubscribe_url }}
