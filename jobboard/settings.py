@@ -276,3 +276,15 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 # New allauth settings (replaces deprecated ACCOUNT_EMAIL_REQUIRED, ACCOUNT_AUTHENTICATION_METHOD, ACCOUNT_USERNAME_REQUIRED)
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+    },
+    "loggers": {
+        "allauth": {"handlers": ["console"], "level": "DEBUG"},
+        "django.request": {"handlers": ["console"], "level": "DEBUG"},
+    },
+}
