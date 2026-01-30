@@ -12,6 +12,7 @@ from .resources import (
     HomeView,
     AllDomainsView,
     ResourcesView,
+    ToolsIndexView,
     SalaryToHourlyView,
     ApplicantAssistantView,
     ApplicantAssistantGenerateView,

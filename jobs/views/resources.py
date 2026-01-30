@@ -109,6 +109,10 @@ class AllDomainsView(TemplateView):
         return context
 
 
+class ToolsIndexView(TemplateView):
+    template_name = "jobs/tools/index.html"
+
+
 class ResourcesView(TemplateView):
     template_name = "jobs/resources.html"
 

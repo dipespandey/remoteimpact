@@ -74,6 +74,7 @@ urlpatterns = [
     ),
     path("payment/cancel/", views.PaymentCancelView.as_view(), name="payment_cancel"),
     # Tools
+    path("tools/", views.ToolsIndexView.as_view(), name="tools_index"),
     path("tools/salary-to-hourly-calculator/", views.SalaryToHourlyView.as_view(), name="salary_to_hourly"),
     # Resources / AI
     path(

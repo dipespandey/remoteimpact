@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Free Career & Remote Work Tools | Remote Impact{% endblock %}
+
+{% block extra_head %}
+<meta name="description" content="Free tools for remote workers and impact professionals. Salary calculator, cover letter generator, time zone finder, cost of living comparison, and more.">
+<link rel="canonical" href="https://remoteimpact.org/tools/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Free Career & Remote Work Tools",
+  "description": "Free tools for remote workers and impact professionals.",
+  "url": "https://remoteimpact.org/tools/",
+  "mainEntity": {
+    "@type": "ItemList",
+    "itemListElement": [
+      {"@type": "ListItem", "position": 1, "name": "Salary to Hourly Calculator", "url": "https://remoteimpact.org/tools/salary-to-hourly-calculator/"},
+      {"@type": "ListItem", "position": 2, "name": "AI Cover Letter Generator", "url": "https://remoteimpact.org/tools/cover-letter-generator/"},
+      {"@type": "ListItem", "position": 3, "name": "Time Zone Overlap Finder", "url": "https://remoteimpact.org/tools/time-zone-overlap-finder/"},
+      {"@type": "ListItem", "position": 4, "name": "Cost of Living Comparison", "url": "https://remoteimpact.org/tools/cost-of-living-comparison/"},
+      {"@type": "ListItem", "position": 5, "name": "Job Description Generator", "url": "https://remoteimpact.org/tools/job-description-generator/"},
+      {"@type": "ListItem", "position": 6, "name": "Resignation Letter Generator", "url": "https://remoteimpact.org/tools/resignation-letter-generator/"}
+    ]
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="py-20 bg-gradient-to-b from-twilight-900 to-twilight-800 text-white">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-3">Free tools</p>
+      <h1 class="text-4xl md:text-5xl font-semibold mb-4">Career & Remote Work Tools</h1>
+      <p class="text-white/70 text-lg max-w-2xl mx-auto">Everything you need to land your next remote impact role — from salary calculators to AI-powered cover letters. All free.</p>
+    </div>
+
+    <!-- AI-Powered Tools -->
+    <div class="mb-14">
+      <h2 class="text-sm uppercase tracking-[0.4em] text-white/50 mb-6">✨ AI-powered</h2>
+      <div class="grid md:grid-cols-3 gap-6">
+
+        <a href="{% url 'jobs:cover_letter_generator' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
+          <div class="text-4xl mb-4">✉️</div>
+          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Cover Letter Generator</h3>
+          <p class="text-white/60 text-sm mb-4">Generate tailored cover letters for remote and impact jobs using AI. Paste a job description and get a personalized letter in seconds.</p>
+          <span class="text-neon text-sm font-semibold">Try it free →</span>
+        </a>
+
+        <a href="{% url 'jobs:jd_generator' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
+          <div class="text-4xl mb-4">📋</div>
+          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Job Description Generator</h3>
+          <p class="text-white/60 text-sm mb-4">Create inclusive, professional job descriptions for your remote positions. Perfect for impact organizations and nonprofits.</p>
+          <span class="text-neon text-sm font-semibold">Try it free →</span>
+        </a>
+
+        <a href="{% url 'jobs:resignation_letter' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
+          <div class="text-4xl mb-4">👋</div>
+          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Resignation Letter Generator</h3>
+          <p class="text-white/60 text-sm mb-4">Write a professional resignation letter in minutes. Choose your tone, customize details, and download instantly.</p>
+          <span class="text-neon text-sm font-semibold">Try it free →</span>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- Calculators & Utilities -->
+    <div>
+      <h2 class="text-sm uppercase tracking-[0.4em] text-white/50 mb-6">🧮 Calculators & utilities</h2>
+      <div class="grid md:grid-cols-3 gap-6">
+
+        <a href="{% url 'jobs:salary_to_hourly' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
+          <div class="text-4xl mb-4">💰</div>
+          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Salary to Hourly Calculator</h3>
+          <p class="text-white/60 text-sm mb-4">Instantly convert between annual salary and hourly rate. Includes tax estimates and a comparison table for common salaries.</p>
+          <span class="text-neon text-sm font-semibold">Calculate now →</span>
+        </a>
+
+        <a href="{% url 'jobs:timezone_overlap' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
+          <div class="text-4xl mb-4">🌍</div>
+          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Time Zone Overlap Finder</h3>
+          <p class="text-white/60 text-sm mb-4">Find the best meeting times across 2–4 time zones. Visual chart shows overlapping work hours for your remote team.</p>
+          <span class="text-neon text-sm font-semibold">Find overlap →</span>
+        </a>
+
+        <a href="{% url 'jobs:cost_of_living_comparison' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
+          <div class="text-4xl mb-4">🏙️</div>
+          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Cost of Living Comparison</h3>
+          <p class="text-white/60 text-sm mb-4">Compare cost of living between 60+ cities worldwide. See what your salary is worth in a different location.</p>
+          <span class="text-neon text-sm font-semibold">Compare cities →</span>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="mt-16 text-center rounded-3xl border border-white/10 bg-card-gradient p-10 backdrop-blur">
+      <h2 class="text-2xl font-semibold mb-3">Looking for your next remote impact role?</h2>
+      <p class="text-white/60 mb-6 max-w-xl mx-auto">Browse thousands of remote jobs at organizations making a difference. Save roles, get matched, and apply — all free.</p>
+      <a href="{% url 'jobs:job_list' %}" class="inline-block px-8 py-4 rounded-full bg-brand-300 text-twilight-900 font-semibold hover:bg-neon transition shadow-glow">
+        Browse jobs →
+      </a>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

@@ -254,7 +254,10 @@
                             class="px-5 py-2 rounded-full text-sm font-semibold bg-brand-300 text-gray-900 hover:bg-brand-400 transition shadow-glow">
                             Jobs
                         </a>
-                        {% comment %}Talent directory hidden for now{% endcomment %}
+                        <a href="{% url 'jobs:tools_index' %}"
+                            class="px-5 py-2 rounded-full text-sm font-semibold bg-brand-300 text-gray-900 hover:bg-brand-400 transition shadow-glow">
+                            Tools
+                        </a>
                         <a href="{% url 'jobs:post_job' %}"
                             class="px-5 py-2 rounded-full text-sm font-semibold bg-brand-300 text-gray-900 hover:bg-brand-400 transition shadow-glow"
                             data-track="nav_post_job" data-track-category="navigation">
@@ -296,7 +299,7 @@
             <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-200 shadow-lg">
                 <div class="px-4 py-3 space-y-2">
                     <a href="{% url 'jobs:job_list' %}" class="block px-4 py-2.5 rounded-xl text-gray-700 hover:bg-gray-50 font-medium">Jobs</a>
-                    {% comment %}Talent directory hidden for now{% endcomment %}
+                    <a href="{% url 'jobs:tools_index' %}" class="block px-4 py-2.5 rounded-xl text-gray-700 hover:bg-gray-50 font-medium">Tools</a>
                     <a href="{% url 'gigs:gig_list' %}" class="block px-4 py-2.5 rounded-xl text-gray-700 hover:bg-gray-50 font-medium">Gigs</a>
                     <a href="{% url 'jobs:post_job' %}" class="block px-4 py-2.5 rounded-xl text-gray-700 hover:bg-gray-50 font-medium">Post a Job</a>
                     <div class="border-t border-gray-100 pt-2 mt-2">
