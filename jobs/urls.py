@@ -184,4 +184,13 @@ urlpatterns = [
     path("tools/interview-prep/", views.InterviewPrepView.as_view(), name="interview_prep"),
     path("tools/interview-prep/generate/", views.InterviewPrepGenerateView.as_view(), name="interview_prep_generate"),
     path("tools/freelance-rate-calculator/", views.FreelanceRateView.as_view(), name="freelance_rate"),
+    path("tools/salary-negotiation-script/", views.SalaryNegotiationView.as_view(), name="salary_negotiation"),
+    path("tools/salary-negotiation-script/generate/", views.SalaryNegotiationGenerateView.as_view(), name="salary_negotiation_generate"),
+    path("tools/skills-gap-analyzer/", views.SkillsGapView.as_view(), name="skills_gap"),
+    path("tools/skills-gap-analyzer/analyze/", views.SkillsGapAnalyzeView.as_view(), name="skills_gap_analyze"),
+    path("tools/pto-calculator/", views.PTOCalculatorView.as_view(), name="pto_calculator"),
+    path("tools/thank-you-email-generator/", views.ThankYouEmailView.as_view(), name="thank_you_email"),
+    path("tools/thank-you-email-generator/generate/", views.ThankYouEmailGenerateView.as_view(), name="thank_you_email_generate"),
+    path("tools/pay-raise-calculator/", views.PayRaiseCalculatorView.as_view(), name="pay_raise_calculator"),
+    path("tools/remote-work-readiness-quiz/", views.RemoteReadinessQuizView.as_view(), name="remote_readiness_quiz"),
 ]

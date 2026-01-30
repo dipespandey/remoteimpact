@@ -1,0 +1,490 @@
+{% extends 'base.html' %}
+
+{% block title %}Am I Ready for Remote Work? Free Quiz | Remote Work Readiness Assessment{% endblock %}
+
+{% block meta_extra %}
+<meta name="description" content="Take our free Remote Work Readiness Quiz to discover if you're prepared for remote work. 12 quick questions assess your skills, setup, and mindset. Get personalized tips instantly.">
+<meta name="keywords" content="remote work readiness, work from home quiz, remote work assessment, am I ready for remote work, remote work skills test">
+<link rel="canonical" href="{{ request.build_absolute_uri }}">
+<meta property="og:title" content="Am I Ready for Remote Work? Free Quiz">
+<meta property="og:description" content="12-question assessment to discover your remote work readiness. Get a personalized score and actionable tips.">
+<meta property="og:type" content="website">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What does the Remote Work Readiness Quiz measure?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The quiz evaluates 12 key dimensions of remote work readiness including self-discipline, home office setup, communication skills, technical infrastructure, self-motivation, and work-life boundary management. You receive a score out of 48 with personalized recommendations."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How long does the remote work readiness assessment take?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The quiz takes approximately 2-3 minutes to complete. There are 12 multiple-choice questions, each with four options. Your results are calculated instantly and displayed with actionable tips."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What score do I need to be ready for remote work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A score of 40-48 indicates you are a Remote Work Natural. Scores of 30-39 mean you are Almost Ready with minor areas to improve. Scores of 20-29 suggest you Need Preparation in key areas. Below 20, consider starting with a hybrid arrangement while building remote skills."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is this quiz free and private?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, the quiz is completely free and runs entirely in your browser. No data is sent to any server, no account is required, and your answers are not stored anywhere."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I retake the Remote Work Readiness Quiz?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Absolutely! You can retake the quiz as many times as you like. It is a great way to track your progress as you improve your remote work skills and setup."
+      }
+    }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="bg-[#F3F2EE] min-h-screen py-12 px-4 sm:px-6 lg:px-8"
+  x-data="{
+    step: 0,
+    answers: {},
+    showResults: false,
+    direction: 1,
+
+    questions: [
+      {
+        id: 1,
+        category: 'Self-Discipline',
+        icon: '🎯',
+        text: 'How do you handle working without in-person supervision?',
+        options: [
+          { score: 1, text: 'I struggle without someone checking in on me regularly' },
+          { score: 2, text: 'I manage okay but sometimes lose focus without oversight' },
+          { score: 3, text: 'I work well independently with occasional check-ins' },
+          { score: 4, text: 'I thrive with autonomy and set my own goals effectively' }
+        ]
+      },
+      {
+        id: 2,
+        category: 'Workspace',
+        icon: '🏠',
+        text: 'Rate your home office setup.',
+        options: [
+          { score: 1, text: 'No dedicated space — I work from the couch or kitchen table' },
+          { score: 2, text: 'A shared space that sometimes gets interrupted' },
+          { score: 3, text: 'A decent setup with a desk and chair in a quiet area' },
+          { score: 4, text: 'A fully equipped, ergonomic home office with a door that closes' }
+        ]
+      },
+      {
+        id: 3,
+        category: 'Communication',
+        icon: '💬',
+        text: 'How comfortable are you with asynchronous communication?',
+        options: [
+          { score: 1, text: 'I prefer real-time conversations and find async frustrating' },
+          { score: 2, text: 'I can do it but often feel anxious waiting for replies' },
+          { score: 3, text: 'I am comfortable and write clear messages most of the time' },
+          { score: 4, text: 'I excel at async — I document thoroughly and communicate proactively' }
+        ]
+      },
+      {
+        id: 4,
+        category: 'Focus',
+        icon: '🧘',
+        text: 'How do you manage distractions at home?',
+        options: [
+          { score: 1, text: 'I get distracted easily and struggle to stay on task' },
+          { score: 2, text: 'I manage some distractions but lose hours to social media or chores' },
+          { score: 3, text: 'I have strategies that work most days' },
+          { score: 4, text: 'I have strong routines and rarely get derailed by distractions' }
+        ]
+      },
+      {
+        id: 5,
+        category: 'Tools',
+        icon: '🛠️',
+        text: 'Experience with remote collaboration tools (Slack, Zoom, etc.)?',
+        options: [
+          { score: 1, text: 'I have barely used any collaboration tools' },
+          { score: 2, text: 'I know the basics of one or two tools' },
+          { score: 3, text: 'I am comfortable with most common tools' },
+          { score: 4, text: 'I am a power user and can learn new tools quickly' }
+        ]
+      },
+      {
+        id: 6,
+        category: 'Boundaries',
+        icon: '⚖️',
+        text: 'How do you maintain work-life boundaries?',
+        options: [
+          { score: 1, text: 'I tend to either overwork or underwork — no balance' },
+          { score: 2, text: 'I struggle to stop working when my laptop is always there' },
+          { score: 3, text: 'I have set working hours and mostly stick to them' },
+          { score: 4, text: 'I have clear rituals to start and end my workday and protect personal time' }
+        ]
+      },
+      {
+        id: 7,
+        category: 'Flexibility',
+        icon: '🌍',
+        text: 'How flexible are you with time zones?',
+        options: [
+          { score: 1, text: 'I can only work strict 9-5 in my local time zone' },
+          { score: 2, text: 'I can adjust by an hour or two if needed' },
+          { score: 3, text: 'I am comfortable overlapping with different time zones' },
+          { score: 4, text: 'I have managed async work across multiple time zones successfully' }
+        ]
+      },
+      {
+        id: 8,
+        category: 'Motivation',
+        icon: '🔥',
+        text: 'How would you rate your self-motivation level?',
+        options: [
+          { score: 1, text: 'I need external deadlines and pressure to get things done' },
+          { score: 2, text: 'I am motivated in bursts but struggle with consistency' },
+          { score: 3, text: 'I am generally self-driven and meet my goals' },
+          { score: 4, text: 'I am highly self-motivated and often go above and beyond on my own' }
+        ]
+      },
+      {
+        id: 9,
+        category: 'Writing',
+        icon: '✍️',
+        text: 'How strong are your written communication skills?',
+        options: [
+          { score: 1, text: 'I prefer talking over writing and often get misunderstood in text' },
+          { score: 2, text: 'My writing is okay but I take a long time to compose messages' },
+          { score: 3, text: 'I write clearly and concisely for most situations' },
+          { score: 4, text: 'I am an excellent writer — I can convey complex ideas clearly in text' }
+        ]
+      },
+      {
+        id: 10,
+        category: 'Social',
+        icon: '🤝',
+        text: 'How do you handle isolation when working remotely?',
+        options: [
+          { score: 1, text: 'I feel lonely quickly and need daily in-person interaction' },
+          { score: 2, text: 'I miss colleagues but can manage for short periods' },
+          { score: 3, text: 'I am comfortable alone and have social outlets outside work' },
+          { score: 4, text: 'I thrive in solitude and proactively build virtual relationships' }
+        ]
+      },
+      {
+        id: 11,
+        category: 'Tech Setup',
+        icon: '💻',
+        text: 'How reliable is your technical setup (internet, hardware)?',
+        options: [
+          { score: 1, text: 'Slow internet and outdated equipment — frequent issues' },
+          { score: 2, text: 'Decent but I experience occasional outages or lag' },
+          { score: 3, text: 'Reliable internet and a modern computer that handles video calls well' },
+          { score: 4, text: 'Enterprise-grade setup with backup internet, quality webcam, and mic' }
+        ]
+      },
+      {
+        id: 12,
+        category: 'Experience',
+        icon: '📊',
+        text: 'How much experience do you have with remote work?',
+        options: [
+          { score: 1, text: 'None — I have always worked in an office' },
+          { score: 2, text: 'A few months or occasional work-from-home days' },
+          { score: 3, text: '1-2 years of regular remote or hybrid work' },
+          { score: 4, text: '3+ years of fully remote work experience' }
+        ]
+      }
+    ],
+
+    get totalScore() {
+      return Object.values(this.answers).reduce((a, b) => a + b, 0);
+    },
+
+    get maxScore() { return 48; },
+
+    get percentage() { return Math.round((this.totalScore / this.maxScore) * 100); },
+
+    get resultCategory() {
+      const s = this.totalScore;
+      if (s >= 40) return { label: 'Remote Work Natural', color: 'green', emoji: '🌟', bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', badge: 'bg-green-100 text-green-800', bar: 'bg-green-500', desc: 'You are exceptionally well-prepared for remote work. Your skills, habits, and setup align perfectly with distributed team success.' };
+      if (s >= 30) return { label: 'Almost Ready', color: 'blue', emoji: '🚀', bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', badge: 'bg-blue-100 text-blue-800', bar: 'bg-blue-500', desc: 'You have a strong foundation for remote work with just a few areas to strengthen. A bit of preparation and you will be fully ready.' };
+      if (s >= 20) return { label: 'Needs Preparation', color: 'yellow', emoji: '📋', bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-700', badge: 'bg-yellow-100 text-yellow-800', bar: 'bg-yellow-500', desc: 'You have potential but need to develop some key remote work skills and infrastructure before going fully remote.' };
+      return { label: 'Consider Hybrid First', color: 'orange', emoji: '🌱', bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700', badge: 'bg-orange-100 text-orange-800', bar: 'bg-orange-500', desc: 'Starting with a hybrid arrangement would help you build remote skills gradually. Focus on the improvement areas below.' };
+    },
+
+    get tips() {
+      let t = [];
+      const a = this.answers;
+      if ((a[1] || 0) <= 2) t.push({ icon: '🎯', tip: 'Build self-discipline by setting daily goals and using time-blocking techniques.' });
+      if ((a[2] || 0) <= 2) t.push({ icon: '🏠', tip: 'Invest in a dedicated workspace — even a small desk in a quiet corner makes a difference.' });
+      if ((a[3] || 0) <= 2) t.push({ icon: '💬', tip: 'Practice async communication by writing detailed updates and documenting decisions.' });
+      if ((a[4] || 0) <= 2) t.push({ icon: '🧘', tip: 'Try the Pomodoro technique and website blockers to manage distractions.' });
+      if ((a[5] || 0) <= 2) t.push({ icon: '🛠️', tip: 'Explore free tiers of Slack, Notion, and Zoom to build tool proficiency.' });
+      if ((a[6] || 0) <= 2) t.push({ icon: '⚖️', tip: 'Create start/end-of-day rituals and set a hard stop time for work.' });
+      if ((a[7] || 0) <= 2) t.push({ icon: '🌍', tip: 'Practice working with global teams by joining open-source or volunteer projects.' });
+      if ((a[8] || 0) <= 2) t.push({ icon: '🔥', tip: 'Set personal OKRs and reward yourself for meeting self-imposed deadlines.' });
+      if ((a[9] || 0) <= 2) t.push({ icon: '✍️', tip: 'Improve writing by reading style guides and practicing concise email drafting.' });
+      if ((a[10] || 0) <= 2) t.push({ icon: '🤝', tip: 'Schedule regular virtual coffee chats and join online communities in your field.' });
+      if ((a[11] || 0) <= 2) t.push({ icon: '💻', tip: 'Upgrade your internet plan and consider a backup mobile hotspot.' });
+      if ((a[12] || 0) <= 2) t.push({ icon: '📊', tip: 'Start with freelance or part-time remote gigs to build experience gradually.' });
+      if (t.length === 0) t.push({ icon: '✅', tip: 'You are well-rounded! Keep refining your remote work practices and mentoring others.' });
+      return t;
+    },
+
+    get categoryScores() {
+      return this.questions.map(q => ({
+        category: q.category,
+        icon: q.icon,
+        score: this.answers[q.id] || 0,
+        max: 4
+      }));
+    },
+
+    selectAnswer(qId, score) {
+      this.answers[qId] = score;
+      if (this.step < this.questions.length - 1) {
+        this.direction = 1;
+        setTimeout(() => { this.step++; }, 300);
+      } else {
+        setTimeout(() => { this.showResults = true; }, 300);
+      }
+    },
+
+    prev() {
+      if (this.step > 0) {
+        this.direction = -1;
+        this.step--;
+      }
+    },
+
+    restart() {
+      this.answers = {};
+      this.step = 0;
+      this.showResults = false;
+      this.direction = 1;
+    },
+
+    get progress() {
+      return Math.round((Object.keys(this.answers).length / this.questions.length) * 100);
+    }
+  }"
+>
+  <div class="max-w-3xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Am I Ready for Remote Work?</h1>
+      <p class="text-lg text-gray-600 max-w-2xl mx-auto">Discover your remote work readiness in under 3 minutes. Answer 12 questions and get a personalized assessment with actionable tips.</p>
+    </div>
+
+    <!-- Quiz Card -->
+    <div x-show="!showResults" class="bg-white rounded-2xl shadow-lg p-6 sm:p-10">
+      <!-- Progress Bar -->
+      <div class="mb-8">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-sm font-medium text-gray-500">Question <span x-text="step + 1"></span> of 12</span>
+          <span class="text-sm font-medium text-green-600" x-text="progress + '%'"></span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+          <div class="h-3 rounded-full bg-green-500 transition-all duration-500 ease-out" :style="'width: ' + progress + '%'"></div>
+        </div>
+      </div>
+
+      <!-- Question -->
+      <template x-for="(q, idx) in questions" :key="q.id">
+        <div x-show="step === idx"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-x-8"
+             x-transition:enter-end="opacity-100 translate-x-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-x-0"
+             x-transition:leave-end="opacity-0 -translate-x-8"
+        >
+          <div class="flex items-center gap-3 mb-6">
+            <span class="text-3xl" x-text="q.icon"></span>
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-wider text-green-600" x-text="q.category"></span>
+              <h2 class="text-xl sm:text-2xl font-bold text-gray-900" x-text="q.text"></h2>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <template x-for="(opt, oi) in q.options" :key="oi">
+              <button
+                @click="selectAnswer(q.id, opt.score)"
+                class="w-full text-left p-4 rounded-xl border-2 transition-all duration-200 hover:border-green-400 hover:bg-green-50 hover:shadow-md group"
+                :class="answers[q.id] === opt.score ? 'border-green-500 bg-green-50 shadow-md' : 'border-gray-200 bg-white'"
+              >
+                <div class="flex items-center gap-3">
+                  <span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors duration-200"
+                        :class="answers[q.id] === opt.score ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-500 group-hover:bg-green-100 group-hover:text-green-700'"
+                        x-text="String.fromCharCode(65 + oi)"></span>
+                  <span class="text-gray-700 font-medium" x-text="opt.text"></span>
+                </div>
+              </button>
+            </template>
+          </div>
+
+          <!-- Back Button -->
+          <div class="mt-6 flex justify-between">
+            <button x-show="step > 0" @click="prev()" class="text-gray-500 hover:text-green-600 font-medium flex items-center gap-1 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+              Previous
+            </button>
+            <div></div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Results -->
+    <div x-show="showResults" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+      <!-- Score Card -->
+      <div class="bg-white rounded-2xl shadow-lg p-6 sm:p-10 mb-6">
+        <div class="text-center mb-8">
+          <span class="text-5xl mb-3 block" x-text="resultCategory.emoji"></span>
+          <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Your Result</h2>
+          <div class="inline-flex items-center px-4 py-2 rounded-full text-lg font-bold" :class="resultCategory.badge" x-text="resultCategory.label"></div>
+        </div>
+
+        <!-- Score Display -->
+        <div class="max-w-md mx-auto mb-6">
+          <div class="flex justify-between text-sm font-medium mb-1">
+            <span class="text-gray-500">Score</span>
+            <span :class="resultCategory.text"><span x-text="totalScore"></span> / 48</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+            <div class="h-4 rounded-full transition-all duration-1000 ease-out" :class="resultCategory.bar" :style="'width: ' + percentage + '%'"></div>
+          </div>
+          <p class="text-center text-sm text-gray-500 mt-2" x-text="percentage + '% readiness'"></p>
+        </div>
+
+        <p class="text-center text-gray-600 max-w-lg mx-auto" x-text="resultCategory.desc"></p>
+      </div>
+
+      <!-- Category Breakdown -->
+      <div class="bg-white rounded-2xl shadow-lg p-6 sm:p-10 mb-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+          📊 Score Breakdown
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <template x-for="cat in categoryScores" :key="cat.category">
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+              <span class="text-xl" x-text="cat.icon"></span>
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="font-medium text-gray-700 truncate" x-text="cat.category"></span>
+                  <span class="font-bold" :class="cat.score >= 3 ? 'text-green-600' : cat.score === 2 ? 'text-yellow-600' : 'text-orange-600'" x-text="cat.score + '/4'"></span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                  <div class="h-2 rounded-full transition-all duration-700"
+                       :class="cat.score >= 3 ? 'bg-green-500' : cat.score === 2 ? 'bg-yellow-500' : 'bg-orange-500'"
+                       :style="'width: ' + (cat.score / 4 * 100) + '%'"></div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Tips -->
+      <div class="bg-white rounded-2xl shadow-lg p-6 sm:p-10 mb-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+          💡 Personalized Tips
+        </h3>
+        <div class="space-y-3">
+          <template x-for="(t, i) in tips" :key="i">
+            <div class="flex items-start gap-3 p-4 rounded-xl bg-green-50 border border-green-100">
+              <span class="text-xl flex-shrink-0" x-text="t.icon"></span>
+              <p class="text-gray-700" x-text="t.tip"></p>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="bg-white rounded-2xl shadow-lg p-6 sm:p-10 text-center">
+        <h3 class="text-xl font-bold text-gray-900 mb-3">Ready to Find Your Remote Role?</h3>
+        <p class="text-gray-600 mb-6">Browse purpose-driven remote jobs that match your readiness level.</p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <a href="{% url 'jobs:job_list' %}" class="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors shadow-md hover:shadow-lg">
+            Browse Remote Jobs →
+          </a>
+          <button @click="restart()" class="inline-flex items-center justify-center px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-green-400 hover:text-green-700 transition-colors">
+            Retake Quiz
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="mt-12 bg-white rounded-2xl shadow-lg p-6 sm:p-10">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
+      <div class="space-y-4" x-data="{ openFaq: null }">
+        <div class="border border-gray-200 rounded-xl overflow-hidden">
+          <button @click="openFaq = openFaq === 0 ? null : 0" class="w-full flex justify-between items-center p-4 text-left font-semibold text-gray-900 hover:bg-gray-50 transition-colors">
+            What does the Remote Work Readiness Quiz measure?
+            <svg class="w-5 h-5 transition-transform" :class="openFaq === 0 && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div x-show="openFaq === 0" x-collapse class="px-4 pb-4 text-gray-600">
+            The quiz evaluates 12 key dimensions of remote work readiness including self-discipline, home office setup, communication skills, technical infrastructure, self-motivation, and work-life boundary management. You receive a score out of 48 with personalized recommendations.
+          </div>
+        </div>
+        <div class="border border-gray-200 rounded-xl overflow-hidden">
+          <button @click="openFaq = openFaq === 1 ? null : 1" class="w-full flex justify-between items-center p-4 text-left font-semibold text-gray-900 hover:bg-gray-50 transition-colors">
+            How long does the assessment take?
+            <svg class="w-5 h-5 transition-transform" :class="openFaq === 1 && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div x-show="openFaq === 1" x-collapse class="px-4 pb-4 text-gray-600">
+            Approximately 2-3 minutes. There are 12 multiple-choice questions with instant results.
+          </div>
+        </div>
+        <div class="border border-gray-200 rounded-xl overflow-hidden">
+          <button @click="openFaq = openFaq === 2 ? null : 2" class="w-full flex justify-between items-center p-4 text-left font-semibold text-gray-900 hover:bg-gray-50 transition-colors">
+            What score do I need to be ready for remote work?
+            <svg class="w-5 h-5 transition-transform" :class="openFaq === 2 && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div x-show="openFaq === 2" x-collapse class="px-4 pb-4 text-gray-600">
+            40-48 = Remote Work Natural, 30-39 = Almost Ready, 20-29 = Needs Preparation, below 20 = Consider Hybrid First.
+          </div>
+        </div>
+        <div class="border border-gray-200 rounded-xl overflow-hidden">
+          <button @click="openFaq = openFaq === 3 ? null : 3" class="w-full flex justify-between items-center p-4 text-left font-semibold text-gray-900 hover:bg-gray-50 transition-colors">
+            Is this quiz free and private?
+            <svg class="w-5 h-5 transition-transform" :class="openFaq === 3 && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div x-show="openFaq === 3" x-collapse class="px-4 pb-4 text-gray-600">
+            Yes, completely free and 100% client-side. No data is sent to any server and no account is required.
+          </div>
+        </div>
+        <div class="border border-gray-200 rounded-xl overflow-hidden">
+          <button @click="openFaq = openFaq === 4 ? null : 4" class="w-full flex justify-between items-center p-4 text-left font-semibold text-gray-900 hover:bg-gray-50 transition-colors">
+            Can I retake the quiz?
+            <svg class="w-5 h-5 transition-transform" :class="openFaq === 4 && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div x-show="openFaq === 4" x-collapse class="px-4 pb-4 text-gray-600">
+            Absolutely! Retake it as many times as you like to track your progress.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

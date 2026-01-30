@@ -20,6 +20,10 @@ class CostOfLivingComparisonView(TemplateView):
     template_name = "jobs/tools/cost_of_living.html"
 
 
+class PayRaiseCalculatorView(TemplateView):
+    template_name = "jobs/tools/pay_raise_calculator.html"
+
+
 class HomeView(TemplateView):
     template_name = "jobs/home.html"
 
@@ -657,5 +661,247 @@ Format as numbered list. Make questions specific to remote work and the impact/n
         return JsonResponse({"result": content})
 
 
+# ---------------------------------------------------------------------------
+# Salary Negotiation Script Generator
+# ---------------------------------------------------------------------------
+
+class SalaryNegotiationView(TemplateView):
+    template_name = "jobs/tools/salary_negotiation.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["faqs"] = [
+            {"q": "Is this salary negotiation script generator really free?", "a": "Yes! You can generate up to 3 scripts for free without creating an account. Sign up to unlock more."},
+            {"q": "Will this work for remote job negotiations?", "a": "Absolutely. The scripts are tailored for modern remote and hybrid roles, including language about distributed teams, location-based pay, and remote-specific benefits."},
+            {"q": "What if my employer says 'that's above our budget'?", "a": "Your generated script includes responses to common objections like budget constraints. It helps you pivot to alternative compensation like equity, bonuses, or extra PTO."},
+            {"q": "Should I negotiate salary via email or in a call?", "a": "A live conversation (video or phone) is usually more effective for the initial negotiation. Use your script to prepare, then follow up in writing to confirm agreements."},
+            {"q": "Is my data stored when I use this tool?", "a": "No. Your details are processed in real-time to generate the script and are not saved on our servers."},
+            {"q": "When is the best time to negotiate salary?", "a": "After receiving an offer but before accepting. For current roles, the best times are during annual reviews, after completing a major project, or when taking on new responsibilities."},
+        ]
+        return context
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class SalaryNegotiationGenerateView(View):
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        job_title = (data.get("job_title") or "").strip()
+        company = (data.get("company") or "").strip()
+        current_salary = (data.get("current_salary") or "").strip()
+        target_salary = (data.get("target_salary") or "").strip()
+        scenario = (data.get("scenario") or "new job offer").strip()
+        achievements = (data.get("achievements") or "").strip()
+        industry = (data.get("industry") or "").strip()
+        tone = (data.get("tone") or "confident").strip()
+
+        if not all([job_title, company, current_salary, target_salary]):
+            return JsonResponse({"error": "Please fill in all required fields."}, status=400)
+
+        # Rate limit anonymous users via session
+        if not request.user.is_authenticated:
+            count = request.session.get("sn_gen_count", 0)
+            if count >= 3:
+                return JsonResponse({"error": "Free limit reached. Please sign up to continue.", "requires_signup": True}, status=429)
+            request.session["sn_gen_count"] = count + 1
+
+        prompt = f"""Write a salary negotiation script for the following situation:
+- Job title: {job_title}
+- Company: {company}
+- Current/offered salary: {current_salary}
+- Target salary: {target_salary}
+- Scenario: {scenario}
+- Tone: {tone}
+{f'- Industry/sector: {industry}' if industry else ''}
+{f'- Key achievements: {achievements[:1500]}' if achievements else ''}
+
+Create a complete, ready-to-use negotiation script with these clearly labeled sections:
+
+**OPENING STATEMENT**
+A natural, {tone} opening that frames the conversation positively.
+
+**KEY TALKING POINTS**
+3-5 bullet points based on the candidate's achievements and market value. Reference specific accomplishments if provided.
+
+**RESPONSES TO COMMON OBJECTIONS**
+Provide scripted responses for:
+1. "That's above our budget range"
+2. "We can't offer more than [current offer]"
+3. "Budget constraints this quarter"
+4. "We'll revisit this in 6 months"
+Include alternative asks (signing bonus, equity, PTO, remote stipend) as fallback positions.
+
+**CLOSING / THE ASK**
+A clear, {tone} closing that reiterates the target and asks for a decision timeline.
+
+Keep the script conversational and natural — something someone can actually say out loud. Under 600 words total."""
+
+        content = _call_llm(prompt)
+
+        if content.startswith("LLM call failed:"):
+            return JsonResponse({"error": "Generation failed. Please try again."}, status=500)
+
+        return JsonResponse({"result": content})
+
+
+class SkillsGapView(TemplateView):
+    template_name = "jobs/tools/skills_gap.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["faqs"] = [
+            {"q": "Is the Skills Gap Analyzer really free?", "a": "Yes! You can run up to 3 analyses for free without creating an account. Sign up for a free account to unlock more."},
+            {"q": "What should I paste in the resume field?", "a": "Anything that describes your experience — your full resume, a skills list, or even your LinkedIn summary. The more detail, the better the analysis."},
+            {"q": "How accurate is the match score?", "a": "The AI compares keywords, concepts, and context between your background and the job description. It's a strong directional indicator but not a guarantee of interview outcomes."},
+            {"q": "Does this tool store my resume or job description?", "a": "No. Your data is analyzed on-the-fly and is not stored on our servers. It only exists in your browser session."},
+            {"q": "What are transferable skills?", "a": "Transferable skills are abilities you already have that relate to what the job requires, even if they aren't an exact match. For example, project management experience transfers well to program coordination roles."},
+            {"q": "How can I improve my match score?", "a": "Follow the action plan provided in your results. Focus on the missing skills with the highest impact and consider online courses, certifications, or project-based learning."},
+        ]
+        return context
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class SkillsGapAnalyzeView(View):
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        resume = (data.get("resume") or "").strip()
+        job_description = (data.get("job_description") or "").strip()
+
+        if not resume or not job_description:
+            return JsonResponse({"error": "Both fields are required."}, status=400)
+
+        # Rate limit anonymous users via session
+        if not request.user.is_authenticated:
+            count = request.session.get("sg_gen_count", 0)
+            if count >= 3:
+                return JsonResponse({"error": "Free limit reached. Please sign up to continue.", "requires_signup": True}, status=429)
+            request.session["sg_gen_count"] = count + 1
+
+        prompt = f"""You are a career coach. Analyze the gap between a candidate's background and a job description.
+
+CANDIDATE RESUME / SKILLS:
+{resume[:3000]}
+
+JOB DESCRIPTION:
+{job_description[:3000]}
+
+Return ONLY valid JSON (no markdown, no code fences) with this exact structure:
+{{
+  "match_score": <integer 0-100>,
+  "match_summary": "<one sentence summary of overall fit>",
+  "matching_skills": ["skill1", "skill2", ...],
+  "missing_skills": [
+    {{"skill": "skill name", "resource": "specific learning resource or course suggestion"}},
+    ...
+  ],
+  "transferable_skills": [
+    {{"skill": "skill name", "relevance": "brief explanation of how it transfers"}},
+    ...
+  ],
+  "action_plan": [
+    "Step 1: ...",
+    "Step 2: ...",
+    "Step 3: ..."
+  ]
+}}
+
+Be specific and actionable. Limit to top 8 matching, 6 missing, and 5 transferable skills. Exactly 3 action plan steps."""
+
+        content = _call_llm(prompt)
+
+        if content.startswith("LLM call failed:"):
+            return JsonResponse({"error": "Analysis failed. Please try again."}, status=500)
+
+        # Parse JSON from LLM response
+        try:
+            # Strip potential markdown code fences
+            cleaned = content.strip()
+            if cleaned.startswith("```"):
+                cleaned = cleaned.split("\n", 1)[1]
+                cleaned = cleaned.rsplit("```", 1)[0]
+            parsed = json.loads(cleaned)
+        except (json.JSONDecodeError, IndexError):
+            return JsonResponse({"error": "Analysis failed. Please try again."}, status=500)
+
+        return JsonResponse(parsed)
+
+
 class FreelanceRateView(TemplateView):
     template_name = "jobs/tools/freelance_rate.html"
+
+
+class PTOCalculatorView(TemplateView):
+    template_name = "jobs/tools/pto_calculator.html"
+
+
+class ThankYouEmailView(TemplateView):
+    template_name = "jobs/tools/thank_you_email.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["faqs"] = [
+            {"q": "Is this thank you email generator really free?", "a": "Yes! You can generate up to 3 thank you emails for free without creating an account. Sign up for a free account to get more."},
+            {"q": "When should I send a thank you email after an interview?", "a": "Ideally within 24 hours. Same-day is best — it shows enthusiasm and keeps you top of mind while the conversation is fresh."},
+            {"q": "Should I send a thank you email after a phone screen?", "a": "Absolutely. Even a brief thank you after a phone screen sets you apart. Most candidates skip this step, so it's an easy way to stand out."},
+            {"q": "What if I interviewed with multiple people?", "a": "Send a personalized thank you to each interviewer. Reference something specific from your conversation with each person. Use this tool once per interviewer."},
+            {"q": "Is my data stored when I use this tool?", "a": "We do not store the personal details you enter in the form. The generated email is created on-the-fly and only exists in your browser."},
+            {"q": "Can I edit the generated email before sending?", "a": "Of course! The generated email is a strong starting point. We recommend reviewing it, adding personal touches, and proofreading before you send."},
+        ]
+        return context
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class ThankYouEmailGenerateView(View):
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        interviewer = (data.get("interviewer") or "").strip()
+        company = (data.get("company") or "").strip()
+        position = (data.get("position") or "").strip()
+        interview_type = (data.get("interview_type") or "video").strip()
+        topics = (data.get("topics") or "").strip()
+        tone = (data.get("tone") or "professional").strip()
+
+        if not all([interviewer, company, position, topics]):
+            return JsonResponse({"error": "All required fields must be filled."}, status=400)
+
+        # Rate limit anonymous users via session
+        if not request.user.is_authenticated:
+            count = request.session.get("ty_gen_count", 0)
+            if count >= 3:
+                return JsonResponse({"error": "Free limit reached. Please sign up to continue.", "requires_signup": True}, status=429)
+            request.session["ty_gen_count"] = count + 1
+
+        type_labels = {"phone": "phone screen", "video": "video call", "onsite": "on-site interview", "panel": "panel interview"}
+        type_label = type_labels.get(interview_type, interview_type)
+
+        prompt = f"""Write a post-interview thank you email with the following details:
+- Interviewer name: {interviewer}
+- Company: {company}
+- Position applied for: {position}
+- Interview type: {type_label}
+- Key topics discussed: {topics}
+- Tone: {tone}
+
+Write a complete, ready-to-send thank you email. Include a subject line on the first line prefixed with "Subject: ". Keep it concise (under 250 words). Be {tone} in tone. Reference specific topics from the interview to show genuine engagement. Reaffirm enthusiasm for the role and company. End with a professional sign-off."""
+
+        content = _call_llm(prompt)
+
+        if content.startswith("LLM call failed:"):
+            return JsonResponse({"error": "Generation failed. Please try again."}, status=500)
+
+        return JsonResponse({"result": content})
+
+
+class RemoteReadinessQuizView(TemplateView):
+    template_name = "jobs/tools/remote_readiness_quiz.html"

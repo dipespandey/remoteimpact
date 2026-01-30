@@ -3,142 +3,291 @@
 {% block title %}Free Career & Remote Work Tools | Remote Impact{% endblock %}
 
 {% block extra_head %}
-<meta name="description" content="Free tools for remote workers and impact professionals. Salary calculator, cover letter generator, time zone finder, cost of living comparison, and more.">
+<meta name="description" content="16 free tools for your remote career journey — from readiness quizzes to salary negotiation scripts. AI-powered generators, calculators, and productivity tools.">
 <link rel="canonical" href="https://remoteimpact.org/tools/">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
   "name": "Free Career & Remote Work Tools",
-  "description": "Free tools for remote workers and impact professionals.",
-  "url": "https://remoteimpact.org/tools/",
-  "mainEntity": {
-    "@type": "ItemList",
-    "itemListElement": [
-      {"@type": "ListItem", "position": 1, "name": "Salary to Hourly Calculator", "url": "https://remoteimpact.org/tools/salary-to-hourly-calculator/"},
-      {"@type": "ListItem", "position": 2, "name": "AI Cover Letter Generator", "url": "https://remoteimpact.org/tools/cover-letter-generator/"},
-      {"@type": "ListItem", "position": 3, "name": "Time Zone Overlap Finder", "url": "https://remoteimpact.org/tools/time-zone-overlap-finder/"},
-      {"@type": "ListItem", "position": 4, "name": "Cost of Living Comparison", "url": "https://remoteimpact.org/tools/cost-of-living-comparison/"},
-      {"@type": "ListItem", "position": 5, "name": "Job Description Generator", "url": "https://remoteimpact.org/tools/job-description-generator/"},
-      {"@type": "ListItem", "position": 6, "name": "Resignation Letter Generator", "url": "https://remoteimpact.org/tools/resignation-letter-generator/"}
-    ]
-  }
+  "description": "16 free tools for remote workers and impact professionals.",
+  "url": "https://remoteimpact.org/tools/"
 }
 </script>
 {% endblock %}
 
 {% block content %}
-<section class="py-20 bg-gradient-to-b from-twilight-900 to-twilight-800 text-white">
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-16">
+<div x-data="{ section: 'explore' }" class="min-h-screen bg-[#F3F2EE]">
+
+  <!-- Header -->
+  <div class="bg-gradient-to-b from-twilight-900 to-twilight-800 text-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
       <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-3">Free tools</p>
       <h1 class="text-4xl md:text-5xl font-semibold mb-4">Career & Remote Work Tools</h1>
-      <p class="text-white/70 text-lg max-w-2xl mx-auto">Everything you need to land your next remote impact role — from salary calculators to AI-powered cover letters. All free.</p>
+      <p class="text-white/70 text-lg max-w-2xl mx-auto">Everything you need for your remote impact career — from exploring readiness to negotiating your offer. All free.</p>
     </div>
-
-    <!-- AI-Powered Tools -->
-    <div class="mb-14">
-      <h2 class="text-sm uppercase tracking-[0.4em] text-white/50 mb-6">✨ AI-powered</h2>
-      <div class="grid md:grid-cols-3 gap-6">
-
-        <a href="{% url 'jobs:cover_letter_generator' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
-          <div class="text-4xl mb-4">✉️</div>
-          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Cover Letter Generator</h3>
-          <p class="text-white/60 text-sm mb-4">Generate tailored cover letters for remote and impact jobs using AI. Paste a job description and get a personalized letter in seconds.</p>
-          <span class="text-neon text-sm font-semibold">Try it free →</span>
-        </a>
-
-        <a href="{% url 'jobs:jd_generator' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
-          <div class="text-4xl mb-4">📋</div>
-          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Job Description Generator</h3>
-          <p class="text-white/60 text-sm mb-4">Create inclusive, professional job descriptions for your remote positions. Perfect for impact organizations and nonprofits.</p>
-          <span class="text-neon text-sm font-semibold">Try it free →</span>
-        </a>
-
-        <a href="{% url 'jobs:resignation_letter' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
-          <div class="text-4xl mb-4">👋</div>
-          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Resignation Letter Generator</h3>
-          <p class="text-white/60 text-sm mb-4">Write a professional resignation letter in minutes. Choose your tone, customize details, and download instantly.</p>
-          <span class="text-neon text-sm font-semibold">Try it free →</span>
-        </a>
-
-        <a href="{% url 'jobs:interview_prep' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
-          <div class="text-4xl mb-4">🎤</div>
-          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Interview Prep</h3>
-          <p class="text-white/60 text-sm mb-4">AI-generated interview questions tailored to your role and sector. Includes suggested answer frameworks.</p>
-          <span class="text-neon text-sm font-semibold">Prepare now →</span>
-        </a>
-
-      </div>
-    </div>
-
-    <!-- Calculators & Utilities -->
-    <div class="mb-14">
-      <h2 class="text-sm uppercase tracking-[0.4em] text-white/50 mb-6">🧮 Calculators & utilities</h2>
-      <div class="grid md:grid-cols-3 gap-6">
-
-        <a href="{% url 'jobs:salary_to_hourly' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
-          <div class="text-4xl mb-4">💰</div>
-          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Salary to Hourly Calculator</h3>
-          <p class="text-white/60 text-sm mb-4">Instantly convert between annual salary and hourly rate. Includes tax estimates and a comparison table for common salaries.</p>
-          <span class="text-neon text-sm font-semibold">Calculate now →</span>
-        </a>
-
-        <a href="{% url 'jobs:timezone_overlap' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
-          <div class="text-4xl mb-4">🌍</div>
-          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Time Zone Overlap Finder</h3>
-          <p class="text-white/60 text-sm mb-4">Find the best meeting times across 2–4 time zones. Visual chart shows overlapping work hours for your remote team.</p>
-          <span class="text-neon text-sm font-semibold">Find overlap →</span>
-        </a>
-
-        <a href="{% url 'jobs:cost_of_living_comparison' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
-          <div class="text-4xl mb-4">🏙️</div>
-          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Cost of Living Comparison</h3>
-          <p class="text-white/60 text-sm mb-4">Compare cost of living between 60+ cities worldwide. See what your salary is worth in a different location.</p>
-          <span class="text-neon text-sm font-semibold">Compare cities →</span>
-        </a>
-
-      </div>
-    </div>
-
-    <!-- Productivity & Everyday Tools -->
-    <div>
-      <h2 class="text-sm uppercase tracking-[0.4em] text-white/50 mb-6">⚡ Productivity & everyday</h2>
-      <div class="grid md:grid-cols-3 gap-6">
-
-        <a href="{% url 'jobs:word_counter' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
-          <div class="text-4xl mb-4">📝</div>
-          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Word Counter</h3>
-          <p class="text-white/60 text-sm mb-4">Count words, characters, sentences, and paragraphs. Plus reading time, speaking time, and keyword density.</p>
-          <span class="text-neon text-sm font-semibold">Count words →</span>
-        </a>
-
-        <a href="{% url 'jobs:pomodoro_timer' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
-          <div class="text-4xl mb-4">🍅</div>
-          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Pomodoro Timer</h3>
-          <p class="text-white/60 text-sm mb-4">Stay focused with the Pomodoro technique. Customizable intervals, browser notifications, and built-in task list.</p>
-          <span class="text-neon text-sm font-semibold">Start timer →</span>
-        </a>
-
-        <a href="{% url 'jobs:freelance_rate' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
-          <div class="text-4xl mb-4">💵</div>
-          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Freelance Rate Calculator</h3>
-          <p class="text-white/60 text-sm mb-4">Calculate your ideal hourly and daily rate based on income goals, expenses, taxes, and billable hours.</p>
-          <span class="text-neon text-sm font-semibold">Calculate rate →</span>
-        </a>
-
-      </div>
-    </div>
-
-    <!-- CTA -->
-    <div class="mt-16 text-center rounded-3xl border border-white/10 bg-card-gradient p-10 backdrop-blur">
-      <h2 class="text-2xl font-semibold mb-3">Looking for your next remote impact role?</h2>
-      <p class="text-white/60 mb-6 max-w-xl mx-auto">Browse thousands of remote jobs at organizations making a difference. Save roles, get matched, and apply — all free.</p>
-      <a href="{% url 'jobs:job_list' %}" class="inline-block px-8 py-4 rounded-full bg-brand-300 text-twilight-900 font-semibold hover:bg-neon transition shadow-glow">
-        Browse jobs →
-      </a>
-    </div>
-
   </div>
-</section>
+
+  <!-- Mobile: horizontal scrollable tabs -->
+  <div class="md:hidden sticky top-0 z-10 bg-white border-b border-gray-200 overflow-x-auto">
+    <div class="flex whitespace-nowrap px-4 py-2 gap-1">
+      <button @click="section='explore'" :class="section==='explore' ? 'bg-brand-300 text-gray-900' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-full text-sm font-semibold transition">🧭 Explore</button>
+      <button @click="section='search'" :class="section==='search' ? 'bg-brand-300 text-gray-900' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-full text-sm font-semibold transition">🔍 Job Search</button>
+      <button @click="section='apply'" :class="section==='apply' ? 'bg-brand-300 text-gray-900' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-full text-sm font-semibold transition">🎯 Apply</button>
+      <button @click="section='interview'" :class="section==='interview' ? 'bg-brand-300 text-gray-900' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-full text-sm font-semibold transition">🎤 Interview</button>
+      <button @click="section='negotiate'" :class="section==='negotiate' ? 'bg-brand-300 text-gray-900' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-full text-sm font-semibold transition">💰 Negotiate</button>
+      <button @click="section='productivity'" :class="section==='productivity' ? 'bg-brand-300 text-gray-900' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-full text-sm font-semibold transition">⚡ Productivity</button>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="flex gap-10">
+
+      <!-- Desktop Sidebar -->
+      <nav class="hidden md:block w-56 flex-shrink-0">
+        <div class="sticky top-24 space-y-1">
+          <p class="text-xs uppercase tracking-[0.3em] text-gray-400 font-semibold mb-3 px-3">Career Journey</p>
+          <button @click="section='explore'" :class="section==='explore' ? 'bg-brand-50 text-brand-700 border-brand-300' : 'text-gray-600 hover:bg-gray-100 border-transparent'" class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition border">
+            🧭 Explore
+          </button>
+          <button @click="section='search'" :class="section==='search' ? 'bg-brand-50 text-brand-700 border-brand-300' : 'text-gray-600 hover:bg-gray-100 border-transparent'" class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition border">
+            🔍 Job Search
+          </button>
+          <button @click="section='apply'" :class="section==='apply' ? 'bg-brand-50 text-brand-700 border-brand-300' : 'text-gray-600 hover:bg-gray-100 border-transparent'" class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition border">
+            🎯 Apply
+          </button>
+          <button @click="section='interview'" :class="section==='interview' ? 'bg-brand-50 text-brand-700 border-brand-300' : 'text-gray-600 hover:bg-gray-100 border-transparent'" class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition border">
+            🎤 Interview
+          </button>
+          <button @click="section='negotiate'" :class="section==='negotiate' ? 'bg-brand-50 text-brand-700 border-brand-300' : 'text-gray-600 hover:bg-gray-100 border-transparent'" class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition border">
+            💰 Negotiate
+          </button>
+          <button @click="section='productivity'" :class="section==='productivity' ? 'bg-brand-50 text-brand-700 border-brand-300' : 'text-gray-600 hover:bg-gray-100 border-transparent'" class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition border">
+            ⚡ Productivity
+          </button>
+
+          <!-- CTA -->
+          <div class="mt-6 pt-6 border-t border-gray-200">
+            <a href="{% url 'jobs:job_list' %}" class="block w-full text-center px-4 py-3 rounded-xl bg-brand-300 text-gray-900 font-semibold text-sm hover:bg-brand-400 transition">
+              Browse Remote Jobs →
+            </a>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Main content -->
+      <div class="flex-1 min-w-0">
+
+        <!-- Explore -->
+        <div x-show="section==='explore'" x-transition>
+          <h2 class="text-2xl font-semibold text-gray-900 mb-2">Explore</h2>
+          <p class="text-gray-500 text-sm mb-6">Figure out if remote work is right for you and where to base yourself.</p>
+          <div class="grid sm:grid-cols-2 gap-5">
+            <a href="{% url 'jobs:remote_readiness_quiz' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-4">
+                <span class="text-3xl">📋</span>
+                <div>
+                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Remote Work Readiness Quiz</h3>
+                  <p class="text-gray-500 text-sm mt-1">12-question assessment to find out if you're ready for remote work. Get personalized tips.</p>
+                  <span class="inline-block mt-3 text-brand-600 text-sm font-semibold">Take the quiz →</span>
+                </div>
+              </div>
+            </a>
+            <a href="{% url 'jobs:cost_of_living_comparison' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-4">
+                <span class="text-3xl">🏙️</span>
+                <div>
+                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Cost of Living Comparison</h3>
+                  <p class="text-gray-500 text-sm mt-1">Compare 60+ cities worldwide. See what your salary is worth in a different location.</p>
+                  <span class="inline-block mt-3 text-brand-600 text-sm font-semibold">Compare cities →</span>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Job Search -->
+        <div x-show="section==='search'" x-transition>
+          <h2 class="text-2xl font-semibold text-gray-900 mb-2">Job Search</h2>
+          <p class="text-gray-500 text-sm mb-6">Tools to help you find the right role and understand job requirements.</p>
+          <div class="grid sm:grid-cols-2 gap-5">
+            <a href="{% url 'jobs:skills_gap' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-4">
+                <span class="text-3xl">🔍</span>
+                <div>
+                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Skills Gap Analyzer</h3>
+                  <p class="text-gray-500 text-sm mt-1">Paste your resume and a job description — AI shows matching, missing, and transferable skills.</p>
+                  <span class="inline-flex items-center gap-1 mt-3 text-brand-600 text-sm font-semibold">Analyze skills → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                </div>
+              </div>
+            </a>
+            <a href="{% url 'jobs:jd_generator' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-4">
+                <span class="text-3xl">📋</span>
+                <div>
+                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Job Description Generator</h3>
+                  <p class="text-gray-500 text-sm mt-1">Create inclusive, professional job descriptions for remote positions at impact organizations.</p>
+                  <span class="inline-flex items-center gap-1 mt-3 text-brand-600 text-sm font-semibold">Generate JD → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                </div>
+              </div>
+            </a>
+            <a href="{% url 'jobs:word_counter' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-4">
+                <span class="text-3xl">📝</span>
+                <div>
+                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Word Counter</h3>
+                  <p class="text-gray-500 text-sm mt-1">Count words, characters, reading time, and keyword density. Perfect for applications.</p>
+                  <span class="inline-block mt-3 text-brand-600 text-sm font-semibold">Count words →</span>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Apply -->
+        <div x-show="section==='apply'" x-transition>
+          <h2 class="text-2xl font-semibold text-gray-900 mb-2">Apply</h2>
+          <p class="text-gray-500 text-sm mb-6">Craft the perfect application materials for your next role.</p>
+          <div class="grid sm:grid-cols-2 gap-5">
+            <a href="{% url 'jobs:cover_letter_generator' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-4">
+                <span class="text-3xl">✉️</span>
+                <div>
+                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Cover Letter Generator</h3>
+                  <p class="text-gray-500 text-sm mt-1">AI-powered cover letters tailored to remote and impact jobs. Paste a job description and go.</p>
+                  <span class="inline-flex items-center gap-1 mt-3 text-brand-600 text-sm font-semibold">Generate letter → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                </div>
+              </div>
+            </a>
+            <a href="{% url 'jobs:resignation_letter' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-4">
+                <span class="text-3xl">👋</span>
+                <div>
+                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Resignation Letter Generator</h3>
+                  <p class="text-gray-500 text-sm mt-1">Write a professional resignation letter in minutes. Choose your tone and download instantly.</p>
+                  <span class="inline-flex items-center gap-1 mt-3 text-brand-600 text-sm font-semibold">Generate letter → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Interview -->
+        <div x-show="section==='interview'" x-transition>
+          <h2 class="text-2xl font-semibold text-gray-900 mb-2">Interview</h2>
+          <p class="text-gray-500 text-sm mb-6">Prepare for interviews and follow up like a pro.</p>
+          <div class="grid sm:grid-cols-2 gap-5">
+            <a href="{% url 'jobs:interview_prep' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-4">
+                <span class="text-3xl">🎤</span>
+                <div>
+                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Interview Prep</h3>
+                  <p class="text-gray-500 text-sm mt-1">AI-generated interview questions tailored to your role, sector, and experience level.</p>
+                  <span class="inline-flex items-center gap-1 mt-3 text-brand-600 text-sm font-semibold">Prepare now → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                </div>
+              </div>
+            </a>
+            <a href="{% url 'jobs:thank_you_email' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-4">
+                <span class="text-3xl">💌</span>
+                <div>
+                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Thank You Email Generator</h3>
+                  <p class="text-gray-500 text-sm mt-1">Generate a polished post-interview thank you email. Customizable tone and interview details.</p>
+                  <span class="inline-flex items-center gap-1 mt-3 text-brand-600 text-sm font-semibold">Generate email → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Negotiate -->
+        <div x-show="section==='negotiate'" x-transition>
+          <h2 class="text-2xl font-semibold text-gray-900 mb-2">Negotiate</h2>
+          <p class="text-gray-500 text-sm mb-6">Know your worth and negotiate with confidence.</p>
+          <div class="grid sm:grid-cols-2 gap-5">
+            <a href="{% url 'jobs:salary_negotiation' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-4">
+                <span class="text-3xl">💬</span>
+                <div>
+                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Salary Negotiation Script</h3>
+                  <p class="text-gray-500 text-sm mt-1">AI-generated negotiation scripts with talking points and objection responses.</p>
+                  <span class="inline-flex items-center gap-1 mt-3 text-brand-600 text-sm font-semibold">Generate script → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                </div>
+              </div>
+            </a>
+            <a href="{% url 'jobs:salary_to_hourly' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-4">
+                <span class="text-3xl">💰</span>
+                <div>
+                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Salary to Hourly Calculator</h3>
+                  <p class="text-gray-500 text-sm mt-1">Convert annual salary to hourly rate and vice versa. Includes tax estimates.</p>
+                  <span class="inline-block mt-3 text-brand-600 text-sm font-semibold">Calculate →</span>
+                </div>
+              </div>
+            </a>
+            <a href="{% url 'jobs:pay_raise_calculator' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-4">
+                <span class="text-3xl">📈</span>
+                <div>
+                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Pay Raise Calculator</h3>
+                  <p class="text-gray-500 text-sm mt-1">See exactly how much a raise is worth. Compare percentages and compound over years.</p>
+                  <span class="inline-block mt-3 text-brand-600 text-sm font-semibold">Calculate raise →</span>
+                </div>
+              </div>
+            </a>
+            <a href="{% url 'jobs:freelance_rate' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-4">
+                <span class="text-3xl">💵</span>
+                <div>
+                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Freelance Rate Calculator</h3>
+                  <p class="text-gray-500 text-sm mt-1">Calculate your ideal hourly rate based on income goals, expenses, and billable hours.</p>
+                  <span class="inline-block mt-3 text-brand-600 text-sm font-semibold">Calculate rate →</span>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Productivity -->
+        <div x-show="section==='productivity'" x-transition>
+          <h2 class="text-2xl font-semibold text-gray-900 mb-2">Productivity</h2>
+          <p class="text-gray-500 text-sm mb-6">Stay productive, organized, and on top of your remote work life.</p>
+          <div class="grid sm:grid-cols-2 gap-5">
+            <a href="{% url 'jobs:pomodoro_timer' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-4">
+                <span class="text-3xl">🍅</span>
+                <div>
+                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Pomodoro Timer</h3>
+                  <p class="text-gray-500 text-sm mt-1">Stay focused with customizable work/break intervals, notifications, and a built-in task list.</p>
+                  <span class="inline-block mt-3 text-brand-600 text-sm font-semibold">Start timer →</span>
+                </div>
+              </div>
+            </a>
+            <a href="{% url 'jobs:timezone_overlap' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-4">
+                <span class="text-3xl">🌍</span>
+                <div>
+                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Time Zone Overlap Finder</h3>
+                  <p class="text-gray-500 text-sm mt-1">Find the best meeting times across 2–4 time zones with a visual overlap chart.</p>
+                  <span class="inline-block mt-3 text-brand-600 text-sm font-semibold">Find overlap →</span>
+                </div>
+              </div>
+            </a>
+            <a href="{% url 'jobs:pto_calculator' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-4">
+                <span class="text-3xl">📅</span>
+                <div>
+                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">PTO & Work Days Calculator</h3>
+                  <p class="text-gray-500 text-sm mt-1">Count work days, track PTO accrual, and countdown to your next vacation.</p>
+                  <span class="inline-block mt-3 text-brand-600 text-sm font-semibold">Calculate →</span>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

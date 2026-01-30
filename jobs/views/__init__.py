@@ -29,6 +29,15 @@ from .resources import (
     InterviewPrepView,
     InterviewPrepGenerateView,
     FreelanceRateView,
+    PTOCalculatorView,
+    PayRaiseCalculatorView,
+    ThankYouEmailView,
+    ThankYouEmailGenerateView,
+    SkillsGapView,
+    SkillsGapAnalyzeView,
+    SalaryNegotiationView,
+    SalaryNegotiationGenerateView,
+    RemoteReadinessQuizView,
 )
 from .stories import (
     StoryFeedView,

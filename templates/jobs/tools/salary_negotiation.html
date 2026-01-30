@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+
+{% block title %}Free Salary Negotiation Script Generator | AI-Powered - Remote Impact{% endblock %}
+
+{% block meta_description %}Learn how to negotiate salary with a personalized AI-generated script. Get talking points, objection responses, and a closing ask — free for remote workers.{% endblock %}
+
+{% block content %}
+<style>
+  .panel{border:1px solid rgba(15,23,42,.1);background:linear-gradient(135deg,#fff,#faf7f2);box-shadow:0 4px 20px rgba(15,23,42,.08);border-radius:1rem}
+  .input-base{background:#fff;border:1px solid rgba(15,23,42,.15);border-radius:.75rem;padding:.75rem 1rem;width:100%;transition:border-color .15s,box-shadow .15s}
+  .input-base:focus{outline:none;border-color:#6EAA1C;box-shadow:0 0 0 3px rgba(110,170,28,.2)}
+  select.input-base{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 1rem center}
+  .spinner{border:3px solid rgba(110,170,28,.2);border-top-color:#6EAA1C;border-radius:9999px;width:28px;height:28px;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .btn-primary{display:inline-flex;align-items:center;justify-content:center;padding:.75rem 1.5rem;border-radius:.75rem;background:#6EAA1C;color:#fff;font-weight:600;transition:background .15s}
+  .btn-primary:hover{background:#5d9416}
+  .btn-secondary{display:inline-flex;align-items:center;justify-content:center;padding:.75rem 1.5rem;border-radius:.75rem;background:#f3f4f6;color:#374151;font-weight:600;transition:background .15s}
+  .btn-secondary:hover{background:#e5e7eb}
+  .faq-toggle:checked+label+div{max-height:500px;padding-top:.75rem}
+  .faq-answer{max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease}
+</style>
+
+<section class="py-12 md:py-16 bg-[#F3F2EE]">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
+       x-data="{
+         jobTitle: '',
+         company: '',
+         currentSalary: '',
+         targetSalary: '',
+         scenario: 'new job offer',
+         achievements: '',
+         industry: '',
+         tone: 'confident',
+         loading: false,
+         result: '',
+         error: '',
+         copied: false,
+         showLimitModal: false,
+         genCount: parseInt(localStorage.getItem('sn_gen_count') || '0'),
+         get remaining() { return Math.max(0, 3 - this.genCount) },
+         getCSRF() {
+           const m = document.cookie.match(/csrftoken=([^;]+)/);
+           return m ? m[1] : '';
+         },
+         async generate() {
+           {% if not user.is_authenticated %}
+           if (this.genCount >= 3) { this.showLimitModal = true; return; }
+           {% endif %}
+           if (!this.jobTitle || !this.company || !this.currentSalary || !this.targetSalary) {
+             this.error = 'Please fill in all required fields.';
+             return;
+           }
+           this.loading = true;
+           this.error = '';
+           this.result = '';
+           try {
+             const res = await fetch('{% url "jobs:salary_negotiation_generate" %}', {
+               method: 'POST',
+               headers: {'Content-Type': 'application/json', 'X-CSRFToken': this.getCSRF()},
+               body: JSON.stringify({
+                 job_title: this.jobTitle, company: this.company,
+                 current_salary: this.currentSalary, target_salary: this.targetSalary,
+                 scenario: this.scenario, achievements: this.achievements,
+                 industry: this.industry, tone: this.tone
+               })
+             });
+             const data = await res.json();
+             if (res.status === 429) { this.showLimitModal = true; return; }
+             if (res.status >= 400) { this.error = data.error || 'Something went wrong.'; return; }
+             this.result = data.result;
+             {% if not user.is_authenticated %}
+             this.genCount++;
+             localStorage.setItem('sn_gen_count', this.genCount);
+             {% endif %}
+             this.$nextTick(() => this.$refs.output?.scrollIntoView({behavior:'smooth',block:'start'}));
+           } catch (e) {
+             this.error = 'Request failed. Please try again.';
+           } finally {
+             this.loading = false;
+           }
+         },
+         copyScript() {
+           if (!this.result) return;
+           navigator.clipboard.writeText(this.result).then(() => {
+             this.copied = true;
+             setTimeout(() => this.copied = false, 1500);
+           });
+         }
+       }">
+
+    <!-- Hero / H1 -->
+    <div class="text-center space-y-4 mb-10">
+      <p class="uppercase text-xs tracking-[0.3em] text-gray-500">Free Tool</p>
+      <h1 class="text-3xl md:text-5xl font-semibold text-gray-900 leading-tight">Free Salary Negotiation Script Generator</h1>
+      <p class="text-lg text-gray-600 max-w-2xl mx-auto">Get a personalized, AI-powered negotiation script with talking points, objection responses, and a confident closing ask — in seconds.</p>
+    </div>
+
+    <!-- Generator Form -->
+    <div class="panel p-6 md:p-8 space-y-6 mb-12">
+      <h2 class="text-xl font-semibold text-gray-900">Your Negotiation Details</h2>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Job Title *</label>
+          <input type="text" x-model="jobTitle" class="input-base text-gray-900" placeholder="Senior Product Manager" />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Company Name *</label>
+          <input type="text" x-model="company" class="input-base text-gray-900" placeholder="Acme Corp" />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Current / Offered Salary *</label>
+          <input type="text" x-model="currentSalary" class="input-base text-gray-900" placeholder="$85,000" />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Your Target Salary *</label>
+          <input type="text" x-model="targetSalary" class="input-base text-gray-900" placeholder="$100,000" />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Scenario</label>
+          <select x-model="scenario" class="input-base text-gray-900">
+            <option value="new job offer">New Job Offer</option>
+            <option value="annual review">Annual Review</option>
+            <option value="promotion">Promotion</option>
+            <option value="counter-offer">Counter-Offer</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Industry / Sector</label>
+          <input type="text" x-model="industry" class="input-base text-gray-900" placeholder="e.g. Nonprofit, Tech, Climate" />
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Your Key Achievements</label>
+        <textarea x-model="achievements" rows="3" class="input-base text-gray-900" placeholder="e.g. Led a team of 8, increased revenue 30%, shipped 3 major features..."></textarea>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Tone</label>
+        <div class="flex flex-wrap gap-3">
+          <template x-for="t in ['confident','collaborative','assertive']" :key="t">
+            <label class="cursor-pointer">
+              <input type="radio" name="tone" :value="t" x-model="tone" class="sr-only peer" />
+              <span class="px-4 py-2 rounded-full border border-gray-300 text-sm font-medium text-gray-700 peer-checked:bg-brand-300 peer-checked:border-brand-400 peer-checked:text-gray-900 transition capitalize" x-text="t"></span>
+            </label>
+          </template>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3 items-start">
+        <button type="button" @click="generate()" :disabled="loading" class="btn-primary" :class="{'opacity-60 pointer-events-none': loading}">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span x-text="loading ? 'Generating…' : 'Generate Negotiation Script'"></span>
+        </button>
+        {% if not user.is_authenticated %}
+        <span class="text-sm text-gray-500 self-center" x-show="remaining < 3 && remaining > 0" x-text="remaining + ' free generation' + (remaining !== 1 ? 's' : '') + ' remaining'"></span>
+        {% endif %}
+      </div>
+
+      <p x-show="error" x-text="error" class="text-red-600 text-sm font-medium"></p>
+    </div>
+
+    <!-- Output -->
+    <div x-ref="output" x-show="result" x-cloak class="panel p-6 md:p-8 space-y-4 mb-12">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h2 class="text-xl font-semibold text-gray-900">Your Salary Negotiation Script</h2>
+        <button type="button" @click="copyScript()" class="btn-secondary text-sm">
+          <svg x-show="!copied" class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          <span x-text="copied ? 'Copied!' : 'Copy to Clipboard'"></span>
+        </button>
+      </div>
+      <div class="relative">
+        <div class="w-full px-4 py-4 rounded-xl bg-white border border-gray-200 text-gray-900 text-sm leading-relaxed whitespace-pre-wrap" x-text="result"></div>
+        <div x-show="loading" class="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rate limit modal -->
+    <div x-show="showLimitModal" x-cloak class="fixed inset-0 z-50">
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showLimitModal = false"></div>
+      <div class="relative max-w-md mx-auto mt-24 px-4">
+        <div class="bg-white rounded-2xl p-6 space-y-4 shadow-xl text-center">
+          <h3 class="text-xl font-semibold text-gray-900">Free Limit Reached</h3>
+          <p class="text-gray-600">You've used your 3 free generations. Sign up for a free account to continue.</p>
+          <a href="{% url 'account_signup' %}?next={{ request.path }}" class="btn-primary w-full">Create Free Account</a>
+          <button @click="showLimitModal = false" class="text-sm text-gray-500 hover:text-gray-700">Maybe later</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- How It Works -->
+    <div class="panel p-6 md:p-8 mb-12">
+      <h2 class="text-2xl font-semibold text-gray-900 text-center mb-8">How It Works</h2>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="text-center space-y-3">
+          <div class="w-12 h-12 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center mx-auto text-lg">1</div>
+          <h3 class="font-semibold text-gray-900">Enter Your Details</h3>
+          <p class="text-sm text-gray-600">Add your job title, salaries, achievements, and negotiation scenario.</p>
+        </div>
+        <div class="text-center space-y-3">
+          <div class="w-12 h-12 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center mx-auto text-lg">2</div>
+          <h3 class="font-semibold text-gray-900">Choose Your Tone</h3>
+          <p class="text-sm text-gray-600">Pick confident, collaborative, or assertive to match your style.</p>
+        </div>
+        <div class="text-center space-y-3">
+          <div class="w-12 h-12 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center mx-auto text-lg">3</div>
+          <h3 class="font-semibold text-gray-900">Practice & Negotiate</h3>
+          <p class="text-sm text-gray-600">Copy your personalized script, rehearse it, and walk into the conversation prepared.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7 Salary Negotiation Tips for Remote Workers -->
+    <div class="panel p-6 md:p-8 mb-12 space-y-6">
+      <h2 class="text-2xl font-semibold text-gray-900">7 Salary Negotiation Tips for Remote Workers</h2>
+      <div class="prose prose-gray max-w-none text-gray-600 space-y-4">
+        <ol class="list-decimal pl-5 space-y-3">
+          <li><strong>Research market rates:</strong> Use sites like Glassdoor, Levels.fyi, and Payscale to know your worth in your specific role, industry, and location.</li>
+          <li><strong>Quantify your impact:</strong> Frame achievements with numbers — revenue generated, costs saved, users served, or projects delivered.</li>
+          <li><strong>Negotiate the full package:</strong> Remote roles often include stipends for home office, internet, coworking, wellness, and professional development. Don't leave these on the table.</li>
+          <li><strong>Practice out loud:</strong> Rehearse your script with a friend or record yourself. Hearing your own words builds confidence for the real conversation.</li>
+          <li><strong>Anchor high (but realistic):</strong> Your first number sets the range. Start at the top of your research-backed range so there's room to meet in the middle.</li>
+          <li><strong>Don't reveal your current salary first:</strong> In many jurisdictions it's illegal for employers to ask. Redirect to your target range based on market data.</li>
+          <li><strong>Get it in writing:</strong> Once you reach agreement verbally, ask for a revised offer letter before accepting. Remote work terms (location flexibility, timezone expectations) should be explicit.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- SEO Content -->
+    <div class="panel p-6 md:p-8 mb-12 space-y-6">
+      <h2 class="text-2xl font-semibold text-gray-900">How to Negotiate Salary: A Script-Based Approach</h2>
+      <div class="prose prose-gray max-w-none text-gray-600 space-y-4">
+        <p>Salary negotiation doesn't have to be intimidating. With the right preparation and a clear script, you can walk into any conversation — whether it's a new job offer, annual review, promotion discussion, or counter-offer — feeling confident and prepared.</p>
+        <p>Our AI-powered salary negotiation script generator creates a personalized script tailored to your specific situation. It includes an opening statement, key talking points based on your achievements, responses to common employer objections like "budget constraints" or "that's above our range," and a clear closing ask.</p>
+        <p>Whether you're in tech, nonprofit, climate, education, or any other sector, your script is customized to your industry context and preferred communication style.</p>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="panel p-6 md:p-8 mb-12">
+      <h2 class="text-2xl font-semibold text-gray-900 mb-6">Frequently Asked Questions</h2>
+      <div class="divide-y divide-gray-200">
+        {% for faq in faqs %}
+        <div class="py-4">
+          <input type="checkbox" id="faq-{{ forloop.counter }}" class="faq-toggle sr-only" />
+          <label for="faq-{{ forloop.counter }}" class="flex items-center justify-between cursor-pointer group">
+            <span class="font-semibold text-gray-900 group-hover:text-brand-600 transition">{{ faq.q }}</span>
+            <svg class="w-5 h-5 text-gray-400 group-hover:text-brand-600 transition flex-shrink-0 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </label>
+          <div class="faq-answer text-gray-600 text-sm leading-relaxed">{{ faq.a }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- JSON-LD FAQPage Schema -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {% for faq in faqs %}
+    {
+      "@type": "Question",
+      "name": "{{ faq.q|escapejs }}",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "{{ faq.a|escapejs }}"
+      }
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
+{% endblock %}

@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Free Pay Raise Calculator | How Much Is a 5% Raise?{% endblock %}
+
+{% block meta_description %}Calculate how much a pay raise is worth. Enter your salary and raise percentage to instantly see your new salary, monthly, biweekly, weekly, and hourly breakdown. Compare 3%, 5%, 10%, 15%, and 20% raises side by side.{% endblock %}
+
+{% block content %}
+<section class="bg-[#F3F2EE] min-h-screen py-12 px-4 sm:px-6 lg:px-8"
+  x-data="{
+    salary: 60000,
+    raisePercent: 5,
+    inflationRate: 3,
+    showInflation: false,
+    presets: [3, 5, 10, 15, 20],
+    comparisonRates: [3, 5, 10, 15, 20],
+    years: [1, 2, 3, 4, 5],
+    showFaq: [false, false, false, false, false],
+
+    get dollarRaise() { return this.salary * this.raisePercent / 100 },
+    get newSalary() { return this.salary + this.dollarRaise },
+    get realRaisePercent() { return ((1 + this.raisePercent / 100) / (1 + this.inflationRate / 100) - 1) * 100 },
+    get realNewSalary() { return this.salary * (1 + this.realRaisePercent / 100) },
+    get realDollarRaise() { return this.realNewSalary - this.salary },
+
+    monthly(s)   { return s / 12 },
+    biweekly(s)  { return s / 26 },
+    weekly(s)    { return s / 52 },
+    hourly(s)    { return s / 2080 },
+
+    raiseAmount(pct)    { return this.salary * pct / 100 },
+    newSalaryAt(pct)    { return this.salary + this.raiseAmount(pct) },
+
+    compound(pct, yrs)  { return this.salary * Math.pow(1 + pct / 100, yrs) },
+    compoundReal(pct, yrs) { return this.salary * Math.pow((1 + pct / 100) / (1 + this.inflationRate / 100), yrs) },
+
+    fmt(v) { return '$' + Math.round(v).toLocaleString() },
+    fmt2(v) { return '$' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') },
+    pct(v) { return v.toFixed(1) + '%' }
+  }">
+
+  <div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-10">
+      <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Free Pay Raise Calculator</h1>
+      <h2 class="text-lg text-gray-600 max-w-2xl mx-auto">Find out exactly how much a raise is worth. See your new salary, pay breakdown, and compare multiple raise percentages side by side.</h2>
+    </div>
+
+    <div class="grid lg:grid-cols-5 gap-8">
+      <!-- Inputs Card -->
+      <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5 h-fit">
+        <h3 class="text-lg font-semibold text-gray-900 mb-1">Your Details</h3>
+
+        <!-- Current Salary -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Current Annual Salary</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+            <input type="number" x-model.number="salary" min="0" step="1000" class="w-full pl-8 pr-3 py-2 rounded-lg border-gray-200 focus:ring-brand-300 focus:border-brand-300">
+          </div>
+        </div>
+
+        <!-- Raise Percentage -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Raise Percentage</label>
+          <div class="relative">
+            <input type="number" x-model.number="raisePercent" min="0" max="200" step="0.5" class="w-full pr-8 pl-3 py-2 rounded-lg border-gray-200 focus:ring-brand-300 focus:border-brand-300">
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+          </div>
+          <!-- Presets -->
+          <div class="flex flex-wrap gap-2 mt-2">
+            <template x-for="p in presets" :key="p">
+              <button
+                @click="raisePercent = p"
+                :class="raisePercent === p ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                class="px-3 py-1 rounded-full text-sm font-medium transition"
+                x-text="p + '%'"></button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Inflation Toggle -->
+        <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+          <span class="text-sm font-medium text-gray-700">Adjust for inflation</span>
+          <button @click="showInflation = !showInflation"
+            :class="showInflation ? 'bg-brand-600' : 'bg-gray-300'"
+            class="relative inline-flex h-6 w-11 items-center rounded-full transition">
+            <span :class="showInflation ? 'translate-x-6' : 'translate-x-1'"
+              class="inline-block h-4 w-4 rounded-full bg-white transition transform"></span>
+          </button>
+        </div>
+        <div x-show="showInflation" x-transition class="space-y-1">
+          <label class="block text-sm font-medium text-gray-700">Inflation Rate</label>
+          <div class="relative">
+            <input type="number" x-model.number="inflationRate" min="0" max="50" step="0.5" class="w-full pr-8 pl-3 py-2 rounded-lg border-gray-200 focus:ring-brand-300 focus:border-brand-300">
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Card -->
+      <div class="lg:col-span-3 space-y-6">
+        <!-- New Salary Highlight -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Raise Breakdown</h3>
+          <div class="grid sm:grid-cols-2 gap-4 mb-6">
+            <div class="bg-brand-50 rounded-xl p-4 text-center">
+              <p class="text-sm text-brand-700 font-medium mb-1">New Annual Salary</p>
+              <p class="text-3xl font-bold text-brand-700" x-text="fmt(newSalary)"></p>
+              <p class="text-sm text-brand-600 mt-1">+ <span x-text="fmt(dollarRaise)"></span>/year</p>
+            </div>
+            <div x-show="showInflation" x-transition class="bg-amber-50 rounded-xl p-4 text-center">
+              <p class="text-sm text-amber-700 font-medium mb-1">Real Value (inflation-adjusted)</p>
+              <p class="text-3xl font-bold text-amber-700" x-text="fmt(realNewSalary)"></p>
+              <p class="text-sm text-amber-600 mt-1">Real raise: <span x-text="pct(realRaisePercent)"></span></p>
+            </div>
+          </div>
+
+          <!-- Pay Period Breakdown -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <template x-for="[label, fn] in [['Monthly', monthly], ['Biweekly', biweekly], ['Weekly', weekly], ['Hourly', hourly]]" :key="label">
+              <div class="bg-gray-50 rounded-xl p-3 text-center">
+                <p class="text-xs text-gray-500 font-medium mb-1" x-text="label"></p>
+                <p class="text-lg font-bold text-gray-900" x-text="fmt2(fn(newSalary))"></p>
+                <p class="text-xs text-brand-600">+<span x-text="fmt2(fn(dollarRaise))"></span></p>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Compare Multiple Raises</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-100">
+                  <th class="text-left py-2 pr-3 text-gray-500 font-medium">Raise %</th>
+                  <th class="text-right py-2 px-3 text-gray-500 font-medium">Increase</th>
+                  <th class="text-right py-2 px-3 text-gray-500 font-medium">New Salary</th>
+                  <th class="text-right py-2 px-3 text-gray-500 font-medium">Monthly</th>
+                  <th class="text-right py-2 pl-3 text-gray-500 font-medium">Hourly</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="r in comparisonRates" :key="r">
+                  <tr class="border-b border-gray-50" :class="r === raisePercent && 'bg-brand-50'">
+                    <td class="py-2 pr-3 font-medium" :class="r === raisePercent ? 'text-brand-700' : 'text-gray-900'" x-text="r + '%'"></td>
+                    <td class="py-2 px-3 text-right text-gray-700" x-text="fmt(raiseAmount(r))"></td>
+                    <td class="py-2 px-3 text-right font-semibold" :class="r === raisePercent ? 'text-brand-700' : 'text-gray-900'" x-text="fmt(newSalaryAt(r))"></td>
+                    <td class="py-2 px-3 text-right text-gray-700" x-text="fmt2(monthly(newSalaryAt(r)))"></td>
+                    <td class="py-2 pl-3 text-right text-gray-700" x-text="fmt2(hourly(newSalaryAt(r)))"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Raise Over Time -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-1">Raise Over Time</h3>
+          <p class="text-sm text-gray-500 mb-4">See how a <span x-text="raisePercent"></span>% raise compounds year over year.</p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-100">
+                  <th class="text-left py-2 pr-3 text-gray-500 font-medium">Year</th>
+                  <th class="text-right py-2 px-3 text-gray-500 font-medium">Nominal Salary</th>
+                  <th class="text-right py-2 px-3 text-gray-500 font-medium">Total Gain</th>
+                  <template x-if="showInflation">
+                    <th class="text-right py-2 pl-3 text-amber-600 font-medium">Real Value</th>
+                  </template>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="y in years" :key="y">
+                  <tr class="border-b border-gray-50">
+                    <td class="py-2 pr-3 font-medium text-gray-900" x-text="'Year ' + y"></td>
+                    <td class="py-2 px-3 text-right text-gray-900 font-semibold" x-text="fmt(compound(raisePercent, y))"></td>
+                    <td class="py-2 px-3 text-right text-brand-600" x-text="'+' + fmt(compound(raisePercent, y) - salary)"></td>
+                    <template x-if="showInflation">
+                      <td class="py-2 pl-3 text-right text-amber-700" x-text="fmt(compoundReal(raisePercent, y))"></td>
+                    </template>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="mt-12 max-w-3xl mx-auto">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Frequently Asked Questions</h2>
+      <div class="space-y-3">
+        <template x-for="(faq, i) in [
+          { q: 'How much is a 5% raise on a $60,000 salary?', a: 'A 5% raise on a $60,000 salary adds $3,000 per year, bringing your new annual salary to $63,000. That works out to about $250 more per month or $115 more per biweekly paycheck before taxes.' },
+          { q: 'Is a 3% raise good?', a: 'A 3% raise roughly matches the average annual inflation rate. While it keeps your purchasing power stable, it does not represent a real increase in your standard of living. A raise above 3% is generally considered a real raise.' },
+          { q: 'How do I calculate my raise percentage?', a: 'Divide your dollar raise by your old salary and multiply by 100. For example, if you went from $50,000 to $53,000, your raise is ($3,000 ÷ $50,000) × 100 = 6%.' },
+          { q: 'What is the average raise percentage?', a: 'The average annual merit raise in the US is around 3–5%. Promotions often come with 10–15% raises, and job changes can yield 10–20% or more.' },
+          { q: 'Should I factor in inflation when evaluating a raise?', a: 'Yes. If inflation is 3% and your raise is 3%, your real purchasing power has not changed. Use the inflation toggle above to see your raise in real (inflation-adjusted) terms.' }
+        ]" :key="i">
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <button @click="showFaq[i] = !showFaq[i]" class="w-full flex justify-between items-center p-5 text-left">
+              <span class="font-semibold text-gray-900" x-text="faq.q"></span>
+              <svg :class="showFaq[i] && 'rotate-180'" class="w-5 h-5 text-gray-400 shrink-0 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div x-show="showFaq[i]" x-transition class="px-5 pb-5 text-gray-600 text-sm leading-relaxed" x-text="faq.a"></div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- JSON-LD FAQ Schema -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How much is a 5% raise on a $60,000 salary?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A 5% raise on a $60,000 salary adds $3,000 per year, bringing your new annual salary to $63,000. That works out to about $250 more per month or $115 more per biweekly paycheck before taxes."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is a 3% raise good?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A 3% raise roughly matches the average annual inflation rate. While it keeps your purchasing power stable, it does not represent a real increase in your standard of living. A raise above 3% is generally considered a real raise."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I calculate my raise percentage?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Divide your dollar raise by your old salary and multiply by 100. For example, if you went from $50,000 to $53,000, your raise is ($3,000 ÷ $50,000) × 100 = 6%."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the average raise percentage?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The average annual merit raise in the US is around 3–5%. Promotions often come with 10–15% raises, and job changes can yield 10–20% or more."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Should I factor in inflation when evaluating a raise?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. If inflation is 3% and your raise is 3%, your real purchasing power has not changed. Use the inflation toggle to see your raise in real (inflation-adjusted) terms."
+      }
+    }
+  ]
+}
+</script>
+{% endblock %}

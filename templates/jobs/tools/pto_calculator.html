@@ -1,0 +1,340 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Free PTO Calculator &amp; Work Days Counter | How Many Work Days Left?{% endblock %}
+{% block meta_description %}Free PTO accrual calculator and work days counter. Find how many work days in a year, calculate PTO accrual rates, and count business days between dates. No signup required.{% endblock %}
+{% block og_title %}Free PTO Calculator & Work Days Counter{% endblock %}
+{% block og_description %}Calculate work days between dates, PTO accrual rates, and countdown to any date. 100% free, no signup.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How many work days are in a year?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A typical year has 260 work days (52 weeks × 5 days). After subtracting 11 US federal holidays, there are 249 working days. Leap years may have 261 or 262 work days depending on how weekends fall."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is PTO accrual calculated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "PTO accrual is calculated by dividing your annual PTO allowance by the number of pay periods. For biweekly pay (26 periods), divide by 26. For monthly pay (12 periods), divide by 12. For example, 15 days annual PTO on a biweekly schedule accrues about 0.58 days per pay period."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the US federal holidays?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The 11 US federal holidays are: New Year's Day, Martin Luther King Jr. Day, Presidents' Day, Memorial Day, Juneteenth, Independence Day, Labor Day, Columbus Day, Veterans Day, Thanksgiving Day, and Christmas Day."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How many work days are left in the year?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Use our Days Until calculator tab to find exactly how many work days remain until any date, including year-end. It automatically excludes weekends and optionally US federal holidays."
+      }
+    }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="bg-[#F3F2EE] min-h-screen py-10 px-4"
+  x-data="{
+    tab: 'workdays',
+
+    // ── Work Days Counter ──
+    wd_start: new Date().toISOString().slice(0,10),
+    wd_end: new Date(new Date().getFullYear(), 11, 31).toISOString().slice(0,10),
+    wd_excludeHolidays: true,
+
+    // ── PTO Accrual ──
+    pto_annual: 15,
+    pto_startDate: new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0,10),
+    pto_used: 0,
+    pto_frequency: 'biweekly',
+
+    // ── Days Until ──
+    du_target: new Date(new Date().getFullYear(), 11, 31).toISOString().slice(0,10),
+    du_excludeHolidays: true,
+
+    // ── Helpers ──
+    getFederalHolidays(year) {
+      const holidays = [];
+      // New Year
+      holidays.push(new Date(year, 0, 1));
+      // MLK: 3rd Monday of Jan
+      holidays.push(this.nthWeekday(year, 0, 1, 3));
+      // Presidents: 3rd Monday of Feb
+      holidays.push(this.nthWeekday(year, 1, 1, 3));
+      // Memorial: last Monday of May
+      holidays.push(this.lastWeekday(year, 4, 1));
+      // Juneteenth
+      holidays.push(new Date(year, 5, 19));
+      // Independence Day
+      holidays.push(new Date(year, 6, 4));
+      // Labor Day: 1st Monday of Sep
+      holidays.push(this.nthWeekday(year, 8, 1, 1));
+      // Columbus: 2nd Monday of Oct
+      holidays.push(this.nthWeekday(year, 9, 1, 2));
+      // Veterans Day
+      holidays.push(new Date(year, 10, 11));
+      // Thanksgiving: 4th Thursday of Nov
+      holidays.push(this.nthWeekday(year, 10, 4, 4));
+      // Christmas
+      holidays.push(new Date(year, 11, 25));
+      return holidays.map(d => d.toISOString().slice(0,10));
+    },
+    nthWeekday(year, month, weekday, n) {
+      let d = new Date(year, month, 1);
+      let count = 0;
+      while (count < n) {
+        if (d.getDay() === weekday) count++;
+        if (count < n) d.setDate(d.getDate() + 1);
+      }
+      return d;
+    },
+    lastWeekday(year, month, weekday) {
+      let d = new Date(year, month + 1, 0);
+      while (d.getDay() !== weekday) d.setDate(d.getDate() - 1);
+      return d;
+    },
+    countWorkDays(startStr, endStr, excludeHolidays) {
+      if (!startStr || !endStr) return 0;
+      let s = new Date(startStr + 'T00:00:00');
+      let e = new Date(endStr + 'T00:00:00');
+      if (s > e) return 0;
+      let holidays = new Set();
+      if (excludeHolidays) {
+        for (let y = s.getFullYear(); y <= e.getFullYear(); y++) {
+          this.getFederalHolidays(y).forEach(h => holidays.add(h));
+        }
+      }
+      let count = 0;
+      let cur = new Date(s);
+      while (cur <= e) {
+        let day = cur.getDay();
+        if (day !== 0 && day !== 6) {
+          if (!holidays.has(cur.toISOString().slice(0,10))) count++;
+        }
+        cur.setDate(cur.getDate() + 1);
+      }
+      return count;
+    },
+    calendarDays(startStr, endStr) {
+      if (!startStr || !endStr) return 0;
+      let s = new Date(startStr + 'T00:00:00');
+      let e = new Date(endStr + 'T00:00:00');
+      return Math.max(0, Math.round((e - s) / 86400000) + 1);
+    },
+
+    // Work Days result
+    get wd_result() { return this.countWorkDays(this.wd_start, this.wd_end, this.wd_excludeHolidays); },
+    get wd_calendar() { return this.calendarDays(this.wd_start, this.wd_end); },
+    get wd_weekends() { return this.wd_calendar - this.countWorkDays(this.wd_start, this.wd_end, false); },
+
+    // PTO Accrual results
+    get pto_accrualRate() {
+      let periods = this.pto_frequency === 'biweekly' ? 26 : 12;
+      return (this.pto_annual / periods);
+    },
+    get pto_accrued() {
+      if (!this.pto_startDate) return 0;
+      let start = new Date(this.pto_startDate + 'T00:00:00');
+      let now = new Date();
+      let diffMs = now - start;
+      if (diffMs < 0) return 0;
+      let diffDays = diffMs / 86400000;
+      let periods = this.pto_frequency === 'biweekly' ? 26 : 12;
+      let periodLen = 365.25 / periods;
+      let elapsed = Math.floor(diffDays / periodLen);
+      return Math.min(this.pto_annual, (elapsed * this.pto_accrualRate));
+    },
+    get pto_remaining() { return Math.max(0, this.pto_accrued - this.pto_used); },
+
+    // Days Until results
+    get du_calendarDays() {
+      let today = new Date().toISOString().slice(0,10);
+      return Math.max(0, this.calendarDays(today, this.du_target) - 1);
+    },
+    get du_workDays() {
+      let today = new Date().toISOString().slice(0,10);
+      let wd = this.countWorkDays(today, this.du_target, this.du_excludeHolidays);
+      return Math.max(0, wd - 1);
+    },
+    get du_weeks() { return (this.du_calendarDays / 7).toFixed(1); }
+  }">
+
+  <div class="max-w-3xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-3">PTO &amp; Work Days Calculator</h1>
+      <p class="text-lg text-gray-600 max-w-2xl mx-auto">Count work days between dates, calculate PTO accrual, or find how many business days until a deadline — all free, no signup.</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex flex-wrap justify-center gap-2 mb-6">
+      <button @click="tab = 'workdays'" :class="tab === 'workdays' ? 'bg-emerald-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100'" class="px-5 py-2.5 rounded-full font-medium text-sm transition-all">
+        📅 Work Days Counter
+      </button>
+      <button @click="tab = 'pto'" :class="tab === 'pto' ? 'bg-emerald-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100'" class="px-5 py-2.5 rounded-full font-medium text-sm transition-all">
+        🏖️ PTO Accrual
+      </button>
+      <button @click="tab = 'countdown'" :class="tab === 'countdown' ? 'bg-emerald-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100'" class="px-5 py-2.5 rounded-full font-medium text-sm transition-all">
+        ⏳ Days Until
+      </button>
+    </div>
+
+    <!-- ═══════════ Tab 1: Work Days Counter ═══════════ -->
+    <div x-show="tab === 'workdays'" x-transition class="bg-white rounded-2xl shadow-sm p-6 md:p-8">
+      <h2 class="text-xl font-semibold text-gray-900 mb-5">Count Work Days Between Two Dates</h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+          <input type="date" x-model="wd_start" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+          <input type="date" x-model="wd_end" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+        </div>
+      </div>
+
+      <label class="flex items-center gap-2 text-sm text-gray-700 mb-6 cursor-pointer">
+        <input type="checkbox" x-model="wd_excludeHolidays" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+        Exclude US federal holidays
+      </label>
+
+      <!-- Results -->
+      <div class="grid grid-cols-3 gap-4">
+        <div class="bg-emerald-50 rounded-xl p-4 text-center">
+          <div class="text-3xl font-bold text-emerald-700" x-text="wd_result"></div>
+          <div class="text-sm text-emerald-600 mt-1">Work Days</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4 text-center">
+          <div class="text-3xl font-bold text-gray-700" x-text="wd_calendar"></div>
+          <div class="text-sm text-gray-500 mt-1">Calendar Days</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4 text-center">
+          <div class="text-3xl font-bold text-gray-700" x-text="wd_weekends"></div>
+          <div class="text-sm text-gray-500 mt-1">Weekend Days</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ Tab 2: PTO Accrual Calculator ═══════════ -->
+    <div x-show="tab === 'pto'" x-transition class="bg-white rounded-2xl shadow-sm p-6 md:p-8">
+      <h2 class="text-xl font-semibold text-gray-900 mb-5">PTO Accrual Calculator</h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Annual PTO Days</label>
+          <input type="number" x-model.number="pto_annual" min="0" max="365" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Accrual Start Date</label>
+          <input type="date" x-model="pto_startDate" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Days Used So Far</label>
+          <input type="number" x-model.number="pto_used" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Pay Frequency</label>
+          <select x-model="pto_frequency" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+            <option value="biweekly">Biweekly (26 periods)</option>
+            <option value="monthly">Monthly (12 periods)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="grid grid-cols-3 gap-4 mt-6">
+        <div class="bg-emerald-50 rounded-xl p-4 text-center">
+          <div class="text-3xl font-bold text-emerald-700" x-text="pto_accrued.toFixed(1)"></div>
+          <div class="text-sm text-emerald-600 mt-1">Days Accrued</div>
+        </div>
+        <div class="bg-emerald-50 rounded-xl p-4 text-center">
+          <div class="text-3xl font-bold text-emerald-700" x-text="pto_remaining.toFixed(1)"></div>
+          <div class="text-sm text-emerald-600 mt-1">Days Remaining</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4 text-center">
+          <div class="text-3xl font-bold text-gray-700" x-text="pto_accrualRate.toFixed(2)"></div>
+          <div class="text-sm text-gray-500 mt-1">Days / Period</div>
+        </div>
+      </div>
+
+      <p class="text-xs text-gray-400 mt-4 text-center">Accrual is estimated based on elapsed pay periods since your start date.</p>
+    </div>
+
+    <!-- ═══════════ Tab 3: Days Until ═══════════ -->
+    <div x-show="tab === 'countdown'" x-transition class="bg-white rounded-2xl shadow-sm p-6 md:p-8">
+      <h2 class="text-xl font-semibold text-gray-900 mb-5">Days Until a Date</h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Target Date</label>
+          <input type="date" x-model="du_target" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+        </div>
+        <div class="flex items-end">
+          <label class="flex items-center gap-2 text-sm text-gray-700 pb-2.5 cursor-pointer">
+            <input type="checkbox" x-model="du_excludeHolidays" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+            Exclude US federal holidays
+          </label>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="grid grid-cols-3 gap-4 mt-2">
+        <div class="bg-emerald-50 rounded-xl p-4 text-center">
+          <div class="text-3xl font-bold text-emerald-700" x-text="du_workDays"></div>
+          <div class="text-sm text-emerald-600 mt-1">Work Days</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4 text-center">
+          <div class="text-3xl font-bold text-gray-700" x-text="du_calendarDays"></div>
+          <div class="text-sm text-gray-500 mt-1">Calendar Days</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4 text-center">
+          <div class="text-3xl font-bold text-gray-700" x-text="du_weeks"></div>
+          <div class="text-sm text-gray-500 mt-1">Weeks</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="mt-10 bg-white rounded-2xl shadow-sm p-6 md:p-8">
+      <h2 class="text-xl font-semibold text-gray-900 mb-5">Frequently Asked Questions</h2>
+      <div class="space-y-5">
+        <div>
+          <h3 class="font-medium text-gray-900">How many work days are in a year?</h3>
+          <p class="text-gray-600 text-sm mt-1">A standard year has 260 work days (52 weeks × 5 weekdays). After removing 11 US federal holidays, you get 249 working days. Leap years may vary by one or two days depending on weekend alignment.</p>
+        </div>
+        <div>
+          <h3 class="font-medium text-gray-900">How is PTO accrual calculated?</h3>
+          <p class="text-gray-600 text-sm mt-1">Divide your annual PTO by the number of pay periods: 26 for biweekly or 12 for monthly. For example, 15 annual PTO days on a biweekly schedule accrues ~0.58 days per pay period.</p>
+        </div>
+        <div>
+          <h3 class="font-medium text-gray-900">Which US federal holidays are excluded?</h3>
+          <p class="text-gray-600 text-sm mt-1">New Year's Day, MLK Jr. Day, Presidents' Day, Memorial Day, Juneteenth, Independence Day, Labor Day, Columbus Day, Veterans Day, Thanksgiving, and Christmas Day — 11 holidays total.</p>
+        </div>
+        <div>
+          <h3 class="font-medium text-gray-900">Is my data stored anywhere?</h3>
+          <p class="text-gray-600 text-sm mt-1">No. All calculations run entirely in your browser. Nothing is sent to any server.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
