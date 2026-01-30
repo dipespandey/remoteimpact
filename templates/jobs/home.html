@@ -241,7 +241,7 @@
                     </svg>
                 </a>
                 <a href="{% url 'jobs:applicant_assistant' %}"
-                class="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-gray-300 text-gray-900 font-semibold text-lg hover:border-brand-500 hover:text-brand-600 transition"
+                class="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-white/30 text-white font-semibold text-lg hover:border-white hover:text-white transition"
                 data-track="ai_tools" data-track-category="cta" data-track-label="hero">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
@@ -439,7 +439,7 @@
                     <span class="px-4 py-2 rounded-full text-xs font-semibold bg-white/10 border border-white/10">{{job.category.name }}</span>
                     {% endif %}
                 </div>
-                <p class="text-white/70 text-sm mb-8 line-clamp-3">{{ job.description|truncatewords:25 }}</p>
+                <p class="text-white/70 text-sm mb-8 line-clamp-3">{{ job.description|striptags|truncatewords:25 }}</p>
                 <div class="flex items-center justify-between text-sm text-white/60">
                     <span>{{ job.location|default:"Remote" }}</span>
                     <a href="{{ job.get_absolute_url }}"
@@ -493,50 +493,6 @@
         </div>
     </div>
 </section> -->
-
-<!-- Recent Jobs Section -->
-{% if recent_jobs %}
-<section class="py-24 bg-gradient-to-b from-twilight-900 via-twilight-800 to-twilight-900">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-12">
-            <div>
-                <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-2">Fresh drops</p>
-                <h2 class="text-4xl font-semibold">Latest opportunities</h2>
-            </div>
-            <a href="{% url 'jobs:job_list' %}" class="inline-flex items-center text-neon font-semibold">
-                Explore all
-                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                        d="M5 12h14m0 0-6-6m6 6-6 6" />
-                </svg>
-            </a>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for job in recent_jobs %}
-            <div
-                class="rounded-3xl border border-white/10 bg-card-gradient p-6 backdrop-blur hover:border-white/30 transition">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <p class="text-xs uppercase tracking-[0.4em] text-white/50">{{ job.get_job_type_display }}</p>
-                        <h3 class="text-xl font-semibold text-white mt-2">
-                            <a href="{{ job.get_absolute_url }}" class="hover:text-neon transition">
-                                {{ job.title }}
-                            </a>
-                        </h3>
-                        <p class="text-white/70 text-sm">{{ job.organization.name }}</p>
-                    </div>
-                    <span class="text-white/60 text-sm card-meta-time">{{ job.posted_at|timesince }} ago</span>
-                </div>
-                <div class="flex items-center justify-between text-sm text-white/60">
-                    <span>{{ job.location|default:"Remote" }}</span>
-                    <a href="{{ job.get_absolute_url }}" class="text-neon font-semibold">Details →</a>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-{% endif %}
 
 <!-- Personalized Matching CTA -->
 {% if not has_impact_profile %}
