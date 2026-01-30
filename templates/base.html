@@ -533,10 +533,17 @@
         // Login popup for anonymous users - cumulative time tracking across pages
         {% if not user.is_authenticated %}
         (function() {
-            var POPUP_THRESHOLD_MS = 10000; // 10 seconds total browsing time
+            var POPUP_THRESHOLD_MS = 20000; // 20 seconds total browsing time
             var TIME_KEY = 'ri_browse_time';
             var SHOWN_KEY = 'ri_login_popup_shown';
             var pageStartTime = Date.now();
+
+            // Don't count time on auth pages
+            var path = window.location.pathname;
+            if (path.startsWith('/accounts/')) {
+                console.log('[LoginPopup] On auth page, not counting time');
+                return;
+            }
 
             console.log('[LoginPopup] Initialized - user not authenticated');
 
