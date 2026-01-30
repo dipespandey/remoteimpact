@@ -533,6 +533,14 @@
             </div>
         </div>
 
+        <!-- Browse by Impact Area - SEO internal links -->
+        <div class="flex flex-wrap gap-2 mb-2">
+            <span class="text-white/50 text-xs md:text-sm self-center mr-1">Browse by area:</span>
+            {% for cat in categories %}
+            <a href="{% url 'jobs:category_landing' slug=cat.slug %}" class="px-3 py-1.5 rounded-full text-xs md:text-sm font-medium bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10 transition">{{ cat.name }}</a>
+            {% endfor %}
+        </div>
+
         <section class="space-y-3 md:space-y-4 relative z-10">
             {% if jobs %}
                 {% for job in jobs %}

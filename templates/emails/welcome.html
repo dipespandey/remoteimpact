@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Remote Impact</title>
+    <style>
+        body { margin: 0; padding: 0; background-color: #f3f2ee; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        @media screen and (max-width: 600px) { .container { width: 100% !important; } }
+    </style>
+</head>
+<body style="background-color: #f3f2ee; margin: 0; padding: 0;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f2ee;">
+<tr><td align="center" style="padding: 40px 16px;">
+<table class="container" role="presentation" width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+    <tr><td style="background-color: #16803c; padding: 32px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Welcome to Remote Impact 🌍</h1>
+    </td></tr>
+    <tr><td style="padding: 32px;">
+        <p style="font-size: 16px; color: #333; line-height: 1.6;">Hi {{ user.first_name|default:"there" }},</p>
+        <p style="font-size: 16px; color: #333; line-height: 1.6;">Thanks for joining <strong>Remote Impact</strong> — the job board for remote roles that make a difference.</p>
+        <p style="font-size: 16px; color: #333; line-height: 1.6;">Here's how to get started:</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr><td style="padding: 8px 0;"><strong>1.</strong> <a href="{{ site_url }}/impact-profile/wizard/" style="color: #16803c;">Complete your Impact Profile</a> — get personalized job matches</td></tr>
+            <tr><td style="padding: 8px 0;"><strong>2.</strong> <a href="{{ site_url }}/jobs/" style="color: #16803c;">Browse impact jobs</a> — filter by cause, role, and more</td></tr>
+            <tr><td style="padding: 8px 0;"><strong>3.</strong> Get a weekly digest of jobs matched to your values</td></tr>
+        </table>
+        <p style="text-align: center; padding-top: 24px;">
+            <a href="{{ site_url }}/impact-profile/wizard/" style="display: inline-block; background-color: #16803c; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600;">Build Your Impact Profile</a>
+        </p>
+    </td></tr>
+    <tr><td style="padding: 16px 32px; background-color: #f9f9f9; text-align: center; font-size: 13px; color: #888;">
+        Remote Impact Jobs · <a href="{{ site_url }}" style="color: #16803c;">remoteimpact.org</a>
+    </td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>

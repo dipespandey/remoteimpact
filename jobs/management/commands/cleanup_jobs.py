@@ -3,7 +3,7 @@ Management command to clean up old/expired jobs.
 
 Usage:
     python manage.py cleanup_jobs                    # Deactivate expired and old jobs
-    python manage.py cleanup_jobs --max-age 180     # Custom max age in days (default: 180 = 6 months)
+    python manage.py cleanup_jobs --max-age 180     # Custom max age in days (default: 90 = 3 months)
     python manage.py cleanup_jobs --dry-run         # Preview without making changes
     python manage.py cleanup_jobs --delete          # Delete instead of deactivate (use with caution)
 """
@@ -24,8 +24,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "--max-age",
             type=int,
-            default=180,
-            help="Deactivate jobs posted more than N days ago (default: 180 = 6 months).",
+            default=90,
+            help="Deactivate jobs posted more than N days ago (default: 90 = 3 months).",
         )
         parser.add_argument(
             "--dry-run",

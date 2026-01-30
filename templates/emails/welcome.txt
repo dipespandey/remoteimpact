@@ -1,0 +1,14 @@
+Hi {{ user.first_name|default:"there" }},
+
+Welcome to Remote Impact — the job board for remote roles that make a difference.
+
+Here's how to get started:
+
+1. Complete your Impact Profile: {{ site_url }}/impact-profile/wizard/
+2. Browse impact jobs: {{ site_url }}/jobs/
+3. Get a weekly digest of jobs matched to your values
+
+Happy job hunting!
+— The Remote Impact Team
+
+{{ site_url }}

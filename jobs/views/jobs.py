@@ -2,7 +2,7 @@ from django.views.generic import ListView, DetailView, FormView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
@@ -161,6 +161,29 @@ class JobDetailView(DetailView):
     template_name = "jobs/job_detail.html"
     context_object_name = "job"
 
+    def get(self, request, *args, **kwargs):
+        try:
+            return super().get(request, *args, **kwargs)
+        except Http404:
+            # Fallback: check if this is an old slug and redirect to new one
+            old_slug = self.kwargs.get("slug", "")
+            try:
+                import json
+                import os
+                for redirect_path in ["/data/slug_redirects.json", "/tmp/slug_redirects.json"]:
+                    if not os.path.exists(redirect_path):
+                        continue
+                    with open(redirect_path) as f:
+                        redirects = json.load(f)
+                    if old_slug in redirects:
+                        return redirect(
+                            reverse("jobs:job_detail", kwargs={"slug": redirects[old_slug]}),
+                            permanent=True,
+                        )
+            except Exception:
+                pass
+            raise
+
     def get_queryset(self):
         from django.utils import timezone
         from datetime import timedelta
@@ -300,6 +323,41 @@ class OrganizationSearchView(View):
 
         results = [{"name": org.name, "job_count": org.job_count} for org in orgs]
         return JsonResponse({"results": results})
+
+
+
+class CategoryLandingView(ListView):
+    """SEO-optimized landing page for each impact category."""
+    model = Job
+    template_name = "jobs/category_landing.html"
+    context_object_name = "jobs"
+    paginate_by = 20
+
+    def get_queryset(self):
+        self.category = get_object_or_404(Category, slug=self.kwargs["slug"])
+        from django.utils import timezone
+        from datetime import timedelta
+        now = timezone.now()
+        cutoff = now - timedelta(days=180)
+        return (
+            Job.objects.filter(is_active=True, category=self.category)
+            .exclude(expires_at__lt=now)
+            .exclude(expires_at__isnull=True, posted_at__lt=cutoff)
+            .select_related("organization", "category")
+            .order_by("-posted_at")
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        cat = self.category
+        context["category"] = cat
+        context["categories"] = Category.objects.all().order_by("name")
+        context["meta_title"] = f"Remote {cat.name} Jobs \u2014 Remote Impact Jobs"
+        context["meta_description"] = (
+            f"Browse {context['page_obj'].paginator.count}+ remote {cat.name.lower()} jobs. "
+            f"Find purpose-driven roles in {cat.name.lower()} from top impact organizations."
+        )
+        return context
 
 
 class AppliedJobDetailView(LoginRequiredMixin, DetailView):

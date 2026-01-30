@@ -255,8 +255,13 @@ DEFAULT_FROM_EMAIL = os.getenv(
     "DEFAULT_FROM_EMAIL", "Remote Impact Jobs <hello@remoteimpact.org>"
 )
 
-# Email settings for development
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Email settings - Resend SMTP
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.resend.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "resend"
+EMAIL_HOST_PASSWORD = os.getenv("RESEND_API_KEY", "")
 ACCOUNT_EMAIL_VERIFICATION = "none"
 # New allauth settings (replaces deprecated ACCOUNT_EMAIL_REQUIRED, ACCOUNT_AUTHENTICATION_METHOD, ACCOUNT_USERNAME_REQUIRED)
 ACCOUNT_LOGIN_METHODS = {"email"}

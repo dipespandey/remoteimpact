@@ -1,7 +1,7 @@
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
 from django.utils import timezone
-from .models import Job
+from .models import Job, Category
 
 
 class JobSitemap(Sitemap):
@@ -20,7 +20,24 @@ class JobSitemap(Sitemap):
         return obj.updated_at
 
 
-# NOTE: CategorySitemap and OrganizationSitemap removed - they were filter URLs
+
+
+class CategorySitemap(Sitemap):
+    """Sitemap for category landing pages."""
+    changefreq = "weekly"
+    priority = 0.9
+
+    def items(self):
+        return Category.objects.all().order_by('name')
+
+    def location(self, obj):
+        return reverse('jobs:category_landing', args=[obj.slug])
+
+    def lastmod(self, obj):
+        from django.utils import timezone
+        return timezone.now()
+
+# NOTE: Old CategorySitemap and OrganizationSitemap removed - they were filter URLs
 # (?category=x, ?org=x) that all canonicalize to /jobs/, causing Google to see
 # them as "alternate pages with proper canonical" and wasting crawl budget.
 # If we want these indexed, create dedicated URLs like /jobs/category/climate/

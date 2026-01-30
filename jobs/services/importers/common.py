@@ -226,10 +226,15 @@ def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
     ).first()
 
     if job:
+        old_title = job.title
         for field, value in defaults.items():
             setattr(job, field, value)
         job.organization = organization
         job.category = category
+        # Update slug if title changed from placeholder
+        new_title = defaults.get("title", old_title)
+        if old_title != new_title and job.slug.startswith("job-at-"):
+            job.slug = _ensure_job_slug(new_title, organization.name)
         job.save()
         return job, False
 

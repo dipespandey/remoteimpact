@@ -74,7 +74,7 @@
         rel="stylesheet">
 
     <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{% static "tailwind.min.css" %}">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <!-- Alpine.js for interactive components -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -100,63 +100,6 @@
         });
     </script>
 
-    <!-- Custom Tailwind Configuration -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        display: ['Sora', 'Inter', 'system-ui', 'sans-serif'],
-                        sans: ['Inter', 'Sora', 'system-ui', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#F5FFE8',
-                            100: '#E8FFC9',
-                            200: '#D3FF9A',
-                            300: '#8AD425', // Darkened from #BDF86B for better contrast
-                            400: '#7BC420',
-                            500: '#6EAA1C',
-                            600: '#5A8B17',
-                            700: '#517E15',
-                            800: '#35530D',
-                            900: '#1B2B06',
-                        },
-                        // Remapped "twilight" to light theme background colors
-                        twilight: {
-                            900: '#f7f4ef', // Main background
-                            800: '#f1ede6', // Card background / secondary
-                            700: '#e7e1d7', // Border / tertiary
-                            600: '#d8d0c4',
-                        },
-                        // Remapped dark grays/blacks to text colors
-                        gray: {
-                            900: '#0f172a', // Main text
-                            800: '#1e293b',
-                            700: '#334155',
-                            400: '#64748b', // Muted text
-                            300: '#94a3b8',
-                            100: '#f3f4f6', // Fixed: Remapped back to light gray for backgrounds
-                            50: '#f9fafb',
-                        },
-                        slate: {
-                            100: '#0f172a', // Main body text
-                        },
-                        neon: '#5A8B17', // Darker green for better contrast on links
-                        accent: '#58F6C7'
-                    },
-                    boxShadow: {
-                        glow: '0 0 30px rgba(138, 212, 37, 0.35)',
-                    },
-                    backgroundImage: {
-                        'grid': 'radial-gradient(circle at 1px 1px, rgba(15, 23, 42, 0.08) 1px, transparent 0)',
-                        'hero-gradient': 'linear-gradient(135deg, #f7f4ef 0%, #efe8dd 50%, #e4dccf 100%)',
-                        'card-gradient': 'linear-gradient(135deg, #ffffff, #faf7f2)',
-                    }
-                }
-            }
-        }
-    </script>
 
     <style>
         body {
