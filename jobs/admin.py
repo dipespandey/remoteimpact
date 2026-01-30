@@ -13,6 +13,9 @@ from .models import (
     AssistantSubscription,
     AssistantGeneration,
     NewsletterSubscriber,
+    Referral,
+    ReferralSignup,
+    JobAlert,
 )
 
 
@@ -457,3 +460,25 @@ class NewsletterSubscriberAdmin(admin.ModelAdmin):
     readonly_fields = ["created_at", "confirmed_at", "unsubscribed_at"]
     date_hierarchy = "created_at"
     ordering = ["-created_at"]
+
+
+@admin.register(Referral)
+class ReferralAdmin(admin.ModelAdmin):
+    list_display = ["referrer", "code", "referral_count", "created_at"]
+    search_fields = ["referrer__email", "code"]
+    readonly_fields = ["created_at"]
+
+
+@admin.register(ReferralSignup)
+class ReferralSignupAdmin(admin.ModelAdmin):
+    list_display = ["referred_user", "referrer", "created_at"]
+    search_fields = ["referred_user__email", "referrer__referrer__email"]
+    readonly_fields = ["created_at"]
+
+
+@admin.register(JobAlert)
+class JobAlertAdmin(admin.ModelAdmin):
+    list_display = ["user", "name", "frequency", "is_active", "last_sent_at", "created_at"]
+    list_filter = ["frequency", "is_active"]
+    search_fields = ["user__email", "name", "keywords"]
+    readonly_fields = ["created_at", "updated_at", "last_sent_at"]

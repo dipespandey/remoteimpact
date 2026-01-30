@@ -1266,3 +1266,116 @@ class NewsletterSubscriber(models.Model):
         if self.unsubscribed:
             status = "unsubscribed"
         return f"{self.email} ({status})"
+
+
+# =============================================================================
+# REFERRAL SYSTEM
+# =============================================================================
+
+
+class Referral(models.Model):
+    """Tracks referral codes and who referred whom."""
+
+    referrer = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="referral_profile"
+    )
+    code = models.CharField(max_length=20, unique=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.referrer.email} ({self.code})"
+
+    @classmethod
+    def get_or_create_for_user(cls, user):
+        """Get or create a referral code for a user."""
+        try:
+            return cls.objects.get(referrer=user)
+        except cls.DoesNotExist:
+            import secrets
+            code = secrets.token_urlsafe(8)[:10]
+            return cls.objects.create(referrer=user, code=code)
+
+    @property
+    def referral_count(self):
+        return ReferralSignup.objects.filter(referrer=self).count()
+
+
+class ReferralSignup(models.Model):
+    """Tracks each signup that came through a referral link."""
+
+    referrer = models.ForeignKey(
+        Referral, on_delete=models.CASCADE, related_name="signups"
+    )
+    referred_user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="referred_by"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.referred_user.email} referred by {self.referrer.referrer.email}"
+
+
+# =============================================================================
+# JOB ALERTS
+# =============================================================================
+
+
+class JobAlert(models.Model):
+    """User-configured job alert with categories, keywords, and frequency."""
+
+    class Frequency(models.TextChoices):
+        DAILY = "daily", "Daily"
+        WEEKLY = "weekly", "Weekly"
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="job_alerts"
+    )
+    name = models.CharField(max_length=100, blank=True, help_text="Optional label for this alert")
+    categories = models.ManyToManyField(Category, blank=True, related_name="alerts")
+    keywords = models.TextField(blank=True, help_text="Comma-separated keywords to match")
+    frequency = models.CharField(
+        max_length=10, choices=Frequency.choices, default=Frequency.WEEKLY
+    )
+    is_active = models.BooleanField(default=True)
+    last_sent_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        label = self.name or f"Alert #{self.pk}"
+        return f"{self.user.email} - {label} ({self.frequency})"
+
+    def get_matching_jobs(self, since=None):
+        """Find jobs matching this alert's criteria since a given date."""
+        from django.db.models import Q
+        from django.utils import timezone
+        from datetime import timedelta
+
+        if since is None:
+            since = self.last_sent_at or (timezone.now() - timedelta(days=7))
+
+        qs = Job.objects.filter(is_active=True, posted_at__gte=since)
+
+        # Filter by categories if set
+        cats = self.categories.all()
+        if cats.exists():
+            qs = qs.filter(category__in=cats)
+
+        # Filter by keywords if set
+        if self.keywords.strip():
+            kw_list = [k.strip() for k in self.keywords.split(",") if k.strip()]
+            kw_q = Q()
+            for kw in kw_list:
+                kw_q |= Q(title__icontains=kw) | Q(description__icontains=kw)
+            qs = qs.filter(kw_q)
+
+        return qs.select_related("organization", "category").order_by("-posted_at")

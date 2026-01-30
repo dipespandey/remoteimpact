@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Share & Invite - Remote Impact{% endblock %}
+
+{% block content %}
+<section class="bg-[#F3F2EE] min-h-screen py-12">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+
+        <header class="border-b border-gray-200 pb-8">
+            <p class="text-xs uppercase tracking-widest text-gray-500 font-bold mb-1">Referral Program</p>
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Share & Invite</h1>
+            <p class="text-gray-600 mt-2">Invite friends to Remote Impact and help them find purpose-driven work.</p>
+        </header>
+
+        <!-- Referral Link Card -->
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Your Referral Link</h2>
+            <div class="flex items-center gap-3">
+                <input type="text" id="referral-link" value="{{ referral_link }}" readonly
+                    class="flex-1 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-700 text-sm font-mono">
+                <button onclick="copyReferralLink()" id="copy-btn"
+                    class="px-5 py-3 rounded-xl bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition text-sm">
+                    Copy Link
+                </button>
+            </div>
+            <p class="text-sm text-gray-500 mt-3">Share this link with friends. When they sign up, it'll be tracked here.</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-white p-6 rounded-3xl border border-gray-100">
+                <p class="text-gray-500 text-sm font-medium">People Invited</p>
+                <p class="text-3xl font-bold text-gray-900 mt-2">{{ total_referrals }}</p>
+            </div>
+            <div class="bg-white p-6 rounded-3xl border border-gray-100">
+                <p class="text-gray-500 text-sm font-medium">Your Code</p>
+                <p class="text-3xl font-bold text-gray-900 mt-2 font-mono">{{ referral.code }}</p>
+            </div>
+        </div>
+
+        <!-- Recent Signups -->
+        {% if signups %}
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-lg font-bold text-gray-900">Recent Referrals</h2>
+            </div>
+            <div class="divide-y divide-gray-100">
+                {% for signup in signups %}
+                <div class="p-6 flex justify-between items-center">
+                    <div>
+                        <p class="font-medium text-gray-900">{{ signup.referred_user.email }}</p>
+                        <p class="text-sm text-gray-500">Joined {{ signup.created_at|date:"M d, Y" }}</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">Signed Up</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="text-center">
+            <a href="{% url 'jobs:account' %}" class="text-brand-600 font-medium hover:underline">&larr; Back to Dashboard</a>
+        </div>
+    </div>
+</section>
+
+<script>
+function copyReferralLink() {
+    const input = document.getElementById('referral-link');
+    navigator.clipboard.writeText(input.value).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy Link'; }, 2000);
+    });
+}
+</script>
+{% endblock %}

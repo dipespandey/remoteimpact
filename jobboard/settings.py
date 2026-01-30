@@ -76,7 +76,6 @@ INSTALLED_APPS = [
     "django_countries",
     "jobs",
     "gigs",
-    "blog",
 ]
 
 MIDDLEWARE = [
@@ -89,6 +88,7 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "jobs.middleware.ReferralMiddleware",
 ]
 
 ROOT_URLCONF = "jobboard.urls"

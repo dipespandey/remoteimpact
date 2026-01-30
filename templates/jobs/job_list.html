@@ -599,6 +599,7 @@
             {% endif %}
         </section>
 
+        <!-- Job Alert CTA -->        <div class="bg-gradient-to-r from-brand-50 to-purple-50 rounded-2xl md:rounded-3xl p-4 md:p-6 border border-brand-100 flex flex-col sm:flex-row items-center justify-between gap-4">            <div class="flex items-center gap-3">                <span class="text-2xl">🔔</span>                <div>                    <p class="font-bold text-gray-900">Get alerts for jobs like these</p>                    <p class="text-sm text-gray-600">We'll email you when new matching jobs are posted.</p>                </div>            </div>            <a href="{% url 'jobs:job_alerts' %}" class="px-5 py-2.5 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition shadow-sm whitespace-nowrap text-sm">Create Alert</a>        </div>
         {% if page_obj.has_other_pages %}
         <div class="pt-10 flex justify-center">
             <nav class="inline-flex items-center gap-2 bg-white rounded-full p-2 shadow-sm border border-gray-200">

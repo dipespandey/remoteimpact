@@ -1,7 +1,8 @@
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
-from ..models import UserProfile, SeekerProfile
+from django.conf import settings
+from ..models import UserProfile, SeekerProfile, Referral, JobAlert
 from ..services.onboarding_service import OnboardingService
 
 
@@ -19,10 +20,18 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
 
+        # Referral info for all users
+        referral = Referral.get_or_create_for_user(user)
+        context["referral"] = referral
+        context["referral_link"] = f"{settings.SITE_URL}/?ref={referral.code}"
+        context["referral_count"] = referral.signups.count()
+
+        # Job alerts count
+        context["alert_count"] = JobAlert.objects.filter(user=user, is_active=True).count()
+
         try:
             profile = user.profile
         except UserProfile.DoesNotExist:
-            # Should be caught by dispatch, but safety net
             return context
 
         if profile.account_type == UserProfile.AccountType.EMPLOYER:

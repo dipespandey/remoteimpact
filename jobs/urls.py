@@ -138,4 +138,11 @@ urlpatterns = [
     # RSS Feeds
     path("feed/jobs/", LatestJobsFeed(), name="jobs_feed"),
     path("feed/jobs/category/<slug:slug>/", CategoryJobsFeed(), name="category_feed"),
+    # Referral System
+    path("referral/", views.ReferralDashboardView.as_view(), name="referral_dashboard"),
+    # Job Alerts
+    path("alerts/", views.JobAlertListView.as_view(), name="job_alerts"),
+    path("alerts/create/", views.JobAlertCreateView.as_view(), name="job_alert_create"),
+    path("alerts/<int:pk>/delete/", views.JobAlertDeleteView.as_view(), name="job_alert_delete"),
+    path("alerts/<int:pk>/toggle/", views.JobAlertToggleView.as_view(), name="job_alert_toggle"),
 ]

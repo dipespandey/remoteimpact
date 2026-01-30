@@ -37,3 +37,5 @@ from .newsletter import (
     NewsletterPreferencesView,
     NewsletterSubscribeView,
 )
+from .referral import ReferralDashboardView, ReferralLandingView
+from .job_alerts import JobAlertListView, JobAlertCreateView, JobAlertDeleteView, JobAlertToggleView

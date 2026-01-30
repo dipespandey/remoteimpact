@@ -2,7 +2,7 @@ from django import forms
 
 from django_countries.widgets import CountrySelectWidget
 
-from .models import Category, Job, Organization, UserProfile
+from .models import Category, Job, JobAlert, Organization, UserProfile
 
 
 class OnboardingTypeForm(forms.Form):
@@ -280,3 +280,28 @@ class JobSubmissionForm(forms.Form):
                 "Max should be greater than or equal to the minimum salary.",
             )
         return cleaned
+
+
+class JobAlertForm(forms.ModelForm):
+    class Meta:
+        model = JobAlert
+        fields = ["name", "categories", "keywords", "frequency"]
+        labels = {
+            "name": "Alert Name (optional)",
+            "categories": "Impact Areas",
+            "keywords": "Keywords",
+            "frequency": "How often?",
+        }
+        widgets = {
+            "keywords": forms.TextInput(attrs={"placeholder": "e.g., climate, python, product manager"}),
+            "categories": forms.CheckboxSelectMultiple(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from .models import Category
+        self.fields["categories"].queryset = Category.objects.all()
+        base_class = "w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition"
+        for name, field in self.fields.items():
+            if name != "categories":
+                field.widget.attrs.update({"class": base_class})

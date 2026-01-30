@@ -60,3 +60,35 @@ def send_welcome_email(sender, instance, created, **kwargs):
         logger.info(f'Welcome email sent to {instance.email}')
     except Exception as e:
         logger.error(f'Failed to send welcome email to {instance.email}: {e}')
+
+
+# =============================================================================
+# REFERRAL TRACKING
+# =============================================================================
+
+try:
+    from allauth.account.signals import user_signed_up
+
+    @receiver(user_signed_up)
+    def track_referral_on_signup(request, user, **kwargs):
+        """When a user signs up, check if they came via a referral link."""
+        referral_code = request.session.pop("referral_code", None)
+        if not referral_code:
+            return
+        try:
+            from jobs.models import Referral, ReferralSignup
+            referral = Referral.objects.get(code=referral_code)
+            # Don't let users refer themselves
+            if referral.referrer == user:
+                return
+            ReferralSignup.objects.get_or_create(
+                referrer=referral,
+                referred_user=user,
+            )
+            logger.info(f"Referral tracked: {user.email} referred by {referral.referrer.email}")
+        except Referral.DoesNotExist:
+            logger.warning(f"Invalid referral code: {referral_code}")
+        except Exception as e:
+            logger.error(f"Error tracking referral: {e}")
+except ImportError:
+    pass
