@@ -76,6 +76,7 @@ INSTALLED_APPS = [
     "django_countries",
     "jobs",
     "gigs",
+    "blog",
 ]
 
 MIDDLEWARE = [
