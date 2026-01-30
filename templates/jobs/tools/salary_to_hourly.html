@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+
+{% block title %}Salary to Hourly Calculator – Convert Annual Salary to Hourly Rate | Remote Impact{% endblock %}
+
+{% block meta_description %}Free salary to hourly calculator. Instantly convert annual salary to hourly rate and hourly to annual. Includes tax estimates, comparison tables, and tips for remote workers.{% endblock %}
+
+{% block content %}
+<style>
+  .panel {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    background: linear-gradient(135deg, #ffffff, #faf7f2);
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+    border-radius: 1rem;
+  }
+  .input-base {
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    font-size: 1rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .input-base:focus {
+    outline: none;
+    border-color: #6EAA1C;
+    box-shadow: 0 0 0 3px rgba(110, 170, 28, 0.2);
+  }
+  .result-card {
+    background: linear-gradient(135deg, #f0fdf4, #faf7f2);
+    border: 2px solid rgba(110, 170, 28, 0.3);
+    border-radius: 1rem;
+    box-shadow: 0 4px 24px rgba(110, 170, 28, 0.1);
+  }
+  .tab-active {
+    background: #6EAA1C;
+    color: white;
+  }
+  .tab-inactive {
+    background: white;
+    color: #374151;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+  }
+  .tab-inactive:hover {
+    background: #f9fafb;
+  }
+  .comparison-row:nth-child(even) {
+    background: rgba(110, 170, 28, 0.04);
+  }
+</style>
+
+<section class="py-12 bg-[#F3F2EE] min-h-screen">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-500 mb-6" aria-label="Breadcrumb">
+      <a href="{% url 'jobs:resources' %}" class="hover:text-gray-700">Resources</a>
+      <span class="mx-2">›</span>
+      <span class="text-gray-700">Salary to Hourly Calculator</span>
+    </nav>
+
+    <!-- Hero -->
+    <div class="text-center mb-10">
+      <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Salary to Hourly Calculator</h1>
+      <p class="text-lg text-gray-600 max-w-2xl mx-auto">Instantly convert between annual salary and hourly rate. Perfect for remote workers, freelancers, and job seekers comparing compensation packages.</p>
+    </div>
+
+    <!-- Calculator -->
+    <div class="panel p-6 md:p-8 mb-10">
+      <!-- Mode Tabs -->
+      <div class="flex gap-2 mb-6">
+        <button id="tab-salary" onclick="setMode('salary')" class="tab-active px-5 py-2.5 rounded-full font-medium text-sm transition">Annual → Hourly</button>
+        <button id="tab-hourly" onclick="setMode('hourly')" class="tab-inactive px-5 py-2.5 rounded-full font-medium text-sm transition">Hourly → Annual</button>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Primary Input -->
+        <div>
+          <label id="primary-label" for="primary-input" class="block text-sm font-semibold text-gray-700 mb-1">Annual Salary ($)</label>
+          <input type="number" id="primary-input" class="input-base text-lg" placeholder="65,000" min="0" step="any" oninput="calculate()">
+        </div>
+
+        <!-- Hours per Week -->
+        <div>
+          <label for="hours-week" class="block text-sm font-semibold text-gray-700 mb-1">Hours per Week</label>
+          <input type="number" id="hours-week" class="input-base" value="40" min="1" max="168" oninput="calculate()">
+        </div>
+
+        <!-- Weeks per Year -->
+        <div>
+          <label for="weeks-year" class="block text-sm font-semibold text-gray-700 mb-1">Weeks per Year</label>
+          <input type="number" id="weeks-year" class="input-base" value="52" min="1" max="52" oninput="calculate()">
+        </div>
+
+        <!-- Tax Rate -->
+        <div>
+          <label for="tax-rate" class="block text-sm font-semibold text-gray-700 mb-1">Tax Rate % <span class="font-normal text-gray-400">(optional)</span></label>
+          <input type="number" id="tax-rate" class="input-base" placeholder="0" min="0" max="100" step="0.1" oninput="calculate()">
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="results" class="result-card p-6 mt-6 hidden">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 text-center">
+          <div>
+            <p class="text-xs uppercase tracking-wider text-gray-500 mb-1">Hourly Rate</p>
+            <p id="res-hourly" class="text-2xl font-bold text-gray-900">—</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wider text-gray-500 mb-1">Annual Salary</p>
+            <p id="res-annual" class="text-2xl font-bold text-gray-900">—</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wider text-gray-500 mb-1">Monthly</p>
+            <p id="res-monthly" class="text-xl font-bold text-gray-900">—</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wider text-gray-500 mb-1">Weekly</p>
+            <p id="res-weekly" class="text-xl font-bold text-gray-900">—</p>
+          </div>
+        </div>
+        <div id="after-tax-row" class="mt-4 pt-4 border-t border-gray-200 hidden">
+          <div class="grid sm:grid-cols-3 gap-4 text-center">
+            <div>
+              <p class="text-xs uppercase tracking-wider text-gray-500 mb-1">After-Tax Annual</p>
+              <p id="res-net-annual" class="text-lg font-semibold text-green-700">—</p>
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-wider text-gray-500 mb-1">After-Tax Monthly</p>
+              <p id="res-net-monthly" class="text-lg font-semibold text-green-700">—</p>
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-wider text-gray-500 mb-1">After-Tax Hourly</p>
+              <p id="res-net-hourly" class="text-lg font-semibold text-green-700">—</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="panel p-6 md:p-8 mb-10">
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">Salary to Hourly Conversion Table</h2>
+      <p class="text-gray-600 mb-4">Based on 40 hours/week, 52 weeks/year (2,080 hours total).</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b-2 border-gray-200 text-left">
+              <th class="py-3 pr-4 font-semibold text-gray-700">Annual Salary</th>
+              <th class="py-3 pr-4 font-semibold text-gray-700">Monthly</th>
+              <th class="py-3 pr-4 font-semibold text-gray-700">Weekly</th>
+              <th class="py-3 font-semibold text-gray-700">Hourly Rate</th>
+            </tr>
+          </thead>
+          <tbody id="comparison-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- How It Works -->
+    <div class="panel p-6 md:p-8 mb-10">
+      <h2 class="text-2xl font-bold text-gray-900 mb-4">How to Convert Salary to Hourly Rate</h2>
+      <div class="space-y-4 text-gray-700 leading-relaxed">
+        <p>The formula is straightforward:</p>
+        <div class="bg-white rounded-lg p-4 border border-gray-200 font-mono text-center text-lg">
+          Hourly Rate = Annual Salary ÷ (Hours per Week × Weeks per Year)
+        </div>
+        <p>For a standard full-time schedule of <strong>40 hours/week</strong> and <strong>52 weeks/year</strong>, you work <strong>2,080 hours</strong> annually. So a $50,000 salary equals roughly <strong>$24.04/hour</strong>.</p>
+        <h3 class="text-lg font-semibold text-gray-900 pt-2">Adjusting for Time Off</h3>
+        <p>If you get 2 weeks of unpaid vacation, change "Weeks per Year" to 50. This gives a more accurate picture of your <em>effective</em> hourly rate, since you're earning the same salary over fewer working weeks.</p>
+        <h3 class="text-lg font-semibold text-gray-900 pt-2">Why This Matters for Remote Workers</h3>
+        <p>When comparing a salaried position to freelance or contract work, understanding your hourly equivalent helps you make fair comparisons. Remember that freelancers typically need to charge 25-50% more per hour to cover self-employment taxes, benefits, and unpaid time off.</p>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="panel p-6 md:p-8 mb-10">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
+      <div class="space-y-6">
+        <div>
+          <h3 class="font-semibold text-gray-900 mb-1">How do I convert my annual salary to an hourly rate?</h3>
+          <p class="text-gray-700">Divide your annual salary by the total number of hours you work in a year. For a standard 40-hour week with 52 weeks, that's 2,080 hours. For example, a $60,000 salary ÷ 2,080 = $28.85/hour.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-900 mb-1">How do I convert an hourly rate to annual salary?</h3>
+          <p class="text-gray-700">Multiply your hourly rate by the number of hours you work per week, then multiply by 52 weeks. For example, $30/hour × 40 hours × 52 weeks = $62,400/year.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-900 mb-1">What is a good hourly rate for remote work?</h3>
+          <p class="text-gray-700">It varies widely by field and experience. In the US, remote work hourly rates typically range from $20-$75/hour for most roles, with specialized tech and consulting roles going higher. Use this calculator to compare offers effectively.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-900 mb-1">Should I include overtime in the calculation?</h3>
+          <p class="text-gray-700">If you regularly work overtime, increase the "Hours per Week" field to reflect your actual hours. This gives you a more realistic effective hourly rate—which may be lower than you expect for salaried roles.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-900 mb-1">How does the tax rate field work?</h3>
+          <p class="text-gray-700">The optional tax rate provides an estimate of your after-tax earnings. Enter your approximate total tax rate (federal + state + local) to see net pay figures. This is an estimate—consult a tax professional for exact numbers.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="text-center py-8">
+      <p class="text-gray-600 mb-4">Ready to find your next opportunity?</p>
+      <a href="{% url 'jobs:job_list' %}" class="inline-flex items-center px-6 py-3 rounded-full bg-[#6EAA1C] text-white font-semibold hover:bg-[#5d9116] transition">
+        Browse Remote Impact Jobs
+        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+      </a>
+    </div>
+
+  </div>
+</section>
+
+<!-- JSON-LD FAQPage Schema -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How do I convert my annual salary to an hourly rate?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Divide your annual salary by the total number of hours you work in a year. For a standard 40-hour week with 52 weeks, that's 2,080 hours. For example, a $60,000 salary ÷ 2,080 = $28.85/hour."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I convert an hourly rate to annual salary?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Multiply your hourly rate by the number of hours you work per week, then multiply by 52 weeks. For example, $30/hour × 40 hours × 52 weeks = $62,400/year."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is a good hourly rate for remote work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It varies widely by field and experience. In the US, remote work hourly rates typically range from $20-$75/hour for most roles, with specialized tech and consulting roles going higher."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Should I include overtime in the calculation?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "If you regularly work overtime, increase the Hours per Week field to reflect your actual hours. This gives you a more realistic effective hourly rate."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does the tax rate field work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The optional tax rate provides an estimate of your after-tax earnings. Enter your approximate total tax rate (federal + state + local) to see net pay figures. This is an estimate—consult a tax professional for exact numbers."
+      }
+    }
+  ]
+}
+</script>
+
+<script>
+let mode = 'salary';
+
+function fmt(n) {
+  return '$' + n.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function setMode(m) {
+  mode = m;
+  const tabS = document.getElementById('tab-salary');
+  const tabH = document.getElementById('tab-hourly');
+  const label = document.getElementById('primary-label');
+  const input = document.getElementById('primary-input');
+  if (m === 'salary') {
+    tabS.className = 'tab-active px-5 py-2.5 rounded-full font-medium text-sm transition';
+    tabH.className = 'tab-inactive px-5 py-2.5 rounded-full font-medium text-sm transition';
+    label.textContent = 'Annual Salary ($)';
+    input.placeholder = '65,000';
+  } else {
+    tabH.className = 'tab-active px-5 py-2.5 rounded-full font-medium text-sm transition';
+    tabS.className = 'tab-inactive px-5 py-2.5 rounded-full font-medium text-sm transition';
+    label.textContent = 'Hourly Rate ($)';
+    input.placeholder = '35.00';
+  }
+  calculate();
+}
+
+function calculate() {
+  const val = parseFloat(document.getElementById('primary-input').value);
+  const hpw = parseFloat(document.getElementById('hours-week').value) || 40;
+  const wpy = parseFloat(document.getElementById('weeks-year').value) || 52;
+  const tax = parseFloat(document.getElementById('tax-rate').value) || 0;
+  const results = document.getElementById('results');
+  const taxRow = document.getElementById('after-tax-row');
+
+  if (!val || val <= 0) { results.classList.add('hidden'); return; }
+  results.classList.remove('hidden');
+
+  const totalHours = hpw * wpy;
+  let annual, hourly;
+  if (mode === 'salary') {
+    annual = val;
+    hourly = val / totalHours;
+  } else {
+    hourly = val;
+    annual = val * totalHours;
+  }
+  const monthly = annual / 12;
+  const weekly = annual / wpy;
+
+  document.getElementById('res-hourly').textContent = fmt(hourly);
+  document.getElementById('res-annual').textContent = fmt(annual);
+  document.getElementById('res-monthly').textContent = fmt(monthly);
+  document.getElementById('res-weekly').textContent = fmt(weekly);
+
+  if (tax > 0) {
+    taxRow.classList.remove('hidden');
+    const factor = 1 - tax / 100;
+    document.getElementById('res-net-annual').textContent = fmt(annual * factor);
+    document.getElementById('res-net-monthly').textContent = fmt(monthly * factor);
+    document.getElementById('res-net-hourly').textContent = fmt(hourly * factor);
+  } else {
+    taxRow.classList.add('hidden');
+  }
+}
+
+// Build comparison table
+(function() {
+  const salaries = [25000,30000,35000,40000,45000,50000,55000,60000,65000,70000,75000,80000,90000,100000,120000,150000];
+  const tbody = document.getElementById('comparison-body');
+  salaries.forEach(s => {
+    const hr = s / 2080;
+    const mo = s / 12;
+    const wk = s / 52;
+    const tr = document.createElement('tr');
+    tr.className = 'comparison-row border-b border-gray-100';
+    tr.innerHTML = `<td class="py-2.5 pr-4 font-medium">${fmt(s)}</td><td class="py-2.5 pr-4">${fmt(mo)}</td><td class="py-2.5 pr-4">${fmt(wk)}</td><td class="py-2.5 font-semibold text-green-700">${fmt(hr)}</td>`;
+    tbody.appendChild(tr);
+  });
+})();
+</script>
+{% endblock %}

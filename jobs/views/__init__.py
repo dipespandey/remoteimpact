@@ -12,10 +12,17 @@ from .resources import (
     HomeView,
     AllDomainsView,
     ResourcesView,
+    SalaryToHourlyView,
     ApplicantAssistantView,
     ApplicantAssistantGenerateView,
     AssistantSubscribeView,
     AssistantSubscribeSuccessView,
+    TimezoneOverlapView,
+    ResignationLetterView,
+    ResignationLetterGenerateView,
+    JobDescriptionGeneratorView,
+    JobDescriptionGenerateView,
+    CostOfLivingComparisonView,
 )
 from .stories import (
     StoryFeedView,

@@ -1,0 +1,444 @@
+{% extends 'base.html' %}
+
+{% block title %}Free Job Description Generator – Create Professional JDs in Seconds | Remote Impact{% endblock %}
+
+{% block meta_description %}Generate professional, impact-focused job descriptions instantly with our free AI-powered tool. Perfect for nonprofits, social enterprises, and remote-first teams hiring for meaningful roles.{% endblock %}
+
+{% block content %}
+<style>
+  .panel {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    background: linear-gradient(135deg, #ffffff, #faf7f2);
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+    border-radius: 1rem;
+  }
+  .input-base {
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+  }
+  .input-base:focus {
+    outline: none;
+    border-color: #6EAA1C;
+    box-shadow: 0 0 0 3px rgba(110, 170, 28, 0.2);
+  }
+  .spinner {
+    border: 3px solid rgba(110, 170, 28, 0.2);
+    border-top-color: #6EAA1C;
+    border-radius: 9999px;
+    width: 28px;
+    height: 28px;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .feature-card {
+    background: linear-gradient(135deg, #ffffff, #faf7f2);
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+  }
+</style>
+
+<section class="relative py-12 md:py-16 bg-[#F3F2EE]">
+  <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- Hero / SEO Header -->
+    <div class="text-center space-y-5 mb-12">
+      <p class="uppercase text-xs tracking-[0.3em] text-gray-500">Free Tool</p>
+      <h1 class="text-3xl md:text-5xl font-semibold text-gray-900 leading-tight">
+        Job Description Generator
+      </h1>
+      <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+        Create professional, impact-focused job descriptions in seconds. Powered by AI, designed for nonprofits, social enterprises, and mission-driven teams.
+      </p>
+    </div>
+
+    <!-- Generator Form -->
+    <div class="panel p-6 md:p-8 space-y-6 mb-12" id="generator-form">
+      <h2 class="text-xl font-semibold text-gray-900">Describe the Role</h2>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5" for="jd-title">Job Title *</label>
+          <input id="jd-title" type="text" required class="w-full px-4 py-3 rounded-xl input-base text-gray-900 placeholder-gray-400" placeholder="e.g. Senior Product Manager" />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5" for="jd-company">Company / Organization</label>
+          <input id="jd-company" type="text" class="w-full px-4 py-3 rounded-xl input-base text-gray-900 placeholder-gray-400" placeholder="e.g. GreenTech Solutions" />
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5" for="jd-type">Job Type</label>
+          <select id="jd-type" class="w-full px-4 py-3 rounded-xl input-base text-gray-900">
+            <option value="full-time">Full-time</option>
+            <option value="part-time">Part-time</option>
+            <option value="contract">Contract</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5" for="jd-location">Work Arrangement</label>
+          <select id="jd-location" class="w-full px-4 py-3 rounded-xl input-base text-gray-900">
+            <option value="remote">Remote</option>
+            <option value="hybrid">Hybrid</option>
+            <option value="onsite">On-site</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5" for="jd-experience">Experience Level</label>
+          <select id="jd-experience" class="w-full px-4 py-3 rounded-xl input-base text-gray-900">
+            <option value="entry">Entry Level</option>
+            <option value="mid">Mid Level</option>
+            <option value="senior">Senior</option>
+            <option value="lead">Lead / Principal</option>
+            <option value="executive">Executive</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1.5" for="jd-responsibilities">Key Responsibilities</label>
+        <textarea id="jd-responsibilities" rows="4" class="w-full px-4 py-3 rounded-xl input-base text-gray-900 placeholder-gray-400" placeholder="Describe the main duties, e.g. Lead product roadmap, manage cross-functional teams..."></textarea>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1.5" for="jd-skills">Required Skills</label>
+        <textarea id="jd-skills" rows="3" class="w-full px-4 py-3 rounded-xl input-base text-gray-900 placeholder-gray-400" placeholder="e.g. Python, project management, data analysis, stakeholder communication"></textarea>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5" for="jd-salary">Salary Range (optional)</label>
+          <input id="jd-salary" type="text" class="w-full px-4 py-3 rounded-xl input-base text-gray-900 placeholder-gray-400" placeholder="e.g. $80,000 – $110,000" />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5" for="jd-impact">Impact Focus Area</label>
+          <select id="jd-impact" class="w-full px-4 py-3 rounded-xl input-base text-gray-900">
+            <option value="">Select (optional)</option>
+            <option value="climate">Climate & Environment</option>
+            <option value="health">Health & Wellbeing</option>
+            <option value="education">Education & Skills</option>
+            <option value="equity">Equity & Inclusion</option>
+            <option value="poverty">Poverty & Economic Development</option>
+            <option value="governance">Governance & Democracy</option>
+            <option value="technology">Technology for Good</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2">
+        <p id="jd-rate-info" class="text-sm text-gray-500">
+          <span id="jd-uses-left">{{ uses_left }}</span> free generation{{ uses_left|pluralize }} remaining
+        </p>
+        <button type="button" id="jd-generate-btn" onclick="generateJD()"
+                class="inline-flex items-center px-8 py-3 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition text-base">
+          Generate Job Description
+          <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Output -->
+    <div id="jd-output-section" class="panel p-6 md:p-8 space-y-4 mb-12 hidden">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-semibold text-gray-900">Generated Job Description</h2>
+        <button type="button" onclick="copyJD(this)" class="px-4 py-2 rounded-full border border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-900 transition text-sm">
+          Copy to Clipboard
+        </button>
+      </div>
+      <div class="relative">
+        <div id="jd-result" class="prose prose-gray max-w-none bg-white rounded-xl border border-gray-200 p-6 min-h-[200px]"></div>
+        <div id="jd-spinner" class="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl hidden">
+          <div class="spinner"></div>
+        </div>
+      </div>
+      <p id="jd-status" class="text-sm text-gray-500"></p>
+    </div>
+
+    <!-- Rate Limit Modal -->
+    <div id="jd-limit-modal" class="fixed inset-0 z-50 hidden">
+      <div class="absolute inset-0 bg-black/50 backdrop-filter backdrop-blur-sm" onclick="closeLimitModal()"></div>
+      <div class="relative max-w-md mx-auto mt-24 px-4">
+        <div class="bg-white rounded-2xl border border-gray-200 p-6 space-y-5 shadow-xl text-center">
+          <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mx-auto">
+            <svg class="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-gray-900">Free limit reached</h3>
+          <p class="text-gray-600">Create a free account to get more generations and access all our career tools.</p>
+          <a href="{% url 'account_signup' %}?next={{ request.path }}" class="block w-full text-center px-6 py-3 rounded-xl bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition">
+            Sign Up Free
+          </a>
+          <button type="button" onclick="closeLimitModal()" class="text-sm text-gray-500 hover:text-gray-700">Maybe later</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEO Content: How It Works -->
+    <div class="space-y-12 mb-16">
+      <div class="panel p-6 md:p-8">
+        <h2 class="text-2xl font-semibold text-gray-900 text-center mb-8">How Our Job Description Generator Works</h2>
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="text-center space-y-3">
+            <div class="w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center mx-auto">1</div>
+            <h3 class="font-semibold text-gray-900">Enter Role Details</h3>
+            <p class="text-sm text-gray-600">Fill in the job title, responsibilities, skills, and your organization's impact focus.</p>
+          </div>
+          <div class="text-center space-y-3">
+            <div class="w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center mx-auto">2</div>
+            <h3 class="font-semibold text-gray-900">AI Generates Your JD</h3>
+            <p class="text-sm text-gray-600">Our AI creates a professional, inclusive job description tailored to impact-driven hiring.</p>
+          </div>
+          <div class="text-center space-y-3">
+            <div class="w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center mx-auto">3</div>
+            <h3 class="font-semibold text-gray-900">Copy &amp; Post</h3>
+            <p class="text-sm text-gray-600">Review, customize, and post your job description on any platform.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Benefits -->
+      <div>
+        <h2 class="text-2xl font-semibold text-gray-900 text-center mb-8">Why Use Our Job Description Generator?</h2>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="feature-card rounded-2xl p-6 space-y-3">
+            <div class="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center">
+              <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h3 class="font-semibold text-gray-900">Save Hours of Writing</h3>
+            <p class="text-sm text-gray-600">Generate a complete job description in under 30 seconds instead of spending hours drafting from scratch.</p>
+          </div>
+          <div class="feature-card rounded-2xl p-6 space-y-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <h3 class="font-semibold text-gray-900">Attract Impact Talent</h3>
+            <p class="text-sm text-gray-600">Our AI is trained on impact-sector best practices to help you attract mission-aligned candidates.</p>
+          </div>
+          <div class="feature-card rounded-2xl p-6 space-y-3">
+            <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+            <h3 class="font-semibold text-gray-900">Inclusive Language</h3>
+            <p class="text-sm text-gray-600">Generated descriptions use inclusive, bias-free language to broaden your candidate pool.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ Section with JSON-LD -->
+    <div class="panel p-6 md:p-8 mb-12">
+      <h2 class="text-2xl font-semibold text-gray-900 mb-6">Frequently Asked Questions</h2>
+      <div class="space-y-6">
+        <div>
+          <h3 class="font-semibold text-gray-900 mb-1">Is this job description generator free?</h3>
+          <p class="text-gray-600 text-sm">Yes! You get 3 free generations without an account. Sign up for a free Remote Impact account to get more.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-900 mb-1">What makes this different from other JD generators?</h3>
+          <p class="text-gray-600 text-sm">Our tool is purpose-built for impact-driven organizations — nonprofits, social enterprises, B-Corps, and climate tech companies. It uses inclusive language and highlights mission alignment.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-900 mb-1">Can I edit the generated job description?</h3>
+          <p class="text-gray-600 text-sm">Absolutely. The generated text is a starting point. Copy it and customize it to fit your organization's voice, benefits, and specific requirements.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-900 mb-1">What types of roles does it support?</h3>
+          <p class="text-gray-600 text-sm">Any role — from engineering and product to operations, fundraising, and executive positions. It works for full-time, part-time, and contract roles across remote, hybrid, and on-site arrangements.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-900 mb-1">How does the AI generate the description?</h3>
+          <p class="text-gray-600 text-sm">We use advanced language models to synthesize your inputs into a well-structured job description with sections for responsibilities, qualifications, benefits, and company mission.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="text-center space-y-4">
+      <p class="text-gray-600">Looking for impact talent? Post your job on Remote Impact.</p>
+      <a href="{% url 'jobs:post_job' %}" class="inline-flex items-center px-6 py-3 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition">
+        Post a Job →
+      </a>
+    </div>
+
+  </div>
+</section>
+
+<!-- JSON-LD FAQPage Schema -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is this job description generator free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes! You get 3 free generations without an account. Sign up for a free Remote Impact account to get more."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What makes this different from other JD generators?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Our tool is purpose-built for impact-driven organizations — nonprofits, social enterprises, B-Corps, and climate tech companies. It uses inclusive language and highlights mission alignment."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I edit the generated job description?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Absolutely. The generated text is a starting point. Copy it and customize it to fit your organization's voice, benefits, and specific requirements."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What types of roles does it support?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Any role — from engineering and product to operations, fundraising, and executive positions. It works for full-time, part-time, and contract roles across remote, hybrid, and on-site arrangements."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does the AI generate the description?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We use advanced language models to synthesize your inputs into a well-structured job description with sections for responsibilities, qualifications, benefits, and company mission."
+      }
+    }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const JD_STORAGE_KEY = 'jd_gen_uses';
+  const JD_MAX_FREE = 3;
+
+  function getUsesLeft() {
+    const stored = localStorage.getItem(JD_STORAGE_KEY);
+    if (!stored) return JD_MAX_FREE;
+    try {
+      const data = JSON.parse(stored);
+      const now = Date.now();
+      // Reset after 24h
+      if (now - data.ts > 86400000) return JD_MAX_FREE;
+      return Math.max(0, JD_MAX_FREE - data.count);
+    } catch { return JD_MAX_FREE; }
+  }
+
+  function recordUse() {
+    const stored = localStorage.getItem(JD_STORAGE_KEY);
+    let count = 1;
+    if (stored) {
+      try {
+        const data = JSON.parse(stored);
+        if (Date.now() - data.ts < 86400000) count = data.count + 1;
+      } catch {}
+    }
+    localStorage.setItem(JD_STORAGE_KEY, JSON.stringify({ count, ts: Date.now() }));
+  }
+
+  function updateUsesUI() {
+    const left = getUsesLeft();
+    const el = document.getElementById('jd-uses-left');
+    if (el) el.textContent = left;
+  }
+
+  function showLimitModal() {
+    document.getElementById('jd-limit-modal').classList.remove('hidden');
+  }
+  function closeLimitModal() {
+    document.getElementById('jd-limit-modal').classList.add('hidden');
+  }
+
+  function getCookie(name) {
+    let v = null;
+    if (document.cookie) {
+      document.cookie.split(';').forEach(c => {
+        c = c.trim();
+        if (c.startsWith(name + '=')) v = decodeURIComponent(c.substring(name.length + 1));
+      });
+    }
+    return v;
+  }
+
+  function generateJD() {
+    const title = document.getElementById('jd-title').value.trim();
+    if (!title) { alert('Please enter a job title.'); return; }
+
+    if (getUsesLeft() <= 0) { showLimitModal(); return; }
+
+    const outputSection = document.getElementById('jd-output-section');
+    const result = document.getElementById('jd-result');
+    const spinner = document.getElementById('jd-spinner');
+    const status = document.getElementById('jd-status');
+
+    outputSection.classList.remove('hidden');
+    result.innerHTML = '';
+    spinner.classList.remove('hidden');
+    status.textContent = 'Generating your job description...';
+
+    const payload = {
+      job_title: title,
+      company: document.getElementById('jd-company').value.trim(),
+      job_type: document.getElementById('jd-type').value,
+      work_arrangement: document.getElementById('jd-location').value,
+      experience_level: document.getElementById('jd-experience').value,
+      responsibilities: document.getElementById('jd-responsibilities').value.trim(),
+      skills: document.getElementById('jd-skills').value.trim(),
+      salary_range: document.getElementById('jd-salary').value.trim(),
+      impact_focus: document.getElementById('jd-impact').value,
+    };
+
+    fetch("{% url 'jobs:jd_generator_generate' %}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+      body: JSON.stringify(payload),
+    })
+      .then(r => r.json().then(d => ({ s: r.status, d })))
+      .then(({ s, d }) => {
+        if (s >= 400) {
+          result.innerHTML = '<p class="text-red-600">' + (d.error || 'Generation failed.') + '</p>';
+          status.textContent = '';
+          return;
+        }
+        // Render markdown-ish output as HTML
+        let html = (d.result || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        html = html.replace(/\n/g, '<br>');
+        result.innerHTML = html;
+        status.textContent = 'Done! Review and customize before posting.';
+        recordUse();
+        updateUsesUI();
+      })
+      .catch(() => {
+        result.innerHTML = '<p class="text-red-600">Request failed. Please try again.</p>';
+        status.textContent = '';
+      })
+      .finally(() => spinner.classList.add('hidden'));
+
+    outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function copyJD(btn) {
+    const el = document.getElementById('jd-result');
+    const text = el.innerText || el.textContent;
+    if (!text) { btn.textContent = 'Nothing to copy'; setTimeout(() => btn.textContent = 'Copy to Clipboard', 1400); return; }
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy to Clipboard', 1400);
+    });
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLimitModal(); });
+  updateUsesUI();
+</script>
+{% endblock %}

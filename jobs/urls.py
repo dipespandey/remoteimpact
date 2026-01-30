@@ -73,6 +73,8 @@ urlpatterns = [
         "payment/success/", views.PaymentSuccessView.as_view(), name="payment_success"
     ),
     path("payment/cancel/", views.PaymentCancelView.as_view(), name="payment_cancel"),
+    # Tools
+    path("tools/salary-to-hourly-calculator/", views.SalaryToHourlyView.as_view(), name="salary_to_hourly"),
     # Resources / AI
     path(
         "resources/applicant-assistant/",
@@ -93,6 +95,18 @@ urlpatterns = [
         "resources/applicant-assistant/subscribe/success/",
         views.AssistantSubscribeSuccessView.as_view(),
         name="assistant_subscribe_success",
+    ),
+    # Tools
+    path(
+        "tools/time-zone-overlap-finder/",
+        views.TimezoneOverlapView.as_view(),
+        name="timezone_overlap",
+    ),
+    # Tools
+    path(
+        "tools/cost-of-living-comparison/",
+        views.CostOfLivingComparisonView.as_view(),
+        name="cost_of_living_comparison",
     ),
     # Stories & Sprints
     path("stories/", views.StoryFeedView.as_view(), name="stories_feed"),
@@ -141,6 +155,9 @@ urlpatterns = [
     path("talent/<int:user_id>/", views.TalentProfileView.as_view(), name="talent_profile"),
     path("talent/<int:user_id>/invite/", views.TalentInviteView.as_view(), name="talent_invite"),
     path("jobs/<slug:slug>/apply/", views.ApplicationCreateView.as_view(), name="apply_job"),    path("applications/", views.MyApplicationsView.as_view(), name="my_applications"),
+    # Tools
+    path("tools/resignation-letter-generator/", views.ResignationLetterView.as_view(), name="resignation_letter"),
+    path("tools/resignation-letter-generator/generate/", views.ResignationLetterGenerateView.as_view(), name="resignation_letter_generate"),
     # RSS Feeds
     path("feed/jobs/", LatestJobsFeed(), name="jobs_feed"),
     path("feed/jobs/category/<slug:slug>/", CategoryJobsFeed(), name="category_feed"),
@@ -156,4 +173,9 @@ urlpatterns = [
     path("invitations/<int:pk>/decline/", views.InvitationDeclineView.as_view(), name="invitation_decline"),
     # Visibility Settings
     path("profile/visibility/", views.VisibilitySettingsView.as_view(), name="visibility_settings"),
+    # SEO alias for cover letter generator
+    path("tools/cover-letter-generator/", views.ApplicantAssistantView.as_view(), name="cover_letter_generator"),
+    # Job Description Generator
+    path("tools/job-description-generator/", views.JobDescriptionGeneratorView.as_view(), name="jd_generator"),
+    path("tools/job-description-generator/generate/", views.JobDescriptionGenerateView.as_view(), name="jd_generator_generate"),
 ]

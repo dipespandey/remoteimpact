@@ -16,6 +16,10 @@ from ..services.ai import AIClient
 from ..services.payment_service import PaymentService
 
 
+class CostOfLivingComparisonView(TemplateView):
+    template_name = "jobs/tools/cost_of_living.html"
+
+
 class HomeView(TemplateView):
     template_name = "jobs/home.html"
 
@@ -252,6 +256,14 @@ class ResourcesView(TemplateView):
         return context
 
 
+class SalaryToHourlyView(TemplateView):
+    template_name = "jobs/tools/salary_to_hourly.html"
+
+
+class TimezoneOverlapView(TemplateView):
+    template_name = "jobs/tools/timezone_overlap.html"
+
+
 class ApplicantAssistantView(TemplateView):
     template_name = "jobs/applicant_assistant.html"
 
@@ -435,6 +447,69 @@ class AssistantSubscribeView(LoginRequiredMixin, View):
             return redirect("jobs:applicant_assistant")
 
 
+class ResignationLetterView(TemplateView):
+    template_name = "jobs/tools/resignation_letter.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["faqs"] = [
+            {"q": "Is this resignation letter generator really free?", "a": "Yes! You can generate up to 3 resignation letters for free without creating an account. Sign up for a free account to get more."},
+            {"q": "Can I edit the generated resignation letter?", "a": "Absolutely. The generated letter is a starting point. We recommend reviewing and personalizing it before sending to your employer."},
+            {"q": "How much notice should I give when resigning?", "a": "Two weeks is standard in most industries, but check your employment contract. Some senior roles or contracts may require 30 days or more."},
+            {"q": "Should I give a reason for leaving in my resignation letter?", "a": "It's courteous but not required. A brief, positive reason is sufficient. Our generator helps you frame your reason professionally."},
+            {"q": "Is my data stored when I use this tool?", "a": "We do not store the personal details you enter in the form. The generated letter is created on-the-fly and only exists in your browser."},
+            {"q": "What tone should I choose for my resignation letter?", "a": "Professional is the safest choice for most situations. Choose Friendly if you have a close relationship with your manager, or Formal for traditional corporate environments."},
+        ]
+        return context
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class ResignationLetterGenerateView(View):
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        name = (data.get("name") or "").strip()
+        manager = (data.get("manager") or "").strip()
+        company = (data.get("company") or "").strip()
+        position = (data.get("position") or "").strip()
+        last_day = (data.get("last_day") or "").strip()
+        reason = (data.get("reason") or "new opportunity").strip()
+        tone = (data.get("tone") or "professional").strip()
+        notes = (data.get("notes") or "").strip()
+
+        if not all([name, manager, company, position, last_day]):
+            return JsonResponse({"error": "All required fields must be filled."}, status=400)
+
+        # Rate limit anonymous users via session
+        if not request.user.is_authenticated:
+            count = request.session.get("rl_gen_count", 0)
+            if count >= 3:
+                return JsonResponse({"error": "Free limit reached. Please sign up to continue.", "requires_signup": True}, status=429)
+            request.session["rl_gen_count"] = count + 1
+
+        prompt = f"""Write a resignation letter with the following details:
+- Author: {name}
+- Addressed to: {manager}
+- Company: {company}
+- Position: {position}
+- Last working day: {last_day}
+- Reason for leaving: {reason}
+- Tone: {tone}
+{f'- Additional context: {notes}' if notes else ''}
+
+Write a complete, ready-to-send resignation letter. Include today's date, proper formatting with line breaks, and a signature line. Keep it concise (under 300 words). Be {tone} in tone. Express gratitude and offer to help with the transition."""
+
+        content = _call_llm(prompt)
+
+        if content.startswith("LLM call failed:"):
+            return JsonResponse({"error": "Generation failed. Please try again."}, status=500)
+
+        return JsonResponse({"result": content})
+
+
 class AssistantSubscribeSuccessView(LoginRequiredMixin, TemplateView):
     """Handle successful subscription checkout."""
 
@@ -451,3 +526,79 @@ class AssistantSubscribeSuccessView(LoginRequiredMixin, TemplateView):
 
         # If verification failed, redirect to assistant page
         return redirect("jobs:applicant_assistant")
+
+
+# ---------------------------------------------------------------------------
+# Job Description Generator Tool
+# ---------------------------------------------------------------------------
+
+class JobDescriptionGeneratorView(TemplateView):
+    """SEO landing page for the free Job Description Generator tool."""
+
+    template_name = "jobs/tools/job_description_generator.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["uses_left"] = 3  # Client-side tracking via localStorage
+        return context
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class JobDescriptionGenerateView(View):
+    """AJAX endpoint that generates a job description via AI."""
+
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON payload"}, status=400)
+
+        job_title = (data.get("job_title") or "").strip()
+        if not job_title:
+            return JsonResponse({"error": "Job title is required."}, status=400)
+
+        company = (data.get("company") or "").strip()
+        job_type = (data.get("job_type") or "full-time").strip()
+        work_arrangement = (data.get("work_arrangement") or "remote").strip()
+        experience_level = (data.get("experience_level") or "mid").strip()
+        responsibilities = (data.get("responsibilities") or "").strip()
+        skills = (data.get("skills") or "").strip()
+        salary_range = (data.get("salary_range") or "").strip()
+        impact_focus = (data.get("impact_focus") or "").strip()
+
+        prompt = f"""You are an expert HR copywriter for mission-driven organizations.
+
+Write a professional, compelling job description for the following role. Use inclusive, bias-free language. Structure the output with clear sections using markdown headings (##).
+
+Role details:
+- Job Title: {job_title}
+- Company/Organization: {company or 'Not specified'}
+- Job Type: {job_type}
+- Work Arrangement: {work_arrangement}
+- Experience Level: {experience_level}
+- Key Responsibilities: {responsibilities or 'Not specified — infer typical responsibilities for this role'}
+- Required Skills: {skills or 'Not specified — infer typical skills for this role'}
+- Salary Range: {salary_range or 'Competitive, commensurate with experience'}
+- Impact Focus Area: {impact_focus or 'General social impact'}
+
+Include these sections:
+1. **About the Role** — engaging 2-3 sentence overview
+2. **About {company or 'the Organization'}** — brief placeholder the employer can customize
+3. **Key Responsibilities** — 5-7 bullet points
+4. **Qualifications** — Required and Nice-to-Have, using inclusive language (avoid "must have X years")
+5. **What We Offer** — 4-5 benefits/perks typical for impact orgs (flexible schedule, mission-driven culture, etc.)
+6. **How to Apply** — brief instructions placeholder
+
+Keep it under 600 words. Be specific, avoid jargon, and emphasize mission alignment.
+"""
+
+        try:
+            ai_client = AIClient()
+            content = ai_client.generate(prompt, max_tokens=2000)
+        except Exception as exc:
+            return JsonResponse({"error": f"AI generation failed: {exc}"}, status=500)
+
+        if content.startswith("LLM call failed:"):
+            return JsonResponse({"error": content}, status=500)
+
+        return JsonResponse({"result": content})

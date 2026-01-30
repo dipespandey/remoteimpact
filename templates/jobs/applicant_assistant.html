@@ -1,7 +1,67 @@
 {% extends 'base.html' %}
 
 {% block title %}
-  Applicant Assistant - Remote Impact
+  Free AI Cover Letter Generator for Remote & Impact Jobs | Remote Impact
+{% endblock %}
+
+{% block extra_head %}
+  <meta name="description" content="Generate tailored cover letters for remote and impact-driven jobs in seconds. Free AI-powered cover letter generator with interview prep — no credit card required.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does the AI cover letter generator work?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Paste a job URL or description along with your key achievements. Our AI analyzes the role requirements and generates a tailored cover letter that highlights your relevant experience, quantified outcomes, and alignment with the organization's mission."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is the cover letter generator free?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes! You get 3 free cover letter or interview prep generations when you sign up. No credit card required. For unlimited access, you can upgrade to Pro for $5/month."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I use this for remote job applications?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Absolutely. The generator is specifically designed for remote and impact-focused roles. It includes time zone awareness and highlights remote work competencies like async communication and self-management."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Should I edit the generated cover letter?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes — always review and personalize the output. Add specific anecdotes, correct any details, and adjust the tone to match your voice. The AI gives you a strong starting point, but your personal touch makes it stand out."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What types of jobs does this work best for?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The generator works for any job but is optimized for remote positions at nonprofits, social enterprises, climate tech companies, and other impact-driven organizations. It understands mission alignment, impact metrics, and values-driven language."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does the tool also help with interview preparation?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. In addition to cover letters, you can generate role-specific interview questions organized by category: technical, behavioral (STAR format), and mission/values questions — each with interviewer hints."
+        }
+      }
+    ]
+  }
+  </script>
 {% endblock %}
 
 {% block content %}
@@ -64,8 +124,11 @@
       <div class="text-center space-y-6 mb-16">
         <p class="uppercase text-xs tracking-[0.3em] text-gray-500">Applicant Assistant</p>
         <h1 class="text-4xl md:text-5xl font-semibold text-gray-900 leading-tight">
-          Land your dream impact job<br class="hidden md:block" /> with AI-powered applications
+          AI Cover Letter Generator
         </h1>
+        <p class="text-xl text-gray-700 max-w-2xl mx-auto">
+          Land your dream impact job with AI-powered applications
+        </p>
         <p class="text-lg text-gray-600 max-w-2xl mx-auto">
           Generate tailored cover letters and interview prep questions in seconds.
           Stand out from the crowd with personalized, high-quality applications.
@@ -240,7 +303,7 @@
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div class="space-y-3">
           <p class="uppercase text-xs tracking-[0.3em] text-gray-500">Applicant Assistant</p>
-          <h1 class="text-3xl md:text-4xl font-semibold text-gray-900 leading-tight">AI-powered application tools</h1>
+          <h1 class="text-3xl md:text-4xl font-semibold text-gray-900 leading-tight">AI Cover Letter Generator</h1>
           <p class="text-gray-600 max-w-2xl">Drop a job URL or paste the description. Get a tailored cover letter or interview prep questions.</p>
         </div>
 
@@ -488,6 +551,110 @@
     </div>
   </div>
   {% endif %}
+
+  <!-- Popular Cover Letter Templates -->
+  <section class="py-16 bg-[#F3F2EE]">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl font-semibold text-gray-900 text-center mb-3">Popular Cover Letter Templates</h2>
+      <p class="text-gray-600 text-center mb-10 max-w-2xl mx-auto">Get inspired by these common cover letter types our users generate for impact-driven roles.</p>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="feature-card rounded-2xl p-6 space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center">
+            <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"/></svg>
+          </div>
+          <h3 class="font-semibold text-gray-900">Remote Position</h3>
+          <p class="text-sm text-gray-600">Highlight async communication skills, self-management, and timezone flexibility for distributed teams.</p>
+        </div>
+        <div class="feature-card rounded-2xl p-6 space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+          </div>
+          <h3 class="font-semibold text-gray-900">Nonprofit & NGO</h3>
+          <p class="text-sm text-gray-600">Demonstrate mission alignment, grant experience, and measurable community outcomes.</p>
+        </div>
+        <div class="feature-card rounded-2xl p-6 space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <h3 class="font-semibold text-gray-900">Climate Tech</h3>
+          <p class="text-sm text-gray-600">Combine technical expertise with passion for sustainability and environmental impact metrics.</p>
+        </div>
+        <div class="feature-card rounded-2xl p-6 space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+          </div>
+          <h3 class="font-semibold text-gray-900">Career Change</h3>
+          <p class="text-sm text-gray-600">Frame transferable skills and explain your motivation for pivoting into impact-driven work.</p>
+        </div>
+        <div class="feature-card rounded-2xl p-6 space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
+            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+          </div>
+          <h3 class="font-semibold text-gray-900">Social Enterprise</h3>
+          <p class="text-sm text-gray-600">Balance business acumen with social impact — show you can drive revenue and purpose together.</p>
+        </div>
+        <div class="feature-card rounded-2xl p-6 space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+          <h3 class="font-semibold text-gray-900">DEI & Equity Roles</h3>
+          <p class="text-sm text-gray-600">Showcase your commitment to diversity, equity, and inclusion with concrete initiatives and outcomes.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tips for Writing Cover Letters -->
+  <section class="py-16 bg-white">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl font-semibold text-gray-900 text-center mb-3">Tips for Writing Great Cover Letters</h2>
+      <p class="text-gray-600 text-center mb-10 max-w-2xl mx-auto">Whether you use our AI generator or write from scratch, these tips will help your application stand out.</p>
+      <div class="space-y-8">
+        <div class="flex gap-4">
+          <div class="shrink-0 w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center">1</div>
+          <div>
+            <h3 class="font-semibold text-gray-900 mb-1">Open with a specific hook, not a generic intro</h3>
+            <p class="text-gray-600 text-sm">Skip "I'm writing to express my interest." Instead, lead with a metric, a shared value, or a specific reason you're drawn to this organization's mission.</p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="shrink-0 w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center">2</div>
+          <div>
+            <h3 class="font-semibold text-gray-900 mb-1">Quantify your impact with real numbers</h3>
+            <p class="text-gray-600 text-sm">Replace vague claims like "improved outcomes" with concrete metrics: "Reduced donor churn by 23%" or "Managed a $1.2M grant portfolio serving 4,000 beneficiaries."</p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="shrink-0 w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center">3</div>
+          <div>
+            <h3 class="font-semibold text-gray-900 mb-1">Mirror the job description's language</h3>
+            <p class="text-gray-600 text-sm">Use keywords from the JD naturally. If they say "program design," don't say "curriculum development." This helps with ATS systems and shows you've read the posting carefully.</p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="shrink-0 w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center">4</div>
+          <div>
+            <h3 class="font-semibold text-gray-900 mb-1">Show mission alignment, don't just state it</h3>
+            <p class="text-gray-600 text-sm">Don't just say "I'm passionate about climate." Describe a specific project, volunteer experience, or decision that demonstrates your commitment to the cause.</p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="shrink-0 w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center">5</div>
+          <div>
+            <h3 class="font-semibold text-gray-900 mb-1">Keep it under 250 words</h3>
+            <p class="text-gray-600 text-sm">Hiring managers skim. A concise, high-signal cover letter with 2-3 proof points beats a full-page essay. Respect their time and they'll respect your application.</p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="shrink-0 w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center">6</div>
+          <div>
+            <h3 class="font-semibold text-gray-900 mb-1">For remote roles, address logistics proactively</h3>
+            <p class="text-gray-600 text-sm">Mention your timezone, overlap hours with the team, and experience with remote collaboration tools. This removes friction and shows you understand distributed work.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 {% endblock %}
 
 {% block extra_js %}

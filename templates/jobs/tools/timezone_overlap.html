@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+
+{% block title %}Time Zone Overlap Finder – Free Tool for Remote Teams | Remote Impact{% endblock %}
+
+{% block meta_description %}Find overlapping working hours across time zones instantly. Free visual tool for remote teams to discover the best meeting windows across 2-4 time zones.{% endblock %}
+
+{% block content %}
+<style>
+  .panel{border:1px solid rgba(15,23,42,.1);background:linear-gradient(135deg,#fff,#faf7f2);box-shadow:0 4px 20px rgba(15,23,42,.08);border-radius:1rem}
+  .tz-select{background:#fff;border:1px solid rgba(15,23,42,.15);border-radius:.5rem;padding:.5rem .75rem;width:100%;font-size:.95rem}
+  .tz-select:focus{outline:none;border-color:#6EAA1C;box-shadow:0 0 0 3px rgba(110,170,28,.2)}
+  .hour-cell{height:36px;min-width:28px;display:flex;align-items:center;justify-content:center;font-size:.7rem;border-right:1px solid rgba(15,23,42,.06);transition:background .15s}
+  .hour-work{background:rgba(110,170,28,.25)}
+  .hour-overlap{background:rgba(110,170,28,.6);color:#fff;font-weight:600}
+  .hour-off{background:rgba(15,23,42,.04)}
+  .tz-colors{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:.5rem}
+  .range-input{-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:#e2e8f0;outline:none}
+  .range-input::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#6EAA1C;cursor:pointer}
+  .faq-toggle{cursor:pointer}
+  .faq-answer{max-height:0;overflow:hidden;transition:max-height .3s ease}
+  .faq-answer.open{max-height:500px}
+  @media(max-width:640px){.hour-cell{min-width:20px;font-size:.6rem}}
+</style>
+
+<section class="py-12 bg-[#F3F2EE]">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- Hero / H1 -->
+    <div class="text-center mb-10">
+      <p class="uppercase text-xs tracking-[0.3em] text-gray-500 mb-3">Free Remote Work Tool</p>
+      <h1 class="text-3xl md:text-4xl font-semibold text-gray-900 leading-tight">Time Zone Overlap Finder</h1>
+      <p class="mt-3 text-lg text-gray-600 max-w-2xl mx-auto">Instantly visualize overlapping working hours across multiple time zones. Find the best meeting windows for your distributed team.</p>
+    </div>
+
+    <!-- Tool Panel -->
+    <div class="panel p-6 md:p-8 mb-10" id="tool">
+      <h2 class="text-xl font-semibold text-gray-900 mb-5">Select Time Zones</h2>
+
+      <div id="tz-selectors" class="grid gap-4 sm:grid-cols-2 mb-6"></div>
+
+      <button id="add-tz" class="text-sm font-medium text-[#6EAA1C] hover:underline mb-6 hidden">+ Add another time zone</button>
+
+      <!-- Working hours -->
+      <div class="flex flex-wrap items-center gap-4 mb-6">
+        <label class="text-sm text-gray-700 font-medium">Work start
+          <input type="range" id="work-start" min="0" max="23" value="9" class="range-input ml-2 w-28">
+          <span id="work-start-label" class="ml-1 text-sm font-semibold text-gray-900">9:00</span>
+        </label>
+        <label class="text-sm text-gray-700 font-medium">Work end
+          <input type="range" id="work-end" min="0" max="23" value="17" class="range-input ml-2 w-28">
+          <span id="work-end-label" class="ml-1 text-sm font-semibold text-gray-900">17:00</span>
+        </label>
+      </div>
+
+      <!-- Chart -->
+      <h2 class="text-lg font-semibold text-gray-900 mb-3">Overlap Visualization</h2>
+      <div id="chart" class="overflow-x-auto mb-6"></div>
+
+      <!-- Best window -->
+      <div id="best-window" class="rounded-lg bg-green-50 border border-green-200 p-4 hidden">
+        <h3 class="font-semibold text-green-800 mb-1">🟢 Best Meeting Window</h3>
+        <p id="best-window-text" class="text-green-700 text-sm"></p>
+      </div>
+
+      <!-- Current times -->
+      <div id="current-times" class="mt-6"></div>
+    </div>
+
+    <!-- SEO Content -->
+    <div class="panel p-6 md:p-8 mb-10">
+      <h2 class="text-xl font-semibold text-gray-900 mb-4">How to Use the Time Zone Overlap Finder</h2>
+      <ol class="list-decimal list-inside space-y-2 text-gray-700">
+        <li>Select 2 to 4 time zones where your team members are located.</li>
+        <li>Adjust the working hours slider to match your team's schedule (default is 9 AM – 5 PM).</li>
+        <li>View the visual chart to see which hours overlap across all selected zones.</li>
+        <li>The green highlighted window shows the best time for team meetings.</li>
+      </ol>
+
+      <h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">Why Overlapping Hours Matter for Remote Teams</h2>
+      <p class="text-gray-700 mb-3">Distributed teams that span multiple time zones face a common challenge: finding enough shared working hours for synchronous collaboration. Research shows that teams with at least 3-4 overlapping hours maintain stronger communication and faster decision-making.</p>
+      <p class="text-gray-700">This free tool helps remote-first companies, freelancers, and globally distributed teams quickly identify the best windows for meetings, pair programming, and real-time collaboration.</p>
+    </div>
+
+    <!-- FAQ -->
+    <div class="panel p-6 md:p-8">
+      <h2 class="text-xl font-semibold text-gray-900 mb-5">Frequently Asked Questions</h2>
+      <div class="space-y-3" id="faq-list">
+        <div class="border-b border-gray-200 pb-3">
+          <button class="faq-toggle w-full text-left font-medium text-gray-900 flex justify-between items-center" onclick="this.nextElementSibling.classList.toggle('open')">
+            What is a time zone overlap?
+            <span class="text-gray-400">+</span>
+          </button>
+          <div class="faq-answer text-gray-600 text-sm mt-2">A time zone overlap is the period of shared working hours between people in different time zones. For example, if one person works 9 AM–5 PM EST and another works 9 AM–5 PM GMT, their overlap is 9 AM–12 PM EST (2 PM–5 PM GMT).</div>
+        </div>
+        <div class="border-b border-gray-200 pb-3">
+          <button class="faq-toggle w-full text-left font-medium text-gray-900 flex justify-between items-center" onclick="this.nextElementSibling.classList.toggle('open')">
+            How many overlapping hours do remote teams need?
+            <span class="text-gray-400">+</span>
+          </button>
+          <div class="faq-answer text-gray-600 text-sm mt-2">Most remote work experts recommend at least 3–4 hours of overlap for effective synchronous collaboration. Teams with fewer overlapping hours should rely more on asynchronous communication tools like Loom, Notion, or shared documents.</div>
+        </div>
+        <div class="border-b border-gray-200 pb-3">
+          <button class="faq-toggle w-full text-left font-medium text-gray-900 flex justify-between items-center" onclick="this.nextElementSibling.classList.toggle('open')">
+            Does this tool account for Daylight Saving Time?
+            <span class="text-gray-400">+</span>
+          </button>
+          <div class="faq-answer text-gray-600 text-sm mt-2">Yes. This tool uses the IANA time zone database built into modern browsers, which automatically accounts for Daylight Saving Time (DST) changes based on the current date.</div>
+        </div>
+        <div class="border-b border-gray-200 pb-3">
+          <button class="faq-toggle w-full text-left font-medium text-gray-900 flex justify-between items-center" onclick="this.nextElementSibling.classList.toggle('open')">
+            Is this tool free to use?
+            <span class="text-gray-400">+</span>
+          </button>
+          <div class="faq-answer text-gray-600 text-sm mt-2">Yes, the Time Zone Overlap Finder is completely free. No account or login required. It runs entirely in your browser — no data is sent to any server.</div>
+        </div>
+        <div class="pb-3">
+          <button class="faq-toggle w-full text-left font-medium text-gray-900 flex justify-between items-center" onclick="this.nextElementSibling.classList.toggle('open')">
+            Can I use this for scheduling interviews across time zones?
+            <span class="text-gray-400">+</span>
+          </button>
+          <div class="faq-answer text-gray-600 text-sm mt-2">Absolutely. Select the time zones of the interviewer and candidate, and the tool will show the overlapping hours that work for both. This is especially useful for companies hiring remotely across continents.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- JSON-LD FAQPage Schema -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a time zone overlap?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A time zone overlap is the period of shared working hours between people in different time zones."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How many overlapping hours do remote teams need?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Most remote work experts recommend at least 3–4 hours of overlap for effective synchronous collaboration."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does this tool account for Daylight Saving Time?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. This tool uses the IANA time zone database built into modern browsers, which automatically accounts for Daylight Saving Time changes."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is this tool free to use?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, the Time Zone Overlap Finder is completely free. No account or login required."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use this for scheduling interviews across time zones?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Absolutely. Select the time zones of the interviewer and candidate, and the tool will show the overlapping hours."
+      }
+    }
+  ]
+}
+</script>
+
+<script>
+(function(){
+  const ZONES = [
+    {label:'US/Eastern (New York)',value:'America/New_York'},
+    {label:'US/Central (Chicago)',value:'America/Chicago'},
+    {label:'US/Mountain (Denver)',value:'America/Denver'},
+    {label:'US/Pacific (Los Angeles)',value:'America/Los_Angeles'},
+    {label:'US/Alaska',value:'America/Anchorage'},
+    {label:'US/Hawaii',value:'Pacific/Honolulu'},
+    {label:'Canada/Atlantic',value:'America/Halifax'},
+    {label:'Mexico City',value:'America/Mexico_City'},
+    {label:'São Paulo',value:'America/Sao_Paulo'},
+    {label:'Buenos Aires',value:'America/Argentina/Buenos_Aires'},
+    {label:'London (GMT/BST)',value:'Europe/London'},
+    {label:'Paris / Berlin (CET)',value:'Europe/Paris'},
+    {label:'Helsinki / Bucharest (EET)',value:'Europe/Helsinki'},
+    {label:'Moscow',value:'Europe/Moscow'},
+    {label:'Istanbul',value:'Europe/Istanbul'},
+    {label:'Dubai (GST)',value:'Asia/Dubai'},
+    {label:'India (IST)',value:'Asia/Kolkata'},
+    {label:'Bangladesh (BST)',value:'Asia/Dhaka'},
+    {label:'Bangkok / Jakarta',value:'Asia/Bangkok'},
+    {label:'Singapore / Kuala Lumpur',value:'Asia/Singapore'},
+    {label:'China / Hong Kong',value:'Asia/Shanghai'},
+    {label:'Korea (Seoul)',value:'Asia/Seoul'},
+    {label:'Japan (Tokyo)',value:'Asia/Tokyo'},
+    {label:'Australia/Sydney (AEST)',value:'Australia/Sydney'},
+    {label:'Australia/Perth (AWST)',value:'Australia/Perth'},
+    {label:'New Zealand (Auckland)',value:'Pacific/Auckland'},
+    {label:'Lagos (WAT)',value:'Africa/Lagos'},
+    {label:'Cairo (EET)',value:'Africa/Cairo'},
+    {label:'Nairobi (EAT)',value:'Africa/Nairobi'},
+    {label:'Johannesburg (SAST)',value:'Africa/Johannesburg'},
+  ];
+
+  const COLORS = ['#6EAA1C','#3B82F6','#F59E0B','#EF4444'];
+  let tzCount = 2;
+  const container = document.getElementById('tz-selectors');
+  const addBtn = document.getElementById('add-tz');
+
+  function makeSelect(idx, defaultVal){
+    const wrap = document.createElement('div');
+    wrap.className = 'flex flex-col gap-1';
+    const label = document.createElement('label');
+    label.className = 'text-sm font-medium text-gray-700 flex items-center';
+    label.innerHTML = `<span class="tz-colors" style="background:${COLORS[idx]}"></span>Time Zone ${idx+1}`;
+    const sel = document.createElement('select');
+    sel.className = 'tz-select';
+    sel.dataset.idx = idx;
+    sel.innerHTML = '<option value="">— Choose —</option>' + ZONES.map(z=>`<option value="${z.value}"${z.value===defaultVal?' selected':''}>${z.label}</option>`).join('');
+    sel.addEventListener('change', render);
+    wrap.append(label, sel);
+    return wrap;
+  }
+
+  function buildSelectors(){
+    container.innerHTML = '';
+    const defaults = ['America/New_York','Europe/London','Asia/Kolkata','Asia/Tokyo'];
+    for(let i=0;i<tzCount;i++) container.appendChild(makeSelect(i, defaults[i]));
+    addBtn.classList.toggle('hidden', tzCount>=4);
+  }
+
+  addBtn.addEventListener('click', ()=>{ if(tzCount<4){tzCount++;buildSelectors();render();} });
+
+  function getOffset(tz){
+    const now = new Date();
+    const str = now.toLocaleString('en-US',{timeZone:tz,hour12:false,hour:'2-digit',minute:'2-digit'});
+    const [h,m] = str.split(':').map(Number);
+    const utcH = now.getUTCHours(), utcM = now.getUTCMinutes();
+    let diff = (h*60+m) - (utcH*60+utcM);
+    if(diff > 720) diff -= 1440;
+    if(diff < -720) diff += 1440;
+    return diff;
+  }
+
+  function render(){
+    const sels = container.querySelectorAll('select');
+    const zones = [];
+    sels.forEach(s=>{ if(s.value) zones.push({tz:s.value, label:s.options[s.selectedIndex].text, idx:+s.dataset.idx}); });
+    if(zones.length < 2){ document.getElementById('chart').innerHTML='<p class="text-sm text-gray-500">Select at least 2 time zones to see the overlap.</p>'; document.getElementById('best-window').classList.add('hidden'); document.getElementById('current-times').innerHTML=''; return; }
+
+    const ws = +document.getElementById('work-start').value;
+    const we = +document.getElementById('work-end').value;
+
+    // Build chart
+    let html = '<table class="w-full text-center"><thead><tr><th class="text-left text-xs text-gray-500 pr-2 whitespace-nowrap">Zone</th>';
+    for(let h=0;h<24;h++) html += `<th class="hour-cell text-xs text-gray-400 font-normal">${h}</th>`;
+    html += '</tr></thead><tbody>';
+
+    const workHoursUTC = [];
+    zones.forEach(z=>{
+      const off = getOffset(z.tz);
+      const myWork = new Set();
+      for(let h=ws;h<we;h++){
+        let utcH = (h*60 - off)/60;
+        utcH = ((Math.round(utcH)%24)+24)%24;
+        myWork.add(utcH);
+      }
+      workHoursUTC.push(myWork);
+
+      html += `<tr><td class="text-left text-xs text-gray-700 pr-2 whitespace-nowrap"><span class="tz-colors" style="background:${COLORS[z.idx]}"></span>${z.label}</td>`;
+      for(let h=0;h<24;h++){
+        // local hour
+        let localH = ((h*60 + off)/60);
+        localH = ((Math.round(localH)%24)+24)%24;
+        const isWork = localH >= ws && localH < we;
+        html += `<td class="hour-cell ${isWork?'hour-work':'hour-off'}">${localH}</td>`;
+      }
+      html += '</tr>';
+    });
+
+    // Overlap row
+    const overlapHours = [];
+    for(let h=0;h<24;h++){
+      if(workHoursUTC.every(s=>s.has(h))) overlapHours.push(h);
+    }
+
+    html += `<tr><td class="text-left text-xs font-semibold text-green-700 pr-2 whitespace-nowrap">✅ Overlap</td>`;
+    for(let h=0;h<24;h++){
+      const isOv = overlapHours.includes(h);
+      html += `<td class="hour-cell ${isOv?'hour-overlap':'hour-off'}">${isOv?'✓':''}</td>`;
+    }
+    html += '</tr></tbody></table>';
+    document.getElementById('chart').innerHTML = html;
+
+    // Best window
+    const bw = document.getElementById('best-window');
+    const bwt = document.getElementById('best-window-text');
+    if(overlapHours.length > 0){
+      // Convert overlap UTC hours to each zone's local
+      const lines = zones.map(z=>{
+        const off = getOffset(z.tz);
+        const locals = overlapHours.map(h=>((Math.round((h*60+off)/60)%24)+24)%24).sort((a,b)=>a-b);
+        return `<strong>${z.label}</strong>: ${locals[0]}:00 – ${locals[locals.length-1]+1}:00`;
+      });
+      bwt.innerHTML = `${overlapHours.length} hour(s) of overlap:<br>` + lines.join('<br>');
+      bw.classList.remove('hidden');
+    } else {
+      bwt.innerHTML = 'No overlapping working hours found. Consider adjusting work hours or using async communication.';
+      bw.classList.remove('hidden');
+      bw.className = bw.className.replace('bg-green-50 border-green-200','bg-amber-50 border-amber-200');
+      bwt.className = bwt.className.replace('text-green-700','text-amber-700');
+    }
+
+    // Current times
+    const ct = document.getElementById('current-times');
+    const now = new Date();
+    ct.innerHTML = '<h3 class="text-sm font-semibold text-gray-700 mb-2">Current Time in Selected Zones</h3><div class="flex flex-wrap gap-4">' +
+      zones.map(z=>`<div class="bg-white rounded-lg border border-gray-200 px-4 py-2 text-sm"><span class="tz-colors" style="background:${COLORS[z.idx]}"></span><strong>${z.label}</strong><br>${now.toLocaleString('en-US',{timeZone:z.tz,hour:'2-digit',minute:'2-digit',hour12:true,weekday:'short'})}</div>`).join('') +
+      '</div>';
+  }
+
+  // Slider listeners
+  ['work-start','work-end'].forEach(id=>{
+    const el = document.getElementById(id);
+    el.addEventListener('input', ()=>{
+      document.getElementById(id+'-label').textContent = el.value+':00';
+      render();
+    });
+  });
+
+  buildSelectors();
+  render();
+  // Update current times every minute
+  setInterval(render, 60000);
+})();
+</script>
+{% endblock %}

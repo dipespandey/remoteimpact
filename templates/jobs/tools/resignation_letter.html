@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+
+{% block title %}Free Resignation Letter Generator | AI-Powered - Remote Impact{% endblock %}
+
+{% block meta_description %}Generate a professional resignation letter in seconds with our free AI-powered tool. Customize tone, reason, and details. Download or copy instantly.{% endblock %}
+
+{% block content %}
+<style>
+  .panel{border:1px solid rgba(15,23,42,.1);background:linear-gradient(135deg,#fff,#faf7f2);box-shadow:0 4px 20px rgba(15,23,42,.08);border-radius:1rem}
+  .input-base{background:#fff;border:1px solid rgba(15,23,42,.15);border-radius:.75rem;padding:.75rem 1rem;width:100%;transition:border-color .15s,box-shadow .15s}
+  .input-base:focus{outline:none;border-color:#6EAA1C;box-shadow:0 0 0 3px rgba(110,170,28,.2)}
+  select.input-base{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 1rem center}
+  .spinner{border:3px solid rgba(110,170,28,.2);border-top-color:#6EAA1C;border-radius:9999px;width:28px;height:28px;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .btn-primary{display:inline-flex;align-items:center;justify-content:center;padding:.75rem 1.5rem;border-radius:.75rem;background:#6EAA1C;color:#fff;font-weight:600;transition:background .15s}
+  .btn-primary:hover{background:#5d9416}
+  .btn-secondary{display:inline-flex;align-items:center;justify-content:center;padding:.75rem 1.5rem;border-radius:.75rem;background:#f3f4f6;color:#374151;font-weight:600;transition:background .15s}
+  .btn-secondary:hover{background:#e5e7eb}
+  .faq-toggle:checked+label+div{max-height:500px;padding-top:.75rem}
+  .faq-answer{max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease}
+</style>
+
+<section class="py-12 md:py-16 bg-[#F3F2EE]">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- Hero / H1 -->
+    <div class="text-center space-y-4 mb-10">
+      <p class="uppercase text-xs tracking-[0.3em] text-gray-500">Free Tool</p>
+      <h1 class="text-3xl md:text-5xl font-semibold text-gray-900 leading-tight">Free Resignation Letter Generator</h1>
+      <p class="text-lg text-gray-600 max-w-2xl mx-auto">Create a polished, professional resignation letter in seconds. Powered by AI — just fill in your details and download.</p>
+    </div>
+
+    <!-- Generator Form -->
+    <div class="panel p-6 md:p-8 space-y-6 mb-12" id="generator-form">
+      <h2 class="text-xl font-semibold text-gray-900">Your Details</h2>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" for="rl-name">Your Full Name *</label>
+          <input id="rl-name" type="text" class="input-base text-gray-900" placeholder="Jane Smith" required />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" for="rl-manager">Manager's Name *</label>
+          <input id="rl-manager" type="text" class="input-base text-gray-900" placeholder="John Doe" required />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" for="rl-company">Company Name *</label>
+          <input id="rl-company" type="text" class="input-base text-gray-900" placeholder="Acme Corp" required />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" for="rl-position">Your Position *</label>
+          <input id="rl-position" type="text" class="input-base text-gray-900" placeholder="Software Engineer" required />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" for="rl-lastday">Last Working Day *</label>
+          <input id="rl-lastday" type="date" class="input-base text-gray-900" required />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1" for="rl-reason">Reason for Leaving *</label>
+          <select id="rl-reason" class="input-base text-gray-900">
+            <option value="new opportunity">New Opportunity</option>
+            <option value="personal reasons">Personal Reasons</option>
+            <option value="relocation">Relocation</option>
+            <option value="career change">Career Change</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1" for="rl-tone">Tone</label>
+        <div class="flex flex-wrap gap-3">
+          <label class="cursor-pointer"><input type="radio" name="tone" value="professional" checked class="sr-only peer" /><span class="px-4 py-2 rounded-full border border-gray-300 text-sm font-medium text-gray-700 peer-checked:bg-brand-300 peer-checked:border-brand-400 peer-checked:text-gray-900 transition">Professional</span></label>
+          <label class="cursor-pointer"><input type="radio" name="tone" value="friendly" class="sr-only peer" /><span class="px-4 py-2 rounded-full border border-gray-300 text-sm font-medium text-gray-700 peer-checked:bg-brand-300 peer-checked:border-brand-400 peer-checked:text-gray-900 transition">Friendly</span></label>
+          <label class="cursor-pointer"><input type="radio" name="tone" value="formal" class="sr-only peer" /><span class="px-4 py-2 rounded-full border border-gray-300 text-sm font-medium text-gray-700 peer-checked:bg-brand-300 peer-checked:border-brand-400 peer-checked:text-gray-900 transition">Formal</span></label>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1" for="rl-notes">Additional Notes (optional)</label>
+        <textarea id="rl-notes" rows="3" class="input-base text-gray-900" placeholder="E.g., mention a specific project you enjoyed, express gratitude for mentorship..."></textarea>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3">
+        <button type="button" onclick="generateLetter()" class="btn-primary" id="generate-btn">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Generate Resignation Letter
+        </button>
+        <span id="rl-usage" class="text-sm text-gray-500 self-center"></span>
+      </div>
+    </div>
+
+    <!-- Output -->
+    <div id="output-section" class="panel p-6 md:p-8 space-y-4 mb-12 hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h2 class="text-xl font-semibold text-gray-900">Your Resignation Letter</h2>
+        <div class="flex gap-2">
+          <button type="button" onclick="copyLetter()" class="btn-secondary text-sm" id="copy-btn">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            Copy
+          </button>
+          <button type="button" onclick="downloadLetter()" class="btn-secondary text-sm">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Download .txt
+          </button>
+        </div>
+      </div>
+      <div class="relative">
+        <textarea id="rl-output" rows="18" class="w-full px-4 py-4 rounded-xl bg-white border border-gray-200 text-gray-900 text-sm leading-relaxed" readonly></textarea>
+        <div id="rl-spinner" class="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl hidden">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rate limit modal -->
+    <div id="limit-modal" class="fixed inset-0 z-50 hidden">
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="document.getElementById('limit-modal').classList.add('hidden')"></div>
+      <div class="relative max-w-md mx-auto mt-24 px-4">
+        <div class="bg-white rounded-2xl p-6 space-y-4 shadow-xl text-center">
+          <h3 class="text-xl font-semibold text-gray-900">Free Limit Reached</h3>
+          <p class="text-gray-600">You've used your 3 free generations. Sign up for a free account to continue.</p>
+          <a href="{% url 'account_signup' %}?next={{ request.path }}" class="btn-primary w-full">Create Free Account</a>
+          <button onclick="document.getElementById('limit-modal').classList.add('hidden')" class="text-sm text-gray-500 hover:text-gray-700">Maybe later</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- How It Works -->
+    <div class="panel p-6 md:p-8 mb-12">
+      <h2 class="text-2xl font-semibold text-gray-900 text-center mb-8">How It Works</h2>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="text-center space-y-3">
+          <div class="w-12 h-12 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center mx-auto text-lg">1</div>
+          <h3 class="font-semibold text-gray-900">Fill in Your Details</h3>
+          <p class="text-sm text-gray-600">Enter your name, company, position, last day, and reason for leaving.</p>
+        </div>
+        <div class="text-center space-y-3">
+          <div class="w-12 h-12 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center mx-auto text-lg">2</div>
+          <h3 class="font-semibold text-gray-900">Choose Your Tone</h3>
+          <p class="text-sm text-gray-600">Pick professional, friendly, or formal — whatever fits your situation.</p>
+        </div>
+        <div class="text-center space-y-3">
+          <div class="w-12 h-12 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center mx-auto text-lg">3</div>
+          <h3 class="font-semibold text-gray-900">Download & Send</h3>
+          <p class="text-sm text-gray-600">Copy or download your letter. Edit as needed and submit to your employer.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEO Content -->
+    <div class="panel p-6 md:p-8 mb-12 space-y-6">
+      <h2 class="text-2xl font-semibold text-gray-900">Why Use a Resignation Letter Generator?</h2>
+      <div class="prose prose-gray max-w-none text-gray-600 space-y-4">
+        <p>Writing a resignation letter can feel daunting. Whether you're leaving for a new opportunity, relocating, or making a career change, a well-crafted resignation letter ensures you leave on good terms and maintain your professional reputation.</p>
+        <p>Our AI-powered resignation letter generator creates a personalized, polished letter in seconds. It considers your specific situation — your role, company, reason for leaving, and preferred tone — to produce a letter that's ready to customize and send.</p>
+        <h3 class="text-lg font-semibold text-gray-900 !mt-6">Tips for a Great Resignation Letter</h3>
+        <ul class="list-disc pl-5 space-y-2">
+          <li><strong>Keep it concise:</strong> A resignation letter should be brief and to the point — ideally one page or less.</li>
+          <li><strong>Be professional:</strong> Regardless of your reasons for leaving, maintain a positive and respectful tone.</li>
+          <li><strong>State your last day:</strong> Give clear notice of when you'll be leaving, typically two weeks.</li>
+          <li><strong>Express gratitude:</strong> Thank your manager and the company for the opportunities you've had.</li>
+          <li><strong>Offer to help transition:</strong> Show willingness to train your replacement or hand off responsibilities.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="panel p-6 md:p-8 mb-12">
+      <h2 class="text-2xl font-semibold text-gray-900 mb-6">Frequently Asked Questions</h2>
+      <div class="divide-y divide-gray-200">
+        {% for faq in faqs %}
+        <div class="py-4">
+          <input type="checkbox" id="faq-{{ forloop.counter }}" class="faq-toggle sr-only" />
+          <label for="faq-{{ forloop.counter }}" class="flex items-center justify-between cursor-pointer group">
+            <span class="font-semibold text-gray-900 group-hover:text-brand-600 transition">{{ faq.q }}</span>
+            <svg class="w-5 h-5 text-gray-400 group-hover:text-brand-600 transition flex-shrink-0 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </label>
+          <div class="faq-answer text-gray-600 text-sm leading-relaxed">{{ faq.a }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- JSON-LD FAQPage Schema -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {% for faq in faqs %}
+    {
+      "@type": "Question",
+      "name": "{{ faq.q|escapejs }}",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "{{ faq.a|escapejs }}"
+      }
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const GENERATE_URL = "{% url 'jobs:resignation_letter_generate' %}";
+const RATE_LIMIT_KEY = 'rl_gen_count';
+
+function getGenCount() {
+  return parseInt(localStorage.getItem(RATE_LIMIT_KEY) || '0', 10);
+}
+function incrGenCount() {
+  const c = getGenCount() + 1;
+  localStorage.setItem(RATE_LIMIT_KEY, c);
+  return c;
+}
+
+function getCSRF() {
+  const m = document.cookie.match(/csrftoken=([^;]+)/);
+  return m ? m[1] : '';
+}
+
+function generateLetter() {
+  // Rate limit for anonymous users
+  {% if not user.is_authenticated %}
+  if (getGenCount() >= 3) {
+    document.getElementById('limit-modal').classList.remove('hidden');
+    return;
+  }
+  {% endif %}
+
+  const name = document.getElementById('rl-name').value.trim();
+  const manager = document.getElementById('rl-manager').value.trim();
+  const company = document.getElementById('rl-company').value.trim();
+  const position = document.getElementById('rl-position').value.trim();
+  const lastDay = document.getElementById('rl-lastday').value;
+  const reason = document.getElementById('rl-reason').value;
+  const tone = document.querySelector('input[name="tone"]:checked').value;
+  const notes = document.getElementById('rl-notes').value.trim();
+
+  if (!name || !manager || !company || !position || !lastDay) {
+    alert('Please fill in all required fields.');
+    return;
+  }
+
+  const output = document.getElementById('rl-output');
+  const spinner = document.getElementById('rl-spinner');
+  const section = document.getElementById('output-section');
+  const btn = document.getElementById('generate-btn');
+
+  section.classList.remove('hidden');
+  spinner.classList.remove('hidden');
+  output.value = '';
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+
+  fetch(GENERATE_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCSRF()},
+    body: JSON.stringify({name, manager, company, position, last_day: lastDay, reason, tone, notes})
+  })
+  .then(r => r.json().then(d => ({status: r.status, data: d})))
+  .then(({status, data}) => {
+    if (status === 429) {
+      document.getElementById('limit-modal').classList.remove('hidden');
+      return;
+    }
+    if (status >= 400) {
+      output.value = data.error || 'Something went wrong.';
+      return;
+    }
+    output.value = data.result;
+    {% if not user.is_authenticated %}
+    incrGenCount();
+    const remaining = 3 - getGenCount();
+    document.getElementById('rl-usage').textContent = remaining > 0 ? remaining + ' free generation' + (remaining !== 1 ? 's' : '') + ' remaining' : '';
+    {% endif %}
+  })
+  .catch(() => { output.value = 'Request failed. Please try again.'; })
+  .finally(() => {
+    spinner.classList.add('hidden');
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    section.scrollIntoView({behavior: 'smooth', block: 'start'});
+  });
+}
+
+function copyLetter() {
+  const text = document.getElementById('rl-output').value;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-btn');
+    const orig = btn.innerHTML;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.innerHTML = orig, 1500);
+  });
+}
+
+function downloadLetter() {
+  const text = document.getElementById('rl-output').value;
+  if (!text) return;
+  const blob = new Blob([text], {type: 'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'resignation-letter.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+{% if not user.is_authenticated %}
+// Show remaining count on load
+(function(){
+  const c = getGenCount();
+  const r = 3 - c;
+  if (r < 3 && r > 0) document.getElementById('rl-usage').textContent = r + ' free generation' + (r !== 1 ? 's' : '') + ' remaining';
+  if (r <= 0) document.getElementById('rl-usage').textContent = 'Free limit reached — sign up to continue';
+})();
+{% endif %}
+</script>
+{% endblock %}
