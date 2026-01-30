@@ -276,7 +276,8 @@
                     </a>
                     {% endif %}
                 </div>
-                <!-- On-platform apply -->
+                <!-- On-platform apply (only for employer-posted jobs) -->
+                {% if job.source == "manual" %}
                 {% if user.is_authenticated and has_applied %}
                 <div class="block w-full text-center px-6 py-4 rounded-full bg-green-100 text-green-700 font-semibold border border-green-200">
                     Applied ✓
@@ -287,6 +288,7 @@
                     data-track="apply_platform" data-track-category="job_action" data-track-label="{{ job.slug }}">
                     Apply on RemoteImpact
                 </a>
+                {% endif %}
                 {% endif %}
 
                 {% if job.application_url %}
