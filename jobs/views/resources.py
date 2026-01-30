@@ -606,3 +606,19 @@ Keep it under 600 words. Be specific, avoid jargon, and emphasize mission alignm
             return JsonResponse({"error": content}, status=500)
 
         return JsonResponse({"result": content})
+
+
+class WordCounterView(TemplateView):
+    template_name = "jobs/tools/word_counter.html"
+
+
+class PomodoroTimerView(TemplateView):
+    template_name = "jobs/tools/pomodoro_timer.html"
+
+
+class EmailSignatureView(TemplateView):
+    template_name = "jobs/tools/email_signature.html"
+
+
+class PasswordGeneratorView(TemplateView):
+    template_name = "jobs/tools/password_generator.html"

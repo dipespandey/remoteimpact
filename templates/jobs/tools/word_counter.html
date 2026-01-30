@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+
+{% block title %}Free Word Counter & Reading Time Calculator | Remote Impact{% endblock %}
+
+{% block meta_extra %}
+<meta name="description" content="Free online word counter and reading time calculator. Get instant word count, character count, sentence count, paragraph count, reading time, speaking time, keyword density, and readability score.">
+<meta name="keywords" content="word counter, reading time calculator, character count, keyword density, readability score, Flesch-Kincaid">
+<link rel="canonical" href="{{ request.build_absolute_uri }}">
+<meta property="og:title" content="Free Word Counter & Reading Time Calculator | Remote Impact">
+<meta property="og:description" content="Paste your text and instantly see word count, reading time, keyword density, and readability score. 100% free.">
+<meta property="og:type" content="website">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How is reading time calculated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Reading time is estimated at 238 words per minute, which is the average silent reading speed for adults. Simply divide your total word count by 238 to get the estimated reading time."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is speaking time calculated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Speaking time is estimated at 150 words per minute, the average pace for presentations and public speaking. This helps you plan speeches, podcasts, and video scripts."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the Flesch-Kincaid readability score?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Flesch-Kincaid Reading Ease score rates text on a 0–100 scale. Higher scores mean easier reading: 90–100 is very easy (5th grade), 60–70 is standard (8th–9th grade), and below 30 is very difficult (college graduate level)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are stop words and why are they excluded from keyword density?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Stop words are common words like 'the', 'and', 'is', and 'of' that appear frequently but carry little meaning. Excluding them from keyword density analysis reveals the most meaningful and relevant terms in your content."
+      }
+    }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="bg-amber-50/40 min-h-screen" x-data="wordCounter()">
+
+  <!-- Hero -->
+  <section class="py-12 sm:py-16 text-center">
+    <div class="mx-auto max-w-3xl px-4">
+      <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Free Word Counter &amp; Reading Time Calculator</h1>
+      <p class="text-lg text-gray-600 max-w-2xl mx-auto">Paste your text below to instantly see word count, character count, reading time, keyword density, and readability score.</p>
+    </div>
+  </section>
+
+  <!-- Main Tool -->
+  <section class="pb-12 px-4">
+    <div class="mx-auto max-w-5xl">
+
+      <!-- Textarea Card -->
+      <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-8">
+        <label for="text-input" class="block text-sm font-medium text-gray-700 mb-2">Paste or type your text</label>
+        <textarea
+          id="text-input"
+          x-model="text"
+          rows="10"
+          class="w-full rounded-xl border border-gray-200 p-4 text-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none resize-y text-base leading-relaxed"
+          placeholder="Start typing or paste your content here…"
+        ></textarea>
+        <div class="mt-3 flex items-center gap-4">
+          <button
+            x-on:click="text = ''"
+            class="text-sm text-gray-500 hover:text-red-500 transition-colors"
+          >Clear text</button>
+          <span class="text-xs text-gray-400" x-show="text.length > 0" x-text="words + ' words'"></span>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+        <template x-for="stat in statsCards" :key="stat.label">
+          <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm text-center">
+            <div class="text-3xl font-bold text-brand-600" x-text="stat.value"></div>
+            <div class="text-sm text-gray-500 mt-1" x-text="stat.label"></div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Two-column: Keyword Density + Readability -->
+      <div class="grid lg:grid-cols-2 gap-8">
+
+        <!-- Keyword Density -->
+        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">Keyword Density</h2>
+          <div x-show="keywords.length === 0" class="text-gray-400 text-sm">Type some text to see keyword density.</div>
+          <table x-show="keywords.length > 0" class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-gray-500 border-b border-gray-100">
+                <th class="pb-2 font-medium">Keyword</th>
+                <th class="pb-2 font-medium text-right">Count</th>
+                <th class="pb-2 font-medium text-right">Density</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="kw in keywords" :key="kw.word">
+                <tr class="border-b border-gray-50">
+                  <td class="py-2 text-gray-800 font-medium" x-text="kw.word"></td>
+                  <td class="py-2 text-right text-gray-600" x-text="kw.count"></td>
+                  <td class="py-2 text-right">
+                    <span class="inline-block bg-brand-50 text-brand-600 text-xs font-semibold px-2 py-0.5 rounded-full" x-text="kw.density + '%'"></span>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Readability -->
+        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">Readability Score</h2>
+          <div x-show="words === 0" class="text-gray-400 text-sm">Type some text to see readability analysis.</div>
+          <div x-show="words > 0">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="text-5xl font-bold" :class="readabilityColor" x-text="readability"></div>
+              <div>
+                <div class="font-semibold text-gray-900" x-text="readabilityLabel"></div>
+                <div class="text-sm text-gray-500">Flesch-Kincaid Reading Ease</div>
+              </div>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+              <div class="h-3 rounded-full transition-all duration-300" :class="readabilityBarColor" :style="'width:' + Math.min(Math.max(readability, 0), 100) + '%'"></div>
+            </div>
+            <div class="flex justify-between text-xs text-gray-400 mt-1">
+              <span>Very Difficult</span>
+              <span>Very Easy</span>
+            </div>
+            <div class="mt-4 text-sm text-gray-600" x-text="readabilityDesc"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="py-12 px-4">
+    <div class="mx-auto max-w-3xl">
+      <h2 class="text-2xl font-bold text-gray-900 mb-8 text-center">Frequently Asked Questions</h2>
+      <div class="space-y-4">
+        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h3 class="font-semibold text-gray-900 mb-2">How is reading time calculated?</h3>
+          <p class="text-gray-600 text-sm">Reading time is estimated at 238 words per minute, the average silent reading speed for adults. Simply divide your total word count by 238.</p>
+        </div>
+        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h3 class="font-semibold text-gray-900 mb-2">How is speaking time calculated?</h3>
+          <p class="text-gray-600 text-sm">Speaking time uses 150 words per minute — the average pace for presentations and public speaking. Great for planning speeches, podcasts, and video scripts.</p>
+        </div>
+        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h3 class="font-semibold text-gray-900 mb-2">What is the Flesch-Kincaid readability score?</h3>
+          <p class="text-gray-600 text-sm">It rates text on a 0–100 scale. Higher scores mean easier reading: 90–100 is very easy (5th grade), 60–70 is standard (8th–9th grade), and below 30 is very difficult (college graduate level).</p>
+        </div>
+        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h3 class="font-semibold text-gray-900 mb-2">What are stop words?</h3>
+          <p class="text-gray-600 text-sm">Stop words are common words like "the", "and", "is" that carry little meaning. They're excluded from keyword density analysis to surface the most relevant terms in your content.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+function wordCounter() {
+  const STOP_WORDS = new Set(['the','be','to','of','and','a','in','that','have','i','it','for','not','on','with','he','as','you','do','at','this','but','his','by','from','they','we','her','she','or','an','will','my','one','all','would','there','their','what','so','up','out','if','about','who','get','which','go','me','when','make','can','like','time','no','just','him','know','take','people','into','year','your','good','some','could','them','see','other','than','then','now','look','only','come','its','over','think','also','back','after','use','two','how','our','work','first','well','way','even','new','want','because','any','these','give','day','most','us','been','is','are','was','were','has','had','did','does','am','being','having','doing','will','shall','should','may','might','must','can','could','need','ought','dare','used','did','done','said','got','went','made','came','took','gave','found','put','ran','set','let','began','kept','held','told','called','asked','tried','left','turned']);
+  return {
+    text: '',
+    get words() {
+      return this.text.trim() === '' ? 0 : this.text.trim().split(/\s+/).length;
+    },
+    get chars() { return this.text.length; },
+    get charsNoSpaces() { return this.text.replace(/\s/g, '').length; },
+    get sentences() {
+      if (this.text.trim() === '') return 0;
+      const m = this.text.match(/[.!?]+(?=\s|$)/g);
+      return m ? m.length : (this.words > 0 ? 1 : 0);
+    },
+    get paragraphs() {
+      if (this.text.trim() === '') return 0;
+      return this.text.split(/\n\s*\n/).filter(p => p.trim().length > 0).length || (this.text.trim().length > 0 ? 1 : 0);
+    },
+    get readingTime() {
+      const m = Math.ceil(this.words / 238);
+      return m < 1 && this.words > 0 ? '< 1 min' : m + ' min';
+    },
+    get speakingTime() {
+      const m = Math.ceil(this.words / 150);
+      return m < 1 && this.words > 0 ? '< 1 min' : m + ' min';
+    },
+    get statsCards() {
+      return [
+        { label: 'Words', value: this.words },
+        { label: 'Characters', value: this.chars },
+        { label: 'Characters (no spaces)', value: this.charsNoSpaces },
+        { label: 'Sentences', value: this.sentences },
+        { label: 'Paragraphs', value: this.paragraphs },
+        { label: 'Reading Time', value: this.readingTime },
+        { label: 'Speaking Time', value: this.speakingTime },
+        { label: 'Readability', value: this.readability },
+      ];
+    },
+    get keywords() {
+      if (this.words === 0) return [];
+      const freq = {};
+      const wordList = this.text.toLowerCase().match(/[a-z']+/g) || [];
+      const total = wordList.length;
+      wordList.forEach(w => {
+        if (w.length > 2 && !STOP_WORDS.has(w)) freq[w] = (freq[w] || 0) + 1;
+      });
+      return Object.entries(freq)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([word, count]) => ({ word, count, density: ((count / total) * 100).toFixed(1) }));
+    },
+    get syllableCount() {
+      const wordList = this.text.toLowerCase().match(/[a-z']+/g) || [];
+      let total = 0;
+      wordList.forEach(w => {
+        let s = w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
+        s = s.replace(/^y/, '');
+        const m = s.match(/[aeiouy]{1,2}/g);
+        total += m ? m.length : 1;
+      });
+      return total;
+    },
+    get readability() {
+      if (this.words < 10) return 0;
+      const score = 206.835 - 1.015 * (this.words / Math.max(this.sentences, 1)) - 84.6 * (this.syllableCount / Math.max(this.words, 1));
+      return Math.round(Math.max(0, Math.min(100, score)));
+    },
+    get readabilityColor() {
+      const s = this.readability;
+      if (s >= 70) return 'text-green-600';
+      if (s >= 50) return 'text-yellow-600';
+      return 'text-red-600';
+    },
+    get readabilityBarColor() {
+      const s = this.readability;
+      if (s >= 70) return 'bg-green-500';
+      if (s >= 50) return 'bg-yellow-500';
+      return 'bg-red-500';
+    },
+    get readabilityLabel() {
+      const s = this.readability;
+      if (s >= 90) return 'Very Easy';
+      if (s >= 70) return 'Easy';
+      if (s >= 50) return 'Fairly Difficult';
+      if (s >= 30) return 'Difficult';
+      return 'Very Difficult';
+    },
+    get readabilityDesc() {
+      const s = this.readability;
+      if (s >= 90) return 'Easily understood by an average 11-year-old student.';
+      if (s >= 70) return 'Conversational English. Easily understood by 13-15 year old students.';
+      if (s >= 50) return 'Fairly difficult to read. Best understood by high school and college students.';
+      if (s >= 30) return 'Difficult to read. Best understood by college graduates.';
+      return 'Very difficult to read. Best understood by university graduates and professionals.';
+    },
+  };
+}
+</script>
+{% endblock %}

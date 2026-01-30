@@ -66,7 +66,7 @@
     </div>
 
     <!-- Calculators & Utilities -->
-    <div>
+    <div class="mb-14">
       <h2 class="text-sm uppercase tracking-[0.4em] text-white/50 mb-6">🧮 Calculators & utilities</h2>
       <div class="grid md:grid-cols-3 gap-6">
 
@@ -89,6 +89,42 @@
           <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Cost of Living Comparison</h3>
           <p class="text-white/60 text-sm mb-4">Compare cost of living between 60+ cities worldwide. See what your salary is worth in a different location.</p>
           <span class="text-neon text-sm font-semibold">Compare cities →</span>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- Productivity & Everyday Tools -->
+    <div>
+      <h2 class="text-sm uppercase tracking-[0.4em] text-white/50 mb-6">⚡ Productivity & everyday</h2>
+      <div class="grid md:grid-cols-3 gap-6">
+
+        <a href="{% url 'jobs:word_counter' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
+          <div class="text-4xl mb-4">📝</div>
+          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Word Counter</h3>
+          <p class="text-white/60 text-sm mb-4">Count words, characters, sentences, and paragraphs. Plus reading time, speaking time, and keyword density.</p>
+          <span class="text-neon text-sm font-semibold">Count words →</span>
+        </a>
+
+        <a href="{% url 'jobs:pomodoro_timer' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
+          <div class="text-4xl mb-4">🍅</div>
+          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Pomodoro Timer</h3>
+          <p class="text-white/60 text-sm mb-4">Stay focused with the Pomodoro technique. Customizable intervals, browser notifications, and built-in task list.</p>
+          <span class="text-neon text-sm font-semibold">Start timer →</span>
+        </a>
+
+        <a href="{% url 'jobs:email_signature' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
+          <div class="text-4xl mb-4">✉️</div>
+          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Email Signature Generator</h3>
+          <p class="text-white/60 text-sm mb-4">Create professional HTML email signatures. Choose from 4 styles, pick your colors, and copy with one click.</p>
+          <span class="text-neon text-sm font-semibold">Create signature →</span>
+        </a>
+
+        <a href="{% url 'jobs:password_generator' %}" class="group rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/40 transition">
+          <div class="text-4xl mb-4">🔐</div>
+          <h3 class="text-xl font-semibold mb-2 group-hover:text-neon transition">Password Generator</h3>
+          <p class="text-white/60 text-sm mb-4">Generate strong, secure passwords instantly. Adjustable length, character options, and strength meter.</p>
+          <span class="text-neon text-sm font-semibold">Generate password →</span>
         </a>
 
       </div>

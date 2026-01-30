@@ -179,4 +179,8 @@ urlpatterns = [
     # Job Description Generator
     path("tools/job-description-generator/", views.JobDescriptionGeneratorView.as_view(), name="jd_generator"),
     path("tools/job-description-generator/generate/", views.JobDescriptionGenerateView.as_view(), name="jd_generator_generate"),
+    path("tools/word-counter/", views.WordCounterView.as_view(), name="word_counter"),
+    path("tools/pomodoro-timer/", views.PomodoroTimerView.as_view(), name="pomodoro_timer"),
+    path("tools/email-signature-generator/", views.EmailSignatureView.as_view(), name="email_signature"),
+    path("tools/password-generator/", views.PasswordGeneratorView.as_view(), name="password_generator"),
 ]

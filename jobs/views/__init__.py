@@ -24,6 +24,10 @@ from .resources import (
     JobDescriptionGeneratorView,
     JobDescriptionGenerateView,
     CostOfLivingComparisonView,
+    WordCounterView,
+    PomodoroTimerView,
+    EmailSignatureView,
+    PasswordGeneratorView,
 )
 from .stories import (
     StoryFeedView,
