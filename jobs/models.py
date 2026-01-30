@@ -1,5 +1,6 @@
 import uuid
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
@@ -1391,3 +1392,22 @@ class JobAlert(models.Model):
             qs = qs.filter(kw_q)
 
         return qs.select_related("organization", "category").order_by("-posted_at")
+
+
+class ProfileView(models.Model):
+    seeker = models.ForeignKey(
+        "SeekerProfile", on_delete=models.CASCADE, related_name="profile_views"
+    )
+    viewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="viewed_profiles"
+    )
+    viewed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-viewed_at"]
+        indexes = [
+            models.Index(fields=["seeker", "-viewed_at"], name="jobs_profileview_seeker_viewed"),
+        ]
+
+    def __str__(self):
+        return f"{self.viewer} viewed {self.seeker} at {self.viewed_at}"
