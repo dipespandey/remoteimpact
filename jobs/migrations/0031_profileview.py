@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("jobs", "0030_add_resume_fields_referral_and_job_alerts"),
+        ("jobs", "0030_add_resume_fields"),
     ]
 
     operations = [
