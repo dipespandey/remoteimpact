@@ -31,6 +31,28 @@
     {% if post.featured_image.name %},"image": "{{ SITE_URL }}{{ post.featured_image.url }}"{% endif %}
 }
 </script>
+
+<style>
+.prose { color: #374151; line-height: 1.75; }
+.prose h2 { color: #111827; font-size: 1.5em; font-weight: 700; margin-top: 2em; margin-bottom: 1em; line-height: 1.33; padding-bottom: 0.3em; border-bottom: 1px solid #e5e7eb; }
+.prose h3 { color: #111827; font-size: 1.25em; font-weight: 600; margin-top: 1.6em; margin-bottom: 0.6em; line-height: 1.6; }
+.prose h4 { color: #111827; font-weight: 600; margin-top: 1.5em; margin-bottom: 0.5em; }
+.prose p { margin-top: 1.25em; margin-bottom: 1.25em; }
+.prose strong { color: #111827; font-weight: 700; }
+.prose a { color: #16803c; text-decoration: none; font-weight: 500; }
+.prose a:hover { text-decoration: underline; }
+.prose ul { list-style-type: disc; margin-top: 1.25em; margin-bottom: 1.25em; padding-left: 1.625em; }
+.prose ol { list-style-type: decimal; margin-top: 1.25em; margin-bottom: 1.25em; padding-left: 1.625em; }
+.prose li { margin-top: 0.5em; margin-bottom: 0.5em; }
+.prose li::marker { color: #6b7280; }
+.prose blockquote { font-style: italic; border-left: 4px solid #16803c; padding-left: 1em; margin: 1.6em 0; color: #4b5563; }
+.prose code { color: #111827; font-size: 0.875em; font-weight: 600; background: #f3f4f6; padding: 0.2em 0.4em; border-radius: 0.25rem; }
+.prose img { border-radius: 0.75rem; margin-top: 2em; margin-bottom: 2em; }
+.prose hr { border-color: #e5e7eb; margin: 3em 0; }
+.prose-lg { font-size: 1.125rem; }
+.prose-lg p { margin-top: 1.33em; margin-bottom: 1.33em; }
+.prose-lg h2 { font-size: 1.66em; }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -81,7 +103,7 @@
     </div>
 
     <footer class="mt-16 pt-8 border-t border-gray-200">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-6">
             <a href="{% url 'blog:post_list' %}" class="text-brand-600 hover:text-brand-700 font-medium">&larr; All Articles</a>
             <a href="{% url 'jobs:job_list' %}" class="px-6 py-3 bg-brand-500 text-white rounded-full font-semibold hover:bg-brand-600 transition text-center">Browse Impact Jobs</a>
         </div>
