@@ -41,34 +41,36 @@
   </div>
 
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-    <div class="flex gap-10">
+    <div class="flex gap-8">
 
       <!-- Desktop Sidebar -->
-      <nav class="hidden md:block w-56 flex-shrink-0">
-        <div class="sticky top-24 space-y-1">
-          <p class="text-xs uppercase tracking-[0.3em] text-gray-400 font-semibold mb-3 px-3">Career Journey</p>
-          <button @click="section='explore'" :class="section==='explore' ? 'bg-brand-50 text-brand-700 border-brand-300' : 'text-gray-600 hover:bg-gray-100 border-transparent'" class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition border">
-            🧭 Explore
-          </button>
-          <button @click="section='search'" :class="section==='search' ? 'bg-brand-50 text-brand-700 border-brand-300' : 'text-gray-600 hover:bg-gray-100 border-transparent'" class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition border">
-            🔍 Job Search
-          </button>
-          <button @click="section='apply'" :class="section==='apply' ? 'bg-brand-50 text-brand-700 border-brand-300' : 'text-gray-600 hover:bg-gray-100 border-transparent'" class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition border">
-            🎯 Apply
-          </button>
-          <button @click="section='interview'" :class="section==='interview' ? 'bg-brand-50 text-brand-700 border-brand-300' : 'text-gray-600 hover:bg-gray-100 border-transparent'" class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition border">
-            🎤 Interview
-          </button>
-          <button @click="section='negotiate'" :class="section==='negotiate' ? 'bg-brand-50 text-brand-700 border-brand-300' : 'text-gray-600 hover:bg-gray-100 border-transparent'" class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition border">
-            💰 Negotiate
-          </button>
-          <button @click="section='productivity'" :class="section==='productivity' ? 'bg-brand-50 text-brand-700 border-brand-300' : 'text-gray-600 hover:bg-gray-100 border-transparent'" class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition border">
-            ⚡ Productivity
-          </button>
+      <nav class="hidden md:block w-52 flex-shrink-0">
+        <div class="sticky top-24">
+          <p class="text-[11px] uppercase tracking-[0.25em] text-gray-400 font-semibold mb-2 px-3">Career Journey</p>
+          <div class="space-y-0.5">
+            <button @click="section='explore'" :class="section==='explore' ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-gray-600 hover:bg-gray-100'" class="w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2">
+              <span class="w-5 text-center">🧭</span> Explore
+            </button>
+            <button @click="section='search'" :class="section==='search' ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-gray-600 hover:bg-gray-100'" class="w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2">
+              <span class="w-5 text-center">🔍</span> Job Search
+            </button>
+            <button @click="section='apply'" :class="section==='apply' ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-gray-600 hover:bg-gray-100'" class="w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2">
+              <span class="w-5 text-center">🎯</span> Apply
+            </button>
+            <button @click="section='interview'" :class="section==='interview' ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-gray-600 hover:bg-gray-100'" class="w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2">
+              <span class="w-5 text-center">🎤</span> Interview
+            </button>
+            <button @click="section='negotiate'" :class="section==='negotiate' ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-gray-600 hover:bg-gray-100'" class="w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2">
+              <span class="w-5 text-center">💰</span> Negotiate
+            </button>
+            <button @click="section='productivity'" :class="section==='productivity' ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-gray-600 hover:bg-gray-100'" class="w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2">
+              <span class="w-5 text-center">⚡</span> Productivity
+            </button>
+          </div>
 
           <!-- CTA -->
-          <div class="mt-6 pt-6 border-t border-gray-200">
-            <a href="{% url 'jobs:job_list' %}" class="block w-full text-center px-4 py-3 rounded-xl bg-brand-300 text-gray-900 font-semibold text-sm hover:bg-brand-400 transition">
+          <div class="mt-5 pt-5 border-t border-gray-200">
+            <a href="{% url 'jobs:job_list' %}" class="block w-full text-center px-4 py-2.5 rounded-lg bg-brand-300 text-gray-900 font-semibold text-sm hover:bg-brand-400 transition">
               Browse Remote Jobs →
             </a>
           </div>
@@ -80,26 +82,26 @@
 
         <!-- Explore -->
         <div x-show="section==='explore'" x-transition>
-          <h2 class="text-2xl font-semibold text-gray-900 mb-2">Explore</h2>
-          <p class="text-gray-500 text-sm mb-6">Figure out if remote work is right for you and where to base yourself.</p>
-          <div class="grid sm:grid-cols-2 gap-5">
-            <a href="{% url 'jobs:remote_readiness_quiz' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
-              <div class="flex items-start gap-4">
-                <span class="text-3xl">📋</span>
+          <h2 class="text-2xl font-semibold text-gray-900 mb-1">Explore</h2>
+          <p class="text-gray-500 text-sm mb-5">Figure out if remote work is right for you and where to base yourself.</p>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <a href="{% url 'jobs:remote_readiness_quiz' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl mt-0.5">📋</span>
                 <div>
                   <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Remote Work Readiness Quiz</h3>
-                  <p class="text-gray-500 text-sm mt-1">12-question assessment to find out if you're ready for remote work. Get personalized tips.</p>
-                  <span class="inline-block mt-3 text-brand-600 text-sm font-semibold">Take the quiz →</span>
+                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">12-question assessment to find out if you're ready for remote work. Get personalized tips.</p>
+                  <span class="inline-block mt-2.5 text-brand-600 text-sm font-semibold">Take the quiz →</span>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:cost_of_living_comparison' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
-              <div class="flex items-start gap-4">
-                <span class="text-3xl">🏙️</span>
+            <a href="{% url 'jobs:cost_of_living_comparison' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl mt-0.5">🏙️</span>
                 <div>
                   <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Cost of Living Comparison</h3>
-                  <p class="text-gray-500 text-sm mt-1">Compare 60+ cities worldwide. See what your salary is worth in a different location.</p>
-                  <span class="inline-block mt-3 text-brand-600 text-sm font-semibold">Compare cities →</span>
+                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Compare 60+ cities worldwide. See what your salary is worth in a different location.</p>
+                  <span class="inline-block mt-2.5 text-brand-600 text-sm font-semibold">Compare cities →</span>
                 </div>
               </div>
             </a>
@@ -108,36 +110,36 @@
 
         <!-- Job Search -->
         <div x-show="section==='search'" x-transition>
-          <h2 class="text-2xl font-semibold text-gray-900 mb-2">Job Search</h2>
-          <p class="text-gray-500 text-sm mb-6">Tools to help you find the right role and understand job requirements.</p>
-          <div class="grid sm:grid-cols-2 gap-5">
-            <a href="{% url 'jobs:skills_gap' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
-              <div class="flex items-start gap-4">
-                <span class="text-3xl">🔍</span>
+          <h2 class="text-2xl font-semibold text-gray-900 mb-1">Job Search</h2>
+          <p class="text-gray-500 text-sm mb-5">Tools to help you find the right role and understand job requirements.</p>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <a href="{% url 'jobs:skills_gap' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl mt-0.5">🔍</span>
                 <div>
                   <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Skills Gap Analyzer</h3>
-                  <p class="text-gray-500 text-sm mt-1">Paste your resume and a job description — AI shows matching, missing, and transferable skills.</p>
-                  <span class="inline-flex items-center gap-1 mt-3 text-brand-600 text-sm font-semibold">Analyze skills → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Paste your resume and a job description — AI shows matching, missing, and transferable skills.</p>
+                  <span class="inline-flex items-center gap-1 mt-2.5 text-brand-600 text-sm font-semibold">Analyze skills → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:jd_generator' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
-              <div class="flex items-start gap-4">
-                <span class="text-3xl">📋</span>
+            <a href="{% url 'jobs:jd_generator' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl mt-0.5">📋</span>
                 <div>
                   <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Job Description Generator</h3>
-                  <p class="text-gray-500 text-sm mt-1">Create inclusive, professional job descriptions for remote positions at impact organizations.</p>
-                  <span class="inline-flex items-center gap-1 mt-3 text-brand-600 text-sm font-semibold">Generate JD → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Create inclusive, professional job descriptions for remote positions at impact organizations.</p>
+                  <span class="inline-flex items-center gap-1 mt-2.5 text-brand-600 text-sm font-semibold">Generate JD → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:word_counter' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
-              <div class="flex items-start gap-4">
-                <span class="text-3xl">📝</span>
+            <a href="{% url 'jobs:word_counter' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl mt-0.5">📝</span>
                 <div>
                   <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Word Counter</h3>
-                  <p class="text-gray-500 text-sm mt-1">Count words, characters, reading time, and keyword density. Perfect for applications.</p>
-                  <span class="inline-block mt-3 text-brand-600 text-sm font-semibold">Count words →</span>
+                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Count words, characters, reading time, and keyword density. Perfect for applications.</p>
+                  <span class="inline-block mt-2.5 text-brand-600 text-sm font-semibold">Count words →</span>
                 </div>
               </div>
             </a>
@@ -146,26 +148,26 @@
 
         <!-- Apply -->
         <div x-show="section==='apply'" x-transition>
-          <h2 class="text-2xl font-semibold text-gray-900 mb-2">Apply</h2>
-          <p class="text-gray-500 text-sm mb-6">Craft the perfect application materials for your next role.</p>
-          <div class="grid sm:grid-cols-2 gap-5">
-            <a href="{% url 'jobs:cover_letter_generator' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
-              <div class="flex items-start gap-4">
-                <span class="text-3xl">✉️</span>
+          <h2 class="text-2xl font-semibold text-gray-900 mb-1">Apply</h2>
+          <p class="text-gray-500 text-sm mb-5">Craft the perfect application materials for your next role.</p>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <a href="{% url 'jobs:cover_letter_generator' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl mt-0.5">✉️</span>
                 <div>
                   <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Cover Letter Generator</h3>
-                  <p class="text-gray-500 text-sm mt-1">AI-powered cover letters tailored to remote and impact jobs. Paste a job description and go.</p>
-                  <span class="inline-flex items-center gap-1 mt-3 text-brand-600 text-sm font-semibold">Generate letter → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">AI-powered cover letters tailored to remote and impact jobs. Paste a job description and go.</p>
+                  <span class="inline-flex items-center gap-1 mt-2.5 text-brand-600 text-sm font-semibold">Generate letter → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:resignation_letter' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
-              <div class="flex items-start gap-4">
-                <span class="text-3xl">👋</span>
+            <a href="{% url 'jobs:resignation_letter' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl mt-0.5">👋</span>
                 <div>
                   <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Resignation Letter Generator</h3>
-                  <p class="text-gray-500 text-sm mt-1">Write a professional resignation letter in minutes. Choose your tone and download instantly.</p>
-                  <span class="inline-flex items-center gap-1 mt-3 text-brand-600 text-sm font-semibold">Generate letter → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Write a professional resignation letter in minutes. Choose your tone and download instantly.</p>
+                  <span class="inline-flex items-center gap-1 mt-2.5 text-brand-600 text-sm font-semibold">Generate letter → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
                 </div>
               </div>
             </a>
@@ -174,26 +176,26 @@
 
         <!-- Interview -->
         <div x-show="section==='interview'" x-transition>
-          <h2 class="text-2xl font-semibold text-gray-900 mb-2">Interview</h2>
-          <p class="text-gray-500 text-sm mb-6">Prepare for interviews and follow up like a pro.</p>
-          <div class="grid sm:grid-cols-2 gap-5">
-            <a href="{% url 'jobs:interview_prep' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
-              <div class="flex items-start gap-4">
-                <span class="text-3xl">🎤</span>
+          <h2 class="text-2xl font-semibold text-gray-900 mb-1">Interview</h2>
+          <p class="text-gray-500 text-sm mb-5">Prepare for interviews and follow up like a pro.</p>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <a href="{% url 'jobs:interview_prep' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl mt-0.5">🎤</span>
                 <div>
                   <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Interview Prep</h3>
-                  <p class="text-gray-500 text-sm mt-1">AI-generated interview questions tailored to your role, sector, and experience level.</p>
-                  <span class="inline-flex items-center gap-1 mt-3 text-brand-600 text-sm font-semibold">Prepare now → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">AI-generated interview questions tailored to your role, sector, and experience level.</p>
+                  <span class="inline-flex items-center gap-1 mt-2.5 text-brand-600 text-sm font-semibold">Prepare now → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:thank_you_email' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
-              <div class="flex items-start gap-4">
-                <span class="text-3xl">💌</span>
+            <a href="{% url 'jobs:thank_you_email' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl mt-0.5">💌</span>
                 <div>
                   <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Thank You Email Generator</h3>
-                  <p class="text-gray-500 text-sm mt-1">Generate a polished post-interview thank you email. Customizable tone and interview details.</p>
-                  <span class="inline-flex items-center gap-1 mt-3 text-brand-600 text-sm font-semibold">Generate email → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Generate a polished post-interview thank you email. Customizable tone and interview details.</p>
+                  <span class="inline-flex items-center gap-1 mt-2.5 text-brand-600 text-sm font-semibold">Generate email → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
                 </div>
               </div>
             </a>
@@ -202,46 +204,46 @@
 
         <!-- Negotiate -->
         <div x-show="section==='negotiate'" x-transition>
-          <h2 class="text-2xl font-semibold text-gray-900 mb-2">Negotiate</h2>
-          <p class="text-gray-500 text-sm mb-6">Know your worth and negotiate with confidence.</p>
-          <div class="grid sm:grid-cols-2 gap-5">
-            <a href="{% url 'jobs:salary_negotiation' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
-              <div class="flex items-start gap-4">
-                <span class="text-3xl">💬</span>
+          <h2 class="text-2xl font-semibold text-gray-900 mb-1">Negotiate</h2>
+          <p class="text-gray-500 text-sm mb-5">Know your worth and negotiate with confidence.</p>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <a href="{% url 'jobs:salary_negotiation' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl mt-0.5">💬</span>
                 <div>
                   <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Salary Negotiation Script</h3>
-                  <p class="text-gray-500 text-sm mt-1">AI-generated negotiation scripts with talking points and objection responses.</p>
-                  <span class="inline-flex items-center gap-1 mt-3 text-brand-600 text-sm font-semibold">Generate script → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">AI-generated negotiation scripts with talking points and objection responses.</p>
+                  <span class="inline-flex items-center gap-1 mt-2.5 text-brand-600 text-sm font-semibold">Generate script → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:salary_to_hourly' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
-              <div class="flex items-start gap-4">
-                <span class="text-3xl">💰</span>
+            <a href="{% url 'jobs:salary_to_hourly' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl mt-0.5">💰</span>
                 <div>
                   <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Salary to Hourly Calculator</h3>
-                  <p class="text-gray-500 text-sm mt-1">Convert annual salary to hourly rate and vice versa. Includes tax estimates.</p>
-                  <span class="inline-block mt-3 text-brand-600 text-sm font-semibold">Calculate →</span>
+                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Convert annual salary to hourly rate and vice versa. Includes tax estimates.</p>
+                  <span class="inline-block mt-2.5 text-brand-600 text-sm font-semibold">Calculate →</span>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:pay_raise_calculator' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
-              <div class="flex items-start gap-4">
-                <span class="text-3xl">📈</span>
+            <a href="{% url 'jobs:pay_raise_calculator' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl mt-0.5">📈</span>
                 <div>
                   <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Pay Raise Calculator</h3>
-                  <p class="text-gray-500 text-sm mt-1">See exactly how much a raise is worth. Compare percentages and compound over years.</p>
-                  <span class="inline-block mt-3 text-brand-600 text-sm font-semibold">Calculate raise →</span>
+                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">See exactly how much a raise is worth. Compare percentages and compound over years.</p>
+                  <span class="inline-block mt-2.5 text-brand-600 text-sm font-semibold">Calculate raise →</span>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:freelance_rate' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
-              <div class="flex items-start gap-4">
-                <span class="text-3xl">💵</span>
+            <a href="{% url 'jobs:freelance_rate' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl mt-0.5">💵</span>
                 <div>
                   <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Freelance Rate Calculator</h3>
-                  <p class="text-gray-500 text-sm mt-1">Calculate your ideal hourly rate based on income goals, expenses, and billable hours.</p>
-                  <span class="inline-block mt-3 text-brand-600 text-sm font-semibold">Calculate rate →</span>
+                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Calculate your ideal hourly rate based on income goals, expenses, and billable hours.</p>
+                  <span class="inline-block mt-2.5 text-brand-600 text-sm font-semibold">Calculate rate →</span>
                 </div>
               </div>
             </a>
@@ -250,36 +252,36 @@
 
         <!-- Productivity -->
         <div x-show="section==='productivity'" x-transition>
-          <h2 class="text-2xl font-semibold text-gray-900 mb-2">Productivity</h2>
-          <p class="text-gray-500 text-sm mb-6">Stay productive, organized, and on top of your remote work life.</p>
-          <div class="grid sm:grid-cols-2 gap-5">
-            <a href="{% url 'jobs:pomodoro_timer' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
-              <div class="flex items-start gap-4">
-                <span class="text-3xl">🍅</span>
+          <h2 class="text-2xl font-semibold text-gray-900 mb-1">Productivity</h2>
+          <p class="text-gray-500 text-sm mb-5">Stay productive, organized, and on top of your remote work life.</p>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <a href="{% url 'jobs:pomodoro_timer' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl mt-0.5">🍅</span>
                 <div>
                   <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Pomodoro Timer</h3>
-                  <p class="text-gray-500 text-sm mt-1">Stay focused with customizable work/break intervals, notifications, and a built-in task list.</p>
-                  <span class="inline-block mt-3 text-brand-600 text-sm font-semibold">Start timer →</span>
+                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Stay focused with customizable work/break intervals, notifications, and a built-in task list.</p>
+                  <span class="inline-block mt-2.5 text-brand-600 text-sm font-semibold">Start timer →</span>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:timezone_overlap' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
-              <div class="flex items-start gap-4">
-                <span class="text-3xl">🌍</span>
+            <a href="{% url 'jobs:timezone_overlap' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl mt-0.5">🌍</span>
                 <div>
                   <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Time Zone Overlap Finder</h3>
-                  <p class="text-gray-500 text-sm mt-1">Find the best meeting times across 2–4 time zones with a visual overlap chart.</p>
-                  <span class="inline-block mt-3 text-brand-600 text-sm font-semibold">Find overlap →</span>
+                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Find the best meeting times across 2–4 time zones with a visual overlap chart.</p>
+                  <span class="inline-block mt-2.5 text-brand-600 text-sm font-semibold">Find overlap →</span>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:pto_calculator' %}" class="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md hover:border-brand-200 transition">
-              <div class="flex items-start gap-4">
-                <span class="text-3xl">📅</span>
+            <a href="{% url 'jobs:pto_calculator' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 transition">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl mt-0.5">📅</span>
                 <div>
                   <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">PTO & Work Days Calculator</h3>
-                  <p class="text-gray-500 text-sm mt-1">Count work days, track PTO accrual, and countdown to your next vacation.</p>
-                  <span class="inline-block mt-3 text-brand-600 text-sm font-semibold">Calculate →</span>
+                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Count work days, track PTO accrual, and countdown to your next vacation.</p>
+                  <span class="inline-block mt-2.5 text-brand-600 text-sm font-semibold">Calculate →</span>
                 </div>
               </div>
             </a>
