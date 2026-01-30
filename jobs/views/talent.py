@@ -24,8 +24,8 @@ from ..services.email_service import EmailService
 logger = logging.getLogger(__name__)
 
 
-class TalentDirectoryView(ListView):
-    """Public talent directory — browse seekers with public profiles."""
+class TalentDirectoryView(LoginRequiredMixin, ListView):
+    """Talent directory — hidden from public for now (login required)."""
 
     template_name = "jobs/talent/directory.html"
     context_object_name = "seekers"
