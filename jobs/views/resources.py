@@ -616,9 +616,46 @@ class PomodoroTimerView(TemplateView):
     template_name = "jobs/tools/pomodoro_timer.html"
 
 
-class EmailSignatureView(TemplateView):
-    template_name = "jobs/tools/email_signature.html"
+class InterviewPrepView(TemplateView):
+    template_name = "jobs/tools/interview_prep.html"
 
 
-class PasswordGeneratorView(TemplateView):
-    template_name = "jobs/tools/password_generator.html"
+class InterviewPrepGenerateView(View):
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        job_title = (data.get("job_title") or "").strip()
+        company_type = (data.get("company_type") or "Nonprofit").strip()
+        experience = (data.get("experience") or "Mid").strip()
+        focus = (data.get("focus") or "behavioral").strip()
+
+        if not job_title:
+            return JsonResponse({"error": "Job title is required."}, status=400)
+
+        if not request.user.is_authenticated:
+            count = request.session.get("ip_gen_count", 0)
+            if count >= 3:
+                return JsonResponse({"error": "Free limit reached. Please sign up to continue.", "requires_signup": True}, status=429)
+            request.session["ip_gen_count"] = count + 1
+
+        prompt = f"""Generate 10 interview questions for a {experience}-level {job_title} position at a {company_type} organization. Focus on {focus} questions.
+
+For each question, provide:
+1. The question
+2. A brief suggested answer framework (2-3 bullet points on how to approach the answer)
+
+Format as numbered list. Make questions specific to remote work and the impact/nonprofit sector where relevant. Be practical and realistic."""
+
+        content = _call_llm(prompt)
+
+        if content.startswith("LLM call failed:"):
+            return JsonResponse({"error": "Generation failed. Please try again."}, status=500)
+
+        return JsonResponse({"result": content})
+
+
+class FreelanceRateView(TemplateView):
+    template_name = "jobs/tools/freelance_rate.html"

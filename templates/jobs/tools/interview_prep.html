@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Free Remote Job Interview Prep | AI Interview Questions Generator{% endblock %}
+
+{% block meta_description %}Prepare for remote job interviews with our free AI-powered interview question generator. Get tailored questions for nonprofit, climate tech, social enterprise roles and more.{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How do I prepare for a remote job interview?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Test your technology beforehand, choose a quiet well-lit space, research the organization's mission, prepare STAR-method stories, have questions ready for the interviewer, and dress professionally even on video."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What questions are commonly asked in nonprofit interviews?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Common nonprofit interview questions include: Why are you passionate about our mission? How do you handle working with limited resources? Describe your experience with stakeholder engagement. How do you measure impact?"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is a remote interview different from in-person?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Remote interviews require strong on-camera presence, reliable technology, a professional background, and the ability to build rapport virtually. You should also be prepared for asynchronous components and virtual assessments."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the best tips for video interview success?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Look at the camera (not the screen), ensure good lighting from the front, use a neutral background, speak clearly with pauses, keep notes nearby but don't read from them, and follow up with a thank-you email."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How many practice questions should I prepare for an interview?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Aim to prepare answers for at least 10-15 common questions in your field. Our AI generator creates 10 tailored questions per session covering behavioral, technical, culture fit, leadership, and remote work scenarios."
+      }
+    }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="bg-[#F3F2EE] min-h-screen py-12 px-4 sm:px-6 lg:px-8" x-data="{
+    jobTitle: '',
+    companyType: '',
+    experienceLevel: '',
+    focusArea: '',
+    usesRemaining: 3,
+    showSignup: false,
+    isGenerating: false,
+    hasResults: false,
+    get formValid() {
+        return this.jobTitle.trim() !== '' && this.companyType !== '' && this.experienceLevel !== '' && this.focusArea !== '';
+    },
+    handleGenerate() {
+        if (this.usesRemaining <= 0) {
+            this.showSignup = true;
+            return;
+        }
+        this.isGenerating = true;
+        this.hasResults = false;
+    },
+    onResults() {
+        this.isGenerating = false;
+        this.hasResults = true;
+        this.usesRemaining = Math.max(0, this.usesRemaining - 1);
+        if (this.usesRemaining <= 0) {
+            this.showSignup = true;
+        }
+    }
+}">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-gray-900 mb-3">Free Remote Job Interview Prep</h1>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">AI-powered interview question generator tailored to impact-driven careers. Practice with questions specific to your role, sector, and experience level.</p>
+        </div>
+
+        <!-- Rate Limit Display -->
+        <div class="flex justify-center mb-8">
+            <div class="bg-brand-50 border border-brand-300 rounded-full px-5 py-2 inline-flex items-center gap-2">
+                <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span class="text-sm font-medium text-brand-600" x-text="`${usesRemaining} free generation${usesRemaining !== 1 ? 's' : ''} remaining`"></span>
+            </div>
+        </div>
+
+        <!-- Generator Card -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Generate Interview Questions</h2>
+
+            <form hx-post="{% url 'jobs:tools_interview_prep_generate' %}"
+                  hx-target="#results-container"
+                  hx-swap="innerHTML"
+                  hx-indicator="#loading-indicator"
+                  @htmx:before-request="handleGenerate()"
+                  @htmx:after-request="onResults()"
+                  x-show="!showSignup"
+                  class="space-y-5">
+                {% csrf_token %}
+
+                <!-- Job Title -->
+                <div>
+                    <label for="job_title" class="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
+                    <input type="text" name="job_title" id="job_title"
+                           x-model="jobTitle"
+                           placeholder="e.g. Program Manager, Data Analyst, Policy Director"
+                           class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-brand-300 focus:ring-2 focus:ring-brand-300/20 transition">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    <!-- Company Type -->
+                    <div>
+                        <label for="company_type" class="block text-sm font-medium text-gray-700 mb-1">Company Type</label>
+                        <select name="company_type" id="company_type"
+                                x-model="companyType"
+                                class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-gray-900 focus:border-brand-300 focus:ring-2 focus:ring-brand-300/20 transition">
+                            <option value="">Select type…</option>
+                            <option value="nonprofit">Nonprofit</option>
+                            <option value="climate_tech">Climate Tech</option>
+                            <option value="social_enterprise">Social Enterprise</option>
+                            <option value="international_development">International Development</option>
+                            <option value="public_health">Public Health</option>
+                            <option value="education">Education</option>
+                            <option value="government">Government</option>
+                            <option value="tech_for_good">Tech for Good</option>
+                        </select>
+                    </div>
+
+                    <!-- Experience Level -->
+                    <div>
+                        <label for="experience_level" class="block text-sm font-medium text-gray-700 mb-1">Experience Level</label>
+                        <select name="experience_level" id="experience_level"
+                                x-model="experienceLevel"
+                                class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-gray-900 focus:border-brand-300 focus:ring-2 focus:ring-brand-300/20 transition">
+                            <option value="">Select level…</option>
+                            <option value="entry">Entry Level</option>
+                            <option value="mid">Mid Level</option>
+                            <option value="senior">Senior Level</option>
+                            <option value="executive">Executive</option>
+                        </select>
+                    </div>
+
+                    <!-- Focus Area -->
+                    <div>
+                        <label for="focus_area" class="block text-sm font-medium text-gray-700 mb-1">Focus Area</label>
+                        <select name="focus_area" id="focus_area"
+                                x-model="focusArea"
+                                class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-gray-900 focus:border-brand-300 focus:ring-2 focus:ring-brand-300/20 transition">
+                            <option value="">Select focus…</option>
+                            <option value="behavioral">Behavioral</option>
+                            <option value="technical">Technical</option>
+                            <option value="culture_fit">Culture Fit</option>
+                            <option value="leadership">Leadership</option>
+                            <option value="remote_work">Remote Work</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="pt-2">
+                    <button type="submit"
+                            x-bind:disabled="!formValid || isGenerating"
+                            x-bind:class="formValid && !isGenerating ? 'bg-brand-300 hover:bg-brand-400 cursor-pointer' : 'bg-gray-300 cursor-not-allowed'"
+                            class="w-full sm:w-auto px-8 py-3 rounded-xl text-white font-semibold transition-colors flex items-center justify-center gap-2">
+                        <svg x-show="isGenerating" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        <span x-text="isGenerating ? 'Generating…' : 'Generate Questions'"></span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Signup Prompt -->
+            <div x-show="showSignup" x-cloak class="text-center py-8">
+                <div class="bg-brand-50 rounded-2xl p-8 border border-brand-300/30">
+                    <svg class="w-12 h-12 text-brand-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">You've used all 3 free generations</h3>
+                    <p class="text-gray-600 mb-6">Create a free account to unlock unlimited interview prep questions and save your practice history.</p>
+                    <a href="{% url 'account_signup' %}" class="inline-block bg-brand-300 hover:bg-brand-400 text-white font-semibold px-8 py-3 rounded-xl transition-colors">Sign Up Free</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Container -->
+        <div id="results-container" class="mb-8">
+            <!-- htmx will inject generated questions here -->
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading-indicator" class="htmx-indicator mb-8">
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+                <div class="animate-pulse space-y-4">
+                    <div class="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+                    <div class="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+                    <div class="h-4 bg-gray-200 rounded w-2/3 mx-auto"></div>
+                </div>
+                <p class="text-gray-500 mt-4 text-sm">Generating tailored interview questions…</p>
+            </div>
+        </div>
+
+        <!-- Tips Section -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">How to Prepare for Remote Job Interviews</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div class="flex gap-4">
+                    <div class="flex-shrink-0 w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 text-sm">Test Your Technology</h3>
+                        <p class="text-gray-500 text-sm mt-1">Check your camera, microphone, internet connection, and the video platform at least 24 hours before the interview.</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex-shrink-0 w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 text-sm">Research the Organization</h3>
+                        <p class="text-gray-500 text-sm mt-1">Understand their mission, recent projects, impact metrics, and culture. Tailor your answers to show alignment with their values.</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex-shrink-0 w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 text-sm">Prepare STAR Stories</h3>
+                        <p class="text-gray-500 text-sm mt-1">Structure your answers using Situation, Task, Action, Result. Have 5–7 stories ready that demonstrate different competencies.</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex-shrink-0 w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 text-sm">Master On-Camera Presence</h3>
+                        <p class="text-gray-500 text-sm mt-1">Look at the camera lens (not the screen), ensure front-facing light, use a clean background, and sit at eye level.</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex-shrink-0 w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 text-sm">Prepare Your Own Questions</h3>
+                        <p class="text-gray-500 text-sm mt-1">Have 3–5 thoughtful questions about remote work culture, team collaboration, growth opportunities, and impact measurement.</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex-shrink-0 w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 text-sm">Follow Up Promptly</h3>
+                        <p class="text-gray-500 text-sm mt-1">Send a personalized thank-you email within 24 hours referencing specific conversation points. It shows professionalism and genuine interest.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
+            <div class="space-y-4" x-data="{ openFaq: null }">
+                <div class="border border-gray-100 rounded-xl overflow-hidden">
+                    <button @click="openFaq = openFaq === 1 ? null : 1" class="w-full flex justify-between items-center px-5 py-4 text-left hover:bg-gray-50 transition">
+                        <span class="font-medium text-gray-900 text-sm">How do I prepare for a remote job interview?</span>
+                        <svg :class="openFaq === 1 ? 'rotate-180' : ''" class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="openFaq === 1" x-cloak class="px-5 pb-4 text-sm text-gray-600">
+                        Test your technology beforehand, choose a quiet well-lit space, research the organization's mission, prepare STAR-method stories, have questions ready for the interviewer, and dress professionally even on video.
+                    </div>
+                </div>
+                <div class="border border-gray-100 rounded-xl overflow-hidden">
+                    <button @click="openFaq = openFaq === 2 ? null : 2" class="w-full flex justify-between items-center px-5 py-4 text-left hover:bg-gray-50 transition">
+                        <span class="font-medium text-gray-900 text-sm">What questions are commonly asked in nonprofit interviews?</span>
+                        <svg :class="openFaq === 2 ? 'rotate-180' : ''" class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="openFaq === 2" x-cloak class="px-5 pb-4 text-sm text-gray-600">
+                        Common nonprofit interview questions include: Why are you passionate about our mission? How do you handle working with limited resources? Describe your experience with stakeholder engagement. How do you measure impact?
+                    </div>
+                </div>
+                <div class="border border-gray-100 rounded-xl overflow-hidden">
+                    <button @click="openFaq = openFaq === 3 ? null : 3" class="w-full flex justify-between items-center px-5 py-4 text-left hover:bg-gray-50 transition">
+                        <span class="font-medium text-gray-900 text-sm">How is a remote interview different from in-person?</span>
+                        <svg :class="openFaq === 3 ? 'rotate-180' : ''" class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="openFaq === 3" x-cloak class="px-5 pb-4 text-sm text-gray-600">
+                        Remote interviews require strong on-camera presence, reliable technology, a professional background, and the ability to build rapport virtually. You should also be prepared for asynchronous components and virtual assessments.
+                    </div>
+                </div>
+                <div class="border border-gray-100 rounded-xl overflow-hidden">
+                    <button @click="openFaq = openFaq === 4 ? null : 4" class="w-full flex justify-between items-center px-5 py-4 text-left hover:bg-gray-50 transition">
+                        <span class="font-medium text-gray-900 text-sm">What are the best tips for video interview success?</span>
+                        <svg :class="openFaq === 4 ? 'rotate-180' : ''" class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="openFaq === 4" x-cloak class="px-5 pb-4 text-sm text-gray-600">
+                        Look at the camera (not the screen), ensure good lighting from the front, use a neutral background, speak clearly with pauses, keep notes nearby but don't read from them, and follow up with a thank-you email.
+                    </div>
+                </div>
+                <div class="border border-gray-100 rounded-xl overflow-hidden">
+                    <button @click="openFaq = openFaq === 5 ? null : 5" class="w-full flex justify-between items-center px-5 py-4 text-left hover:bg-gray-50 transition">
+                        <span class="font-medium text-gray-900 text-sm">How many practice questions should I prepare for an interview?</span>
+                        <svg :class="openFaq === 5 ? 'rotate-180' : ''" class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="openFaq === 5" x-cloak class="px-5 pb-4 text-sm text-gray-600">
+                        Aim to prepare answers for at least 10–15 common questions in your field. Our AI generator creates 10 tailored questions per session covering behavioral, technical, culture fit, leadership, and remote work scenarios.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

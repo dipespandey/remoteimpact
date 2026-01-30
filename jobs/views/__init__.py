@@ -26,8 +26,9 @@ from .resources import (
     CostOfLivingComparisonView,
     WordCounterView,
     PomodoroTimerView,
-    EmailSignatureView,
-    PasswordGeneratorView,
+    InterviewPrepView,
+    InterviewPrepGenerateView,
+    FreelanceRateView,
 )
 from .stories import (
     StoryFeedView,

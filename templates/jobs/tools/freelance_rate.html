@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Free Freelance Rate Calculator | Set Your Remote Consulting Rate{% endblock %}
+
+{% block meta_description %}Calculate your ideal freelance hourly rate based on desired income, expenses, and availability. Free tool for remote consultants and independent professionals.{% endblock %}
+
+{% block content %}
+<section class="bg-[#F3F2EE] min-h-screen py-12 px-4 sm:px-6 lg:px-8"
+  x-data="{
+    income: 80000,
+    expenses: 10000,
+    vacationDays: 20,
+    sickDays: 10,
+    holidays: 10,
+    billableHours: 6,
+    taxRate: 25,
+    currency: 'USD',
+    symbols: { USD: '$', EUR: '€', GBP: '£', CAD: 'CA$', AUD: 'A$' },
+    showFaq: [false, false, false, false, false],
+    get sym() { return this.symbols[this.currency] },
+    get workingDays() { return 365 - 104 - this.vacationDays - this.sickDays - this.holidays },
+    get billableHoursYear() { return this.workingDays * this.billableHours },
+    get grossIncome() { return (this.income + this.expenses) / (1 - this.taxRate / 100) },
+    get taxAmount() { return this.grossIncome * (this.taxRate / 100) },
+    get hourlyRate() { return this.billableHoursYear > 0 ? this.grossIncome / this.billableHoursYear : 0 },
+    get dailyRate() { return this.hourlyRate * this.billableHours },
+    get weeklyRate() { return this.dailyRate * 5 },
+    get monthlyRate() { return this.grossIncome / 12 },
+    get incomePercent() { return this.grossIncome > 0 ? (this.income / this.grossIncome * 100) : 0 },
+    get taxPercent() { return this.grossIncome > 0 ? (this.taxAmount / this.grossIncome * 100) : 0 },
+    get expensePercent() { return this.grossIncome > 0 ? (this.expenses / this.grossIncome * 100) : 0 },
+    fmt(v) { return this.sym + Math.round(v).toLocaleString() },
+    marketRanges: [
+      { label: 'Junior / Entry-level', min: 25, max: 60 },
+      { label: 'Mid-level Consultant', min: 60, max: 120 },
+      { label: 'Senior / Specialist', min: 120, max: 250 },
+      { label: 'Expert / Niche Advisory', min: 250, max: 500 }
+    ],
+    rateInRange(min, max) {
+      return this.hourlyRate >= min && this.hourlyRate <= max;
+    }
+  }">
+
+  <div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-10">
+      <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Free Freelance Rate Calculator</h1>
+      <h2 class="text-lg text-gray-600 max-w-2xl mx-auto">Set your remote consulting rate with confidence. Enter your goals and see your ideal hourly, daily, and monthly rates instantly.</h2>
+    </div>
+
+    <div class="grid lg:grid-cols-5 gap-8">
+      <!-- Inputs Card -->
+      <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5 h-fit">
+        <h3 class="text-lg font-semibold text-gray-900 mb-1">Your Details</h3>
+
+        <!-- Currency -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+          <select x-model="currency" class="w-full rounded-lg border-gray-200 bg-brand-50 text-brand-600 font-medium px-3 py-2 focus:ring-brand-300 focus:border-brand-300">
+            <template x-for="c in ['USD','EUR','GBP','CAD','AUD']" :key="c">
+              <option :value="c" x-text="c" :selected="c === currency"></option>
+            </template>
+          </select>
+        </div>
+
+        <!-- Annual Income -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Desired Annual Income (net)</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" x-text="sym"></span>
+            <input type="number" x-model.number="income" min="0" step="1000" class="w-full pl-10 pr-3 py-2 rounded-lg border-gray-200 focus:ring-brand-300 focus:border-brand-300">
+          </div>
+        </div>
+
+        <!-- Expenses -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Annual Business Expenses</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" x-text="sym"></span>
+            <input type="number" x-model.number="expenses" min="0" step="500" class="w-full pl-10 pr-3 py-2 rounded-lg border-gray-200 focus:ring-brand-300 focus:border-brand-300">
+          </div>
+        </div>
+
+        <!-- Days off -->
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Vacation Days</label>
+            <input type="number" x-model.number="vacationDays" min="0" max="365" class="w-full px-3 py-2 rounded-lg border-gray-200 focus:ring-brand-300 focus:border-brand-300 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Sick Days</label>
+            <input type="number" x-model.number="sickDays" min="0" max="365" class="w-full px-3 py-2 rounded-lg border-gray-200 focus:ring-brand-300 focus:border-brand-300 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Holidays</label>
+            <input type="number" x-model.number="holidays" min="0" max="365" class="w-full px-3 py-2 rounded-lg border-gray-200 focus:ring-brand-300 focus:border-brand-300 text-sm">
+          </div>
+        </div>
+
+        <!-- Billable hours -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Billable Hours / Day</label>
+          <input type="number" x-model.number="billableHours" min="1" max="16" step="0.5" class="w-full px-3 py-2 rounded-lg border-gray-200 focus:ring-brand-300 focus:border-brand-300">
+        </div>
+
+        <!-- Tax Rate -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Estimated Tax Rate (%)</label>
+          <input type="number" x-model.number="taxRate" min="0" max="80" class="w-full px-3 py-2 rounded-lg border-gray-200 focus:ring-brand-300 focus:border-brand-300">
+        </div>
+      </div>
+
+      <!-- Results Column -->
+      <div class="lg:col-span-3 space-y-6">
+
+        <!-- Summary Stats -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-1">Availability</h3>
+          <div class="grid grid-cols-2 gap-4 mt-4">
+            <div class="bg-brand-50 rounded-xl p-4 text-center">
+              <p class="text-2xl font-bold text-brand-600" x-text="workingDays"></p>
+              <p class="text-xs text-gray-500 mt-1">Working Days / Year</p>
+            </div>
+            <div class="bg-brand-50 rounded-xl p-4 text-center">
+              <p class="text-2xl font-bold text-brand-600" x-text="billableHoursYear.toLocaleString()"></p>
+              <p class="text-xs text-gray-500 mt-1">Billable Hours / Year</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rates Card -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Rates</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="bg-brand-50 rounded-xl p-4 text-center">
+              <p class="text-xl sm:text-2xl font-bold text-brand-600" x-text="fmt(hourlyRate)"></p>
+              <p class="text-xs text-gray-500 mt-1">Hourly</p>
+            </div>
+            <div class="bg-brand-50 rounded-xl p-4 text-center">
+              <p class="text-xl sm:text-2xl font-bold text-brand-600" x-text="fmt(dailyRate)"></p>
+              <p class="text-xs text-gray-500 mt-1">Daily</p>
+            </div>
+            <div class="bg-brand-50 rounded-xl p-4 text-center">
+              <p class="text-xl sm:text-2xl font-bold text-brand-600" x-text="fmt(weeklyRate)"></p>
+              <p class="text-xs text-gray-500 mt-1">Weekly</p>
+            </div>
+            <div class="bg-brand-50 rounded-xl p-4 text-center">
+              <p class="text-xl sm:text-2xl font-bold text-brand-600" x-text="fmt(monthlyRate)"></p>
+              <p class="text-xs text-gray-500 mt-1">Monthly</p>
+            </div>
+          </div>
+          <div class="mt-4 bg-gray-50 rounded-xl p-4 text-center">
+            <p class="text-sm text-gray-500">Required Gross Income</p>
+            <p class="text-2xl font-bold text-gray-900" x-text="fmt(grossIncome)"></p>
+          </div>
+        </div>
+
+        <!-- Visual Breakdown -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Income Breakdown</h3>
+          <!-- Stacked bar -->
+          <div class="w-full h-10 rounded-full overflow-hidden flex">
+            <div class="bg-brand-300 h-full transition-all duration-300" :style="'width:' + incomePercent + '%'" :title="'Take-home: ' + fmt(income)"></div>
+            <div class="bg-amber-400 h-full transition-all duration-300" :style="'width:' + taxPercent + '%'" :title="'Taxes: ' + fmt(taxAmount)"></div>
+            <div class="bg-rose-400 h-full transition-all duration-300" :style="'width:' + expensePercent + '%'" :title="'Expenses: ' + fmt(expenses)"></div>
+          </div>
+          <!-- Legend -->
+          <div class="flex flex-wrap gap-4 mt-4 text-sm">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-brand-300 inline-block"></span>
+              <span class="text-gray-600">Take-home <span class="font-semibold" x-text="fmt(income)"></span> (<span x-text="Math.round(incomePercent)"></span>%)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-amber-400 inline-block"></span>
+              <span class="text-gray-600">Taxes <span class="font-semibold" x-text="fmt(taxAmount)"></span> (<span x-text="Math.round(taxPercent)"></span>%)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-rose-400 inline-block"></span>
+              <span class="text-gray-600">Expenses <span class="font-semibold" x-text="fmt(expenses)"></span> (<span x-text="Math.round(expensePercent)"></span>%)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Market Comparison -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Rate vs Market</h3>
+          <p class="text-sm text-gray-500 mb-4">Common hourly rate ranges for remote impact &amp; consulting work</p>
+          <div class="space-y-3">
+            <template x-for="range in marketRanges" :key="range.label">
+              <div>
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="text-gray-700" x-text="range.label"></span>
+                  <span class="text-gray-400" x-text="sym + range.min + ' – ' + sym + range.max"></span>
+                </div>
+                <div class="relative w-full h-6 bg-gray-100 rounded-full overflow-hidden">
+                  <!-- Market range bar -->
+                  <div class="absolute h-full bg-gray-200 rounded-full"
+                    :style="'left:' + (range.min / 500 * 100) + '%; width:' + ((range.max - range.min) / 500 * 100) + '%'"></div>
+                  <!-- Your rate marker -->
+                  <div class="absolute top-0 h-full w-1 bg-brand-600 rounded-full transition-all duration-300"
+                    :style="'left: min(' + (hourlyRate / 500 * 100) + '%, 99.5%)'"></div>
+                </div>
+                <div x-show="rateInRange(range.min, range.max)" class="text-xs text-brand-600 font-medium mt-1">
+                  ✓ Your rate falls in this range
+                </div>
+              </div>
+            </template>
+          </div>
+          <p class="text-xs text-gray-400 mt-4">Green marker shows your calculated hourly rate. Ranges are approximate for remote consulting roles.</p>
+        </div>
+
+        <!-- FAQ -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Frequently Asked Questions</h2>
+          <div class="divide-y divide-gray-100">
+            <div class="py-3">
+              <button x-on:click="showFaq[0] = !showFaq[0]" class="flex justify-between w-full text-left text-sm font-medium text-gray-800">
+                <span>How do I calculate my freelance hourly rate?</span>
+                <span x-text="showFaq[0] ? '−' : '+'" class="text-brand-600 ml-2"></span>
+              </button>
+              <p x-show="showFaq[0]" x-cloak class="mt-2 text-sm text-gray-600">Add your desired net income and business expenses, divide by (1 minus your tax rate) to get gross income, then divide by your total billable hours per year. This calculator does it all automatically.</p>
+            </div>
+            <div class="py-3">
+              <button x-on:click="showFaq[1] = !showFaq[1]" class="flex justify-between w-full text-left text-sm font-medium text-gray-800">
+                <span>What are typical billable hours for freelancers?</span>
+                <span x-text="showFaq[1] ? '−' : '+'" class="text-brand-600 ml-2"></span>
+              </button>
+              <p x-show="showFaq[1]" x-cloak class="mt-2 text-sm text-gray-600">Most freelancers bill 5–7 hours per day. The rest goes to admin, marketing, learning, and breaks. We default to 6 hours, which is realistic for sustainable consulting work.</p>
+            </div>
+            <div class="py-3">
+              <button x-on:click="showFaq[2] = !showFaq[2]" class="flex justify-between w-full text-left text-sm font-medium text-gray-800">
+                <span>Should I charge hourly or daily rates?</span>
+                <span x-text="showFaq[2] ? '−' : '+'" class="text-brand-600 ml-2"></span>
+              </button>
+              <p x-show="showFaq[2]" x-cloak class="mt-2 text-sm text-gray-600">Daily or project rates are often preferred for consulting engagements. They reduce time-tracking overhead and align incentives around outcomes. Use your hourly rate as a baseline, then quote daily or project fees.</p>
+            </div>
+            <div class="py-3">
+              <button x-on:click="showFaq[3] = !showFaq[3]" class="flex justify-between w-full text-left text-sm font-medium text-gray-800">
+                <span>How much should I budget for taxes as a freelancer?</span>
+                <span x-text="showFaq[3] ? '−' : '+'" class="text-brand-600 ml-2"></span>
+              </button>
+              <p x-show="showFaq[3]" x-cloak class="mt-2 text-sm text-gray-600">In most countries, freelancers should set aside 25–35% of gross income for taxes (income tax + self-employment tax). Consult a local accountant for your exact situation.</p>
+            </div>
+            <div class="py-3">
+              <button x-on:click="showFaq[4] = !showFaq[4]" class="flex justify-between w-full text-left text-sm font-medium text-gray-800">
+                <span>What expenses should I include?</span>
+                <span x-text="showFaq[4] ? '−' : '+'" class="text-brand-600 ml-2"></span>
+              </button>
+              <p x-show="showFaq[4]" x-cloak class="mt-2 text-sm text-gray-600">Include software subscriptions, equipment, co-working space, insurance, professional development, accounting fees, internet, and any other costs of running your freelance business.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- JSON-LD FAQPage Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do I calculate my freelance hourly rate?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Add your desired net income and business expenses, divide by (1 minus your tax rate) to get gross income, then divide by your total billable hours per year."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What are typical billable hours for freelancers?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Most freelancers bill 5–7 hours per day. The rest goes to admin, marketing, learning, and breaks. 6 hours per day is realistic for sustainable consulting work."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Should I charge hourly or daily rates?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Daily or project rates are often preferred for consulting engagements. They reduce time-tracking overhead and align incentives around outcomes. Use your hourly rate as a baseline, then quote daily or project fees."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How much should I budget for taxes as a freelancer?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "In most countries, freelancers should set aside 25–35% of gross income for taxes including income tax and self-employment tax. Consult a local accountant for your exact situation."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What expenses should I include?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Include software subscriptions, equipment, co-working space, insurance, professional development, accounting fees, internet, and any other costs of running your freelance business."
+        }
+      }
+    ]
+  }
+  </script>
+</section>
+{% endblock %}
