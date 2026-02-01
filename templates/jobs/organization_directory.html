@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}{{ meta_title }}{% endblock %}
+{% block meta_description %}{{ meta_description }}{% endblock %}
+{% block canonical %}{{ SITE_URL }}{% url 'jobs:organization_directory' %}{% endblock %}
+{% block og_title %}{{ meta_title }}{% endblock %}
+{% block og_description %}{{ meta_description }}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ SITE_URL }}/"},
+        {"@type": "ListItem", "position": 2, "name": "Organizations"}
+    ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="bg-twilight-900 py-6 md:py-12">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 md:space-y-10">
+        <header class="space-y-2 md:space-y-3">
+            <nav class="text-xs md:text-sm text-white/50" aria-label="Breadcrumb">
+                <a href="{% url 'jobs:home' %}" class="hover:text-white/80 transition">Home</a>
+                <span class="mx-1">/</span>
+                <span class="text-white/70">Organizations</span>
+            </nav>
+            <h1 class="text-2xl md:text-4xl font-semibold text-white">Impact Organizations Hiring Remotely</h1>
+            <p class="text-white/60 text-sm md:text-base max-w-2xl">
+                Browse purpose-driven organizations with open remote positions. Nonprofits, social enterprises, B Corps, and more.
+            </p>
+        </header>
+
+        <!-- Search -->
+        <form method="get" class="flex gap-2 max-w-md">
+            <input type="text" name="q" value="{{ search_query }}" placeholder="Search organizations…"
+                   class="flex-1 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 text-sm focus:outline-none focus:border-brand-300/50">
+            <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-300 text-twilight-900 font-semibold text-sm hover:bg-neon transition">Search</button>
+        </form>
+
+        <!-- Org grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for org in organizations %}
+            <a href="{% url 'jobs:organization_profile' slug=org.slug %}" class="rounded-xl md:rounded-2xl border border-white/10 bg-card-gradient backdrop-blur px-4 py-4 md:px-5 md:py-5 hover:border-white/20 transition group">
+                <div class="flex items-center gap-3 mb-3">
+                    {% if org.logo %}
+                    <div class="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                        <img src="{{ org.logo.url }}" alt="{{ org.name }}" class="w-8 h-8 rounded-lg object-cover">
+                    </div>
+                    {% else %}
+                    <div class="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center text-white font-semibold text-sm shrink-0">
+                        {{ org.name|slice:":2"|upper }}
+                    </div>
+                    {% endif %}
+                    <div class="min-w-0">
+                        <h2 class="text-white font-semibold text-sm md:text-base group-hover:text-neon transition truncate">{{ org.name }}</h2>
+                        {% if org.organization_type %}
+                        <span class="text-white/50 text-xs">{{ org.get_organization_type_display }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-white/50">
+                    <span class="px-2 py-0.5 rounded-full bg-white/5 border border-white/10">{{ org.active_job_count }} job{{ org.active_job_count|pluralize }}</span>
+                    {% for signal in org.verified_signals_list %}
+                    <span class="px-2 py-0.5 rounded-full bg-brand-300/20 border border-brand-300/30 text-brand-300">✓</span>
+                    {% endfor %}
+                </div>
+            </a>
+            {% empty %}
+            <div class="col-span-full text-center py-16 rounded-3xl border border-white/10 bg-card-gradient backdrop-blur text-white">
+                <h3 class="text-2xl font-semibold mb-3">No organizations found</h3>
+                <p class="text-white/60">Try a different search term.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <nav class="flex justify-center gap-2 pt-4" aria-label="Pagination">
+            {% if page_obj.has_previous %}<a href="?{% if search_query %}q={{ search_query }}&{% endif %}page={{ page_obj.previous_page_number }}" class="px-4 py-2 rounded-xl bg-white/5 text-white/70 hover:bg-white/10 border border-white/10 transition">&laquo; Previous</a>{% endif %}
+            <span class="px-4 py-2 text-white/50 text-sm">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}<a href="?{% if search_query %}q={{ search_query }}&{% endif %}page={{ page_obj.next_page_number }}" class="px-4 py-2 rounded-xl bg-white/5 text-white/70 hover:bg-white/10 border border-white/10 transition">Next &raquo;</a>{% endif %}
+        </nav>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

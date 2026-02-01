@@ -69,3 +69,6 @@ from .visibility import VisibilitySettingsView
 from .applications import ApplicationCreateView, MyApplicationsView
 
 from .og_image import JobOGImageView
+
+from .organizations import OrganizationProfileView, OrganizationDirectoryView
+from .locations import RegionJobsView

@@ -193,4 +193,9 @@ urlpatterns = [
     path("tools/thank-you-email-generator/generate/", views.ThankYouEmailGenerateView.as_view(), name="thank_you_email_generate"),
     path("tools/pay-raise-calculator/", views.PayRaiseCalculatorView.as_view(), name="pay_raise_calculator"),
     path("tools/remote-work-readiness-quiz/", views.RemoteReadinessQuizView.as_view(), name="remote_readiness_quiz"),
+    # Organization pages
+    path("organizations/", views.OrganizationDirectoryView.as_view(), name="organization_directory"),
+    path("org/<slug:slug>/", views.OrganizationProfileView.as_view(), name="organization_profile"),
+    # Location / Region pages
+    path("remote-jobs/<slug:region_slug>/", views.RegionJobsView.as_view(), name="region_jobs"),
 ]

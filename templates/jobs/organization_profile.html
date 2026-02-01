@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% load job_extras %}
+
+{% block title %}{{ meta_title }}{% endblock %}
+{% block meta_description %}{{ meta_description }}{% endblock %}
+{% block canonical %}{{ SITE_URL }}/org/{{ organization.slug }}/{% endblock %}
+{% block og_title %}{{ meta_title }}{% endblock %}
+{% block og_description %}{{ meta_description }}{% endblock %}
+{% block twitter_title %}{{ meta_title }}{% endblock %}
+{% block twitter_description %}{{ meta_description }}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ SITE_URL }}/"},
+        {"@type": "ListItem", "position": 2, "name": "Organizations", "item": "{{ SITE_URL }}{% url 'jobs:organization_directory' %}"},
+        {"@type": "ListItem", "position": 3, "name": "{{ organization.name|escapejs }}"}
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "{{ organization.name|escapejs }}",
+    {% if organization.description %}"description": "{{ organization.description|escapejs|truncatewords:50 }}",{% endif %}
+    {% if organization.website %}"url": "{{ organization.website }}",{% endif %}
+    {% if organization.logo %}"logo": "{{ SITE_URL }}{{ organization.logo.url }}",{% endif %}
+    "sameAs": []
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="bg-twilight-900 py-6 md:py-12">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 md:space-y-10">
+        <header class="space-y-2 md:space-y-3">
+            <nav class="text-xs md:text-sm text-white/50" aria-label="Breadcrumb">
+                <a href="{% url 'jobs:home' %}" class="hover:text-white/80 transition">Home</a>
+                <span class="mx-1">/</span>
+                <a href="{% url 'jobs:organization_directory' %}" class="hover:text-white/80 transition">Organizations</a>
+                <span class="mx-1">/</span>
+                <span class="text-white/70">{{ organization.name }}</span>
+            </nav>
+
+            <div class="flex items-start gap-4 md:gap-6">
+                {% if organization.logo %}
+                <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+                    <img src="{{ organization.logo.url }}" alt="{{ organization.name }}" class="w-14 h-14 md:w-18 md:h-18 rounded-xl object-cover">
+                </div>
+                {% else %}
+                <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-white font-semibold text-xl md:text-2xl shrink-0">
+                    {{ organization.name|slice:":2"|upper }}
+                </div>
+                {% endif %}
+                <div class="space-y-1">
+                    <h1 class="text-2xl md:text-4xl font-semibold text-white">{{ organization.name }}</h1>
+                    {% if organization.organization_type %}
+                    <span class="inline-block px-3 py-1 rounded-full bg-white/10 border border-white/10 text-white/70 text-xs">{{ organization.get_organization_type_display }}</span>
+                    {% endif %}
+                    {% if organization.website %}
+                    <a href="{{ organization.website }}" target="_blank" rel="noopener" class="text-neon text-sm hover:underline block">{{ organization.website|truncatechars:50 }}</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if organization.description %}
+            <p class="text-white/60 text-sm md:text-base max-w-3xl">{{ organization.description }}</p>
+            {% endif %}
+
+            {% if organization.impact_statement %}
+            <p class="text-white/70 text-sm md:text-base max-w-3xl italic">"{{ organization.impact_statement }}"</p>
+            {% endif %}
+
+            <!-- Stats & signals -->
+            <div class="flex flex-wrap gap-3 md:gap-4 text-sm">
+                <span class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/70">{{ job_count }} active role{{ job_count|pluralize }}</span>
+                {% if organization.team_size %}
+                <span class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/70">{{ organization.get_team_size_display }} team</span>
+                {% endif %}
+                {% if organization.remote_culture %}
+                <span class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/70">{{ organization.get_remote_culture_display }}</span>
+                {% endif %}
+                {% if organization.founded_year %}
+                <span class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/70">Founded {{ organization.founded_year }}</span>
+                {% endif %}
+                {% for signal in organization.verified_signals_list %}
+                <span class="px-3 py-1.5 rounded-full bg-brand-300/20 border border-brand-300/30 text-brand-300 text-xs font-medium">✓ {{ signal }}</span>
+                {% endfor %}
+            </div>
+
+            {% if categories %}
+            <div class="flex flex-wrap gap-2">
+                <span class="text-white/50 text-xs self-center mr-1">Hiring in:</span>
+                {% for cat in categories %}
+                <a href="{% url 'jobs:category_landing' slug=cat.slug %}" class="px-3 py-1 rounded-full text-xs bg-white/5 text-white/70 hover:bg-white/10 border border-white/10 transition">{{ cat.name }}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </header>
+
+        <!-- Job listings -->
+        <section class="space-y-3 md:space-y-4 relative z-10">
+            <h2 class="text-lg md:text-xl font-semibold text-white">Open Positions</h2>
+            {% if jobs %}
+                {% for job in jobs %}
+                <article class="rounded-xl md:rounded-2xl border border-white/10 bg-card-gradient backdrop-blur px-3 py-3 md:px-5 md:py-4 flex gap-3 md:gap-4 items-start">
+                    <div class="hidden sm:flex w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white/10 border border-white/10 items-center justify-center text-white font-semibold text-xs md:text-base shrink-0">
+                        {% if job.organization.logo %}<img src="{{ job.organization.logo.url }}" alt="{{ job.organization.name }}" class="w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-xl object-cover">{% else %}{{ job.organization.name|default:"RI"|slice:":2"|upper }}{% endif %}
+                    </div>
+                    <div class="flex-1 min-w-0 space-y-1 md:space-y-2">
+                        <div class="flex flex-wrap items-center gap-1.5 md:gap-2 text-[10px] md:text-xs uppercase tracking-wide md:tracking-[0.3em] text-white/50">
+                            {% if job.category %}<span class="tracking-normal px-2 py-0.5 md:px-3 md:py-1 rounded-full bg-white/10 border border-white/10 text-white/80 normal-case text-[10px] md:text-xs">{{ job.category.name }}</span>{% endif %}
+                            <span>{{ job.get_job_type_display }}</span>
+                        </div>
+                        <div>
+                            <h3 class="text-base md:text-2xl font-semibold text-white leading-tight">
+                                <a href="{{ job.get_absolute_url }}" class="hover:text-neon transition line-clamp-2">{{ job.title }}</a>
+                            </h3>
+                        </div>
+                        <div class="flex flex-wrap gap-2 md:gap-4 text-xs md:text-sm text-white/70">
+                            <span class="flex items-center gap-1">
+                                <svg class="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2.25c-3.728 0-6.75 3.022-6.75 6.75 0 5.062 6.75 12.75 6.75 12.75s6.75-7.688 6.75-12.75c0-3.728-3.022-6.75-6.75-6.75Zm0 9a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5Z"/></svg>
+                                {{ job.location|default:"Remote" }}
+                            </span>
+                            {% if job.salary_min and job.salary_max %}<span class="hidden sm:inline">{{ job.salary_currency }} {{ job.salary_min|floatformat:0 }} - {{ job.salary_max|floatformat:0 }}</span>{% endif %}
+                        </div>
+                    </div>
+                    <div class="text-right text-white/70 text-xs md:text-sm flex flex-col gap-2 md:gap-3 justify-between items-end shrink-0">
+                        <span class="whitespace-nowrap">{{ job.posted_at|timesince|slice:":8" }}</span>
+                        <a href="{{ job.get_absolute_url }}" class="text-neon font-semibold inline-flex items-center gap-1"><span class="hidden sm:inline">Details</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 5 7 7-7 7"/></svg></a>
+                    </div>
+                </article>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-16 rounded-3xl border border-white/10 bg-card-gradient backdrop-blur text-white">
+                    <h3 class="text-3xl font-semibold mb-3">No open roles right now</h3>
+                    <p class="text-white/60 mb-6">Check back soon or browse all available positions.</p>
+                    <a href="{% url 'jobs:job_list' %}" class="inline-flex px-6 py-3 rounded-full bg-brand-300 text-twilight-900 font-semibold hover:bg-neon transition">Browse all jobs</a>
+                </div>
+            {% endif %}
+        </section>
+
+        {% if page_obj.has_other_pages %}
+        <nav class="flex justify-center gap-2 pt-4" aria-label="Pagination">
+            {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 rounded-xl bg-white/5 text-white/70 hover:bg-white/10 border border-white/10 transition">&laquo; Previous</a>{% endif %}
+            <span class="px-4 py-2 text-white/50 text-sm">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 rounded-xl bg-white/5 text-white/70 hover:bg-white/10 border border-white/10 transition">Next &raquo;</a>{% endif %}
+        </nav>
+        {% endif %}
+
+        <div class="text-center pt-4">
+            <a href="{% url 'jobs:organization_directory' %}" class="text-neon hover:underline text-sm">← Browse more organizations</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
