@@ -16,7 +16,7 @@
         {% endif %}
     </p>
 
-    <a href="{% url 'jobs:job_list' %}?category={{ category.slug }}"
+    <a href="{% url 'jobs:category_landing' slug=category.slug %}"
         class="inline-flex items-center text-sm font-medium text-brand-600 hover:text-brand-700 transition mt-auto group">
         View opportunities
         <span class="ml-1 group-hover:translate-x-1 transition-transform">→</span>
