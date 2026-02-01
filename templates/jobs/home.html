@@ -358,7 +358,7 @@
         </div>
         <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {% for category in categories|slice:":6" %}
-            <a href="{% url 'jobs:job_list' %}?category={{ category.slug }}"
+            <a href="{% url 'jobs:category_landing' slug=category.slug %}"
                 class="group relative overflow-hidden rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-white/30 transition">
                 <div class="flex items-center justify-between mb-6">
                     <div class="text-4xl">{{ category.icon|default:"🌍" }}</div>
