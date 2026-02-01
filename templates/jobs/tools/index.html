@@ -3,7 +3,8 @@
 {% block title %}Free Career & Remote Work Tools | Remote Impact{% endblock %}
 
 {% block extra_head %}
-<meta name="description" content="16 free tools for your remote career journey — from readiness quizzes to salary negotiation scripts. AI-powered generators, calculators, and productivity tools.">
+<meta name="description"
+  content="16 free tools for your remote career journey — from readiness quizzes to salary negotiation scripts. AI-powered generators, calculators, and productivity tools.">
 <link rel="canonical" href="https://remoteimpact.org/tools/">
 <script type="application/ld+json">
 {
@@ -24,19 +25,32 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
       <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-3">Free tools</p>
       <h1 class="text-4xl md:text-5xl font-semibold mb-4">Career & Remote Work Tools</h1>
-      <p class="text-white/70 text-lg max-w-2xl mx-auto">Everything you need for your remote impact career — from exploring readiness to negotiating your offer. All free.</p>
+      <p class="text-white/70 text-lg max-w-2xl mx-auto">Everything you need for your remote impact career — from
+        exploring readiness to negotiating your offer. All free.</p>
     </div>
   </div>
 
   <!-- Mobile: horizontal scrollable tabs -->
   <div class="md:hidden sticky top-0 z-10 bg-white/90 backdrop-blur-md border-b border-gray-200 overflow-x-auto">
     <div class="flex whitespace-nowrap px-4 py-2.5 gap-1.5">
-      <button @click="section='explore'" :class="section==='explore' ? 'bg-brand-300 text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200">🧭 Explore</button>
-      <button @click="section='search'" :class="section==='search' ? 'bg-brand-300 text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200">🔍 Job Search</button>
-      <button @click="section='apply'" :class="section==='apply' ? 'bg-brand-300 text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200">🎯 Apply</button>
-      <button @click="section='interview'" :class="section==='interview' ? 'bg-brand-300 text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200">🎤 Interview</button>
-      <button @click="section='negotiate'" :class="section==='negotiate' ? 'bg-brand-300 text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200">💰 Negotiate</button>
-      <button @click="section='productivity'" :class="section==='productivity' ? 'bg-brand-300 text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-600'" class="px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200">⚡ Productivity</button>
+      <button @click="section='explore'"
+        :class="section==='explore' ? 'bg-brand-300 text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-600'"
+        class="px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200">🧭 Explore</button>
+      <button @click="section='search'"
+        :class="section==='search' ? 'bg-brand-300 text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-600'"
+        class="px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200">🔍 Job Search</button>
+      <button @click="section='apply'"
+        :class="section==='apply' ? 'bg-brand-300 text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-600'"
+        class="px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200">🎯 Apply</button>
+      <button @click="section='interview'"
+        :class="section==='interview' ? 'bg-brand-300 text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-600'"
+        class="px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200">🎤 Interview</button>
+      <button @click="section='negotiate'"
+        :class="section==='negotiate' ? 'bg-brand-300 text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-600'"
+        class="px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200">💰 Negotiate</button>
+      <button @click="section='productivity'"
+        :class="section==='productivity' ? 'bg-brand-300 text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-600'"
+        class="px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200">⚡ Productivity</button>
     </div>
   </div>
 
@@ -44,27 +58,51 @@
     <div class="flex gap-10">
 
       <!-- Desktop Sidebar -->
-      <nav class="hidden md:block w-44 flex-shrink-0 bg-transparent">
-        <div class="sticky top-24 bg-transparent">
-          <p class="text-xs uppercase tracking-widest text-gray-400 font-semibold mb-4 pl-1">Career Journey</p>
-          <div class="flex flex-col gap-0.5">
-            <button @click="section='explore'" :class="section==='explore' ? 'text-gray-900 font-semibold' : 'text-gray-500 hover:text-gray-800'" class="w-full text-left px-2 py-2 rounded-md text-sm flex items-center gap-2.5 transition">
-              <span class="text-base" style="width:20px;display:inline-block;text-align:center">🧭</span> Explore
+      <nav class="hidden md:block w-72 flex-shrink-0">
+        <div class="sticky top-24 bg-[#F8F9FA]/90 backdrop-blur-md rounded-3xl p-5 border border-gray-200/50 shadow-sm">
+          <p class="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold mt-4 mb-8 pl-4">Career Journey</p>
+          <div class="flex flex-col gap-2">
+            <button @click="section='explore'"
+              :class="section==='explore' ? 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] text-brand-700 font-bold' : 'text-gray-500 hover:text-gray-800 hover:bg-white/40'"
+              class="w-full text-left p-3 rounded-2xl text-sm flex items-center gap-4 transition-all duration-300 focus:outline-none group">
+              <span class="text-xl w-8 text-center transition-transform duration-300 group-hover:scale-110"
+                :class="section==='explore' ? 'scale-110' : ''">🧭</span>
+              <span class="tracking-tight">Explore</span>
             </button>
-            <button @click="section='search'" :class="section==='search' ? 'text-gray-900 font-semibold' : 'text-gray-500 hover:text-gray-800'" class="w-full text-left px-2 py-2 rounded-md text-sm flex items-center gap-2.5 transition">
-              <span class="text-base" style="width:20px;display:inline-block;text-align:center">🔍</span> Job Search
+            <button @click="section='search'"
+              :class="section==='search' ? 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] text-brand-700 font-bold' : 'text-gray-500 hover:text-gray-800 hover:bg-white/40'"
+              class="w-full text-left p-3 rounded-2xl text-sm flex items-center gap-4 transition-all duration-300 focus:outline-none group">
+              <span class="text-xl w-8 text-center transition-transform duration-300 group-hover:scale-110"
+                :class="section==='search' ? 'scale-110' : ''">🔍</span>
+              <span class="tracking-tight">Job Search</span>
             </button>
-            <button @click="section='apply'" :class="section==='apply' ? 'text-gray-900 font-semibold' : 'text-gray-500 hover:text-gray-800'" class="w-full text-left px-2 py-2 rounded-md text-sm flex items-center gap-2.5 transition">
-              <span class="text-base" style="width:20px;display:inline-block;text-align:center">🎯</span> Apply
+            <button @click="section='apply'"
+              :class="section==='apply' ? 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] text-brand-700 font-bold' : 'text-gray-500 hover:text-gray-800 hover:bg-white/40'"
+              class="w-full text-left p-3 rounded-2xl text-sm flex items-center gap-4 transition-all duration-300 focus:outline-none group">
+              <span class="text-xl w-8 text-center transition-transform duration-300 group-hover:scale-110"
+                :class="section==='apply' ? 'scale-110' : ''">🎯</span>
+              <span class="tracking-tight">Apply</span>
             </button>
-            <button @click="section='interview'" :class="section==='interview' ? 'text-gray-900 font-semibold' : 'text-gray-500 hover:text-gray-800'" class="w-full text-left px-2 py-2 rounded-md text-sm flex items-center gap-2.5 transition">
-              <span class="text-base" style="width:20px;display:inline-block;text-align:center">🎤</span> Interview
+            <button @click="section='interview'"
+              :class="section==='interview' ? 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] text-brand-700 font-bold' : 'text-gray-500 hover:text-gray-800 hover:bg-white/40'"
+              class="w-full text-left p-3 rounded-2xl text-sm flex items-center gap-4 transition-all duration-300 focus:outline-none group">
+              <span class="text-xl w-8 text-center transition-transform duration-300 group-hover:scale-110"
+                :class="section==='interview' ? 'scale-110' : ''">🎤</span>
+              <span class="tracking-tight">Interview</span>
             </button>
-            <button @click="section='negotiate'" :class="section==='negotiate' ? 'text-gray-900 font-semibold' : 'text-gray-500 hover:text-gray-800'" class="w-full text-left px-2 py-2 rounded-md text-sm flex items-center gap-2.5 transition">
-              <span class="text-base" style="width:20px;display:inline-block;text-align:center">💰</span> Negotiate
+            <button @click="section='negotiate'"
+              :class="section==='negotiate' ? 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] text-brand-700 font-bold' : 'text-gray-500 hover:text-gray-800 hover:bg-white/40'"
+              class="w-full text-left p-3 rounded-2xl text-sm flex items-center gap-4 transition-all duration-300 focus:outline-none group">
+              <span class="text-xl w-8 text-center transition-transform duration-300 group-hover:scale-110"
+                :class="section==='negotiate' ? 'scale-110' : ''">💰</span>
+              <span class="tracking-tight">Negotiate</span>
             </button>
-            <button @click="section='productivity'" :class="section==='productivity' ? 'text-gray-900 font-semibold' : 'text-gray-500 hover:text-gray-800'" class="w-full text-left px-2 py-2 rounded-md text-sm flex items-center gap-2.5 transition">
-              <span class="text-base" style="width:20px;display:inline-block;text-align:center">⚡</span> Productivity
+            <button @click="section='productivity'"
+              :class="section==='productivity' ? 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] text-brand-700 font-bold' : 'text-gray-500 hover:text-gray-800 hover:bg-white/40'"
+              class="w-full text-left p-3 rounded-2xl text-sm flex items-center gap-4 transition-all duration-300 focus:outline-none group">
+              <span class="text-xl w-8 text-center transition-transform duration-300 group-hover:scale-110"
+                :class="section==='productivity' ? 'scale-110' : ''">⚡</span>
+              <span class="tracking-tight">Productivity</span>
             </button>
           </div>
         </div>
@@ -74,27 +112,59 @@
       <div class="flex-1 min-w-0">
 
         <!-- Explore -->
-        <div x-show="section==='explore'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
-          <h2 class="text-2xl font-semibold text-gray-900 mb-1">Explore</h2>
-          <p class="text-gray-500 text-sm mb-5">Figure out if remote work is right for you and where to base yourself.</p>
-          <div class="grid sm:grid-cols-2 gap-4">
-            <a href="{% url 'jobs:remote_readiness_quiz' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 hover:-translate-y-0.5 transition-all duration-200">
-              <div class="flex items-start gap-3">
-                <span class="text-2xl mt-0.5">📋</span>
+        <div x-show="section==='explore'" x-transition:enter="transition ease-out duration-200"
+          x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+          <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Explore</h2>
+            <p class="text-gray-500 text-base max-w-2xl">Figure out if remote work is right for you and where to base
+              yourself.</p>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-6">
+            <a href="{% url 'jobs:remote_readiness_quiz' %}"
+              class="group relative rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm hover:shadow-xl hover:bg-white hover:border-brand-200 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
+              <div class="flex flex-col gap-4">
+                <div
+                  class="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                  📋</div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Remote Work Readiness Quiz</h3>
-                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">12-question assessment to find out if you're ready for remote work. Get personalized tips.</p>
-                  <span class="inline-block mt-2.5 text-brand-600 text-sm font-semibold">Take the quiz →</span>
+                  <h3 class="text-lg font-bold text-gray-900 group-hover:text-brand-600 transition">Remote Work
+                    Readiness Quiz</h3>
+                  <p class="text-gray-500 text-sm mt-2 leading-relaxed">12-question assessment to find out if you're
+                    ready for remote work. Get personalized tips.</p>
+                  <div class="flex items-center gap-1.5 mt-4 text-brand-600 text-sm font-bold">
+                    Take the quiz
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                      class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20"
+                      fill="currentColor">
+                      <path fill-rule="evenodd"
+                        d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                        clip-rule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:cost_of_living_comparison' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 hover:-translate-y-0.5 transition-all duration-200">
-              <div class="flex items-start gap-3">
-                <span class="text-2xl mt-0.5">🏙️</span>
+            <a href="{% url 'jobs:cost_of_living_comparison' %}"
+              class="group relative rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm hover:shadow-xl hover:bg-white hover:border-brand-200 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
+              <div class="flex flex-col gap-4">
+                <div
+                  class="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                  🏙️</div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Cost of Living Comparison</h3>
-                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Compare 60+ cities worldwide. See what your salary is worth in a different location.</p>
-                  <span class="inline-block mt-2.5 text-brand-600 text-sm font-semibold">Compare cities →</span>
+                  <h3 class="text-lg font-bold text-gray-900 group-hover:text-brand-600 transition">Cost of Living
+                    Comparison</h3>
+                  <p class="text-gray-500 text-sm mt-2 leading-relaxed">Compare 60+ cities worldwide. See what your
+                    salary is worth in a different location.</p>
+                  <div class="flex items-center gap-1.5 mt-4 text-brand-600 text-sm font-bold">
+                    Compare cities
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                      class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20"
+                      fill="currentColor">
+                      <path fill-rule="evenodd"
+                        d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                        clip-rule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             </a>
@@ -102,37 +172,92 @@
         </div>
 
         <!-- Job Search -->
-        <div x-show="section==='search'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
-          <h2 class="text-2xl font-semibold text-gray-900 mb-1">Job Search</h2>
-          <p class="text-gray-500 text-sm mb-5">Tools to help you find the right role and understand job requirements.</p>
-          <div class="grid sm:grid-cols-2 gap-4">
-            <a href="{% url 'jobs:skills_gap' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 hover:-translate-y-0.5 transition-all duration-200">
-              <div class="flex items-start gap-3">
-                <span class="text-2xl mt-0.5">🔍</span>
+        <div x-show="section==='search'" x-transition:enter="transition ease-out duration-200"
+          x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+          <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Job Search</h2>
+            <p class="text-gray-500 text-base max-w-2xl">Tools to help you find the right role and understand job
+              requirements.</p>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-6">
+            <a href="{% url 'jobs:skills_gap' %}"
+              class="group relative rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm hover:shadow-xl hover:bg-white hover:border-brand-200 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
+              <div class="flex flex-col gap-4">
+                <div
+                  class="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                  🔍</div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Skills Gap Analyzer</h3>
-                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Paste your resume and a job description — AI shows matching, missing, and transferable skills.</p>
-                  <span class="inline-flex items-center gap-1 mt-2.5 text-brand-600 text-sm font-semibold">Analyze skills → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                  <h3 class="text-lg font-bold text-gray-900 group-hover:text-brand-600 transition">Skills Gap Analyzer
+                  </h3>
+                  <p class="text-gray-500 text-sm mt-2 leading-relaxed">Paste your resume and a job description — AI
+                    shows matching, missing, and transferable skills.</p>
+                  <div class="flex items-center justify-between mt-4">
+                    <div class="flex items-center gap-1.5 text-brand-600 text-sm font-bold">
+                      Analyze skills
+                      <svg xmlns="http://www.w3.org/2000/svg"
+                        class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                          d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                          clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                    <span
+                      class="text-[10px] uppercase tracking-wider font-bold bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md">AI
+                      Powered</span>
+                  </div>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:jd_generator' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 hover:-translate-y-0.5 transition-all duration-200">
-              <div class="flex items-start gap-3">
-                <span class="text-2xl mt-0.5">📋</span>
+            <a href="{% url 'jobs:jd_generator' %}"
+              class="group relative rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm hover:shadow-xl hover:bg-white hover:border-brand-200 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
+              <div class="flex flex-col gap-4">
+                <div
+                  class="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                  📋</div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Job Description Generator</h3>
-                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Create inclusive, professional job descriptions for remote positions at impact organizations.</p>
-                  <span class="inline-flex items-center gap-1 mt-2.5 text-brand-600 text-sm font-semibold">Generate JD → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                  <h3 class="text-lg font-bold text-gray-900 group-hover:text-brand-600 transition">Job Description
+                    Generator</h3>
+                  <p class="text-gray-500 text-sm mt-2 leading-relaxed">Create inclusive, professional job descriptions
+                    for remote positions at impact organizations.</p>
+                  <div class="flex items-center justify-between mt-4">
+                    <div class="flex items-center gap-1.5 text-brand-600 text-sm font-bold">
+                      Generate JD
+                      <svg xmlns="http://www.w3.org/2000/svg"
+                        class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                          d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                          clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                    <span
+                      class="text-[10px] uppercase tracking-wider font-bold bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md">AI
+                      Powered</span>
+                  </div>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:word_counter' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 hover:-translate-y-0.5 transition-all duration-200">
-              <div class="flex items-start gap-3">
-                <span class="text-2xl mt-0.5">📝</span>
+            <a href="{% url 'jobs:word_counter' %}"
+              class="group relative rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm hover:shadow-xl hover:bg-white hover:border-brand-200 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
+              <div class="flex flex-col gap-4">
+                <div
+                  class="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                  📝</div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Word Counter</h3>
-                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Count words, characters, reading time, and keyword density. Perfect for applications.</p>
-                  <span class="inline-block mt-2.5 text-brand-600 text-sm font-semibold">Count words →</span>
+                  <h3 class="text-lg font-bold text-gray-900 group-hover:text-brand-600 transition">Word Counter</h3>
+                  <p class="text-gray-500 text-sm mt-2 leading-relaxed">Count words, characters, reading time, and
+                    keyword density. Perfect for applications.</p>
+                  <div class="flex items-center gap-1.5 mt-4 text-brand-600 text-sm font-bold">
+                    Count words
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                      class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20"
+                      fill="currentColor">
+                      <path fill-rule="evenodd"
+                        d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                        clip-rule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             </a>
@@ -140,27 +265,68 @@
         </div>
 
         <!-- Apply -->
-        <div x-show="section==='apply'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
-          <h2 class="text-2xl font-semibold text-gray-900 mb-1">Apply</h2>
-          <p class="text-gray-500 text-sm mb-5">Craft the perfect application materials for your next role.</p>
-          <div class="grid sm:grid-cols-2 gap-4">
-            <a href="{% url 'jobs:cover_letter_generator' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 hover:-translate-y-0.5 transition-all duration-200">
-              <div class="flex items-start gap-3">
-                <span class="text-2xl mt-0.5">✉️</span>
+        <div x-show="section==='apply'" x-transition:enter="transition ease-out duration-200"
+          x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+          <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Apply</h2>
+            <p class="text-gray-500 text-base max-w-2xl">Craft the perfect application materials for your next role.</p>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-6">
+            <a href="{% url 'jobs:cover_letter_generator' %}"
+              class="group relative rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm hover:shadow-xl hover:bg-white hover:border-brand-200 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
+              <div class="flex flex-col gap-4">
+                <div
+                  class="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                  ✉️</div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Cover Letter Generator</h3>
-                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">AI-powered cover letters tailored to remote and impact jobs. Paste a job description and go.</p>
-                  <span class="inline-flex items-center gap-1 mt-2.5 text-brand-600 text-sm font-semibold">Generate letter → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                  <h3 class="text-lg font-bold text-gray-900 group-hover:text-brand-600 transition">Cover Letter
+                    Generator</h3>
+                  <p class="text-gray-500 text-sm mt-2 leading-relaxed">AI-powered cover letters tailored to remote and
+                    impact jobs. Paste a job description and go.</p>
+                  <div class="flex items-center justify-between mt-4">
+                    <div class="flex items-center gap-1.5 text-brand-600 text-sm font-bold">
+                      Generate letter
+                      <svg xmlns="http://www.w3.org/2000/svg"
+                        class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                          d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                          clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                    <span
+                      class="text-[10px] uppercase tracking-wider font-bold bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md">AI
+                      Powered</span>
+                  </div>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:resignation_letter' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 hover:-translate-y-0.5 transition-all duration-200">
-              <div class="flex items-start gap-3">
-                <span class="text-2xl mt-0.5">👋</span>
+            <a href="{% url 'jobs:resignation_letter' %}"
+              class="group relative rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm hover:shadow-xl hover:bg-white hover:border-brand-200 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
+              <div class="flex flex-col gap-4">
+                <div
+                  class="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                  👋</div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Resignation Letter Generator</h3>
-                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Write a professional resignation letter in minutes. Choose your tone and download instantly.</p>
-                  <span class="inline-flex items-center gap-1 mt-2.5 text-brand-600 text-sm font-semibold">Generate letter → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                  <h3 class="text-lg font-bold text-gray-900 group-hover:text-brand-600 transition">Resignation Letter
+                    Generator</h3>
+                  <p class="text-gray-500 text-sm mt-2 leading-relaxed">Write a professional resignation letter in
+                    minutes. Choose your tone and download instantly.</p>
+                  <div class="flex items-center justify-between mt-4">
+                    <div class="flex items-center gap-1.5 text-brand-600 text-sm font-bold">
+                      Generate letter
+                      <svg xmlns="http://www.w3.org/2000/svg"
+                        class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                          d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                          clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                    <span
+                      class="text-[10px] uppercase tracking-wider font-bold bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md">AI
+                      Powered</span>
+                  </div>
                 </div>
               </div>
             </a>
@@ -168,27 +334,67 @@
         </div>
 
         <!-- Interview -->
-        <div x-show="section==='interview'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
-          <h2 class="text-2xl font-semibold text-gray-900 mb-1">Interview</h2>
-          <p class="text-gray-500 text-sm mb-5">Prepare for interviews and follow up like a pro.</p>
-          <div class="grid sm:grid-cols-2 gap-4">
-            <a href="{% url 'jobs:interview_prep' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 hover:-translate-y-0.5 transition-all duration-200">
-              <div class="flex items-start gap-3">
-                <span class="text-2xl mt-0.5">🎤</span>
+        <div x-show="section==='interview'" x-transition:enter="transition ease-out duration-200"
+          x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+          <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Interview</h2>
+            <p class="text-gray-500 text-base max-w-2xl">Prepare for interviews and follow up like a pro.</p>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-6">
+            <a href="{% url 'jobs:interview_prep' %}"
+              class="group relative rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm hover:shadow-xl hover:bg-white hover:border-brand-200 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
+              <div class="flex flex-col gap-4">
+                <div
+                  class="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                  🎤</div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Interview Prep</h3>
-                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">AI-generated interview questions tailored to your role, sector, and experience level.</p>
-                  <span class="inline-flex items-center gap-1 mt-2.5 text-brand-600 text-sm font-semibold">Prepare now → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                  <h3 class="text-lg font-bold text-gray-900 group-hover:text-brand-600 transition">Interview Prep</h3>
+                  <p class="text-gray-500 text-sm mt-2 leading-relaxed">AI-generated interview questions tailored to
+                    your role, sector, and experience level.</p>
+                  <div class="flex items-center justify-between mt-4">
+                    <div class="flex items-center gap-1.5 text-brand-600 text-sm font-bold">
+                      Prepare now
+                      <svg xmlns="http://www.w3.org/2000/svg"
+                        class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                          d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                          clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                    <span
+                      class="text-[10px] uppercase tracking-wider font-bold bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md">AI
+                      Powered</span>
+                  </div>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:thank_you_email' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 hover:-translate-y-0.5 transition-all duration-200">
-              <div class="flex items-start gap-3">
-                <span class="text-2xl mt-0.5">💌</span>
+            <a href="{% url 'jobs:thank_you_email' %}"
+              class="group relative rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm hover:shadow-xl hover:bg-white hover:border-brand-200 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
+              <div class="flex flex-col gap-4">
+                <div
+                  class="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                  💌</div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Thank You Email Generator</h3>
-                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Generate a polished post-interview thank you email. Customizable tone and interview details.</p>
-                  <span class="inline-flex items-center gap-1 mt-2.5 text-brand-600 text-sm font-semibold">Generate email → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                  <h3 class="text-lg font-bold text-gray-900 group-hover:text-brand-600 transition">Thank You Email
+                    Generator</h3>
+                  <p class="text-gray-500 text-sm mt-2 leading-relaxed">Generate a polished post-interview thank you
+                    email. Customizable tone and interview details.</p>
+                  <div class="flex items-center justify-between mt-4">
+                    <div class="flex items-center gap-1.5 text-brand-600 text-sm font-bold">
+                      Generate email
+                      <svg xmlns="http://www.w3.org/2000/svg"
+                        class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                          d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                          clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                    <span
+                      class="text-[10px] uppercase tracking-wider font-bold bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md">AI
+                      Powered</span>
+                  </div>
                 </div>
               </div>
             </a>
@@ -196,47 +402,111 @@
         </div>
 
         <!-- Negotiate -->
-        <div x-show="section==='negotiate'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
-          <h2 class="text-2xl font-semibold text-gray-900 mb-1">Negotiate</h2>
-          <p class="text-gray-500 text-sm mb-5">Know your worth and negotiate with confidence.</p>
-          <div class="grid sm:grid-cols-2 gap-4">
-            <a href="{% url 'jobs:salary_negotiation' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 hover:-translate-y-0.5 transition-all duration-200">
-              <div class="flex items-start gap-3">
-                <span class="text-2xl mt-0.5">💬</span>
+        <div x-show="section==='negotiate'" x-transition:enter="transition ease-out duration-200"
+          x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+          <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Negotiate</h2>
+            <p class="text-gray-500 text-base max-w-2xl">Know your worth and negotiate with confidence.</p>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-6">
+            <a href="{% url 'jobs:salary_negotiation' %}"
+              class="group relative rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm hover:shadow-xl hover:bg-white hover:border-brand-200 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
+              <div class="flex flex-col gap-4">
+                <div
+                  class="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                  💬</div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Salary Negotiation Script</h3>
-                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">AI-generated negotiation scripts with talking points and objection responses.</p>
-                  <span class="inline-flex items-center gap-1 mt-2.5 text-brand-600 text-sm font-semibold">Generate script → <span class="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded-full">AI</span></span>
+                  <h3 class="text-lg font-bold text-gray-900 group-hover:text-brand-600 transition">Salary Negotiation
+                    Script</h3>
+                  <p class="text-gray-500 text-sm mt-2 leading-relaxed">AI-generated negotiation scripts with talking
+                    points and objection responses.</p>
+                  <div class="flex items-center justify-between mt-4">
+                    <div class="flex items-center gap-1.5 text-brand-600 text-sm font-bold">
+                      Generate script
+                      <svg xmlns="http://www.w3.org/2000/svg"
+                        class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                          d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                          clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                    <span
+                      class="text-[10px] uppercase tracking-wider font-bold bg-brand-100 text-brand-700 px-2 py-0.5 rounded-md">AI
+                      Powered</span>
+                  </div>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:salary_to_hourly' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 hover:-translate-y-0.5 transition-all duration-200">
-              <div class="flex items-start gap-3">
-                <span class="text-2xl mt-0.5">💰</span>
+            <a href="{% url 'jobs:salary_to_hourly' %}"
+              class="group relative rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm hover:shadow-xl hover:bg-white hover:border-brand-200 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
+              <div class="flex flex-col gap-4">
+                <div
+                  class="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                  💰</div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Salary to Hourly Calculator</h3>
-                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Convert annual salary to hourly rate and vice versa. Includes tax estimates.</p>
-                  <span class="inline-block mt-2.5 text-brand-600 text-sm font-semibold">Calculate →</span>
+                  <h3 class="text-lg font-bold text-gray-900 group-hover:text-brand-600 transition">Salary to Hourly
+                    Calculator</h3>
+                  <p class="text-gray-500 text-sm mt-2 leading-relaxed">Convert annual salary to hourly rate and vice
+                    versa. Includes tax estimates.</p>
+                  <div class="flex items-center gap-1.5 mt-4 text-brand-600 text-sm font-bold">
+                    Calculate
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                      class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20"
+                      fill="currentColor">
+                      <path fill-rule="evenodd"
+                        d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                        clip-rule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:pay_raise_calculator' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 hover:-translate-y-0.5 transition-all duration-200">
-              <div class="flex items-start gap-3">
-                <span class="text-2xl mt-0.5">📈</span>
+            <a href="{% url 'jobs:pay_raise_calculator' %}"
+              class="group relative rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm hover:shadow-xl hover:bg-white hover:border-brand-200 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
+              <div class="flex flex-col gap-4">
+                <div
+                  class="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                  📈</div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Pay Raise Calculator</h3>
-                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">See exactly how much a raise is worth. Compare percentages and compound over years.</p>
-                  <span class="inline-block mt-2.5 text-brand-600 text-sm font-semibold">Calculate raise →</span>
+                  <h3 class="text-lg font-bold text-gray-900 group-hover:text-brand-600 transition">Pay Raise Calculator
+                  </h3>
+                  <p class="text-gray-500 text-sm mt-2 leading-relaxed">See exactly how much a raise is worth. Compare
+                    percentages and compound over years.</p>
+                  <div class="flex items-center gap-1.5 mt-4 text-brand-600 text-sm font-bold">
+                    Calculate raise
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                      class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20"
+                      fill="currentColor">
+                      <path fill-rule="evenodd"
+                        d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                        clip-rule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:freelance_rate' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 hover:-translate-y-0.5 transition-all duration-200">
-              <div class="flex items-start gap-3">
-                <span class="text-2xl mt-0.5">💵</span>
+            <a href="{% url 'jobs:freelance_rate' %}"
+              class="group relative rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm hover:shadow-xl hover:bg-white hover:border-brand-200 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
+              <div class="flex flex-col gap-4">
+                <div
+                  class="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                  💵</div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Freelance Rate Calculator</h3>
-                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Calculate your ideal hourly rate based on income goals, expenses, and billable hours.</p>
-                  <span class="inline-block mt-2.5 text-brand-600 text-sm font-semibold">Calculate rate →</span>
+                  <h3 class="text-lg font-bold text-gray-900 group-hover:text-brand-600 transition">Freelance Rate
+                    Calculator</h3>
+                  <p class="text-gray-500 text-sm mt-2 leading-relaxed">Calculate your ideal hourly rate based on income
+                    goals, expenses, and billable hours.</p>
+                  <div class="flex items-center gap-1.5 mt-4 text-brand-600 text-sm font-bold">
+                    Calculate rate
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                      class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20"
+                      fill="currentColor">
+                      <path fill-rule="evenodd"
+                        d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                        clip-rule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             </a>
@@ -244,37 +514,82 @@
         </div>
 
         <!-- Productivity -->
-        <div x-show="section==='productivity'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
-          <h2 class="text-2xl font-semibold text-gray-900 mb-1">Productivity</h2>
-          <p class="text-gray-500 text-sm mb-5">Stay productive, organized, and on top of your remote work life.</p>
-          <div class="grid sm:grid-cols-2 gap-4">
-            <a href="{% url 'jobs:pomodoro_timer' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 hover:-translate-y-0.5 transition-all duration-200">
-              <div class="flex items-start gap-3">
-                <span class="text-2xl mt-0.5">🍅</span>
+        <div x-show="section==='productivity'" x-transition:enter="transition ease-out duration-200"
+          x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+          <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Productivity</h2>
+            <p class="text-gray-500 text-base max-w-2xl">Stay productive, organized, and on top of your remote work
+              life.</p>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-6">
+            <a href="{% url 'jobs:pomodoro_timer' %}"
+              class="group relative rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm hover:shadow-xl hover:bg-white hover:border-brand-200 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
+              <div class="flex flex-col gap-4">
+                <div
+                  class="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                  🍅</div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Pomodoro Timer</h3>
-                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Stay focused with customizable work/break intervals, notifications, and a built-in task list.</p>
-                  <span class="inline-block mt-2.5 text-brand-600 text-sm font-semibold">Start timer →</span>
+                  <h3 class="text-lg font-bold text-gray-900 group-hover:text-brand-600 transition">Pomodoro Timer</h3>
+                  <p class="text-gray-500 text-sm mt-2 leading-relaxed">Stay focused with customizable work/break
+                    intervals, notifications, and a built-in task list.</p>
+                  <div class="flex items-center gap-1.5 mt-4 text-brand-600 text-sm font-bold">
+                    Start timer
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                      class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20"
+                      fill="currentColor">
+                      <path fill-rule="evenodd"
+                        d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                        clip-rule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:timezone_overlap' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 hover:-translate-y-0.5 transition-all duration-200">
-              <div class="flex items-start gap-3">
-                <span class="text-2xl mt-0.5">🌍</span>
+            <a href="{% url 'jobs:timezone_overlap' %}"
+              class="group relative rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm hover:shadow-xl hover:bg-white hover:border-brand-200 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
+              <div class="flex flex-col gap-4">
+                <div
+                  class="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                  🌍</div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">Time Zone Overlap Finder</h3>
-                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Find the best meeting times across 2–4 time zones with a visual overlap chart.</p>
-                  <span class="inline-block mt-2.5 text-brand-600 text-sm font-semibold">Find overlap →</span>
+                  <h3 class="text-lg font-bold text-gray-900 group-hover:text-brand-600 transition">Time Zone Overlap
+                    Finder</h3>
+                  <p class="text-gray-500 text-sm mt-2 leading-relaxed">Find the best meeting times across 2–4 time
+                    zones with a visual overlap chart.</p>
+                  <div class="flex items-center gap-1.5 mt-4 text-brand-600 text-sm font-bold">
+                    Find overlap
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                      class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20"
+                      fill="currentColor">
+                      <path fill-rule="evenodd"
+                        d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                        clip-rule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             </a>
-            <a href="{% url 'jobs:pto_calculator' %}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-brand-200 hover:-translate-y-0.5 transition-all duration-200">
-              <div class="flex items-start gap-3">
-                <span class="text-2xl mt-0.5">📅</span>
+            <a href="{% url 'jobs:pto_calculator' %}"
+              class="group relative rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm hover:shadow-xl hover:bg-white hover:border-brand-200 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
+              <div class="flex flex-col gap-4">
+                <div
+                  class="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                  📅</div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition">PTO & Work Days Calculator</h3>
-                  <p class="text-gray-500 text-sm mt-1 leading-relaxed">Count work days, track PTO accrual, and countdown to your next vacation.</p>
-                  <span class="inline-block mt-2.5 text-brand-600 text-sm font-semibold">Calculate →</span>
+                  <h3 class="text-lg font-bold text-gray-900 group-hover:text-brand-600 transition">PTO & Work Days
+                    Calculator</h3>
+                  <p class="text-gray-500 text-sm mt-2 leading-relaxed">Count work days, track PTO accrual, and
+                    countdown to your next vacation.</p>
+                  <div class="flex items-center gap-1.5 mt-4 text-brand-600 text-sm font-bold">
+                    Calculate
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                      class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20"
+                      fill="currentColor">
+                      <path fill-rule="evenodd"
+                        d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                        clip-rule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             </a>
@@ -287,9 +602,14 @@
 
   <!-- Mobile CTA -->
   <div class="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-gray-200 z-10">
-    <a href="{% url 'jobs:job_list' %}" class="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-brand-300 text-gray-900 font-semibold text-sm hover:bg-brand-400 transition-all duration-200 shadow-sm">
+    <a href="{% url 'jobs:job_list' %}"
+      class="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-brand-300 text-gray-900 font-semibold text-sm hover:bg-brand-400 transition-all duration-200 shadow-sm">
       Browse Remote Jobs
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd"
+          d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+          clip-rule="evenodd" />
+      </svg>
     </a>
   </div>
 </div>
