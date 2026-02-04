@@ -341,7 +341,6 @@
 </section>
 
 <!-- Personalized Matching CTA -->
-{% if not has_impact_profile %}
 <section class="pt-16 pb-10 bg-twilight-900">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="rounded-2xl border border-white/10 bg-card-gradient p-6 md:p-8 backdrop-blur flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
@@ -350,6 +349,19 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                 </svg>
             </div>
+            {% if has_impact_profile %}
+            <div class="flex-1">
+                <h2 class="text-xl md:text-2xl font-semibold mb-2">Your Impact Profile is active</h2>
+                <p class="text-white/70 text-sm">Jobs are ranked by how well they match your skills and goals.</p>
+            </div>
+            <a href="{% url 'jobs:my_matches' %}"
+                class="inline-flex items-center justify-center px-6 py-3 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition shadow-glow whitespace-nowrap">
+                View Your Matches
+                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                </svg>
+            </a>
+            {% else %}
             <div class="flex-1">
                 <h2 class="text-xl md:text-2xl font-semibold mb-2">Want personalized job matches?</h2>
                 <p class="text-white/70 text-sm">Tell us your skills and impact goals. Our algorithm will rank opportunities by fit.</p>
@@ -361,10 +373,10 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                 </svg>
             </a>
+            {% endif %}
         </div>
     </div>
 </section>
-{% endif %}
 
 <!-- Categories Section -->
 {% if categories %}
