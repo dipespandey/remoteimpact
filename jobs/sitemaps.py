@@ -1,7 +1,7 @@
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
 from django.utils import timezone
-from .models import Job, Category, SeekerProfile
+from .models import Job, Category, SeekerProfile, Organization
 
 
 class JobSitemap(Sitemap):
@@ -20,8 +20,6 @@ class JobSitemap(Sitemap):
         return obj.updated_at
 
 
-
-
 class CategorySitemap(Sitemap):
     """Sitemap for category landing pages."""
     changefreq = "weekly"
@@ -34,29 +32,56 @@ class CategorySitemap(Sitemap):
         return reverse('jobs:category_landing', args=[obj.slug])
 
     def lastmod(self, obj):
-        from django.utils import timezone
         return timezone.now()
 
-# NOTE: Old CategorySitemap and OrganizationSitemap removed - they were filter URLs
-# (?category=x, ?org=x) that all canonicalize to /jobs/, causing Google to see
-# them as "alternate pages with proper canonical" and wasting crawl budget.
-# If we want these indexed, create dedicated URLs like /jobs/category/climate/
 
-
-class StaticSitemap(Sitemap):
-    """Sitemap for static pages - homepage gets highest priority."""
-    changefreq = "daily"
-    priority = 1.0
+class OrganizationSitemap(Sitemap):
+    """Sitemap for organization profile pages."""
+    changefreq = "weekly"
+    priority = 0.7
 
     def items(self):
+        # Only include organizations with active job listings
+        return Organization.objects.filter(
+            jobs__is_active=True
+        ).distinct().order_by('name')
+
+    def location(self, obj):
+        return reverse('jobs:organization_profile', args=[obj.slug])
+
+    def lastmod(self, obj):
+        # Use the most recent job update time
+        latest_job = obj.jobs.filter(is_active=True).order_by('-updated_at').first()
+        if latest_job:
+            return latest_job.updated_at
+        return timezone.now()
+
+
+class ToolsSitemap(Sitemap):
+    """Sitemap for career tools pages - important for SEO traffic."""
+    changefreq = "monthly"
+    priority = 0.7
+
+    def items(self):
+        # List of all tools with their URL names and priorities
         return [
-            ('jobs:home', 1.0, 'daily'),
-            ('jobs:job_list', 0.9, 'hourly'),
-            ('jobs:resources', 0.7, 'weekly'),
-            ('jobs:applicant_assistant', 0.6, 'weekly'),
-            ('jobs:post_job', 0.5, 'monthly'),
-            ('gigs:gig_list', 0.8, 'daily'),
-            ('jobs:talent_directory', 0.8, 'daily'),
+            ('jobs:tools_index', 0.8, 'weekly'),
+            ('jobs:salary_to_hourly', 0.7, 'monthly'),
+            ('jobs:freelance_rate', 0.7, 'monthly'),
+            ('jobs:pto_calculator', 0.7, 'monthly'),
+            ('jobs:pay_raise_calculator', 0.7, 'monthly'),
+            ('jobs:word_counter', 0.6, 'monthly'),
+            ('jobs:pomodoro_timer', 0.6, 'monthly'),
+            ('jobs:timezone_overlap', 0.7, 'monthly'),
+            ('jobs:cost_of_living', 0.7, 'monthly'),
+            ('jobs:remote_readiness_quiz', 0.7, 'monthly'),
+            ('jobs:skills_gap', 0.7, 'monthly'),
+            ('jobs:interview_prep', 0.7, 'monthly'),
+            ('jobs:salary_negotiation', 0.7, 'monthly'),
+            ('jobs:resignation_letter', 0.7, 'monthly'),
+            ('jobs:thank_you_email', 0.7, 'monthly'),
+            ('jobs:jd_generator', 0.6, 'monthly'),
+            ('jobs:cover_letter_generator', 0.7, 'monthly'),
         ]
 
     def location(self, item):
@@ -69,7 +94,36 @@ class StaticSitemap(Sitemap):
         return item[2]
 
     def lastmod(self, item):
-        # Static pages - use current time for frequently changing pages
+        return timezone.now()
+
+
+class StaticSitemap(Sitemap):
+    """Sitemap for static pages - homepage gets highest priority."""
+    changefreq = "daily"
+    priority = 1.0
+
+    def items(self):
+        return [
+            ('jobs:home', 1.0, 'daily'),
+            ('jobs:job_list', 0.9, 'hourly'),
+            ('jobs:resources', 0.7, 'weekly'),
+            ('jobs:post_job', 0.5, 'monthly'),
+            ('gigs:gig_list', 0.8, 'daily'),
+            ('jobs:talent_directory', 0.8, 'daily'),
+            ('jobs:organization_directory', 0.8, 'weekly'),
+            ('jobs:all_domains', 0.7, 'weekly'),
+        ]
+
+    def location(self, item):
+        return reverse(item[0])
+
+    def priority(self, item):
+        return item[1]
+
+    def changefreq(self, item):
+        return item[2]
+
+    def lastmod(self, item):
         return timezone.now()
 
 
@@ -88,7 +142,3 @@ class TalentSitemap(Sitemap):
 
     def lastmod(self, obj):
         return obj.updated_at
-
-
-# NOTE: LocationSitemap also removed - same reason as above.
-# Filter URLs (?location=x) all canonicalize to /jobs/

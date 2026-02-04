@@ -22,7 +22,10 @@ from django.http import HttpResponse
 from django.urls import include, path
 from django.views.decorators.cache import cache_page
 
-from jobs.sitemaps import JobSitemap, StaticSitemap, CategorySitemap
+from jobs.sitemaps import (
+    JobSitemap, StaticSitemap, CategorySitemap, 
+    OrganizationSitemap, ToolsSitemap, TalentSitemap
+)
 from blog.sitemaps import BlogSitemap
 
 
@@ -45,10 +48,10 @@ sitemaps = {
     'static': StaticSitemap,
     'jobs': JobSitemap,
     'categories': CategorySitemap,
+    'organizations': OrganizationSitemap,
+    'tools': ToolsSitemap,
+    'talent': TalentSitemap,
     'blog': BlogSitemap,
-    # Removed: categories, organizations, locations - they were filter URLs
-    # (?category=x, ?org=x, ?location=x) that canonicalize to /jobs/
-    # This was causing "alternate page with proper canonical" warnings in Search Console
 }
 
 urlpatterns = [
