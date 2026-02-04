@@ -237,14 +237,129 @@
                             class="px-4 py-2 rounded-full text-sm font-semibold uppercase tracking-wide text-gray-700 hover:text-gray-900 transition">
                             Guides
                         </a>
-                        <a href="{% url 'jobs:tools_index' %}"
-                            class="px-4 py-2 rounded-full text-sm font-semibold uppercase tracking-wide text-gray-700 hover:text-gray-900 transition flex items-center"
-                            data-track="nav_tools" data-track-category="navigation">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                            </svg>
-                            Tools
-                        </a>
+                        <!-- Tools Mega Menu -->
+                        <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
+                            <button @click="open = !open"
+                                class="px-4 py-2 rounded-full text-sm font-semibold uppercase tracking-wide text-gray-700 hover:text-gray-900 transition flex items-center"
+                                data-track="nav_tools" data-track-category="navigation">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                </svg>
+                                Tools
+                                <svg class="w-3 h-3 ml-1 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/></svg>
+                            </button>
+                            
+                            <!-- Dropdown Panel -->
+                            <div x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-1"
+                                class="absolute right-0 mt-2 w-[600px] bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 z-50">
+                                <div class="grid grid-cols-2 gap-6">
+                                    <!-- AI-Powered Tools -->
+                                    <div>
+                                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">🤖 AI-Powered</h3>
+                                        <div class="space-y-1">
+                                            <a href="{% url 'jobs:cover_letter_generator' %}" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition group">
+                                                <span class="text-xl">✉️</span>
+                                                <div>
+                                                    <p class="font-medium text-gray-900 group-hover:text-brand-600">Cover Letter Generator</p>
+                                                    <p class="text-xs text-gray-500">AI-crafted letters in seconds</p>
+                                                </div>
+                                            </a>
+                                            <a href="{% url 'jobs:interview_prep' %}" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition group">
+                                                <span class="text-xl">🎯</span>
+                                                <div>
+                                                    <p class="font-medium text-gray-900 group-hover:text-brand-600">Interview Prep</p>
+                                                    <p class="text-xs text-gray-500">Practice questions & answers</p>
+                                                </div>
+                                            </a>
+                                            <a href="{% url 'jobs:salary_negotiation' %}" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition group">
+                                                <span class="text-xl">💬</span>
+                                                <div>
+                                                    <p class="font-medium text-gray-900 group-hover:text-brand-600">Salary Negotiation Script</p>
+                                                    <p class="text-xs text-gray-500">Nail your compensation talk</p>
+                                                </div>
+                                            </a>
+                                            <a href="{% url 'jobs:resignation_letter' %}" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition group">
+                                                <span class="text-xl">👋</span>
+                                                <div>
+                                                    <p class="font-medium text-gray-900 group-hover:text-brand-600">Resignation Letter</p>
+                                                    <p class="text-xs text-gray-500">Leave gracefully</p>
+                                                </div>
+                                            </a>
+                                            <a href="{% url 'jobs:thank_you_email' %}" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition group">
+                                                <span class="text-xl">🙏</span>
+                                                <div>
+                                                    <p class="font-medium text-gray-900 group-hover:text-brand-600">Thank You Email</p>
+                                                    <p class="text-xs text-gray-500">Post-interview follow-up</p>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Calculators & Utilities -->
+                                    <div>
+                                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">🧮 Calculators & Quizzes</h3>
+                                        <div class="space-y-1">
+                                            <a href="{% url 'jobs:salary_to_hourly' %}" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition group">
+                                                <span class="text-xl">💵</span>
+                                                <div>
+                                                    <p class="font-medium text-gray-900 group-hover:text-brand-600">Salary to Hourly</p>
+                                                    <p class="text-xs text-gray-500">Convert annual ↔ hourly pay</p>
+                                                </div>
+                                            </a>
+                                            <a href="{% url 'jobs:freelance_rate' %}" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition group">
+                                                <span class="text-xl">📊</span>
+                                                <div>
+                                                    <p class="font-medium text-gray-900 group-hover:text-brand-600">Freelance Rate Calculator</p>
+                                                    <p class="text-xs text-gray-500">Find your ideal rate</p>
+                                                </div>
+                                            </a>
+                                            <a href="{% url 'jobs:pto_calculator' %}" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition group">
+                                                <span class="text-xl">🏖️</span>
+                                                <div>
+                                                    <p class="font-medium text-gray-900 group-hover:text-brand-600">PTO Calculator</p>
+                                                    <p class="text-xs text-gray-500">Track your time off</p>
+                                                </div>
+                                            </a>
+                                            <a href="{% url 'jobs:pay_raise_calculator' %}" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition group">
+                                                <span class="text-xl">📈</span>
+                                                <div>
+                                                    <p class="font-medium text-gray-900 group-hover:text-brand-600">Pay Raise Calculator</p>
+                                                    <p class="text-xs text-gray-500">Calculate % increases</p>
+                                                </div>
+                                            </a>
+                                            <a href="{% url 'jobs:remote_readiness_quiz' %}" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition group">
+                                                <span class="text-xl">🏠</span>
+                                                <div>
+                                                    <p class="font-medium text-gray-900 group-hover:text-brand-600">Remote Readiness Quiz</p>
+                                                    <p class="text-xs text-gray-500">Are you ready for remote?</p>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Bottom Row - Quick Tools -->
+                                <div class="mt-4 pt-4 border-t border-gray-100">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex gap-4">
+                                            <a href="{% url 'jobs:pomodoro_timer' %}" class="flex items-center gap-2 text-sm text-gray-600 hover:text-brand-600 transition">
+                                                <span>🍅</span> Pomodoro
+                                            </a>
+                                            <a href="{% url 'jobs:word_counter' %}" class="flex items-center gap-2 text-sm text-gray-600 hover:text-brand-600 transition">
+                                                <span>📝</span> Word Counter
+                                            </a>
+                                            <a href="{% url 'jobs:skills_gap' %}" class="flex items-center gap-2 text-sm text-gray-600 hover:text-brand-600 transition">
+                                                <span>🎯</span> Skills Gap Analyzer
+                                            </a>
+                                        </div>
+                                        <a href="{% url 'jobs:tools_index' %}" class="text-sm font-medium text-brand-600 hover:text-brand-700 transition flex items-center gap-1">
+                                            All Tools
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7"/></svg>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <a href="{% url 'gigs:gig_list' %}"
                             class="px-5 py-2 rounded-full text-sm font-semibold bg-brand-300 text-gray-900 hover:bg-brand-400 transition shadow-glow">
                             Gigs
@@ -291,22 +406,41 @@
             </div>
 
             <!-- Mobile Menu Dropdown -->
-            <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-200 shadow-lg">
+            <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-200 shadow-lg max-h-[80vh] overflow-y-auto">
                 <div class="px-4 py-3 space-y-2">
                     <a href="{% url 'jobs:job_list' %}" class="block px-4 py-2.5 rounded-xl text-gray-700 hover:bg-gray-50 font-medium">Jobs</a>
-                    <a href="{% url 'jobs:tools_index' %}" class="block px-4 py-2.5 rounded-xl text-gray-700 hover:bg-gray-50 font-medium">Tools</a>
                     <a href="{% url 'gigs:gig_list' %}" class="block px-4 py-2.5 rounded-xl text-gray-700 hover:bg-gray-50 font-medium">Gigs</a>
                     <a href="{% url 'jobs:post_job' %}" class="block px-4 py-2.5 rounded-xl text-gray-700 hover:bg-gray-50 font-medium">Post a Job</a>
+                    
+                    <!-- Tools Section - Expanded -->
+                    <div class="border-t border-gray-100 pt-3 mt-2">
+                        <p class="px-4 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">🧰 Free Tools</p>
+                        <div class="grid grid-cols-2 gap-2 px-2">
+                            <a href="{% url 'jobs:cover_letter_generator' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50 text-sm">
+                                <span>✉️</span> Cover Letter
+                            </a>
+                            <a href="{% url 'jobs:interview_prep' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50 text-sm">
+                                <span>🎯</span> Interview Prep
+                            </a>
+                            <a href="{% url 'jobs:salary_negotiation' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50 text-sm">
+                                <span>💬</span> Salary Script
+                            </a>
+                            <a href="{% url 'jobs:salary_to_hourly' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50 text-sm">
+                                <span>💵</span> Salary Calc
+                            </a>
+                            <a href="{% url 'jobs:remote_readiness_quiz' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50 text-sm">
+                                <span>🏠</span> Remote Quiz
+                            </a>
+                            <a href="{% url 'jobs:tools_index' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-brand-600 hover:bg-brand-50 text-sm font-medium">
+                                <span>→</span> All 15 Tools
+                            </a>
+                        </div>
+                    </div>
+                    
                     <div class="border-t border-gray-100 pt-2 mt-2">
                         <a href="{% url 'jobs:organization_directory' %}" class="block px-4 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50">Organizations</a>
                         <a href="{% url 'blog:post_list' %}" class="block px-4 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50">Blog</a>
                         <a href="{% url 'jobs:resources' %}" class="block px-4 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50">Guides & Playbooks</a>
-                        <a href="{% url 'jobs:applicant_assistant' %}" class="block px-4 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 flex items-center">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                            </svg>
-                            AI Application Tools
-                        </a>
                     </div>
                     <div class="border-t border-gray-100 pt-2 mt-2">
                         {% if user.is_authenticated %}
