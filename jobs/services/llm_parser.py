@@ -67,13 +67,26 @@ Choose the BEST match based on the organization's mission and role focus. Use "o
 
    If the job is clearly for interns/students OR explicitly targets people with no experience, use "internship" or "entry".
 
-10. **salary_min**: Minimum annual salary as integer (convert to USD if needed), or null
+10. **education_level**: One of: "high_school", "associate", "bachelor", "master", "phd", or null
 
-11. **salary_max**: Maximum annual salary as integer (convert to USD if needed), or null
+    Extract the MINIMUM education requirement mentioned:
+    - "high_school": high school diploma, GED, no degree required
+    - "associate": associate degree, 2-year degree
+    - "bachelor": bachelor, BA, BS, undergraduate degree, 4-year degree
+    - "master": master, MA, MS, MBA, MSc, graduate degree
+    - "phd": PhD, doctorate, doctoral degree
 
-12. **salary_currency**: Currency code like "USD", "EUR", "GBP", or null
+    If no education requirement is explicitly stated, return null.
 
-13. **skills**: Array of skill slugs required/preferred for this role. Select 3-10 from this list:
+11. **country**: If location-restricted, extract the primary country (e.g., "United States", "United Kingdom", "Germany"). Use null for fully global remote roles.
+
+12. **salary_min**: Minimum annual salary as integer (convert to USD if needed), or null
+
+13. **salary_max**: Maximum annual salary as integer (convert to USD if needed), or null
+
+14. **salary_currency**: Currency code like "USD", "EUR", "GBP", or null
+
+15. **skills**: Array of skill slugs required/preferred for this role. Select 3-10 from this list:
 {skills_list}
 
 Use exact slugs from the list. Only include skills explicitly mentioned or strongly implied by the requirements.
@@ -91,7 +104,7 @@ Organization: {organization}
 Raw Description:
 {description}
 
-Return JSON with keys: mission, profile, impact, benefits, about_org, impact_area, location, job_type, experience_level, salary_min, salary_max, salary_currency, skills
+Return JSON with keys: mission, profile, impact, benefits, about_org, impact_area, location, job_type, experience_level, education_level, country, salary_min, salary_max, salary_currency, skills
 """
 
 # Provider configurations
@@ -346,6 +359,10 @@ class JobParser:
                 enriched["job_type"] = parsed["job_type"]
             if parsed.get("experience_level"):
                 enriched["experience_level"] = parsed["experience_level"]
+            if parsed.get("education_level"):
+                enriched["education_level"] = parsed["education_level"]
+            if parsed.get("country"):
+                enriched["country"] = parsed["country"]
 
             # Salary fields (only if extracted and not already set)
             if parsed.get("salary_min") and not enriched.get("salary_min"):

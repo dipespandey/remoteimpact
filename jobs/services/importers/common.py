@@ -213,6 +213,9 @@ def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
         "company_description": payload.get("company_description", ""),
         "how_to_apply_text": payload.get("how_to_apply_text", ""),
         "skills": payload.get("skills", []),  # AI-extracted skills for matching
+        "experience_level": payload.get("experience_level"),
+        "education_level": payload.get("education_level"),
+        "country": payload.get("country"),
         "is_active": True,
         "is_featured": payload.get("is_featured", False),
         "posted_at": payload.get("posted_at", timezone.now()),
