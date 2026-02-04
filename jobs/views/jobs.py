@@ -167,7 +167,76 @@ class JobListView(ListView):
             context["jobs"] = jobs
             context["object_list"] = jobs
 
+        # If no results, get recommended organizations
+        if not context.get("object_list") or context["page_obj"].paginator.count == 0:
+            context["recommended_orgs"] = self._get_recommended_organizations(
+                search_query=context.get("search_query"),
+                category_slugs=context.get("current_categories", []),
+                skills=context["filters"].get("skills", []),
+            )
+
         return context
+
+    def _get_recommended_organizations(self, search_query=None, category_slugs=None, skills=None):
+        """
+        Get recommended organizations based on search context.
+        Returns organizations that might be relevant even if no jobs match.
+        """
+        from ..models import Organization
+        from django.db.models import Count, Q
+        from django.contrib.postgres.search import TrigramSimilarity
+        
+        # Start with orgs that have active jobs
+        orgs = Organization.objects.filter(
+            jobs__is_active=True
+        ).annotate(
+            job_count=Count('jobs', filter=Q(jobs__is_active=True))
+        ).distinct()
+
+        recommendations = []
+        
+        # If there's a search query, find orgs with similar names or whose jobs match
+        if search_query and search_query.strip():
+            query = search_query.strip()
+            # Organizations with similar names
+            name_matches = orgs.annotate(
+                similarity=TrigramSimilarity('name', query)
+            ).filter(similarity__gt=0.1).order_by('-similarity', '-job_count')[:6]
+            recommendations.extend(list(name_matches))
+            
+            # Organizations whose jobs contain the search term
+            if len(recommendations) < 6:
+                job_matches = orgs.filter(
+                    Q(jobs__title__icontains=query) |
+                    Q(jobs__description__icontains=query)
+                ).exclude(id__in=[o.id for o in recommendations]).order_by('-job_count')[:6 - len(recommendations)]
+                recommendations.extend(list(job_matches))
+
+        # If there are category filters, get top orgs in those categories
+        if category_slugs and len(recommendations) < 6:
+            category_orgs = orgs.filter(
+                jobs__category__slug__in=category_slugs
+            ).exclude(id__in=[o.id for o in recommendations]).order_by('-job_count')[:6 - len(recommendations)]
+            recommendations.extend(list(category_orgs))
+
+        # If there are skill filters, get orgs whose jobs have those skills
+        if skills and len(recommendations) < 6:
+            skill_q = Q()
+            for skill in skills[:5]:  # Limit to first 5 skills
+                skill_q |= Q(jobs__skills__contains=[skill])
+            skill_orgs = orgs.filter(skill_q).exclude(
+                id__in=[o.id for o in recommendations]
+            ).order_by('-job_count')[:6 - len(recommendations)]
+            recommendations.extend(list(skill_orgs))
+
+        # Fill remaining slots with top orgs by job count
+        if len(recommendations) < 6:
+            top_orgs = orgs.exclude(
+                id__in=[o.id for o in recommendations]
+            ).order_by('-job_count')[:6 - len(recommendations)]
+            recommendations.extend(list(top_orgs))
+
+        return recommendations[:6]
 
 
 class JobDetailView(DetailView):
