@@ -361,7 +361,7 @@ class ApplicantAssistantGenerateView(View):
             )
 
         try:
-            data = json.loads(request.body)
+            data = request.POST
             job_url = (data.get("job_url") or "").strip()
             job_description = (data.get("job_description") or "").strip()
             user_resume = (data.get("resume") or "").strip()
@@ -475,7 +475,7 @@ class ResignationLetterView(TemplateView):
 class ResignationLetterGenerateView(View):
     def post(self, request, *args, **kwargs):
         try:
-            data = json.loads(request.body)
+            data = request.POST
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
 
@@ -557,7 +557,7 @@ class JobDescriptionGenerateView(View):
 
     def post(self, request, *args, **kwargs):
         try:
-            data = json.loads(request.body)
+            data = request.POST
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON payload"}, status=400)
 
@@ -627,7 +627,7 @@ class InterviewPrepView(TemplateView):
 class InterviewPrepGenerateView(View):
     def post(self, request, *args, **kwargs):
         try:
-            data = json.loads(request.body)
+            data = request.POST
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
 
@@ -685,7 +685,7 @@ class SalaryNegotiationView(TemplateView):
 class SalaryNegotiationGenerateView(View):
     def post(self, request, *args, **kwargs):
         try:
-            data = json.loads(request.body)
+            data = request.POST
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
 
@@ -767,7 +767,7 @@ class SkillsGapView(TemplateView):
 class SkillsGapAnalyzeView(View):
     def post(self, request, *args, **kwargs):
         try:
-            data = json.loads(request.body)
+            data = request.POST
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
 
@@ -861,7 +861,7 @@ class ThankYouEmailView(TemplateView):
 class ThankYouEmailGenerateView(View):
     def post(self, request, *args, **kwargs):
         try:
-            data = json.loads(request.body)
+            data = request.POST
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
 
