@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}Remote Impact Jobs - Find Remote Work That Makes a Difference{% endblock %}
 
@@ -209,11 +210,10 @@
         <div>
             <p class="uppercase text-sm tracking-[0.5em] text-white/70 mb-6">Remote · Purpose-led · Verified</p>
             <h1 class="text-4xl md:text-6xl font-display font-semibold leading-tight mb-8">
-                Build your career around <span>real-world impact</span>.
+                Remote Impact: <span>Curated Remote Jobs for Social Good</span>.
             </h1>
             <p class="text-lg text-white/70 mb-6 max-w-xl">
-                We remove the noise and bring you curated opportunities from climate innovators, civic technologists,
-                and social ventures building equitable futures.
+                Stop searching through noise. Discover verified remote careers in climate tech, AI safety, and social impact—curated from over {{ organizations_count|intcomma }}+ purpose-led organizations.
             </p>
             {% if not has_impact_profile %}
             <p class="text-sm text-white/50 mb-10 flex items-center gap-2">
