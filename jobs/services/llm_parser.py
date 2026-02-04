@@ -55,7 +55,16 @@ Choose the BEST match based on the organization's mission and role focus. Use "o
 
 8. **job_type**: One of: "full-time", "part-time", "contract", "freelance", "internship"
 
-9. **experience_level**: One of: "entry", "mid", "senior", "executive", or null
+9. **experience_level**: One of: "internship", "entry", "mid", "senior", "executive", or null
+
+   IMPORTANT: Check BOTH the title AND description for experience indicators:
+   - "internship": intern, internship, working student, stage (French)
+   - "entry": entry-level, junior, 0-2 years experience, recent graduate, new grad, trainee, apprentice, early career, no experience required
+   - "mid": mid-level, 3-6 years experience, intermediate
+   - "senior": senior, 7+ years experience, lead, staff, principal
+   - "executive": director, VP, C-suite, head of, managing director
+
+   If the job is clearly for interns/students OR explicitly targets people with no experience, use "internship" or "entry".
 
 10. **salary_min**: Minimum annual salary as integer (convert to USD if needed), or null
 
