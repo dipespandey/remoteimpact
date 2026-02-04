@@ -343,18 +343,16 @@
 <!-- Personalized Matching CTA -->
 <section class="pt-16 pb-10 bg-twilight-900">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="rounded-2xl border border-white/10 bg-card-gradient px-8 py-8 md:px-12 md:py-10 backdrop-blur flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
-            <div class="flex items-center gap-5">
-                <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-neon/20 shrink-0">
-                    <svg class="w-7 h-7 text-neon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                    </svg>
-                </div>
-                {% if has_impact_profile %}
-                <div>
-                    <h2 class="text-xl md:text-2xl font-semibold">Your Impact Profile is active</h2>
-                    <p class="text-white/70 text-base mt-1">Jobs are ranked by how well they match your skills and goals.</p>
-                </div>
+        <div class="rounded-2xl border border-white/10 bg-card-gradient px-8 py-10 md:px-12 md:py-12 backdrop-blur flex flex-col items-center text-center gap-6">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-neon/20">
+                <svg class="w-7 h-7 text-neon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+            </div>
+            {% if has_impact_profile %}
+            <div>
+                <h2 class="text-xl md:text-2xl font-semibold">Your Impact Profile is active</h2>
+                <p class="text-white/70 text-base mt-2">Jobs are ranked by how well they match your skills and goals.</p>
             </div>
             <a href="{% url 'jobs:my_matches' %}"
                 class="inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition shadow-glow whitespace-nowrap text-base">
@@ -363,11 +361,10 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                 </svg>
             </a>
-                {% else %}
-                <div>
-                    <h2 class="text-xl md:text-2xl font-semibold">Want personalized job matches?</h2>
-                    <p class="text-white/70 text-base mt-1">Tell us your skills and impact goals. Our algorithm will rank opportunities by fit.</p>
-                </div>
+            {% else %}
+            <div>
+                <h2 class="text-xl md:text-2xl font-semibold">Want personalized job matches?</h2>
+                <p class="text-white/70 text-base mt-2">Tell us your skills and impact goals. Our algorithm will rank opportunities by fit.</p>
             </div>
             <a href="{% url 'jobs:impact_wizard' %}"
                 class="inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition shadow-glow whitespace-nowrap text-base">
@@ -521,17 +518,15 @@
 <!-- Employer CTA Section -->
 <section class="py-10 bg-[#F3F2EE]">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-white rounded-2xl border border-gray-100 px-8 py-8 md:px-12 md:py-10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
-            <div class="flex items-center gap-5 text-center md:text-left">
-                <div class="hidden md:flex items-center justify-center w-14 h-14 rounded-full bg-brand-100 shrink-0">
-                    <svg class="w-7 h-7 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                    </svg>
-                </div>
-                <div>
-                    <h2 class="text-xl md:text-2xl font-bold text-gray-900">For Employers: Want to post a job?</h2>
-                    <p class="text-gray-600 text-base mt-1">Reach thousands of mission-driven professionals actively looking for impact roles.</p>
-                </div>
+        <div class="bg-white rounded-2xl border border-gray-100 px-8 py-10 md:px-12 md:py-12 flex flex-col items-center text-center gap-6 shadow-sm">
+            <div class="flex items-center justify-center w-14 h-14 rounded-full bg-brand-100">
+                <svg class="w-7 h-7 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-xl md:text-2xl font-bold text-gray-900">For Employers: Want to post a job?</h2>
+                <p class="text-gray-600 text-base mt-2">Reach thousands of mission-driven professionals actively looking for impact roles.</p>
             </div>
             <a href="{% url 'jobs:post_job' %}"
                class="inline-flex items-center px-8 py-3.5 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition shadow-glow whitespace-nowrap text-base">
