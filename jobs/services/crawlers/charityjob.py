@@ -183,19 +183,26 @@ def parse_charityjob_page(html: str, url: str) -> dict:
     if salary_text:
         # Parse salary like "£32,000 - £40,000" or "£35,000 per year"
         amounts = re.findall(r"[\d,]+", salary_text)
-        amounts = [float(a.replace(",", "")) for a in amounts if float(a.replace(",", "")) >= 10000]
+        parsed_amounts = []
+        for a in amounts:
+            try:
+                val = float(a.replace(",", ""))
+                if val >= 10000:
+                    parsed_amounts.append(val)
+            except (ValueError, TypeError):
+                continue
 
         if "$" in salary_text:
             salary_currency = "USD"
         elif "€" in salary_text:
             salary_currency = "EUR"
 
-        if len(amounts) >= 2:
-            salary_min = min(amounts)
-            salary_max = max(amounts)
-        elif len(amounts) == 1:
-            salary_min = amounts[0]
-            salary_max = amounts[0]
+        if len(parsed_amounts) >= 2:
+            salary_min = min(parsed_amounts)
+            salary_max = max(parsed_amounts)
+        elif len(parsed_amounts) == 1:
+            salary_min = parsed_amounts[0]
+            salary_max = parsed_amounts[0]
 
     # Extract job type
     job_type = "full-time"
