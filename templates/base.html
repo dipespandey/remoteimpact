@@ -462,50 +462,76 @@
         <!-- Footer -->
         <footer class="relative mt-24">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-10">
-                    <div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
+                    <!-- Brand Column -->
+                    <div class="lg:col-span-1">
                         <div class="flex items-center space-x-3 mb-4">
                             <div class="h-10 w-10 rounded-xl bg-brand-500 flex items-center justify-center shadow-glow">
                                 <span class="text-xl font-semibold text-white">RI</span>
                             </div>
                             <span class="text-2xl font-semibold tracking-tight text-gray-900">Remote Impact</span>
                         </div>
-                        <p class="text-gray-600 leading-relaxed">Purpose-driven remote careers for builders,
+                        <p class="text-gray-600 leading-relaxed text-sm">Purpose-driven remote careers for builders,
                             strategists, and operators creating measurable social impact.</p>
                     </div>
+                    
+                    <!-- Explore Column -->
                     <div>
                         <h3 class="text-sm uppercase tracking-[0.3em] text-gray-500 mb-4">Explore</h3>
-                        <ul class="space-y-2 text-gray-600">
-                            <li><a href="{% url 'jobs:job_list' %}" class="hover:text-brand-600 transition">All
-                                    Opportunities</a></li>
+                        <ul class="space-y-2 text-gray-600 text-sm">
+                            <li><a href="{% url 'jobs:job_list' %}" class="hover:text-brand-600 transition">All Jobs</a></li>
+                            <li><a href="{% url 'gigs:gig_list' %}" class="hover:text-brand-600 transition">Gigs</a></li>
                             <li><a href="{% url 'jobs:organization_directory' %}" class="hover:text-brand-600 transition">Organizations</a></li>
-                            <li><a href="{% url 'jobs:home' %}#categories"
-                                    class="hover:text-brand-600 transition">Impact Domains</a></li>
-                            <li><a href="{% url 'jobs:home' %}#success" class="hover:text-brand-600 transition">Success
-                                    Stories</a></li>
+                            <li><a href="{% url 'jobs:tools_index' %}" class="hover:text-brand-600 transition">Career Tools</a></li>
+                            <li><a href="{% url 'blog:post_list' %}" class="hover:text-brand-600 transition">Blog</a></li>
+                            <li><a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Guides</a></li>
                         </ul>
                     </div>
+                    
+                    <!-- Impact Domains Column 1 -->
                     <div>
-                        <h3 class="text-sm uppercase tracking-[0.3em] text-gray-500 mb-4">Resources</h3>
-                        <ul class="space-y-2 text-gray-600">
-                            <li><a href="{% url 'jobs:job_list' %}?type=full-time"
-                                    class="hover:text-brand-600 transition">Full-time Roles</a></li>
-                            <li><a href="{% url 'jobs:job_list' %}?type=contract"
-                                    class="hover:text-brand-600 transition">Contract Work</a></li>
-                            <li><a href="{% url 'jobs:job_list' %}?type=freelance"
-                                    class="hover:text-brand-600 transition">Flexible Gigs</a></li>
+                        <h3 class="text-sm uppercase tracking-[0.3em] text-gray-500 mb-4">Impact Domains</h3>
+                        <ul class="space-y-1.5 text-gray-600 text-sm">
+                            <li><a href="{% url 'jobs:category_landing' slug='climate-environment' %}" class="hover:text-brand-600 transition">🌱 Climate & Environment</a></li>
+                            <li><a href="{% url 'jobs:category_landing' slug='ai-safety' %}" class="hover:text-brand-600 transition">🤖 AI Safety</a></li>
+                            <li><a href="{% url 'jobs:category_landing' slug='global-health' %}" class="hover:text-brand-600 transition">🏥 Global Health</a></li>
+                            <li><a href="{% url 'jobs:category_landing' slug='education' %}" class="hover:text-brand-600 transition">📚 Education</a></li>
+                            <li><a href="{% url 'jobs:category_landing' slug='biosecurity' %}" class="hover:text-brand-600 transition">🦠 Biosecurity</a></li>
+                            <li><a href="{% url 'jobs:category_landing' slug='energy' %}" class="hover:text-brand-600 transition">⚡ Energy</a></li>
+                            <li><a href="{% url 'jobs:category_landing' slug='poverty-development' %}" class="hover:text-brand-600 transition">🤝 Poverty & Development</a></li>
+                            <li><a href="{% url 'jobs:category_landing' slug='human-rights' %}" class="hover:text-brand-600 transition">✊ Human Rights</a></li>
+                            <li><a href="{% url 'jobs:category_landing' slug='animal-welfare' %}" class="hover:text-brand-600 transition">🐾 Animal Welfare</a></li>
+                            <li><a href="{% url 'jobs:category_landing' slug='effective-altruism' %}" class="hover:text-brand-600 transition">💡 Effective Altruism</a></li>
                         </ul>
                     </div>
+                    
+                    <!-- Impact Domains Column 2 -->
+                    <div>
+                        <h3 class="text-sm uppercase tracking-[0.3em] text-gray-500 mb-4">&nbsp;</h3>
+                        <ul class="space-y-1.5 text-gray-600 text-sm">
+                            <li><a href="{% url 'jobs:category_landing' slug='nonprofit-charity' %}" class="hover:text-brand-600 transition">💜 Nonprofit & Charity</a></li>
+                            <li><a href="{% url 'jobs:category_landing' slug='technology' %}" class="hover:text-brand-600 transition">💻 Technology</a></li>
+                            <li><a href="{% url 'jobs:category_landing' slug='policy-advocacy' %}" class="hover:text-brand-600 transition">🏛️ Policy & Advocacy</a></li>
+                            <li><a href="{% url 'jobs:category_landing' slug='food-agriculture-land-use' %}" class="hover:text-brand-600 transition">🌾 Food & Agriculture</a></li>
+                            <li><a href="{% url 'jobs:category_landing' slug='humanitarian' %}" class="hover:text-brand-600 transition">🆘 Humanitarian</a></li>
+                            <li><a href="{% url 'jobs:category_landing' slug='transportation' %}" class="hover:text-brand-600 transition">🚄 Transportation</a></li>
+                            <li><a href="{% url 'jobs:category_landing' slug='coastal-ocean-sinks' %}" class="hover:text-brand-600 transition">🌊 Ocean & Marine</a></li>
+                            <li><a href="{% url 'jobs:category_landing' slug='nuclear-security' %}" class="hover:text-brand-600 transition">☢️ Nuclear Security</a></li>
+                            <li><a href="{% url 'jobs:category_landing' slug='media-journalism' %}" class="hover:text-brand-600 transition">📰 Media & Journalism</a></li>
+                            <li><a href="{% url 'jobs:all_domains' %}" class="hover:text-brand-600 transition font-medium text-brand-600">→ View all 29 domains</a></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Newsletter Column -->
                     <div>
                         <h3 class="text-sm uppercase tracking-[0.3em] text-gray-500 mb-4">Stay in sync</h3>
-                        <p class="text-gray-600 mb-4 text-sm">Quarterly digest of mission-driven roles, founder
-                            spotlights, and playbooks.</p>
+                        <p class="text-gray-600 mb-4 text-sm">Weekly digest of mission-driven roles and impact career tips.</p>
                         <form id="newsletter-form" class="flex items-center space-x-2">
                             {% csrf_token %}
                             <input type="email" name="email" id="newsletter-email" placeholder="you@email.com" required
-                                class="flex-1 px-4 py-3 rounded-full bg-white border border-gray-200 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-400">
+                                class="flex-1 px-4 py-3 rounded-full bg-white border border-gray-200 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-400 text-sm">
                             <button type="submit" id="newsletter-btn"
-                                class="px-5 py-3 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition">Join</button>
+                                class="px-5 py-3 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition text-sm">Join</button>
                         </form>
                         <p id="newsletter-message" class="text-sm mt-2 hidden"></p>
                     </div>
