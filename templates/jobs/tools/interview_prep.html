@@ -105,7 +105,7 @@
         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 mb-8">
             <h2 class="text-xl font-semibold text-gray-900 mb-6">Generate Interview Questions</h2>
 
-            <form hx-post="{% url 'jobs:tools_interview_prep_generate' %}"
+            <form hx-post="{% url 'jobs:interview_prep_generate' %}"
                   hx-target="#results-container"
                   hx-swap="innerHTML"
                   hx-indicator="#loading-indicator"
