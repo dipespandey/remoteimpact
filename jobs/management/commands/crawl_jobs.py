@@ -18,12 +18,12 @@ from jobs.services import crawlers
 
 
 class Command(BaseCommand):
-    help = "Crawl job details from job board APIs (Greenhouse, Lever, Ashby)."
+    help = "Crawl job details from job board APIs (Greenhouse, Lever, Ashby, CharityJob)."
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--source",
-            choices=["greenhouse", "lever", "ashby", "probablygood"],
+            choices=["greenhouse", "lever", "ashby", "probablygood", "charityjob"],
             default=None,
             help="Crawl only jobs from this source.",
         )
