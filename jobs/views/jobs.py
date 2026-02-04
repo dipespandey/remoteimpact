@@ -483,7 +483,26 @@ class CategoryLandingView(ListView):
             f"Browse {context['page_obj'].paginator.count}+ remote {cat.name.lower()} jobs. "
             f"Find purpose-driven roles in {cat.name.lower()} from top impact organizations."
         )
+        
+        # If no jobs in this category, get recommended organizations
+        if context["page_obj"].paginator.count == 0:
+            context["recommended_orgs"] = self._get_recommended_orgs_for_category(cat)
+        
         return context
+    
+    def _get_recommended_orgs_for_category(self, category):
+        """Get organizations that have had jobs in this category or similar categories."""
+        from ..models import Organization
+        
+        # Get orgs that have active jobs (any category) but prioritize those 
+        # that have had jobs in this category before
+        orgs = Organization.objects.filter(
+            jobs__is_active=True
+        ).annotate(
+            job_count=Count('jobs', filter=Q(jobs__is_active=True))
+        ).distinct().order_by('-job_count')[:6]
+        
+        return list(orgs)
 
 
 class AppliedJobDetailView(LoginRequiredMixin, DetailView):

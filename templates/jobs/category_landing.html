@@ -47,14 +47,6 @@
             <p class="text-white/50 text-sm">{{ page_obj.paginator.count }} role{{ page_obj.paginator.count|pluralize }} found</p>
         </header>
 
-        <!-- Category navigation pills -->
-        <div class="flex flex-wrap gap-2">
-            <a href="{% url 'jobs:job_list' %}" class="px-3 py-1.5 rounded-full text-xs md:text-sm font-medium bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10 transition">All Jobs</a>
-            {% for cat in categories %}
-            <a href="{% url 'jobs:category_landing' slug=cat.slug %}" class="px-3 py-1.5 rounded-full text-xs md:text-sm font-medium transition {% if cat.slug == category.slug %}bg-brand-300 text-gray-900{% else %}bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10{% endif %}">{{ cat.name }}</a>
-            {% endfor %}
-        </div>
-
         <!-- Job listings -->
         <section class="space-y-3 md:space-y-4 relative z-10">
             {% if jobs %}
@@ -90,10 +82,60 @@
                 </article>
                 {% endfor %}
             {% else %}
-                <div class="text-center py-16 rounded-3xl border border-white/10 bg-card-gradient backdrop-blur text-white">
-                    <h3 class="text-3xl font-semibold mb-3">No {{ category.name|lower }} roles right now</h3>
-                    <p class="text-white/60 mb-6">Check back soon or browse all available positions.</p>
-                    <a href="{% url 'jobs:job_list' %}" class="inline-flex px-6 py-3 rounded-full bg-brand-300 text-twilight-900 font-semibold hover:bg-neon transition">Browse all jobs</a>
+                <!-- No Results Section -->
+                <div class="rounded-3xl border border-white/10 bg-card-gradient backdrop-blur text-white p-8 md:p-12 space-y-8">
+                    <!-- Main Message -->
+                    <div class="text-center">
+                        <div class="text-5xl mb-4">🔍</div>
+                        {% if user.is_authenticated %}
+                            <h3 class="text-2xl md:text-3xl font-semibold mb-3">No {{ category.name|lower }} roles right now</h3>
+                            <p class="text-white/70 max-w-xl mx-auto">Don't worry — we'll notify you as soon as a {{ category.name|lower }} role pops up. Keep an eye on your inbox!</p>
+                        {% else %}
+                            <h3 class="text-2xl md:text-3xl font-semibold mb-3">No {{ category.name|lower }} jobs yet</h3>
+                            <p class="text-white/70 max-w-xl mx-auto mb-6">Want us to email you when a {{ category.name|lower }} role becomes available?</p>
+                            
+                            <!-- Email Signup CTA -->
+                            <a href="{% url 'account_signup' %}?next={% url 'jobs:job_alerts' %}" 
+                               class="inline-flex px-6 py-3 rounded-full bg-brand-300 text-twilight-900 font-semibold hover:bg-neon transition">
+                                Sign up for job alerts
+                            </a>
+                        {% endif %}
+                    </div>
+
+                    <!-- Recommended Organizations -->
+                    {% if recommended_orgs %}
+                    <div class="border-t border-white/10 pt-8">
+                        <h4 class="text-lg font-semibold text-center mb-2">Organizations to watch</h4>
+                        <p class="text-white/60 text-sm text-center mb-6">These organizations work in {{ category.name|lower }} and may have openings soon</p>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {% for org in recommended_orgs %}
+                            <a href="{% url 'jobs:organization_profile' org.slug %}" 
+                               class="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition group">
+                                <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-white font-semibold text-sm shrink-0">
+                                    {% if org.logo %}
+                                    <img src="{{ org.logo.url }}" alt="{{ org.name }}" class="w-8 h-8 rounded object-cover">
+                                    {% else %}
+                                    {{ org.name|slice:":2"|upper }}
+                                    {% endif %}
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="font-medium text-white truncate group-hover:text-neon transition">{{ org.name }}</p>
+                                    <p class="text-xs text-white/50">{{ org.job_count }} open role{{ org.job_count|pluralize }}</p>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Browse All Jobs Button -->
+                    <div class="text-center pt-4">
+                        <a href="{% url 'jobs:job_list' %}" class="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-white/20 text-white/80 font-medium hover:bg-white/5 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                            Browse all jobs
+                        </a>
+                    </div>
                 </div>
             {% endif %}
         </section>
