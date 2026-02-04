@@ -125,6 +125,18 @@ class JobService:
             mapped_edu = [edu_map.get(e, e.lower()) for e in education_levels]
             jobs = jobs.filter(education_level__in=mapped_edu)
 
+        # Skills filter - filter jobs that have ANY of the selected skills
+        if hasattr(filters, "getlist"):
+            skills = filters.getlist("skill")
+        else:
+            skills = [filters.get("skill")] if filters.get("skill") else []
+        skills = [s for s in skills if s]
+        if skills:
+            skill_q = Q()
+            for skill in skills:
+                skill_q |= Q(skills__contains=[skill])
+            jobs = jobs.filter(skill_q)
+
         # Skill search (text-based, keep backward compatibility)
         if skill := filters.get("skillset"):
             jobs = jobs.filter(

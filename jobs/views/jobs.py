@@ -49,6 +49,7 @@ class JobListView(ListView):
             "salary_max": self.request.GET.get("salary_max", ""),
             "experiences": self.request.GET.getlist("experience"),
             "educations": self.request.GET.getlist("education"),
+            "skills": self.request.GET.getlist("skill"),
             "posted": self.request.GET.get("posted", ""),
             # Keep single value versions for backward compatibility
             "country": self.request.GET.get("country", ""),
@@ -99,6 +100,19 @@ class JobListView(ListView):
         ).annotate(
             job_count=Count('jobs', filter=Q(jobs__is_active=True))
         ).order_by('-job_count', 'name')[:500]
+
+        # Get top skills with counts
+        from collections import Counter
+        all_skills = []
+        for skills_list in Job.objects.filter(is_active=True).exclude(skills=[]).values_list("skills", flat=True):
+            if skills_list:
+                all_skills.extend(skills_list)
+        skill_counts = Counter(all_skills)
+        top_skills = [
+            {"slug": skill, "display": skill.replace("-", " ").title(), "count": count}
+            for skill, count in skill_counts.most_common(50)
+        ]
+        context["skills_list"] = top_skills
 
         # Knowledge-based filters with field value mappings
         context["knowledge_filters"] = {

@@ -45,7 +45,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 text-sm overflow-visible">
                     <!-- Areas / Categories - Multiselect -->
                     <div x-data="{ open: false, selected: [] }" x-init="selected = {{ current_categories|safe|default:'[]' }}" class="relative">
-                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Areas</label>
+                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Area of Impact</label>
                         <button type="button" @click="open = !open"
                             class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 text-white text-sm text-left flex justify-between items-center">
                             <span x-text="selected.length ? selected.length + ' selected' : 'All areas'"></span>
@@ -507,6 +507,53 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Skills - Multiselect with search -->
+                    <div x-data="{ 
+                        open: false, 
+                        selected: [], 
+                        search: '',
+                        skills: {{ skills_list|safe|default:'[]' }},
+                        get filteredSkills() {
+                            if (!this.search) return this.skills;
+                            return this.skills.filter(s => s.display.toLowerCase().includes(this.search.toLowerCase()));
+                        }
+                    }" x-init="selected = {{ filters.skills|safe|default:'[]' }}" class="relative">
+                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Skills</label>
+                        <button type="button" @click="open = !open"
+                            class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 text-white text-sm text-left flex justify-between items-center">
+                            <span x-text="selected.length ? selected.length + ' selected' : 'Any skills'"></span>
+                            <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9-7 7-7-7"/></svg>
+                        </button>
+                        <div x-show="open" @click.outside="open = false" x-transition class="absolute z-[100] mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-2xl max-h-80 overflow-hidden flex flex-col">
+                            <!-- Search -->
+                            <div class="p-2 border-b border-white/10">
+                                <input type="text" x-model="search" placeholder="Search skills..." @click.stop
+                                    class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/40 focus:outline-none focus:border-brand-300">
+                            </div>
+                            <!-- Selected count + clear -->
+                            <div x-show="selected.length > 0" class="p-2 bg-twilight-800 border-b border-white/10 flex justify-between items-center">
+                                <span class="text-white/60 text-xs"><span x-text="selected.length"></span> selected</span>
+                                <button type="button" @click.stop="selected = []" class="text-xs text-brand-300 hover:text-brand-200">Clear all</button>
+                            </div>
+                            <!-- Skills list -->
+                            <div class="overflow-y-auto overscroll-contain flex-1">
+                                <template x-for="skill in filteredSkills" :key="skill.slug">
+                                    <label class="flex items-center justify-between px-3 py-2 hover:bg-white/5 cursor-pointer" 
+                                        :class="{ 'bg-white/5': selected.includes(skill.slug) }" @click.stop>
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="skill" :value="skill.slug"
+                                                :checked="selected.includes(skill.slug)"
+                                                @change="selected.includes(skill.slug) ? selected = selected.filter(x => x !== skill.slug) : selected.push(skill.slug)"
+                                                class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
+                                            <span class="text-white text-sm" x-text="skill.display"></span>
+                                        </div>
+                                        <span class="text-white/40 text-sm" x-text="skill.count"></span>
+                                    </label>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </form>
@@ -531,14 +578,6 @@
                     </select>
                 </div>
             </div>
-        </div>
-
-        <!-- Browse by Impact Area - SEO internal links -->
-        <div class="flex flex-wrap gap-2 mb-2">
-            <span class="text-white/50 text-xs md:text-sm self-center mr-1">Browse by area:</span>
-            {% for cat in categories %}
-            <a href="{% url 'jobs:category_landing' slug=cat.slug %}" class="px-3 py-1.5 rounded-full text-xs md:text-sm font-medium bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10 transition">{{ cat.name }}</a>
-            {% endfor %}
         </div>
 
         <section class="space-y-3 md:space-y-4 relative z-10">
