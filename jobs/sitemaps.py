@@ -64,6 +64,7 @@ class ToolsSitemap(Sitemap):
 
     def items(self):
         # List of all tools with their URL names and priorities
+        # Only include tools that actually exist in urls.py
         return [
             ('jobs:tools_index', 0.8, 'weekly'),
             ('jobs:salary_to_hourly', 0.7, 'monthly'),
@@ -72,8 +73,6 @@ class ToolsSitemap(Sitemap):
             ('jobs:pay_raise_calculator', 0.7, 'monthly'),
             ('jobs:word_counter', 0.6, 'monthly'),
             ('jobs:pomodoro_timer', 0.6, 'monthly'),
-            ('jobs:timezone_overlap', 0.7, 'monthly'),
-            ('jobs:cost_of_living', 0.7, 'monthly'),
             ('jobs:remote_readiness_quiz', 0.7, 'monthly'),
             ('jobs:skills_gap', 0.7, 'monthly'),
             ('jobs:interview_prep', 0.7, 'monthly'),
@@ -87,10 +86,10 @@ class ToolsSitemap(Sitemap):
     def location(self, item):
         return reverse(item[0])
 
-    def priority(self, item):
+    def _priority(self, item):
         return item[1]
 
-    def changefreq(self, item):
+    def _changefreq(self, item):
         return item[2]
 
     def lastmod(self, item):
@@ -109,7 +108,6 @@ class StaticSitemap(Sitemap):
             ('jobs:resources', 0.7, 'weekly'),
             ('jobs:post_job', 0.5, 'monthly'),
             ('gigs:gig_list', 0.8, 'daily'),
-            ('jobs:talent_directory', 0.8, 'daily'),
             ('jobs:organization_directory', 0.8, 'weekly'),
             ('jobs:all_domains', 0.7, 'weekly'),
         ]
@@ -117,10 +115,10 @@ class StaticSitemap(Sitemap):
     def location(self, item):
         return reverse(item[0])
 
-    def priority(self, item):
+    def _priority(self, item):
         return item[1]
 
-    def changefreq(self, item):
+    def _changefreq(self, item):
         return item[2]
 
     def lastmod(self, item):
