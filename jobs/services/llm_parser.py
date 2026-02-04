@@ -25,6 +25,7 @@ from typing import Any
 from django.conf import settings
 from jobs.constants import IMPACT_AREAS_FOR_PROMPT
 from jobs.constants.skills import SKILLS_FOR_PROMPT
+from jobs.services.experience_classifier import ExperienceClassifier
 
 logger = logging.getLogger(__name__)
 
@@ -358,6 +359,17 @@ class JobParser:
             if parsed.get("skills") and isinstance(parsed["skills"], list):
                 enriched["skills"] = parsed["skills"]
 
+
+        # Refine experience_level with rule-based classifier (catches what LLM missed)
+        classified_level, reason = ExperienceClassifier.get_best_classification(
+            title=title,
+            description=desc,
+            job_type=enriched.get("job_type", ""),
+            existing_level=enriched.get("experience_level")
+        )
+        if classified_level and classified_level != enriched.get("experience_level"):
+            logger.debug(f"Classifier refined experience_level to {classified_level}: {reason}")
+            enriched["experience_level"] = classified_level
         return enriched
 
     async def _parse_with_retry(
