@@ -633,8 +633,8 @@ class InterviewPrepGenerateView(View):
 
         job_title = (data.get("job_title") or "").strip()
         company_type = (data.get("company_type") or "Nonprofit").strip()
-        experience = (data.get("experience") or "Mid").strip()
-        focus = (data.get("focus") or "behavioral").strip()
+        experience = (data.get("experience_level") or "Mid").strip()
+        focus = (data.get("focus_area") or "behavioral").strip()
 
         if not job_title:
             return JsonResponse({"error": "Job title is required."}, status=400)
