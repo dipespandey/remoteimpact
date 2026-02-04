@@ -375,55 +375,7 @@
 </section>
 {% endif %}
 
-<!-- Featured Jobs Section -->
-{% if featured_jobs %}
-<section class="py-24 bg-gradient-to-b from-twilight-900 to-twilight-800" id="featured">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-12">
-            <div>
-                <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-2">Highlighted searches</p>
-                <h2 class="text-4xl font-semibold">Featured opportunities</h2>
-            </div>
-            <a href="{% url 'jobs:job_list' %}"
-                class="inline-flex items-center px-6 py-3 rounded-full border border-white/20 hover:border-white text-white transition">
-                View all roles
-            </a>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for job in featured_jobs %}
-            <div
-                class="rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-neon/60 transition shadow-lg shadow-black/20">
-                <div class="flex items-start justify-between mb-6">
-                    <div>
-                        <p class="text-sm uppercase tracking-[0.4em] text-white/50">{{ job.get_job_type_display }}</p>
-                        <h3 class="text-2xl font-semibold mt-2 mb-1">
-                            <a href="{{ job.get_absolute_url }}" class="hover:text-neon transition">
-                                {{ job.title }}
-                            </a>
-                        </h3>
-                        <p class="text-white/70">{{ job.organization.name }}</p>
-                    </div>
-                    {% if job.category %}
-                    <span class="px-4 py-2 rounded-full text-xs font-semibold bg-white/10 border border-white/10">{{job.category.name }}</span>
-                    {% endif %}
-                </div>
-                <p class="text-white/70 text-sm mb-8 line-clamp-3">{{ job.description|striptags|truncatewords:25 }}</p>
-                <div class="flex items-center justify-between text-sm text-white/60">
-                    <span>{{ job.location|default:"Remote" }}</span>
-                    <a href="{{ job.get_absolute_url }}"
-                        class="inline-flex items-center text-neon font-semibold">Details
-                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                d="M5 12h14m0 0-6-6m6 6-6 6" />
-                        </svg>
-                    </a>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-{% endif %}
+<!-- Featured Jobs Section - Removed per user request -->
 
 <!-- Impact Metrics -->
 <!-- <section id="success" class="py-24 bg-twilight-900">
