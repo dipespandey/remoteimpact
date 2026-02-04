@@ -437,12 +437,48 @@ class CategoryLandingView(ListView):
             .order_by("-posted_at")
         )
 
+    # SEO-optimized titles for each category
+    SEO_TITLES = {
+        "advocacy-or-policy": "Remote Advocacy & Policy Jobs",
+        "ai-safety": "Remote AI Safety & Governance Jobs",
+        "animal-welfare": "Remote Animal Welfare Jobs",
+        "biosecurity": "Remote Biosecurity & Pandemic Prep Jobs",
+        "buildings": "Remote Sustainable Buildings Jobs",
+        "capital": "Remote Impact Capital & Finance Jobs",
+        "climate-environment": "Remote Climate & Environment Jobs",
+        "coastal-ocean-sinks": "Remote Ocean & Marine Science Jobs",
+        "communications": "Remote Communications & Media Jobs",
+        "education": "Remote Education & EdTech Jobs",
+        "effective-altruism": "Remote Effective Altruism Jobs",
+        "energy": "Remote Clean Energy & Electricity Jobs",
+        "food-agriculture-land-use": "Remote Sustainable Food & Agriculture Jobs",
+        "gender-equality-social-inclusion": "Remote Social Justice & Equity Jobs",
+        "global-health": "Remote Global Health & Development Jobs",
+        "humanitarian": "Remote Humanitarian & Disaster Relief Jobs",
+        "human-rights": "Remote Human Rights & Justice Jobs",
+        "impact-careers": "Remote Impact Careers Jobs",
+        "materials-manufacturing": "Remote Sustainable Industry Jobs",
+        "media-journalism": "Remote Impact Media & Journalism Jobs",
+        "nonprofit-charity": "Remote Philanthropy & Non-Profit Jobs",
+        "nuclear-security": "Remote Nuclear Security Jobs",
+        "operations": "Remote Operations & Administration Jobs",
+        "other-1": "Remote Impact Jobs",
+        "other": "Remote Impact Jobs",
+        "policy-advocacy": "Remote Policy & Advocacy Jobs",
+        "poverty-development": "Remote Poverty & Development Jobs",
+        "technology": "Remote Tech for Good Jobs",
+        "transportation": "Remote Clean Transportation Jobs",
+    }
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         cat = self.category
         context["category"] = cat
         context["categories"] = Category.objects.all().order_by("name")
-        context["meta_title"] = f"Remote {cat.name} Jobs \u2014 Remote Impact Jobs"
+        
+        # Use custom SEO title if available, otherwise generate one
+        seo_title = self.SEO_TITLES.get(cat.slug, f"Remote {cat.name} Jobs")
+        context["meta_title"] = f"{seo_title} — Remote Impact"
         context["meta_description"] = (
             f"Browse {context['page_obj'].paginator.count}+ remote {cat.name.lower()} jobs. "
             f"Find purpose-driven roles in {cat.name.lower()} from top impact organizations."
