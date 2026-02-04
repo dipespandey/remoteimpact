@@ -1,6 +1,9 @@
-from django.db.models import Q
+from django.db.models import Q, F, Value, Case, When, FloatField
+from django.db.models.functions import Greatest, Coalesce
+from django.contrib.postgres.search import SearchQuery, SearchRank, TrigramSimilarity
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from pgvector.django import CosineDistance
 from ..models import Job, Category, SavedJob, Organization
 
 
@@ -168,16 +171,92 @@ class JobService:
             except (TypeError, ValueError):
                 pass
 
-        # Core Search
-        if query := filters.get("q"):
-            jobs = jobs.filter(
-                Q(title__icontains=query)
-                | Q(description__icontains=query)
-                | Q(requirements__icontains=query)
-                | Q(organization__name__icontains=query)
-            )
+        # Enhanced Search with ranking
+        query = filters.get("q")
+        if query:
+            query = query.strip()
+            jobs = JobService._apply_smart_search(jobs, query)
+            # Return early - ordering is handled by search ranking
+            return jobs
 
         return jobs.order_by("-is_featured", "-posted_at")
+
+    @staticmethod
+    def _apply_smart_search(queryset, query):
+        """
+        Enhanced search that combines:
+        1. Full-text search (exact keyword matches) - highest weight
+        2. Trigram similarity (fuzzy matches, typo tolerance)
+        3. Semantic vector search (conceptually similar)
+        
+        Results are ranked by combined relevance score.
+        """
+        from jobs.services.embedding_service import get_embedding
+        
+        # Parse query for full-text search (handles phrases and operators)
+        try:
+            search_query = SearchQuery(query, search_type='websearch')
+        except Exception:
+            # Fallback to plain search if websearch parsing fails
+            search_query = SearchQuery(query, search_type='plain')
+        
+        # Annotate with multiple relevance signals
+        queryset = queryset.annotate(
+            # Full-text search rank (exact keyword matches)
+            fts_rank=SearchRank('search_vector', search_query),
+            # Trigram similarity on title (fuzzy matching)
+            title_similarity=TrigramSimilarity('title', query),
+            # Trigram similarity on organization name
+            org_similarity=TrigramSimilarity('organization__name', query),
+        )
+        
+        # Try to add semantic search if embeddings are available
+        try:
+            query_embedding = get_embedding(query)
+            if query_embedding:
+                queryset = queryset.annotate(
+                    vector_distance=CosineDistance('embedding', query_embedding)
+                )
+                # Semantic similarity (1 - distance)
+                queryset = queryset.annotate(
+                    semantic_score=Case(
+                        When(embedding__isnull=False, then=1.0 - F('vector_distance')),
+                        default=Value(0.0),
+                        output_field=FloatField()
+                    )
+                )
+            else:
+                queryset = queryset.annotate(semantic_score=Value(0.0, output_field=FloatField()))
+        except Exception:
+            queryset = queryset.annotate(semantic_score=Value(0.0, output_field=FloatField()))
+        
+        # Combined relevance score with weights:
+        # - FTS rank: 40% (exact keyword matches)
+        # - Title similarity: 25% (fuzzy title match)
+        # - Semantic: 25% (conceptual similarity)
+        # - Org similarity: 10% (organization name match)
+        queryset = queryset.annotate(
+            relevance_score=(
+                Coalesce(F('fts_rank'), Value(0.0)) * 0.40 +
+                Coalesce(F('title_similarity'), Value(0.0)) * 0.25 +
+                Coalesce(F('semantic_score'), Value(0.0)) * 0.25 +
+                Coalesce(F('org_similarity'), Value(0.0)) * 0.10
+            )
+        )
+        
+        # Filter to only include jobs with some relevance
+        # Use a low threshold to include fuzzy/semantic matches
+        queryset = queryset.filter(
+            Q(fts_rank__gt=0) |  # Has keyword matches
+            Q(title_similarity__gt=0.15) |  # Fuzzy title match
+            Q(semantic_score__gt=0.5) |  # Semantically similar
+            Q(org_similarity__gt=0.3) |  # Org name match
+            Q(title__icontains=query) |  # Fallback: basic title match
+            Q(organization__name__icontains=query)  # Fallback: basic org match
+        )
+        
+        # Order by featured status first, then relevance score
+        return queryset.order_by('-is_featured', '-relevance_score', '-posted_at')
 
     @staticmethod
     def create_job(data: dict, user=None, organization=None) -> Job:

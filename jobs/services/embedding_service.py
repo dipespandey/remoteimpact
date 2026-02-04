@@ -14,6 +14,19 @@ def embed(text):
     return get_model().encode(text, normalize_embeddings=True).tolist()
 
 
+def get_embedding(text):
+    """
+    Get embedding for a text string (e.g., search query).
+    Returns None if embedding fails.
+    """
+    if not text or not text.strip():
+        return None
+    try:
+        return embed(text.strip()[:1000])  # Limit query length
+    except Exception:
+        return None
+
+
 def embed_job(job):
     parts = [job.title, job.description or '']
     if job.requirements:
