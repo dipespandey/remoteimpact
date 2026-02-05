@@ -76,19 +76,39 @@ class JobService:
                 country_q |= Q(country=country) | Q(location__icontains=country)
             jobs = jobs.filter(country_q)
 
-        # Salary min - filter jobs with salary >= value
-        if salary_min := filters.get("salary_min"):
+        # "Has salary listed" filter - only show jobs with actual salary data
+        if filters.get("has_salary"):
+            jobs = jobs.filter(
+                Q(salary_min__isnull=False, salary_min__gt=0) |
+                Q(salary_max__isnull=False, salary_max__gt=0)
+            )
+
+        # Salary range filter - a job matches if its salary range OVERLAPS with the user's filter range
+        # Overlap logic: job_max >= filter_min AND job_min <= filter_max
+        filter_salary_min = filters.get("salary_min")
+        filter_salary_max = filters.get("salary_max")
+
+        if filter_salary_min:
             try:
-                val = float(salary_min)
-                jobs = jobs.filter(Q(salary_min__gte=val) | Q(salary_max__gte=val))
+                val = float(filter_salary_min)
+                # Job's upper bound must be >= user's lower bound (for overlap)
+                # Use salary_max if available, otherwise fall back to salary_min
+                jobs = jobs.filter(
+                    Q(salary_max__gte=val) |
+                    Q(salary_max__isnull=True, salary_min__gte=val)
+                )
             except (TypeError, ValueError):
                 pass
 
-        # Salary max - filter jobs with salary <= value
-        if salary_max := filters.get("salary_max"):
+        if filter_salary_max:
             try:
-                val = float(salary_max)
-                jobs = jobs.filter(Q(salary_max__lte=val) | Q(salary_min__lte=val))
+                val = float(filter_salary_max)
+                # Job's lower bound must be <= user's upper bound (for overlap)
+                # Use salary_min if available, otherwise fall back to salary_max
+                jobs = jobs.filter(
+                    Q(salary_min__lte=val) |
+                    Q(salary_min__isnull=True, salary_max__lte=val)
+                )
             except (TypeError, ValueError):
                 pass
 
@@ -281,7 +301,7 @@ class JobService:
             job_type="full_time",  # Defaulting as per previous view logic, or could be passed
             salary_min=data.get("salary_min"),
             salary_max=data.get("salary_max"),
-            salary_currency=data.get("salary_currency", "USD"),
+            salary_currency=data.get("salary_currency") or ("USD" if (data.get("salary_min") or data.get("salary_max")) else ""),
             application_url=data.get("application_url"),
             application_email=data.get("application_email"),
             posted_at=timezone.now(),

@@ -207,7 +207,7 @@ def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
         "application_email": payload.get("application_email", ""),
         "salary_min": _sanitize_salary(payload.get("salary_min")),
         "salary_max": _sanitize_salary(payload.get("salary_max")),
-        "salary_currency": payload.get("salary_currency", "USD"),
+        "salary_currency": payload.get("salary_currency") or ("USD" if (_sanitize_salary(payload.get("salary_min")) or _sanitize_salary(payload.get("salary_max"))) else ""),
         "impact": payload.get("impact", ""),
         "benefits": payload.get("benefits", ""),
         "company_description": payload.get("company_description", ""),

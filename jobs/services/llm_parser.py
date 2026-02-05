@@ -80,11 +80,11 @@ Choose the BEST match based on the organization's mission and role focus. Use "o
 
 11. **country**: If location-restricted, extract the primary country (e.g., "United States", "United Kingdom", "Germany"). Use null for fully global remote roles.
 
-12. **salary_min**: Minimum annual salary as integer (convert to USD if needed), or null
+12. **salary_min**: Minimum annual salary as integer in the ORIGINAL currency (do NOT convert to USD), or null
 
-13. **salary_max**: Maximum annual salary as integer (convert to USD if needed), or null
+13. **salary_max**: Maximum annual salary as integer in the ORIGINAL currency (do NOT convert to USD), or null
 
-14. **salary_currency**: Currency code like "USD", "EUR", "GBP", or null
+14. **salary_currency**: The ORIGINAL currency code as stated in the posting (e.g. "USD", "EUR", "GBP", "CHF", "CAD", "AUD"), or null if no salary mentioned. Do NOT convert currencies.
 
 15. **skills**: Array of skill slugs required/preferred for this role. Select 3-10 from this list:
 {skills_list}
@@ -93,7 +93,7 @@ Use exact slugs from the list. Only include skills explicitly mentioned or stron
 
 ## GUIDELINES:
 - Format text sections as HTML (<p> for paragraphs, <ul>/<li> for lists)
-- Extract salary even if given as hourly/monthly (convert to annual)
+- Extract salary even if given as hourly/monthly (convert to annual in the original currency, do NOT convert between currencies)
 - For impact_area, consider the organization's PRIMARY focus, not the job function
 - For skills, focus on technical skills, tools, and domain expertise mentioned in requirements
 - Return valid JSON only

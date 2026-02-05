@@ -121,7 +121,7 @@ def _transform_reliefweb_item(item: Dict) -> Dict:
         "application_email": "",
         "salary_min": None,
         "salary_max": None,
-        "salary_currency": "USD",
+        "salary_currency": "",
         "posted_at": _parse_iso_date(created_at),
         "expires_at": _parse_iso_date(closing_at) if closing_at else None,
         "category_name": category_name,
