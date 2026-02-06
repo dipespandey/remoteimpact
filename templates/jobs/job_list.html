@@ -500,7 +500,10 @@
                 <div class="flex items-center gap-2">
                     <span class="text-white/50 text-sm">Sort:</span>
                     <select id="sort-select" name="sort" class="border border-white/10 bg-white/5 rounded-lg py-2 px-3 focus:ring-brand-300 focus:border-transparent text-white text-sm">
-                        <option value="" {% if not sort %}selected{% endif %}>Newest</option>
+                        <option value="date" {% if sort == 'date' or not sort %}selected{% endif %}>Newest</option>
+                        {% if search_query %}
+                        <option value="relevance" {% if sort == 'relevance' %}selected{% endif %}>Most Relevant</option>
+                        {% endif %}
                         <option value="salary-high" {% if sort == 'salary-high' %}selected{% endif %}>Salary (high to low)</option>
                         <option value="salary-low" {% if sort == 'salary-low' %}selected{% endif %}>Salary (low to high)</option>
                     </select>

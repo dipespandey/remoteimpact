@@ -193,20 +193,33 @@ class JobService:
 
         # Enhanced Search with ranking
         query = filters.get("q")
+        sort = filters.get("sort", "")
+        
         if query:
             query = query.strip()
-            jobs = JobService._apply_smart_search(jobs, query)
-            # Return early - ordering is handled by search ranking
+            jobs = JobService._apply_smart_search(jobs, query, sort=sort)
+            # Return early - ordering is handled by search
             return jobs
 
+        # Default ordering for non-search results
+        if sort == "date":
+            return jobs.order_by("-is_featured", "-posted_at")
+        elif sort == "relevance":
+            return jobs.order_by("-is_featured", "-posted_at")
+        
         return jobs.order_by("-is_featured", "-posted_at")
 
     @staticmethod
-    def _apply_smart_search(queryset, query):
+    def _apply_smart_search(queryset, query, sort=""):
         """
         Simple, precise search using PostgreSQL full-text search.
         Uses raw SQL for ts_rank because Django's SearchRank has a bug
         with SearchVectorField (converts tsvector to text, losing weights).
+        
+        Args:
+            queryset: Base queryset to search
+            query: Search query string
+            sort: Sort order - "date" for newest first, "" or "relevance" for FTS rank
         """
         from django.db.models.expressions import RawSQL
         
@@ -232,8 +245,13 @@ class JobService:
             # Long/specific query: require FTS match (more precise)
             queryset = queryset.filter(fts_rank__gt=0.01)
         
-        # Order by FTS relevance
-        return queryset.order_by('-is_featured', '-fts_rank', '-posted_at')
+        # Order by user preference: date (default) or relevance
+        if sort == "relevance":
+            # Sort by FTS relevance, date as tiebreaker
+            return queryset.order_by('-is_featured', '-fts_rank', '-posted_at')
+        else:
+            # Default (including "date" or empty): sort by date posted (newest first)
+            return queryset.order_by('-is_featured', '-posted_at', '-fts_rank')
 
     @staticmethod
     def create_job(data: dict, user=None, organization=None) -> Job:
