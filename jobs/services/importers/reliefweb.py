@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 API_URL = "https://api.reliefweb.int/v2/jobs"
 PAGE_SIZE = 100
-REMOTE_QUERY = "(remote) AND NOT _exists_:country"
+REMOTE_QUERY = "NOT _exists_:country"
 
 
 def _reliefweb_headers(app_name: str) -> Dict[str, str]:
