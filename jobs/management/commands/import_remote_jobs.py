@@ -51,6 +51,12 @@ class Command(BaseCommand):
             action="store_true",
             help="Only import new jobs, skip already-imported jobs (for incremental/daily imports).",
         )
+        parser.add_argument(
+            "--max-pages",
+            type=int,
+            default=None,
+            help="Maximum pages to scrape for paginated sources like Probably Good (default: source-specific).",
+        )
 
     def handle(self, *args, **options):
         dry_run = options["dry_run"]
@@ -60,10 +66,11 @@ class Command(BaseCommand):
         batch_size = options["batch_size"]
         provider = options["provider"]
         new_only = options["new_only"]
+        max_pages = options["max_pages"]
 
         # Run the async import
         summaries = asyncio.run(
-            self._run_imports(source, limit, dry_run, use_ai, batch_size, provider, new_only)
+            self._run_imports(source, limit, dry_run, use_ai, batch_size, provider, new_only, max_pages)
         )
 
         if not summaries:
@@ -87,6 +94,7 @@ class Command(BaseCommand):
         batch_size: int,
         provider: str | None,
         new_only: bool = False,
+        max_pages: int | None = None,
     ) -> dict:
         """Run imports asynchronously."""
         summaries = {}
@@ -172,6 +180,7 @@ class Command(BaseCommand):
             try:
                 summaries["probablygood"] = await importers.import_probablygood(
                     limit=limit,
+                    max_pages=max_pages,
                     dry_run=dry_run,
                     use_ai=use_ai,
                     batch_size=batch_size,

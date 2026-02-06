@@ -457,14 +457,14 @@ def fetch_descriptions_batch(
 
 
 def fetch_job_listings(
-    max_pages: Optional[int] = None,
+    max_pages: Optional[int] = 60,
     delay: float = 1.0,
 ) -> List[Dict]:
     """
     Fetch all remote job listings from Probably Good.
 
     Args:
-        max_pages: Maximum pages to fetch (None for all)
+        max_pages: Maximum pages to fetch (default 60, ~1500 jobs)
         delay: Delay between requests in seconds
 
     Returns:
@@ -472,6 +472,7 @@ def fetch_job_listings(
     """
     jobs = []
     page = 1
+    logger.info(f"Starting Probably Good listing fetch (max_pages={max_pages})")
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
