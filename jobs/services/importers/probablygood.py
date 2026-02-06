@@ -568,7 +568,7 @@ async def import_probablygood(
 
     Args:
         limit: Maximum number of jobs to import
-        max_pages: Maximum pages to scrape (25 jobs/page)
+        max_pages: Maximum pages to scrape (25 jobs/page). Default: 10 for incremental, 60 for full.
         dry_run: If True, fetch but don't save to database
         use_ai: If True, use AI to enrich job descriptions
         fetch_descriptions: If True, fetch full descriptions from external URLs
@@ -581,6 +581,11 @@ async def import_probablygood(
     Returns:
         Dict with keys: fetched, created, updated
     """
+    # Use smaller page limit for incremental imports (new jobs are on first pages)
+    if max_pages is None:
+        max_pages = 10 if skip_existing else 60
+        logger.info(f"Using default max_pages={max_pages} ({'incremental' if skip_existing else 'full'} mode)")
+
     # Fetch all job listings from Probably Good
     all_payloads = fetch_job_listings(max_pages=max_pages, delay=delay)
 
