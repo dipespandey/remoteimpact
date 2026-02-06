@@ -204,21 +204,18 @@ class JobService:
     @staticmethod
     def _apply_smart_search(queryset, query):
         """
-        Simple, precise search:
-        1. Full-text search (keyword matches) - primary method
-        2. Title matching for short queries
-        
-        Focuses on precision over recall - returns fewer, more relevant results.
+        Simple, precise search using PostgreSQL full-text search.
+        Uses raw SQL for ts_rank because Django's SearchRank has a bug
+        with SearchVectorField (converts tsvector to text, losing weights).
         """
-        # Parse query for full-text search
-        try:
-            search_query = SearchQuery(query, search_type='websearch')
-        except Exception:
-            search_query = SearchQuery(query, search_type='plain')
+        from django.db.models.expressions import RawSQL
         
-        # Annotate with FTS rank
+        # Annotate with proper FTS rank using raw SQL
         queryset = queryset.annotate(
-            fts_rank=SearchRank('search_vector', search_query),
+            fts_rank=RawSQL(
+                "ts_rank(search_vector, websearch_to_tsquery('english', %s))",
+                [query]
+            ),
         )
         
         # For short queries (1-3 words), also check title contains
@@ -233,7 +230,6 @@ class JobService:
             )
         else:
             # Long/specific query: require FTS match (more precise)
-            # This prevents "Emergency Health Coordinator" from matching everything with "health"
             queryset = queryset.filter(fts_rank__gt=0.01)
         
         # Order by FTS relevance
