@@ -76,6 +76,45 @@ def _fetch_reliefweb_detail(
     return items[0] if items else None
 
 
+# Map ReliefWeb categories to existing RemoteImpact domains
+RELIEFWEB_CATEGORY_MAP = {
+    # ReliefWeb career_categories → RemoteImpact domains
+    "Program/Project Management": "Impact Careers",
+    "Administration/Finance": "Nonprofit & Charity",
+    "Advocacy/Communications": "Advocacy or Policy",
+    "Donor Relations/Grants Management": "Nonprofit & Charity",
+    "Logistics/Procurement": "Impact Careers",
+    "Monitoring and Evaluation": "Impact Careers",
+    "Information Management": "Technology & Engineering",
+    "Information and Communications Technology": "Technology & Engineering",
+    "Human Resources": "Impact Careers",
+    "Operations & Administration": "Impact Careers",
+    # ReliefWeb themes → RemoteImpact domains
+    "Health": "Global Health",
+    "Protection and Human Rights": "Human Rights & Justice",
+    "Food and Nutrition": "Poverty & Economic Development",
+    "Education": "Education & Research",
+    "Climate Change and Environment": "Climate & Environment",
+    "Disaster Management": "Humanitarian & Disaster Relief",
+    "Shelter and Non-Food Items": "Humanitarian & Disaster Relief",
+    "Water Sanitation Hygiene": "Global Health",
+    "Camp Coordination / Management": "Humanitarian & Disaster Relief",
+    "Agriculture": "Climate & Environment",
+    "Gender": "Gender Equality and Social Inclusion (GESI)",
+    "Recovery and Reconstruction": "Humanitarian & Disaster Relief",
+    "Mine Action": "Humanitarian & Disaster Relief",
+    "Peacekeeping and Peacebuilding": "Human Rights & Justice",
+    "Coordination": "Impact Careers",
+    "Safety and Security": "Impact Careers",
+    "Contributions": "Nonprofit & Charity",
+}
+
+
+def _map_reliefweb_category(raw_name: str) -> str:
+    """Map ReliefWeb category to existing RemoteImpact domain."""
+    return RELIEFWEB_CATEGORY_MAP.get(raw_name, "Impact Careers")
+
+
 def _transform_reliefweb_item(item: Dict) -> Dict:
     fields = item.get("fields", {})
     title = fields.get("title") or "Untitled role"
@@ -87,7 +126,8 @@ def _transform_reliefweb_item(item: Dict) -> Dict:
     category_name = "Impact Careers"
     if categories:
         first = categories[0]
-        category_name = first.get("name") or category_name
+        raw_name = first.get("name") or ""
+        category_name = _map_reliefweb_category(raw_name)
 
     organization_name = "Unknown Organization"
     organization_url = ""
