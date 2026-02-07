@@ -277,7 +277,7 @@
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-3">
                             <p class="text-sm uppercase tracking-[0.4em] text-white/60">Featured Jobs</p>
-                            <a href="{% url 'jobs:job_list' %}" class="text-neon text-sm hover:underline">View all</a>
+                            <a href="{% url 'jobs:job_list' %}" class="text-neon text-sm hover:underline whitespace-nowrap">View all</a>
                         </div>
                         <div class="flex items-center gap-2">
                             {% for job in recent_jobs|slice:":3" %}
