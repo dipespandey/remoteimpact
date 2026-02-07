@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import RedirectView
 from . import views
 from .feeds import LatestJobsFeed, CategoryJobsFeed
 
@@ -77,10 +78,10 @@ urlpatterns = [
     # Tools
     path("tools/", views.ToolsIndexView.as_view(), name="tools_index"),
     path("tools/salary-to-hourly-calculator/", views.SalaryToHourlyView.as_view(), name="salary_to_hourly"),
-    # Resources / AI
+    # Resources / AI (redirect to canonical URL)
     path(
         "resources/applicant-assistant/",
-        views.ApplicantAssistantView.as_view(),
+        RedirectView.as_view(url="/tools/cover-letter-generator/", permanent=True),
         name="applicant_assistant",
     ),
     path(
