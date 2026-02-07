@@ -345,6 +345,15 @@ class ApplicationGuideView(DetailView):
             posted_at__lt=cutoff,
         ).select_related("organization", "category")
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Generate personalized guide content
+        from ..services.guide_generator import generate_application_guide
+        context["guide"] = generate_application_guide(self.object)
+        
+        return context
+
 
 class PostJobView(LoginRequiredMixin, FormView):
     template_name = "jobs/post_job.html"

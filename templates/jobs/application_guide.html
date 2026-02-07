@@ -3,7 +3,7 @@
 
 {% block title %}How to Apply for {{ job.title }} at {{ job.organization.name }} - Application Guide{% endblock %}
 
-{% block meta_description %}Complete guide to applying for {{ job.title }} at {{ job.organization.name }}. Tips, cover letter help, interview prep, and application resources.{% endblock %}
+{% block meta_description %}Complete guide to applying for {{ job.title }} at {{ job.organization.name }}. Personalized tips, cover letter help, interview prep, and application resources.{% endblock %}
 
 {% block canonical %}{{ SITE_URL }}{% url 'jobs:application_guide' job.slug %}{% endblock %}
 
@@ -76,9 +76,25 @@
 <section class="bg-gray-50 pb-20">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
+        <!-- Company & Role Overview -->
+        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm mb-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">🏢 About {{ job.organization.name }}</h2>
+            <p class="text-gray-600 mb-6">{{ guide.company_intro }}</p>
+            
+            <h3 class="text-lg font-bold text-gray-900 mb-3">About This Role</h3>
+            <p class="text-gray-600 mb-4">{{ guide.role_overview }}</p>
+            
+            {% if guide.day_in_life %}
+            <div class="bg-brand-50 rounded-xl p-4 border border-brand-100">
+                <p class="text-sm font-semibold text-brand-700 mb-1">💡 A Day in the Life</p>
+                <p class="text-gray-700 text-sm">{{ guide.day_in_life }}</p>
+            </div>
+            {% endif %}
+        </div>
+
         <!-- Quick Actions -->
         <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm mb-8">
-            <h2 class="text-xl font-bold text-gray-900 mb-6">🚀 Quick Actions</h2>
+            <h2 class="text-xl font-bold text-gray-900 mb-6">🚀 Application Tools</h2>
             <div class="grid sm:grid-cols-2 gap-4">
                 <a href="{% url 'jobs:cover_letter_generator' %}?job_title={{ job.title|urlencode }}&company={{ job.organization.name|urlencode }}&job_url={{ SITE_URL }}{{ job.get_absolute_url|urlencode }}" 
                    class="flex items-center gap-4 p-4 rounded-2xl border border-gray-200 hover:border-brand-300 hover:bg-brand-50 transition group">
@@ -89,7 +105,7 @@
                     </div>
                     <div>
                         <p class="font-semibold text-gray-900">Generate Cover Letter</p>
-                        <p class="text-sm text-gray-500">AI-powered, tailored for this role</p>
+                        <p class="text-sm text-gray-500">AI-powered, tailored for {{ job.organization.name }}</p>
                     </div>
                 </a>
                 <a href="{% url 'jobs:interview_prep' %}?job_title={{ job.title|urlencode }}&company={{ job.organization.name|urlencode }}" 
@@ -101,53 +117,118 @@
                     </div>
                     <div>
                         <p class="font-semibold text-gray-900">Interview Prep</p>
-                        <p class="text-sm text-gray-500">Practice questions & tips</p>
+                        <p class="text-sm text-gray-500">Practice questions for this role</p>
                     </div>
                 </a>
             </div>
         </div>
 
-        <!-- Application Tips -->
+        <!-- Ideal Candidate -->
+        {% if guide.ideal_candidate %}
         <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm mb-8">
-            <h2 class="text-xl font-bold text-gray-900 mb-6">📝 Tips for a Strong Application</h2>
+            <h2 class="text-xl font-bold text-gray-900 mb-6">🎯 Who {{ job.organization.name }} Is Looking For</h2>
+            <ul class="space-y-3">
+                {% for trait in guide.ideal_candidate %}
+                <li class="flex items-start gap-3">
+                    <span class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </span>
+                    <span class="text-gray-700">{{ trait }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Application Tips -->
+        {% if guide.application_tips %}
+        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm mb-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">📝 Tips for Applying to {{ job.organization.name }}</h2>
             <div class="space-y-4">
+                {% for tip in guide.application_tips %}
                 <div class="flex gap-4">
-                    <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0 text-brand-600 font-bold">1</div>
-                    <div>
-                        <p class="font-semibold text-gray-900">Tailor your cover letter</p>
-                        <p class="text-gray-600">Mention {{ job.organization.name }} by name and explain why their mission resonates with you. Generic applications rarely make it past the first round.</p>
-                    </div>
+                    <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0 text-brand-600 font-bold text-sm">{{ forloop.counter }}</div>
+                    <p class="text-gray-700 pt-1">{{ tip }}</p>
                 </div>
-                <div class="flex gap-4">
-                    <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0 text-brand-600 font-bold">2</div>
-                    <div>
-                        <p class="font-semibold text-gray-900">Highlight relevant experience</p>
-                        <p class="text-gray-600">Even if you don't have direct experience, showcase transferable skills from volunteering, academic projects, or previous roles.</p>
-                    </div>
-                </div>
-                <div class="flex gap-4">
-                    <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0 text-brand-600 font-bold">3</div>
-                    <div>
-                        <p class="font-semibold text-gray-900">Show your passion for impact</p>
-                        <p class="text-gray-600">{{ job.organization.name }} is looking for candidates who genuinely care about their cause. Let your enthusiasm shine through.</p>
-                    </div>
-                </div>
-                <div class="flex gap-4">
-                    <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0 text-brand-600 font-bold">4</div>
-                    <div>
-                        <p class="font-semibold text-gray-900">Keep it concise</p>
-                        <p class="text-gray-600">Hiring managers review hundreds of applications. Make every sentence count and avoid unnecessary filler.</p>
-                    </div>
-                </div>
-                <div class="flex gap-4">
-                    <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0 text-brand-600 font-bold">5</div>
-                    <div>
-                        <p class="font-semibold text-gray-900">Proofread carefully</p>
-                        <p class="text-gray-600">Typos and grammatical errors signal carelessness. Have someone else review your application before submitting.</p>
-                    </div>
-                </div>
+                {% endfor %}
             </div>
         </div>
+        {% endif %}
+
+        <!-- Cover Letter Focus -->
+        {% if guide.cover_letter_focus %}
+        <div class="bg-gradient-to-br from-brand-50 to-white rounded-3xl border border-brand-100 p-8 shadow-sm mb-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">✉️ What to Emphasize in Your Cover Letter</h2>
+            <p class="text-gray-700">{{ guide.cover_letter_focus }}</p>
+            <a href="{% url 'jobs:cover_letter_generator' %}?job_title={{ job.title|urlencode }}&company={{ job.organization.name|urlencode }}" 
+               class="inline-flex items-center mt-4 px-5 py-2 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition text-sm">
+                Generate Cover Letter →
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Research Suggestions -->
+        {% if guide.research_suggestions %}
+        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm mb-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">🔍 Research Before Applying</h2>
+            <p class="text-gray-600 mb-4">To stand out, make sure you've researched:</p>
+            <ul class="space-y-3">
+                {% for suggestion in guide.research_suggestions %}
+                <li class="flex items-start gap-3">
+                    <span class="text-brand-500 mt-1">→</span>
+                    <span class="text-gray-700">{{ suggestion }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% if job.organization.website %}
+            <a href="{{ job.organization.website }}" target="_blank" rel="noopener noreferrer"
+               class="inline-flex items-center mt-4 px-4 py-2 rounded-full border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition text-sm">
+                Visit {{ job.organization.name }}'s Website →
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Interview Topics -->
+        {% if guide.interview_topics %}
+        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm mb-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">💬 Prepare for These Interview Topics</h2>
+            <p class="text-gray-600 mb-4">Based on this role, you may be asked about:</p>
+            <div class="space-y-3">
+                {% for topic in guide.interview_topics %}
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <span class="w-8 h-8 rounded-full bg-brand-200 flex items-center justify-center text-brand-700 font-bold text-sm">{{ forloop.counter }}</span>
+                    <span class="text-gray-700">{{ topic }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <a href="{% url 'jobs:interview_prep' %}?job_title={{ job.title|urlencode }}&company={{ job.organization.name|urlencode }}" 
+               class="inline-flex items-center mt-4 px-5 py-2 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition text-sm">
+                Practice Interview Questions →
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Common Mistakes -->
+        {% if guide.red_flags_to_avoid %}
+        <div class="bg-red-50 rounded-3xl border border-red-100 p-8 shadow-sm mb-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">⚠️ Common Mistakes to Avoid</h2>
+            <ul class="space-y-3">
+                {% for mistake in guide.red_flags_to_avoid %}
+                <li class="flex items-start gap-3">
+                    <span class="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </span>
+                    <span class="text-gray-700">{{ mistake }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
 
         <!-- Application Timeline -->
         <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm mb-8">
@@ -160,52 +241,38 @@
             {% else %}
             <p class="text-gray-600 mb-6">This position is open until filled. However, we recommend applying as soon as possible as roles at mission-driven organizations tend to fill quickly.</p>
             {% endif %}
-        </div>
-
-        <!-- What to Expect -->
-        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm mb-8">
-            <h2 class="text-xl font-bold text-gray-900 mb-6">🎯 What to Expect After Applying</h2>
-            <p class="text-gray-600 mb-6">Most organizations follow a similar hiring process:</p>
-            <div class="space-y-4">
-                <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+            
+            <p class="text-gray-600 mb-4">Typical hiring timeline:</p>
+            <div class="space-y-3">
+                <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
                     <div class="w-10 h-10 rounded-full bg-brand-200 flex items-center justify-center text-brand-700 font-bold">1</div>
                     <div>
                         <p class="font-semibold text-gray-900">Application Review</p>
                         <p class="text-sm text-gray-500">1-2 weeks</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
                     <div class="w-10 h-10 rounded-full bg-brand-200 flex items-center justify-center text-brand-700 font-bold">2</div>
                     <div>
                         <p class="font-semibold text-gray-900">Initial Screening</p>
                         <p class="text-sm text-gray-500">Phone call or written assessment</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
                     <div class="w-10 h-10 rounded-full bg-brand-200 flex items-center justify-center text-brand-700 font-bold">3</div>
                     <div>
-                        <p class="font-semibold text-gray-900">First Interview</p>
-                        <p class="text-sm text-gray-500">Usually virtual</p>
+                        <p class="font-semibold text-gray-900">Interviews</p>
+                        <p class="text-sm text-gray-500">1-2 rounds, usually virtual</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-                    <div class="w-10 h-10 rounded-full bg-brand-200 flex items-center justify-center text-brand-700 font-bold">4</div>
-                    <div>
-                        <p class="font-semibold text-gray-900">Final Round</p>
-                        <p class="text-sm text-gray-500">Interview or task-based assessment</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
                     <div class="w-10 h-10 rounded-full bg-green-200 flex items-center justify-center text-green-700 font-bold">✓</div>
                     <div>
-                        <p class="font-semibold text-gray-900">Offer & Negotiation</p>
+                        <p class="font-semibold text-gray-900">Offer</p>
                         <p class="text-sm text-gray-500">Congratulations!</p>
                     </div>
                 </div>
             </div>
-            <p class="mt-6 text-sm text-gray-500 bg-gray-50 rounded-xl p-4">
-                <strong>Pro tip:</strong> If you haven't heard back in 2-3 weeks, it's appropriate to send a polite follow-up email expressing your continued interest.
-            </p>
         </div>
 
         <!-- CTA -->
