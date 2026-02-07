@@ -188,6 +188,20 @@ class Command(BaseCommand):
                     provider=provider,
                     skip_existing=new_only,
                 )
+                
+                # Crawl newly imported jobs that have API-accessible URLs
+                if not dry_run and summaries["probablygood"]["created"] > 0:
+                    self.stdout.write("Crawling Probably Good jobs from APIs (Greenhouse/Lever/Ashby)...")
+                    crawl_stats = crawlers.crawl_jobs_needing_update(
+                        source="probablygood",
+                        limit=summaries["probablygood"]["created"] + 50,  # Some buffer
+                        dry_run=dry_run,
+                        delay=0.3,
+                    )
+                    self.stdout.write(
+                        f"  Crawled: {crawl_stats['success']} updated, "
+                        f"{crawl_stats['failed']} failed, {crawl_stats['skipped']} skipped"
+                    )
             except Exception as e:
                 self.stderr.write(f"probablygood import failed: {e}")
                 summaries["probablygood"] = {"fetched": 0, "created": 0, "updated": 0, "error": str(e)}
