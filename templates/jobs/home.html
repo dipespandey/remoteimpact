@@ -275,29 +275,63 @@
                 {% if recent_jobs %}
                 <div class="rounded-3xl border border-white/10 bg-card-gradient p-6 backdrop-blur flex flex-col min-h-[280px]">
                     <div class="flex items-center justify-between mb-4">
-                        <p class="text-sm uppercase tracking-[0.4em] text-white/60">Featured Jobs</p>
+                        <p class="text-sm uppercase tracking-[0.4em] text-white/60">Featured Job</p>
                         <a href="{% url 'jobs:job_list' %}" class="text-neon text-sm hover:underline">View all →</a>
                     </div>
-                    <div class="space-y-2 flex-1">
+                    <div class="flex-1 flex flex-col justify-center" id="featured-job-rotator">
                         {% for job in recent_jobs|slice:":3" %}
-                        <a href="{% url 'jobs:job_detail' job.id %}" class="block group">
-                            <div class="flex items-start gap-3 p-3 rounded-xl hover:bg-white/5 transition">
-                                {% if job.organization.logo %}
-                                <img src="{{ job.organization.logo.url }}" alt="{{ job.organization.name }}" class="w-10 h-10 rounded-lg object-cover flex-shrink-0 bg-white/10">
-                                {% else %}
-                                <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
-                                    <span class="text-lg">{{ job.organization.name|slice:":1" }}</span>
+                        <a href="{% url 'jobs:job_detail' job.id %}" 
+                           class="featured-job-slide block group {% if not forloop.first %}hidden{% endif %}"
+                           data-index="{{ forloop.counter0 }}">
+                            <div class="space-y-3">
+                                <div class="flex items-center gap-3">
+                                    {% if job.organization.logo %}
+                                    <img src="{{ job.organization.logo.url }}" alt="{{ job.organization.name }}" class="w-12 h-12 rounded-xl object-cover flex-shrink-0 bg-white/10">
+                                    {% else %}
+                                    <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                                        <span class="text-xl">{{ job.organization.name|slice:":1" }}</span>
+                                    </div>
+                                    {% endif %}
+                                    <p class="text-sm text-white/60">{{ job.organization.name }}</p>
                                 </div>
-                                {% endif %}
-                                <div class="min-w-0 flex-1">
-                                    <p class="font-semibold text-white group-hover:text-neon transition truncate">{{ job.title }}</p>
-                                    <p class="text-sm text-white/60 truncate">{{ job.organization.name }}</p>
-                                </div>
+                                <h3 class="text-2xl font-semibold text-white group-hover:text-neon transition">{{ job.title }}</h3>
+                                <p class="text-white/70 text-sm line-clamp-2">{{ job.description|striptags|truncatewords:25 }}</p>
                             </div>
                         </a>
                         {% endfor %}
                     </div>
+                    <div class="flex items-center justify-center gap-2 mt-4">
+                        {% for job in recent_jobs|slice:":3" %}
+                        <button class="featured-job-dot w-2 h-2 rounded-full transition-all {% if forloop.first %}bg-neon w-6{% else %}bg-white/30{% endif %}" data-index="{{ forloop.counter0 }}"></button>
+                        {% endfor %}
+                    </div>
                 </div>
+                <script>
+                (function() {
+                    const slides = document.querySelectorAll('.featured-job-slide');
+                    const dots = document.querySelectorAll('.featured-job-dot');
+                    if (slides.length <= 1) return;
+                    let current = 0;
+                    function showSlide(index) {
+                        slides.forEach((s, i) => {
+                            s.classList.toggle('hidden', i !== index);
+                        });
+                        dots.forEach((d, i) => {
+                            d.classList.toggle('bg-neon', i === index);
+                            d.classList.toggle('w-6', i === index);
+                            d.classList.toggle('bg-white/30', i !== index);
+                            d.classList.toggle('w-2', i !== index);
+                        });
+                        current = index;
+                    }
+                    dots.forEach(dot => {
+                        dot.addEventListener('click', () => showSlide(parseInt(dot.dataset.index)));
+                    });
+                    setInterval(() => {
+                        showSlide((current + 1) % slides.length);
+                    }, 5000);
+                })();
+                </script>
                 {% endif %}
                 <div
                     class="rounded-3xl border border-white/10 bg-card-gradient p-6 backdrop-blur flex flex-col justify-between min-h-[280px]">
