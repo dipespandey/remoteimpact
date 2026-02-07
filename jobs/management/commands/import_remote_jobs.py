@@ -218,6 +218,20 @@ class Command(BaseCommand):
                     provider=provider,
                     skip_existing=new_only,
                 )
+                
+                # Crawl newly imported CharityJob jobs to get full descriptions
+                if not dry_run and summaries["charityjob"]["created"] > 0:
+                    self.stdout.write("Crawling CharityJob jobs for full descriptions...")
+                    crawl_stats = crawlers.crawl_jobs_needing_update(
+                        source="charityjob",
+                        limit=summaries["charityjob"]["created"] + 50,
+                        dry_run=dry_run,
+                        delay=0.3,
+                    )
+                    self.stdout.write(
+                        f"  Crawled: {crawl_stats['success']} updated, "
+                        f"{crawl_stats['failed']} failed, {crawl_stats['skipped']} skipped"
+                    )
             except Exception as e:
                 self.stderr.write(f"charityjob import failed: {e}")
                 summaries["charityjob"] = {"fetched": 0, "created": 0, "updated": 0, "error": str(e)}
