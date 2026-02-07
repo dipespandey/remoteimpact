@@ -271,23 +271,6 @@
         </div>
         <div class="relative mt-8 md:mt-12">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div
-                    class="rounded-3xl border border-white/10 bg-card-gradient p-6 backdrop-blur flex flex-col justify-between min-h-[280px]">
-                    <div class="space-y-4">
-                        <p class="text-sm uppercase tracking-[0.4em] text-white/60">How we curate</p>
-                        <div class="space-y-1">
-                            <p class="text-2xl font-semibold">AI vetted with human oversight</p>
-                            <p class="text-white/70 text-sm">Every role is reviewed by our team before it goes live.</p>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex flex-wrap items-center gap-3">
-                            <span class="timezone-pill">Human-vetted</span>
-                            <span class="timezone-pill">AI summaries</span>
-                            <span class="timezone-pill">Organic fit</span>
-                        </div>
-                    </div>
-                </div>
                 <!-- Featured Jobs Widget -->
                 {% if recent_jobs %}
                 <div class="rounded-3xl border border-white/10 bg-card-gradient p-6 backdrop-blur flex flex-col min-h-[280px]">
@@ -316,6 +299,23 @@
                     </div>
                 </div>
                 {% endif %}
+                <div
+                    class="rounded-3xl border border-white/10 bg-card-gradient p-6 backdrop-blur flex flex-col justify-between min-h-[280px]">
+                    <div class="space-y-4">
+                        <p class="text-sm uppercase tracking-[0.4em] text-white/60">How we curate</p>
+                        <div class="space-y-1">
+                            <p class="text-2xl font-semibold">AI vetted with human oversight</p>
+                            <p class="text-white/70 text-sm">Every role is reviewed by our team before it goes live.</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <span class="timezone-pill">Human-vetted</span>
+                            <span class="timezone-pill">AI summaries</span>
+                            <span class="timezone-pill">Organic fit</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
