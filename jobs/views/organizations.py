@@ -1,10 +1,27 @@
 from django.views.generic import ListView
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Q, Count
 from django.utils import timezone
 from datetime import timedelta
+from django.http import Http404
 
 from ..models import Job, Organization, Category
+
+# Map old broken slugs to new correct slugs for 301 redirects
+OLD_SLUG_REDIRECTS = {
+    "fort20health": "fort-health",
+    "fort20health-1": "fort-health",
+    "grindr20llc": "grindr-llc",
+    "grindr20llc-1": "grindr-llc",
+    "nautilus20biotechnology": "nautilus-biotechnology",
+    "new20story": "new-story",
+    "solana20foundation": "solana-foundation",
+    "solana20foundation-1": "solana-foundation",
+    "the20agency20fund": "the-agency-fund",
+    "the20agency20fund-1": "the-agency-fund",
+    "djurens-ratt-1": "djurens-ratt",
+    "farai-1": "farai",
+}
 
 
 class OrganizationProfileView(ListView):
@@ -13,6 +30,14 @@ class OrganizationProfileView(ListView):
     template_name = "jobs/organization_profile.html"
     context_object_name = "jobs"
     paginate_by = 20
+
+    def get(self, request, *args, **kwargs):
+        slug = self.kwargs.get("slug")
+        # Check if this is an old slug that needs redirecting
+        if slug in OLD_SLUG_REDIRECTS:
+            new_slug = OLD_SLUG_REDIRECTS[slug]
+            return redirect("jobs:organization_profile", slug=new_slug, permanent=True)
+        return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         self.organization = get_object_or_404(Organization, slug=self.kwargs["slug"])
