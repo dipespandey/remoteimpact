@@ -26,12 +26,19 @@ class CategorySitemap(Sitemap):
     priority = 0.9
 
     def items(self):
-        return Category.objects.all().order_by('name')
+        # Only include categories with active jobs
+        return Category.objects.filter(
+            jobs__is_active=True
+        ).distinct().order_by('name')
 
     def location(self, obj):
         return reverse('jobs:category_landing', args=[obj.slug])
 
     def lastmod(self, obj):
+        # Use the most recent job update time
+        latest_job = obj.jobs.filter(is_active=True).order_by('-updated_at').first()
+        if latest_job:
+            return latest_job.updated_at
         return timezone.now()
 
 
