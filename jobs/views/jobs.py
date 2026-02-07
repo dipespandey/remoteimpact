@@ -327,6 +327,25 @@ class JobDetailView(DetailView):
         return context
 
 
+class ApplicationGuideView(DetailView):
+    """SEO-optimized application guide page for each job."""
+    model = Job
+    template_name = "jobs/application_guide.html"
+    context_object_name = "job"
+
+    def get_queryset(self):
+        from django.utils import timezone
+        from datetime import timedelta
+        now = timezone.now()
+        cutoff = now - timedelta(days=180)
+        return Job.objects.filter(is_active=True).exclude(
+            expires_at__lt=now,
+        ).exclude(
+            expires_at__isnull=True,
+            posted_at__lt=cutoff,
+        ).select_related("organization", "category")
+
+
 class PostJobView(LoginRequiredMixin, FormView):
     template_name = "jobs/post_job.html"
     form_class = JobSubmissionForm
