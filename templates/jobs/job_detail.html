@@ -107,15 +107,8 @@
                     <h1 class="text-4xl md:text-5xl font-bold leading-tight text-gray-900">{{ job.title }}</h1>
                     <p class="text-2xl text-gray-600">{{ job.organization.name }}</p>
                 </div>
-                <div class="grid sm:grid-cols-3 gap-6 text-sm text-gray-600">
-                    <div>
-                        <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-1">Location</p>
-                        <p class="text-lg text-gray-900 font-medium">{{ job.location|default:"Remote" }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-1">Type</p>
-                        <p class="text-lg text-gray-900 font-medium">{{ job.get_job_type_display }}</p>
-                    </div>
+                <!-- Top row: Posted, Deadline, Compensation -->
+                <div class="grid sm:grid-cols-3 gap-6 text-sm text-gray-600 mb-6">
                     <div>
                         <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-1">Posted</p>
                         <p class="text-lg text-gray-900 font-medium">{{ job.posted_at|date:"M d, Y" }}</p>
@@ -142,6 +135,17 @@
                         </p>
                     </div>
                     {% endif %}
+                </div>
+                <!-- Bottom row: Location, Type -->
+                <div class="grid sm:grid-cols-2 gap-6 text-sm text-gray-600">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-1">Location</p>
+                        <p class="text-lg text-gray-900 font-medium">{{ job.location|default:"Remote" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-1">Type</p>
+                        <p class="text-lg text-gray-900 font-medium">{{ job.get_job_type_display }}</p>
+                    </div>
                 </div>
             </div>
 
