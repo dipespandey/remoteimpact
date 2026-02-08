@@ -80,6 +80,118 @@ def extract_company_from_url(url: str) -> str:
     return ""
 
 
+def extract_salary_from_text(text: str) -> Dict[str, Any]:
+    """
+    Extract salary information from text content.
+    
+    Handles formats like:
+    - $350,000—$850,000 USD
+    - $120,000 - $180,000
+    - £67,100 - £89,000
+    - Annual Salary: $200,000—$300,000 USD
+    - Compensation: $150k-$200k
+    - Salary Range: €80,000 to €120,000
+    
+    Returns:
+        Dict with salary_min, salary_max, salary_currency (or empty dict)
+    """
+    if not text:
+        return {}
+    
+    result = {}
+    
+    # Currency patterns and their codes
+    currency_patterns = [
+        (r'\$', 'USD'),
+        (r'£', 'GBP'),
+        (r'€', 'EUR'),
+        (r'USD', 'USD'),
+        (r'GBP', 'GBP'),
+        (r'EUR', 'EUR'),
+        (r'CAD', 'CAD'),
+        (r'AUD', 'AUD'),
+    ]
+    
+    # Salary range patterns (ordered by specificity)
+    # Pattern: currency + number + separator + currency? + number
+    salary_patterns = [
+        # $350,000—$850,000 or $350,000-$850,000 or $350,000 - $850,000
+        r'[\$£€]?\s*([\d,]+(?:\.\d+)?)\s*[kK]?\s*(?:—|–|-|to)\s*[\$£€]?\s*([\d,]+(?:\.\d+)?)\s*[kK]?(?:\s*(?:USD|GBP|EUR|CAD|AUD|per\s+year|annually|/yr|/year))?',
+        # Annual Salary: $200,000—$300,000
+        r'(?:salary|compensation|pay|range)[:\s]*[\$£€]?\s*([\d,]+(?:\.\d+)?)\s*[kK]?\s*(?:—|–|-|to)\s*[\$£€]?\s*([\d,]+(?:\.\d+)?)\s*[kK]?',
+    ]
+    
+    # Find currency first
+    text_lower = text.lower()
+    detected_currency = None
+    for pattern, code in currency_patterns:
+        if re.search(pattern, text, re.IGNORECASE):
+            detected_currency = code
+            break
+    
+    # Try each salary pattern
+    for pattern in salary_patterns:
+        matches = re.findall(pattern, text, re.IGNORECASE)
+        if matches:
+            for match in matches:
+                try:
+                    # Clean and parse numbers
+                    min_str = match[0].replace(',', '').replace(' ', '')
+                    max_str = match[1].replace(',', '').replace(' ', '')
+                    
+                    # Handle 'k' suffix (e.g., $150k)
+                    min_val = float(min_str)
+                    max_val = float(max_str)
+                    
+                    # Check if values are in thousands (e.g., 150 meaning 150k)
+                    # Heuristic: if both values are < 1000, they're probably in thousands
+                    if min_val < 1000 and max_val < 1000:
+                        # Check if 'k' was in the original text near these numbers
+                        if re.search(r'[\d,]+\s*[kK]', text):
+                            min_val *= 1000
+                            max_val *= 1000
+                    
+                    # Sanity check: salary should be reasonable
+                    if 10000 <= min_val <= 10000000 and 10000 <= max_val <= 10000000:
+                        # Take the largest range found (more likely to be the actual salary)
+                        if 'salary_max' not in result or max_val > result.get('salary_max', 0):
+                            result['salary_min'] = min_val
+                            result['salary_max'] = max_val
+                            if detected_currency:
+                                result['salary_currency'] = detected_currency
+                except (ValueError, IndexError):
+                    continue
+    
+    # Also try to find single salary values if no range found
+    if not result:
+        single_salary_pattern = r'[\$£€]\s*([\d,]+(?:\.\d+)?)\s*[kK]?(?:\s*(?:USD|GBP|EUR|CAD|AUD|per\s+year|annually|/yr|/year))?'
+        matches = re.findall(single_salary_pattern, text)
+        salaries = []
+        for match in matches:
+            try:
+                val = float(match.replace(',', ''))
+                if val < 1000 and re.search(r'[\d,]+\s*[kK]', text):
+                    val *= 1000
+                if 10000 <= val <= 10000000:
+                    salaries.append(val)
+            except ValueError:
+                continue
+        
+        if len(salaries) >= 2:
+            result['salary_min'] = min(salaries)
+            result['salary_max'] = max(salaries)
+            if detected_currency:
+                result['salary_currency'] = detected_currency
+        elif len(salaries) == 1:
+            # Single salary value - use as both min and max
+            result['salary_min'] = salaries[0]
+            result['salary_max'] = salaries[0]
+            if detected_currency:
+                result['salary_currency'] = detected_currency
+    
+    return result
+
+
 def update_job_from_crawl(
     job: Job,
     title: str,

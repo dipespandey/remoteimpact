@@ -15,7 +15,7 @@ import requests
 
 from jobs.models import Job
 
-from .base import html_to_markdown, update_job_from_crawl
+from .base import html_to_markdown, update_job_from_crawl, extract_salary_from_text
 
 logger = logging.getLogger(__name__)
 
@@ -130,6 +130,16 @@ def parse_lever_job(data: dict) -> dict:
     salary_min = salary_range.get("min")
     salary_max = salary_range.get("max")
     salary_currency = salary_range.get("currency", "USD")
+
+    # If no salary in structured data, try to extract from description
+    if salary_min is None and salary_max is None and description:
+        extracted_salary = extract_salary_from_text(description)
+        if extracted_salary:
+            salary_min = extracted_salary.get("salary_min")
+            salary_max = extracted_salary.get("salary_max")
+            if extracted_salary.get("salary_currency"):
+                salary_currency = extracted_salary["salary_currency"]
+            logger.info(f"Extracted salary from description: {salary_min} - {salary_max} {salary_currency}")
 
     # Benefits from salary description
     benefits_html = data.get("salaryDescription", "")
