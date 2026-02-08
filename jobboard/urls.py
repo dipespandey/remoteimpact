@@ -44,6 +44,11 @@ Sitemap: {site_url}/sitemap.xml
 """
     return HttpResponse(content, content_type="text/plain")
 
+
+def indexnow_key(request):
+    """IndexNow API key verification file."""
+    return HttpResponse("db25ddbb333d413289a18c8820c32ca4", content_type="text/plain")
+
 sitemaps = {
     'static': StaticSitemap,
     'jobs': JobSitemap,
@@ -59,6 +64,7 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path("gigs/", include("gigs.urls")),
     path("robots.txt", robots_txt, name='robots_txt'),
+    path("db25ddbb333d413289a18c8820c32ca4.txt", indexnow_key, name='indexnow_key'),
     path("sitemap.xml", sitemap, {'sitemaps': sitemaps}, name='sitemap'),
     path("blog/", include("blog.urls")),
     path("", include("jobs.urls")),
