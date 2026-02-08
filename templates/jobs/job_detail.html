@@ -130,7 +130,15 @@
                     <div>
                         <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-1">Compensation</p>
                         <p class="text-lg text-gray-900 font-medium">
-                            {% if job.salary_currency == "GBP" %}£{% elif job.salary_currency == "EUR" %}€{% elif job.salary_currency == "JPY" %}¥{% elif job.salary_currency == "CHF" %}CHF {% elif job.salary_currency == "CAD" %}CA${% elif job.salary_currency == "AUD" %}A${% elif job.salary_currency == "SEK" %}SEK {% elif job.salary_currency == "NOK" %}NOK {% elif job.salary_currency == "DKK" %}DKK {% elif job.salary_currency == "USD" %}${% elif job.salary_currency %}{{ job.salary_currency }} {% else %}${% endif %}{% if job.salary_min and job.salary_max %}{{ job.salary_min|floatformat:0 }} – {{ job.salary_max|floatformat:0 }}{% elif job.salary_min %}{{ job.salary_min|floatformat:0 }}+{% else %}Up to {{ job.salary_max|floatformat:0 }}{% endif %}{% if job.salary_currency and job.salary_currency != "USD" and job.salary_currency != "GBP" and job.salary_currency != "EUR" and job.salary_currency != "JPY" %} {{ job.salary_currency }}{% endif %}
+                            {% with currency_symbol=job.salary_currency|default:"USD" %}
+                            {% if job.salary_min and job.salary_max %}
+                                {% if currency_symbol == "GBP" %}£{{ job.salary_min|floatformat:0 }} - £{{ job.salary_max|floatformat:0 }}{% elif currency_symbol == "EUR" %}€{{ job.salary_min|floatformat:0 }} - €{{ job.salary_max|floatformat:0 }}{% else %}${{ job.salary_min|floatformat:0 }} - ${{ job.salary_max|floatformat:0 }}{% endif %}
+                            {% elif job.salary_min %}
+                                {% if currency_symbol == "GBP" %}£{{ job.salary_min|floatformat:0 }}+{% elif currency_symbol == "EUR" %}€{{ job.salary_min|floatformat:0 }}+{% else %}${{ job.salary_min|floatformat:0 }}+{% endif %}
+                            {% else %}
+                                {% if currency_symbol == "GBP" %}Up to £{{ job.salary_max|floatformat:0 }}{% elif currency_symbol == "EUR" %}Up to €{{ job.salary_max|floatformat:0 }}{% else %}Up to ${{ job.salary_max|floatformat:0 }}{% endif %}
+                            {% endif %}
+                            {% endwith %}
                         </p>
                     </div>
                     {% endif %}
