@@ -1,9 +1,16 @@
 from datetime import timedelta
+import re
 
 from django import template
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.template.defaultfilters import linebreaks_filter
+
+try:
+    import markdown
+    HAS_MARKDOWN = True
+except ImportError:
+    HAS_MARKDOWN = False
 
 register = template.Library()
 
@@ -50,13 +57,16 @@ def get_item(dictionary, key):
 @register.filter(name="render_html")
 def render_html(value):
     """
-    Renders value as safe HTML if it looks like HTML, otherwise applies linebreaks.
-    Simple heuristic: if it contains HTML tags, assume it's HTML.
+    Renders value as safe HTML.
+    - If it looks like HTML, return as-is
+    - If it looks like markdown, convert to HTML
+    - Otherwise, apply linebreaks
     """
     if not value:
         return ""
 
     value_str = str(value)
+    
     # Check for common HTML indicators (opening or closing tags)
     html_indicators = [
         "</p>",
@@ -85,4 +95,37 @@ def render_html(value):
     if any(tag in value_str.lower() for tag in html_indicators):
         return mark_safe(value_str)
 
+    # Check for markdown indicators
+    markdown_indicators = [
+        r'^#{1,6}\s',      # Headers (# ## ### etc)
+        r'^\*\*.*\*\*',    # Bold **text**
+        r'^- ',            # Unordered list
+        r'^\* ',           # Unordered list (asterisk)
+        r'^• ',            # Bullet points
+        r'^\d+\.\s',       # Ordered list
+        r'\[.*\]\(.*\)',   # Links [text](url)
+    ]
+    
+    is_markdown = any(
+        re.search(pattern, value_str, re.MULTILINE)
+        for pattern in markdown_indicators
+    )
+    
+    if is_markdown and HAS_MARKDOWN:
+        # Convert markdown to HTML
+        # Clean up some common issues first
+        cleaned = value_str
+        # Convert bullet points (•) to standard markdown bullets
+        cleaned = re.sub(r'^• ', '- ', cleaned, flags=re.MULTILINE)
+        # Handle **bold** headers that start with ##
+        cleaned = re.sub(r'^(#{1,6})\s*\*\*(.+?)\*\*\s*$', r'\1 \2', cleaned, flags=re.MULTILINE)
+        
+        html = markdown.markdown(
+            cleaned,
+            extensions=['nl2br', 'sane_lists'],
+            output_format='html5'
+        )
+        return mark_safe(html)
+    
+    # Fallback: just convert line breaks
     return linebreaks_filter(value)

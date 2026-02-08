@@ -32,6 +32,7 @@ dependencies = [
     "sentence-transformers>=5.2.0",
     "pgvector>=0.4.2",
     "torch>=2.7.0",
+    "markdown>=3.5",
 ]
 
 [tool.uv]
