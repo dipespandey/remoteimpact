@@ -1,5 +1,8 @@
 import logging
+import threading
 
+import requests
+from django.conf import settings
 from django.contrib.postgres.search import SearchVector
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -7,6 +10,10 @@ from django.dispatch import receiver
 from jobs.models import Job, SeekerProfile
 
 logger = logging.getLogger(__name__)
+
+# IndexNow configuration
+INDEXNOW_KEY = "db25ddbb333d413289a18c8820c32ca4"
+INDEXNOW_ENDPOINT = "https://www.bing.com/indexnow"
 
 
 @receiver(post_save, sender=Job)
@@ -28,6 +35,44 @@ def update_job_search_vector(sender, instance, created, **kwargs):
                 SearchVector('impact', weight='B')
             )
         )
+
+
+def _ping_indexnow(url: str):
+    """Send IndexNow ping to Bing (runs in background thread)."""
+    try:
+        site_url = getattr(settings, 'SITE_URL', 'https://remoteimpact.org')
+        key_location = f"{site_url}/{INDEXNOW_KEY}.txt"
+        response = requests.get(
+            INDEXNOW_ENDPOINT,
+            params={
+                "url": url,
+                "key": INDEXNOW_KEY,
+                "keyLocation": key_location,
+            },
+            timeout=10,
+        )
+        if response.status_code == 200:
+            logger.info(f"IndexNow: Successfully pinged {url}")
+        else:
+            logger.warning(f"IndexNow: Got status {response.status_code} for {url}")
+    except Exception as e:
+        logger.error(f"IndexNow: Failed to ping {url}: {e}")
+
+
+@receiver(post_save, sender=Job)
+def ping_indexnow_on_job_save(sender, instance, created, **kwargs):
+    """Notify Bing via IndexNow when a job is created or updated."""
+    if not instance.is_active:
+        return
+    try:
+        site_url = getattr(settings, 'SITE_URL', 'https://remoteimpact.org')
+        job_url = f"{site_url}{instance.get_absolute_url()}"
+        # Run in background thread to not block the request
+        thread = threading.Thread(target=_ping_indexnow, args=(job_url,))
+        thread.daemon = True
+        thread.start()
+    except Exception as e:
+        logger.error(f"IndexNow: Error preparing ping for job {instance.pk}: {e}")
 
 
 @receiver(post_save, sender=SeekerProfile)
