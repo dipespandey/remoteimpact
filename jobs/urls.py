@@ -99,6 +99,9 @@ urlpatterns = [
         views.AssistantSubscribeSuccessView.as_view(),
         name="assistant_subscribe_success",
     ),
+    # Content Hub — pillar & cluster guides
+    path("resources/<slug:pillar_slug>/", views.PillarDetailView.as_view(), name="pillar_detail"),
+    path("resources/<slug:pillar_slug>/<slug:cluster_slug>/", views.ClusterDetailView.as_view(), name="cluster_detail"),
     # Tools
     path(
         "tools/time-zone-overlap-finder/",

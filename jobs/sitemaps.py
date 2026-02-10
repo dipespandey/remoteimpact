@@ -103,6 +103,37 @@ class ToolsSitemap(Sitemap):
         return timezone.now()
 
 
+class GuidesSitemap(Sitemap):
+    """Sitemap for pillar and cluster guide pages."""
+    changefreq = "weekly"
+
+    def items(self):
+        from .views.resources import PILLAR_MAP, CLUSTER_MAP
+        entries = []
+        # Pillars (priority 0.8)
+        for slug in PILLAR_MAP:
+            entries.append(('pillar', slug, None, 0.8))
+        # Clusters (priority 0.7)
+        for (pillar_slug, cluster_slug) in CLUSTER_MAP:
+            entries.append(('cluster', pillar_slug, cluster_slug, 0.7))
+        return entries
+
+    def location(self, item):
+        kind, pillar_slug, cluster_slug, _ = item
+        if kind == 'pillar':
+            return reverse('jobs:pillar_detail', kwargs={'pillar_slug': pillar_slug})
+        return reverse('jobs:cluster_detail', kwargs={
+            'pillar_slug': pillar_slug,
+            'cluster_slug': cluster_slug,
+        })
+
+    def _priority(self, item):
+        return item[3]
+
+    def lastmod(self, item):
+        return timezone.now()
+
+
 class StaticSitemap(Sitemap):
     """Sitemap for static pages - homepage gets highest priority."""
     changefreq = "daily"

@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{# ──────────────────────────────────────────────────────────
+   CLUSTER POST: Health-Tech Startups Making Impact in 2026
+   Pillar: Global Health Careers
+   Slug:   /resources/global-health-careers/health-tech-impact-careers/
+   ────────────────────────────────────────────────────────── #}
+
+{% block title %}Health-Tech Startups Making Impact in 2026{% endblock %}
+
+{% block meta_description %}Meet the health-tech startups transforming global health in 2026. From AI diagnostics to drone delivery — and they're hiring remotely.{% endblock %}
+
+{% block canonical %}{{ SITE_URL }}{% url 'jobs:cluster_detail' pillar_slug='global-health-careers' cluster_slug='health-tech-impact-careers' %}{% endblock %}
+
+{% block og_type %}article{% endblock %}
+{% block og_title %}Health-Tech Startups Making Impact in 2026{% endblock %}
+{% block og_description %}Meet the health-tech startups transforming global health in 2026. From AI diagnostics to drone delivery — and they're hiring remotely.{% endblock %}
+{% block twitter_title %}Health-Tech Startups Making Impact in 2026{% endblock %}
+{% block twitter_description %}Meet the health-tech startups transforming global health in 2026. From AI diagnostics to drone delivery — and they're hiring remotely.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ SITE_URL }}/"},
+        {"@type": "ListItem", "position": 2, "name": "Resources", "item": "{{ SITE_URL }}/resources/"},
+        {"@type": "ListItem", "position": 3, "name": "Global Health Careers", "item": "{{ SITE_URL }}/resources/global-health-careers/"},
+        {"@type": "ListItem", "position": 4, "name": "Health-Tech Startups Making Impact in 2026"}
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Health-Tech Startups Making Impact in 2026",
+    "description": "Meet the health-tech startups transforming global health in 2026. From AI diagnostics to drone delivery — and they're hiring remotely.",
+    "author": {"@type": "Organization", "name": "{{ SITE_NAME }}"},
+    "publisher": {
+        "@type": "Organization",
+        "name": "{{ SITE_NAME }}",
+        "logo": {"@type": "ImageObject", "url": "{{ SITE_URL }}/static/favicon.svg"}
+    },
+    "datePublished": "2026-02-10",
+    "dateModified": "2026-02-10",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "{{ SITE_URL }}/resources/global-health-careers/health-tech-impact-careers/"}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 pt-16 pb-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
+            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
+            <span>&rsaquo;</span>
+            <a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Resources</a>
+            <span>&rsaquo;</span>
+            <a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}" class="hover:text-brand-600 transition">Global Health Careers</a>
+            <span>&rsaquo;</span>
+            <span class="text-gray-900">Health-Tech Startups 2026</span>
+        </nav>
+
+        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm prose prose-gray max-w-none">
+            <p class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold mb-2">Cluster Guide</p>
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
+                Health-Tech Startups Making Impact in 2026
+            </h1>
+
+            <p class="text-xl text-gray-600 leading-relaxed mb-8">
+                The intersection of technology and global health is producing some of the most exciting career opportunities in the impact sector. These eight startups are building products that reach millions of people in low- and middle-income countries, and many of them hire remote teams across engineering, product, data, and operations.
+            </p>
+
+            <h2>1. Dimagi</h2>
+            <p>
+                Dimagi builds CommCare, an open-source mobile platform used by frontline health workers in over 80 countries for data collection, case management, and decision support. With more than 500 active projects, Dimagi is one of the most established names in digital health for development. They hire remotely for software engineering, data science, project management, and technical consulting roles.
+            </p>
+
+            <h2>2. Medic</h2>
+            <p>
+                Medic develops the Community Health Toolkit (CHT), an open-source platform that powers community health systems in sub-Saharan Africa and South Asia. Their tools help community health workers register patients, track pregnancies, and deliver care protocols through basic mobile phones. Medic hires remote software engineers, product designers, and technical programme managers who want to work at the intersection of open source and public health.
+            </p>
+
+            <h2>3. Zipline</h2>
+            <p>
+                Zipline operates the world's largest autonomous drone delivery network, transporting blood, vaccines, and medications to hard-to-reach clinics across Rwanda, Ghana, Nigeria, and beyond. What started as a medical supply chain solution has expanded to broader instant logistics. Zipline hires remotely for software engineering, flight operations, data analytics, and regulatory affairs positions.
+            </p>
+
+            <h2>4. Babylon Health</h2>
+            <p>
+                Babylon Health uses artificial intelligence to power triage chatbots, virtual consultations, and chronic disease management tools. Their platform has been deployed in the UK's NHS as well as health systems in Rwanda and other emerging markets, expanding access to primary care where doctors are scarce. Remote roles span machine learning engineering, clinical content development, and product management.
+            </p>
+
+            <h2>5. Ada Health</h2>
+            <p>
+                Ada Health has built an AI-powered symptom assessment app used by millions worldwide. The app helps users understand their symptoms and guides them to appropriate care, reducing unnecessary clinic visits while catching serious conditions early. Ada hires remotely for medical knowledge engineering, natural language processing research, and clinical validation roles.
+            </p>
+
+            <h2>6. Eko</h2>
+            <p>
+                Eko develops AI-powered cardiac screening tools, including smart stethoscopes and ECG devices that detect heart disease at the point of care. Their technology is particularly promising for low-resource settings where cardiologists are rare. Eko hires for hardware engineering, machine learning, clinical research, and sales roles, with several positions offering remote flexibility.
+            </p>
+
+            <h2>7. Novastone</h2>
+            <p>
+                Novastone builds messaging and engagement platforms designed for organisations operating in low-connectivity environments. Their tools help health programmes communicate with beneficiaries via SMS, WhatsApp, and USSD, enabling everything from appointment reminders to health education campaigns. Remote roles include software development, customer success, and implementation management.
+            </p>
+
+            <h2>8. SwiftMedic</h2>
+            <p>
+                SwiftMedic is a telemedicine platform focused on connecting patients in underserved African communities with licensed physicians through mobile devices. The platform reduces travel burden and wait times while giving doctors tools for remote diagnosis and prescription management. SwiftMedic hires remote software developers, clinical operations staff, and growth marketers.
+            </p>
+
+            <h2>Why health-tech startups?</h2>
+            <p>
+                Compared to large UN agencies or traditional NGOs, health-tech startups offer faster feedback loops, more ownership over your work, and the chance to build products that scale. Salaries are often competitive with the private sector, and engineering-heavy teams tend to be remote-first by default. If you want to combine technical skills with global health impact, these organisations are a strong place to start. For a broader view of the sector, explore our <a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}">complete global health careers guide</a>.
+            </p>
+
+            <div class="bg-brand-50 border border-brand-200 rounded-2xl p-6 mt-8 not-prose">
+                <a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}" class="text-brand-600 hover:text-brand-700 font-medium text-sm">
+                    &larr; Back to Global Health Careers Guide
+                </a>
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{# ──────────────────────────────────────────────────────────
+   CLUSTER POST: UN Remote Jobs — A Guide for Health Workers
+   Pillar: Global Health Careers
+   Slug:   /resources/global-health-careers/un-agency-remote-jobs-guide/
+   ────────────────────────────────────────────────────────── #}
+
+{% block title %}UN Remote Jobs: A Guide for Health Workers{% endblock %}
+
+{% block meta_description %}Navigate the UN job application system for remote health roles. Understand P-levels, consultancies, rosters, and how to write a winning UN CV.{% endblock %}
+
+{% block canonical %}{{ SITE_URL }}{% url 'jobs:cluster_detail' pillar_slug='global-health-careers' cluster_slug='un-agency-remote-jobs-guide' %}{% endblock %}
+
+{% block og_type %}article{% endblock %}
+{% block og_title %}UN Remote Jobs: A Guide for Health Workers{% endblock %}
+{% block og_description %}Navigate the UN job application system for remote health roles. Understand P-levels, consultancies, rosters, and how to write a winning UN CV.{% endblock %}
+{% block twitter_title %}UN Remote Jobs: A Guide for Health Workers{% endblock %}
+{% block twitter_description %}Navigate the UN job application system for remote health roles. Understand P-levels, consultancies, rosters, and how to write a winning UN CV.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ SITE_URL }}/"},
+        {"@type": "ListItem", "position": 2, "name": "Resources", "item": "{{ SITE_URL }}/resources/"},
+        {"@type": "ListItem", "position": 3, "name": "Global Health Careers", "item": "{{ SITE_URL }}/resources/global-health-careers/"},
+        {"@type": "ListItem", "position": 4, "name": "UN Remote Jobs: A Guide for Health Workers"}
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "UN Remote Jobs: A Guide for Health Workers",
+    "description": "Navigate the UN job application system for remote health roles. Understand P-levels, consultancies, rosters, and how to write a winning UN CV.",
+    "author": {"@type": "Organization", "name": "{{ SITE_NAME }}"},
+    "publisher": {
+        "@type": "Organization",
+        "name": "{{ SITE_NAME }}",
+        "logo": {"@type": "ImageObject", "url": "{{ SITE_URL }}/static/favicon.svg"}
+    },
+    "datePublished": "2026-02-10",
+    "dateModified": "2026-02-10",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "{{ SITE_URL }}/resources/global-health-careers/un-agency-remote-jobs-guide/"}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 pt-16 pb-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
+            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
+            <span>&rsaquo;</span>
+            <a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Resources</a>
+            <span>&rsaquo;</span>
+            <a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}" class="hover:text-brand-600 transition">Global Health Careers</a>
+            <span>&rsaquo;</span>
+            <span class="text-gray-900">UN Agency Guide</span>
+        </nav>
+
+        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm prose prose-gray max-w-none">
+            <p class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold mb-2">Cluster Guide</p>
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
+                UN Remote Jobs: A Guide for Health Workers
+            </h1>
+
+            <p class="text-xl text-gray-600 leading-relaxed mb-8">
+                The United Nations system is one of the largest employers in global health. But its hiring process is notoriously opaque. This guide breaks down the classification system, explains how to write a UN-format CV, and identifies which health agencies offer the most remote-friendly positions.
+            </p>
+
+            <h2>Understanding the UN classification system</h2>
+            <p>
+                UN jobs are divided into several categories. <strong>Professional staff (P-levels)</strong> range from P-1 (entry) to P-5 (senior), with D-1 and D-2 for directors. These are international posts with tax-exempt salaries based on the International Civil Service Commission scale. <strong>General Service staff (G-levels)</strong> are locally recruited support roles, typically G-2 through G-7. For health professionals, most substantive remote roles fall in the P-2 to P-4 range.
+            </p>
+            <p>
+                Beyond fixed-term contracts, there are two flexible entry points. <strong>Consultancies</strong> are short-term contracts (typically 3 to 11 months) that agencies use to fill specific technical gaps. They are the fastest route into the system and often remote-friendly. <strong>UN Volunteers (UNV)</strong> placements offer a structured entry for early-career professionals, sometimes with remote modalities, particularly in data and communications roles.
+            </p>
+
+            <h2>Writing a UN-format CV</h2>
+            <p>
+                A UN CV is not a standard two-page resume. It is a detailed, achievement-oriented document that can run three to five pages. Each work experience entry should include your exact dates of employment, your supervisor's name, the number of people you managed, and specific accomplishments tied to the competencies listed in the vacancy announcement. Use the STAR method (Situation, Task, Action, Result) for each bullet point. Mirror the language of the job posting closely: if the vacancy says "programme management," do not write "project management."
+            </p>
+
+            <h2>Competency-based interviews</h2>
+            <p>
+                UN interviews follow a structured, competency-based format. The panel will ask behavioural questions mapped to core competencies such as "Communication," "Teamwork," "Planning &amp; Organizing," and role-specific competencies listed in the vacancy. Prepare two to three STAR stories for each competency. Panels score every answer on a rubric, so vague responses receive low marks. Practise with a friend who can press you for specifics.
+            </p>
+
+            <h2>The roster system</h2>
+            <p>
+                Many UN agencies maintain rosters: pre-vetted talent pools of candidates who passed an assessment but were not selected for the specific vacancy. Being placed on a roster means you can be contacted for future positions at the same level without re-applying. Rosters are common at WHO, UNICEF, and WFP. When you see "this vacancy may be used to fill a roster," treat the application seriously even if the original post does not match perfectly.
+            </p>
+
+            <h2>Which UN health agencies hire remotely most often?</h2>
+            <p>
+                <strong>WHO</strong> leads the pack, especially for technical officers, epidemiologists, and health information specialists. Since the pandemic, WHO has normalised remote consultancies for HQ-level analytical work. <strong>UNICEF</strong> hires remotely for health supply-chain, data, and communications roles. <strong>WFP</strong> recruits nutrition and food-security analysts who work remotely on vulnerability assessments. <strong>UNFPA</strong> offers remote consultancies in sexual and reproductive health programme design and data analysis. Check each agency's careers portal directly and set up job alerts filtered by "remote" or "home-based."
+            </p>
+
+            <h2>Getting started</h2>
+            <p>
+                Start by creating profiles on <a href="https://careers.un.org" target="_blank" rel="noopener noreferrer">careers.un.org</a> and each agency's individual portal. Set alerts for P-2 and P-3 health roles. Apply to consultancies first to build UN experience on your CV. And for a broader overview of global health career paths, visit our <a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}">complete global health careers guide</a>.
+            </p>
+
+            <div class="bg-brand-50 border border-brand-200 rounded-2xl p-6 mt-8 not-prose">
+                <a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}" class="text-brand-600 hover:text-brand-700 font-medium text-sm">
+                    &larr; Back to Global Health Careers Guide
+                </a>
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}

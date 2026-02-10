@@ -1,6 +1,6 @@
 from django.views.generic import TemplateView, View
 from django.db.models import Count, Q
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.decorators import method_decorator
@@ -905,3 +905,68 @@ Write a complete, ready-to-send thank you email. Include a subject line on the f
 
 class RemoteReadinessQuizView(TemplateView):
     template_name = "jobs/tools/remote_readiness_quiz.html"
+
+
+# ---------------------------------------------------------------------------
+# Pillar / Cluster Content Hub Views
+# ---------------------------------------------------------------------------
+
+PILLAR_MAP = {
+    "climate-environment-careers": "resources/pillars/climate-environment.html",
+    "ai-safety-careers": "resources/pillars/ai-safety.html",
+    "global-health-careers": "resources/pillars/global-health.html",
+    "humanitarian-ingo-careers": "resources/pillars/humanitarian-ingo.html",
+    "effective-altruism-careers": "resources/pillars/effective-altruism.html",
+}
+
+CLUSTER_MAP = {
+    # Climate & Environment
+    ("climate-environment-careers", "break-into-climate-tech-no-stem"): "resources/clusters/climate-break-into-no-stem.html",
+    ("climate-environment-careers", "top-remote-climate-employers"): "resources/clusters/climate-top-remote-employers.html",
+    ("climate-environment-careers", "climate-career-switch-guide"): "resources/clusters/climate-career-switch-90-day.html",
+    # AI Safety
+    ("ai-safety-careers", "non-technical-ai-safety-roles"): "resources/clusters/ai-safety-non-technical-roles.html",
+    ("ai-safety-careers", "alignment-research-pathway"): "resources/clusters/ai-safety-alignment-researcher-path.html",
+    ("ai-safety-careers", "ai-governance-fellowships"): "resources/clusters/ai-safety-governance-fellowships.html",
+    # Global Health
+    ("global-health-careers", "remote-global-health-without-mph"): "resources/clusters/health-remote-without-mph.html",
+    ("global-health-careers", "un-agency-remote-jobs-guide"): "resources/clusters/health-un-agency-guide.html",
+    ("global-health-careers", "health-tech-impact-careers"): "resources/clusters/health-tech-startups-2026.html",
+    # Humanitarian / INGO
+    ("humanitarian-ingo-careers", "remote-ingo-job-no-field-experience"): "resources/clusters/ingo-no-field-experience.html",
+    ("humanitarian-ingo-careers", "un-consultancy-guide"): "resources/clusters/ingo-un-consultancy-guide.html",
+    ("humanitarian-ingo-careers", "mel-skills-humanitarian-career"): "resources/clusters/ingo-mel-skills-career.html",
+    # Effective Altruism
+    ("effective-altruism-careers", "ea-operations-roles-guide"): "resources/clusters/ea-operations-roles.html",
+    ("effective-altruism-careers", "mid-career-switch-to-ea"): "resources/clusters/ea-mid-career-switch.html",
+    ("effective-altruism-careers", "ea-grantmaking-career-path"): "resources/clusters/ea-grantmaking-career.html",
+}
+
+
+class PillarDetailView(TemplateView):
+    def get_template_names(self):
+        slug = self.kwargs["pillar_slug"]
+        try:
+            return [PILLAR_MAP[slug]]
+        except KeyError:
+            raise Http404
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["pillar_slug"] = self.kwargs["pillar_slug"]
+        return ctx
+
+
+class ClusterDetailView(TemplateView):
+    def get_template_names(self):
+        key = (self.kwargs["pillar_slug"], self.kwargs["cluster_slug"])
+        try:
+            return [CLUSTER_MAP[key]]
+        except KeyError:
+            raise Http404
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["pillar_slug"] = self.kwargs["pillar_slug"]
+        ctx["cluster_slug"] = self.kwargs["cluster_slug"]
+        return ctx

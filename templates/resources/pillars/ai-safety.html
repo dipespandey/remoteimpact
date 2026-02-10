@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{# ──────────────────────────────────────────────────────────
+   PILLAR PAGE: AI Safety & Governance Careers
+   Slug:  /resources/ai-safety-careers/
+   ────────────────────────────────────────────────────────── #}
+
+{% block title %}Remote AI Safety Jobs: Career Guide for 2026{% endblock %}
+
+{% block meta_description %}Explore remote AI safety and governance careers. Learn the skills, orgs, and pathways to work on AI alignment, policy, and responsible AI.{% endblock %}
+
+{% block canonical %}{{ SITE_URL }}{% url 'jobs:pillar_detail' pillar_slug='ai-safety-careers' %}{% endblock %}
+
+{% block og_type %}article{% endblock %}
+{% block og_title %}Remote AI Safety Jobs: Career Guide for 2026{% endblock %}
+{% block og_description %}Everything you need to build a career in AI safety, alignment, and governance — remotely.{% endblock %}
+{% block twitter_title %}Remote AI Safety Jobs: Career Guide for 2026{% endblock %}
+{% block twitter_description %}Everything you need to build a career in AI safety, alignment, and governance — remotely.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ SITE_URL }}/"},
+        {"@type": "ListItem", "position": 2, "name": "Resources", "item": "{{ SITE_URL }}/resources/"},
+        {"@type": "ListItem", "position": 3, "name": "AI Safety Careers"}
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Remote AI Safety Jobs: Career Guide for 2026",
+    "description": "A comprehensive guide to building a remote career in AI safety, alignment research, and AI governance.",
+    "author": {"@type": "Organization", "name": "{{ SITE_NAME }}"},
+    "publisher": {
+        "@type": "Organization",
+        "name": "{{ SITE_NAME }}",
+        "logo": {"@type": "ImageObject", "url": "{{ SITE_URL }}/static/favicon.svg"}
+    },
+    "datePublished": "2026-02-10",
+    "dateModified": "2026-02-10",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "{{ SITE_URL }}/resources/ai-safety-careers/"}
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "What is AI safety and why does it matter?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "AI safety is the field dedicated to ensuring that artificial intelligence systems behave as intended, remain under human control, and do not cause unintended harm. As AI capabilities grow rapidly, the field has become one of the highest-priority areas for researchers, policymakers, and engineers who want to shape how these systems are built and deployed."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Do I need a PhD to work in AI safety?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Not necessarily. While core alignment research roles often prefer PhD-level candidates, the broader AI safety ecosystem has many entry points: policy analysis, communications, operations, field-building, and software engineering. Organisations like 80,000 Hours report that operations and strategy roles at AI safety labs are highly impactful and do not require research credentials."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Which organisations hire for remote AI safety roles?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Major employers include Anthropic, OpenAI, DeepMind, Redwood Research, MIRI, the Center for AI Safety, the Future of Humanity Institute, and GovAI. Many policy-focused roles sit within think tanks such as the Center for a New American Security (CNAS) and the Institute for AI Policy and Strategy. Most of these organisations offer remote or hybrid arrangements."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "What salary can I expect in AI safety?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "AI safety salaries are competitive. Research scientists and ML engineers at frontier labs earn $150,000 to $400,000+. Policy analysts and programme managers typically earn $80,000 to $140,000. Operations and communications roles range from $60,000 to $110,000. Non-profit salaries are generally lower than industry but still above average for the impact sector."
+            }
+        }
+    ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 pt-16 pb-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
+            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
+            <span>&rsaquo;</span>
+            <a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Resources</a>
+            <span>&rsaquo;</span>
+            <span class="text-gray-900">AI Safety Careers</span>
+        </nav>
+
+        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm prose prose-gray max-w-none">
+            <p class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold mb-2">Pillar Guide</p>
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
+                Remote AI Safety &amp; Governance Jobs: The Complete Career Guide
+            </h1>
+
+            <p class="text-xl text-gray-600 leading-relaxed mb-8">
+                AI safety has gone from a niche academic concern to one of the most in-demand career paths in technology. Frontier AI labs, governments, and non-profits are all hiring — and many of these roles are fully remote.
+            </p>
+
+            <h2>What is AI safety?</h2>
+            <p>
+                AI safety encompasses the research, engineering, and policy work aimed at ensuring advanced AI systems are reliable, aligned with human values, and governed responsibly. The field broadly splits into two tracks:
+            </p>
+            <ul>
+                <li><strong>Technical alignment</strong> — Research on making AI systems do what we intend (interpretability, RLHF, red-teaming, evaluation science).</li>
+                <li><strong>Governance &amp; policy</strong> — Designing regulation, standards, and institutional frameworks to manage AI risks (export controls, safety benchmarks, international coordination).</li>
+            </ul>
+            <p>
+                Both tracks are essential, and the division between them is increasingly blurred as policy decisions require deep technical literacy and technical work is shaped by regulatory reality.
+            </p>
+
+            <h2>Key skills employers look for</h2>
+            <ul>
+                <li><strong>Machine learning fundamentals</strong> — Transformers, reinforcement learning, evaluation methodology.</li>
+                <li><strong>Interpretability &amp; red-teaming</strong> — Probing model behaviour, adversarial testing, jailbreak analysis.</li>
+                <li><strong>Policy writing &amp; analysis</strong> — Translating technical concepts into regulatory language (EU AI Act, NIST AI RMF).</li>
+                <li><strong>Research communication</strong> — Distilling complex findings for diverse audiences: policymakers, media, the public.</li>
+                <li><strong>Programme &amp; grant management</strong> — Running research agendas, allocating funding, coordinating distributed teams.</li>
+                <li><strong>Security engineering</strong> — Model security, supply-chain integrity, access controls for frontier systems.</li>
+            </ul>
+
+            <h2>How to get started</h2>
+            <p>
+                The fastest on-ramps depend on your background. Software engineers should explore alignment research programmes like MATS (ML Alignment Theory Scholars) or Redwood Research's residency. Policy professionals should look at fellowships at GovAI or the AI Policy Institute. Generalists with strong operations or communications skills are urgently needed at safety-focused non-profits — 80,000 Hours lists these as some of the most impactful roles available today.
+            </p>
+            <p>
+                Regardless of track, signal your commitment: publish blog posts on the AI Alignment Forum, attend EAGx conferences, and engage with open problems on the alignment research agenda.
+            </p>
+
+            <h2>Frequently asked questions</h2>
+
+            <h3>What is AI safety and why does it matter?</h3>
+            <p>
+                AI safety is the field dedicated to ensuring that artificial intelligence systems behave as intended, remain under human control, and do not cause unintended harm. As AI capabilities grow rapidly, the field has become one of the highest-priority areas for researchers, policymakers, and engineers who want to shape how these systems are built and deployed.
+            </p>
+
+            <h3>Do I need a PhD to work in AI safety?</h3>
+            <p>
+                Not necessarily. While core alignment research roles often prefer PhD-level candidates, the broader AI safety ecosystem has many entry points: policy analysis, communications, operations, field-building, and software engineering. Organisations like 80,000 Hours report that operations and strategy roles at AI safety labs are highly impactful and do not require research credentials.
+            </p>
+
+            <h3>Which organisations hire for remote AI safety roles?</h3>
+            <p>
+                Major employers include Anthropic, OpenAI, DeepMind, Redwood Research, MIRI, the Center for AI Safety, the Future of Humanity Institute, and GovAI. Many policy-focused roles sit within think tanks such as the Center for a New American Security (CNAS) and the Institute for AI Policy and Strategy. Most of these organisations offer remote or hybrid arrangements.
+            </p>
+
+            <h3>What salary can I expect in AI safety?</h3>
+            <p>
+                AI safety salaries are competitive. Research scientists and ML engineers at frontier labs earn $150,000 to $400,000+. Policy analysts and programme managers typically earn $80,000 to $140,000. Operations and communications roles range from $60,000 to $110,000. Non-profit salaries are generally lower than industry but still above average for the impact sector.
+            </p>
+
+            <div class="bg-brand-50 border border-brand-200 rounded-2xl p-6 mt-8 not-prose">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Related reads</h3>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="{% url 'jobs:cluster_detail' pillar_slug='ai-safety-careers' cluster_slug='non-technical-ai-safety-roles' %}" class="text-brand-600 hover:text-brand-700 font-medium">5 Non-Technical AI Safety Roles You Can Apply For Today &rarr;</a></li>
+                    <li><a href="{% url 'jobs:cluster_detail' pillar_slug='ai-safety-careers' cluster_slug='alignment-research-pathway' %}" class="text-brand-600 hover:text-brand-700 font-medium">From Software Engineer to Alignment Researcher: A Step-by-Step Guide &rarr;</a></li>
+                    <li><a href="{% url 'jobs:cluster_detail' pillar_slug='ai-safety-careers' cluster_slug='ai-governance-fellowships' %}" class="text-brand-600 hover:text-brand-700 font-medium">The Best AI Governance Fellowships and How to Get In &rarr;</a></li>
+                </ul>
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{# ──────────────────────────────────────────────────────────
+   CLUSTER POST: UN Remote Consultancies: Find and Win Them
+   Parent Pillar: /resources/humanitarian-ingo-careers/
+   Slug:  /resources/humanitarian-ingo-careers/un-consultancy-guide/
+   ────────────────────────────────────────────────────────── #}
+
+{% block title %}UN Remote Consultancies: Find and Win Them{% endblock %}
+
+{% block meta_description %}A practical guide to finding, applying for, and winning remote UN consultancies. Daily rates, platforms, and proposal writing tips.{% endblock %}
+
+{% block canonical %}{{ SITE_URL }}{% url 'jobs:cluster_detail' pillar_slug='humanitarian-ingo-careers' cluster_slug='un-consultancy-guide' %}{% endblock %}
+
+{% block og_type %}article{% endblock %}
+{% block og_title %}UN Remote Consultancies: Find and Win Them{% endblock %}
+{% block og_description %}A practical guide to finding, applying for, and winning remote UN consultancies. Daily rates, platforms, and proposal writing tips.{% endblock %}
+{% block twitter_title %}UN Remote Consultancies: Find and Win Them{% endblock %}
+{% block twitter_description %}A practical guide to finding, applying for, and winning remote UN consultancies. Daily rates, platforms, and proposal writing tips.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ SITE_URL }}/"},
+        {"@type": "ListItem", "position": 2, "name": "Resources", "item": "{{ SITE_URL }}/resources/"},
+        {"@type": "ListItem", "position": 3, "name": "Humanitarian & INGO Careers", "item": "{{ SITE_URL }}/resources/humanitarian-ingo-careers/"},
+        {"@type": "ListItem", "position": 4, "name": "UN Remote Consultancies: Find and Win Them"}
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "UN Remote Consultancies: Find and Win Them",
+    "description": "A practical guide to finding, applying for, and winning remote UN consultancies. Daily rates, platforms, and proposal writing tips.",
+    "author": {"@type": "Organization", "name": "{{ SITE_NAME }}"},
+    "publisher": {
+        "@type": "Organization",
+        "name": "{{ SITE_NAME }}",
+        "logo": {"@type": "ImageObject", "url": "{{ SITE_URL }}/static/favicon.svg"}
+    },
+    "datePublished": "2026-02-10",
+    "dateModified": "2026-02-10",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "{{ SITE_URL }}/resources/humanitarian-ingo-careers/un-consultancy-guide/"}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 pt-16 pb-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
+            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
+            <span>&rsaquo;</span>
+            <a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Resources</a>
+            <span>&rsaquo;</span>
+            <a href="{% url 'jobs:pillar_detail' pillar_slug='humanitarian-ingo-careers' %}" class="hover:text-brand-600 transition">Humanitarian &amp; INGO Careers</a>
+            <span>&rsaquo;</span>
+            <span class="text-gray-900">UN Consultancy Guide</span>
+        </nav>
+
+        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm prose prose-gray max-w-none">
+            <p class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold mb-2">Cluster Guide</p>
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
+                UN Remote Consultancies: How to Find and Win Them
+            </h1>
+
+            <p class="text-xl text-gray-600 leading-relaxed mb-8">
+                UN consultancies are one of the fastest ways to build a humanitarian career from anywhere in the world. These short-term contracts pay competitive daily rates and can be performed entirely remotely. Here is everything you need to know to land your first one.
+            </p>
+
+            <h2>What is a UN consultancy?</h2>
+            <p>
+                A UN consultancy is a short-term contract, typically ranging from one to eleven months, issued to an individual or firm to deliver a specific output. Each consultancy is governed by a Terms of Reference (TOR) that spells out the deliverables, timeline, and qualifications required. Unlike staff positions, consultancies do not come with benefits, pensions, or employment protections. What they do offer is flexibility, strong compensation, and a credential that opens doors across the sector.
+            </p>
+            <p>
+                Applications generally require a P11 form (the UN's standard personal history form), a cover letter, and in many cases a technical and financial proposal. Some agencies have moved to online application portals, but the P11 remains the universal currency.
+            </p>
+
+            <h2>Where to find UN consultancies</h2>
+            <p>
+                Opportunities are scattered across dozens of agency-specific portals. These are the platforms worth checking regularly:
+            </p>
+            <ul>
+                <li><strong>UNDP Procurement Notices</strong> — The largest single source of consultancy listings. Filter by "individual contractor" to find remote-eligible assignments.</li>
+                <li><strong>UNOPS Jobs</strong> — UNOPS manages procurement for many smaller agencies. Their portal lists both staff and consultancy roles.</li>
+                <li><strong>ReliefWeb Jobs</strong> — Aggregates humanitarian vacancies from across the UN system and INGOs. Use the "consultant" filter.</li>
+                <li><strong>Individual agency career pages</strong> — UNICEF, UNHCR, WHO, WFP, and FAO each maintain their own portals. Bookmark the ones relevant to your expertise.</li>
+                <li><strong>UN Jobs and UNjobnet</strong> — Third-party aggregators that consolidate listings from multiple agencies into a single feed.</li>
+            </ul>
+
+            <h2>Daily rates and what to expect</h2>
+            <p>
+                UN consultancies are paid as lump sums or daily fees. Typical daily rates range from $300 to $700 depending on seniority, technical specialism, and the issuing agency. Junior consultants and researchers usually fall in the $300 to $400 range. Mid-career specialists with five to ten years of experience command $400 to $550. Senior advisors and team leaders can negotiate $550 to $700 or above. Remember that as a consultant you are responsible for your own taxes, health insurance, and equipment.
+            </p>
+
+            <h2>How to write a winning proposal</h2>
+            <p>
+                Most competitive consultancies require a technical proposal alongside your P11. A strong proposal does three things:
+            </p>
+            <ul>
+                <li><strong>Mirrors the TOR.</strong> Use the exact language and structure of the Terms of Reference. Address every deliverable explicitly and explain your approach for each one.</li>
+                <li><strong>Demonstrates methodology.</strong> Don't just say you will produce a report. Explain the analytical framework, data sources, and validation steps you will use. Evaluators score on rigour.</li>
+                <li><strong>Provides a realistic workplan.</strong> Break the assignment into phases with clear milestones. Show that you understand the time required and have accounted for review cycles with the hiring unit.</li>
+            </ul>
+
+            <h2>Common pitfalls to avoid</h2>
+            <ul>
+                <li><strong>Ignoring the P11.</strong> Submitting a CV instead of a completed P11 form is grounds for automatic disqualification at many agencies.</li>
+                <li><strong>Underpricing yourself.</strong> Agencies have budget ceilings, but quoting too low signals inexperience. Research the standard rate for your level and location.</li>
+                <li><strong>Generic cover letters.</strong> Every application should reference the specific TOR, the agency's mandate, and your relevant deliverables from past work.</li>
+                <li><strong>Missing the deadline.</strong> UN procurement deadlines are absolute. Late submissions are not considered regardless of quality.</li>
+            </ul>
+
+            <h2>Getting started</h2>
+            <p>
+                Complete your P11 form now, before you find a listing. Prepare a two-page capability statement summarising your expertise, past deliverables, and daily rate. When a relevant consultancy appears, you will be ready to submit within hours rather than scrambling over a weekend.
+            </p>
+            <p>
+                For more on building a humanitarian career remotely, read our <a href="{% url 'jobs:pillar_detail' pillar_slug='humanitarian-ingo-careers' %}">complete guide to remote humanitarian and INGO careers</a>.
+            </p>
+
+            <div class="not-prose mt-10 pt-6 border-t border-gray-200">
+                <a href="{% url 'jobs:pillar_detail' pillar_slug='humanitarian-ingo-careers' %}" class="inline-flex items-center text-brand-600 hover:text-brand-700 font-medium text-sm transition">
+                    &larr; Back to Humanitarian &amp; INGO Careers
+                </a>
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}

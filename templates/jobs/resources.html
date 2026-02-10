@@ -97,12 +97,51 @@
 <section class="sticky top-16 md:top-20 z-20 bg-white/95 backdrop-blur border-b border-gray-200 py-3">
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center gap-2 overflow-x-auto pb-1 -mb-1 scrollbar-hide">
+      <a href="#career-guides" class="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition whitespace-nowrap">Career Guides</a>
       <a href="#job-boards" class="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition whitespace-nowrap">Job Boards</a>
       <a href="#communities" class="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition whitespace-nowrap">Communities</a>
       <a href="#learning" class="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition whitespace-nowrap">Learning</a>
       <a href="#newsletters" class="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition whitespace-nowrap">Newsletters</a>
       <a href="#playbook" class="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition whitespace-nowrap">Playbook</a>
       <a href="#salary" class="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition whitespace-nowrap">Salary Tools</a>
+    </div>
+  </div>
+</section>
+
+<!-- Career Guides Section -->
+<section id="career-guides" class="py-16 bg-white">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="mb-8">
+      <p class="text-xs uppercase tracking-[0.3em] text-gray-500 mb-1">In-Depth Guides</p>
+      <h2 class="text-2xl font-semibold text-gray-900">Career Guides by Impact Area</h2>
+      <p class="text-gray-600 mt-1">Deep-dive guides for the most sought-after impact career paths</p>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}" class="resource-card rounded-2xl p-6 block">
+        <span class="tag mb-3 inline-block">Climate</span>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">Climate & Environment Careers</h3>
+        <p class="text-sm text-gray-600">Roles in renewable energy, conservation, carbon accounting, and sustainability — skills, salaries, and how to get started.</p>
+      </a>
+      <a href="{% url 'jobs:pillar_detail' pillar_slug='ai-safety-careers' %}" class="resource-card rounded-2xl p-6 block">
+        <span class="tag mb-3 inline-block">AI Safety</span>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">AI Safety & Governance Careers</h3>
+        <p class="text-sm text-gray-600">Alignment research, policy, and governance roles at the frontier of responsible AI development.</p>
+      </a>
+      <a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}" class="resource-card rounded-2xl p-6 block">
+        <span class="tag mb-3 inline-block">Health</span>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">Global Health Careers</h3>
+        <p class="text-sm text-gray-600">Remote roles at WHO, MSF, health-tech startups, and NGOs — no MPH required for many paths.</p>
+      </a>
+      <a href="{% url 'jobs:pillar_detail' pillar_slug='humanitarian-ingo-careers' %}" class="resource-card rounded-2xl p-6 block">
+        <span class="tag mb-3 inline-block">Humanitarian</span>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">Humanitarian & INGO Careers</h3>
+        <p class="text-sm text-gray-600">UN consultancies, INGO remote roles, and M&E career paths in the humanitarian sector.</p>
+      </a>
+      <a href="{% url 'jobs:pillar_detail' pillar_slug='effective-altruism-careers' %}" class="resource-card rounded-2xl p-6 block">
+        <span class="tag mb-3 inline-block">EA</span>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">Effective Altruism Careers</h3>
+        <p class="text-sm text-gray-600">Operations, grantmaking, and research roles at EA orgs — plus how to switch mid-career.</p>
+      </a>
     </div>
   </div>
 </section>

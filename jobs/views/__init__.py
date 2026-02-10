@@ -38,6 +38,8 @@ from .resources import (
     SalaryNegotiationView,
     SalaryNegotiationGenerateView,
     RemoteReadinessQuizView,
+    PillarDetailView,
+    ClusterDetailView,
 )
 from .stories import (
     StoryFeedView,
