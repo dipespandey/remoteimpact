@@ -128,8 +128,8 @@
                 <div class="bg-white rounded-3xl border border-gray-100 p-6">
                     <div class="flex items-center gap-4 mb-4">
                         {% if organization.logo %}
-                        <img src="{{ organization.logo.url }}" class="w-12 h-12 rounded-xl object-contain bg-gray-50"
-                            alt="">
+                        <img src="{{ organization.logo.url }}" loading="lazy" class="w-12 h-12 rounded-xl object-contain bg-gray-50"
+                            alt="{{ organization.name }}">
                         {% else %}
                         <div
                             class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 text-xl font-bold">

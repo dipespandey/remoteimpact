@@ -1,6 +1,45 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ story.author_name }}'s Story{% endblock %}
+{% block title %}{{ story.author_name }}'s Story - {{ story.author_title }} @ {{ story.organization.name }}{% endblock %}
+
+{% block meta_description %}{{ story.author_name }}, {{ story.author_title }} at {{ story.organization.name }}, shares their impact story. {{ story.content|striptags|truncatechars:140 }}{% endblock %}
+
+{% block og_title %}{{ story.author_name }}'s Impact Story - {{ story.organization.name }}{% endblock %}
+{% block og_description %}{{ story.content|striptags|truncatechars:200 }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block twitter_title %}{{ story.author_name }}'s Impact Story{% endblock %}
+{% block twitter_description %}{{ story.content|striptags|truncatechars:200 }}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "{{ story.author_name|escapejs }}'s Impact Story",
+    "author": {
+        "@type": "Person",
+        "name": "{{ story.author_name|escapejs }}",
+        "jobTitle": "{{ story.author_title|escapejs }}"
+    },
+    "publisher": {
+        "@type": "Organization",
+        "name": "{{ SITE_NAME }}",
+        "url": "{{ SITE_URL }}",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "{{ SITE_URL }}/static/favicon.svg"
+        }
+    },
+    "description": "{{ story.content|striptags|truncatechars:200|escapejs }}",
+    {% if story.published_at %}"datePublished": "{{ story.published_at|date:'c' }}",{% endif %}
+    {% if story.author_image %}"image": "{{ SITE_URL }}{{ story.author_image.url }}",{% endif %}
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "{{ SITE_URL }}{% url 'jobs:story_detail' story.id %}"
+    }
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="max-w-3xl mx-auto px-4 py-8">
@@ -13,7 +52,7 @@
     <div class="bg-white rounded-2xl border border-gray-200 p-8 mb-8 shadow-sm">
         <div class="flex items-start gap-4 mb-6">
             {% if story.author_image %}
-            <img src="{{ story.author_image.url }}" alt="{{ story.author_name }}"
+            <img src="{{ story.author_image.url }}" alt="{{ story.author_name }}" loading="lazy"
                 class="w-16 h-16 rounded-full object-cover">
             {% else %}
             <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">

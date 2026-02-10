@@ -519,7 +519,7 @@
                 <article class="rounded-xl md:rounded-2xl border border-white/10 bg-card-gradient backdrop-blur px-3 py-3 md:px-5 md:py-4 flex gap-3 md:gap-4 items-start">
                     <div class="hidden sm:flex w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white/10 border border-white/10 items-center justify-center text-white font-semibold text-xs md:text-base shrink-0">
                         {% if job.organization.logo %}
-                        <img src="{{ job.organization.logo.url }}" alt="{{ job.organization.name }}" class="w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-xl object-cover">
+                        <img src="{{ job.organization.logo.url }}" alt="{{ job.organization.name }}" loading="lazy" class="w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-xl object-cover">
                         {% else %}
                         {{ job.organization.name|default:"RI"|slice:":2"|upper }}
                         {% endif %}

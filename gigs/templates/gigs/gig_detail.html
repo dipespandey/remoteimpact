@@ -1,6 +1,58 @@
 {% extends "base.html" %}
 
-{% block title %}{{ gig.title }} - Gig{% endblock %}
+{% block title %}{{ gig.title }} at {{ gig.organization.name }} - Remote Impact Gigs{% endblock %}
+
+{% block meta_description %}{{ gig.title }} at {{ gig.organization.name }}. {{ gig.get_remote_policy_display }} contract gig. Budget: ${% widthratio gig.budget_fixed_cents 100 1 %} {{ gig.currency }}. Apply on Remote Impact.{% endblock %}
+{% block canonical %}{{ SITE_URL }}{% url 'gigs:gig_detail' gig.slug %}{% endblock %}
+
+{% block og_title %}{{ gig.title }} at {{ gig.organization.name }}{% endblock %}
+{% block og_description %}{{ gig.get_remote_policy_display }} contract gig at {{ gig.organization.name }}. {{ gig.brief_redacted|striptags|truncatechars:150 }}{% endblock %}
+{% block twitter_title %}{{ gig.title }} - Remote Impact Gigs{% endblock %}
+{% block twitter_description %}{{ gig.get_remote_policy_display }} contract gig at {{ gig.organization.name }}. {{ gig.brief_redacted|striptags|truncatechars:150 }}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ SITE_URL }}/"},
+        {"@type": "ListItem", "position": 2, "name": "Gigs", "item": "{{ SITE_URL }}{% url 'gigs:gig_list' %}"},
+        {"@type": "ListItem", "position": 3, "name": "{{ gig.title|escapejs }}"}
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    "title": "{{ gig.title|escapejs }}",
+    "description": "{{ gig.brief_redacted|striptags|truncatechars:5000|escapejs }}",
+    {% if gig.published_at %}"datePosted": "{{ gig.published_at|date:'c' }}",{% endif %}
+    "employmentType": "CONTRACTOR",
+    "hiringOrganization": {
+        "@type": "Organization",
+        "name": "{{ gig.organization.name|escapejs }}",
+        "sameAs": "{{ gig.organization.website|default:'' }}"
+    },
+    "jobLocationType": "TELECOMMUTE",
+    "applicantLocationRequirements": {
+        "@type": "Country",
+        "name": "{{ gig.get_remote_policy_display|escapejs }}"
+    },
+    "baseSalary": {
+        "@type": "MonetaryAmount",
+        "currency": "{{ gig.currency }}",
+        "value": {
+            "@type": "QuantitativeValue",
+            "value": {% widthratio gig.budget_fixed_cents 100 1 %},
+            "unitText": "PROJECT"
+        }
+    },
+    "directApply": true
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <section class="bg-gray-50 pt-16 pb-12">

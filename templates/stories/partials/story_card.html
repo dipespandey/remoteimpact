@@ -2,7 +2,7 @@
 
     <div class="flex items-start gap-3 mb-4">
         {% if story.author_image %}
-        <img src="{{ story.author_image.url }}" alt="{{ story.author_name }}"
+        <img src="{{ story.author_image.url }}" alt="{{ story.author_name }}" loading="lazy"
             class="w-12 h-12 rounded-full object-cover">
         {% else %}
         <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
