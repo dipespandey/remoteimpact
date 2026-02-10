@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{# ──────────────────────────────────────────────────────────
+   CLUSTER POST: 5 Non-Technical AI Safety Roles
+   Parent pillar: /resources/ai-safety-careers/
+   Slug: /resources/ai-safety-careers/non-technical-ai-safety-roles/
+   ────────────────────────────────────────────────────────── #}
+
+{% block title %}5 Non-Technical AI Safety Roles You Can Apply For{% endblock %}
+
+{% block meta_description %}AI safety isn't just for ML researchers. Explore 5 non-technical roles — from policy to operations — at top AI safety organisations.{% endblock %}
+
+{% block canonical %}{{ SITE_URL }}/resources/ai-safety-careers/non-technical-ai-safety-roles/{% endblock %}
+
+{% block og_type %}article{% endblock %}
+{% block og_title %}5 Non-Technical AI Safety Roles You Can Apply For{% endblock %}
+{% block og_description %}AI safety isn't just for ML researchers. Explore 5 non-technical roles — from policy to operations — at top AI safety organisations.{% endblock %}
+{% block twitter_title %}5 Non-Technical AI Safety Roles You Can Apply For{% endblock %}
+{% block twitter_description %}AI safety isn't just for ML researchers. Explore 5 non-technical roles — from policy to operations — at top AI safety organisations.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ SITE_URL }}/"},
+        {"@type": "ListItem", "position": 2, "name": "Resources", "item": "{{ SITE_URL }}/resources/"},
+        {"@type": "ListItem", "position": 3, "name": "AI Safety Careers", "item": "{{ SITE_URL }}/resources/ai-safety-careers/"},
+        {"@type": "ListItem", "position": 4, "name": "Non-Technical AI Safety Roles"}
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "5 Non-Technical AI Safety Roles You Can Apply For",
+    "description": "AI safety isn't just for ML researchers. Explore 5 non-technical roles — from policy to operations — at top AI safety organisations.",
+    "author": {"@type": "Organization", "name": "{{ SITE_NAME }}"},
+    "publisher": {
+        "@type": "Organization",
+        "name": "{{ SITE_NAME }}",
+        "logo": {"@type": "ImageObject", "url": "{{ SITE_URL }}/static/favicon.svg"}
+    },
+    "datePublished": "2026-02-10",
+    "dateModified": "2026-02-10",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "{{ SITE_URL }}/resources/ai-safety-careers/non-technical-ai-safety-roles/"}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 pt-16 pb-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
+            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
+            <span>&rsaquo;</span>
+            <a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Resources</a>
+            <span>&rsaquo;</span>
+            <a href="/resources/ai-safety-careers/" class="hover:text-brand-600 transition">AI Safety Careers</a>
+            <span>&rsaquo;</span>
+            <span class="text-gray-900">Non-Technical Roles</span>
+        </nav>
+
+        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm prose prose-gray max-w-none">
+            <p class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold mb-2">Cluster Guide</p>
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
+                5 Non-Technical AI Safety Roles You Can Apply For
+            </h1>
+
+            <p class="text-xl text-gray-600 leading-relaxed mb-8">
+                When people think of AI safety careers, they picture machine-learning researchers writing papers on alignment. But the organisations doing this work also need policy experts, communicators, operations leaders, and programme managers. If you care about reducing AI risk and do not have a technical background, there is almost certainly a role that matches your skills.
+            </p>
+
+            <p>
+                Below are five non-technical roles that are in high demand across the AI safety ecosystem right now. For a broader overview of the field, see our <a href="/resources/ai-safety-careers/">complete AI safety career guide</a>.
+            </p>
+
+            <h2>1. Policy Analyst</h2>
+            <p>
+                Policy analysts translate technical AI safety concepts into actionable regulatory recommendations. Day-to-day work involves writing policy memos, analysing draft legislation such as the EU AI Act or U.S. executive orders on AI, and briefing policymakers on frontier-model risks. You need strong analytical writing, familiarity with the policy cycle, and enough technical literacy to read safety evaluations and benchmark reports critically.
+            </p>
+            <p>
+                <strong>Who hires:</strong> GovAI (Oxford), the Institute for AI Policy and Strategy, and the Center for a New American Security (CNAS).
+            </p>
+
+            <h2>2. Operations Manager</h2>
+            <p>
+                Operations managers keep safety-focused organisations running. Responsibilities span hiring, budgeting, vendor management, and internal processes. In a fast-growing field where research teams double in size every year, the person who builds scalable systems is just as important as the person writing the next interpretability paper. You need experience managing cross-functional teams, comfort with ambiguity, and the ability to prioritise ruthlessly.
+            </p>
+            <p>
+                <strong>Who hires:</strong> Anthropic, the Center for AI Safety (CAIS), and Redwood Research.
+            </p>
+
+            <h2>3. Communications Lead</h2>
+            <p>
+                Communications leads shape how safety research reaches the public, journalists, and policymakers. This includes writing press releases, managing social channels, producing explainer content, and handling media enquiries during high-profile model releases. You need excellent writing skills, experience with media relations, and the ability to simplify technical concepts without distorting them.
+            </p>
+            <p>
+                <strong>Who hires:</strong> Anthropic, the Future of Life Institute, and the Partnership on AI.
+            </p>
+
+            <h2>4. Research Programme Manager</h2>
+            <p>
+                Research programme managers coordinate multi-team research agendas, manage grant portfolios, and ensure milestones are hit. In AI safety, this often means overseeing alignment research grants, organising workshops, and acting as the bridge between funders like Open Philanthropy and the research teams doing the work. You need project-management expertise, strong stakeholder communication, and enough familiarity with the research landscape to evaluate progress meaningfully.
+            </p>
+            <p>
+                <strong>Who hires:</strong> Open Philanthropy, the Centre for Effective Altruism, and the Machine Intelligence Research Institute (MIRI).
+            </p>
+
+            <h2>5. Field-Building Coordinator</h2>
+            <p>
+                Field-building coordinators grow the pipeline of talent entering AI safety. They design fellowship programmes, run career workshops, manage mentorship networks, and produce resources that help newcomers navigate the space. This is a role that combines community management, event production, and strategic outreach. You need strong interpersonal skills, event-planning experience, and a genuine understanding of the AI safety talent bottleneck.
+            </p>
+            <p>
+                <strong>Who hires:</strong> 80,000 Hours, AI Safety Camp, and the Centre for Effective Altruism.
+            </p>
+
+            <h2>Where to start</h2>
+            <p>
+                The best way to break in is to demonstrate domain knowledge before you apply. Write about AI governance on the EA Forum, volunteer at an EAGx conference, or complete a short course like BlueDot Impact's AI safety fundamentals programme. Hiring managers consistently say that candidates who show genuine engagement with the field stand out far more than those with a generic policy or operations CV.
+            </p>
+
+            <div class="bg-brand-50 border border-brand-200 rounded-2xl p-6 mt-8 not-prose">
+                <a href="/resources/ai-safety-careers/" class="text-brand-600 hover:text-brand-700 font-medium">&larr; Back to AI Safety &amp; Governance Career Guide</a>
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{# ──────────────────────────────────────────────────────────
+   CLUSTER POST: M&E Skills That Fast-Track Humanitarian Careers
+   Parent Pillar: /resources/humanitarian-ingo-careers/
+   Slug:  /resources/humanitarian-ingo-careers/mel-skills-humanitarian-career/
+   ────────────────────────────────────────────────────────── #}
+
+{% block title %}M&amp;E Skills That Fast-Track Humanitarian Careers{% endblock %}
+
+{% block meta_description %}Monitoring &amp; evaluation skills are the fastest path into humanitarian work. Learn the tools, frameworks, and certifications employers want.{% endblock %}
+
+{% block canonical %}{{ SITE_URL }}/resources/humanitarian-ingo-careers/mel-skills-humanitarian-career/{% endblock %}
+
+{% block og_type %}article{% endblock %}
+{% block og_title %}M&amp;E Skills That Fast-Track Humanitarian Careers{% endblock %}
+{% block og_description %}Monitoring and evaluation skills are the fastest path into humanitarian work. Learn the tools, frameworks, and certifications employers want.{% endblock %}
+{% block twitter_title %}M&amp;E Skills That Fast-Track Humanitarian Careers{% endblock %}
+{% block twitter_description %}Monitoring and evaluation skills are the fastest path into humanitarian work. Learn the tools, frameworks, and certifications employers want.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ SITE_URL }}/"},
+        {"@type": "ListItem", "position": 2, "name": "Resources", "item": "{{ SITE_URL }}/resources/"},
+        {"@type": "ListItem", "position": 3, "name": "Humanitarian & INGO Careers", "item": "{{ SITE_URL }}/resources/humanitarian-ingo-careers/"},
+        {"@type": "ListItem", "position": 4, "name": "M&E Skills That Fast-Track Humanitarian Careers"}
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "M&E Skills That Fast-Track Humanitarian Careers",
+    "description": "Monitoring and evaluation skills are the fastest path into humanitarian work. Learn the tools, frameworks, and certifications employers want.",
+    "author": {"@type": "Organization", "name": "{{ SITE_NAME }}"},
+    "publisher": {
+        "@type": "Organization",
+        "name": "{{ SITE_NAME }}",
+        "logo": {"@type": "ImageObject", "url": "{{ SITE_URL }}/static/favicon.svg"}
+    },
+    "datePublished": "2026-02-10",
+    "dateModified": "2026-02-10",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "{{ SITE_URL }}/resources/humanitarian-ingo-careers/mel-skills-humanitarian-career/"}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 pt-16 pb-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
+            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
+            <span>&rsaquo;</span>
+            <a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Resources</a>
+            <span>&rsaquo;</span>
+            <a href="/resources/humanitarian-ingo-careers/" class="hover:text-brand-600 transition">Humanitarian &amp; INGO Careers</a>
+            <span>&rsaquo;</span>
+            <span class="text-gray-900">M&amp;E Skills</span>
+        </nav>
+
+        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm prose prose-gray max-w-none">
+            <p class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold mb-2">Cluster Guide</p>
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
+                M&amp;E Skills That Will Fast-Track Your Humanitarian Career
+            </h1>
+
+            <p class="text-xl text-gray-600 leading-relaxed mb-8">
+                If there is a single skill set that consistently appears in humanitarian job listings, it is monitoring, evaluation, and learning (MEL). Donors demand evidence. Programme teams need data. And there are not enough qualified MEL professionals to go around. That supply-demand gap is your opportunity.
+            </p>
+
+            <h2>Why M&amp;E is in such high demand</h2>
+            <p>
+                Every major institutional donor, from USAID to the European Commission, requires grantees to demonstrate measurable results. INGOs must track indicators, conduct evaluations, and report outcomes on strict timelines. As accountability standards have risen, the need for dedicated MEL staff has exploded. A search on ReliefWeb on any given day returns hundreds of M&amp;E-related vacancies, from junior M&amp;E officers to senior evaluation advisors. Many of these roles are remote, because the work centres on data analysis, report writing, and systems design rather than direct programme delivery.
+            </p>
+
+            <h2>Key frameworks you need to know</h2>
+            <p>
+                Humanitarian MEL is built on a handful of core frameworks. Understanding them is non-negotiable:
+            </p>
+            <ul>
+                <li><strong>Logical frameworks (logframes)</strong> — The foundational tool for linking activities to outputs, outcomes, and impact. Every proposal you write or evaluate will include one. Learn to build logframes with SMART indicators and clear assumptions.</li>
+                <li><strong>Theory of Change (ToC)</strong> — A narrative and visual map that explains how and why a programme expects to achieve its goals. ToC has become the preferred planning tool for many donors and is a staple of programme design workshops.</li>
+                <li><strong>Results-based management (RBM)</strong> — The management philosophy that ties budgets and decisions to measurable results. The UN system, the World Bank, and most bilateral donors operate under RBM principles.</li>
+                <li><strong>DAC evaluation criteria</strong> — The OECD Development Assistance Committee defines six criteria for evaluating development interventions: relevance, coherence, effectiveness, efficiency, impact, and sustainability. Evaluators use these as the backbone of every assessment.</li>
+            </ul>
+
+            <h2>Tools employers expect you to know</h2>
+            <p>
+                Frameworks provide the logic; tools provide the execution. Here are the most commonly requested:
+            </p>
+            <ul>
+                <li><strong>KoboToolbox</strong> — The most widely used mobile data collection platform in the humanitarian sector. Free, open-source, and designed for low-connectivity environments.</li>
+                <li><strong>ODK (Open Data Kit)</strong> — The underlying technology behind KoboToolbox and many other survey platforms. Understanding ODK's XLSForm standard gives you flexibility across tools.</li>
+                <li><strong>DHIS2</strong> — A health information system used by over 80 countries. If you are interested in global health or nutrition programming, DHIS2 skills are highly sought after.</li>
+                <li><strong>Power BI and Tableau</strong> — Data visualisation platforms used to build dashboards for donor reporting and programme management. Power BI is increasingly favoured because of its lower cost.</li>
+                <li><strong>Excel and statistical software</strong> — Advanced Excel (pivot tables, Power Query) remains essential. R or Stata are expected for evaluation roles requiring statistical analysis.</li>
+            </ul>
+
+            <h2>Certifications and courses worth your time</h2>
+            <p>
+                Formal credentials signal competence to hiring managers who are screening dozens of applications:
+            </p>
+            <ul>
+                <li><strong>IPDET (International Program for Development Evaluation Training)</strong> — A flagship evaluation training programme hosted by the University of Bern. Highly respected in the sector.</li>
+                <li><strong>BetterEvaluation</strong> — Offers free resources, method guides, and a comprehensive evaluation framework that is widely referenced.</li>
+                <li><strong>DisasterReady.org</strong> — Provides free, self-paced courses on M&amp;E fundamentals, indicator design, and data quality assurance.</li>
+                <li><strong>Kaya (Humanitarian Leadership Academy)</strong> — Offers M&amp;E learning paths specifically designed for humanitarian contexts.</li>
+            </ul>
+
+            <h2>A practical learning roadmap</h2>
+            <p>
+                If you are starting from scratch, follow this sequence. First, complete an introductory M&amp;E course on DisasterReady or Kaya to understand the terminology and core concepts. Second, learn KoboToolbox by designing and deploying a practice survey. Third, build a logframe and Theory of Change for a hypothetical programme, then get feedback from someone in the sector. Fourth, take a Power BI or Tableau course and create a sample dashboard using publicly available humanitarian data from the HDX platform. Fifth, apply for a junior M&amp;E officer role or a short-term consultancy to put your skills into practice.
+            </p>
+            <p>
+                Within six to twelve months of focused effort, you will have a portfolio that qualifies you for entry-level and mid-level MEL positions across the humanitarian sector.
+            </p>
+            <p>
+                For the full picture on humanitarian career paths, read our <a href="/resources/humanitarian-ingo-careers/">complete guide to remote humanitarian and INGO careers</a>.
+            </p>
+
+            <div class="not-prose mt-10 pt-6 border-t border-gray-200">
+                <a href="/resources/humanitarian-ingo-careers/" class="inline-flex items-center text-brand-600 hover:text-brand-700 font-medium text-sm transition">
+                    &larr; Back to Humanitarian &amp; INGO Careers
+                </a>
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}

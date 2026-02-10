@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{# ──────────────────────────────────────────────────────────
+   CLUSTER POST: EA Grantmaking Career Path
+   Pillar: Effective Altruism Careers
+   Slug:  /resources/effective-altruism-careers/ea-grantmaking-career-path/
+   ────────────────────────────────────────────────────────── #}
+
+{% block title %}Build a Career in EA Grantmaking{% endblock %}
+
+{% block meta_description %}EA grantmaking is one of the most impactful career paths. Learn how to become a programme officer at Open Philanthropy, GiveWell, and more.{% endblock %}
+
+{% block canonical %}{{ SITE_URL }}/resources/effective-altruism-careers/ea-grantmaking-career-path/{% endblock %}
+
+{% block og_type %}article{% endblock %}
+{% block og_title %}Build a Career in EA Grantmaking{% endblock %}
+{% block og_description %}EA grantmaking is one of the most impactful career paths. Learn how to become a programme officer at Open Philanthropy, GiveWell, and more.{% endblock %}
+{% block twitter_title %}Build a Career in EA Grantmaking{% endblock %}
+{% block twitter_description %}EA grantmaking is one of the most impactful career paths. Learn how to become a programme officer at Open Philanthropy, GiveWell, and more.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ SITE_URL }}/"},
+        {"@type": "ListItem", "position": 2, "name": "Resources", "item": "{{ SITE_URL }}/resources/"},
+        {"@type": "ListItem", "position": 3, "name": "Effective Altruism Careers", "item": "{{ SITE_URL }}/resources/effective-altruism-careers/"},
+        {"@type": "ListItem", "position": 4, "name": "EA Grantmaking Career Path"}
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Build a Career in EA Grantmaking",
+    "description": "EA grantmaking is one of the most impactful career paths. Learn how to become a programme officer at Open Philanthropy, GiveWell, and more.",
+    "author": {"@type": "Organization", "name": "{{ SITE_NAME }}"},
+    "publisher": {
+        "@type": "Organization",
+        "name": "{{ SITE_NAME }}",
+        "logo": {"@type": "ImageObject", "url": "{{ SITE_URL }}/static/favicon.svg"}
+    },
+    "datePublished": "2026-02-10",
+    "dateModified": "2026-02-10",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "{{ SITE_URL }}/resources/effective-altruism-careers/ea-grantmaking-career-path/"}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 pt-16 pb-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
+            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
+            <span>&rsaquo;</span>
+            <a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Resources</a>
+            <span>&rsaquo;</span>
+            <a href="/resources/effective-altruism-careers/" class="hover:text-brand-600 transition">Effective Altruism Careers</a>
+            <span>&rsaquo;</span>
+            <span class="text-gray-900">EA Grantmaking Career Path</span>
+        </nav>
+
+        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm prose prose-gray max-w-none">
+            <p class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold mb-2">Cluster Guide</p>
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
+                How to Build a Career in EA Grantmaking
+            </h1>
+
+            <p class="text-xl text-gray-600 leading-relaxed mb-8">
+                EA grantmakers decide where hundreds of millions of dollars flow each year. A single programme officer at Open Philanthropy might direct more funding than most nonprofit executives will manage in a lifetime. If you have strong analytical skills and deep domain knowledge, grantmaking offers an extraordinary lever for impact.
+            </p>
+
+            <h2>What EA grantmakers do</h2>
+            <p>
+                At its core, grantmaking in the EA ecosystem involves identifying the most cost-effective interventions and directing funding toward them. Day-to-day, this includes:
+            </p>
+            <ul>
+                <li><strong>Evaluating interventions</strong> — Conducting deep dives into specific problems, reviewing academic literature, commissioning research, and building cost-effectiveness models to compare different approaches.</li>
+                <li><strong>Managing grant portfolios</strong> — Overseeing active grants, tracking milestones, maintaining relationships with grantees, and making follow-on funding decisions.</li>
+                <li><strong>Making funding recommendations</strong> — Writing detailed internal memos that lay out the case for or against a grant, then presenting recommendations to leadership or grant committees.</li>
+                <li><strong>Field-building</strong> — Identifying emerging talent and organisations in a cause area, sometimes catalysing new projects through seed funding or strategic introductions.</li>
+            </ul>
+
+            <h2>The major EA grantmakers</h2>
+
+            <h3>Open Philanthropy</h3>
+            <p>
+                The largest EA-aligned funder, Open Philanthropy deploys hundreds of millions of dollars annually across global health, AI safety, biosecurity, farm animal welfare, and criminal justice reform. Programme officers typically specialise in one cause area and have significant autonomy over grant decisions. Open Phil is known for rigorous analytical hiring processes and competitive compensation.
+            </p>
+
+            <h3>GiveWell</h3>
+            <p>
+                GiveWell focuses specifically on global health and development, identifying the most cost-effective charities in the world. Their research analysts conduct deep investigations into interventions like malaria bed nets, vitamin A supplementation, and direct cash transfers. GiveWell has directed over $1 billion in funding to its recommended charities.
+            </p>
+
+            <h3>Effective Ventures</h3>
+            <p>
+                The umbrella organisation for the Centre for Effective Altruism and 80,000 Hours, Effective Ventures manages fiscal sponsorship and incubation for EA-aligned projects. Their grantmaking is more operational, focused on supporting community infrastructure and new initiatives within the ecosystem.
+            </p>
+
+            <h3>Survival and Flourishing Fund</h3>
+            <p>
+                SFF uses a distinctive "S-process" (a mechanism inspired by combinatorial auction theory) to allocate funding across existential risk reduction, AI safety, and related areas. Their approach is more decentralised, relying on a network of recommenders rather than a traditional programme officer model.
+            </p>
+
+            <h2>Required skills</h2>
+            <ul>
+                <li><strong>Analytical reasoning</strong> — You need to be comfortable with expected-value calculations, Bayesian updating, and thinking under deep uncertainty. Grantmaking requires making decisions with incomplete information and being transparent about your reasoning.</li>
+                <li><strong>Domain expertise</strong> — Most grantmakers specialise. Open Philanthropy hires people with backgrounds in the cause areas they fund: public health researchers for global health, machine learning engineers for AI safety, economists for policy work.</li>
+                <li><strong>Written communication</strong> — Grant memos are the primary output. You must be able to write clearly, structure arguments logically, and present nuanced tradeoffs in a way that supports good decision-making.</li>
+                <li><strong>Relationship management</strong> — Grantmakers work closely with grantees, academic researchers, and other funders. Empathy, discretion, and the ability to give honest feedback are essential.</li>
+            </ul>
+
+            <h2>Entry pathways</h2>
+            <p>
+                There is no single route into EA grantmaking, but common pathways include:
+            </p>
+            <ul>
+                <li><strong>Research analyst roles</strong> — GiveWell and Open Philanthropy hire research analysts who conduct the investigations that inform grant decisions. These roles are the most direct entry point.</li>
+                <li><strong>Domain expertise transfer</strong> — If you have deep expertise in a relevant field (epidemiology, machine learning, development economics), you may be hired directly into a programme officer role.</li>
+                <li><strong>EA community building</strong> — Some grantmakers started by running EA groups, working at CEA, or contributing to the EA Forum, building the judgment and network that grantmaking requires.</li>
+                <li><strong>Adjacent nonprofit work</strong> — Experience at GiveWell-recommended charities, government aid agencies, or other foundations can provide relevant skills and credibility.</li>
+            </ul>
+            <p>
+                Start by reading GiveWell's published research and Open Philanthropy's grant writeups to understand the level of analysis expected. Contributing your own cause area investigations to the EA Forum is one of the strongest signals you can send to potential employers.
+            </p>
+
+            <div class="bg-brand-50 border border-brand-200 rounded-2xl p-6 mt-8 not-prose">
+                <p class="text-sm text-gray-700">
+                    This guide is part of our
+                    <a href="/resources/effective-altruism-careers/" class="text-brand-600 hover:text-brand-700 font-medium">Effective Altruism Careers</a>
+                    pillar. Return to the main guide for more EA career paths, skills breakdowns, and job-search resources.
+                </p>
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}

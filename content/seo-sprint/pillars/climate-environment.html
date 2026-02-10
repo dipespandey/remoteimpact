@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{# ──────────────────────────────────────────────────────────
+   PILLAR PAGE: Climate & Environment Careers
+   Slug:  /resources/climate-environment-careers/
+   ────────────────────────────────────────────────────────── #}
+
+{% block title %}Remote Climate Jobs: The Ultimate Career Guide (2026){% endblock %}
+
+{% block meta_description %}Land a remote climate job. Explore roles in renewable energy, conservation, and sustainability. Skills, salaries, and open positions inside.{% endblock %}
+
+{% block canonical %}{{ SITE_URL }}/resources/climate-environment-careers/{% endblock %}
+
+{% block og_type %}article{% endblock %}
+{% block og_title %}Remote Climate Jobs: The Ultimate Career Guide{% endblock %}
+{% block og_description %}Everything you need to break into remote climate and environment work — key skills, top employers, and open roles.{% endblock %}
+{% block twitter_title %}Remote Climate Jobs: The Ultimate Career Guide{% endblock %}
+{% block twitter_description %}Everything you need to break into remote climate and environment work — key skills, top employers, and open roles.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ SITE_URL }}/"},
+        {"@type": "ListItem", "position": 2, "name": "Resources", "item": "{{ SITE_URL }}/resources/"},
+        {"@type": "ListItem", "position": 3, "name": "Climate & Environment Careers"}
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Remote Climate Jobs: The Ultimate Career Guide",
+    "description": "A comprehensive guide to building a remote career in climate tech, conservation, and environmental sustainability.",
+    "author": {"@type": "Organization", "name": "{{ SITE_NAME }}"},
+    "publisher": {
+        "@type": "Organization",
+        "name": "{{ SITE_NAME }}",
+        "logo": {"@type": "ImageObject", "url": "{{ SITE_URL }}/static/favicon.svg"}
+    },
+    "datePublished": "2026-02-10",
+    "dateModified": "2026-02-10",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "{{ SITE_URL }}/resources/climate-environment-careers/"}
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "What qualifications do I need for a remote climate job?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Most entry-level climate roles require a bachelor's degree in environmental science, engineering, policy, or a related field. However, many organisations hire from adjacent disciplines — data science, communications, project management — if you can demonstrate genuine interest in climate outcomes. Certifications like LEED, PMP, or GHG Protocol training are useful but rarely mandatory."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Can I work in climate without a science degree?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Absolutely. Climate organisations need fundraisers, policy analysts, marketers, software engineers, and operations managers. Some of the highest-impact climate jobs are in advocacy, finance, and technology — none of which require a hard-science background."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "What is the typical salary range for remote climate jobs?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Remote climate salaries vary widely. Entry-level roles (coordinator, analyst) typically range from $45,000 to $65,000 USD. Mid-career professionals (manager, specialist) earn $70,000 to $110,000. Senior leadership, engineering, and technical roles can exceed $140,000, especially at well-funded climate-tech startups."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Which organisations hire the most remote climate workers?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Large environmental NGOs like WWF, The Nature Conservancy, and Greenpeace regularly list remote roles. Climate-tech startups (Watershed, Pachama, Wren) are growing fast. Multilateral bodies like UNEP and the World Bank also offer remote-friendly contracts. Check Remote Impact's climate category for current openings."
+            }
+        }
+    ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 pt-16 pb-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
+            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
+            <span>&rsaquo;</span>
+            <a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Resources</a>
+            <span>&rsaquo;</span>
+            <span class="text-gray-900">Climate & Environment Careers</span>
+        </nav>
+
+        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm prose prose-gray max-w-none">
+            <p class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold mb-2">Pillar Guide</p>
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
+                Remote Climate &amp; Environment Jobs: The Ultimate Career Guide
+            </h1>
+
+            <p class="text-xl text-gray-600 leading-relaxed mb-8">
+                The climate sector is one of the fastest-growing employers in the impact space. From carbon accounting to renewable energy policy, organisations worldwide are hiring remote professionals to tackle the defining challenge of our generation.
+            </p>
+
+            <h2>What are climate and environment jobs?</h2>
+            <p>
+                Climate and environment roles span any position whose primary mission is to reduce greenhouse-gas emissions, protect ecosystems, or help communities adapt to a warming planet. This includes direct technical work — energy modelling, conservation biology, sustainable agriculture — as well as the enabling functions every organisation needs: fundraising, communications, software development, and programme management.
+            </p>
+            <p>
+                The sector has moved far beyond traditional "field scientist" stereotypes. Today's climate workforce includes UX designers building carbon dashboards, lobbyists drafting clean-energy legislation, and data engineers powering satellite deforestation alerts. Remote work has accelerated this shift, allowing talent anywhere in the world to contribute to projects that were previously limited to a handful of capital cities.
+            </p>
+
+            <h2>Key skills employers look for</h2>
+            <ul>
+                <li><strong>GHG accounting &amp; life-cycle analysis</strong> — Understanding carbon footprints across supply chains (GHG Protocol, ISO 14064).</li>
+                <li><strong>Geospatial &amp; remote-sensing tools</strong> — GIS, Google Earth Engine, satellite imagery for land-use monitoring.</li>
+                <li><strong>Policy analysis &amp; regulatory knowledge</strong> — Familiarity with the Paris Agreement, EU Taxonomy, SEC climate disclosure rules.</li>
+                <li><strong>Data science &amp; modelling</strong> — Python, R, climate models (CMIP6), scenario analysis.</li>
+                <li><strong>Stakeholder engagement</strong> — Grant writing, coalition building, community outreach — especially for NGOs.</li>
+                <li><strong>Project management</strong> — Coordinating distributed teams across time zones is a core skill for any remote climate role.</li>
+            </ul>
+
+            <h2>Where to start</h2>
+            <p>
+                If you are transitioning into climate work, start by identifying the overlap between your current expertise and the sector's needs. A software engineer can target climate-tech startups building monitoring platforms. A marketing professional can help NGOs amplify their campaigns. Volunteer for a climate organisation, complete a short course (Terra.do and Climate Draft are popular), and begin contributing to open-source climate projects on GitHub. These signal genuine commitment to hiring managers.
+            </p>
+
+            <h2>Frequently asked questions</h2>
+
+            <h3>What qualifications do I need for a remote climate job?</h3>
+            <p>
+                Most entry-level climate roles require a bachelor's degree in environmental science, engineering, policy, or a related field. However, many organisations hire from adjacent disciplines — data science, communications, project management — if you can demonstrate genuine interest in climate outcomes. Certifications like LEED, PMP, or GHG Protocol training are useful but rarely mandatory.
+            </p>
+
+            <h3>Can I work in climate without a science degree?</h3>
+            <p>
+                Absolutely. Climate organisations need fundraisers, policy analysts, marketers, software engineers, and operations managers. Some of the highest-impact climate jobs are in advocacy, finance, and technology — none of which require a hard-science background.
+            </p>
+
+            <h3>What is the typical salary range for remote climate jobs?</h3>
+            <p>
+                Remote climate salaries vary widely. Entry-level roles (coordinator, analyst) typically range from $45,000 to $65,000 USD. Mid-career professionals (manager, specialist) earn $70,000 to $110,000. Senior leadership, engineering, and technical roles can exceed $140,000, especially at well-funded climate-tech startups.
+            </p>
+
+            <h3>Which organisations hire the most remote climate workers?</h3>
+            <p>
+                Large environmental NGOs like WWF, The Nature Conservancy, and Greenpeace regularly list remote roles. Climate-tech startups (Watershed, Pachama, Wren) are growing fast. Multilateral bodies like UNEP and the World Bank also offer remote-friendly contracts. Check Remote Impact's <a href="/jobs/?category=climate-environment">climate category</a> for current openings.
+            </p>
+
+            <div class="bg-brand-50 border border-brand-200 rounded-2xl p-6 mt-8 not-prose">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Related reads</h3>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="/resources/climate-environment-careers/break-into-climate-tech-no-stem/" class="text-brand-600 hover:text-brand-700 font-medium">How to Break Into Climate Tech Without a STEM Degree &rarr;</a></li>
+                    <li><a href="/resources/climate-environment-careers/top-remote-climate-employers/" class="text-brand-600 hover:text-brand-700 font-medium">10 Organisations Hiring Remote Climate Professionals Right Now &rarr;</a></li>
+                    <li><a href="/resources/climate-environment-careers/climate-career-switch-guide/" class="text-brand-600 hover:text-brand-700 font-medium">Career Switching to Climate: A 90-Day Action Plan &rarr;</a></li>
+                </ul>
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}

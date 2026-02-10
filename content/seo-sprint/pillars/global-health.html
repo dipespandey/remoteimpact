@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{# ──────────────────────────────────────────────────────────
+   PILLAR PAGE: Global Health Careers
+   Slug:  /resources/global-health-careers/
+   ────────────────────────────────────────────────────────── #}
+
+{% block title %}Remote Global Health Jobs: Career Guide 2026{% endblock %}
+
+{% block meta_description %}Find remote global health jobs in pandemic preparedness, public health, and medical research. Skills, orgs, and open roles inside.{% endblock %}
+
+{% block canonical %}{{ SITE_URL }}/resources/global-health-careers/{% endblock %}
+
+{% block og_type %}article{% endblock %}
+{% block og_title %}Remote Global Health Jobs: Career Guide 2026{% endblock %}
+{% block og_description %}Your complete guide to remote careers in global health — from epidemiology to health-tech startups.{% endblock %}
+{% block twitter_title %}Remote Global Health Jobs: Career Guide 2026{% endblock %}
+{% block twitter_description %}Your complete guide to remote careers in global health — from epidemiology to health-tech startups.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ SITE_URL }}/"},
+        {"@type": "ListItem", "position": 2, "name": "Resources", "item": "{{ SITE_URL }}/resources/"},
+        {"@type": "ListItem", "position": 3, "name": "Global Health Careers"}
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Remote Global Health Jobs: Career Guide 2026",
+    "description": "A comprehensive guide to building a remote career in global health, public health, and health technology.",
+    "author": {"@type": "Organization", "name": "{{ SITE_NAME }}"},
+    "publisher": {
+        "@type": "Organization",
+        "name": "{{ SITE_NAME }}",
+        "logo": {"@type": "ImageObject", "url": "{{ SITE_URL }}/static/favicon.svg"}
+    },
+    "datePublished": "2026-02-10",
+    "dateModified": "2026-02-10",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "{{ SITE_URL }}/resources/global-health-careers/"}
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "Can I work in global health remotely?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. While some global health roles require field presence, a growing number of positions are fully remote — particularly in data analysis, programme management, research coordination, health-tech product development, and policy work. The COVID-19 pandemic permanently shifted how global health organisations operate, making remote arrangements common even at WHO, MSF headquarters, and Gates Foundation."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "What degree do I need for global health work?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "An MPH (Master of Public Health) is the most common credential, but it is not always required. Roles in data science, software engineering, communications, and operations often accept candidates with relevant experience and a bachelor's degree. Epidemiology and clinical research roles typically require graduate-level training."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "What are the top global health employers hiring remotely?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Major employers include the World Health Organization (WHO), Gavi, the Global Fund, Partners in Health, PATH, Clinton Health Access Initiative (CHAI), GiveWell-recommended charities like Malaria Consortium and Helen Keller International, and health-tech companies like Dimagi, Medic, and Zipline."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "How much do remote global health jobs pay?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Salaries depend heavily on the employer type. UN agencies offer tax-free salaries starting around $60,000 for P-2 roles and exceeding $120,000 at P-4/P-5 levels. NGOs pay $50,000 to $100,000 for mid-career roles. Health-tech startups and consulting firms (McKinsey Global Health, Dalberg) can offer $90,000 to $180,000 for experienced professionals."
+            }
+        }
+    ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 pt-16 pb-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
+            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
+            <span>&rsaquo;</span>
+            <a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Resources</a>
+            <span>&rsaquo;</span>
+            <span class="text-gray-900">Global Health Careers</span>
+        </nav>
+
+        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm prose prose-gray max-w-none">
+            <p class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold mb-2">Pillar Guide</p>
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
+                Remote Global Health Jobs: Your Complete Career Guide
+            </h1>
+
+            <p class="text-xl text-gray-600 leading-relaxed mb-8">
+                Global health is one of the largest and most established impact sectors. Whether you want to fight malaria, strengthen health systems, or build digital tools that reach the last mile, there is a remote role for you.
+            </p>
+
+            <h2>What are global health careers?</h2>
+            <p>
+                Global health careers focus on improving health outcomes and reducing health inequities worldwide. The field spans epidemiology, programme management, health policy, biostatistics, clinical research, supply-chain logistics, and increasingly, health technology. Employers range from the World Health Organization and UNICEF to nimble non-profits like Partners in Health and health-tech startups like Dimagi.
+            </p>
+            <p>
+                Remote work in global health has surged. Data teams, research coordinators, monitoring-and-evaluation specialists, grant writers, and software developers frequently work from home while supporting field operations across continents. The pandemic demonstrated that many functions previously thought to require co-location work just as well — or better — with distributed teams.
+            </p>
+
+            <h2>Key skills employers look for</h2>
+            <ul>
+                <li><strong>Epidemiology &amp; biostatistics</strong> — Study design, Stata/R, causal inference, surveillance systems.</li>
+                <li><strong>Monitoring, evaluation &amp; learning (MEL)</strong> — Logical frameworks, Theory of Change, DHIS2, KoboToolbox.</li>
+                <li><strong>Health informatics</strong> — Electronic health records, interoperability standards (HL7/FHIR), data pipelines.</li>
+                <li><strong>Grant writing &amp; donor relations</strong> — USAID, Global Fund, GAVI proposal formats.</li>
+                <li><strong>Programme management</strong> — Multi-country project coordination, budget oversight, stakeholder reporting.</li>
+                <li><strong>Digital health tools</strong> — mHealth apps, telemedicine platforms, AI-assisted diagnostics.</li>
+            </ul>
+
+            <h2>How to get started</h2>
+            <p>
+                Entry paths vary by role. For research and technical positions, an MPH or equivalent graduate degree is the standard on-ramp. For operations, communications, and tech roles, relevant work experience often matters more than credentials. Volunteering with organisations like the Red Cross, doing short consultancies via platforms like ReliefWeb, or contributing to open-source health tools (OpenMRS, DHIS2) can build your profile fast.
+            </p>
+
+            <h2>Frequently asked questions</h2>
+
+            <h3>Can I work in global health remotely?</h3>
+            <p>
+                Yes. While some global health roles require field presence, a growing number of positions are fully remote — particularly in data analysis, programme management, research coordination, health-tech product development, and policy work. The COVID-19 pandemic permanently shifted how global health organisations operate.
+            </p>
+
+            <h3>What degree do I need for global health work?</h3>
+            <p>
+                An MPH (Master of Public Health) is the most common credential, but it is not always required. Roles in data science, software engineering, communications, and operations often accept candidates with relevant experience and a bachelor's degree.
+            </p>
+
+            <h3>What are the top global health employers hiring remotely?</h3>
+            <p>
+                Major employers include WHO, Gavi, the Global Fund, Partners in Health, PATH, Clinton Health Access Initiative (CHAI), GiveWell-recommended charities like Malaria Consortium, and health-tech companies like Dimagi and Zipline.
+            </p>
+
+            <h3>How much do remote global health jobs pay?</h3>
+            <p>
+                UN agencies offer tax-free salaries starting around $60,000 (P-2) and exceeding $120,000 (P-4/P-5). NGOs pay $50,000 to $100,000 for mid-career roles. Health-tech startups and consulting firms can offer $90,000 to $180,000+. Browse current openings in our <a href="/jobs/?category=global-health">global health category</a>.
+            </p>
+
+            <div class="bg-brand-50 border border-brand-200 rounded-2xl p-6 mt-8 not-prose">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Related reads</h3>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="/resources/global-health-careers/remote-global-health-without-mph/" class="text-brand-600 hover:text-brand-700 font-medium">How to Get a Remote Global Health Job Without an MPH &rarr;</a></li>
+                    <li><a href="/resources/global-health-careers/un-agency-remote-jobs-guide/" class="text-brand-600 hover:text-brand-700 font-medium">Navigating UN Agency Job Applications: A Remote Worker's Guide &rarr;</a></li>
+                    <li><a href="/resources/global-health-careers/health-tech-impact-careers/" class="text-brand-600 hover:text-brand-700 font-medium">Health-Tech Startups Making the Biggest Impact in 2026 &rarr;</a></li>
+                </ul>
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}

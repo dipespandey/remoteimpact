@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{# ──────────────────────────────────────────────────────────
+   CLUSTER POST: From Engineer to Alignment Researcher
+   Parent pillar: /resources/ai-safety-careers/
+   Slug: /resources/ai-safety-careers/alignment-research-pathway/
+   ────────────────────────────────────────────────────────── #}
+
+{% block title %}From Engineer to Alignment Researcher: A Guide{% endblock %}
+
+{% block meta_description %}A step-by-step guide for software engineers who want to transition into AI alignment research. Programmes, skills, and resources inside.{% endblock %}
+
+{% block canonical %}{{ SITE_URL }}/resources/ai-safety-careers/alignment-research-pathway/{% endblock %}
+
+{% block og_type %}article{% endblock %}
+{% block og_title %}From Engineer to Alignment Researcher: A Guide{% endblock %}
+{% block og_description %}A step-by-step guide for software engineers who want to transition into AI alignment research. Programmes, skills, and resources inside.{% endblock %}
+{% block twitter_title %}From Engineer to Alignment Researcher: A Guide{% endblock %}
+{% block twitter_description %}A step-by-step guide for software engineers who want to transition into AI alignment research. Programmes, skills, and resources inside.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ SITE_URL }}/"},
+        {"@type": "ListItem", "position": 2, "name": "Resources", "item": "{{ SITE_URL }}/resources/"},
+        {"@type": "ListItem", "position": 3, "name": "AI Safety Careers", "item": "{{ SITE_URL }}/resources/ai-safety-careers/"},
+        {"@type": "ListItem", "position": 4, "name": "Alignment Research Pathway"}
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "From Engineer to Alignment Researcher: A Guide",
+    "description": "A step-by-step guide for software engineers who want to transition into AI alignment research. Programmes, skills, and resources inside.",
+    "author": {"@type": "Organization", "name": "{{ SITE_NAME }}"},
+    "publisher": {
+        "@type": "Organization",
+        "name": "{{ SITE_NAME }}",
+        "logo": {"@type": "ImageObject", "url": "{{ SITE_URL }}/static/favicon.svg"}
+    },
+    "datePublished": "2026-02-10",
+    "dateModified": "2026-02-10",
+    "mainEntityOfPage": {"@type": "WebPage", "@id": "{{ SITE_URL }}/resources/ai-safety-careers/alignment-research-pathway/"}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="bg-gray-50 pt-16 pb-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
+            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
+            <span>&rsaquo;</span>
+            <a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Resources</a>
+            <span>&rsaquo;</span>
+            <a href="/resources/ai-safety-careers/" class="hover:text-brand-600 transition">AI Safety Careers</a>
+            <span>&rsaquo;</span>
+            <span class="text-gray-900">Alignment Research Pathway</span>
+        </nav>
+
+        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm prose prose-gray max-w-none">
+            <p class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold mb-2">Cluster Guide</p>
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
+                From Software Engineer to Alignment Researcher: A Step-by-Step Guide
+            </h1>
+
+            <p class="text-xl text-gray-600 leading-relaxed mb-8">
+                You have spent years building production systems, and now you want to work on one of the most consequential research problems of the century: making sure advanced AI systems do what we actually want. The good news is that software engineering experience is a genuine asset. The transition is hard but well-trodden. Here is a concrete plan.
+            </p>
+
+            <p>
+                This guide is part of our <a href="/resources/ai-safety-careers/">AI safety career guide</a>, which covers the full landscape of roles and pathways in the field.
+            </p>
+
+            <h2>Why engineers are well-positioned</h2>
+            <p>
+                Alignment research is not purely theoretical. A large share of the work involves running experiments on real models: probing internal representations, building evaluation harnesses, fine-tuning with RLHF, and stress-testing outputs. Software engineers who can write clean, reproducible ML code are valuable from day one. What you need to add is a research mindset: the ability to formulate hypotheses, design experiments, and write up findings.
+            </p>
+
+            <h2>Prerequisite skills to build</h2>
+            <p>
+                Before applying to structured programmes, invest in filling specific knowledge gaps:
+            </p>
+            <ul>
+                <li><strong>ML fundamentals</strong> — Complete a rigorous deep-learning course. Andrej Karpathy's "Neural Networks: Zero to Hero" series and fast.ai's Practical Deep Learning are both excellent and free.</li>
+                <li><strong>Transformer internals</strong> — Understand attention mechanisms, positional encoding, and how large language models are trained. Read "Attention Is All You Need" and implement a small transformer from scratch.</li>
+                <li><strong>Interpretability</strong> — Study mechanistic interpretability: circuits, superposition, and feature visualisation. Neel Nanda's "200 Concrete Open Problems in Mechanistic Interpretability" is the go-to reference.</li>
+                <li><strong>Alignment concepts</strong> — Work through the AGI Safety Fundamentals curriculum (BlueDot Impact) to understand RLHF, scalable oversight, goal misgeneralisation, and deceptive alignment.</li>
+            </ul>
+
+            <h2>Structured programmes to apply to</h2>
+            <p>
+                The following programmes are specifically designed to bridge the gap between industry experience and alignment research:
+            </p>
+            <ul>
+                <li><strong>MATS (ML Alignment Theory Scholars)</strong> — A selective programme that pairs scholars with established alignment researchers for a multi-month mentored project. Alumni have gone on to roles at Anthropic, DeepMind, and Redwood Research.</li>
+                <li><strong>Redwood Research Residency</strong> — A hands-on residency focused on empirical alignment research. Redwood is known for its work on adversarial training and interpretability.</li>
+                <li><strong>ARC Evals</strong> — The Alignment Research Center's evaluations team works on assessing dangerous capabilities in frontier models. Strong engineering skills are directly applicable here.</li>
+                <li><strong>SERI MATS</strong> — The Stanford Existential Risks Initiative's branch of the MATS programme, offering additional mentorship pairings and a Bay Area cohort.</li>
+            </ul>
+
+            <h2>A 6-month transition timeline</h2>
+            <p>
+                Here is what a focused transition could look like:
+            </p>
+            <ul>
+                <li><strong>Month 1:</strong> Complete the AGI Safety Fundamentals curriculum. Start reading the Alignment Forum daily.</li>
+                <li><strong>Month 2:</strong> Finish a deep-learning course. Implement a transformer from scratch in PyTorch and replicate a simple interpretability result.</li>
+                <li><strong>Month 3:</strong> Choose one open problem from Neel Nanda's list and begin a small independent research project. Write up preliminary findings as a blog post on the Alignment Forum or LessWrong.</li>
+                <li><strong>Month 4:</strong> Submit applications to MATS, Redwood, or ARC Evals. Attend an EAGx or AI safety unconference to build connections with researchers.</li>
+                <li><strong>Month 5:</strong> Continue your independent project. Seek feedback from established researchers via cold emails or the AI Safety Camp Slack. Iterate and improve your write-up.</li>
+                <li><strong>Month 6:</strong> Publish your research. If programme applications are pending, use this time to contribute to an open-source alignment tool or collaborate on a group project.</li>
+            </ul>
+
+            <h2>Key advice</h2>
+            <p>
+                Do not wait until you feel fully qualified. The field moves fast and values demonstrated initiative over credentials. A single well-executed interpretability experiment published on the Alignment Forum will do more for your candidacy than another year of self-study. Start building in public, get feedback early, and apply to programmes even if you feel underprepared.
+            </p>
+
+            <div class="bg-brand-50 border border-brand-200 rounded-2xl p-6 mt-8 not-prose">
+                <a href="/resources/ai-safety-careers/" class="text-brand-600 hover:text-brand-700 font-medium">&larr; Back to AI Safety &amp; Governance Career Guide</a>
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}
