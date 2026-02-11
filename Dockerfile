@@ -56,10 +56,20 @@ cd /app\n\
 /usr/local/bin/uv run python manage.py import_remote_jobs --new-only --use-ai --provider deepseek --batch-size 20\n\
 ' > /app/run_import.sh && chmod +x /app/run_import.sh
 
-# Setup cron job for daily imports (6 AM UTC)
-RUN echo "0 6 * * * /app/run_import.sh >> /var/log/import_jobs.log 2>&1" > /etc/cron.d/import-jobs \
-    && chmod 0644 /etc/cron.d/import-jobs \
-    && crontab /etc/cron.d/import-jobs
+# Create job alerts script
+RUN echo '#!/bin/bash\n\
+source /app/.env.cron\n\
+cd /app\n\
+/usr/local/bin/uv run python manage.py send_job_alerts\n\
+' > /app/run_alerts.sh && chmod +x /app/run_alerts.sh
+
+# Setup cron jobs:
+# - 6 AM UTC: Import new jobs
+# - 8 AM UTC: Send job alerts (daily alerts every day, weekly alerts on Mondays)
+RUN echo "0 6 * * * /app/run_import.sh >> /var/log/import_jobs.log 2>&1" > /etc/cron.d/remoteimpact-crons \
+    && echo "0 8 * * * /app/run_alerts.sh >> /var/log/job_alerts.log 2>&1" >> /etc/cron.d/remoteimpact-crons \
+    && chmod 0644 /etc/cron.d/remoteimpact-crons \
+    && crontab /etc/cron.d/remoteimpact-crons
 
 # Create entrypoint script
 RUN echo '#!/bin/bash\n\

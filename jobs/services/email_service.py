@@ -138,6 +138,58 @@ class EmailService:
         subject = f"{invitation.organization.name} thinks you'd be great for {invitation.job.title}"
         return self.send_email(to=seeker_user.email, subject=subject, html=html)
 
+    def send_job_alert(self, alert, jobs: list) -> bool:
+        """
+        Send job alert email to a user.
+
+        Args:
+            alert: JobAlert object
+            jobs: List of matching Job objects
+        
+        Returns:
+            True if sent successfully
+        """
+        if not jobs:
+            return False
+
+        user = alert.user
+        job_count = len(jobs)
+        display_jobs = list(jobs[:10])  # Show max 10 jobs
+        more_jobs = max(0, job_count - 10)
+
+        # Generate URLs
+        unsubscribe_url = self._get_unsubscribe_url(user.id)
+        alerts_url = f"{self.site_url}/alerts/"
+
+        # Build context
+        context = {
+            "user": user,
+            "jobs": display_jobs,
+            "job_count": job_count,
+            "more_jobs": more_jobs,
+            "alert_name": alert.name,
+            "keywords": alert.keywords.strip() if alert.keywords else "",
+            "frequency": alert.get_frequency_display().lower(),
+            "site_url": self.site_url,
+            "alerts_url": alerts_url,
+            "unsubscribe_url": unsubscribe_url,
+        }
+
+        html = render_to_string("emails/job_alert.html", context)
+        text = render_to_string("emails/job_alert.txt", context)
+
+        # Build subject
+        subject = f"🔔 {job_count} new job{'s' if job_count != 1 else ''}"
+        if alert.name:
+            subject += f' for "{alert.name}"'
+
+        return self.send_email(
+            to=user.email,
+            subject=subject,
+            html=html,
+            text=text,
+        )
+
     def send_seeker_weekly_digest(self, seeker_profile, profile_views: int, new_invitations: int) -> bool:
         """Send weekly digest to a seeker with profile views and invitation counts."""
         if profile_views == 0 and new_invitations == 0:

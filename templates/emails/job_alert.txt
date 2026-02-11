@@ -1,0 +1,24 @@
+🔔 Job Alert: {{ job_count }} new job{{ job_count|pluralize }}{% if alert_name %} for "{{ alert_name }}"{% endif %}
+
+Hi{% if user.first_name %} {{ user.first_name }}{% endif %},
+
+We found {{ job_count }} new job{{ job_count|pluralize }} matching your alert{% if alert_name %} "{{ alert_name }}"{% endif %}{% if keywords %} for "{{ keywords }}"{% endif %}:
+
+{% for job in jobs %}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{{ job.title }}
+{{ job.organization.name }}
+{{ job.location|default:"Remote" }} • {{ job.get_job_type_display }}{% if job.salary_min and job.salary_max %} • {{ job.salary_currency }}{{ job.salary_min|floatformat:0 }} - {{ job.salary_max|floatformat:0 }}{% endif %}
+
+View: {{ site_url }}{{ job.get_absolute_url }}
+{% endfor %}
+{% if more_jobs > 0 %}
++ {{ more_jobs }} more job{{ more_jobs|pluralize }}...
+{% endif %}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+View all jobs: {{ site_url }}/jobs/
+Manage your alerts: {{ alerts_url }}
+Unsubscribe: {{ unsubscribe_url }}
+
+— Remote Impact Jobs
