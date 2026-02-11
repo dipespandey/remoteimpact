@@ -5,6 +5,7 @@ from .probablygood import crawl_probablygood_job
 from .charityjob import crawl_charityjob_job
 from .idealist import crawl_idealist_job
 from .reliefweb import crawl_reliefweb_job
+from .climatebase import crawl_climatebase_job
 from .base import crawl_jobs_needing_update, crawl_jobs_async
 
 __all__ = [
@@ -15,6 +16,7 @@ __all__ = [
     "crawl_charityjob_job",
     "crawl_idealist_job",
     "crawl_reliefweb_job",
+    "crawl_climatebase_job",
     "crawl_jobs_needing_update",
     "crawl_jobs_async",
 ]
