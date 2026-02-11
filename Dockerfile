@@ -4,8 +4,27 @@ FROM python:3.12-slim
 # Install uv for fast dependency management
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Install cron
-RUN apt-get update && apt-get install -y cron fonts-dejavu-core && rm -rf /var/lib/apt/lists/*
+# Install cron and Playwright browser dependencies
+RUN apt-get update && apt-get install -y \
+    cron \
+    fonts-dejavu-core \
+    # Playwright Chromium dependencies
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
+    libpango-1.0-0 \
+    libcairo2 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -17,6 +36,9 @@ WORKDIR /app
 # Install dependencies first (cached layer)
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
+
+# Install Playwright Chromium browser (headless)
+RUN uv run playwright install chromium
 
 # Copy application code
 COPY . .
