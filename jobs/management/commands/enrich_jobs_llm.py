@@ -21,8 +21,8 @@ FETCH_HEADERS = {
 SOURCES_WITH_CRAWLERS = ["greenhouse", "lever", "ashby", "charityjob", "idealist", "reliefweb"]
 
 
-def fetch_page_text(url: str, max_chars: int = 15000) -> str:
-    """Fetch page and return clean text content."""
+def fetch_page_html(url: str, max_chars: int = 20000) -> str:
+    """Fetch page and return cleaned HTML content."""
     try:
         response = requests.get(url, headers=FETCH_HEADERS, timeout=30)
         if response.status_code != 200:
@@ -31,35 +31,47 @@ def fetch_page_text(url: str, max_chars: int = 15000) -> str:
         from bs4 import BeautifulSoup
         soup = BeautifulSoup(response.text, "html.parser")
         
-        # Remove script/style
-        for tag in soup.find_all(["script", "style", "nav", "footer", "header"]):
+        # Remove script/style/nav but keep structure
+        for tag in soup.find_all(["script", "style", "nav", "footer", "header", "iframe", "noscript"]):
             tag.decompose()
         
-        text = soup.get_text(" ", strip=True)
-        return text[:max_chars]
+        # Remove comments
+        from bs4 import Comment
+        for comment in soup.find_all(string=lambda t: isinstance(t, Comment)):
+            comment.extract()
+        
+        # Get main content area if possible
+        main = soup.find("main") or soup.find("article") or soup.find(class_=re.compile(r"job|content|description", re.I))
+        if main:
+            html = str(main)
+        else:
+            body = soup.find("body")
+            html = str(body) if body else str(soup)
+        
+        return html[:max_chars]
     except Exception as e:
         return ""
 
 
-def extract_with_llm(page_text: str, job_title: str, provider: str = "groq") -> dict:
-    """Use LLM to extract job details from page text."""
+def extract_with_llm(page_html: str, job_title: str, provider: str = "groq") -> dict:
+    """Use LLM to extract job details from page HTML."""
     
-    prompt = f"""Extract job posting details from this webpage text. The job title is: "{job_title}"
+    prompt = f"""Extract job posting details from this HTML. The job title is: "{job_title}"
 
 Return a JSON object with these fields (use null if not found):
-- description: Full job description (responsibilities, about the role, etc.)
-- requirements: Requirements and qualifications
-- organization_name: Company/organization name
-- salary_min: Minimum salary as number (no currency symbol)
-- salary_max: Maximum salary as number
+- description: Full job description (responsibilities, about the role). Extract ALL the text content, combine multiple sections.
+- requirements: Requirements, qualifications, skills needed
+- organization_name: Company/organization hiring for this role
+- salary_min: Minimum salary as number only (no currency symbol)
+- salary_max: Maximum salary as number only
 - salary_currency: Currency code (USD, GBP, EUR, etc.)
 - location: Job location
 - job_type: full-time, part-time, contract, or freelance
 
-Page text:
-{page_text[:12000]}
+HTML:
+{page_html[:15000]}
 
-Return ONLY valid JSON, no other text."""
+Return ONLY valid JSON, no markdown, no explanation."""
 
     try:
         if provider == "groq":
@@ -186,16 +198,16 @@ class Command(BaseCommand):
         for i, job in enumerate(jobs, 1):
             self.stdout.write(f"[{i}/{len(jobs)}] {job.source}: {job.title[:40]}...")
 
-            # Fetch page
-            page_text = fetch_page_text(job.application_url)
-            if not page_text:
+            # Fetch page HTML
+            page_html = fetch_page_html(job.application_url)
+            if not page_html:
                 self.stdout.write(self.style.WARNING("  Could not fetch page"))
                 failed += 1
                 time.sleep(delay)
                 continue
 
             # Extract with LLM
-            extracted = extract_with_llm(page_text, job.title, provider)
+            extracted = extract_with_llm(page_html, job.title, provider)
             
             if not extracted or not extracted.get("description"):
                 self.stdout.write(self.style.WARNING("  LLM could not extract description"))
