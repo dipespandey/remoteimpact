@@ -230,6 +230,22 @@ def update_job_from_crawl(
     job.title = title
     job.description = description or job.description
 
+    # Update organization if company_name provided and current org is unknown
+    if company_name and company_name.strip():
+        from jobs.models import Organization
+        from django.utils.text import slugify
+        
+        current_org_name = job.organization.name.lower() if job.organization else ""
+        if "unknown" in current_org_name or not job.organization:
+            # Create or get the organization
+            org_slug = slugify(company_name)[:50]
+            org, _ = Organization.objects.get_or_create(
+                slug=org_slug,
+                defaults={"name": company_name.strip()}
+            )
+            job.organization = org
+            logger.info(f"Updated organization for job {job.id}: {company_name}")
+
     if location:
         # Normalize location to standard country/region value
         job.location = normalize_location(location)

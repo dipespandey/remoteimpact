@@ -102,17 +102,25 @@ def _extract_jobs_from_page(html: str) -> List[Dict]:
 
         card_text = card.get_text(" | ", strip=True)
 
-        # Extract organization name
+        # Extract organization name from URL (most reliable)
+        # URL pattern: /jobs/{org-slug}/{job-title}/{id}
         org_name = "Unknown Organization"
-        for a in card.find_all("a"):
-            a_href = a.get("href", "")
-            a_text = a.get_text(strip=True)
-            if a_text and a_text != title and len(a_text) > 2:
-                if any(x in a_href for x in ["/jobs?", "/volunteer", "/advice"]):
-                    continue
-                if a_text not in ["Apply", "Save", "Share", "Job Details"]:
-                    org_name = a_text
-                    break
+        url_match = re.search(r'/jobs/([^/]+)/[^/]+/\d+', clean_url)
+        if url_match:
+            org_slug = url_match.group(1)
+            # Convert slug to name: replace hyphens with spaces, title case
+            org_name = org_slug.replace('-', ' ').title()
+        else:
+            # Fallback: try to find org from links in card
+            for a in card.find_all("a"):
+                a_href = a.get("href", "")
+                a_text = a.get_text(strip=True)
+                if a_text and a_text != title and len(a_text) > 2:
+                    if any(x in a_href for x in ["/jobs?", "/volunteer", "/advice"]):
+                        continue
+                    if a_text not in ["Apply", "Save", "Share", "Job Details"]:
+                        org_name = a_text
+                        break
 
         # Extract salary
         salary_min, salary_max, salary_currency = None, None, "GBP"

@@ -262,11 +262,21 @@ def crawl_charityjob_job(job: Job) -> Optional[Job]:
         job.raw_data["crawl_error"] = "Could not extract content"
         return job
 
+    # Extract org name from URL if not found in page
+    org_name = parsed.get("organization_name", "")
+    if not org_name or org_name == "Unknown Organization":
+        import re
+        url_match = re.search(r'/jobs/([^/]+)/[^/]+/\d+', job.application_url or "")
+        if url_match:
+            org_slug = url_match.group(1)
+            org_name = org_slug.replace('-', ' ').title()
+
     # Update the job
     return update_job_from_crawl(
         job=job,
         title=parsed["title"] or job.title,
         description=parsed["description"],
+        company_name=org_name,
         requirements=parsed["requirements"],
         location=parsed["location"],
         job_type=parsed["job_type"],
