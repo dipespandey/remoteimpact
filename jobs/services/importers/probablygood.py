@@ -215,13 +215,25 @@ def _extract_job_from_card(card_elem, soup: BeautifulSoup) -> Optional[Dict]:
                 pass
 
         # Find external application URL if present
+        # Priority 1: Look for the "Job Details" button which has the actual application link
         application_url = job_url  # Default to Probably Good detail page
-        external_links = card_elem.find_all("a", href=lambda x: x and x.startswith("http") and "probablygood.org" not in x)
-        for link in external_links:
-            href = link.get("href", "")
-            if any(kw in href.lower() for kw in ["careers", "jobs", "workday", "greenhouse", "lever", "ashby", "apply"]):
+        
+        job_details_button = card_elem.find("a", class_=lambda c: c and "job-details-button" in c)
+        if job_details_button:
+            href = job_details_button.get("href", "")
+            if href and href.startswith("http") and "probablygood.org" not in href:
                 application_url = href
-                break
+        
+        # Priority 2: Fall back to scanning for any external career-related links
+        if application_url == job_url:
+            external_links = card_elem.find_all("a", href=lambda x: x and x.startswith("http") and "probablygood.org" not in x)
+            for link in external_links:
+                href = link.get("href", "")
+                # Accept any external link as a potential application URL
+                # (most Probably Good listings link directly to the employer's job page)
+                if href:
+                    application_url = href
+                    break
 
         return {
             "source": Job.Source.PROBABLYGOOD,
