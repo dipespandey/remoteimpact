@@ -298,3 +298,27 @@ LOGGING = {
         "django.request": {"handlers": ["console"], "level": "DEBUG"},
     },
 }
+
+# =============================================================================
+# CACHING - Redis for faster page loads globally
+# =============================================================================
+
+REDIS_URL = os.getenv("REDIS_URL", "redis://dokploy-redis:6379/0")
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": REDIS_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django.core.cache.backends.redis.RedisCacheClient",
+        },
+        "KEY_PREFIX": "ri",
+        "TIMEOUT": 300,  # 5 minutes default
+    }
+}
+
+# Cache timeouts for different content types (in seconds)
+CACHE_TTL_SHORT = 60  # 1 minute - for frequently changing content
+CACHE_TTL_MEDIUM = 300  # 5 minutes - for job listings
+CACHE_TTL_LONG = 3600  # 1 hour - for static-ish pages like resources
+CACHE_TTL_DAY = 86400  # 24 hours - for rarely changing content

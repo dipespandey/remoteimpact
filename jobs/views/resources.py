@@ -5,6 +5,8 @@ from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.cache import cache_page
+from django.conf import settings
 import json
 import re
 
@@ -24,6 +26,7 @@ class PayRaiseCalculatorView(TemplateView):
     template_name = "jobs/tools/pay_raise_calculator.html"
 
 
+@method_decorator(cache_page(getattr(settings, 'CACHE_TTL_MEDIUM', 300)), name='dispatch')
 class HomeView(TemplateView):
     template_name = "jobs/home.html"
 
@@ -117,6 +120,7 @@ class ToolsIndexView(TemplateView):
     template_name = "jobs/tools/index.html"
 
 
+@method_decorator(cache_page(getattr(settings, 'CACHE_TTL_LONG', 3600)), name='dispatch')
 class ResourcesView(TemplateView):
     template_name = "jobs/resources.html"
 
