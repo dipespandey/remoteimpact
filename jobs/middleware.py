@@ -83,34 +83,47 @@ class CloudflareEdgeCacheMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
         
-        # Debug: Always set a header to verify middleware runs
-        response['X-Edge-Cache-Middleware'] = 'active'
+        # Debug: trace execution path
+        debug_info = []
         
         # Only cache GET requests
         if request.method != 'GET':
+            response['X-Edge-Cache-Debug'] = 'skip:not-get'
             return response
         
+        debug_info.append(f'method=GET')
+        
         # Don't cache for authenticated users
-        # Note: Check if user attr exists and is authenticated
         user = getattr(request, 'user', None)
-        if user is not None and getattr(user, 'is_authenticated', False):
+        is_auth = getattr(user, 'is_authenticated', False) if user else False
+        debug_info.append(f'auth={is_auth}')
+        
+        if is_auth:
             response['Cache-Control'] = 'private, no-cache'
+            response['X-Edge-Cache-Debug'] = 'skip:authenticated'
             return response
         
         # Don't cache if response already has strong cache directive
-        if response.get('Cache-Control') and 'no-store' in response.get('Cache-Control', ''):
+        existing_cc = response.get('Cache-Control', '')
+        debug_info.append(f'existing-cc={existing_cc[:30] if existing_cc else "none"}')
+        if existing_cc and 'no-store' in existing_cc:
+            response['X-Edge-Cache-Debug'] = 'skip:no-store'
             return response
         
         # Don't cache error responses
+        debug_info.append(f'status={response.status_code}')
         if response.status_code >= 400:
+            response['X-Edge-Cache-Debug'] = f'skip:status-{response.status_code}'
             return response
         
         path = request.path
+        debug_info.append(f'path={path}')
         
         # Check no-cache patterns first
         for pattern in self.no_cache_patterns:
             if pattern.match(path):
                 response['Cache-Control'] = 'private, no-cache'
+                response['X-Edge-Cache-Debug'] = f'skip:no-cache-pattern'
                 return response
         
         # Check if URL has query params (search/filter) - shorter cache
@@ -121,13 +134,14 @@ class CloudflareEdgeCacheMiddleware:
             if pattern.match(path):
                 # Reduce TTL for filtered/search pages
                 if has_query and path.startswith('/jobs'):
-                    edge_ttl = min(edge_ttl, 60)  # Max 1 min for filtered results
+                    edge_ttl = min(edge_ttl, 60)
                 
-                # s-maxage = CDN cache time, max-age = browser cache time
-                browser_ttl = min(edge_ttl, 60)  # Browser cache max 1 min
+                browser_ttl = min(edge_ttl, 60)
                 response['Cache-Control'] = f'public, max-age={browser_ttl}, s-maxage={edge_ttl}'
                 response['Vary'] = 'Accept-Encoding'
+                response['X-Edge-Cache-Debug'] = f'cached:ttl={edge_ttl}'
                 return response
         
-        # Default: don't set aggressive caching for unmatched paths
+        # No match
+        response['X-Edge-Cache-Debug'] = f'skip:no-match,{",".join(debug_info)}'
         return response
