@@ -43,16 +43,12 @@ class Command(BaseCommand):
             "charityjob", "probablygood", "80000hours"
         ]
 
-        # Get jobs that haven't been checked recently (last 24 hours)
-        one_day_ago = timezone.now() - timezone.timedelta(days=1)
-        
+        # Get jobs from verifiable sources that are active
+        # Order by updated_at to check oldest jobs first
         jobs = (
             Job.objects.filter(
                 source__in=verifiable_sources,
                 is_active=True,
-            )
-            .exclude(
-                raw_data__last_stale_check__gte=one_day_ago.isoformat()
             )
             .order_by("updated_at")[:limit]
         )
