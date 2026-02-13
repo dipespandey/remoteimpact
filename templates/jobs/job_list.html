@@ -525,7 +525,7 @@
                         {% endif %}
                     </div>
                     <div class="flex-1 min-w-0 space-y-1 md:space-y-2">
-                        <!-- Top line: Posted, Deadline, Compensation -->
+                        <!-- Top line: Posted, Deadline, Compensation, Entry-Level Badge -->
                         <div class="flex flex-wrap items-center gap-2 md:gap-4 text-[10px] md:text-xs text-white/60">
                             <span>{{ job.posted_at|timesince|slice:":8" }} ago</span>
                             {% if job.expires_at %}
@@ -533,6 +533,9 @@
                             {% endif %}
                             {% if job.salary_min and job.salary_max %}
                             <span class="text-neon font-medium">{% if job.salary_currency == "GBP" %}£{% elif job.salary_currency == "EUR" %}€{% else %}${% endif %}{{ job.salary_min|floatformat:0 }} - {% if job.salary_currency == "GBP" %}£{% elif job.salary_currency == "EUR" %}€{% else %}${% endif %}{{ job.salary_max|floatformat:0 }}</span>
+                            {% endif %}
+                            {% if job.is_entry_level_friendly %}
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" title="Great for career starters & switchers">🌱 Entry-Level</span>
                             {% endif %}
                         </div>
                         <!-- Title and Org -->

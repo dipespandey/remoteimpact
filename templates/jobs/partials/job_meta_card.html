@@ -12,6 +12,9 @@
             {% if job.is_featured %}
             <span class="px-4 py-1 rounded-full text-xs font-semibold bg-brand-500/20 text-neon border border-brand-500/40">Featured</span>
             {% endif %}
+            {% if job.is_entry_level_friendly %}
+            <span class="px-4 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" title="Great for career starters & switchers">🌱 Entry-Level Friendly</span>
+            {% endif %}
         </div>
         <div class="grid sm:grid-cols-2 gap-6 text-white">
             <div>
