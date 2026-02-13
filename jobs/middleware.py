@@ -83,12 +83,17 @@ class CloudflareEdgeCacheMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
         
+        # Debug: Always set a header to verify middleware runs
+        response['X-Edge-Cache-Middleware'] = 'active'
+        
         # Only cache GET requests
         if request.method != 'GET':
             return response
         
         # Don't cache for authenticated users
-        if hasattr(request, 'user') and request.user.is_authenticated:
+        # Note: Check if user attr exists and is authenticated
+        user = getattr(request, 'user', None)
+        if user is not None and getattr(user, 'is_authenticated', False):
             response['Cache-Control'] = 'private, no-cache'
             return response
         
