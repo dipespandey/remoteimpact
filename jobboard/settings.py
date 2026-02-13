@@ -91,6 +91,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "jobs.middleware.ReferralMiddleware",
+    "jobs.middleware.CloudflareEdgeCacheMiddleware",  # Edge caching for global perf
 ]
 
 ROOT_URLCONF = "jobboard.urls"
