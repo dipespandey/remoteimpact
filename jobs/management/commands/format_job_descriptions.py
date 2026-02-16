@@ -15,15 +15,33 @@ def is_cluttered(description: str) -> bool:
     if not description or len(description) < 500:
         return False
     
-    # Count line breaks relative to length
     line_breaks = description.count('\n')
-    ratio = line_breaks / len(description)
+    char_count = len(description)
     
-    # Check for section headers
-    has_headers = bool(re.search(r'\n#{1,3}\s|\n\*\*[A-Z]', description))
+    # Calculate average chars per line (high = wall of text)
+    if line_breaks == 0:
+        chars_per_line = float('inf')
+    else:
+        chars_per_line = char_count / line_breaks
     
-    # Cluttered if very few line breaks and no headers
-    return ratio < 0.01 and not has_headers
+    # Check for markdown structure
+    has_headers = '##' in description or bool(re.search(r'\n\*\*[A-Z]', description))
+    has_bullets = '- ' in description or '• ' in description
+    
+    # Criteria for "needs formatting":
+    # 1. Wall of text: >300 chars per line on average
+    if chars_per_line > 300:
+        return True
+    
+    # 2. No structure: >150 chars per line AND no markdown headers
+    if chars_per_line > 150 and not has_headers:
+        return True
+    
+    # 3. Minimal breaks: large description with very few line breaks
+    if line_breaks < 10 and char_count > 1000:
+        return True
+    
+    return False
 
 
 def format_with_llm(description: str, job_title: str, provider: str = "groq") -> str:
@@ -142,9 +160,11 @@ class Command(BaseCommand):
         if job_id:
             jobs = Job.objects.filter(id=job_id)
         else:
-            # Find cluttered descriptions
+            # Find cluttered descriptions that haven't been formatted yet
+            # Note: exclude() with JSONField key lookup doesn't work when key is missing
+            # So we use contains() instead to find jobs WITH the flag, then exclude those
             jobs = Job.objects.filter(is_active=True).exclude(
-                raw_data__description_formatted=True
+                raw_data__contains={'description_formatted': True}
             )
             
             # Filter to cluttered ones
