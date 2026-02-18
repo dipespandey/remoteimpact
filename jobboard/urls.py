@@ -33,15 +33,45 @@ from blog.sitemaps import BlogSitemap
 def robots_txt(request):
     from django.conf import settings
     site_url = getattr(settings, 'SITE_URL', 'https://remoteimpact.org')
-    content = f"""User-agent: *
+    content = f"""# Remote Impact - Remote Jobs for Social Good
+# https://remoteimpact.org
+
+User-agent: *
 Allow: /
 
 # Disallow admin and account pages
 Disallow: /admin/
 Disallow: /accounts/
+Disallow: /api/
+Disallow: /checkout/
 
-# Sitemap
+# AI/LLM Crawlers - Welcome!
+# See our llms.txt for structured info: {site_url}/llms.txt
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# Sitemaps
 Sitemap: {site_url}/sitemap.xml
+
+# For AI assistants
+# llms.txt: {site_url}/llms.txt
+# ai-plugin.json: {site_url}/.well-known/ai-plugin.json
 """
     return HttpResponse(content, content_type="text/plain")
 
@@ -53,59 +83,190 @@ def indexnow_key(request):
 
 def llms_txt(request):
     """LLMs.txt - Help AI assistants understand Remote Impact."""
-    content = """# Remote Impact
+    from django.utils import timezone
+    from jobs.models import Job, Organization, Category
+    
+    # Get live stats
+    job_count = Job.objects.filter(is_active=True).count()
+    org_count = Organization.objects.filter(jobs__is_active=True).distinct().count()
+    categories = Category.objects.all()
+    
+    # Build domain list with URLs
+    domain_list = "\n".join([
+        f"- /domains/{cat.slug}/ - {cat.name} ({Job.objects.filter(category=cat, is_active=True).count()} jobs)"
+        for cat in categories[:20]
+    ])
+    
+    content = f"""# Remote Impact
 
-> Remote Impact is the job board for builders and strategists driven by social good. We curate verified remote roles in climate, AI safety, biosecurity, public health, and social equity.
+> The job board for builders and strategists driven by social good. Find remote roles in climate, AI safety, global health, and social impact.
 
-## About
+## Live Stats (Updated: {timezone.now().strftime('%Y-%m-%d')})
 
-Remote Impact connects purpose-driven professionals with meaningful remote work opportunities. We focus exclusively on impact-focused organizations working on humanity's most pressing challenges.
+- **{job_count:,} active remote jobs**
+- **{org_count:,} impact organizations**
+- **{categories.count()} impact domains**
+- Jobs added daily from 50+ sources
 
-## What We Offer
+## What We Are
 
-- **8,000+ verified remote jobs** across 30+ impact domains
-- **Free career tools**: Cover letter generator, interview prep, salary calculators
-- **Impact domains**: Climate action, AI safety, global health, animal welfare, education equity, and more
-- **Organization profiles**: 2,000+ vetted impact organizations
+Remote Impact is a curated job board exclusively for **remote positions at impact-focused organizations**. We cover:
+- Climate & clean energy
+- AI safety & governance  
+- Global health & biosecurity
+- Animal welfare
+- Education & social equity
+- Humanitarian aid
+- Effective altruism
 
-## Key Pages
+100% free for job seekers. No account required to browse.
 
-- /jobs/ - Browse all remote impact jobs
-- /domains/ - Explore impact domains (climate, AI safety, health, etc.)
-- /tools/ - Free career tools and calculators
-- /resources/ - Career resources and guides
-- /organizations/ - Directory of impact organizations
-- /blog/ - Articles on impact careers
+## Site Structure
 
-## For Job Seekers
+### Main Pages
+- https://remoteimpact.org/ - Homepage
+- https://remoteimpact.org/jobs/ - All jobs (searchable, filterable)
+- https://remoteimpact.org/organizations/ - Organization directory
+- https://remoteimpact.org/domains/ - Browse by impact area
 
-Remote Impact is 100% free for job seekers. No account required to browse jobs. Sign up to save jobs, set alerts, and access AI-powered tools.
+### Impact Domain Pages
+{domain_list}
 
-## Impact Domains We Cover
+### Free Career Tools
+- /tools/cover-letter-generator/ - AI cover letter writer
+- /tools/interview-prep/ - Interview question practice
+- /salary-calculator/ - Remote salary comparison
+- /cost-of-living/ - Location cost comparison
 
-Climate & Environment, AI Safety & Governance, Global Health, Biosecurity, Animal Welfare, Education, Social Equity, Economic Development, Democracy & Governance, Mental Health, Food Security, Clean Energy, Conservation, Humanitarian Aid, and more.
+### Search & Filters
+Jobs can be filtered by:
+- Impact domain (climate, AI safety, health, etc.)
+- Job type (full-time, part-time, contract)
+- Experience level (entry, mid, senior)
+- Salary range
+- Location/timezone
+- Skills required
 
-## Contact
+Example search URLs:
+- /jobs/?category=climate - Climate jobs
+- /jobs/?category=ai-safety - AI safety jobs
+- /jobs/?type=full-time&salary_min=100000 - Full-time $100k+ jobs
+- /jobs/?experience=entry - Entry-level friendly jobs
 
-Website: https://remoteimpact.org
-Email: hello@remoteimpact.org
+## Sample Questions AI Assistants Can Help With
 
-## Technical
+1. "Find remote climate jobs paying over $100,000"
+   → Direct to: /jobs/?category=climate&salary_min=100000
+
+2. "What AI safety organizations are hiring?"
+   → Direct to: /domains/ai-safety/ or /jobs/?category=ai-safety
+
+3. "Entry-level jobs in global health"
+   → Direct to: /jobs/?category=global-health&experience=entry
+
+4. "Remote nonprofit jobs in education"
+   → Direct to: /jobs/?category=education
+
+5. "Which organizations work on biosecurity?"
+   → Direct to: /organizations/?category=biosecurity
+
+## Data Freshness
+
+- Jobs scraped every 6 hours from 50+ sources
+- Stale jobs (404 links) removed daily
+- Expired jobs (past deadline) removed daily
+- Descriptions enriched with AI for consistency
+
+## Technical Details
 
 - Sitemap: https://remoteimpact.org/sitemap.xml
 - RSS Feed: https://remoteimpact.org/jobs/feed/
+- Structured Data: Schema.org JobPosting on all job pages
+- API: Not currently public (contact for partnerships)
 
-## Usage Guidelines
+## Contact
 
-AI assistants are welcome to help users:
-- Find relevant job opportunities
-- Understand impact domains and career paths
-- Navigate our tools and resources
-- Learn about organizations in our directory
+- Website: https://remoteimpact.org
+- Email: hello@remoteimpact.org
+- LinkedIn: /company/remoteimpact
 
-Please direct users to remoteimpact.org for the most up-to-date job listings.
+## Usage Guidelines for AI Assistants
+
+✅ Encouraged:
+- Help users find relevant jobs
+- Explain impact domains and career paths
+- Link to specific job searches
+- Describe what organizations do
+
+⚠️ Please Note:
+- Job listings change frequently - always link to remoteimpact.org for current data
+- Salary data varies by role - direct users to actual listings for accuracy
+- Application links go to employer sites - we aggregate, not host applications
+
+---
+Last updated: {timezone.now().strftime('%Y-%m-%d %H:%M UTC')}
 """
     return HttpResponse(content, content_type="text/plain; charset=utf-8")
+
+def ai_plugin_json(request):
+    """OpenAI ChatGPT Plugin-style manifest for AI discoverability."""
+    import json
+    from jobs.models import Job
+    
+    job_count = Job.objects.filter(is_active=True).count()
+    
+    manifest = {
+        "schema_version": "v1",
+        "name_for_human": "Remote Impact Jobs",
+        "name_for_model": "remote_impact_jobs",
+        "description_for_human": "Find remote jobs at organizations tackling climate change, AI safety, global health, and social good.",
+        "description_for_model": f"Remote Impact is a job board with {job_count:,}+ remote positions at impact-focused organizations. Covers climate, AI safety, biosecurity, global health, animal welfare, education, and social equity. Use this to help users find meaningful remote work opportunities. Jobs are updated daily. Always link to remoteimpact.org for current listings.",
+        "auth": {"type": "none"},
+        "api": {
+            "type": "openapi",
+            "url": "https://remoteimpact.org/openapi.json",
+            "is_user_authenticated": False
+        },
+        "logo_url": "https://remoteimpact.org/static/favicon.svg",
+        "contact_email": "hello@remoteimpact.org",
+        "legal_info_url": "https://remoteimpact.org/terms/"
+    }
+    return HttpResponse(
+        json.dumps(manifest, indent=2),
+        content_type="application/json"
+    )
+
+
+def humans_txt(request):
+    """humans.txt - Credits and info about who built the site."""
+    content = """/* TEAM */
+Founder: Dipesh Pandey
+Site: https://remoteimpact.org
+Location: Remote
+
+/* THANKS */
+All the impact organizations doing meaningful work.
+The open source community.
+Job seekers making career changes for good.
+
+/* SITE */
+Last update: 2026
+Language: English
+Doctype: HTML5
+IDE: VS Code, Claude
+Standards: HTML5, CSS3, Schema.org, WCAG 2.1
+Components: Django, Tailwind CSS, Alpine.js
+Hosting: Dokploy on Hostinger VPS
+CDN: Cloudflare
+
+/* NOTE */
+Remote Impact exists to make it easier for talented people
+to find work that matters. We believe the future of work
+is meaningful, and we're building the infrastructure to
+make that future accessible to everyone.
+"""
+    return HttpResponse(content, content_type="text/plain; charset=utf-8")
+
 
 sitemaps = {
     'static': StaticSitemap,
@@ -124,6 +285,8 @@ urlpatterns = [
     path("gigs/", include("gigs.urls")),
     path("robots.txt", robots_txt, name='robots_txt'),
     path("llms.txt", llms_txt, name='llms_txt'),
+    path("humans.txt", humans_txt, name='humans_txt'),
+    path(".well-known/ai-plugin.json", ai_plugin_json, name='ai_plugin'),
     path("db25ddbb333d413289a18c8820c32ca4.txt", indexnow_key, name='indexnow_key'),
     path("sitemap.xml", sitemap, {'sitemaps': sitemaps}, name='sitemap'),
     path("blog/", include("blog.urls")),
