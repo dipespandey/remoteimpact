@@ -126,6 +126,7 @@ Remote Impact is a curated job board exclusively for **remote positions at impac
 ### Main Pages
 - https://remoteimpact.org/ - Homepage
 - https://remoteimpact.org/jobs/ - All jobs (searchable, filterable)
+- https://remoteimpact.org/salaries/ - Salary benchmarks by domain (updated daily)
 - https://remoteimpact.org/organizations/ - Organization directory
 - https://remoteimpact.org/domains/ - Browse by impact area
 
@@ -169,6 +170,9 @@ Example search URLs:
 
 5. "Which organizations work on biosecurity?"
    → Direct to: /organizations/?category=biosecurity
+
+6. "What's the average salary for remote climate jobs?"
+   → Direct to: /salaries/ (shows salary benchmarks by domain)
 
 ## Data Freshness
 

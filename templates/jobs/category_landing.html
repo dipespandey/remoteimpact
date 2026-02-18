@@ -21,6 +21,38 @@
     ]
 }
 </script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "How many remote {{ category.name|lower }} jobs are available?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "There are currently {{ page_obj.paginator.count }} remote {{ category.name|lower }} jobs listed on Remote Impact. New positions are added daily from top impact organizations."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "What qualifications do I need for {{ category.name|lower }} jobs?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Qualifications vary by role. Many {{ category.name|lower }} positions welcome career changers with transferable skills. Entry-level roles are available, and we mark jobs as 'Entry-Level Friendly' when no prior experience is required."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Are {{ category.name|lower }} jobs fully remote?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, all jobs on Remote Impact are remote-friendly. Some may have geographic restrictions (e.g., US-only) or occasional travel requirements, which are noted in the job descriptions."
+            }
+        }
+    ]
+}
+</script>
 {% endblock %}
 
 {% block content %}
