@@ -129,9 +129,9 @@ class Command(BaseCommand):
         parser.add_argument(
             "--provider",
             type=str,
-            default="groq",
-            choices=["groq", "deepseek"],
-            help="LLM provider (default: groq)",
+            default="deepseek",
+            choices=["deepseek", "groq"],
+            help="LLM provider (default: deepseek)",
         )
         parser.add_argument(
             "--delay",
