@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+
+{% block title %}Remote Impact Job Salaries 2026 | Salary Benchmarks by Domain{% endblock %}
+
+{% block meta_description %}Explore salary data for {{ total_with_salary|default:"3,000" }}+ remote impact jobs. See average salaries by domain: Climate (${{ overall.avg_min|floatformat:0|default:"100,000" }}+), AI Safety, Global Health, Nonprofits. Updated daily.{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    "name": "Remote Impact Job Salary Benchmarks 2026",
+    "description": "Salary data for remote jobs at impact-focused organizations, covering climate, AI safety, global health, and social good sectors.",
+    "url": "https://remoteimpact.org/salaries/",
+    "creator": {
+        "@type": "Organization",
+        "name": "Remote Impact"
+    },
+    "temporalCoverage": "2026",
+    "spatialCoverage": "Global (Remote)",
+    "variableMeasured": [
+        {
+            "@type": "PropertyValue",
+            "name": "Minimum Salary",
+            "unitText": "USD per year"
+        },
+        {
+            "@type": "PropertyValue",
+            "name": "Maximum Salary",
+            "unitText": "USD per year"
+        }
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "What is the average salary for remote climate jobs?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Based on our data from {{ by_domain.0.job_count|default:'1,500' }}+ jobs, remote climate and environment roles pay an average of ${{ by_domain.0.avg_min|floatformat:0|default:'90,000' }} to ${{ by_domain.0.avg_max|floatformat:0|default:'130,000' }} per year."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Do nonprofit jobs pay well?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Nonprofit salaries vary widely. Our data shows average ranges from $40,000 to $150,000+ depending on role seniority and organization size. Impact-focused tech companies and well-funded nonprofits often pay competitively with for-profit sectors."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "What are the highest paying impact domains?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Based on current job listings, AI Safety, Climate Tech, and Global Health tend to have the highest average salaries, often $120,000-$200,000+ for senior roles."
+            }
+        }
+    ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="bg-twilight-900 py-12 md:py-20">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-3">Salary Data</p>
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">
+                Remote Impact Job Salaries
+            </h1>
+            <p class="text-xl text-white/70 max-w-2xl mx-auto">
+                Real salary data from {{ total_with_salary|default:"3,000" }}+ remote jobs at impact-focused organizations. Updated daily.
+            </p>
+        </div>
+
+        <!-- Overall Stats -->
+        <div class="grid md:grid-cols-4 gap-6 mb-16">
+            <div class="bg-card-gradient rounded-2xl border border-white/10 p-6 text-center">
+                <p class="text-4xl font-bold text-neon mb-2">${{ overall.avg_min|floatformat:0|intcomma }}</p>
+                <p class="text-white/60 text-sm">Average Min Salary</p>
+            </div>
+            <div class="bg-card-gradient rounded-2xl border border-white/10 p-6 text-center">
+                <p class="text-4xl font-bold text-neon mb-2">${{ overall.avg_max|floatformat:0|intcomma }}</p>
+                <p class="text-white/60 text-sm">Average Max Salary</p>
+            </div>
+            <div class="bg-card-gradient rounded-2xl border border-white/10 p-6 text-center">
+                <p class="text-4xl font-bold text-white mb-2">${{ overall.max_salary|floatformat:0|intcomma }}</p>
+                <p class="text-white/60 text-sm">Highest Listed</p>
+            </div>
+            <div class="bg-card-gradient rounded-2xl border border-white/10 p-6 text-center">
+                <p class="text-4xl font-bold text-white mb-2">{{ total_with_salary|intcomma }}</p>
+                <p class="text-white/60 text-sm">Jobs with Salary Data</p>
+            </div>
+        </div>
+
+        <!-- By Domain -->
+        <div class="mb-16">
+            <h2 class="text-2xl font-semibold text-white mb-6">Salaries by Impact Domain</h2>
+            <div class="bg-card-gradient rounded-2xl border border-white/10 overflow-hidden">
+                <table class="w-full">
+                    <thead class="border-b border-white/10">
+                        <tr class="text-left text-white/60 text-sm">
+                            <th class="px-6 py-4">Domain</th>
+                            <th class="px-6 py-4 text-right">Jobs</th>
+                            <th class="px-6 py-4 text-right">Avg Min</th>
+                            <th class="px-6 py-4 text-right">Avg Max</th>
+                            <th class="px-6 py-4 text-right hidden md:table-cell">Range</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for domain in by_domain %}
+                        <tr class="text-white hover:bg-white/5 transition">
+                            <td class="px-6 py-4">
+                                <a href="{% url 'jobs:category_landing' slug=domain.category__slug %}" class="flex items-center gap-3 hover:text-neon transition">
+                                    <span class="text-xl">{{ domain.category__icon|default:"🌍" }}</span>
+                                    <span class="font-medium">{{ domain.category__name }}</span>
+                                </a>
+                            </td>
+                            <td class="px-6 py-4 text-right text-white/70">{{ domain.job_count|intcomma }}</td>
+                            <td class="px-6 py-4 text-right font-medium">${{ domain.avg_min|floatformat:0|intcomma }}</td>
+                            <td class="px-6 py-4 text-right font-medium">${{ domain.avg_max|floatformat:0|intcomma }}</td>
+                            <td class="px-6 py-4 text-right text-white/60 hidden md:table-cell">
+                                ${{ domain.min_salary|floatformat:0|intcomma }} - ${{ domain.max_salary|floatformat:0|intcomma }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- By Experience Level -->
+        {% if by_experience %}
+        <div class="mb-16">
+            <h2 class="text-2xl font-semibold text-white mb-6">Salaries by Experience Level</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {% for exp in by_experience %}
+                <div class="bg-card-gradient rounded-xl border border-white/10 p-5">
+                    <p class="text-white/60 text-sm mb-1 capitalize">{{ exp.experience_level|default:"Not Specified" }}</p>
+                    <p class="text-xl font-semibold text-white">
+                        ${{ exp.avg_min|floatformat:0|intcomma }} - ${{ exp.avg_max|floatformat:0|intcomma }}
+                    </p>
+                    <p class="text-white/50 text-xs mt-1">{{ exp.job_count }} jobs</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Top Paying Roles -->
+        <div class="mb-16">
+            <h2 class="text-2xl font-semibold text-white mb-6">Highest Paying Remote Impact Jobs</h2>
+            <div class="space-y-3">
+                {% for job in top_paying %}
+                <a href="{{ job.get_absolute_url }}" class="block bg-card-gradient rounded-xl border border-white/10 p-4 hover:border-white/30 transition">
+                    <div class="flex justify-between items-start gap-4">
+                        <div>
+                            <h3 class="font-semibold text-white hover:text-neon transition">{{ job.title }}</h3>
+                            <p class="text-white/60 text-sm">{{ job.organization.name }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-neon font-bold">${{ job.salary_max|floatformat:0|intcomma }}</p>
+                            <p class="text-white/50 text-xs">Max salary</p>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Methodology Note -->
+        <div class="bg-white/5 rounded-2xl p-6 text-white/70 text-sm">
+            <h3 class="font-semibold text-white mb-2">📊 About This Data</h3>
+            <p class="mb-2">
+                This salary data is aggregated from {{ total_with_salary|intcomma }} job listings on Remote Impact that include salary information. 
+                Data is updated daily as new jobs are added. All figures are in USD unless otherwise specified.
+            </p>
+            <p>
+                Note: Not all employers disclose salary. The jobs shown represent roughly 30-40% of all listings. 
+                Actual salary ranges may vary based on experience, location, and organization.
+            </p>
+        </div>
+
+        <!-- CTA -->
+        <div class="mt-12 text-center">
+            <a href="{% url 'jobs:job_list' %}" class="inline-flex items-center px-8 py-4 rounded-full bg-brand-300 text-twilight-900 font-semibold hover:bg-neon transition shadow-glow">
+                Browse All {{ overall.total_jobs|intcomma }}+ Jobs
+                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

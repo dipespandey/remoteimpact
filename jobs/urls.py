@@ -10,6 +10,7 @@ urlpatterns = [
     path("", views.HomeView.as_view(), name="home"),
     path("resources/", views.ResourcesView.as_view(), name="resources"),
     path("domains/", views.AllDomainsView.as_view(), name="all_domains"),
+    path("salaries/", views.SalaryBenchmarksView.as_view(), name="salary_benchmarks"),
     # Jobs
     path("jobs/", views.JobListView.as_view(), name="job_list"),
     path("jobs/post/", views.PostJobView.as_view(), name="post_job"),

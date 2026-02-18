@@ -14,6 +14,7 @@ from .resources import (
     ResourcesView,
     ToolsIndexView,
     SalaryToHourlyView,
+    SalaryBenchmarksView,
     ApplicantAssistantView,
     ApplicantAssistantGenerateView,
     AssistantSubscribeView,

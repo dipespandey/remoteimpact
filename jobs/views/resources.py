@@ -974,3 +974,79 @@ class ClusterDetailView(TemplateView):
         ctx["pillar_slug"] = self.kwargs["pillar_slug"]
         ctx["cluster_slug"] = self.kwargs["cluster_slug"]
         return ctx
+
+
+class SalaryBenchmarksView(TemplateView):
+    """Salary benchmarks across impact domains - SEO and transparency."""
+    template_name = "jobs/tools/salary_benchmarks.html"
+    
+    def get_context_data(self, **kwargs):
+        from django.db.models import Avg, Min, Max, Count, Q
+        from django.db.models.functions import Coalesce
+        from ..models import Job, Category
+        
+        ctx = super().get_context_data(**kwargs)
+        
+        # Base queryset - jobs with salary data
+        salary_jobs = Job.objects.filter(
+            is_active=True,
+            salary_min__isnull=False,
+            salary_max__isnull=False,
+            salary_min__gt=0,
+            salary_max__lt=1000000,  # Filter outliers
+        )
+        
+        # Stats by category/domain
+        by_domain = salary_jobs.values(
+            'category__name', 'category__slug', 'category__icon'
+        ).annotate(
+            job_count=Count('id'),
+            avg_min=Avg('salary_min'),
+            avg_max=Avg('salary_max'),
+            min_salary=Min('salary_min'),
+            max_salary=Max('salary_max'),
+        ).filter(
+            category__name__isnull=False,
+            job_count__gte=10  # Only domains with enough data
+        ).order_by('-job_count')
+        
+        # Stats by job type
+        by_type = salary_jobs.values('job_type').annotate(
+            job_count=Count('id'),
+            avg_min=Avg('salary_min'),
+            avg_max=Avg('salary_max'),
+        ).order_by('-job_count')
+        
+        # Stats by experience level
+        by_experience = salary_jobs.exclude(
+            experience_level__isnull=True
+        ).exclude(
+            experience_level=''
+        ).values('experience_level').annotate(
+            job_count=Count('id'),
+            avg_min=Avg('salary_min'),
+            avg_max=Avg('salary_max'),
+        ).order_by('-job_count')
+        
+        # Overall stats
+        overall = salary_jobs.aggregate(
+            total_jobs=Count('id'),
+            avg_min=Avg('salary_min'),
+            avg_max=Avg('salary_max'),
+            min_salary=Min('salary_min'),
+            max_salary=Max('salary_max'),
+        )
+        
+        # Top paying roles (sample)
+        top_paying = salary_jobs.order_by('-salary_max')[:10]
+        
+        ctx.update({
+            'by_domain': list(by_domain),
+            'by_type': list(by_type),
+            'by_experience': list(by_experience),
+            'overall': overall,
+            'top_paying': top_paying,
+            'total_with_salary': salary_jobs.count(),
+        })
+        
+        return ctx

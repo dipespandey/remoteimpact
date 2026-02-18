@@ -144,6 +144,7 @@ class StaticSitemap(Sitemap):
             ('jobs:home', 1.0, 'daily'),
             ('jobs:job_list', 0.9, 'hourly'),
             ('jobs:resources', 0.7, 'weekly'),
+            ('jobs:salary_benchmarks', 0.8, 'daily'),  # Salary data page - high value SEO
             ('jobs:post_job', 0.5, 'monthly'),
             ('gigs:gig_list', 0.8, 'daily'),
             ('jobs:organization_directory', 0.8, 'weekly'),
