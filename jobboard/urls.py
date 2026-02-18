@@ -268,6 +268,22 @@ make that future accessible to everyone.
     return HttpResponse(content, content_type="text/plain; charset=utf-8")
 
 
+def security_txt(request):
+    """security.txt - Security contact information (RFC 9116)."""
+    content = """# Security Policy for Remote Impact
+# https://remoteimpact.org
+
+Contact: mailto:security@remoteimpact.org
+Contact: mailto:hello@remoteimpact.org
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: en
+
+# We appreciate responsible disclosure of security vulnerabilities.
+# Please allow us reasonable time to address issues before public disclosure.
+"""
+    return HttpResponse(content, content_type="text/plain; charset=utf-8")
+
+
 sitemaps = {
     'static': StaticSitemap,
     'jobs': JobSitemap,
@@ -287,6 +303,8 @@ urlpatterns = [
     path("llms.txt", llms_txt, name='llms_txt'),
     path("humans.txt", humans_txt, name='humans_txt'),
     path(".well-known/ai-plugin.json", ai_plugin_json, name='ai_plugin'),
+    path(".well-known/security.txt", security_txt, name='security_txt'),
+    path("security.txt", security_txt, name='security_txt_root'),
     path("db25ddbb333d413289a18c8820c32ca4.txt", indexnow_key, name='indexnow_key'),
     path("sitemap.xml", sitemap, {'sitemaps': sitemaps}, name='sitemap'),
     path("blog/", include("blog.urls")),
