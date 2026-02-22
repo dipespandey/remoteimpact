@@ -50,6 +50,7 @@ class OnboardingService:
     def create_organization(user, form):
         org = form.save(commit=False)
         org.slug = unique_slug(Organization, org.name)
+        org.source = 'signup'
         org.save()
         org.members.add(user)
         return org
