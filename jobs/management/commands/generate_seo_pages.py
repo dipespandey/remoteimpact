@@ -96,10 +96,18 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('─' * 50))
 
         skill_counts = Counter()
-        for job in jobs.values_list('skills_list', flat=True):
-            if job:
-                for skill in job:
-                    skill_counts[skill.lower()] += 1
+        for skills_str in jobs.exclude(skills__isnull=True).exclude(skills='').values_list('skills', flat=True):
+            if skills_str:
+                # Skills are stored as comma-separated or JSON array
+                import json
+                try:
+                    skills = json.loads(skills_str) if skills_str.startswith('[') else skills_str.split(',')
+                except:
+                    skills = skills_str.split(',')
+                for skill in skills:
+                    skill = skill.strip().lower()
+                    if skill and len(skill) > 2:
+                        skill_counts[skill] += 1
 
         for skill, count in skill_counts.most_common(30):
             if count >= min_jobs:
@@ -189,10 +197,17 @@ class Command(BaseCommand):
 
         # Generate skill pages
         skill_counts = Counter()
-        for job in jobs.values_list('skills_list', flat=True):
-            if job:
-                for skill in job:
-                    skill_counts[skill.lower()] += 1
+        for skills_str in jobs.exclude(skills__isnull=True).exclude(skills='').values_list('skills', flat=True):
+            if skills_str:
+                import json
+                try:
+                    skills = json.loads(skills_str) if skills_str.startswith('[') else skills_str.split(',')
+                except:
+                    skills = skills_str.split(',')
+                for skill in skills:
+                    skill = skill.strip().lower()
+                    if skill and len(skill) > 2:
+                        skill_counts[skill] += 1
 
         for skill, count in skill_counts.most_common():
             if count >= min_jobs and len(skill) > 2:
