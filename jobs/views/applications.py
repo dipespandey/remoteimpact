@@ -141,3 +141,28 @@ class MyApplicationsView(LoginRequiredMixin, ListView):
         return Application.objects.filter(
             applicant=self.request.user
         ).select_related("job", "job__organization", "job__category").order_by("-applied_at")
+
+
+class EmployerJobApplicationsView(LoginRequiredMixin, ListView):
+    """Employer view of applicants for a specific job."""
+    template_name = "jobs/employer_applications.html"
+    context_object_name = "applications"
+    paginate_by = 20
+
+    def dispatch(self, request, *args, **kwargs):
+        self.job = get_object_or_404(Job, slug=kwargs["slug"])
+        # Verify user is org member
+        if not self.job.organization.members.filter(pk=request.user.pk).exists():
+            messages.error(request, "You don't have permission to view these applications.")
+            return redirect("jobs:account")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return Application.objects.filter(
+            job=self.job
+        ).select_related("applicant", "applicant__profile").order_by("-applied_at")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["job"] = self.job
+        return ctx

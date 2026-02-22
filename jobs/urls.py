@@ -11,6 +11,8 @@ urlpatterns = [
     path("resources/", views.ResourcesView.as_view(), name="resources"),
     path("domains/", views.AllDomainsView.as_view(), name="all_domains"),
     path("salaries/", views.SalaryBenchmarksView.as_view(), name="salary_benchmarks"),
+    path("privacy/", views.PrivacyPolicyView.as_view(), name="privacy"),
+    path("terms/", views.TermsOfServiceView.as_view(), name="terms"),
     # Jobs
     path("jobs/", views.JobListView.as_view(), name="job_list"),
     path("jobs/post/", views.PostJobView.as_view(), name="post_job"),
@@ -161,7 +163,9 @@ urlpatterns = [
     path("talent/", views.TalentDirectoryView.as_view(), name="talent_directory"),
     path("talent/<int:user_id>/", views.TalentProfileView.as_view(), name="talent_profile"),
     path("talent/<int:user_id>/invite/", views.TalentInviteView.as_view(), name="talent_invite"),
-    path("jobs/<slug:slug>/apply/", views.ApplicationCreateView.as_view(), name="apply_job"),    path("applications/", views.MyApplicationsView.as_view(), name="my_applications"),
+    path("jobs/<slug:slug>/apply/", views.ApplicationCreateView.as_view(), name="apply_job"),
+    path("jobs/<slug:slug>/applications/", views.EmployerJobApplicationsView.as_view(), name="employer_job_applications"),
+    path("applications/", views.MyApplicationsView.as_view(), name="my_applications"),
     # Tools
     path("tools/resignation-letter-generator/", views.ResignationLetterView.as_view(), name="resignation_letter"),
     path("tools/resignation-letter-generator/generate/", views.ResignationLetterGenerateView.as_view(), name="resignation_letter_generate"),

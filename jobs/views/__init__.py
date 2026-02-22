@@ -41,6 +41,8 @@ from .resources import (
     RemoteReadinessQuizView,
     PillarDetailView,
     ClusterDetailView,
+    PrivacyPolicyView,
+    TermsOfServiceView,
 )
 from .stories import (
     StoryFeedView,
@@ -69,7 +71,7 @@ from .talent import TalentDirectoryView, TalentProfileView, TalentInviteView
 from .invitations import InvitationInboxView, InvitationDeclineView
 from .visibility import VisibilitySettingsView
 
-from .applications import ApplicationCreateView, MyApplicationsView
+from .applications import ApplicationCreateView, MyApplicationsView, EmployerJobApplicationsView
 
 from .og_image import JobOGImageView
 

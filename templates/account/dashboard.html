@@ -67,11 +67,11 @@
                                 </div>
                                 <div class="flex items-center gap-3">
                                     {% if job.is_paid %}
-                                    <a href="#"
-                                        class="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5 hover:bg-gray-100 rounded-lg transition">Edit</a>
-                                    <a href="#"
+                                    <a href="{{ job.get_absolute_url }}"
+                                        class="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5 hover:bg-gray-100 rounded-lg transition">View</a>
+                                    <a href="{% url 'jobs:employer_job_applications' job.slug %}"
                                         class="text-sm font-bold text-brand-600 hover:text-brand-700 px-3 py-1.5 bg-brand-50 hover:bg-brand-100 rounded-lg transition">View
-                                        Applicants (0)</a>
+                                        Applicants ({{ job.applications.count }})</a>
                                     {% else %}
                                     <a href="{% url 'jobs:post_job' %}"
                                         class="text-sm font-bold text-white bg-green-600 px-4 py-2 rounded-xl hover:bg-green-700 transition">Finish

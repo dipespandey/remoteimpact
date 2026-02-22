@@ -26,6 +26,14 @@ class PayRaiseCalculatorView(TemplateView):
     template_name = "jobs/tools/pay_raise_calculator.html"
 
 
+class PrivacyPolicyView(TemplateView):
+    template_name = "jobs/privacy.html"
+
+
+class TermsOfServiceView(TemplateView):
+    template_name = "jobs/terms.html"
+
+
 @method_decorator(cache_page(getattr(settings, 'CACHE_TTL_MEDIUM', 300)), name='dispatch')
 class HomeView(TemplateView):
     template_name = "jobs/home.html"
