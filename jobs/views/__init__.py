@@ -77,3 +77,4 @@ from .og_image import JobOGImageView
 
 from .organizations import OrganizationProfileView, OrganizationDirectoryView
 from .locations import RegionJobsView
+from .seo_pages import RoleJobsView, AllRolePagesView

@@ -25,7 +25,7 @@ from django.views.decorators.cache import cache_page
 from jobs.sitemaps import (
     JobSitemap, StaticSitemap, CategorySitemap,
     OrganizationSitemap, ToolsSitemap, TalentSitemap,
-    GuidesSitemap,
+    GuidesSitemap, RolePagesSitemap,
 )
 from blog.sitemaps import BlogSitemap
 
@@ -297,6 +297,7 @@ sitemaps = {
     'talent': TalentSitemap,
     'blog': BlogSitemap,
     'guides': GuidesSitemap,
+    'roles': RolePagesSitemap,
 }
 
 urlpatterns = [

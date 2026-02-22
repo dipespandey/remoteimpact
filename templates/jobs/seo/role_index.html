@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block meta_description %}{{ meta_description }}{% endblock %}
+
+{% block content %}
+<section class="bg-twilight-900 py-16">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Browse Remote Jobs by Role</h1>
+            <p class="text-white/60 text-lg max-w-2xl mx-auto">Explore {{ total_jobs|intcomma }}+ remote positions at impact organizations, organized by role type.</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for role in role_pages %}
+            <a href="{% url 'jobs:role_jobs' role_slug=role.slug %}" 
+               class="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-brand-300/50 hover:bg-white/10 transition group">
+                <div class="flex items-center gap-4 mb-4">
+                    <span class="text-4xl">{{ role.icon }}</span>
+                    <div>
+                        <h2 class="text-xl font-semibold text-white group-hover:text-neon transition">{{ role.role }}</h2>
+                        <p class="text-white/50 text-sm">{{ role.job_count|intcomma }} open positions</p>
+                    </div>
+                </div>
+                <p class="text-white/60 text-sm line-clamp-2">{{ role.intro }}</p>
+                <div class="mt-4 flex items-center text-neon text-sm font-medium">
+                    View all {{ role.role }} jobs
+                    <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="py-16 bg-gray-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Can't find your role?</h2>
+        <p class="text-gray-600 mb-6">Browse all {{ total_jobs|intcomma }}+ jobs or use our advanced search filters.</p>
+        <a href="{% url 'jobs:job_list' %}" class="inline-flex items-center px-8 py-4 bg-brand-500 text-white rounded-full font-semibold hover:bg-brand-600 transition">
+            Browse All Jobs
+            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+        </a>
+    </div>
+</section>
+{% endblock %}

@@ -211,4 +211,7 @@ urlpatterns = [
     path("org/<slug:slug>/", views.OrganizationProfileView.as_view(), name="organization_profile"),
     # Location / Region pages
     path("remote-jobs/<slug:region_slug>/", views.RegionJobsView.as_view(), name="region_jobs"),
+    # Programmatic SEO: Role-based landing pages
+    path("careers/", views.AllRolePagesView.as_view(), name="all_role_pages"),
+    path("<slug:role_slug>/", views.RoleJobsView.as_view(), name="role_jobs"),
 ]

@@ -134,6 +134,22 @@ class GuidesSitemap(Sitemap):
         return timezone.now()
 
 
+class RolePagesSitemap(Sitemap):
+    """Sitemap for role-based SEO landing pages."""
+    changefreq = "daily"
+    priority = 0.85
+
+    def items(self):
+        from .seo_config import ROLE_SEO_PAGES
+        return ROLE_SEO_PAGES
+
+    def location(self, item):
+        return reverse('jobs:role_jobs', kwargs={'role_slug': item['slug']})
+
+    def lastmod(self, item):
+        return timezone.now()
+
+
 class StaticSitemap(Sitemap):
     """Sitemap for static pages - homepage gets highest priority."""
     changefreq = "daily"

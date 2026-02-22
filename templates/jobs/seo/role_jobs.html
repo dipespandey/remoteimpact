@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block meta_description %}{{ meta_description }}{% endblock %}
+{% block canonical %}{{ SITE_URL }}/{{ config.slug }}/{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ SITE_URL }}/"},
+        {"@type": "ListItem", "position": 2, "name": "Jobs", "item": "{{ SITE_URL }}{% url 'jobs:job_list' %}"},
+        {"@type": "ListItem", "position": 3, "name": "{{ h1 }}"}
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "{{ h1 }}",
+    "description": "{{ meta_description }}",
+    "numberOfItems": {{ job_count }},
+    "itemListElement": [
+        {% for job in jobs %}
+        {
+            "@type": "ListItem",
+            "position": {{ forloop.counter }},
+            "item": {
+                "@type": "JobPosting",
+                "title": "{{ job.title|escapejs }}",
+                "hiringOrganization": {
+                    "@type": "Organization",
+                    "name": "{{ job.organization.name|escapejs }}"
+                },
+                "datePosted": "{{ job.posted_at|date:'Y-m-d' }}",
+                "jobLocationType": "TELECOMMUTE",
+                "url": "{{ SITE_URL }}{{ job.get_absolute_url }}"
+                {% if job.salary_min or job.salary_max %},
+                "baseSalary": {
+                    "@type": "MonetaryAmount",
+                    "currency": "{{ job.salary_currency|default:'USD' }}",
+                    "value": {
+                        "@type": "QuantitativeValue",
+                        {% if job.salary_min and job.salary_max %}"minValue": {{ job.salary_min }}, "maxValue": {{ job.salary_max }}{% elif job.salary_min %}"value": {{ job.salary_min }}{% else %}"value": {{ job.salary_max }}{% endif %},
+                        "unitText": "YEAR"
+                    }
+                }
+                {% endif %}
+            }
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="bg-twilight-900 pt-16 pb-12">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="text-sm text-white/50 mb-6" aria-label="Breadcrumb">
+            <a href="{% url 'jobs:home' %}" class="hover:text-white/80 transition">Home</a>
+            <span class="mx-2">/</span>
+            <a href="{% url 'jobs:job_list' %}" class="hover:text-white/80 transition">Jobs</a>
+            <span class="mx-2">/</span>
+            <span class="text-white/70">{{ role_name }}</span>
+        </nav>
+        
+        <div class="flex items-center gap-4 mb-6">
+            <span class="text-5xl">{{ icon }}</span>
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold text-white">{{ h1 }}</h1>
+                <p class="text-white/70 text-lg mt-2">{{ job_count|intcomma }} open positions at impact organizations</p>
+            </div>
+        </div>
+        
+        <p class="text-white/60 max-w-3xl text-lg leading-relaxed">{{ intro }}</p>
+        
+        {% if salary_stats %}
+        <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                <p class="text-white/50 text-xs uppercase tracking-wider mb-1">Average Salary</p>
+                <p class="text-2xl font-bold text-white">${{ salary_stats.avg_min|intcomma }} - ${{ salary_stats.avg_max|intcomma }}</p>
+            </div>
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                <p class="text-white/50 text-xs uppercase tracking-wider mb-1">Top Salary</p>
+                <p class="text-2xl font-bold text-neon">${{ salary_stats.highest|intcomma }}</p>
+            </div>
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                <p class="text-white/50 text-xs uppercase tracking-wider mb-1">Open Roles</p>
+                <p class="text-2xl font-bold text-white">{{ job_count|intcomma }}</p>
+            </div>
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                <p class="text-white/50 text-xs uppercase tracking-wider mb-1">With Salary Data</p>
+                <p class="text-2xl font-bold text-white">{{ salary_stats.count|intcomma }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Category Breakdown -->
+{% if category_breakdown %}
+<section class="bg-twilight-900/80 py-6 border-t border-white/5">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <p class="text-white/50 text-sm uppercase tracking-wider mb-4">{{ role_name }} jobs by impact area</p>
+        <div class="flex flex-wrap gap-3">
+            {% for cat_name, cat_info in category_breakdown %}
+            <a href="{% url 'jobs:category_landing' slug=cat_info.slug %}?q={{ role_name|urlencode }}" 
+               class="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/80 hover:border-brand-300/50 hover:text-neon transition text-sm">
+                {{ cat_name }} <span class="text-white/50">({{ cat_info.count }})</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Featured Jobs -->
+{% if featured_jobs %}
+<section class="py-12 bg-gray-50">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">💰 Top Paying {{ role_name }} Jobs</h2>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for job in featured_jobs %}
+            <a href="{{ job.get_absolute_url }}" class="bg-white rounded-2xl border border-gray-100 p-6 hover:border-brand-300 hover:shadow-lg transition group">
+                <div class="flex items-start gap-3 mb-3">
+                    {% if job.organization.logo %}
+                    <img src="{{ job.organization.logo.url }}" alt="{{ job.organization.name }}" class="w-12 h-12 rounded-xl object-cover">
+                    {% else %}
+                    <div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 font-semibold">{{ job.organization.name|slice:":2"|upper }}</div>
+                    {% endif %}
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition truncate">{{ job.title }}</h3>
+                        <p class="text-sm text-gray-500 truncate">{{ job.organization.name }}</p>
+                    </div>
+                </div>
+                {% if job.salary_min or job.salary_max %}
+                <p class="text-lg font-bold text-brand-600 mb-2">
+                    {% if job.salary_min and job.salary_max %}
+                    ${{ job.salary_min|floatformat:0|intcomma }} - ${{ job.salary_max|floatformat:0|intcomma }}
+                    {% elif job.salary_min %}
+                    ${{ job.salary_min|floatformat:0|intcomma }}+
+                    {% else %}
+                    Up to ${{ job.salary_max|floatformat:0|intcomma }}
+                    {% endif %}
+                </p>
+                {% endif %}
+                <div class="flex items-center gap-2 text-sm text-gray-500">
+                    <span>📍 {{ job.location|default:"Remote" }}</span>
+                    {% if job.category %}
+                    <span>•</span>
+                    <span>{{ job.category.name }}</span>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- All Jobs Listing -->
+<section class="py-12 bg-gray-50">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">All {{ role_name }} Jobs</h2>
+            <p class="text-gray-500">{{ job_count }} positions</p>
+        </div>
+        
+        <div class="space-y-4">
+            {% for job in jobs %}
+            <article class="bg-white rounded-2xl border border-gray-100 p-6 hover:border-brand-200 hover:shadow-md transition">
+                <div class="flex flex-col md:flex-row md:items-center gap-4">
+                    <div class="flex items-start gap-4 flex-1 min-w-0">
+                        {% if job.organization.logo %}
+                        <img src="{{ job.organization.logo.url }}" alt="{{ job.organization.name }}" class="w-14 h-14 rounded-xl object-cover flex-shrink-0">
+                        {% else %}
+                        <div class="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 font-semibold text-lg flex-shrink-0">{{ job.organization.name|slice:":2"|upper }}</div>
+                        {% endif %}
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                {% if job.category %}
+                                <span class="px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 text-xs font-medium">{{ job.category.name }}</span>
+                                {% endif %}
+                                <span class="text-xs text-gray-400">{{ job.posted_at|timesince }} ago</span>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-1">
+                                <a href="{{ job.get_absolute_url }}" class="hover:text-brand-600 transition">{{ job.title }}</a>
+                            </h3>
+                            <p class="text-gray-600 text-sm">{{ job.organization.name }}</p>
+                            <div class="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                                <span>📍 {{ job.location|default:"Remote" }}</span>
+                                <span>{{ job.get_job_type_display }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 md:flex-col md:items-end">
+                        {% if job.salary_min or job.salary_max %}
+                        <p class="font-bold text-brand-600">
+                            {% if job.salary_min and job.salary_max %}
+                            ${{ job.salary_min|floatformat:0|intcomma }} - ${{ job.salary_max|floatformat:0|intcomma }}
+                            {% elif job.salary_min %}
+                            ${{ job.salary_min|floatformat:0|intcomma }}+
+                            {% else %}
+                            Up to ${{ job.salary_max|floatformat:0|intcomma }}
+                            {% endif %}
+                        </p>
+                        {% endif %}
+                        <a href="{{ job.get_absolute_url }}" class="px-4 py-2 bg-brand-300 text-gray-900 rounded-full font-semibold text-sm hover:bg-brand-400 transition whitespace-nowrap">View Job</a>
+                    </div>
+                </div>
+            </article>
+            {% empty %}
+            <div class="text-center py-12">
+                <p class="text-gray-500">No jobs found matching this role.</p>
+                <a href="{% url 'jobs:job_list' %}" class="text-brand-600 font-medium hover:underline">Browse all jobs →</a>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav class="flex justify-center gap-2 mt-8" aria-label="Pagination">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition">&laquo; Previous</a>
+            {% endif %}
+            <span class="px-4 py-2 text-gray-500 text-sm">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition">Next &raquo;</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Related Role Pages -->
+{% if related_roles %}
+<section class="py-12 bg-twilight-900">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl font-bold text-white mb-6">Explore More Remote Roles</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {% for role in related_roles %}
+            <a href="{% url 'jobs:role_jobs' role_slug=role.slug %}" class="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-brand-300/50 hover:bg-white/10 transition text-center">
+                <span class="text-3xl block mb-2">{{ role.icon }}</span>
+                <span class="text-white/80 text-sm">{{ role.role }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- CTA Section -->
+<section class="py-12 bg-brand-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Get {{ role_name }} jobs delivered to your inbox</h2>
+        <p class="text-gray-600 mb-6">Subscribe to weekly alerts for new {{ role_name.lower }} positions at impact organizations.</p>
+        <form class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto" action="{% url 'jobs:newsletter_subscribe' %}" method="post">
+            {% csrf_token %}
+            <input type="email" name="email" placeholder="you@email.com" required
+                   class="flex-1 px-4 py-3 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-300">
+            <button type="submit" class="px-6 py-3 bg-brand-500 text-white rounded-full font-semibold hover:bg-brand-600 transition">Subscribe</button>
+        </form>
+    </div>
+</section>
+{% endblock %}
