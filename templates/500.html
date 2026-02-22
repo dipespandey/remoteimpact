@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Something went wrong - Remote Impact{% endblock %}
+
+{% block content %}
+<section class="bg-twilight-900 min-h-[80vh] flex items-center justify-center py-20">
+    <div class="max-w-2xl mx-auto px-4 text-center">
+        <div class="mb-8">
+            <span class="text-8xl font-bold text-red-400">500</span>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-bold text-white mb-4">Something went wrong</h1>
+        <p class="text-white/70 text-lg mb-8">We're working on fixing this. In the meantime, try refreshing the page or head back to the homepage.</p>
+        
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% url 'jobs:home' %}" 
+               class="inline-flex items-center justify-center px-8 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold text-lg hover:bg-brand-400 transition shadow-glow">
+                Go Home
+            </a>
+            <button onclick="location.reload()" 
+               class="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-white/30 text-white font-semibold text-lg hover:border-white transition">
+                Try Again
+            </button>
+        </div>
+    </div>
+</section>
+{% endblock %}
