@@ -39,6 +39,27 @@ class Organization(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     # =========================================================================
+    # SOURCE TRACKING - Where did this org come from?
+    # =========================================================================
+    class OrganizationSource(models.TextChoices):
+        SCRAPED = "scraped", "Scraped from job boards"
+        SIGNUP = "signup", "Direct employer signup"
+        CLAIMED = "claimed", "Scraped then claimed by user"
+        MANUAL = "manual", "Manually added by staff"
+
+    source = models.CharField(
+        max_length=20,
+        choices=OrganizationSource.choices,
+        default=OrganizationSource.SCRAPED,
+        help_text="How this organization was added to the platform",
+    )
+    source_detail = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Specific source e.g., 'climatebase', 'idealist', 'lever'",
+    )
+
+    # =========================================================================
     # IMPACT PROFILE - Third-party signals (auto-detected)
     # =========================================================================
     is_80k_recommended = models.BooleanField(

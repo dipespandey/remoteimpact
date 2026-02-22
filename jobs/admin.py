@@ -25,14 +25,17 @@ class OrganizationAdmin(admin.ModelAdmin):
         "name",
         "organization_type",
         "team_size",
+        "source",
+        "source_detail",
         "verification_status",
         "impact_signals",
         "profile_completeness",
         "created_at",
     ]
     prepopulated_fields = {"slug": ("name",)}
-    search_fields = ["name", "description", "impact_statement"]
+    search_fields = ["name", "description", "impact_statement", "source_detail"]
     list_filter = [
+        "source",
         "verification_status",
         "organization_type",
         "is_80k_recommended",

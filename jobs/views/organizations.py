@@ -7,6 +7,35 @@ from django.http import Http404
 
 from ..models import Job, Organization, Category
 
+# SEO-optimized metadata for "striking distance" keywords
+# These organizations have specific high-value search queries we're targeting
+SEO_OPTIMIZED_ORGS = {
+    "carnegie-endowment-for-international-peace": {
+        "meta_title": "Carnegie Endowment for International Peace Internships & Jobs 2026 | Remote Impact",
+        "meta_description": "Apply now for Carnegie Endowment for International Peace internships and jobs in 2026. Browse {count} open roles in policy research, communications, and international affairs. Remote & DC-based positions available.",
+        "h1_title": "Carnegie Endowment for International Peace Internships & Jobs",
+        "key_info": {
+            "organization_type": "Think Tank / Policy Research",
+            "headquarters": "Washington, DC",
+            "focus_areas": "International Affairs, Foreign Policy, Nuclear Policy, Democracy",
+            "internship_cycles": "Spring, Summer, Fall (Rolling applications)",
+            "eligibility": "Graduate students, Recent graduates, Early-career professionals",
+        }
+    },
+    "chatham-house": {
+        "meta_title": "Chatham House Jobs & Careers 2026 | Remote Impact",
+        "meta_description": "Apply now for Chatham House jobs in 2026. Browse {count} open roles at the Royal Institute of International Affairs. Research, policy, and communications positions in London & remote.",
+        "h1_title": "Chatham House Jobs & Careers",
+        "key_info": {
+            "organization_type": "Think Tank / Policy Research",
+            "headquarters": "London, UK",
+            "focus_areas": "International Affairs, Geopolitics, Energy, Economy",
+            "also_known_as": "Royal Institute of International Affairs",
+            "eligibility": "Researchers, Policy analysts, Communications professionals",
+        }
+    },
+}
+
 # Map old broken slugs to new correct slugs for 301 redirects
 OLD_SLUG_REDIRECTS = {
     "fort20health": "fort-health",
@@ -63,11 +92,27 @@ class OrganizationProfileView(ListView):
         )
         job_count = context["page_obj"].paginator.count
         context["job_count"] = job_count
-        context["meta_title"] = f"Jobs at {org.name} — Remote Impact Jobs"
-        context["meta_description"] = (
-            f"Browse {job_count} remote job{'' if job_count == 1 else 's'} at {org.name}. "
-            f"Find purpose-driven roles at this impact organization."
-        )
+        
+        # Check for SEO-optimized organizations (striking distance keywords)
+        seo_data = SEO_OPTIMIZED_ORGS.get(org.slug)
+        if seo_data:
+            context["meta_title"] = seo_data["meta_title"]
+            context["meta_description"] = seo_data["meta_description"].format(count=job_count)
+            context["h1_title"] = seo_data["h1_title"]
+            context["key_info"] = seo_data.get("key_info", {})
+            context["is_seo_optimized"] = True
+        else:
+            context["meta_title"] = f"Jobs at {org.name} — Remote Impact Jobs"
+            context["meta_description"] = (
+                f"Browse {job_count} remote job{'' if job_count == 1 else 's'} at {org.name}. "
+                f"Find purpose-driven roles at this impact organization."
+            )
+            context["h1_title"] = org.name
+            context["is_seo_optimized"] = False
+        
+        # Add dateModified for schema freshness signal
+        context["date_modified"] = timezone.now().strftime("%Y-%m-%d")
+        
         return context
 
 

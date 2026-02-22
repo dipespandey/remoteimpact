@@ -164,6 +164,24 @@
                     </div>
                     {% endif %}
 
+                    <!-- Featured Think Tanks - Internal Links for Policy Categories -->
+                    {% if category.slug == 'advocacy-or-policy' or category.slug == 'policy-advocacy' or category.slug == 'human-rights' %}
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-4 mt-4">
+                        <p class="text-xs text-white/50 uppercase tracking-wider mb-3">Featured Think Tanks & Policy Organizations</p>
+                        <div class="flex flex-wrap gap-2">
+                            <a href="/org/carnegie-endowment-for-international-peace/" class="text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/70 hover:text-neon hover:border-brand-300/50 transition">
+                                Carnegie Endowment for International Peace Internships
+                            </a>
+                            <a href="/org/chatham-house/" class="text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/70 hover:text-neon hover:border-brand-300/50 transition">
+                                Chatham House Jobs
+                            </a>
+                            <a href="/org/brookings-institution/" class="text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/70 hover:text-neon hover:border-brand-300/50 transition">
+                                Brookings Institution
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <!-- Browse All Jobs Button -->
                     <div class="text-center pt-4">
                         <a href="{% url 'jobs:job_list' %}" class="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-white/20 text-white/80 font-medium hover:bg-white/5 transition">

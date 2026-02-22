@@ -29,9 +29,39 @@
     {% if organization.description %}"description": "{{ organization.description|escapejs|truncatewords:50 }}",{% endif %}
     {% if organization.website %}"url": "{{ organization.website }}",{% endif %}
     {% if organization.logo %}"logo": "{{ SITE_URL }}{{ organization.logo.url }}",{% endif %}
-    "sameAs": []
+    "sameAs": [],
+    "dateModified": "{{ date_modified }}"
 }
 </script>
+{% if jobs %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "{{ h1_title }} - Open Positions",
+    "numberOfItems": {{ job_count }},
+    "dateModified": "{{ date_modified }}",
+    "itemListElement": [
+        {% for job in jobs %}
+        {
+            "@type": "ListItem",
+            "position": {{ forloop.counter }},
+            "item": {
+                "@type": "JobPosting",
+                "title": "{{ job.title|escapejs }}",
+                "hiringOrganization": {
+                    "@type": "Organization",
+                    "name": "{{ organization.name|escapejs }}"
+                },
+                "datePosted": "{{ job.posted_at|date:'Y-m-d' }}",
+                "url": "{{ SITE_URL }}{{ job.get_absolute_url }}"
+            }
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+}
+</script>
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -57,7 +87,7 @@
                 </div>
                 {% endif %}
                 <div class="space-y-1">
-                    <h1 class="text-2xl md:text-4xl font-semibold text-white">{{ organization.name }}</h1>
+                    <h1 class="text-2xl md:text-4xl font-semibold text-white">{{ h1_title|default:organization.name }}</h1>
                     {% if organization.organization_type %}
                     <span class="inline-block px-3 py-1 rounded-full bg-white/10 border border-white/10 text-white/70 text-xs">{{ organization.get_organization_type_display }}</span>
                     {% endif %}
@@ -73,6 +103,25 @@
 
             {% if organization.impact_statement %}
             <p class="text-white/70 text-sm md:text-base max-w-3xl italic">"{{ organization.impact_statement }}"</p>
+            {% endif %}
+
+            {% if key_info %}
+            <!-- Key Information for SEO Quick Answers -->
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4 md:p-5 max-w-2xl">
+                <h2 class="text-sm font-semibold text-white/90 uppercase tracking-wider mb-3">📌 Key Information</h2>
+                <ul class="space-y-2 text-sm">
+                    {% for key, value in key_info.items %}
+                    <li class="flex gap-2">
+                        <span class="text-white/50 min-w-[140px]">{{ key|title|cut:"_" }}:</span>
+                        <span class="text-white/80">{{ value }}</span>
+                    </li>
+                    {% endfor %}
+                    <li class="flex gap-2">
+                        <span class="text-white/50 min-w-[140px]">Open Roles:</span>
+                        <span class="text-white/80 font-semibold">{{ job_count }} position{{ job_count|pluralize }} (Updated {{ date_modified }})</span>
+                    </li>
+                </ul>
+            </div>
             {% endif %}
 
             <!-- Stats & signals -->
