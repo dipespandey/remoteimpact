@@ -1,7 +1,7 @@
 from django.urls import path
 from django.views.generic import RedirectView
 from . import views
-from .feeds import LatestJobsFeed, CategoryJobsFeed
+from .feeds import LatestJobsFeed, CategoryJobsFeed, IndeedXMLFeed, LinkedInXMLFeed
 
 app_name = "jobs"
 
@@ -172,6 +172,9 @@ urlpatterns = [
     # RSS Feeds
     path("feed/jobs/", LatestJobsFeed(), name="jobs_feed"),
     path("feed/jobs/category/<slug:slug>/", CategoryJobsFeed(), name="category_feed"),
+    # Job Aggregator Feeds (Indeed, LinkedIn, etc.)
+    path("feed/indeed.xml", IndeedXMLFeed.as_view(), name="indeed_feed"),
+    path("feed/linkedin.xml", LinkedInXMLFeed.as_view(), name="linkedin_feed"),
     # Referral System
     path("referral/", views.ReferralDashboardView.as_view(), name="referral_dashboard"),
     # Job Alerts
