@@ -36,6 +36,7 @@
     "title": "{{ job.title|escapejs }}",
     "description": "{{ job|job_description_for_schema|striptags|truncatechars:5000|escapejs }}",
     "datePosted": "{{ job.posted_at|date:'c' }}",
+    "dateModified": "{{ job.updated_at|date:'c' }}",
     "validThrough": "{{ job|default_expiry|date:'c' }}",
     "employmentType": "{{ job.get_job_type_display|upper }}",
     "hiringOrganization": {

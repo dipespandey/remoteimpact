@@ -71,7 +71,7 @@
     </header>
 
     {% if post.featured_image.name %}
-    <img src="{{ post.featured_image.url }}" alt="{{ post.featured_image_alt }}" class="w-full rounded-2xl mb-10 shadow-sm">
+    <img src="{{ post.featured_image.url }}" alt="{{ post.featured_image_alt }}" class="w-full rounded-2xl mb-10 shadow-sm" fetchpriority="high">
     {% endif %}
 
     <div class="prose prose-lg prose-gray max-w-none

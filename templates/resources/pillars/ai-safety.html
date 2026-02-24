@@ -169,6 +169,28 @@
                     <li><a href="{% url 'jobs:cluster_detail' pillar_slug='ai-safety-careers' cluster_slug='ai-governance-fellowships' %}" class="text-brand-600 hover:text-brand-700 font-medium">The Best AI Governance Fellowships and How to Get In &rarr;</a></li>
                 </ul>
             </div>
+
+            <div class="bg-gray-50 border border-gray-200 rounded-2xl p-6 mt-8 not-prose">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Explore other impact career paths</h3>
+                <div class="grid sm:grid-cols-2 gap-3">
+                    <a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
+                        <span class="text-xl">🌍</span>
+                        <span class="text-brand-600 font-medium text-sm">Climate & Environment Careers</span>
+                    </a>
+                    <a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
+                        <span class="text-xl">🏥</span>
+                        <span class="text-brand-600 font-medium text-sm">Global Health Careers</span>
+                    </a>
+                    <a href="{% url 'jobs:pillar_detail' pillar_slug='humanitarian-ingo-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
+                        <span class="text-xl">🕊️</span>
+                        <span class="text-brand-600 font-medium text-sm">Humanitarian & INGO Careers</span>
+                    </a>
+                    <a href="{% url 'jobs:pillar_detail' pillar_slug='effective-altruism-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
+                        <span class="text-xl">🎯</span>
+                        <span class="text-brand-600 font-medium text-sm">Effective Altruism Careers</span>
+                    </a>
+                </div>
+            </div>
         </article>
     </div>
 </section>

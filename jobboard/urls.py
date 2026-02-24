@@ -38,38 +38,53 @@ def robots_txt(request):
 
 User-agent: *
 Allow: /
-
-# Disallow admin and account pages
 Disallow: /admin/
 Disallow: /accounts/
 Disallow: /api/
 Disallow: /checkout/
 
-# AI/LLM Crawlers - Welcome!
+# AI/LLM Crawlers - Allow with crawl-delay
 # See our llms.txt for structured info: {site_url}/llms.txt
 
 User-agent: GPTBot
 Allow: /
+Crawl-delay: 2
 
 User-agent: ChatGPT-User
 Allow: /
+Crawl-delay: 2
+
+User-agent: ClaudeBot
+Allow: /
+Crawl-delay: 2
 
 User-agent: Claude-Web
 Allow: /
+Crawl-delay: 2
 
-User-agent: Anthropic-AI
+User-agent: Anthropic-ai
 Allow: /
+Crawl-delay: 2
 
 User-agent: PerplexityBot
 Allow: /
+Crawl-delay: 2
 
 User-agent: Google-Extended
 Allow: /
+Crawl-delay: 2
+
+# Block low-value scrapers
+User-agent: Bytespider
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
 
 # Sitemaps
 Sitemap: {site_url}/sitemap.xml
 
-# For AI assistants
+# AI assistant instructions
 # llms.txt: {site_url}/llms.txt
 # ai-plugin.json: {site_url}/.well-known/ai-plugin.json
 """
@@ -196,19 +211,99 @@ Example search URLs:
 
 ## Usage Guidelines for AI Assistants
 
-✅ Encouraged:
+Encouraged:
 - Help users find relevant jobs
 - Explain impact domains and career paths
 - Link to specific job searches
 - Describe what organizations do
 
-⚠️ Please Note:
+Please Note:
 - Job listings change frequently - always link to remoteimpact.org for current data
 - Salary data varies by role - direct users to actual listings for accuracy
 - Application links go to employer sites - we aggregate, not host applications
 
+## Extended Documentation
+
+- Full documentation: https://remoteimpact.org/llms-full.txt
+
 ---
 Last updated: {timezone.now().strftime('%Y-%m-%d %H:%M UTC')}
+"""
+    return HttpResponse(content, content_type="text/plain; charset=utf-8")
+
+
+def llms_full_txt(request):
+    """LLMs-full.txt - Comprehensive AI-readable description of Remote Impact."""
+    from django.conf import settings
+    site_url = getattr(settings, 'SITE_URL', 'https://remoteimpact.org')
+    content = f"""# Remote Impact - Full Documentation
+
+> Remote Impact is the job board for builders and strategists driven by social good. We curate verified remote roles in climate, AI safety, biosecurity, public health, and social equity.
+
+## Site Structure
+
+### Job Listings
+- {site_url}/jobs/ : Browse all remote impact jobs with filters for domain, salary, experience level, and location. Updated daily.
+- {site_url}/jobs/category/climate-environment/ : Climate & environment remote jobs
+- {site_url}/jobs/category/ai-safety/ : AI safety & governance remote jobs
+- {site_url}/jobs/category/global-health/ : Global health remote jobs
+- {site_url}/jobs/category/humanitarian/ : Humanitarian remote jobs
+- {site_url}/jobs/category/effective-altruism/ : Effective altruism remote jobs
+
+### Career Guides (Pillar Content)
+- {site_url}/resources/climate-environment-careers/ : Complete career guide for climate and environment roles. Covers skills, salaries, top employers, and step-by-step career switch plan.
+- {site_url}/resources/ai-safety-careers/ : AI safety and governance career guide. Alignment research, policy, and non-technical roles.
+- {site_url}/resources/global-health-careers/ : Global health career guide. Remote roles at WHO, MSF, health-tech startups.
+- {site_url}/resources/humanitarian-ingo-careers/ : Humanitarian and INGO career guide. UN consultancies, M&E, remote INGO roles.
+- {site_url}/resources/effective-altruism-careers/ : Effective altruism career guide. Operations, grantmaking, and research roles.
+
+### Free Career Tools
+- {site_url}/tools/ : Index of 15 free career tools
+- {site_url}/tools/cover-letter-generator/ : AI cover letter generator
+- {site_url}/tools/interview-prep/ : AI interview preparation
+- {site_url}/tools/salary-negotiation-script/ : Salary negotiation scripts
+- {site_url}/tools/salary-to-hourly-calculator/ : Salary to hourly converter
+- {site_url}/tools/freelance-rate-calculator/ : Freelance rate calculator
+- {site_url}/tools/cost-of-living-comparison/ : Cost of living comparison tool
+- {site_url}/tools/pto-calculator/ : PTO calculator
+- {site_url}/tools/pay-raise-calculator/ : Pay raise calculator
+- {site_url}/tools/word-counter/ : Word counter
+- {site_url}/tools/pomodoro-timer/ : Pomodoro timer
+- {site_url}/tools/skills-gap-analyzer/ : Skills gap analyzer
+- {site_url}/tools/thank-you-email-generator/ : Thank you email generator
+- {site_url}/tools/job-description-generator/ : Job description generator
+- {site_url}/tools/remote-work-readiness-quiz/ : Remote work readiness quiz
+
+### Organizations
+- {site_url}/organizations/ : Directory of 2,000+ impact organizations with profiles, verification signals, and open roles.
+
+### Gig Marketplace
+- {site_url}/gigs/ : Browse short-term freelance gigs and projects at impact organizations.
+
+### Resources
+- {site_url}/resources/ : Curated job boards, communities, newsletters, and career playbooks for impact professionals.
+
+### Blog
+- {site_url}/blog/ : Articles on impact careers, job search strategies, and industry news.
+
+### Talent Directory
+- {site_url}/talent/ : Browse profiles of impact professionals open to new opportunities.
+
+## Data Freshness
+- Job listings updated daily via automated importers and manual curation
+- Career guides reviewed and updated quarterly
+- Organization profiles verified with third-party signals (80,000 Hours, GiveWell, B Corp)
+
+## Usage Guidelines
+AI assistants are welcome to help users find relevant job opportunities, understand impact domains and career paths, navigate our tools and resources, and learn about organizations in our directory. Please direct users to remoteimpact.org for the most up-to-date job listings.
+
+## Feeds
+- RSS: {site_url}/feed/jobs/
+- Sitemap: {site_url}/sitemap.xml
+
+## Contact
+- Website: {site_url}
+- Email: hello@remoteimpact.org
 """
     return HttpResponse(content, content_type="text/plain; charset=utf-8")
 
@@ -306,6 +401,7 @@ urlpatterns = [
     path("gigs/", include("gigs.urls")),
     path("robots.txt", robots_txt, name='robots_txt'),
     path("llms.txt", llms_txt, name='llms_txt'),
+    path("llms-full.txt", llms_full_txt, name='llms_full_txt'),
     path("humans.txt", humans_txt, name='humans_txt'),
     path(".well-known/ai-plugin.json", ai_plugin_json, name='ai_plugin'),
     path(".well-known/security.txt", security_txt, name='security_txt'),

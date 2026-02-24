@@ -5,6 +5,51 @@
 
 {% block meta_description %}Browse {{ page_obj.paginator.count|default:"8,000+" }} verified remote jobs in climate, AI safety, public health, and social impact. Filter by role, domain, salary, and more.{% endblock %}
 
+{% block og_title %}All Jobs - Remote Impact Jobs{% endblock %}
+{% block og_description %}Browse {{ page_obj.paginator.count|default:"8,000+" }} verified remote jobs in climate, AI safety, public health, and social impact.{% endblock %}
+{% block twitter_title %}All Jobs - Remote Impact Jobs{% endblock %}
+{% block twitter_description %}Browse {{ page_obj.paginator.count|default:"8,000+" }} verified remote jobs in climate, AI safety, public health, and social impact.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ SITE_URL }}/"},
+        {"@type": "ListItem", "position": 2, "name": "Jobs"}
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Remote Impact Jobs",
+    "description": "Browse verified remote jobs in climate, AI safety, public health, and social impact.",
+    "url": "{{ SITE_URL }}{% url 'jobs:job_list' %}",
+    "isPartOf": {
+        "@type": "WebSite",
+        "name": "{{ SITE_NAME }}",
+        "url": "{{ SITE_URL }}/"
+    },
+    "mainEntity": {
+        "@type": "ItemList",
+        "numberOfItems": {{ page_obj.paginator.count|default:"0" }},
+        "itemListElement": [
+            {% for job in jobs %}
+            {
+                "@type": "ListItem",
+                "position": {{ forloop.counter }},
+                "url": "{{ SITE_URL }}{{ job.get_absolute_url }}"
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]
+    }
+}
+</script>
+{% endblock %}
+
 {% block content %}
 <section class="bg-twilight-900 py-6 md:py-12">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 md:space-y-10">

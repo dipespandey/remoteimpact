@@ -468,6 +468,56 @@
 </section>
 {% endif %}
 
+<!-- Career Guides Section -->
+<section class="pt-16 pb-10 bg-twilight-900">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
+            <div>
+                <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-2">Career guides</p>
+                <h2 class="text-4xl font-semibold">Deep-dive guides for impact careers</h2>
+            </div>
+            <a href="{% url 'jobs:resources' %}" class="inline-flex items-center text-neon font-semibold">
+                All resources
+                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14m0 0-6-6m6 6-6 6" />
+                </svg>
+            </a>
+        </div>
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}"
+               class="group rounded-2xl border border-white/10 bg-card-gradient p-6 backdrop-blur hover:border-white/30 transition">
+                <div class="text-2xl mb-3">🌍</div>
+                <h3 class="text-lg font-semibold mb-1 group-hover:text-neon transition">Climate & Environment</h3>
+                <p class="text-white/60 text-sm">Renewables, conservation, carbon accounting</p>
+            </a>
+            <a href="{% url 'jobs:pillar_detail' pillar_slug='ai-safety-careers' %}"
+               class="group rounded-2xl border border-white/10 bg-card-gradient p-6 backdrop-blur hover:border-white/30 transition">
+                <div class="text-2xl mb-3">🤖</div>
+                <h3 class="text-lg font-semibold mb-1 group-hover:text-neon transition">AI Safety & Governance</h3>
+                <p class="text-white/60 text-sm">Alignment, policy, responsible AI</p>
+            </a>
+            <a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}"
+               class="group rounded-2xl border border-white/10 bg-card-gradient p-6 backdrop-blur hover:border-white/30 transition">
+                <div class="text-2xl mb-3">🏥</div>
+                <h3 class="text-lg font-semibold mb-1 group-hover:text-neon transition">Global Health</h3>
+                <p class="text-white/60 text-sm">WHO, MSF, health-tech, remote roles</p>
+            </a>
+            <a href="{% url 'jobs:pillar_detail' pillar_slug='humanitarian-ingo-careers' %}"
+               class="group rounded-2xl border border-white/10 bg-card-gradient p-6 backdrop-blur hover:border-white/30 transition">
+                <div class="text-2xl mb-3">🕊️</div>
+                <h3 class="text-lg font-semibold mb-1 group-hover:text-neon transition">Humanitarian & INGO</h3>
+                <p class="text-white/60 text-sm">UN, NGOs, M&E, consultancies</p>
+            </a>
+            <a href="{% url 'jobs:pillar_detail' pillar_slug='effective-altruism-careers' %}"
+               class="group rounded-2xl border border-white/10 bg-card-gradient p-6 backdrop-blur hover:border-white/30 transition">
+                <div class="text-2xl mb-3">🎯</div>
+                <h3 class="text-lg font-semibold mb-1 group-hover:text-neon transition">Effective Altruism</h3>
+                <p class="text-white/60 text-sm">Operations, grantmaking, research</p>
+            </a>
+        </div>
+    </div>
+</section>
+
 <!-- Featured Jobs Section - Removed per user request -->
 
 <!-- Impact Metrics -->

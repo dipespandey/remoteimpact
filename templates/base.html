@@ -75,7 +75,7 @@
 
     <!-- Tailwind CSS CDN -->
     <link rel="stylesheet" href="{% static "tailwind.min.css" %}">
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script defer src="https://unpkg.com/htmx.org@1.9.10"></script>
     <!-- Alpine.js for interactive components -->
     <style>[x-cloak] { display: none !important; }</style>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -481,6 +481,12 @@
                             <li><a href="{% url 'jobs:tools_index' %}" class="hover:text-brand-600 transition">Career Tools</a></li>
                             <li><a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Career Guides</a></li>
                             <li><a href="{% url 'blog:post_list' %}" class="hover:text-brand-600 transition">Blog</a></li>
+                            <li class="pt-2"><span class="text-xs uppercase tracking-wider text-gray-400">Guides</span></li>
+                            <li><a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}" class="hover:text-brand-600 transition">Climate Careers</a></li>
+                            <li><a href="{% url 'jobs:pillar_detail' pillar_slug='ai-safety-careers' %}" class="hover:text-brand-600 transition">AI Safety Careers</a></li>
+                            <li><a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}" class="hover:text-brand-600 transition">Global Health Careers</a></li>
+                            <li><a href="{% url 'jobs:pillar_detail' pillar_slug='humanitarian-ingo-careers' %}" class="hover:text-brand-600 transition">Humanitarian Careers</a></li>
+                            <li><a href="{% url 'jobs:pillar_detail' pillar_slug='effective-altruism-careers' %}" class="hover:text-brand-600 transition">EA Careers</a></li>
                         </ul>
                     </div>
                     

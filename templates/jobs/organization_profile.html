@@ -29,7 +29,12 @@
     {% if organization.description %}"description": "{{ organization.description|escapejs|truncatewords:50 }}",{% endif %}
     {% if organization.website %}"url": "{{ organization.website }}",{% endif %}
     {% if organization.logo %}"logo": "{{ SITE_URL }}{{ organization.logo.url }}",{% endif %}
-    "sameAs": [],
+    {% if organization.founded_year %}"foundingDate": "{{ organization.founded_year }}",{% endif %}
+    {% if organization.team_size %}"numberOfEmployees": {
+        "@type": "QuantitativeValue",
+        "value": "{{ organization.get_team_size_display }}"
+    },{% endif %}
+    "sameAs": [{% if organization.website %}"{{ organization.website }}"{% endif %}],
     "dateModified": "{{ date_modified }}"
 }
 </script>
@@ -79,7 +84,7 @@
             <div class="flex items-start gap-4 md:gap-6">
                 {% if organization.logo %}
                 <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
-                    <img src="{{ organization.logo.url }}" alt="{{ organization.name }}" class="w-14 h-14 md:w-18 md:h-18 rounded-xl object-cover">
+                    <img src="{{ organization.logo.url }}" alt="{{ organization.name }}" class="w-14 h-14 md:w-18 md:h-18 rounded-xl object-cover" fetchpriority="high">
                 </div>
                 {% else %}
                 <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-white font-semibold text-xl md:text-2xl shrink-0">
