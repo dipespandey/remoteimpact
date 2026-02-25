@@ -213,5 +213,9 @@ urlpatterns = [
     path("remote-jobs/<slug:region_slug>/", views.RegionJobsView.as_view(), name="region_jobs"),
     # Programmatic SEO: Role-based landing pages
     path("careers/", views.AllRolePagesView.as_view(), name="all_role_pages"),
+    # Programmatic SEO: Keyword-based landing pages
+    path("browse/", views.AllKeywordPagesView.as_view(), name="all_keyword_pages"),
+    path("impact/<slug:keyword_slug>/", views.KeywordJobsView.as_view(), name="keyword_jobs"),
+    # Role pages (catch-all, must be last)
     path("<slug:role_slug>/", views.RoleJobsView.as_view(), name="role_jobs"),
 ]

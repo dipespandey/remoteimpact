@@ -242,3 +242,222 @@ def get_role_page_config(slug):
 def get_all_role_slugs():
     """Get list of all role page slugs."""
     return [page['slug'] for page in ROLE_SEO_PAGES]
+
+
+# =============================================================================
+# KEYWORD SEO PAGES
+# Target long-tail keywords from keyword planner research
+# =============================================================================
+
+KEYWORD_SEO_PAGES = [
+    # High volume keywords
+    {
+        'slug': 'remote-jobs-with-purpose',
+        'keyword': 'remote jobs with purpose',
+        'h1': 'Remote Jobs With Purpose',
+        'title': 'Remote Jobs With Purpose (2026) | {count}+ Meaningful Careers',
+        'meta_desc': 'Find {count}+ remote jobs with purpose at organizations making real impact. Climate, health, education & social good roles. Updated daily.',
+        'intro': 'Looking for remote work that actually matters? These aren\'t just jobs—they\'re opportunities to contribute to causes you believe in while working from anywhere.',
+        'icon': '🎯',
+        'filter_type': 'all',  # All jobs on platform are purpose-driven
+        'difficulty': 47,
+        'search_volume': 'high',
+    },
+    {
+        'slug': 'work-from-home-impact-jobs',
+        'keyword': 'work from home impact jobs',
+        'h1': 'Work From Home Impact Jobs',
+        'title': 'Work From Home Impact Jobs (2026) | {count}+ Remote Positions',
+        'meta_desc': 'Discover {count}+ work from home impact jobs. Join organizations tackling climate change, global health, poverty & more—all remotely.',
+        'intro': 'Work from home doesn\'t mean compromising on impact. These remote positions let you make a real difference from your home office.',
+        'icon': '🏠',
+        'filter_type': 'all',
+        'difficulty': 48,
+        'search_volume': 'high',
+    },
+    {
+        'slug': 'remote-jobs-that-help-others',
+        'keyword': 'remote jobs that help others',
+        'h1': 'Remote Jobs That Help Others',
+        'title': 'Remote Jobs That Help Others (2026) | {count}+ Helping Careers',
+        'meta_desc': 'Find {count}+ remote jobs that help others. Work for nonprofits, NGOs & social enterprises making a difference—from anywhere.',
+        'intro': 'Want a career centered on helping others? These remote positions connect you with organizations dedicated to improving lives around the world.',
+        'icon': '🤝',
+        'filter_type': 'all',
+        'difficulty': 49,
+        'search_volume': 'high',
+    },
+    {
+        'slug': 'work-from-anywhere-impact-jobs',
+        'keyword': 'work from anywhere impact jobs',
+        'h1': 'Work From Anywhere Impact Jobs',
+        'title': 'Work From Anywhere Impact Jobs (2026) | {count}+ Global Roles',
+        'meta_desc': 'Find {count}+ work from anywhere impact jobs. Location-independent roles at climate, health & social impact organizations.',
+        'intro': 'True location independence meets meaningful work. These global remote positions let you make an impact from anywhere in the world.',
+        'icon': '🌍',
+        'filter_type': 'all',
+        'difficulty': 50,
+        'search_volume': 'high',
+    },
+    # Medium volume - Nonprofit focused
+    {
+        'slug': 'remote-nonprofit-jobs',
+        'keyword': 'remote jobs for nonprofit organizations',
+        'h1': 'Remote Nonprofit Jobs',
+        'title': 'Remote Nonprofit Jobs (2026) | {count}+ NGO Positions',
+        'meta_desc': 'Find {count}+ remote nonprofit jobs at leading NGOs & charities. Program management, fundraising, advocacy & more.',
+        'intro': 'Nonprofits are embracing remote work. Find your next role at organizations driving change in education, health, environment, and social justice.',
+        'icon': '💚',
+        'filter_type': 'nonprofit',
+        'patterns': ['nonprofit', 'non-profit', 'ngo', 'charity', 'foundation'],
+        'difficulty': 53,
+        'search_volume': 'medium',
+    },
+    {
+        'slug': 'remote-positions-in-nonprofits',
+        'keyword': 'remote positions in nonprofits',
+        'h1': 'Remote Positions in Nonprofits',
+        'title': 'Remote Nonprofit Positions (2026) | {count}+ Available Roles',
+        'meta_desc': 'Browse {count}+ remote positions in nonprofits. Find meaningful work at mission-driven organizations hiring remotely.',
+        'intro': 'The nonprofit sector offers diverse remote opportunities—from entry-level coordinators to executive directors. Find your fit in the social sector.',
+        'icon': '🌱',
+        'filter_type': 'nonprofit',
+        'patterns': ['nonprofit', 'non-profit', 'ngo', 'charity', 'foundation'],
+        'difficulty': 45,
+        'search_volume': 'medium',
+    },
+    # Humanitarian focus
+    {
+        'slug': 'remote-humanitarian-jobs',
+        'keyword': 'remote humanitarian jobs',
+        'h1': 'Remote Humanitarian Jobs',
+        'title': 'Remote Humanitarian Jobs (2026) | {count}+ Aid & Relief Roles',
+        'meta_desc': 'Find {count}+ remote humanitarian jobs in disaster relief, refugee support & international development. Work with top aid organizations.',
+        'intro': 'Humanitarian work has gone remote. Support crisis response, refugee assistance, and development programs from anywhere in the world.',
+        'icon': '🚑',
+        'filter_type': 'keyword',
+        'patterns': ['humanitarian', 'relief', 'refugee', 'crisis', 'emergency', 'disaster', 'aid worker', 'development'],
+        'difficulty': 46,
+        'search_volume': 'medium',
+    },
+    # Social impact
+    {
+        'slug': 'social-impact-remote-careers',
+        'keyword': 'social impact remote careers',
+        'h1': 'Social Impact Remote Careers',
+        'title': 'Social Impact Remote Careers (2026) | {count}+ Opportunities',
+        'meta_desc': 'Launch your social impact remote career. {count}+ positions at organizations tackling inequality, justice & community development.',
+        'intro': 'Build a career in social impact without geographic constraints. These remote roles span advocacy, community development, and systemic change.',
+        'icon': '✊',
+        'filter_type': 'keyword',
+        'patterns': ['social impact', 'social change', 'social justice', 'community', 'equity', 'advocacy'],
+        'difficulty': 43,
+        'search_volume': 'medium',
+    },
+    {
+        'slug': 'remote-jobs-for-social-impact',
+        'keyword': 'remote jobs for social impact',
+        'h1': 'Remote Jobs for Social Impact',
+        'title': 'Remote Jobs for Social Impact (2026) | {count}+ Positions',
+        'meta_desc': 'Find {count}+ remote jobs for social impact. Join organizations working on poverty, education, health equity & more.',
+        'intro': 'Social impact isn\'t limited by location. These remote positions connect you with organizations creating systemic change globally.',
+        'icon': '🌟',
+        'filter_type': 'keyword',
+        'patterns': ['social impact', 'social good', 'social change', 'community', 'poverty', 'education'],
+        'difficulty': 40,
+        'search_volume': 'medium',
+    },
+    # Environmental focus
+    {
+        'slug': 'remote-jobs-for-environmental-impact',
+        'keyword': 'remote jobs for environmental impact',
+        'h1': 'Remote Environmental Impact Jobs',
+        'title': 'Remote Environmental Impact Jobs (2026) | {count}+ Green Careers',
+        'meta_desc': 'Find {count}+ remote environmental impact jobs. Climate tech, conservation, sustainability & clean energy roles.',
+        'intro': 'Fight climate change from your home office. These remote positions span climate tech, conservation, renewable energy, and sustainability.',
+        'icon': '🌿',
+        'filter_type': 'keyword',
+        'patterns': ['climate', 'environment', 'sustainability', 'conservation', 'renewable', 'clean energy', 'green', 'carbon'],
+        'difficulty': 38,
+        'search_volume': 'medium',
+    },
+    # Community development
+    {
+        'slug': 'remote-community-development-jobs',
+        'keyword': 'remote community development jobs',
+        'h1': 'Remote Community Development Jobs',
+        'title': 'Remote Community Development Jobs (2026) | {count}+ Positions',
+        'meta_desc': 'Find {count}+ remote community development jobs. Build stronger communities through organizing, advocacy & social programs.',
+        'intro': 'Community development goes beyond geography. Support community organizing, local programs, and grassroots initiatives from anywhere.',
+        'icon': '🏘️',
+        'filter_type': 'keyword',
+        'patterns': ['community', 'organizing', 'grassroots', 'local', 'neighborhood', 'civic'],
+        'difficulty': 29,
+        'search_volume': 'low',
+    },
+    # Social enterprise
+    {
+        'slug': 'remote-social-enterprise-jobs',
+        'keyword': 'remote positions in social enterprises',
+        'h1': 'Remote Social Enterprise Jobs',
+        'title': 'Remote Social Enterprise Jobs (2026) | {count}+ Startup Roles',
+        'meta_desc': 'Find {count}+ remote social enterprise jobs. Join mission-driven startups & B Corps solving social problems through business.',
+        'intro': 'Social enterprises blend purpose with profit. Find remote roles at impact startups, B Corps, and mission-driven companies.',
+        'icon': '🚀',
+        'filter_type': 'keyword',
+        'patterns': ['social enterprise', 'b corp', 'impact startup', 'mission-driven', 'purpose-driven'],
+        'difficulty': 32,
+        'search_volume': 'low',
+    },
+    # Charity
+    {
+        'slug': 'remote-charity-jobs',
+        'keyword': 'remote roles in charity organizations',
+        'h1': 'Remote Charity Jobs',
+        'title': 'Remote Charity Jobs (2026) | {count}+ Charitable Organization Roles',
+        'meta_desc': 'Find {count}+ remote charity jobs. Fundraising, program management & operations roles at charitable organizations worldwide.',
+        'intro': 'Charities worldwide are hiring remotely. From fundraising to program delivery, find your role in the charitable sector.',
+        'icon': '❤️',
+        'filter_type': 'nonprofit',
+        'patterns': ['charity', 'charitable', 'donation', 'giving', 'philanthropy'],
+        'difficulty': 30,
+        'search_volume': 'low',
+    },
+    # Online jobs for social good
+    {
+        'slug': 'online-jobs-for-social-good',
+        'keyword': 'online jobs for social good',
+        'h1': 'Online Jobs for Social Good',
+        'title': 'Online Jobs for Social Good (2026) | {count}+ Digital Impact Roles',
+        'meta_desc': 'Find {count}+ online jobs for social good. Digital-first roles at organizations making a positive difference in the world.',
+        'intro': 'Digital skills meet social purpose. These online positions let you contribute to causes you care about through remote, digital work.',
+        'icon': '💻',
+        'filter_type': 'all',
+        'difficulty': 35,
+        'search_volume': 'medium',
+    },
+    # Jobs that make a difference
+    {
+        'slug': 'jobs-that-make-a-difference-remote',
+        'keyword': 'jobs that make a difference remote',
+        'h1': 'Remote Jobs That Make a Difference',
+        'title': 'Remote Jobs That Make a Difference (2026) | {count}+ Meaningful Roles',
+        'meta_desc': 'Find {count}+ remote jobs that make a difference. Work for organizations solving real problems in climate, health & social justice.',
+        'intro': 'Not all jobs are created equal. These remote positions offer the chance to make a genuine difference in the world.',
+        'icon': '💫',
+        'filter_type': 'all',
+        'difficulty': 39,
+        'search_volume': 'medium',
+    },
+]
+
+# Create lookup dict for keyword pages
+KEYWORD_SEO_LOOKUP = {page['slug']: page for page in KEYWORD_SEO_PAGES}
+
+def get_keyword_page_config(slug):
+    """Get configuration for a keyword-based SEO page."""
+    return KEYWORD_SEO_LOOKUP.get(slug)
+
+def get_all_keyword_slugs():
+    """Get list of all keyword page slugs."""
+    return [page['slug'] for page in KEYWORD_SEO_PAGES]
