@@ -518,7 +518,73 @@
     </div>
 </section>
 
-<!-- Featured Jobs Section - Removed per user request -->
+<!-- Browse by Role Section -->
+<section class="pt-16 pb-10 bg-twilight-900">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
+            <div>
+                <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-2">Browse by role</p>
+                <h2 class="text-4xl font-semibold">Find your perfect position</h2>
+            </div>
+            <a href="{% url 'jobs:all_role_pages' %}" class="inline-flex items-center text-neon font-semibold">
+                View all roles
+                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14m0 0-6-6m6 6-6 6" />
+                </svg>
+            </a>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <a href="/remote-software-engineer-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
+                <div class="text-3xl mb-2">💻</div>
+                <h3 class="font-medium text-sm group-hover:text-neon transition">Software Engineer</h3>
+            </a>
+            <a href="/remote-data-scientist-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
+                <div class="text-3xl mb-2">📊</div>
+                <h3 class="font-medium text-sm group-hover:text-neon transition">Data Scientist</h3>
+            </a>
+            <a href="/remote-product-manager-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
+                <div class="text-3xl mb-2">🎯</div>
+                <h3 class="font-medium text-sm group-hover:text-neon transition">Product Manager</h3>
+            </a>
+            <a href="/remote-program-manager-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
+                <div class="text-3xl mb-2">🎪</div>
+                <h3 class="font-medium text-sm group-hover:text-neon transition">Program Manager</h3>
+            </a>
+            <a href="/remote-policy-analyst-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
+                <div class="text-3xl mb-2">🏛️</div>
+                <h3 class="font-medium text-sm group-hover:text-neon transition">Policy Analyst</h3>
+            </a>
+            <a href="/remote-research-scientist-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
+                <div class="text-3xl mb-2">🔬</div>
+                <h3 class="font-medium text-sm group-hover:text-neon transition">Research Scientist</h3>
+            </a>
+            <a href="/remote-marketing-manager-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
+                <div class="text-3xl mb-2">📣</div>
+                <h3 class="font-medium text-sm group-hover:text-neon transition">Marketing Manager</h3>
+            </a>
+            <a href="/remote-operations-manager-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
+                <div class="text-3xl mb-2">⚙️</div>
+                <h3 class="font-medium text-sm group-hover:text-neon transition">Operations Manager</h3>
+            </a>
+            <a href="/remote-ux-designer-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
+                <div class="text-3xl mb-2">🎨</div>
+                <h3 class="font-medium text-sm group-hover:text-neon transition">UX Designer</h3>
+            </a>
+            <a href="/remote-communications-manager-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
+                <div class="text-3xl mb-2">✍️</div>
+                <h3 class="font-medium text-sm group-hover:text-neon transition">Communications</h3>
+            </a>
+            <a href="/remote-finance-manager-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
+                <div class="text-3xl mb-2">💰</div>
+                <h3 class="font-medium text-sm group-hover:text-neon transition">Finance Manager</h3>
+            </a>
+            <a href="{% url 'jobs:all_role_pages' %}" class="group rounded-2xl border border-brand-300/30 bg-gradient-to-br from-brand-300/10 to-transparent p-5 hover:border-brand-300/50 transition text-center flex flex-col items-center justify-center">
+                <div class="text-2xl mb-2">→</div>
+                <h3 class="font-medium text-sm text-neon">View all roles</h3>
+            </a>
+        </div>
+    </div>
+</section>
 
 <!-- Impact Metrics -->
 <!-- <section id="success" class="py-24 bg-twilight-900">
