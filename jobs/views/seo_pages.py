@@ -322,39 +322,13 @@ class AllKeywordPagesView(ListView):
     context_object_name = "keyword_pages"
 
     def get_queryset(self):
-        """Get all keyword pages with job counts."""
-        result = []
-        for config in KEYWORD_SEO_PAGES:
-            filter_type = config.get('filter_type', 'all')
-            patterns = config.get('patterns', [])
-            
-            base_qs = Job.objects.filter(is_active=True)
-            
-            if filter_type == 'all':
-                count = base_qs.count()
-            elif filter_type == 'nonprofit':
-                q_objects = Q(organization__organization_type='nonprofit')
-                for pattern in patterns:
-                    q_objects |= Q(organization__name__icontains=pattern)
-                    q_objects |= Q(title__icontains=pattern)
-                count = base_qs.filter(q_objects).distinct().count()
-            elif filter_type == 'keyword':
-                q_objects = Q()
-                for pattern in patterns:
-                    q_objects |= Q(title__icontains=pattern)
-                    q_objects |= Q(description__icontains=pattern)
-                count = base_qs.filter(q_objects).distinct().count()
-            else:
-                count = base_qs.count()
-            
-            result.append({
-                **config,
-                'job_count': count,
-            })
-        
-        # Sort by search volume priority, then job count
+        """Get all keyword pages (no counts for speed)."""
+        # Skip counting - just return the configs sorted by volume
         volume_order = {'high': 0, 'medium': 1, 'low': 2}
-        result.sort(key=lambda x: (volume_order.get(x.get('search_volume', 'low'), 2), -x['job_count']))
+        result = sorted(
+            KEYWORD_SEO_PAGES,
+            key=lambda x: volume_order.get(x.get('search_volume', 'low'), 2)
+        )
         return result
 
     def get_context_data(self, **kwargs):
