@@ -25,8 +25,8 @@ class CloudflareEdgeCacheMiddleware:
     # URL patterns and their edge cache TTLs (in seconds)
     # More specific patterns first
     CACHE_RULES = [
-        # Static-ish pages - cache longer at edge
-        (r'^/$', 300),                              # Homepage: 5 min
+        # NOTE: Homepage excluded - shows personalized content for logged-in users
+        # (r'^/$', 300),                            # Homepage: DO NOT CACHE (personalized)
         (r'^/domains/$', 600),                      # All domains: 10 min
         (r'^/domains/[^/]+/$', 600),                # Domain landing pages: 10 min
         (r'^/organizations/$', 300),                # Org list: 5 min
@@ -59,8 +59,9 @@ class CloudflareEdgeCacheMiddleware:
         (r'^/robots\.txt$', 86400),                 # robots.txt: 24 hours
     ]
     
-    # Never cache these paths (authenticated/dynamic)
+    # Never cache these paths (authenticated/dynamic/personalized)
     NO_CACHE_PATTERNS = [
+        r'^/$',                 # Homepage - shows personalized content
         r'^/admin/',
         r'^/accounts/',
         r'^/account/',
@@ -72,6 +73,9 @@ class CloudflareEdgeCacheMiddleware:
         r'^/applications/',
         r'^/checkout/',
         r'^/webhook/',
+        r'^/my-matches/',       # Personalized matches
+        r'^/impact-profile/',   # User profile
+        r'^/talent/',           # Talent directory (may show user-specific)
     ]
     
     def __init__(self, get_response):
@@ -122,7 +126,8 @@ class CloudflareEdgeCacheMiddleware:
                 
                 browser_ttl = min(edge_ttl, 60)
                 response['Cache-Control'] = f'public, max-age={browser_ttl}, s-maxage={edge_ttl}'
-                response['Vary'] = 'Accept-Encoding'
+                # CRITICAL: Include Cookie in Vary to prevent serving cached authenticated pages to wrong users
+                response['Vary'] = 'Accept-Encoding, Cookie'
                 return response
         
         # Default: don't set aggressive caching for unmatched paths
