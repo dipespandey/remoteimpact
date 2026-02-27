@@ -88,7 +88,13 @@
 </script>
 {% endblock %}
 
+{% block extra_head %}
+{% include 'components/prose_enhancements.html' %}
+{% endblock %}
+
 {% block content %}
+<div class="reading-progress" id="reading-progress"></div>
+
 <section class="bg-gray-50 pt-16 pb-12">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
@@ -99,72 +105,203 @@
             <span class="text-gray-900">Climate & Environment Careers</span>
         </nav>
 
-        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm prose prose-gray max-w-none">
-            <p class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold mb-2">Pillar Guide</p>
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
-                Remote Climate &amp; Environment Jobs: The Ultimate Career Guide
-            </h1>
+        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm">
+            
+            <!-- Header -->
+            <div class="not-prose mb-8">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold">Pillar Guide</span>
+                    <span class="read-time">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        10 min read
+                    </span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
+                    Remote Climate &amp; Environment Jobs: The Ultimate Career Guide
+                </h1>
+                <p class="text-xl text-gray-600 leading-relaxed">
+                    The climate sector is one of the fastest-growing employers in the impact space. From carbon accounting to renewable energy policy, organisations worldwide are hiring remote professionals to tackle the defining challenge of our generation.
+                </p>
+            </div>
 
-            <p class="text-xl text-gray-600 leading-relaxed mb-8">
-                The climate sector is one of the fastest-growing employers in the impact space. From carbon accounting to renewable energy policy, organisations worldwide are hiring remote professionals to tackle the defining challenge of our generation.
-            </p>
+            <!-- Stats Row -->
+            <div class="stats-row not-prose">
+                <div class="stat-card">
+                    <div class="stat-number">$1.4T</div>
+                    <div class="stat-label">Annual Climate Finance</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">38%</div>
+                    <div class="stat-label">Job Growth (2024)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">$95K</div>
+                    <div class="stat-label">Avg Remote Salary</div>
+                </div>
+            </div>
 
-            <h2>What are climate and environment jobs?</h2>
-            <p>
-                Climate and environment roles span any position whose primary mission is to reduce greenhouse-gas emissions, protect ecosystems, or help communities adapt to a warming planet. This includes direct technical work — energy modelling, conservation biology, sustainable agriculture — as well as the enabling functions every organisation needs: fundraising, communications, software development, and programme management.
-            </p>
-            <p>
-                The sector has moved far beyond traditional "field scientist" stereotypes. Today's climate workforce includes UX designers building carbon dashboards, lobbyists drafting clean-energy legislation, and data engineers powering satellite deforestation alerts. Remote work has accelerated this shift, allowing talent anywhere in the world to contribute to projects that were previously limited to a handful of capital cities.
-            </p>
-
-            <h2>Key skills employers look for</h2>
-            <ul>
-                <li><strong>GHG accounting &amp; life-cycle analysis</strong> — Understanding carbon footprints across supply chains (GHG Protocol, ISO 14064).</li>
-                <li><strong>Geospatial &amp; remote-sensing tools</strong> — GIS, Google Earth Engine, satellite imagery for land-use monitoring.</li>
-                <li><strong>Policy analysis &amp; regulatory knowledge</strong> — Familiarity with the Paris Agreement, EU Taxonomy, SEC climate disclosure rules.</li>
-                <li><strong>Data science &amp; modelling</strong> — Python, R, climate models (CMIP6), scenario analysis.</li>
-                <li><strong>Stakeholder engagement</strong> — Grant writing, coalition building, community outreach — especially for NGOs.</li>
-                <li><strong>Project management</strong> — Coordinating distributed teams across time zones is a core skill for any remote climate role.</li>
-            </ul>
-
-            <h2>Where to start</h2>
-            <p>
-                If you are transitioning into climate work, start by identifying the overlap between your current expertise and the sector's needs. A software engineer can target climate-tech startups building monitoring platforms. A marketing professional can help NGOs amplify their campaigns. Volunteer for a climate organisation, complete a short course (Terra.do and Climate Draft are popular), and begin contributing to open-source climate projects on GitHub. These signal genuine commitment to hiring managers.
-            </p>
-
-            <h2>Frequently asked questions</h2>
-
-            <h3>What qualifications do I need for a remote climate job?</h3>
-            <p>
-                Most entry-level climate roles require a bachelor's degree in environmental science, engineering, policy, or a related field. However, many organisations hire from adjacent disciplines — data science, communications, project management — if you can demonstrate genuine interest in climate outcomes. Certifications like LEED, PMP, or GHG Protocol training are useful but rarely mandatory.
-            </p>
-
-            <h3>Can I work in climate without a science degree?</h3>
-            <p>
-                Absolutely. Climate organisations need fundraisers, policy analysts, marketers, software engineers, and operations managers. Some of the highest-impact climate jobs are in advocacy, finance, and technology — none of which require a hard-science background.
-            </p>
-
-            <h3>What is the typical salary range for remote climate jobs?</h3>
-            <p>
-                Remote climate salaries vary widely. Entry-level roles (coordinator, analyst) typically range from $45,000 to $65,000 USD. Mid-career professionals (manager, specialist) earn $70,000 to $110,000. Senior leadership, engineering, and technical roles can exceed $140,000, especially at well-funded climate-tech startups.
-            </p>
-
-            <h3>Which organisations hire the most remote climate workers?</h3>
-            <p>
-                Large environmental NGOs like WWF, The Nature Conservancy, and Greenpeace regularly list remote roles. Climate-tech startups (Watershed, Pachama, Wren) are growing fast. Multilateral bodies like UNEP and the World Bank also offer remote-friendly contracts. Check Remote Impact's <a href="/jobs/?category=climate-environment">climate category</a> for current openings.
-            </p>
-
-            <div class="bg-brand-50 border border-brand-200 rounded-2xl p-6 mt-8 not-prose">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Related reads</h3>
-                <ul class="space-y-2 text-sm">
-                    <li><a href="{% url 'jobs:cluster_detail' pillar_slug='climate-environment-careers' cluster_slug='break-into-climate-tech-no-stem' %}" class="text-brand-600 hover:text-brand-700 font-medium">How to Break Into Climate Tech Without a STEM Degree &rarr;</a></li>
-                    <li><a href="{% url 'jobs:cluster_detail' pillar_slug='climate-environment-careers' cluster_slug='top-remote-climate-employers' %}" class="text-brand-600 hover:text-brand-700 font-medium">10 Organisations Hiring Remote Climate Professionals Right Now &rarr;</a></li>
-                    <li><a href="{% url 'jobs:cluster_detail' pillar_slug='climate-environment-careers' cluster_slug='climate-career-switch-guide' %}" class="text-brand-600 hover:text-brand-700 font-medium">Career Switching to Climate: A 90-Day Action Plan &rarr;</a></li>
+            <!-- TL;DR Box -->
+            <div class="tldr-box not-prose">
+                <h4>⚡ Quick Summary</h4>
+                <ul>
+                    <li>Climate jobs span tech, policy, finance, and operations — not just science</li>
+                    <li>Entry roles: $45-65K | Mid-career: $70-110K | Senior: $140K+</li>
+                    <li>Key skills: GHG accounting, GIS, policy analysis, project management</li>
+                    <li>Best entry path: volunteer, take a course, build a climate portfolio</li>
                 </ul>
             </div>
 
+            <!-- Table of Contents -->
+            <div class="toc-box not-prose">
+                <h4>In This Guide</h4>
+                <ol>
+                    <li><a href="#what">What Are Climate & Environment Jobs?</a></li>
+                    <li><a href="#skills">Key Skills Employers Look For</a></li>
+                    <li><a href="#start">Where to Start</a></li>
+                    <li><a href="#faq">Frequently Asked Questions</a></li>
+                </ol>
+            </div>
+
+            <div class="prose prose-gray max-w-none">
+                
+                <h2 id="what">🌍 What are climate and environment jobs?</h2>
+                <p>
+                    Climate and environment roles span any position whose primary mission is to reduce greenhouse-gas emissions, protect ecosystems, or help communities adapt to a warming planet. This includes direct technical work — energy modelling, conservation biology, sustainable agriculture — as well as the enabling functions every organisation needs: fundraising, communications, software development, and programme management.
+                </p>
+
+                <div class="callout callout-info not-prose">
+                    <strong>The sector has evolved:</strong> Today's climate workforce includes UX designers building carbon dashboards, lobbyists drafting clean-energy legislation, and data engineers powering satellite deforestation alerts. Remote work has accelerated this shift, allowing talent anywhere to contribute.
+                </div>
+
+                <h2 id="skills">💼 Key skills employers look for</h2>
+                
+                <div class="feature-grid not-prose">
+                    <div class="feature-card">
+                        <div class="feature-card-icon">📊</div>
+                        <h4>GHG Accounting & LCA</h4>
+                        <p>Understanding carbon footprints across supply chains (GHG Protocol, ISO 14064).</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">🗺️</div>
+                        <h4>Geospatial & Remote Sensing</h4>
+                        <p>GIS, Google Earth Engine, satellite imagery for land-use monitoring.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">📜</div>
+                        <h4>Policy & Regulatory</h4>
+                        <p>Paris Agreement, EU Taxonomy, SEC climate disclosure rules.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">🐍</div>
+                        <h4>Data Science & Modelling</h4>
+                        <p>Python, R, climate models (CMIP6), scenario analysis.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">🤝</div>
+                        <h4>Stakeholder Engagement</h4>
+                        <p>Grant writing, coalition building, community outreach — especially for NGOs.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">📋</div>
+                        <h4>Project Management</h4>
+                        <p>Coordinating distributed teams across time zones is core to remote climate work.</p>
+                    </div>
+                </div>
+
+                <h2 id="start">🚀 Where to start</h2>
+                <p>
+                    If you're transitioning into climate work, start by identifying the overlap between your current expertise and the sector's needs.
+                </p>
+
+                <ul class="icon-list arrow not-prose">
+                    <li><strong>Software engineer?</strong> Target climate-tech startups building monitoring platforms.</li>
+                    <li><strong>Marketing professional?</strong> Help NGOs amplify their campaigns.</li>
+                    <li><strong>Finance background?</strong> Explore climate investment and green bonds.</li>
+                    <li><strong>Policy wonk?</strong> International climate frameworks need analysts.</li>
+                </ul>
+
+                <div class="callout callout-tip not-prose">
+                    <strong>Action steps:</strong> Volunteer for a climate organisation, complete a short course (<a href="https://terra.do" class="text-green-700 hover:underline">Terra.do</a> and Climate Draft are popular), and contribute to open-source climate projects on GitHub. These signal genuine commitment to hiring managers.
+                </div>
+
+                <div class="section-divider not-prose">FAQ</div>
+
+                <h2 id="faq">❓ Frequently asked questions</h2>
+
+                <details class="group mb-4 border border-gray-200 rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 bg-gray-50 cursor-pointer hover:bg-gray-100 transition">
+                        <span class="font-semibold text-gray-900">What qualifications do I need for a remote climate job?</span>
+                        <svg class="w-5 h-5 text-gray-500 transform group-open:rotate-180 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="p-5 border-t border-gray-200">
+                        <p class="text-gray-600">Most entry-level climate roles require a bachelor's degree in environmental science, engineering, policy, or a related field. However, many organisations hire from adjacent disciplines — data science, communications, project management — if you can demonstrate genuine interest in climate outcomes. Certifications like LEED, PMP, or GHG Protocol training are useful but rarely mandatory.</p>
+                    </div>
+                </details>
+
+                <details class="group mb-4 border border-gray-200 rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 bg-gray-50 cursor-pointer hover:bg-gray-100 transition">
+                        <span class="font-semibold text-gray-900">Can I work in climate without a science degree?</span>
+                        <svg class="w-5 h-5 text-gray-500 transform group-open:rotate-180 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="p-5 border-t border-gray-200">
+                        <p class="text-gray-600">Absolutely. Climate organisations need fundraisers, policy analysts, marketers, software engineers, and operations managers. Some of the highest-impact climate jobs are in advocacy, finance, and technology — none of which require a hard-science background.</p>
+                    </div>
+                </details>
+
+                <details class="group mb-4 border border-gray-200 rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 bg-gray-50 cursor-pointer hover:bg-gray-100 transition">
+                        <span class="font-semibold text-gray-900">What is the typical salary range for remote climate jobs?</span>
+                        <svg class="w-5 h-5 text-gray-500 transform group-open:rotate-180 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="p-5 border-t border-gray-200">
+                        <p class="text-gray-600">Remote climate salaries vary widely. Entry-level roles (coordinator, analyst) typically range from $45,000 to $65,000 USD. Mid-career professionals (manager, specialist) earn $70,000 to $110,000. Senior leadership, engineering, and technical roles can exceed $140,000, especially at well-funded climate-tech startups.</p>
+                    </div>
+                </details>
+
+                <details class="group mb-4 border border-gray-200 rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 bg-gray-50 cursor-pointer hover:bg-gray-100 transition">
+                        <span class="font-semibold text-gray-900">Which organisations hire the most remote climate workers?</span>
+                        <svg class="w-5 h-5 text-gray-500 transform group-open:rotate-180 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="p-5 border-t border-gray-200">
+                        <p class="text-gray-600">Large environmental NGOs like WWF, The Nature Conservancy, and Greenpeace regularly list remote roles. Climate-tech startups (Watershed, Pachama, Wren) are growing fast. Multilateral bodies like UNEP and the World Bank also offer remote-friendly contracts. Check our <a href="/jobs/?category=climate-environment" class="text-brand-600 hover:underline">climate category</a> for current openings.</p>
+                    </div>
+                </details>
+
+            </div>
+
+            <!-- CTA Card -->
+            <div class="bg-gradient-to-br from-brand-50 to-brand-100 border border-brand-200 rounded-2xl p-8 mt-10 not-prose text-center">
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Ready to start your climate career?</h3>
+                <p class="text-gray-600 mb-4">Browse open remote climate positions on Remote Impact.</p>
+                <a href="/jobs/?category=climate-environment" class="inline-flex items-center gap-2 px-6 py-3 bg-brand-500 text-white font-semibold rounded-full hover:bg-brand-600 transition">
+                    Browse Climate Jobs
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                </a>
+            </div>
+
+            <!-- Related Reads -->
+            <div class="bg-brand-50 border border-brand-200 rounded-2xl p-6 mt-8 not-prose">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">📚 Related Reads</h3>
+                <div class="space-y-3">
+                    <a href="{% url 'jobs:cluster_detail' pillar_slug='climate-environment-careers' cluster_slug='break-into-climate-tech-no-stem' %}" class="flex items-center gap-3 p-3 rounded-xl bg-white/60 hover:bg-white transition group">
+                        <span class="text-xl">🎓</span>
+                        <span class="text-brand-600 group-hover:text-brand-700 font-medium">How to Break Into Climate Tech Without a STEM Degree →</span>
+                    </a>
+                    <a href="{% url 'jobs:cluster_detail' pillar_slug='climate-environment-careers' cluster_slug='top-remote-climate-employers' %}" class="flex items-center gap-3 p-3 rounded-xl bg-white/60 hover:bg-white transition group">
+                        <span class="text-xl">🏢</span>
+                        <span class="text-brand-600 group-hover:text-brand-700 font-medium">10 Organisations Hiring Remote Climate Professionals →</span>
+                    </a>
+                    <a href="{% url 'jobs:cluster_detail' pillar_slug='climate-environment-careers' cluster_slug='climate-career-switch-guide' %}" class="flex items-center gap-3 p-3 rounded-xl bg-white/60 hover:bg-white transition group">
+                        <span class="text-xl">🔄</span>
+                        <span class="text-brand-600 group-hover:text-brand-700 font-medium">Career Switching to Climate: A 90-Day Action Plan →</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Other Pillars -->
             <div class="bg-gray-50 border border-gray-200 rounded-2xl p-6 mt-8 not-prose">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Explore other impact career paths</h3>
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Explore Other Impact Career Paths</h3>
                 <div class="grid sm:grid-cols-2 gap-3">
                     <a href="{% url 'jobs:pillar_detail' pillar_slug='ai-safety-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
                         <span class="text-xl">🤖</span>
@@ -187,4 +324,23 @@
         </article>
     </div>
 </section>
+
+<script>
+window.addEventListener('scroll', function() {
+    const article = document.querySelector('article');
+    const progressBar = document.getElementById('reading-progress');
+    if (!article || !progressBar) return;
+    
+    const articleTop = article.offsetTop;
+    const articleHeight = article.offsetHeight;
+    const windowHeight = window.innerHeight;
+    const scrollY = window.scrollY;
+    
+    const progress = Math.min(100, Math.max(0, 
+        ((scrollY - articleTop + windowHeight * 0.3) / (articleHeight - windowHeight * 0.5)) * 100
+    ));
+    
+    progressBar.style.width = progress + '%';
+});
+</script>
 {% endblock %}
