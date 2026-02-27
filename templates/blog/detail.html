@@ -10,7 +10,13 @@
 {% block canonical %}{{ SITE_URL }}{{ post.get_absolute_url }}{% endblock %}
 
 {% block extra_head %}
-{% include 'components/prose_enhancements.html' %}
+<style>
+/* Reading Progress */
+.reading-progress { position: fixed; top: 0; left: 0; width: 0%; height: 3px; background: linear-gradient(90deg, #16803c 0%, #22c55e 100%); z-index: 9999; transition: width 0.1s ease; }
+/* Read Time */
+.read-time { display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.8rem; color: #6b7280; background: #f3f4f6; padding: 0.25rem 0.75rem; border-radius: 9999px; }
+.read-time svg { width: 0.875rem; height: 0.875rem; }
+</style>
 
 <script type="application/ld+json">
 {
