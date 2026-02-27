@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+
+{% block title %}Remote Tech for Good Jobs: Software Engineering at Nonprofits 2026{% endblock %}
+{% block meta_description %}Build a remote tech career at nonprofits and civic organizations. Software engineering, data science, and product roles for social impact. Skills, salaries, and employers.{% endblock %}
+{% block canonical %}{{ SITE_URL }}{% url 'jobs:pillar_detail' pillar_slug='tech-for-good-careers' %}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_title %}Tech for Good: Software Engineering & Data Science for Social Impact{% endblock %}
+{% block og_description %}Use your tech skills for social good. Learn how to build a career as a software engineer, data scientist, or product manager at nonprofits and civic tech organizations.{% endblock %}
+
+{% block extra_head %}
+<style>
+.callout { position: relative; padding: 1.25rem 1.25rem 1.25rem 3.5rem; border-radius: 1rem; margin: 1.5rem 0; border: 1px solid; }
+.callout::before { position: absolute; left: 1rem; top: 1.25rem; font-size: 1.25rem; }
+.callout-info { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-color: #93c5fd; }
+.callout-info::before { content: '💡'; }
+.callout-tip { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-color: #86efac; }
+.callout-tip::before { content: '✨'; }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin: 2rem 0; }
+.stat-card { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.25rem; text-align: center; }
+.stat-number { font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #16803c 0%, #22c55e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.2; }
+.stat-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-top: 0.25rem; }
+.feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin: 2rem 0; }
+.feature-card { background: white; border: 1px solid #e5e7eb; border-radius: 1rem; padding: 1.5rem; transition: all 0.2s ease; }
+.feature-card:hover { border-color: #16803c; box-shadow: 0 4px 12px rgba(22, 128, 60, 0.1); }
+.feature-card-icon { width: 2.5rem; height: 2.5rem; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; margin-bottom: 1rem; }
+.feature-card h4 { font-size: 1.1rem; font-weight: 600; color: #111827; margin: 0 0 0.5rem 0; }
+.feature-card p { font-size: 0.9rem; color: #6b7280; margin: 0; line-height: 1.5; }
+.org-card { background: white; border: 1px solid #e5e7eb; border-radius: 1rem; padding: 1.5rem; margin: 1.5rem 0; display: flex; gap: 1.25rem; align-items: flex-start; }
+.org-card-badge { flex-shrink: 0; width: 3.5rem; height: 3.5rem; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 1rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+.org-card-content h4 { font-size: 1.15rem; font-weight: 600; color: #111827; margin: 0 0 0.5rem 0; }
+.org-card-content p { font-size: 0.95rem; color: #4b5563; margin: 0; line-height: 1.6; }
+.org-card-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+.org-tag { font-size: 0.75rem; padding: 0.25rem 0.625rem; background: #f3f4f6; color: #374151; border-radius: 9999px; }
+.tldr-box { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #86efac; border-radius: 1.25rem; padding: 1.5rem; margin: 2rem 0; }
+.tldr-box h4 { display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; font-weight: 700; color: #166534; margin: 0 0 1rem 0; text-transform: uppercase; letter-spacing: 0.05em; }
+.tldr-box ul { list-style: none; padding: 0; margin: 0; }
+.tldr-box li { position: relative; padding-left: 1.5rem; margin-bottom: 0.5rem; color: #166534; font-weight: 500; }
+.tldr-box li::before { content: '✓'; position: absolute; left: 0; color: #16803c; font-weight: bold; }
+.toc-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.25rem 1.5rem; margin: 2rem 0; }
+.toc-box h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin: 0 0 0.75rem 0; }
+.toc-box ol { list-style: decimal; padding-left: 1.25rem; margin: 0; }
+.toc-box li { margin-bottom: 0.375rem; }
+.toc-box a { color: #374151; text-decoration: none; font-size: 0.9rem; }
+.toc-box a:hover { color: #16803c; }
+.section-divider { display: flex; align-items: center; gap: 1rem; margin: 2.5rem 0; color: #9ca3af; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; }
+.section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, #e5e7eb, transparent); }
+.reading-progress { position: fixed; top: 0; left: 0; width: 0%; height: 3px; background: linear-gradient(90deg, #16803c 0%, #22c55e 100%); z-index: 9999; transition: width 0.1s ease; }
+.read-time { display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.8rem; color: #6b7280; background: #f3f4f6; padding: 0.25rem 0.75rem; border-radius: 9999px; }
+.read-time svg { width: 0.875rem; height: 0.875rem; }
+@media (max-width: 640px) { .org-card { flex-direction: column; } .stats-row { grid-template-columns: repeat(2, 1fr); } .feature-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reading-progress" id="reading-progress"></div>
+
+<section class="bg-gray-50 pt-16 pb-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
+            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
+            <span>&rsaquo;</span>
+            <a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Resources</a>
+            <span>&rsaquo;</span>
+            <span class="text-gray-900">Tech for Good Careers</span>
+        </nav>
+
+        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm">
+            
+            <div class="not-prose mb-8">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold">Pillar Guide</span>
+                    <span class="read-time">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        11 min read
+                    </span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
+                    Tech for Good: Software Engineering &amp; Data Science for Social Impact
+                </h1>
+                <p class="text-xl text-gray-600 leading-relaxed">
+                    Your tech skills can drive social change. Nonprofits, civic tech organizations, and impact startups need software engineers, data scientists, and product managers to build technology that serves communities, not just shareholders. Here's how to make the switch.
+                </p>
+            </div>
+
+            <div class="stats-row not-prose">
+                <div class="stat-card">
+                    <div class="stat-number">$120K</div>
+                    <div class="stat-label">Avg Nonprofit Engineer</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">65%</div>
+                    <div class="stat-label">Remote-Friendly Orgs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">2.5K</div>
+                    <div class="stat-label">Civic Tech Projects</div>
+                </div>
+            </div>
+
+            <div class="tldr-box not-prose">
+                <h4>⚡ Quick Summary</h4>
+                <ul>
+                    <li>80,000 Hours ranks nonprofit tech as one of the highest-impact career paths</li>
+                    <li>Salaries lower than FAANG but competitive ($100-160K for senior engineers)</li>
+                    <li>Three paths: nonprofits, civic tech/government, or impact startups</li>
+                    <li>Most roles remote-friendly; open source experience highly valued</li>
+                </ul>
+            </div>
+
+            <div class="toc-box not-prose">
+                <h4>In This Guide</h4>
+                <ol>
+                    <li><a href="#why">Why Tech for Good?</a></li>
+                    <li><a href="#tracks">Career Tracks</a></li>
+                    <li><a href="#orgs">Top Employers</a></li>
+                    <li><a href="#faq">FAQs</a></li>
+                </ol>
+            </div>
+
+            <div class="prose prose-gray max-w-none">
+                
+                <h2 id="why">💡 Why tech for good?</h2>
+                <p>80,000 Hours — the career advice organization based on rigorous research — identifies software engineering at effective nonprofits as one of the highest-impact career paths available. The reasoning is simple: nonprofits are chronically under-resourced on technical talent, so a skilled engineer can have outsized impact by building systems that serve millions.</p>
+
+                <div class="callout callout-info not-prose">
+                    <strong>The leverage is real:</strong> Code for America estimates that a single well-built civic tech tool can serve millions of people annually. Engineers at GiveDirectly build systems that deliver cash to hundreds of thousands of families. At Wikimedia, a small engineering team supports 15+ billion page views monthly.
+                </div>
+
+                <h2 id="tracks">💻 Career tracks in tech for good</h2>
+
+                <div class="feature-grid not-prose">
+                    <div class="feature-card">
+                        <div class="feature-card-icon">🏛️</div>
+                        <h4>Nonprofit Engineering</h4>
+                        <p>Full-stack, backend, infrastructure at mission-driven orgs. Wikipedia, Khan Academy, GiveDirectly, charity: water all have engineering teams.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">🏙️</div>
+                        <h4>Civic Tech & Government</h4>
+                        <p>USDS, 18F, Code for America, Nava PBC. Build digital services for government agencies and underserved communities.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">📊</div>
+                        <h4>Data Science for Impact</h4>
+                        <p>Data.org, DataKind, Crisis Text Line. Apply ML and analytics to social problems. Often pro bono or fellowship opportunities.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">🚀</div>
+                        <h4>Impact Startups</h4>
+                        <p>Venture-backed companies solving social/environmental problems. Fintech for inclusion, climate tech, health tech. Startup salaries + equity.</p>
+                    </div>
+                </div>
+
+                <h2>💼 Key skills & how to transition</h2>
+
+                <div class="feature-grid not-prose">
+                    <div class="feature-card">
+                        <div class="feature-card-icon">🐙</div>
+                        <h4>Open Source Contribution</h4>
+                        <p>Many nonprofits run on open source. Contribute to projects like OpenMRS, Ushahidi, or Humanitarian OpenStreetMap to build credibility.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">🔒</div>
+                        <h4>Security & Privacy</h4>
+                        <p>Nonprofits handle sensitive data (donors, beneficiaries). Privacy-preserving techniques, compliance (HIPAA, GDPR) are valuable.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">📱</div>
+                        <h4>Low-Resource Environments</h4>
+                        <p>Offline-first, SMS-based interfaces, low-bandwidth optimization. Understanding constraints in developing contexts matters.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">🎯</div>
+                        <h4>Product Thinking</h4>
+                        <p>Nonprofits need engineers who can own problems end-to-end. User research, prioritization, and business context are key.</p>
+                    </div>
+                </div>
+
+                <div class="section-divider not-prose">Top Employers</div>
+
+                <h2 id="orgs">🏢 Top employers hiring</h2>
+
+                <div class="org-card not-prose">
+                    <div class="org-card-badge">📖</div>
+                    <div class="org-card-content">
+                        <h4>Wikimedia Foundation</h4>
+                        <p>Runs Wikipedia and Wikimedia projects. Fully remote, global team. Engineers build tools serving 15+ billion page views monthly. Strong open source culture. Competitive nonprofit salaries.</p>
+                        <div class="org-card-tags">
+                            <span class="org-tag">🏠 Fully Remote</span>
+                            <span class="org-tag">🌍 Global Team</span>
+                            <span class="org-tag">💰 $100-180K</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="org-card not-prose">
+                    <div class="org-card-badge">🇺🇸</div>
+                    <div class="org-card-content">
+                        <h4>U.S. Digital Service (USDS)</h4>
+                        <p>Tech talent serving tours of duty in federal government. Fix healthcare.gov-scale problems. Two-year commitments, GS-15 pay ($120-150K), meaningful work, unique résumé item.</p>
+                        <div class="org-card-tags">
+                            <span class="org-tag">🏛️ Government</span>
+                            <span class="org-tag">🇺🇸 DC-based</span>
+                            <span class="org-tag">⏱️ 2-Year Tours</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="org-card not-prose">
+                    <div class="org-card-badge">💚</div>
+                    <div class="org-card-content">
+                        <h4>GiveDirectly</h4>
+                        <p>Direct cash transfers to people in poverty. Engineers build payment infrastructure, fraud detection, and mobile apps used by hundreds of thousands. Remote-friendly, mission-driven.</p>
+                        <div class="org-card-tags">
+                            <span class="org-tag">💰 Cash Transfers</span>
+                            <span class="org-tag">🏠 Remote-friendly</span>
+                            <span class="org-tag">📱 Fintech</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="org-card not-prose">
+                    <div class="org-card-badge">🏙️</div>
+                    <div class="org-card-content">
+                        <h4>Code for America</h4>
+                        <p>Civic tech organization building government services that work. Safety net benefits, criminal justice reform, integrated benefits. Remote-friendly with strong engineering culture.</p>
+                        <div class="org-card-tags">
+                            <span class="org-tag">🏛️ Civic Tech</span>
+                            <span class="org-tag">🏠 Remote-friendly</span>
+                            <span class="org-tag">💰 $110-160K</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="callout callout-tip not-prose">
+                    <strong>Also hiring:</strong> Khan Academy, Crisis Text Line, charity: water, Nava PBC, 18F, New America, Mozilla, Signal, Electronic Frontier Foundation, and most major foundations (Gates, Ford, Hewlett) have tech teams.
+                </div>
+
+                <div class="section-divider not-prose">FAQ</div>
+
+                <h2 id="faq">❓ Frequently asked questions</h2>
+
+                <details class="group mb-4 border border-gray-200 rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 bg-gray-50 cursor-pointer hover:bg-gray-100 transition">
+                        <span class="font-semibold text-gray-900">Will I take a big pay cut moving from FAANG to nonprofit?</span>
+                        <svg class="w-5 h-5 text-gray-500 transform group-open:rotate-180 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="p-5 border-t border-gray-200">
+                        <p class="text-gray-600">Expect 30-50% less than top tech companies. Senior engineers at well-funded nonprofits earn $120-160K. Smaller orgs pay $80-120K. The gap is significant compared to FAANG ($200K+), but competitive with many mid-tier tech companies. Benefits, flexibility, and mission often offset the difference for those who value impact.</p>
+                    </div>
+                </details>
+
+                <details class="group mb-4 border border-gray-200 rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 bg-gray-50 cursor-pointer hover:bg-gray-100 transition">
+                        <span class="font-semibold text-gray-900">Is the tech stack outdated at nonprofits?</span>
+                        <svg class="w-5 h-5 text-gray-500 transform group-open:rotate-180 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="p-5 border-t border-gray-200">
+                        <p class="text-gray-600">Not at the organizations listed above. Wikimedia, Code for America, Khan Academy, and civic tech orgs use modern stacks (React, Python, Kubernetes, etc.). Some legacy nonprofits do have technical debt, but that's true of any large organization. Research the specific org's tech blog or GitHub before applying.</p>
+                    </div>
+                </details>
+
+                <details class="group mb-4 border border-gray-200 rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 bg-gray-50 cursor-pointer hover:bg-gray-100 transition">
+                        <span class="font-semibold text-gray-900">How do I break in without nonprofit experience?</span>
+                        <svg class="w-5 h-5 text-gray-500 transform group-open:rotate-180 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="p-5 border-t border-gray-200">
+                        <p class="text-gray-600">Volunteer with DataKind, Code for America brigades, or contribute to humanitarian open source projects. Take on a pro bono project for a local nonprofit. Write about why you care about the org's mission. Most hiring managers care more about technical skills and genuine mission alignment than prior nonprofit experience.</p>
+                    </div>
+                </details>
+
+            </div>
+
+            <div class="bg-gradient-to-br from-brand-50 to-brand-100 border border-brand-200 rounded-2xl p-8 mt-10 not-prose text-center">
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Ready to use your tech skills for good?</h3>
+                <p class="text-gray-600 mb-4">Browse open remote software engineering and data science positions at impact organizations.</p>
+                <a href="/jobs/?q=software+engineer" class="inline-flex items-center gap-2 px-6 py-3 bg-brand-500 text-white font-semibold rounded-full hover:bg-brand-600 transition">
+                    Browse Tech for Good Jobs
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                </a>
+            </div>
+
+            <div class="bg-gray-50 border border-gray-200 rounded-2xl p-6 mt-8 not-prose">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Explore Other Impact Career Paths</h3>
+                <div class="grid sm:grid-cols-2 gap-3">
+                    <a href="{% url 'jobs:pillar_detail' pillar_slug='ai-safety-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
+                        <span class="text-xl">🤖</span>
+                        <span class="text-brand-600 font-medium text-sm">AI Safety Careers</span>
+                    </a>
+                    <a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
+                        <span class="text-xl">🌍</span>
+                        <span class="text-brand-600 font-medium text-sm">Climate & Environment Careers</span>
+                    </a>
+                    <a href="{% url 'jobs:pillar_detail' pillar_slug='education-edtech-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
+                        <span class="text-xl">🎓</span>
+                        <span class="text-brand-600 font-medium text-sm">Education & EdTech Careers</span>
+                    </a>
+                    <a href="{% url 'jobs:pillar_detail' pillar_slug='effective-altruism-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
+                        <span class="text-xl">🎯</span>
+                        <span class="text-brand-600 font-medium text-sm">Effective Altruism Careers</span>
+                    </a>
+                </div>
+            </div>
+        </article>
+    </div>
+</section>
+
+<script>
+window.addEventListener('scroll', function() {
+    const article = document.querySelector('article');
+    const progressBar = document.getElementById('reading-progress');
+    if (!article || !progressBar) return;
+    const articleTop = article.offsetTop;
+    const articleHeight = article.offsetHeight;
+    const windowHeight = window.innerHeight;
+    const scrollY = window.scrollY;
+    const progress = Math.min(100, Math.max(0, ((scrollY - articleTop + windowHeight * 0.3) / (articleHeight - windowHeight * 0.5)) * 100));
+    progressBar.style.width = progress + '%';
+});
+</script>
+{% endblock %}

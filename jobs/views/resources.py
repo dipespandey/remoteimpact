@@ -929,6 +929,12 @@ PILLAR_MAP = {
     "global-health-careers": "resources/pillars/global-health.html",
     "humanitarian-ingo-careers": "resources/pillars/humanitarian-ingo.html",
     "effective-altruism-careers": "resources/pillars/effective-altruism.html",
+    # New pillars (Feb 2026)
+    "mental-health-careers": "resources/pillars/mental-health.html",
+    "education-edtech-careers": "resources/pillars/education-edtech.html",
+    "economic-development-careers": "resources/pillars/economic-development.html",
+    "social-justice-careers": "resources/pillars/social-justice.html",
+    "tech-for-good-careers": "resources/pillars/tech-for-good.html",
 }
 
 CLUSTER_MAP = {
@@ -952,6 +958,26 @@ CLUSTER_MAP = {
     ("effective-altruism-careers", "ea-operations-roles-guide"): "resources/clusters/ea-operations-roles.html",
     ("effective-altruism-careers", "mid-career-switch-to-ea"): "resources/clusters/ea-mid-career-switch.html",
     ("effective-altruism-careers", "ea-grantmaking-career-path"): "resources/clusters/ea-grantmaking-career.html",
+    # Mental Health (new)
+    ("mental-health-careers", "telehealth-therapy-careers"): "resources/clusters/mental-health-telehealth.html",
+    ("mental-health-careers", "mental-health-tech-startups"): "resources/clusters/mental-health-startups.html",
+    ("mental-health-careers", "mental-health-nonprofit-careers"): "resources/clusters/mental-health-nonprofits.html",
+    # Education & EdTech (new)
+    ("education-edtech-careers", "edtech-product-roles"): "resources/clusters/edtech-product-roles.html",
+    ("education-edtech-careers", "nonprofit-education-careers"): "resources/clusters/education-nonprofits.html",
+    ("education-edtech-careers", "instructional-design-careers"): "resources/clusters/education-instructional-design.html",
+    # Economic Development (new)
+    ("economic-development-careers", "world-bank-ifc-careers"): "resources/clusters/econ-dev-world-bank.html",
+    ("economic-development-careers", "microfinance-fintech-impact"): "resources/clusters/econ-dev-microfinance.html",
+    ("economic-development-careers", "international-development-consulting"): "resources/clusters/econ-dev-consulting.html",
+    # Social Justice (new)
+    ("social-justice-careers", "civil-rights-advocacy-careers"): "resources/clusters/social-justice-advocacy.html",
+    ("social-justice-careers", "legal-aid-public-interest-law"): "resources/clusters/social-justice-legal.html",
+    ("social-justice-careers", "dei-careers-corporate-nonprofit"): "resources/clusters/social-justice-dei.html",
+    # Tech for Good (new)
+    ("tech-for-good-careers", "software-engineer-nonprofit"): "resources/clusters/tech-for-good-engineering.html",
+    ("tech-for-good-careers", "civic-tech-government-careers"): "resources/clusters/tech-for-good-civic.html",
+    ("tech-for-good-careers", "data-science-social-impact"): "resources/clusters/tech-for-good-data.html",
 }
 
 

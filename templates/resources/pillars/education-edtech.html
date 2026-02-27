@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+
+{% block title %}Remote Education & EdTech Jobs: Career Guide 2026{% endblock %}
+{% block meta_description %}Build a remote career in education and edtech. Explore nonprofit education, instructional design, and education technology roles. Skills, salaries, and top employers.{% endblock %}
+{% block canonical %}{{ SITE_URL }}{% url 'jobs:pillar_detail' pillar_slug='education-edtech-careers' %}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_title %}Remote Education & EdTech Careers Guide{% endblock %}
+{% block og_description %}From Khan Academy to Teach For All, education organizations are hiring remotely. Learn how to build a career in edtech, instructional design, and nonprofit education.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Home", "item": "{{ SITE_URL }}/"},
+        {"@type": "ListItem", "position": 2, "name": "Resources", "item": "{{ SITE_URL }}/resources/"},
+        {"@type": "ListItem", "position": 3, "name": "Education & EdTech Careers"}
+    ]
+}
+</script>
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {"@type": "Question", "name": "Do I need a teaching background for edtech jobs?", "acceptedAnswer": {"@type": "Answer", "text": "Not always. Product, engineering, and marketing roles at edtech companies often prioritize tech skills over classroom experience. However, instructional design, curriculum development, and learning science roles typically prefer candidates with education backgrounds."}},
+        {"@type": "Question", "name": "What's the salary range for remote education jobs?", "acceptedAnswer": {"@type": "Answer", "text": "Instructional designers earn $65,000-$95,000. EdTech product managers earn $100,000-$150,000. Curriculum developers at nonprofits earn $55,000-$85,000. Education program managers at foundations earn $70,000-$110,000."}},
+        {"@type": "Question", "name": "Which edtech companies are fully remote?", "acceptedAnswer": {"@type": "Answer", "text": "Khan Academy, Duolingo, Coursera, and Outschool are remote-first or remote-friendly. Many edtech startups operate distributed teams. Nonprofit education orgs like Teach For All and Education First also have remote roles."}}
+    ]
+}
+</script>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+.callout { position: relative; padding: 1.25rem 1.25rem 1.25rem 3.5rem; border-radius: 1rem; margin: 1.5rem 0; border: 1px solid; }
+.callout::before { position: absolute; left: 1rem; top: 1.25rem; font-size: 1.25rem; }
+.callout-info { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-color: #93c5fd; }
+.callout-info::before { content: '💡'; }
+.callout-tip { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-color: #86efac; }
+.callout-tip::before { content: '✨'; }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin: 2rem 0; }
+.stat-card { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.25rem; text-align: center; }
+.stat-number { font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #16803c 0%, #22c55e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.2; }
+.stat-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-top: 0.25rem; }
+.feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin: 2rem 0; }
+.feature-card { background: white; border: 1px solid #e5e7eb; border-radius: 1rem; padding: 1.5rem; transition: all 0.2s ease; }
+.feature-card:hover { border-color: #16803c; box-shadow: 0 4px 12px rgba(22, 128, 60, 0.1); }
+.feature-card-icon { width: 2.5rem; height: 2.5rem; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; margin-bottom: 1rem; }
+.feature-card h4 { font-size: 1.1rem; font-weight: 600; color: #111827; margin: 0 0 0.5rem 0; }
+.feature-card p { font-size: 0.9rem; color: #6b7280; margin: 0; line-height: 1.5; }
+.org-card { background: white; border: 1px solid #e5e7eb; border-radius: 1rem; padding: 1.5rem; margin: 1.5rem 0; display: flex; gap: 1.25rem; align-items: flex-start; }
+.org-card-badge { flex-shrink: 0; width: 3.5rem; height: 3.5rem; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 1rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+.org-card-content h4 { font-size: 1.15rem; font-weight: 600; color: #111827; margin: 0 0 0.5rem 0; }
+.org-card-content p { font-size: 0.95rem; color: #4b5563; margin: 0; line-height: 1.6; }
+.org-card-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+.org-tag { font-size: 0.75rem; padding: 0.25rem 0.625rem; background: #f3f4f6; color: #374151; border-radius: 9999px; }
+.tldr-box { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #86efac; border-radius: 1.25rem; padding: 1.5rem; margin: 2rem 0; }
+.tldr-box h4 { display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; font-weight: 700; color: #166534; margin: 0 0 1rem 0; text-transform: uppercase; letter-spacing: 0.05em; }
+.tldr-box ul { list-style: none; padding: 0; margin: 0; }
+.tldr-box li { position: relative; padding-left: 1.5rem; margin-bottom: 0.5rem; color: #166534; font-weight: 500; }
+.tldr-box li::before { content: '✓'; position: absolute; left: 0; color: #16803c; font-weight: bold; }
+.toc-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.25rem 1.5rem; margin: 2rem 0; }
+.toc-box h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin: 0 0 0.75rem 0; }
+.toc-box ol { list-style: decimal; padding-left: 1.25rem; margin: 0; }
+.toc-box li { margin-bottom: 0.375rem; }
+.toc-box a { color: #374151; text-decoration: none; font-size: 0.9rem; }
+.toc-box a:hover { color: #16803c; }
+.section-divider { display: flex; align-items: center; gap: 1rem; margin: 2.5rem 0; color: #9ca3af; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; }
+.section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, #e5e7eb, transparent); }
+.reading-progress { position: fixed; top: 0; left: 0; width: 0%; height: 3px; background: linear-gradient(90deg, #16803c 0%, #22c55e 100%); z-index: 9999; transition: width 0.1s ease; }
+.read-time { display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.8rem; color: #6b7280; background: #f3f4f6; padding: 0.25rem 0.75rem; border-radius: 9999px; }
+.read-time svg { width: 0.875rem; height: 0.875rem; }
+@media (max-width: 640px) { .org-card { flex-direction: column; } .stats-row { grid-template-columns: repeat(2, 1fr); } .feature-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reading-progress" id="reading-progress"></div>
+
+<section class="bg-gray-50 pt-16 pb-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
+            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
+            <span>&rsaquo;</span>
+            <a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Resources</a>
+            <span>&rsaquo;</span>
+            <span class="text-gray-900">Education & EdTech Careers</span>
+        </nav>
+
+        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm">
+            
+            <div class="not-prose mb-8">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold">Pillar Guide</span>
+                    <span class="read-time">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        11 min read
+                    </span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
+                    Remote Education &amp; EdTech Careers: The Complete Guide
+                </h1>
+                <p class="text-xl text-gray-600 leading-relaxed">
+                    Education is being transformed by technology and remote work. From nonprofit education organizations to venture-backed edtech startups, opportunities abound for those who want to expand access to learning. Here's how to build a career at the intersection of education and impact.
+                </p>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-row not-prose">
+                <div class="stat-card">
+                    <div class="stat-number">$400B</div>
+                    <div class="stat-label">Global EdTech Market</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">16%</div>
+                    <div class="stat-label">Annual Growth Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">$85K</div>
+                    <div class="stat-label">Avg Instructional Designer</div>
+                </div>
+            </div>
+
+            <!-- TL;DR -->
+            <div class="tldr-box not-prose">
+                <h4>⚡ Quick Summary</h4>
+                <ul>
+                    <li>Three paths: nonprofit education, edtech startups, or corporate L&D</li>
+                    <li>Teaching background helpful but not required for most tech roles</li>
+                    <li>Hot skills: instructional design, learning science, UX for education</li>
+                    <li>Top remote employers: Khan Academy, Duolingo, Coursera, Teach For All</li>
+                </ul>
+            </div>
+
+            <!-- TOC -->
+            <div class="toc-box not-prose">
+                <h4>In This Guide</h4>
+                <ol>
+                    <li><a href="#tracks">Career Tracks in Education</a></li>
+                    <li><a href="#skills">Key Skills Employers Want</a></li>
+                    <li><a href="#orgs">Top Employers Hiring Remote</a></li>
+                    <li><a href="#faq">FAQs</a></li>
+                </ol>
+            </div>
+
+            <div class="prose prose-gray max-w-none">
+                
+                <h2 id="tracks">🎓 Career tracks in education</h2>
+                <p>Education careers span traditional nonprofits, venture-backed startups, and corporate learning. Remote work has become standard across all three, opening opportunities regardless of location.</p>
+
+                <div class="feature-grid not-prose">
+                    <div class="feature-card">
+                        <div class="feature-card-icon">🏫</div>
+                        <h4>Nonprofit Education</h4>
+                        <p>Program managers, curriculum developers, and education policy analysts at organizations like Teach For All, KIPP, and education foundations.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">📱</div>
+                        <h4>EdTech Startups</h4>
+                        <p>Product managers, engineers, content creators, and learning designers at companies building educational technology products.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">🏢</div>
+                        <h4>Corporate L&D</h4>
+                        <p>Learning & development specialists, instructional designers, and training managers building employee education programs.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">📚</div>
+                        <h4>Content & Curriculum</h4>
+                        <p>Subject matter experts, content writers, and curriculum designers creating educational materials and courses.</p>
+                    </div>
+                </div>
+
+                <h2 id="skills">💼 Key skills employers want</h2>
+
+                <div class="callout callout-info not-prose">
+                    <strong>Teaching vs. tech:</strong> Edtech companies value both educators who can code and technologists who understand pedagogy. The most in-demand candidates bridge both worlds.
+                </div>
+
+                <div class="feature-grid not-prose">
+                    <div class="feature-card">
+                        <div class="feature-card-icon">📐</div>
+                        <h4>Instructional Design</h4>
+                        <p>ADDIE, SAM, backwards design. Tools: Articulate, Captivate, Rise. Learning objectives, assessment design, accessibility (WCAG).</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">🧪</div>
+                        <h4>Learning Science</h4>
+                        <p>Cognitive load theory, spaced repetition, gamification, personalized learning paths. Data-driven curriculum iteration.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">📊</div>
+                        <h4>Education Data</h4>
+                        <p>Learning analytics, A/B testing educational interventions, outcomes measurement, student success metrics.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">🎨</div>
+                        <h4>UX for Education</h4>
+                        <p>User research with learners, accessibility, engagement design, mobile-first learning experiences.</p>
+                    </div>
+                </div>
+
+                <div class="section-divider not-prose">Top Employers</div>
+
+                <h2 id="orgs">🏢 Top employers hiring remote</h2>
+
+                <div class="org-card not-prose">
+                    <div class="org-card-badge">📚</div>
+                    <div class="org-card-content">
+                        <h4>Khan Academy</h4>
+                        <p>Free world-class education for anyone, anywhere. Fully remote nonprofit with 150M+ monthly learners. Hires engineers, content creators, product managers, and learning scientists. Mission-driven culture with competitive nonprofit salaries.</p>
+                        <div class="org-card-tags">
+                            <span class="org-tag">🏠 Fully Remote</span>
+                            <span class="org-tag">🎗️ Nonprofit</span>
+                            <span class="org-tag">💰 $100-180K (tech)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="org-card not-prose">
+                    <div class="org-card-badge">🦉</div>
+                    <div class="org-card-content">
+                        <h4>Duolingo</h4>
+                        <p>World's most downloaded education app with 500M+ users learning languages. Public company (DUOL) with remote roles in engineering, content, research, and design. Strong learning science team.</p>
+                        <div class="org-card-tags">
+                            <span class="org-tag">📈 Public Company</span>
+                            <span class="org-tag">🔬 Research Focus</span>
+                            <span class="org-tag">💰 $120-200K+</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="org-card not-prose">
+                    <div class="org-card-badge">🎓</div>
+                    <div class="org-card-content">
+                        <h4>Coursera</h4>
+                        <p>Online learning platform partnering with 300+ universities. Public company (COUR) offering degrees, certificates, and enterprise learning. Remote roles in product, content partnerships, and engineering.</p>
+                        <div class="org-card-tags">
+                            <span class="org-tag">🌐 Global</span>
+                            <span class="org-tag">🤝 B2B + B2C</span>
+                            <span class="org-tag">🏠 Remote-friendly</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="org-card not-prose">
+                    <div class="org-card-badge">🌍</div>
+                    <div class="org-card-content">
+                        <h4>Teach For All</h4>
+                        <p>Global network of 60+ organizations working to expand educational opportunity. Remote roles in network support, knowledge management, and program design. Strong values alignment required.</p>
+                        <div class="org-card-tags">
+                            <span class="org-tag">🎗️ Nonprofit Network</span>
+                            <span class="org-tag">🌐 60+ Countries</span>
+                            <span class="org-tag">📋 Program Roles</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="org-card not-prose">
+                    <div class="org-card-badge">👶</div>
+                    <div class="org-card-content">
+                        <h4>Outschool</h4>
+                        <p>Marketplace for live online classes for kids ages 3-18. Remote-first startup connecting independent educators with learners. Hires for product, engineering, and educator success.</p>
+                        <div class="org-card-tags">
+                            <span class="org-tag">🏠 Remote-first</span>
+                            <span class="org-tag">🚀 Startup</span>
+                            <span class="org-tag">👨‍🏫 Educator Platform</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="callout callout-tip not-prose">
+                    <strong>Also worth exploring:</strong> 2U/edX, Udemy, Skillshare, Brilliant, Age of Learning (ABCmouse), Carnegie Learning, Newsela, and education-focused foundations like Gates, Walton, and Chan Zuckerberg Initiative.
+                </div>
+
+                <div class="section-divider not-prose">FAQ</div>
+
+                <h2 id="faq">❓ Frequently asked questions</h2>
+
+                <details class="group mb-4 border border-gray-200 rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 bg-gray-50 cursor-pointer hover:bg-gray-100 transition">
+                        <span class="font-semibold text-gray-900">Do I need a teaching background for edtech jobs?</span>
+                        <svg class="w-5 h-5 text-gray-500 transform group-open:rotate-180 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="p-5 border-t border-gray-200">
+                        <p class="text-gray-600">Not always. Product, engineering, and marketing roles at edtech companies often prioritize tech skills over classroom experience. However, instructional design, curriculum development, and learning science roles typically prefer candidates with education backgrounds. Former teachers are highly valued for content roles and user research.</p>
+                    </div>
+                </details>
+
+                <details class="group mb-4 border border-gray-200 rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 bg-gray-50 cursor-pointer hover:bg-gray-100 transition">
+                        <span class="font-semibold text-gray-900">What's the salary range for remote education jobs?</span>
+                        <svg class="w-5 h-5 text-gray-500 transform group-open:rotate-180 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="p-5 border-t border-gray-200">
+                        <p class="text-gray-600">Instructional designers earn $65,000-$95,000. EdTech product managers earn $100,000-$150,000. Curriculum developers at nonprofits earn $55,000-$85,000. Education program managers at foundations earn $70,000-$110,000. Software engineers at edtech companies earn $120,000-$200,000+.</p>
+                    </div>
+                </details>
+
+                <details class="group mb-4 border border-gray-200 rounded-xl overflow-hidden">
+                    <summary class="flex items-center justify-between p-5 bg-gray-50 cursor-pointer hover:bg-gray-100 transition">
+                        <span class="font-semibold text-gray-900">Which edtech companies are fully remote?</span>
+                        <svg class="w-5 h-5 text-gray-500 transform group-open:rotate-180 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="p-5 border-t border-gray-200">
+                        <p class="text-gray-600">Khan Academy, Outschool, and many smaller edtech startups are fully remote. Duolingo, Coursera, and 2U/edX are remote-friendly with some in-office roles. Nonprofit education organizations like Teach For All and Education First also have significant remote workforces.</p>
+                    </div>
+                </details>
+
+            </div>
+
+            <!-- CTA -->
+            <div class="bg-gradient-to-br from-brand-50 to-brand-100 border border-brand-200 rounded-2xl p-8 mt-10 not-prose text-center">
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Ready to start your education career?</h3>
+                <p class="text-gray-600 mb-4">Browse open remote education and edtech positions.</p>
+                <a href="/jobs/?q=education" class="inline-flex items-center gap-2 px-6 py-3 bg-brand-500 text-white font-semibold rounded-full hover:bg-brand-600 transition">
+                    Browse Education Jobs
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                </a>
+            </div>
+
+            <div class="bg-gray-50 border border-gray-200 rounded-2xl p-6 mt-8 not-prose">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Explore Other Impact Career Paths</h3>
+                <div class="grid sm:grid-cols-2 gap-3">
+                    <a href="{% url 'jobs:pillar_detail' pillar_slug='mental-health-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
+                        <span class="text-xl">🧠</span>
+                        <span class="text-brand-600 font-medium text-sm">Mental Health Careers</span>
+                    </a>
+                    <a href="{% url 'jobs:pillar_detail' pillar_slug='tech-for-good-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
+                        <span class="text-xl">💻</span>
+                        <span class="text-brand-600 font-medium text-sm">Tech for Good Careers</span>
+                    </a>
+                    <a href="{% url 'jobs:pillar_detail' pillar_slug='economic-development-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
+                        <span class="text-xl">📈</span>
+                        <span class="text-brand-600 font-medium text-sm">Economic Development Careers</span>
+                    </a>
+                    <a href="{% url 'jobs:pillar_detail' pillar_slug='effective-altruism-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
+                        <span class="text-xl">🎯</span>
+                        <span class="text-brand-600 font-medium text-sm">Effective Altruism Careers</span>
+                    </a>
+                </div>
+            </div>
+        </article>
+    </div>
+</section>
+
+<script>
+window.addEventListener('scroll', function() {
+    const article = document.querySelector('article');
+    const progressBar = document.getElementById('reading-progress');
+    if (!article || !progressBar) return;
+    const articleTop = article.offsetTop;
+    const articleHeight = article.offsetHeight;
+    const windowHeight = window.innerHeight;
+    const scrollY = window.scrollY;
+    const progress = Math.min(100, Math.max(0, ((scrollY - articleTop + windowHeight * 0.3) / (articleHeight - windowHeight * 0.5)) * 100));
+    progressBar.style.width = progress + '%';
+});
+</script>
+{% endblock %}
