@@ -150,6 +150,22 @@ class RolePagesSitemap(Sitemap):
         return timezone.now()
 
 
+class KeywordPagesSitemap(Sitemap):
+    """Sitemap for keyword-based SEO landing pages (long-tail keywords)."""
+    changefreq = "daily"
+    priority = 0.85
+
+    def items(self):
+        from .seo_config import KEYWORD_SEO_PAGES
+        return KEYWORD_SEO_PAGES
+
+    def location(self, item):
+        return reverse('jobs:keyword_jobs', kwargs={'keyword_slug': item['slug']})
+
+    def lastmod(self, item):
+        return timezone.now()
+
+
 class StaticSitemap(Sitemap):
     """Sitemap for static pages - homepage gets highest priority."""
     changefreq = "daily"
