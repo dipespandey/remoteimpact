@@ -63,19 +63,37 @@ def _get_or_create_category_by_slug(slug: Optional[str]) -> Optional[Category]:
 
 
 def _get_or_create_category(name: Optional[str]) -> Optional[Category]:
-    """Legacy: Get or create a category by name."""
+    """
+    Get a category by name, matching to standard impact areas.
+    Never creates new categories - maps unknown names to 'Other Impact Areas'.
+    """
     if not name:
         return None
-    category, created = Category.objects.get_or_create(
-        name=name,
-        defaults={
-            "slug": unique_slug(Category, name),
-            "description": "",
-        },
-    )
-    if created:
-        logger.debug("Created new category %s", category)
-    return category
+    
+    name_lower = name.lower().strip()
+    
+    # First, try exact slug match from standard impact areas
+    for area in IMPACT_AREAS:
+        if area["name"].lower() == name_lower or area["slug"] == name_lower:
+            return _get_or_create_category_by_slug(area["slug"])
+        
+        # Try keyword matching
+        if any(kw in name_lower for kw in area.get("keywords", [])):
+            return _get_or_create_category_by_slug(area["slug"])
+    
+    # Try fuzzy matching against existing database categories
+    existing_cats = Category.objects.all()
+    for cat in existing_cats:
+        # Case-insensitive exact match
+        if cat.name.lower() == name_lower:
+            return cat
+        # Partial match (name contains or is contained by)
+        if name_lower in cat.name.lower() or cat.name.lower() in name_lower:
+            return cat
+    
+    # No match found - fall back to 'Other Impact Areas'
+    logger.info(f"Unknown category '{name}' mapped to 'Other Impact Areas'")
+    return _get_or_create_category_by_slug("other")
 
 
 def is_duplicate_job(application_url: str, source: str = None) -> bool:
