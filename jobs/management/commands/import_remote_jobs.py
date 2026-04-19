@@ -14,7 +14,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             "--source",
-            choices=["all", "80000hours", "idealist", "reliefweb", "climatebase", "probablygood", "charityjob", "jobboards"],
+            choices=["all", "80000hours", "idealist", "reliefweb", "climatebase", "probablygood", "jobboards"],
             default="all",
             help="Limit imports to a single upstream source. 'jobboards' = Greenhouse/Lever/Ashby via Google.",
         )
@@ -205,36 +205,6 @@ class Command(BaseCommand):
             except Exception as e:
                 self.stderr.write(f"probablygood import failed: {e}")
                 summaries["probablygood"] = {"fetched": 0, "created": 0, "updated": 0, "error": str(e)}
-
-        if source in ("all", "charityjob"):
-            self.stdout.write("Starting import from CharityJob...")
-            try:
-                summaries["charityjob"] = await importers.import_charityjob(
-                    limit=limit,
-                    dry_run=dry_run,
-                    use_ai=use_ai,
-                    batch_size=batch_size,
-                    progress_callback=make_progress_callback("charityjob") if use_ai else None,
-                    provider=provider,
-                    skip_existing=new_only,
-                )
-                
-                # Crawl newly imported CharityJob jobs to get full descriptions
-                if not dry_run and summaries["charityjob"]["created"] > 0:
-                    self.stdout.write("Crawling CharityJob jobs for full descriptions...")
-                    crawl_stats = crawlers.crawl_jobs_needing_update(
-                        source="charityjob",
-                        limit=summaries["charityjob"]["created"] + 50,
-                        dry_run=dry_run,
-                        delay=0.3,
-                    )
-                    self.stdout.write(
-                        f"  Crawled: {crawl_stats['success']} updated, "
-                        f"{crawl_stats['failed']} failed, {crawl_stats['skipped']} skipped"
-                    )
-            except Exception as e:
-                self.stderr.write(f"charityjob import failed: {e}")
-                summaries["charityjob"] = {"fetched": 0, "created": 0, "updated": 0, "error": str(e)}
 
         if source in ("all", "jobboards"):
             self.stdout.write("Starting import from job boards (Greenhouse/Lever/Ashby)...")
