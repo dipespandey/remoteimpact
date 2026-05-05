@@ -226,28 +226,32 @@ GOOGLE_CSE_API_KEY = os.getenv("GOOGLE_CSE_API_KEY", "AIzaSyB80R9QJjZLxw_tQqxUj8
 GOOGLE_CSE_CX = os.getenv("GOOGLE_CSE_CX", "d29e1be4453804e08")
 
 SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        "APP": {
-            "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
-            "secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
-            "key": "",
-        },
-        "SCOPE": ["profile", "email"],
-        "AUTH_PARAMS": {"access_type": "online"},
-    },
-    "openid_connect": {
-        "APPS": [
-            {
-                "provider_id": "linkedin",
-                "name": "LinkedIn",
-                "client_id": os.getenv("LINKEDIN_CLIENT_ID", ""),
-                "secret": os.getenv("LINKEDIN_CLIENT_SECRET", ""),
-                "settings": {
-                    "server_url": "https://www.linkedin.com/oauth",
-                },
-            },
-        ],
-    },
+    # "google" APP block commented out — credentials are stored in the DB
+    # (having both causes allauth MultipleObjectsReturned errors)
+    # "google": {
+    #     "APP": {
+    #         "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
+    #         "secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
+    #         "key": "",
+    #     },
+    #     "SCOPE": ["profile", "email"],
+    #     "AUTH_PARAMS": {"access_type": "online"},
+    # },
+    # "openid_connect" APPS block commented out — credentials are in the DB
+    # (having both causes allauth MultipleObjectsReturned errors)
+    # "openid_connect": {
+    #     "APPS": [
+    #         {
+    #             "provider_id": "linkedin",
+    #             "name": "LinkedIn",
+    #             "client_id": os.getenv("LINKEDIN_CLIENT_ID", ""),
+    #             "secret": os.getenv("LINKEDIN_CLIENT_SECRET", ""),
+    #             "settings": {
+    #                 "server_url": "https://www.linkedin.com/oauth",
+    #             },
+    #         },
+    #     ],
+    # },
 }
 
 
