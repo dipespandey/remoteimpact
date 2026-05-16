@@ -34,6 +34,25 @@ def default_expiry(job):
     return job.posted_at + timedelta(days=90)
 
 
+@register.filter(name="employment_type_schema")
+def employment_type_schema(value):
+    """Map local job type values to Schema.org/Google JobPosting values."""
+    mapping = {
+        "full-time": "FULL_TIME",
+        "full_time": "FULL_TIME",
+        "part-time": "PART_TIME",
+        "part_time": "PART_TIME",
+        "contract": "CONTRACTOR",
+        "contractor": "CONTRACTOR",
+        "freelance": "CONTRACTOR",
+        "internship": "INTERN",
+        "intern": "INTERN",
+        "temporary": "TEMPORARY",
+        "volunteer": "VOLUNTEER",
+    }
+    return mapping.get(str(value or "").lower(), "OTHER")
+
+
 @register.filter(name="job_description_for_schema")
 def job_description_for_schema(job):
     """Return the best available description for structured data schema."""

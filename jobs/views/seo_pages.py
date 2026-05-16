@@ -78,23 +78,23 @@ class RoleJobsView(ListView):
         context['icon'] = self.config['icon']
         context['role_name'] = self.config['role']
         
-        # Get category breakdown for this role
-        category_counts = {}
-        for job in self.get_queryset().values('category__name', 'category__slug').distinct():
-            cat_name = job['category__name']
-            cat_slug = job['category__slug']
-            if cat_name:
-                count = self.get_queryset().filter(category__slug=cat_slug).count()
-                category_counts[cat_name] = {'slug': cat_slug, 'count': count}
-        
-        context['category_breakdown'] = sorted(
-            category_counts.items(), 
-            key=lambda x: x[1]['count'], 
-            reverse=True
-        )[:8]
+        jobs_qs = self.get_queryset()
+        category_rows = (
+            jobs_qs.values('category__name', 'category__slug')
+            .exclude(category__name__isnull=True)
+            .annotate(count=Count('id'))
+            .order_by('-count')[:8]
+        )
+        context['category_breakdown'] = [
+            (
+                row['category__name'],
+                {'slug': row['category__slug'], 'count': row['count']},
+            )
+            for row in category_rows
+        ]
         
         # Salary stats
-        jobs_with_salary = self.get_queryset().exclude(salary_min__isnull=True)
+        jobs_with_salary = jobs_qs.exclude(salary_min__isnull=True)
         if jobs_with_salary.exists():
             from django.db.models import Avg, Min, Max
             salary_stats = jobs_with_salary.aggregate(
@@ -112,7 +112,7 @@ class RoleJobsView(ListView):
             }
         
         # Featured jobs (with salary, recent)
-        context['featured_jobs'] = self.get_queryset().exclude(
+        context['featured_jobs'] = jobs_qs.exclude(
             salary_min__isnull=True
         ).order_by('-salary_max', '-posted_at')[:6]
         
@@ -212,6 +212,12 @@ class KeywordJobsView(ListView):
             if category_slug:
                 return base_qs.filter(category__slug=category_slug).order_by('-posted_at')
             return base_qs.none()
+
+        elif filter_type == 'job_type':
+            job_type = self.config.get('job_type')
+            if job_type:
+                return base_qs.filter(job_type=job_type).order_by('-posted_at')
+            return base_qs.none()
         
         elif filter_type == 'nonprofit':
             # Filter by organization type or keywords
@@ -219,7 +225,7 @@ class KeywordJobsView(ListView):
             for pattern in patterns:
                 q_objects |= Q(organization__name__icontains=pattern)
                 q_objects |= Q(title__icontains=pattern)
-                q_objects |= Q(description__icontains=pattern)
+                q_objects |= Q(category__name__icontains=pattern)
             return base_qs.filter(q_objects).distinct().order_by('-posted_at')
         
         elif filter_type == 'keyword':
@@ -227,7 +233,6 @@ class KeywordJobsView(ListView):
             q_objects = Q()
             for pattern in patterns:
                 q_objects |= Q(title__icontains=pattern)
-                q_objects |= Q(description__icontains=pattern)
                 q_objects |= Q(category__name__icontains=pattern)
                 q_objects |= Q(organization__name__icontains=pattern)
             return base_qs.filter(q_objects).distinct().order_by('-posted_at')

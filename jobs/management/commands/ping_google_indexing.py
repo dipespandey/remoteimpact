@@ -1,170 +1,161 @@
 """
-Google Indexing API - Request instant indexing for new/updated jobs.
+Notify Google's Indexing API about new, updated, or removed job URLs.
 
-This pings Google to crawl new job pages immediately instead of waiting
-for the normal crawl schedule (which can take days).
+Environment:
+    GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+    or GOOGLE_INDEXING_CREDENTIALS_JSON='{"type":"service_account",...}'
 
-Usage:
-    python manage.py ping_google_indexing                    # Index jobs from last 24h
-    python manage.py ping_google_indexing --hours 6          # Jobs from last 6 hours
-    python manage.py ping_google_indexing --job-slug xyz     # Index specific job
-    python manage.py ping_google_indexing --dry-run          # Preview without sending
-
-Requires:
-    - Google Cloud project with Indexing API enabled
-    - Service account JSON key file
-    - GOOGLE_APPLICATION_CREDENTIALS env var pointing to key file
-    
-Setup:
-    1. Go to Google Cloud Console
-    2. Create project & enable "Indexing API"
-    3. Create service account & download JSON key
-    4. Verify site ownership in Search Console
-    5. Add service account email as owner in Search Console
-    6. Set GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json
+The command exits cleanly when credentials are missing so it is safe to run
+from cron before the Search Console service account is configured.
 """
 
-from django.core.management.base import BaseCommand
-from django.conf import settings
-from django.utils import timezone
+import json
+import os
+import time
 from datetime import timedelta
+
+import jwt
+import requests
+from django.conf import settings
+from django.core.management.base import BaseCommand
+from django.utils import timezone
+
 from jobs.models import Job
 
 
 class Command(BaseCommand):
-    help = 'Ping Google Indexing API for new jobs'
+    help = "Notify Google Indexing API for job posting URLs."
+
+    TOKEN_SCOPE = "https://www.googleapis.com/auth/indexing"
+    TOKEN_URI = "https://oauth2.googleapis.com/token"
+    PUBLISH_URL = "https://indexing.googleapis.com/v3/urlNotifications:publish"
 
     def add_arguments(self, parser):
+        parser.add_argument("--hours", type=int, default=24, help="Jobs updated in the last N hours.")
+        parser.add_argument("--job-slug", help="Notify one job by slug.")
+        parser.add_argument("--limit", type=int, default=200, help="Maximum URLs to notify.")
+        parser.add_argument("--dry-run", action="store_true", help="Print URLs without calling Google.")
         parser.add_argument(
-            '--hours',
-            type=int,
-            default=24,
-            help='Index jobs posted in last N hours (default: 24)',
-        )
-        parser.add_argument(
-            '--job-slug',
-            type=str,
-            help='Index a specific job by slug',
-        )
-        parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            help='Preview URLs without sending to Google',
-        )
-        parser.add_argument(
-            '--type',
-            choices=['URL_UPDATED', 'URL_DELETED'],
-            default='URL_UPDATED',
-            help='Notification type (default: URL_UPDATED)',
+            "--type",
+            choices=["URL_UPDATED", "URL_DELETED"],
+            default="URL_UPDATED",
+            help="Indexing API notification type.",
         )
 
     def handle(self, *args, **options):
-        dry_run = options['dry_run']
-        notification_type = options['type']
-        
-        # Get jobs to index
-        if options['job_slug']:
-            jobs = Job.objects.filter(slug=options['job_slug'])
-        else:
-            cutoff = timezone.now() - timedelta(hours=options['hours'])
-            jobs = Job.objects.filter(
-                is_active=True,
-                posted_at__gte=cutoff,
-            )
+        notification_type = options["type"]
+        urls = self.build_urls(options)
 
-        if not jobs.exists():
-            self.stdout.write(self.style.WARNING('No jobs found to index'))
+        if not urls:
+            self.stdout.write(self.style.WARNING("No job URLs matched."))
             return
 
-        # Build URLs
-        base_url = getattr(settings, 'SITE_URL', 'https://remoteimpact.org')
-        urls = [f"{base_url}{job.get_absolute_url()}" for job in jobs]
-
-        self.stdout.write(f'Found {len(urls)} URLs to index\n')
-
-        if dry_run:
-            self.stdout.write(self.style.SUCCESS('DRY RUN - URLs that would be indexed:'))
+        self.stdout.write(f"Found {len(urls)} URL(s) for {notification_type}.")
+        if options["dry_run"]:
             for url in urls:
-                self.stdout.write(f'  {url}')
+                self.stdout.write(f"  {url}")
             return
 
-        # Send to Google
-        success, failed = self.send_to_google(urls, notification_type)
-        
-        self.stdout.write(self.style.SUCCESS(f'\n✓ Indexed: {success}'))
-        if failed:
-            self.stdout.write(self.style.ERROR(f'✗ Failed: {failed}'))
-
-    def send_to_google(self, urls, notification_type):
-        """Send URLs to Google Indexing API."""
-        import os
-        
-        credentials_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
-        
-        if not credentials_path:
-            self.stdout.write(self.style.ERROR(
-                'GOOGLE_APPLICATION_CREDENTIALS not set.\n'
-                'Set this to the path of your service account JSON key file.'
-            ))
-            return 0, len(urls)
-
-        try:
-            from google.oauth2 import service_account
-            from googleapiclient.discovery import build
-        except ImportError:
-            self.stdout.write(self.style.ERROR(
-                'Google API client not installed.\n'
-                'Run: pip install google-api-python-client google-auth'
-            ))
-            return 0, len(urls)
-
-        try:
-            credentials = service_account.Credentials.from_service_account_file(
-                credentials_path,
-                scopes=['https://www.googleapis.com/auth/indexing']
+        credentials = self.load_credentials()
+        if not credentials:
+            self.stdout.write(
+                self.style.WARNING(
+                    "Google Indexing API credentials are not configured; skipping."
+                )
             )
-            service = build('indexing', 'v3', credentials=credentials)
-        except Exception as e:
-            self.stdout.write(self.style.ERROR(f'Failed to initialize Google API: {e}'))
-            return 0, len(urls)
+            return
+
+        access_token = self.fetch_access_token(credentials)
+        if not access_token:
+            return
 
         success = 0
         failed = 0
-
         for url in urls:
-            try:
-                body = {
-                    'url': url,
-                    'type': notification_type
-                }
-                response = service.urlNotifications().publish(body=body).execute()
-                
-                if 'urlNotificationMetadata' in response:
-                    self.stdout.write(f'  ✓ {url}')
-                    success += 1
-                else:
-                    self.stdout.write(self.style.WARNING(f'  ? {url} - unexpected response'))
-                    failed += 1
-                    
-            except Exception as e:
-                self.stdout.write(self.style.ERROR(f'  ✗ {url} - {e}'))
+            if self.publish(access_token, url, notification_type):
+                success += 1
+                self.stdout.write(f"  OK {url}")
+            else:
                 failed += 1
+                self.stdout.write(self.style.ERROR(f"  FAIL {url}"))
+            time.sleep(0.1)
 
-        return success, failed
+        self.stdout.write(self.style.SUCCESS(f"Done. Success: {success}; failed: {failed}."))
 
+    def build_urls(self, options):
+        site_url = getattr(settings, "SITE_URL", "https://remoteimpact.org").rstrip("/")
+        limit = max(1, options["limit"])
 
-# Also create a signal handler to auto-ping on new jobs
-def ping_on_job_create(sender, instance, created, **kwargs):
-    """Signal handler to ping Google when a new job is created."""
-    if not created:
-        return
-    
-    import os
-    if not os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
-        return  # Skip if not configured
-    
-    from django.core.management import call_command
-    try:
-        call_command('ping_google_indexing', job_slug=instance.slug)
-    except Exception:
-        pass  # Don't break job creation if indexing fails
+        if options["job_slug"]:
+            qs = Job.objects.filter(slug=options["job_slug"])
+        else:
+            cutoff = timezone.now() - timedelta(hours=options["hours"])
+            qs = Job.objects.filter(updated_at__gte=cutoff)
+
+        if options["type"] == "URL_UPDATED":
+            qs = qs.filter(is_active=True).exclude(expires_at__lt=timezone.now())
+
+        qs = qs.order_by("-updated_at").only("slug")[:limit]
+        return [f"{site_url}{job.get_absolute_url()}" for job in qs]
+
+    def load_credentials(self):
+        raw_json = os.getenv("GOOGLE_INDEXING_CREDENTIALS_JSON")
+        if raw_json:
+            try:
+                return json.loads(raw_json)
+            except json.JSONDecodeError as exc:
+                self.stdout.write(self.style.ERROR(f"Invalid GOOGLE_INDEXING_CREDENTIALS_JSON: {exc}"))
+                return None
+
+        path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        if not path:
+            return None
+        try:
+            with open(path, encoding="utf-8") as handle:
+                return json.load(handle)
+        except OSError as exc:
+            self.stdout.write(self.style.ERROR(f"Could not read GOOGLE_APPLICATION_CREDENTIALS: {exc}"))
+            return None
+
+    def fetch_access_token(self, credentials):
+        now = int(time.time())
+        token_uri = credentials.get("token_uri") or self.TOKEN_URI
+        claims = {
+            "iss": credentials.get("client_email"),
+            "scope": self.TOKEN_SCOPE,
+            "aud": token_uri,
+            "iat": now,
+            "exp": now + 3600,
+        }
+        try:
+            assertion = jwt.encode(
+                claims,
+                credentials["private_key"],
+                algorithm="RS256",
+                headers={"kid": credentials.get("private_key_id")},
+            )
+            response = requests.post(
+                token_uri,
+                data={
+                    "grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+                    "assertion": assertion,
+                },
+                timeout=20,
+            )
+        except Exception as exc:
+            self.stdout.write(self.style.ERROR(f"Could not request Google OAuth token: {exc}"))
+            return None
+
+        if response.status_code != 200:
+            self.stdout.write(self.style.ERROR(f"Google OAuth token failed: {response.status_code} {response.text[:500]}"))
+            return None
+        return response.json().get("access_token")
+
+    def publish(self, access_token, url, notification_type):
+        response = requests.post(
+            self.PUBLISH_URL,
+            headers={"Authorization": f"Bearer {access_token}"},
+            json={"url": url, "type": notification_type},
+            timeout=20,
+        )
+        return response.status_code in {200, 201}

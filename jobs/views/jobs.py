@@ -13,6 +13,7 @@ from ..forms import JobSubmissionForm
 from ..services.job_service import JobService
 from ..services.payment_service import PaymentService
 from ..services.unified_matching_service import UnifiedMatchingService
+from ..seo_config import KEYWORD_SEO_PAGES, ROLE_SEO_PAGES
 
 
 class JobListView(ListView):
@@ -315,7 +316,66 @@ class JobDetailView(DetailView):
                 job=self.object, applicant=self.request.user
             ).exists()
 
+        context["related_jobs"] = self._get_related_jobs()
+        context["related_seo_links"] = self._get_related_seo_links()
         return context
+
+    def _get_related_jobs(self):
+        job = self.object
+        qs = self.get_queryset().exclude(pk=job.pk)
+        if job.category_id:
+            qs = qs.filter(category_id=job.category_id)
+        else:
+            qs = qs.filter(organization_id=job.organization_id)
+        return qs.order_by("-posted_at")[:4]
+
+    def _get_related_seo_links(self):
+        job = self.object
+        links = []
+        seen = set()
+
+        def add(label, url):
+            if url in seen:
+                return
+            seen.add(url)
+            links.append({"label": label, "url": url})
+
+        add("Remote impact jobs", reverse("jobs:job_list"))
+        if job.category:
+            add(
+                f"Remote {job.category.name.lower()} jobs",
+                reverse("jobs:category_landing", kwargs={"slug": job.category.slug}),
+            )
+        if job.organization and job.organization.slug:
+            add(
+                f"Jobs at {job.organization.name}",
+                reverse("jobs:organization_profile", kwargs={"slug": job.organization.slug}),
+            )
+
+        title = (job.title or "").lower()
+        for page in ROLE_SEO_PAGES:
+            if any(pattern.lower() in title for pattern in page.get("patterns", [])):
+                add(page["h1"], reverse("jobs:role_jobs", kwargs={"role_slug": page["slug"]}))
+                if len(links) >= 7:
+                    break
+
+        keyword_lookup = {page["slug"]: page for page in KEYWORD_SEO_PAGES}
+        keyword_slugs = ["remote-social-impact-jobs", "impact-jobs-remote", "remote-jobs-with-purpose"]
+        if job.category and job.category.slug == "climate-environment":
+            keyword_slugs.insert(0, "remote-climate-jobs")
+        if job.job_type == "part-time":
+            keyword_slugs.insert(0, "remote-part-time-jobs")
+        org_text = f"{job.organization.name} {job.organization.organization_type}".lower()
+        if any(term in org_text for term in ("nonprofit", "foundation", "charity", "ngo")):
+            keyword_slugs.insert(0, "remote-nonprofit-jobs")
+
+        for slug in keyword_slugs:
+            page = keyword_lookup.get(slug)
+            if page:
+                add(page["h1"], reverse("jobs:keyword_jobs", kwargs={"keyword_slug": slug}))
+            if len(links) >= 8:
+                break
+        return links[:8]
 
 
 class ApplicationGuideView(DetailView):

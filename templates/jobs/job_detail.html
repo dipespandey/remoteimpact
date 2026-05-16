@@ -35,30 +35,37 @@
     "@type": "JobPosting",
     "title": "{{ job.title|escapejs }}",
     "description": "{{ job|job_description_for_schema|striptags|truncatechars:5000|escapejs }}",
+    "identifier": {
+        "@type": "PropertyValue",
+        "name": "Remote Impact",
+        "value": "{{ job.pk }}"
+    },
+    "url": "{{ SITE_URL }}{{ job.get_absolute_url }}",
     "datePosted": "{{ job.posted_at|date:'c' }}",
-    "dateModified": "{{ job.updated_at|date:'c' }}"{% if job.expires_at %},
-    "validThrough": "{{ job.expires_at|date:'c' }}"{% endif %},
-    "employmentType": "{{ job.get_job_type_display|upper }}",
+    "dateModified": "{{ job.updated_at|date:'c' }}",
+    "validThrough": "{{ job|default_expiry|date:'c' }}",
+    "employmentType": "{{ job.job_type|employment_type_schema }}",
     "hiringOrganization": {
         "@type": "Organization",
         "name": "{{ job.organization.name|escapejs }}",
-        "sameAs": "{{ job.organization.website|default:'' }}"
+        "sameAs": "{{ job.organization.website|default:SITE_URL }}"{% if job.organization.logo %},
+        "logo": "{{ SITE_URL }}{{ job.organization.logo.url }}"{% endif %}
     },
+    {% if job.category %}"industry": "{{ job.category.name|escapejs }}",
+    "occupationalCategory": "{{ job.category.name|escapejs }}",{% endif %}
     "jobLocation": {
         "@type": "Place",
         "address": {
             "@type": "PostalAddress",
-            "addressLocality": "{{ job.location|default:'Remote'|escapejs }}"
+            "addressLocality": "{{ job.location|default:'Remote'|escapejs }}"{% if job.country %},
+            "addressCountry": "{{ job.country|escapejs }}"{% endif %}
         }
     },
-    "jobLocationType": "TELECOMMUTE",
-    {% if job.country %}
+    "jobLocationType": "TELECOMMUTE"{% if job.country %},
     "applicantLocationRequirements": {
         "@type": "Country",
         "name": "{{ job.country|escapejs }}"
-    },
-    {% endif %}
-    {% if job.salary_min or job.salary_max %}
+    }{% endif %}{% if job.salary_min or job.salary_max %},
     "baseSalary": {
         "@type": "MonetaryAmount",
         "currency": "{{ job.salary_currency|default:'USD' }}",
@@ -68,8 +75,7 @@
             "maxValue": {{ job.salary_max }},{% elif job.salary_min %}"value": {{ job.salary_min }},{% else %}"value": {{ job.salary_max }},{% endif %}
             "unitText": "YEAR"
         }
-    },
-    {% endif %}
+    }{% endif %},
     "directApply": {% if job.source == 'manual' %}true{% else %}false{% endif %}
 }
 </script>
@@ -416,6 +422,20 @@
                     </form>
                     <p id="job-alert-message" class="text-xs mt-2 hidden"></p>
                 </div>
+
+                {% if related_seo_links %}
+                <div class="rounded-2xl border border-gray-200 bg-white p-4">
+                    <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">Related searches</p>
+                    <div class="flex flex-wrap gap-2">
+                        {% for link in related_seo_links %}
+                        <a href="{{ link.url }}"
+                           class="inline-flex rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700 transition">
+                            {{ link.label }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </aside>
     </div>

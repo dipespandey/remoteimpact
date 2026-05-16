@@ -14,18 +14,22 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from math import ceil
+from xml.sax.saxutils import escape as xml_escape
+
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
+from django.core.cache import cache
 from django.http import HttpResponse
-from django.urls import include, path
-from django.views.decorators.cache import cache_page
+from django.urls import include, path, reverse
 
 from jobs.sitemaps import (
-    JobSitemap, StaticSitemap, CategorySitemap,
+    StaticSitemap, CategorySitemap,
     OrganizationSitemap, ToolsSitemap, TalentSitemap,
     GuidesSitemap, RolePagesSitemap, KeywordPagesSitemap,
+    visible_jobs,
 )
 from blog.sitemaps import BlogSitemap
 
@@ -385,7 +389,6 @@ Preferred-Languages: en
 
 sitemaps = {
     'static': StaticSitemap,
-    'jobs': JobSitemap,
     'categories': CategorySitemap,
     'organizations': OrganizationSitemap,
     'tools': ToolsSitemap,
@@ -400,21 +403,99 @@ def healthz(request):
     return HttpResponse("ok", content_type="text/plain")
 
 
+JOB_SITEMAP_PAGE_SIZE = 2000
+
+
+def _xml_response(content: str) -> HttpResponse:
+    response = HttpResponse(content, content_type="application/xml")
+    response["Cache-Control"] = "public, max-age=60, s-maxage=3600"
+    return response
+
+
+def _job_sitemap_page_count() -> int:
+    return max(1, ceil(visible_jobs().count() / JOB_SITEMAP_PAGE_SIZE))
+
+
 def sitemap_index(request):
     """Fast sitemap index that avoids expensive lastmod queries on every fetch."""
+    cache_key = "seo:sitemap:index:v2"
+    cached = cache.get(cache_key)
+    if cached:
+        return _xml_response(cached)
+
     site_url = getattr(settings, "SITE_URL", "https://remoteimpact.org").rstrip("/")
-    sections = "\n".join(
+    sections = [
+        f"  <sitemap><loc>{site_url}/sitemap-jobs-{page}.xml</loc></sitemap>"
+        for page in range(1, _job_sitemap_page_count() + 1)
+    ]
+    sections.extend(
         f"  <sitemap><loc>{site_url}/sitemap-{section}.xml</loc></sitemap>"
         for section in sitemaps
+    )
+    content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{chr(10).join(sections)}
+</sitemapindex>
+"""
+    cache.set(cache_key, content, 3600)
+    return _xml_response(content)
+
+
+def job_sitemap_index(request):
+    """Compatibility index for the previous /sitemap-jobs.xml endpoint."""
+    site_url = getattr(settings, "SITE_URL", "https://remoteimpact.org").rstrip("/")
+    sections = "\n".join(
+        f"  <sitemap><loc>{site_url}/sitemap-jobs-{page}.xml</loc></sitemap>"
+        for page in range(1, _job_sitemap_page_count() + 1)
     )
     content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 {sections}
 </sitemapindex>
 """
-    response = HttpResponse(content, content_type="application/xml")
-    response["Cache-Control"] = "public, max-age=60, s-maxage=3600"
-    return response
+    return _xml_response(content)
+
+
+def job_sitemap_page(request, page: int):
+    """Small, cacheable job sitemap shards for faster Googlebot fetches."""
+    if page < 1:
+        return HttpResponse(status=404)
+
+    cache_key = f"seo:sitemap:jobs:{page}:v2"
+    cached = cache.get(cache_key)
+    if cached:
+        return _xml_response(cached)
+
+    offset = (page - 1) * JOB_SITEMAP_PAGE_SIZE
+    jobs = list(
+        visible_jobs()
+        .only("slug", "updated_at", "posted_at")
+        .order_by("-posted_at", "-id")[offset: offset + JOB_SITEMAP_PAGE_SIZE]
+    )
+    if not jobs:
+        return HttpResponse(status=404)
+
+    site_url = getattr(settings, "SITE_URL", "https://remoteimpact.org").rstrip("/")
+    url_rows = []
+    for job in jobs:
+        loc = f"{site_url}{reverse('jobs:job_detail', kwargs={'slug': job.slug})}"
+        lastmod = (job.updated_at or job.posted_at).date().isoformat()
+        url_rows.append(
+            "  <url>"
+            f"<loc>{xml_escape(loc)}</loc>"
+            f"<lastmod>{lastmod}</lastmod>"
+            "<changefreq>daily</changefreq>"
+            "<priority>0.8</priority>"
+            "</url>"
+        )
+
+    content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{chr(10).join(url_rows)}
+</urlset>
+"""
+    cache.set(cache_key, content, 3600)
+    return _xml_response(content)
 
 
 urlpatterns = [
@@ -431,6 +512,8 @@ urlpatterns = [
     path("security.txt", security_txt, name='security_txt_root'),
     path("db25ddbb333d413289a18c8820c32ca4.txt", indexnow_key, name='indexnow_key'),
     path("sitemap.xml", sitemap_index, name='sitemap'),
+    path("sitemap-jobs.xml", job_sitemap_index, name='job_sitemap_index'),
+    path("sitemap-jobs-<int:page>.xml", job_sitemap_page, name='job_sitemap_page'),
     path(
         "sitemap-<section>.xml",
         sitemap,
