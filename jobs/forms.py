@@ -1,3 +1,4 @@
+import json
 import os
 from django import forms
 
@@ -183,6 +184,11 @@ class JobSubmissionForm(forms.Form):
         required=False,
         widget=forms.Textarea(attrs={"rows": 3}),
     )
+    custom_questions = forms.JSONField(
+        required=False,
+        widget=forms.HiddenInput(),
+        initial=[],
+    )
 
     salary_currency = forms.CharField(
         label="Currency",
@@ -261,6 +267,8 @@ class JobSubmissionForm(forms.Form):
         }
 
         for name, field in self.fields.items():
+            if isinstance(field.widget, forms.HiddenInput):
+                continue
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update(base_textarea)
                 placeholder = textarea_placeholders.get(name)
@@ -271,6 +279,29 @@ class JobSubmissionForm(forms.Form):
                 placeholder = input_placeholders.get(name)
                 if placeholder:
                     field.widget.attrs.setdefault("placeholder", placeholder)
+
+    def clean_custom_questions(self):
+        questions = self.cleaned_data.get("custom_questions") or []
+        if isinstance(questions, str):
+            try:
+                questions = json.loads(questions)
+            except json.JSONDecodeError as exc:
+                raise forms.ValidationError("Custom questions could not be read.") from exc
+        if not isinstance(questions, list):
+            raise forms.ValidationError("Custom questions must be a list.")
+
+        cleaned_questions = []
+        for question in questions:
+            question = str(question or "").strip()
+            if not question:
+                continue
+            if len(question) > 300:
+                raise forms.ValidationError("Each custom question must be 300 characters or fewer.")
+            cleaned_questions.append(question)
+
+        if len(cleaned_questions) > 5:
+            raise forms.ValidationError("You can add up to 5 custom questions.")
+        return cleaned_questions
 
     def clean(self):
         cleaned = super().clean()

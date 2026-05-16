@@ -195,7 +195,7 @@ class JobAdmin(admin.ModelAdmin):
         ("Description", {"fields": ("description", "requirements")}),
         (
             "Application",
-            {"fields": ("application_url", "application_email", "location")},
+            {"fields": ("application_url", "application_email", "custom_questions", "location")},
         ),
         (
             "Compensation",
@@ -306,6 +306,7 @@ class ApplicationAdmin(admin.ModelAdmin):
                     "willing_to_relocate",
                     "salary_expectation",
                     "why_great_fit",
+                    "custom_question_answers",
                 )
             },
         ),

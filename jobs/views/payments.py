@@ -77,6 +77,7 @@ class JobCheckoutView(LoginRequiredMixin, FormView):
             "salary_max": job.salary_max,
             "application_url": job.application_url,
             "application_email": job.application_email,
+            "custom_questions": job.custom_questions or [],
             "how_to_apply": raw.get("how_to_apply", ""),
             "contact_email": raw.get("internal_contact", ""),
             "start_timeline": raw.get("start_timeline", ""),

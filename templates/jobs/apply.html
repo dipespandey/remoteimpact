@@ -104,6 +104,21 @@
                     {{ form.why_great_fit }}
                     {% if form.why_great_fit.errors %}<p class="mt-1 text-sm text-red-600">{{ form.why_great_fit.errors.0 }}</p>{% endif %}
                 </div>
+                {% if custom_questions %}
+                <div class="space-y-4 rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900">Questions from {{ job.organization.name }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Your answers are shared with the hiring team.</p>
+                    </div>
+                    {% for question in custom_questions %}
+                    <div>
+                        <label for="custom_question_{{ forloop.counter0 }}" class="block text-sm font-semibold text-gray-900 mb-2">{{ question }}</label>
+                        <textarea id="custom_question_{{ forloop.counter0 }}" name="custom_question_{{ forloop.counter0 }}" rows="3"
+                            class="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition"></textarea>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
                 <div>
                     <label for="{{ form.cover_letter.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">{{ form.cover_letter.label }}</label>
                     {{ form.cover_letter }}

@@ -234,6 +234,24 @@
                                 <p class="text-xs text-gray-500 mt-2">Perks, culture, insurance, etc.</p>
                             </div>
                         </div>
+
+                        <div class="pt-2" data-custom-questions>
+                            {{ form.custom_questions }}
+                            {{ form.custom_questions.value|default:"[]"|json_script:"custom-questions-initial" }}
+                            <div class="flex items-center justify-between gap-4 mb-3">
+                                <div>
+                                    <h3 class="climate-label mb-1">Custom Questions (Optional)</h3>
+                                    <p class="text-xs text-gray-500">Ask applicants up to 5 short questions.</p>
+                                </div>
+                                <button type="button" data-add-question
+                                    class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-brand-200 bg-brand-50 text-2xl leading-none text-brand-700 hover:bg-brand-100 focus:outline-none focus:ring-4 focus:ring-brand-100"
+                                    aria-label="Add custom question">+</button>
+                            </div>
+                            <div data-question-list class="space-y-3"></div>
+                            {% if form.custom_questions.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.custom_questions.errors.0 }}</p>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
 
@@ -273,14 +291,16 @@
 
                     <div class="space-y-4">
                         <div>
-                            <label for="{{ form.application_url.id_for_label }}" class="climate-label">Application
-                                Link</label>
+                            <label for="{{ form.application_url.id_for_label }}" class="climate-label">External
+                                Application Link (Optional)</label>
                             {{ form.application_url }}
+                            <p class="text-xs text-gray-500 mt-2">{{ form.application_url.help_text }}</p>
                         </div>
                         <div>
                             <label for="{{ form.application_email.id_for_label }}" class="climate-label">Or
-                                Email</label>
+                                Email (Optional)</label>
                             {{ form.application_email }}
+                            <p class="text-xs text-gray-500 mt-2">Leave both blank to collect applications directly on Remote Impact.</p>
                         </div>
                     </div>
                 </div>
@@ -295,4 +315,78 @@
         </div>
     </div>
 </div>
+<script>
+    (function () {
+        const root = document.querySelector("[data-custom-questions]");
+        if (!root) return;
+
+        const hiddenInput = root.querySelector("input[type='hidden']");
+        const list = root.querySelector("[data-question-list]");
+        const addButton = root.querySelector("[data-add-question]");
+        const initialNode = document.getElementById("custom-questions-initial");
+        let questions = [];
+
+        try {
+            const parsed = JSON.parse(initialNode ? initialNode.textContent : "[]");
+            questions = Array.isArray(parsed) ? parsed : JSON.parse(parsed || "[]");
+        } catch (error) {
+            questions = [];
+        }
+
+        questions = questions.filter(Boolean).slice(0, 5);
+
+        function sync() {
+            hiddenInput.value = JSON.stringify(
+                questions.map((question) => question.trim()).filter(Boolean)
+            );
+            addButton.disabled = questions.length >= 5;
+            addButton.classList.toggle("opacity-40", addButton.disabled);
+            addButton.classList.toggle("cursor-not-allowed", addButton.disabled);
+        }
+
+        function render() {
+            list.innerHTML = "";
+            questions.forEach((question, index) => {
+                const row = document.createElement("div");
+                row.className = "flex items-start gap-3";
+
+                const input = document.createElement("textarea");
+                input.rows = 2;
+                input.maxLength = 300;
+                input.value = question;
+                input.placeholder = "Example: What mission outcome are you most proud of contributing to?";
+                input.className = "w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition";
+                input.addEventListener("input", function () {
+                    questions[index] = input.value;
+                    sync();
+                });
+
+                const remove = document.createElement("button");
+                remove.type = "button";
+                remove.className = "mt-1 inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-gray-200 text-xl leading-none text-gray-500 hover:bg-gray-50";
+                remove.setAttribute("aria-label", "Remove custom question");
+                remove.textContent = "x";
+                remove.addEventListener("click", function () {
+                    questions.splice(index, 1);
+                    render();
+                });
+
+                row.appendChild(input);
+                row.appendChild(remove);
+                list.appendChild(row);
+            });
+            sync();
+        }
+
+        addButton.addEventListener("click", function () {
+            if (questions.length >= 5) return;
+            questions.push("");
+            render();
+            const lastInput = list.querySelector("textarea:last-of-type");
+            if (lastInput) lastInput.focus();
+        });
+
+        render();
+    })();
+</script>
 {% endblock %}

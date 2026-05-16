@@ -287,8 +287,9 @@ class JobService:
             salary_min=data.get("salary_min"),
             salary_max=data.get("salary_max"),
             salary_currency=data.get("salary_currency") or ("USD" if (data.get("salary_min") or data.get("salary_max")) else ""),
-            application_url=data.get("application_url"),
-            application_email=data.get("application_email"),
+            application_url=data.get("application_url") or "",
+            application_email=data.get("application_email") or "",
+            custom_questions=data.get("custom_questions") or [],
             posted_at=timezone.now(),
         )
 
@@ -343,8 +344,9 @@ class JobService:
         job.salary_min = data.get("salary_min")
         job.salary_max = data.get("salary_max")
         job.salary_currency = data.get("salary_currency") or job.salary_currency
-        job.application_url = data.get("application_url") or job.application_url
-        job.application_email = data.get("application_email") or job.application_email
+        job.application_url = data.get("application_url") or ""
+        job.application_email = data.get("application_email") or ""
+        job.custom_questions = data.get("custom_questions") or []
 
         raw_payload = {
             "internal_contact": data.get("contact_email"),

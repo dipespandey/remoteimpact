@@ -104,6 +104,19 @@
                     <p class="text-gray-600 text-sm whitespace-pre-line">{{ app.why_great_fit|truncatewords:80 }}</p>
                 </div>
                 {% endif %}
+                {% if app.custom_question_answers %}
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <p class="text-xs uppercase tracking-wide text-gray-500 font-bold mb-3">Custom questions</p>
+                    <div class="space-y-3">
+                        {% for item in app.custom_question_answers %}
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900">{{ item.question }}</p>
+                            <p class="text-gray-600 text-sm whitespace-pre-line mt-1">{{ item.answer|default:"No answer provided." }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
                 {% if app.cover_letter %}
                 <div class="mt-4 pt-4 border-t border-gray-100">
                     <p class="text-xs uppercase tracking-wide text-gray-500 font-bold mb-2">Cover Letter</p>

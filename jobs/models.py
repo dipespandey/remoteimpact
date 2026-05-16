@@ -305,7 +305,11 @@ class Job(models.Model):
         help_text="Normalized country name for filtering",
     )
 
-    application_url = models.TextField(help_text="URL to apply for this job")  # TextField for long URLs
+    application_url = models.TextField(
+        blank=True,
+        default="",
+        help_text="Optional external URL to apply for this job",
+    )  # TextField for long URLs
     application_email = models.EmailField(
         blank=True, help_text="Alternative: email to apply"
     )
@@ -324,6 +328,11 @@ class Job(models.Model):
     )
     benefits = models.TextField(
         blank=True, help_text="Benefits, perks, and culture notes"
+    )
+    custom_questions = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Custom application questions for on-platform applicants",
     )
     company_description = models.TextField(
         blank=True, help_text="AI-extracted company bio if different from Org"
@@ -496,6 +505,11 @@ class Application(models.Model):
     willing_to_relocate = models.BooleanField(default=False)
     salary_expectation = models.CharField(max_length=120, blank=True)
     why_great_fit = models.TextField(blank=True, help_text="Short pitch for this role")
+    custom_question_answers = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Answers to the job poster's custom application questions",
+    )
 
     # Existing
     cover_letter = models.TextField(blank=True, help_text="Optional cover note")

@@ -28,6 +28,7 @@ class ApplicationCreateView(LoginRequiredMixin, FormView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["job"] = self.job
+        ctx["custom_questions"] = self.job.custom_questions or []
         return ctx
 
     def get_initial(self):
@@ -70,6 +71,11 @@ class ApplicationCreateView(LoginRequiredMixin, FormView):
         app = form.save(commit=False)
         app.job = self.job
         app.applicant = self.request.user
+        custom_answers = []
+        for index, question in enumerate(self.job.custom_questions or []):
+            answer = (self.request.POST.get(f"custom_question_{index}") or "").strip()
+            custom_answers.append({"question": question, "answer": answer})
+        app.custom_question_answers = custom_answers
 
         # Fall back to seeker profile resume if none uploaded
         if not app.resume:
