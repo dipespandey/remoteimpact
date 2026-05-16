@@ -36,12 +36,12 @@ WEIGHTS = {
     'impact': 0.15,         # Cause alignment + role/org impact potential
 }
 
-# all-MiniLM cosine similarities for short profile-vs-JD text are compressed,
-# but production top-k matches commonly sit around 0.54-0.61. Keep the useful
-# range narrow enough to reward strong matches without saturating every top
-# candidate at 100.
-SEMANTIC_SIMILARITY_FLOOR = 0.42
-SEMANTIC_SIMILARITY_CEILING = 0.62
+# all-MiniLM cosine similarities for short profile-vs-JD text are compressed.
+# Production top-k similarities cluster around 0.52-0.67, with rare excellent
+# matches above that. Calibrate against that range so semantic scoring helps
+# ranking without making every plausible match look perfect.
+SEMANTIC_SIMILARITY_FLOOR = 0.50
+SEMANTIC_SIMILARITY_CEILING = 0.68
 
 # Work style keywords mapping
 WORK_STYLE_KEYWORDS = {
