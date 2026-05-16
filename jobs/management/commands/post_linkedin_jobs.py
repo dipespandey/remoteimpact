@@ -4,10 +4,10 @@ Post a daily LinkedIn roundup of the latest complete Remote Impact jobs.
 Required environment variables for live posting:
     LINKEDIN_ACCESS_TOKEN
     LINKEDIN_AUTHOR_URN
+    OPENAI_API_KEY
 
 LINKEDIN_AUTHOR_URN should look like one of:
     urn:li:organization:123456
-    urn:li:person:abcdef
 
 Usage:
     python manage.py post_linkedin_jobs --dry-run
@@ -15,8 +15,8 @@ Usage:
 """
 
 import io
+import base64
 import os
-import textwrap
 from decimal import Decimal
 
 import requests
@@ -40,10 +40,16 @@ class Command(BaseCommand):
     GREEN = (138, 212, 37)
     WHITE = (255, 255, 255)
     MUTED = (203, 213, 225)
+    LINKEDIN_API_VERSION = "202505"
 
     def add_arguments(self, parser):
         parser.add_argument("--dry-run", action="store_true", help="Print copy and write image without posting.")
         parser.add_argument("--count", type=int, default=10, help="Number of jobs to include.")
+        parser.add_argument(
+            "--no-openai-image",
+            action="store_true",
+            help="Skip OpenAI image generation and use the local Pillow fallback.",
+        )
         parser.add_argument(
             "--min-description-length",
             type=int,
@@ -64,7 +70,7 @@ class Command(BaseCommand):
             raise CommandError(f"Only found {len(jobs)} complete jobs; need {count}. Not posting.")
 
         copy = self.build_post_copy(jobs)
-        image_bytes = self.build_image(jobs)
+        image_bytes = self.build_image(jobs, use_openai=not options["no_openai_image"])
 
         with open(options["output"], "wb") as f:
             f.write(image_bytes)
@@ -130,7 +136,79 @@ class Command(BaseCommand):
         )
         return "\n".join(lines)
 
-    def build_image(self, jobs):
+    def build_image(self, jobs, use_openai=True):
+        if use_openai and os.environ.get("OPENAI_API_KEY"):
+            try:
+                return self.build_openai_image(jobs)
+            except Exception as exc:
+                self.stderr.write(f"OpenAI image generation failed, using fallback image: {exc}")
+
+        return self.build_fallback_image(jobs)
+
+    def build_openai_image(self, jobs):
+        prompt = self.build_image_prompt(jobs)
+
+        from openai import OpenAI
+
+        client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+        response = client.images.generate(
+            model=os.environ.get("LINKEDIN_IMAGE_MODEL", "gpt-image-1"),
+            prompt=prompt,
+            size="1536x1024",
+            quality=os.environ.get("LINKEDIN_IMAGE_QUALITY", "medium"),
+            n=1,
+        )
+
+        image_b64 = response.data[0].b64_json
+        if not image_b64:
+            raise CommandError("OpenAI image response did not include image data.")
+
+        generated = Image.open(io.BytesIO(base64.b64decode(image_b64))).convert("RGB")
+        generated = generated.resize((self.WIDTH, self.HEIGHT))
+        return self.overlay_jobs_on_image(generated, jobs)
+
+    def build_image_prompt(self, jobs):
+        categories = sorted({job.category.name for job in jobs if job.category})[:5]
+        category_text = ", ".join(categories) if categories else "remote impact work"
+        return (
+            "Create a premium editorial LinkedIn banner for Remote Impact, a job board for "
+            "remote roles in climate, global health, AI safety, nonprofits, policy, and social impact. "
+            f"Theme: {category_text}. Use a sophisticated, optimistic, human-centered style with a subtle "
+            "global remote-work feel, clean light-and-dark contrast, and Remote Impact green accents. "
+            "Leave clear negative space in the center-left for overlaid text. Do not include readable text, "
+            "logos, fake UI, distorted letters, or screenshots."
+        )
+
+    def overlay_jobs_on_image(self, image, jobs):
+        draw = ImageDraw.Draw(image, "RGBA")
+        font_brand = self.font(34, bold=True)
+        font_title = self.font(54, bold=True)
+        font_sub = self.font(25)
+        font_job = self.font(23, bold=True)
+        font_footer = self.font(20)
+
+        draw.rounded_rectangle([40, 34, 1160, 593], radius=36, fill=(7, 13, 24, 178))
+        draw.rounded_rectangle([58, 52, 285, 98], radius=23, fill=(138, 212, 37, 235))
+        draw.text((82, 62), "Remote Impact", fill=(15, 23, 42), font=font_brand)
+
+        draw.text((62, 134), "10 fresh remote impact jobs", fill=self.WHITE, font=font_title)
+        draw.text((66, 202), timezone.localdate().strftime("%B %-d, %Y"), fill=self.MUTED, font=font_sub)
+
+        y = 262
+        for index, job in enumerate(jobs[:10], 1):
+            row_y = y + (index - 1) * 28
+            title = self.truncate(f"{job.title} at {job.organization.name}", 76)
+            draw.text((66, row_y), f"{index}.", fill=self.GREEN, font=font_job)
+            draw.text((108, row_y), title, fill=self.WHITE, font=font_job)
+
+        draw.rounded_rectangle([58, 554, 1142, 594], radius=20, fill=(24, 35, 58, 220))
+        draw.text((84, 563), "Browse all roles at remoteimpact.org/jobs", fill=self.MUTED, font=font_footer)
+
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG", optimize=True)
+        return buffer.getvalue()
+
+    def build_fallback_image(self, jobs):
         image = Image.new("RGB", (self.WIDTH, self.HEIGHT), self.BG)
         draw = ImageDraw.Draw(image)
 
@@ -167,67 +245,60 @@ class Command(BaseCommand):
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
+            "LinkedIn-Version": self.LINKEDIN_API_VERSION,
             "X-Restli-Protocol-Version": "2.0.0",
         }
-        register_payload = {
-            "registerUploadRequest": {
-                "recipes": ["urn:li:digitalmediaRecipe:feedshare-image"],
+        payload = {
+            "initializeUploadRequest": {
                 "owner": author_urn,
-                "serviceRelationships": [
-                    {
-                        "relationshipType": "OWNER",
-                        "identifier": "urn:li:userGeneratedContent",
-                    }
-                ],
             }
         }
         response = requests.post(
-            "https://api.linkedin.com/v2/assets?action=registerUpload",
+            "https://api.linkedin.com/rest/images?action=initializeUpload",
             headers=headers,
-            json=register_payload,
+            json=payload,
             timeout=30,
         )
         response.raise_for_status()
         data = response.json()["value"]
-        upload_url = data["uploadMechanism"]["com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"]["uploadUrl"]
-        asset_urn = data["asset"]
+        upload_url = data["uploadUrl"]
+        image_urn = data["image"]
 
         upload_response = requests.put(
             upload_url,
-            headers={"Authorization": f"Bearer {token}", "Content-Type": "image/png"},
+            headers={"Content-Type": "image/png"},
             data=image_bytes,
             timeout=60,
         )
         upload_response.raise_for_status()
-        return asset_urn
+        return image_urn
 
-    def create_linkedin_post(self, token, author_urn, copy, asset_urn):
+    def create_linkedin_post(self, token, author_urn, copy, image_urn):
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
+            "LinkedIn-Version": self.LINKEDIN_API_VERSION,
             "X-Restli-Protocol-Version": "2.0.0",
         }
         payload = {
             "author": author_urn,
             "lifecycleState": "PUBLISHED",
-            "specificContent": {
-                "com.linkedin.ugc.ShareContent": {
-                    "shareCommentary": {"text": copy},
-                    "shareMediaCategory": "IMAGE",
-                    "media": [
-                        {
-                            "status": "READY",
-                            "description": {"text": "Latest remote impact jobs from Remote Impact."},
-                            "media": asset_urn,
-                            "title": {"text": "10 latest remote impact jobs"},
-                        }
-                    ],
+            "commentary": copy,
+            "visibility": "PUBLIC",
+            "distribution": {
+                "feedDistribution": "MAIN_FEED",
+                "targetEntities": [],
+                "thirdPartyDistributionChannels": [],
+            },
+            "content": {
+                "media": {
+                    "title": "10 latest remote impact jobs",
+                    "id": image_urn,
                 }
             },
-            "visibility": {"com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"},
         }
         response = requests.post(
-            "https://api.linkedin.com/v2/ugcPosts",
+            "https://api.linkedin.com/rest/posts",
             headers=headers,
             json=payload,
             timeout=30,
