@@ -250,6 +250,45 @@ def get_all_role_slugs():
 # =============================================================================
 
 KEYWORD_SEO_PAGES = [
+    # Exact GSC opportunity keywords
+    {
+        'slug': 'remote-social-impact-jobs',
+        'keyword': 'remote social impact jobs',
+        'h1': 'Remote Social Impact Jobs',
+        'title': 'Remote Social Impact Jobs (2026) | {count}+ Purpose-Driven Roles',
+        'meta_desc': 'Find {count}+ remote social impact jobs at nonprofits, NGOs, climate organizations, health teams, and mission-driven companies. Updated daily.',
+        'intro': 'Remote social impact jobs let you build a meaningful career without giving up location flexibility. Browse roles across nonprofits, climate, global health, education, advocacy, and social good.',
+        'icon': '🌍',
+        'filter_type': 'keyword',
+        'patterns': ['social impact', 'social good', 'nonprofit', 'ngo', 'foundation', 'advocacy', 'community', 'equity'],
+        'difficulty': 42,
+        'search_volume': 'medium',
+    },
+    {
+        'slug': 'impact-jobs-remote',
+        'keyword': 'impact jobs remote',
+        'h1': 'Impact Jobs Remote',
+        'title': 'Impact Jobs Remote (2026) | {count}+ Remote Impact Roles',
+        'meta_desc': 'Browse {count}+ impact jobs remote-friendly and updated daily. Find purpose-driven roles in climate, AI safety, global health, nonprofits, and social good.',
+        'intro': 'Looking for impact jobs remote teams are hiring for now? These roles are built around meaningful work, flexible locations, and organizations solving real-world problems.',
+        'icon': '🎯',
+        'filter_type': 'all',
+        'difficulty': 44,
+        'search_volume': 'medium',
+    },
+    {
+        'slug': 'remote-climate-jobs',
+        'keyword': 'remote climate jobs',
+        'h1': 'Remote Climate Jobs',
+        'title': 'Remote Climate Jobs (2026) | {count}+ Climate & Sustainability Roles',
+        'meta_desc': 'Find {count}+ remote climate jobs in climate tech, sustainability, clean energy, conservation, carbon removal, and environmental policy.',
+        'intro': 'Remote climate jobs span software, operations, policy, research, fundraising, and communications. Find mission-driven work helping climate organizations scale their impact.',
+        'icon': '🌱',
+        'filter_type': 'keyword',
+        'patterns': ['climate', 'sustainability', 'environment', 'renewable', 'clean energy', 'carbon', 'conservation'],
+        'difficulty': 38,
+        'search_volume': 'medium',
+    },
     # High volume keywords
     {
         'slug': 'remote-jobs-with-purpose',
