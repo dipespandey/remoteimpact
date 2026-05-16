@@ -17,7 +17,7 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.contrib.sitemaps.views import index, sitemap
+from django.contrib.sitemaps.views import sitemap
 from django.http import HttpResponse
 from django.urls import include, path
 from django.views.decorators.cache import cache_page
@@ -400,6 +400,23 @@ def healthz(request):
     return HttpResponse("ok", content_type="text/plain")
 
 
+def sitemap_index(request):
+    """Fast sitemap index that avoids expensive lastmod queries on every fetch."""
+    site_url = getattr(settings, "SITE_URL", "https://remoteimpact.org").rstrip("/")
+    sections = "\n".join(
+        f"  <sitemap><loc>{site_url}/sitemap-{section}.xml</loc></sitemap>"
+        for section in sitemaps
+    )
+    content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{sections}
+</sitemapindex>
+"""
+    response = HttpResponse(content, content_type="application/xml")
+    response["Cache-Control"] = "public, max-age=60, s-maxage=3600"
+    return response
+
+
 urlpatterns = [
     path("healthz/", healthz, name="healthz"),
     path("admin/", admin.site.urls),
@@ -413,7 +430,7 @@ urlpatterns = [
     path(".well-known/security.txt", security_txt, name='security_txt'),
     path("security.txt", security_txt, name='security_txt_root'),
     path("db25ddbb333d413289a18c8820c32ca4.txt", indexnow_key, name='indexnow_key'),
-    path("sitemap.xml", index, {'sitemaps': sitemaps}, name='sitemap'),
+    path("sitemap.xml", sitemap_index, name='sitemap'),
     path(
         "sitemap-<section>.xml",
         sitemap,
