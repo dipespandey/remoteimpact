@@ -3,7 +3,7 @@ from django import forms
 
 from django_countries.widgets import CountrySelectWidget
 
-from .models import Category, Job, JobAlert, Organization, UserProfile
+from .models import Application, Category, Job, JobAlert, Organization, UserProfile
 
 
 class OnboardingTypeForm(forms.Form):
@@ -203,8 +203,9 @@ class JobSubmissionForm(forms.Form):
     )
 
     application_url = forms.URLField(
-        label="Application URL",
-        help_text="Link to apply or to your ATS",
+        label="External application URL",
+        required=False,
+        help_text="Optional. Leave blank to take applications through Remote Impact.",
     )
     application_email = forms.EmailField(
         label="Application email",
@@ -312,27 +313,84 @@ class JobAlertForm(forms.ModelForm):
 # Application Form
 # ---------------------------------------------------------------------------
 
-class ApplicationForm(forms.Form):
-    """Form for on-platform job applications."""
+class ApplicationForm(forms.ModelForm):
+    """On-platform job application form."""
 
-    cover_letter = forms.CharField(
-        widget=forms.Textarea(attrs={
-            "rows": 8,
-            "placeholder": "Tell the organization why you're a great fit for this role...",
-            "class": "w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition",
-        }),
-        required=False,
-        label="Cover Letter",
-    )
-    resume = forms.FileField(
-        required=False,
-        label="Resume",
-        help_text="PDF or DOC, max 5 MB",
-        widget=forms.ClearableFileInput(attrs={
-            "accept": ".pdf,.doc,.docx",
-            "class": "block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100",
-        }),
-    )
+    class Meta:
+        model = Application
+        fields = [
+            "full_name",
+            "email",
+            "phone",
+            "linkedin_url",
+            "portfolio_url",
+            "years_experience",
+            "current_location",
+            "available_from",
+            "willing_to_relocate",
+            "salary_expectation",
+            "why_great_fit",
+            "cover_letter",
+            "resume",
+        ]
+        widgets = {
+            "available_from": forms.DateInput(attrs={"type": "date"}),
+            "why_great_fit": forms.Textarea(attrs={"rows": 4}),
+            "cover_letter": forms.Textarea(
+                attrs={
+                    "rows": 8,
+                    "placeholder": "Tell the organization why you're a great fit for this role...",
+                }
+            ),
+            "resume": forms.ClearableFileInput(attrs={"accept": ".pdf,.doc,.docx"}),
+        }
+        labels = {
+            "full_name": "Full name",
+            "email": "Email",
+            "phone": "Phone (optional)",
+            "linkedin_url": "LinkedIn URL",
+            "portfolio_url": "Portfolio / website / GitHub",
+            "years_experience": "Years of experience",
+            "current_location": "Current location / time zone",
+            "available_from": "Earliest start date",
+            "willing_to_relocate": "Open to relocation",
+            "salary_expectation": "Salary expectation",
+            "why_great_fit": "Why are you a great fit for this role?",
+            "cover_letter": "Cover letter (optional, longer-form)",
+            "resume": "Resume (PDF or DOC, max 5 MB)",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Required-vs-optional rules
+        self.fields["full_name"].required = True
+        self.fields["email"].required = True
+        for name in (
+            "phone",
+            "linkedin_url",
+            "portfolio_url",
+            "years_experience",
+            "current_location",
+            "available_from",
+            "willing_to_relocate",
+            "salary_expectation",
+            "why_great_fit",
+            "cover_letter",
+            "resume",
+        ):
+            self.fields[name].required = False
+
+        # Tailwind styling
+        text_class = "w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition"
+        for name, field in self.fields.items():
+            widget = field.widget
+            existing = widget.attrs.get("class", "")
+            if isinstance(widget, forms.CheckboxInput):
+                widget.attrs["class"] = (existing + " h-5 w-5 rounded border-gray-300 text-brand-600 focus:ring-brand-500").strip()
+            elif isinstance(widget, forms.ClearableFileInput):
+                widget.attrs["class"] = (existing + " block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100").strip()
+            else:
+                widget.attrs["class"] = (existing + " " + text_class).strip()
 
     def clean_resume(self):
         f = self.cleaned_data.get("resume")

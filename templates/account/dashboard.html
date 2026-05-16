@@ -31,11 +31,11 @@
             <div class="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="bg-white p-6 rounded-3xl border border-gray-100">
                     <p class="text-gray-500 text-sm font-medium">Active Jobs</p>
-                    <p class="text-3xl font-bold text-gray-900 mt-2">{{ posted_jobs.count }}</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-2">{{ active_jobs_count|default:0 }}</p>
                 </div>
                 <div class="bg-white p-6 rounded-3xl border border-gray-100">
                     <p class="text-gray-500 text-sm font-medium">Total Candidates</p>
-                    <p class="text-3xl font-bold text-gray-900 mt-2">0</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-2">{{ total_candidates|default:0 }}</p>
                 </div>
             </div>
 
@@ -53,8 +53,7 @@
                                 <div>
                                     <div class="flex items-center gap-3 mb-1">
                                         <a href="{{ job.get_absolute_url }}"
-                                            class="font-bold text-gray-900 text-lg hover:text-brand-600">{{ job.title
-                                            }}</a>
+                                            class="font-bold text-gray-900 text-lg hover:text-brand-600">{{ job.title }}</a>
                                         {% if job.is_active %}
                                         <span
                                             class="px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-medium">Active</span>
@@ -73,15 +72,21 @@
                                         class="text-sm font-bold text-brand-600 hover:text-brand-700 px-3 py-1.5 bg-brand-50 hover:bg-brand-100 rounded-lg transition">View
                                         Applicants ({{ job.applications.count }})</a>
                                     {% else %}
-                                    <a href="{% url 'jobs:post_job' %}"
-                                        class="text-sm font-bold text-white bg-green-600 px-4 py-2 rounded-xl hover:bg-green-700 transition">Finish
-                                        & Pay</a>
+                                    <a href="{% url 'jobs:job_checkout' job.slug %}"
+                                        class="text-sm font-bold text-white bg-green-600 px-4 py-2 rounded-xl hover:bg-green-700 transition">Finish &amp; Pay</a>
                                     {% endif %}
                                 </div>
                             </div>
 
                             <!-- Top Matching Candidates -->
-                            {% if job.top_candidates %}
+                            {% if job.matching_data_quality < 0.55 %}
+                            <div class="mt-4 pt-4 border-t border-gray-100">
+                                <div class="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
+                                    <p class="text-xs font-bold uppercase tracking-wide text-amber-800 mb-1">Matching needs more detail</p>
+                                    <p class="text-sm text-amber-800">Add a fuller job description, requirements, and skills to get reliable candidate matches.</p>
+                                </div>
+                            </div>
+                            {% elif job.top_candidates %}
                             <div class="mt-4 pt-4 border-t border-gray-100">
                                 <p class="text-xs uppercase tracking-wide text-gray-500 font-bold mb-3">Top Matching Candidates</p>
                                 <div class="flex flex-wrap gap-3">
@@ -143,7 +148,7 @@
                         </div>
                     </div>
                     <p class="text-gray-600 text-sm mb-6">{{ organization.description|truncatewords:20 }}</p>
-                    <a href="{% url 'jobs:onboarding_employer' %}"
+                    <a href="{% url 'jobs:edit_company_profile' %}"
                         class="block w-full text-center px-4 py-2 border border-gray-200 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition text-sm">
                         Edit Company Profile
                     </a>

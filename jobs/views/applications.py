@@ -32,9 +32,21 @@ class ApplicationCreateView(LoginRequiredMixin, FormView):
 
     def get_initial(self):
         initial = super().get_initial()
+        u = self.request.user
+        full_name = " ".join(p for p in [u.first_name, u.last_name] if p).strip()
+        initial.update({
+            "full_name": full_name or u.username,
+            "email": u.email,
+        })
+        try:
+            sp = u.seeker_profile
+            if getattr(sp, "location", ""):
+                initial["current_location"] = sp.location
+        except SeekerProfile.DoesNotExist:
+            pass
         # Pre-fill cover letter from CoverLetter model
         cl = CoverLetter.objects.filter(
-            seeker__user=self.request.user, job=self.job
+            seeker__user=u, job=self.job
         ).order_by("-created_at").first()
         if cl:
             initial["cover_letter"] = cl.final_text or cl.generated_text
@@ -55,24 +67,21 @@ class ApplicationCreateView(LoginRequiredMixin, FormView):
         return form
 
     def form_valid(self, form):
-        resume_file = form.cleaned_data.get("resume")
+        app = form.save(commit=False)
+        app.job = self.job
+        app.applicant = self.request.user
 
-        # Fall back to seeker profile resume
-        if not resume_file:
+        # Fall back to seeker profile resume if none uploaded
+        if not app.resume:
             try:
                 sp = self.request.user.seeker_profile
                 if sp.resume:
-                    resume_file = sp.resume
+                    app.resume = sp.resume
             except SeekerProfile.DoesNotExist:
                 pass
 
         try:
-            app = Application.objects.create(
-                job=self.job,
-                applicant=self.request.user,
-                cover_letter=form.cleaned_data.get("cover_letter", ""),
-                resume=resume_file if resume_file else None,
-            )
+            app.save()
         except IntegrityError:
             messages.info(self.request, "You have already applied to this position.")
             return redirect(self.job.get_absolute_url())
@@ -150,9 +159,17 @@ class EmployerJobApplicationsView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
         self.job = get_object_or_404(Job, slug=kwargs["slug"])
-        # Verify user is org member
-        if not self.job.organization.members.filter(pk=request.user.pk).exists():
+        # Allow superusers, the job's poster, or any org member.
+        user = request.user
+        is_authorized = (
+            user.is_superuser
+            or (self.job.poster_id and self.job.poster_id == user.pk)
+            or self.job.organization.members.filter(pk=user.pk).exists()
+        )
+        if not is_authorized:
             messages.error(request, "You don't have permission to view these applications.")
             return redirect("jobs:account")
         return super().dispatch(request, *args, **kwargs)

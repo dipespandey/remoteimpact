@@ -6,8 +6,9 @@ from .onboarding import (
     OnboardingEmployerView,
     OnboardingImpactProfileView,
     OnboardingSeekerView,
+    EditCompanyProfileView,
 )
-from .payments import PaymentSuccessView, PaymentCancelView
+from .payments import PaymentSuccessView, PaymentCancelView, StripeWebhookView, JobCheckoutView
 from .resources import (
     HomeView,
     AllDomainsView,

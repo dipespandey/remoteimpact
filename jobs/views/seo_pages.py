@@ -11,12 +11,24 @@ from django.views.generic import ListView
 from django.http import Http404
 from django.db.models import Q
 from django.utils import timezone
+from datetime import timedelta
 
 from ..models import Job, Category, Organization
 from ..seo_config import (
     get_role_page_config, get_all_role_slugs, ROLE_SEO_PAGES,
     get_keyword_page_config, get_all_keyword_slugs, KEYWORD_SEO_PAGES,
 )
+
+
+def visible_jobs():
+    now = timezone.now()
+    cutoff = now - timedelta(days=180)
+    return Job.objects.filter(is_active=True).exclude(
+        expires_at__lt=now,
+    ).exclude(
+        expires_at__isnull=True,
+        posted_at__lt=cutoff,
+    )
 
 
 class RoleJobsView(ListView):
@@ -47,9 +59,7 @@ class RoleJobsView(ListView):
         for pattern in patterns:
             q_objects |= Q(title__icontains=pattern)
         
-        return Job.objects.filter(
-            is_active=True
-        ).filter(q_objects).select_related(
+        return visible_jobs().filter(q_objects).select_related(
             'organization', 'category'
         ).order_by('-posted_at')
 
@@ -136,7 +146,7 @@ class AllRolePagesView(ListView):
             for pattern in patterns:
                 q_objects |= Q(title__icontains=pattern)
             
-            count = Job.objects.filter(is_active=True).filter(q_objects).count()
+            count = visible_jobs().filter(q_objects).count()
             
             if count > 0:
                 result.append({
@@ -152,7 +162,7 @@ class AllRolePagesView(ListView):
         context = super().get_context_data(**kwargs)
         context['page_title'] = "Browse Remote Jobs by Role | Remote Impact"
         context['meta_description'] = "Explore remote job opportunities by role type. Find software engineer, data scientist, product manager, and more positions at impact organizations."
-        context['total_jobs'] = Job.objects.filter(is_active=True).count()
+        context['total_jobs'] = visible_jobs().count()
         return context
 
 
@@ -189,7 +199,7 @@ class KeywordJobsView(ListView):
         filter_type = self.config.get('filter_type', 'all')
         patterns = self.config.get('patterns', [])
         
-        base_qs = Job.objects.filter(is_active=True).select_related(
+        base_qs = visible_jobs().select_related(
             'organization', 'category'
         )
         
@@ -335,7 +345,7 @@ class AllKeywordPagesView(ListView):
         context = super().get_context_data(**kwargs)
         context['page_title'] = "Browse Remote Impact Jobs | Remote Impact"
         context['meta_description'] = "Explore remote impact job opportunities by category. Find nonprofit, humanitarian, environmental, and social impact careers from anywhere."
-        context['total_jobs'] = Job.objects.filter(is_active=True).count()
+        context['total_jobs'] = visible_jobs().count()
         
         # Group by search volume for display
         high_volume = [p for p in context['keyword_pages'] if p.get('search_volume') == 'high']

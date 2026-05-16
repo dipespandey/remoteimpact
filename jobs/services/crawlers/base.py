@@ -15,6 +15,8 @@ from urllib.parse import urlparse
 
 from asgiref.sync import sync_to_async
 from django.db import transaction
+from django.db.models import Q
+from django.db.models.functions import Length
 from django.utils import timezone
 
 from jobs.models import Job
@@ -229,6 +231,8 @@ def update_job_from_crawl(
     """
     job.title = title
     job.description = description or job.description
+    if job.description and len(job.description.strip()) >= 100:
+        job.is_active = True
 
     # Update organization if company_name provided and current org is unknown
     if company_name and company_name.strip():
@@ -311,12 +315,13 @@ def crawl_jobs_needing_update(
     Returns:
         Dict with success, failed, skipped counts
     """
-    from . import crawl_greenhouse_job, crawl_lever_job, crawl_ashby_job, crawl_probablygood_job, crawl_charityjob_job
+    from . import crawl_greenhouse_job, crawl_lever_job, crawl_ashby_job, crawl_probablygood_job
 
     # Build query
-    queryset = Job.objects.filter(
-        raw_data__needs_crawling=True,
-        is_active=True,
+    queryset = (
+        Job.objects.annotate(description_length=Length("description"))
+        .filter(source__in=["greenhouse", "lever", "ashby", "probablygood"])
+        .filter(Q(raw_data__needs_crawling=True) | Q(description_length__lt=100))
     )
 
     if source:
@@ -334,7 +339,6 @@ def crawl_jobs_needing_update(
         "lever": crawl_lever_job,
         "ashby": crawl_ashby_job,
         "probablygood": crawl_probablygood_job,
-        "charityjob": crawl_charityjob_job,
     }
 
     for i, job in enumerate(jobs):
@@ -401,12 +405,14 @@ async def crawl_jobs_async(
     Returns:
         Dict with success, failed, skipped counts
     """
-    from . import crawl_greenhouse_job, crawl_lever_job, crawl_ashby_job, crawl_probablygood_job, crawl_charityjob_job
+    from . import crawl_greenhouse_job, crawl_lever_job, crawl_ashby_job, crawl_probablygood_job
 
     # Build query with organization pre-fetched
-    queryset = Job.objects.select_related('organization').filter(
-        raw_data__needs_crawling=True,
-        is_active=True,
+    queryset = (
+        Job.objects.select_related("organization")
+        .annotate(description_length=Length("description"))
+        .filter(source__in=["greenhouse", "lever", "ashby", "probablygood"])
+        .filter(Q(raw_data__needs_crawling=True) | Q(description_length__lt=100))
     )
 
     if source:
@@ -428,7 +434,6 @@ async def crawl_jobs_async(
         "lever": crawl_lever_job,
         "ashby": crawl_ashby_job,
         "probablygood": crawl_probablygood_job,
-        "charityjob": crawl_charityjob_job,
     }
 
     def crawl_single_job(job: Job) -> tuple[Job, Optional[Job], Optional[str]]:

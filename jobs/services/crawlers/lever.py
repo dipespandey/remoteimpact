@@ -106,6 +106,23 @@ def parse_lever_job(data: dict) -> dict:
     additional_html = data.get("additional", "")
     requirements = html_to_markdown(additional_html) if additional_html else ""
 
+    # Lever often stores the actual responsibilities/requirements in "lists"
+    # while descriptionBody is only a short header. Fold those sections into the
+    # saved description so public job pages are useful without relying on a
+    # separate downstream AI enrichment pass.
+    list_sections = []
+    for section in data.get("lists") or []:
+        heading = section.get("text", "").strip()
+        content = html_to_markdown(section.get("content", ""))
+        if heading and content:
+            list_sections.append(f"## {heading}\n{content}")
+        elif content:
+            list_sections.append(content)
+
+    detail_parts = [part for part in [description, *list_sections, requirements] if part]
+    if detail_parts and len(description.strip()) < 250:
+        description = "\n\n".join(detail_parts)
+
     # Location from categories
     categories = data.get("categories", {})
     location = categories.get("location", "Remote")

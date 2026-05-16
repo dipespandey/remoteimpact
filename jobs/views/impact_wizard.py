@@ -108,7 +108,8 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
         # This ensures they can complete the full flow again
         if step_slug != "summary" and profile.wizard_completed:
             profile.wizard_completed = False
-            profile.save(update_fields=["wizard_completed"])
+            profile.embedding = None
+            profile.save(update_fields=["wizard_completed", "embedding"])
 
         # Process the step data
         success, errors = self._process_step(request, profile, step_slug)
@@ -255,6 +256,7 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
                 return False, {"impact_areas": "Please select up to 5 impact areas."}
 
             profile.impact_areas.set(area_ids)
+            profile.embedding = None
             profile.save()
             return True, None
 
@@ -266,6 +268,7 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
             profile.work_styles = work_styles
             # Also set legacy field for backward compatibility
             profile.work_style = work_styles[0] if work_styles else ""
+            profile.embedding = None
             profile.save()
             return True, None
 
@@ -275,6 +278,7 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
                 return False, {"experience_level": "Please select your experience level."}
 
             profile.experience_level = experience_level
+            profile.embedding = None
             profile.save()
             return True, None
 
@@ -286,6 +290,7 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
                 return False, {"skills": "Please select up to 15 skills."}
 
             profile.skills = skills
+            profile.embedding = None
             profile.save()
             return True, None
 
@@ -315,6 +320,7 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
             profile.country_eligibility = data.get("country_eligibility", "").strip()
             profile.linkedin_url = data.get("linkedin_url", "").strip()
 
+            profile.embedding = None
             profile.save()
             return True, None
 
@@ -334,6 +340,7 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
             profile.bio = bio
             # Also save to legacy field for backward compatibility
             profile.impact_statement = bio[:500] if len(bio) > 500 else bio
+            profile.embedding = None
             profile.save()
             return True, None
 
@@ -345,6 +352,7 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
                     answers[key] = data.get(key)
 
             profile.assessment_answers = answers
+            profile.embedding = None
             profile.save()
             return True, None
 
@@ -352,6 +360,7 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
             # Final confirmation - calculate completeness
             profile.profile_completeness = profile.calculate_completeness()
             profile.wizard_completed = True
+            profile.embedding = None
             profile.save()
             return True, None
 

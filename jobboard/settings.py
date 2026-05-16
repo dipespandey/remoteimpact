@@ -55,6 +55,22 @@ SITE_NAME = "Remote Impact Jobs"  # Full brand name for SEO differentiation
 # Trust X-Forwarded-Proto header from reverse proxy (for HTTPS detection)
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+# Production browser security. Keep redirects/HSTS off in DEBUG so local dev
+# remains painless, but lock down cookies and transport on the live site.
+SECURE_SSL_REDIRECT = not DEBUG
+SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
+SECURE_HSTS_PRELOAD = not DEBUG
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
+X_FRAME_OPTIONS = "DENY"
+
 
 # Application definition
 
@@ -90,6 +106,7 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "jobs.middleware.SecurityHeadersMiddleware",
     "jobs.middleware.ReferralMiddleware",
     "jobs.middleware.CloudflareEdgeCacheMiddleware",  # Edge caching for global perf
 ]
@@ -267,6 +284,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
 STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 
 # Resend API for sending emails (newsletter, transactional)
 # Get your API key at: https://resend.com/api-keys

@@ -16,7 +16,7 @@ import logging
 import re
 import time
 from typing import Any, Callable, Dict, List, Optional
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 import requests
 from django.conf import settings
@@ -82,7 +82,7 @@ def _extract_company_from_url(url: str, board_type: str) -> str:
     parts = path.split("/")
 
     if parts:
-        return parts[0].replace("-", " ").title()
+        return unquote(parts[0]).replace("-", " ").title()
 
     return "Unknown Organization"
 
@@ -464,6 +464,7 @@ def search_google_cse_unified(
             "location": "Remote",
             "job_type": "full-time",
             "application_url": url,
+            "is_active": False,
             "raw_data": {
                 "source_url": url,
                 "board_type": board_type,
@@ -575,6 +576,7 @@ def fetch_urls_for_board(
             "location": "Remote",
             "job_type": "full-time",
             "application_url": url,
+            "is_active": False,
             "raw_data": {
                 "source_url": url,
                 "board_type": board_type,

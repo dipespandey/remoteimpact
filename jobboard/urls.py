@@ -17,7 +17,7 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.contrib.sitemaps.views import sitemap
+from django.contrib.sitemaps.views import index, sitemap
 from django.http import HttpResponse
 from django.urls import include, path
 from django.views.decorators.cache import cache_page
@@ -396,7 +396,12 @@ sitemaps = {
     'keywords': KeywordPagesSitemap,
 }
 
+def healthz(request):
+    return HttpResponse("ok", content_type="text/plain")
+
+
 urlpatterns = [
+    path("healthz/", healthz, name="healthz"),
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls")),
     path("gigs/", include("gigs.urls")),
@@ -408,7 +413,13 @@ urlpatterns = [
     path(".well-known/security.txt", security_txt, name='security_txt'),
     path("security.txt", security_txt, name='security_txt_root'),
     path("db25ddbb333d413289a18c8820c32ca4.txt", indexnow_key, name='indexnow_key'),
-    path("sitemap.xml", sitemap, {'sitemaps': sitemaps}, name='sitemap'),
+    path("sitemap.xml", index, {'sitemaps': sitemaps}, name='sitemap'),
+    path(
+        "sitemap-<section>.xml",
+        sitemap,
+        {'sitemaps': sitemaps},
+        name='django.contrib.sitemaps.views.sitemap',
+    ),
     path("blog/", include("blog.urls")),
     path("", include("jobs.urls")),
 ]

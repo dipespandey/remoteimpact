@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+    .hfm-hero {
+        background: linear-gradient(135deg, #f5f3ed 0%, #faf8f3 100%);
+        padding: 80px 20px;
+        text-align: center;
+    }
+    .hfm-hero h1 {
+        font-size: 3em;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 20px;
+    }
+    .hfm-hero p {
+        font-size: 1.15em;
+        color: #666;
+        margin-bottom: 15px;
+        line-height: 1.6;
+    }
+    .hfm-cta-group {
+        margin-top: 40px;
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .hfm-cta-primary,
+    .hfm-cta-secondary {
+        padding: 14px 32px;
+        font-size: 1em;
+        font-weight: 600;
+        border-radius: 6px;
+        text-decoration: none;
+        display: inline-block;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .hfm-cta-primary {
+        background: #7FD556;
+        color: #1a1a1a;
+    }
+    .hfm-cta-primary:hover {
+        background: #6ac043;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(127, 213, 86, 0.3);
+    }
+    .hfm-cta-secondary {
+        background: white;
+        color: #1a1a1a;
+        border: 2px solid #7FD556;
+    }
+    .hfm-cta-secondary:hover {
+        background: #faf8f3;
+        border-color: #6ac043;
+    }
+    .hfm-section {
+        background: #f5f3ed;
+        padding: 60px 20px;
+    }
+    .hfm-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .hfm-section h2 {
+        font-size: 2em;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 40px;
+        text-align: center;
+        border-bottom: 2px solid #7FD556;
+        padding-bottom: 20px;
+    }
+    .hfm-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 30px;
+        margin-bottom: 40px;
+    }
+    .hfm-stat-card {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+    .hfm-stat-card:hover {
+        box-shadow: 0 4px 12px rgba(127, 213, 86, 0.1);
+        border-color: #7FD556;
+    }
+    .hfm-stat-number {
+        font-size: 2.5em;
+        font-weight: 700;
+        color: #7FD556;
+        margin-bottom: 10px;
+    }
+    .hfm-stat-label {
+        color: #666;
+        font-size: 0.95em;
+    }
+    .hfm-features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+    }
+    .hfm-feature-item {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+    .hfm-feature-item:hover {
+        box-shadow: 0 8px 20px rgba(127, 213, 86, 0.15);
+        border-color: #7FD556;
+        transform: translateY(-4px);
+    }
+    .hfm-feature-icon {
+        font-size: 2.5em;
+        margin-bottom: 15px;
+        display: block;
+    }
+    .hfm-feature-item h3 {
+        font-size: 1.2em;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 10px;
+    }
+    .hfm-feature-item p {
+        color: #666;
+        font-size: 0.95em;
+        line-height: 1.6;
+    }
+    .hfm-footer-section {
+        background: white;
+        padding: 60px 20px;
+        text-align: center;
+        border-top: 1px solid #e0e0e0;
+    }
+    .hfm-footer-section h3 {
+        font-size: 1.6em;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 20px;
+    }
+    .hfm-footer-section p {
+        color: #666;
+        font-size: 1.05em;
+        margin-bottom: 30px;
+        line-height: 1.6;
+    }
+    .hfm-footer-content {
+        color: #666;
+        font-size: 0.95em;
+        line-height: 1.8;
+        margin-top: 20px;
+    }
+    .hfm-footer-content strong {
+        color: #1a1a1a;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hfm-hero">
+    <h1>Hire for Mission</h1>
+    <p>AI-powered screening for mission-driven organizations</p>
+    <p style="font-size: 1em; margin-bottom: 30px;">Save 16-20 hours per hire. Find mission-aligned candidates in minutes.</p>
+    <div class="hfm-cta-group">
+        <a href="/accounts/login/" class="hfm-cta-primary">Get Started</a>
+        <a href="/hire-for-mission/demo/" class="hfm-cta-secondary">See How It Works</a>
+    </div>
+</div>
+
+<!-- Stats Section -->
+<div class="hfm-section">
+    <div class="hfm-container">
+        <h2>Live Statistics</h2>
+        <div class="hfm-stats">
+            <div class="hfm-stat-card">
+                <div class="hfm-stat-number">{{ stats.total_jobs }}</div>
+                <div class="hfm-stat-label">Jobs Screened</div>
+            </div>
+            <div class="hfm-stat-card">
+                <div class="hfm-stat-number">{{ stats.total_applications }}</div>
+                <div class="hfm-stat-label">Applications Processed</div>
+            </div>
+            <div class="hfm-stat-card">
+                <div class="hfm-stat-number">{{ stats.total_scored }}</div>
+                <div class="hfm-stat-label">Candidates Scored</div>
+            </div>
+            <div class="hfm-stat-card">
+                <div class="hfm-stat-number">{{ stats.time_saved_hours }}</div>
+                <div class="hfm-stat-label">Hours Saved</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="hfm-section">
+    <div class="hfm-container">
+        <h2>Key Features</h2>
+        <div class="hfm-features">
+            {% for feature in features %}
+            <div class="hfm-feature-item">
+                <span class="hfm-feature-icon">{{ feature.icon }}</span>
+                <h3>{{ feature.title }}</h3>
+                <p>{{ feature.description }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- CTA Section -->
+<div class="hfm-footer-section">
+    <div class="hfm-container">
+        <h3>Ready to Save Time on Hiring?</h3>
+        <p>Post a job on Remote Impact and get AI-screened candidates in minutes.</p>
+        <div class="hfm-cta-group">
+            <a href="/accounts/login/" class="hfm-cta-primary">Log In & Start Screening</a>
+            <a href="/jobs/post/" class="hfm-cta-secondary">Post a Job First</a>
+        </div>
+        <div class="hfm-footer-content">
+            <p><strong>Hire for Mission</strong> — AI screening built for mission-driven organizations</p>
+            <p>Part of Remote Impact — Purpose-driven remote careers</p>
+            <p style="font-size: 0.9em;">Contact: hello@remoteimpact.org</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

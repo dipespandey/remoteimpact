@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Shortlist - {{ session.job.title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <a href="{% url 'jobs:hire_dashboard' %}" class="text-blue-600 hover:text-blue-800">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </a>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Shortlist</h1>
+                        <p class="text-sm text-gray-600">{{ session.job.title }}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm text-gray-600">Total Applicants</div>
+                    <div class="text-2xl font-bold text-gray-900">{{ total_count }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white border-b border-gray-200 sticky top-16 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Score Range</label>
+                    <div class="flex gap-2">
+                        <input type="number" min="0" max="100" placeholder="Min" id="minScore" value="{{ request.GET.min_score }}" class="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <span class="text-gray-400">–</span>
+                        <input type="number" min="0" max="100" placeholder="Max" id="maxScore" value="{{ request.GET.max_score }}" class="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select id="hasConcerns" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">All candidates</option>
+                        <option value="false" {% if request.GET.has_concerns == 'false' %}selected{% endif %}>No concerns</option>
+                        <option value="true" {% if request.GET.has_concerns == 'true' %}selected{% endif %}>Has concerns</option>
+                    </select>
+                </div>
+
+                <div class="flex items-end gap-2">
+                    <button onclick="applyFilters()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition whitespace-nowrap">
+                        Apply Filters
+                    </button>
+                    <button onclick="resetFilters()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition whitespace-nowrap">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Candidate List -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% if candidates %}
+            <div class="space-y-4">
+                {% for candidate in candidates %}
+                <div class="bg-white rounded-lg shadow hover:shadow-md transition overflow-hidden" data-candidate-id="{{ candidate.id }}">
+                    <div class="p-6">
+                        <div class="flex flex-col md:flex-row md:items-start md:justify-between">
+                            <div class="flex-1 mb-4 md:mb-0">
+                                <!-- Name and Email -->
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                        {{ candidate.application.applicant.first_name|first|upper }}
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900">
+                                            {{ candidate.application.applicant.first_name }} {{ candidate.application.applicant.last_name }}
+                                        </h3>
+                                        <p class="text-sm text-gray-600">{{ candidate.application.applicant.email }}</p>
+                                    </div>
+                                </div>
+
+                                <!-- Scores -->
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 my-4">
+                                    <div class="text-center">
+                                        <div class="text-sm text-gray-600">Skills</div>
+                                        <div class="text-2xl font-bold text-blue-600">{{ candidate.skills_score }}</div>
+                                        <div class="text-xs text-gray-500">/100</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-sm text-gray-600">Mission</div>
+                                        <div class="text-2xl font-bold text-green-600">{{ candidate.mission_score }}</div>
+                                        <div class="text-xs text-gray-500">/100</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-sm text-gray-600">Culture</div>
+                                        <div class="text-2xl font-bold text-purple-600">{{ candidate.culture_score }}</div>
+                                        <div class="text-xs text-gray-500">/100</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-sm text-gray-600 font-semibold">Overall</div>
+                                        <div class="text-2xl font-bold text-gray-900">{{ candidate.combined_score }}</div>
+                                        <div class="text-xs text-gray-500">/100</div>
+                                    </div>
+                                </div>
+
+                                <!-- Status Badges -->
+                                <div class="flex flex-wrap gap-2 mt-4">
+                                    {% if candidate.has_concerns %}
+                                    <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                                        ⚠️ Has Concerns
+                                    </span>
+                                    {% endif %}
+                                    
+                                    {% if candidate.avg_rating %}
+                                    <span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                                        ⭐ {{ candidate.avg_rating|floatformat:1 }}/5 Team Rating
+                                    </span>
+                                    {% endif %}
+
+                                    {% if candidate.team_recommendation != 'pending' %}
+                                    <span class="px-3 py-1 {% if candidate.team_recommendation == 'strong_yes' %}bg-green-100 text-green-800{% elif candidate.team_recommendation == 'yes' %}bg-green-50 text-green-700{% elif candidate.team_recommendation == 'maybe' %}bg-yellow-50 text-yellow-700{% elif candidate.team_recommendation == 'no' %}bg-red-50 text-red-700{% else %}bg-red-100 text-red-800{% endif %} text-xs font-medium rounded-full">
+                                        {{ candidate.get_team_recommendation_display }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="flex flex-col gap-2 md:ml-4">
+                                <a href="{% url 'jobs:hire_candidate_detail' candidate.id %}" class="px-4 py-2 bg-blue-600 text-white text-center rounded-lg hover:bg-blue-700 transition text-sm font-medium">
+                                    View Details
+                                </a>
+                                <button onclick="openQuickAction({{ candidate.id }}, 'invite')" class="px-4 py-2 bg-green-600 text-white text-center rounded-lg hover:bg-green-700 transition text-sm font-medium">
+                                    Invite
+                                </button>
+                                <button onclick="openQuickAction({{ candidate.id }}, 'reject')" class="px-4 py-2 bg-red-600 text-white text-center rounded-lg hover:bg-red-700 transition text-sm font-medium">
+                                    Reject
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar showing candidate rank -->
+                    <div class="h-1 bg-gradient-to-r" 
+                         style="background: linear-gradient(to right, 
+                         {% if candidate.combined_score >= 90 %}rgb(22, 163, 74){% elif candidate.combined_score >= 70 %}rgb(59, 130, 246){% elif candidate.combined_score >= 50 %}rgb(234, 179, 8){% else %}rgb(239, 68, 68){% endif %})">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="bg-white rounded-lg shadow p-12 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <h3 class="mt-4 text-lg font-medium text-gray-900">No candidates found</h3>
+                <p class="mt-2 text-gray-600">Try adjusting your filters or check back later.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    @media (max-width: 768px) {
+        .grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+</style>
+
+<script>
+function applyFilters() {
+    const minScore = document.getElementById('minScore').value;
+    const maxScore = document.getElementById('maxScore').value;
+    const hasConcerns = document.getElementById('hasConcerns').value;
+    
+    const params = new URLSearchParams();
+    if (minScore) params.append('min_score', minScore);
+    if (maxScore) params.append('max_score', maxScore);
+    if (hasConcerns) params.append('has_concerns', hasConcerns);
+    
+    window.location.href = `?${params.toString()}`;
+}
+
+function resetFilters() {
+    document.getElementById('minScore').value = '';
+    document.getElementById('maxScore').value = '';
+    document.getElementById('hasConcerns').value = '';
+    window.location.href = window.location.pathname;
+}
+
+function openQuickAction(candidateId, action) {
+    // This could open a modal or perform an action
+    console.log(`Action: ${action} for candidate ${candidateId}`);
+    // Implement modal or toast notification here
+}
+</script>
+{% endblock %}

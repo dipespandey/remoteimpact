@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Post a Job - Remote Impact Jobs{% endblock %}
+{% block title %}{% if is_edit %}Finish &amp; Pay{% else %}Post a Job{% endif %} - Remote Impact Jobs{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-[#F3F2EE] pt-20 pb-24">
@@ -10,8 +10,8 @@
         <div class="space-y-12">
             <!-- Header -->
             <div class="text-center max-w-2xl mx-auto">
-                <h1 class="text-4xl font-bold text-gray-900 tracking-tight mb-4">Post a Role</h1>
-                <p class="text-xl text-gray-600">Reach thousands of purpose-driven professionals.</p>
+                <h1 class="text-4xl font-bold text-gray-900 tracking-tight mb-4">{% if is_edit %}Review &amp; Pay{% else %}Post a Role{% endif %}</h1>
+                <p class="text-xl text-gray-600">{% if is_edit %}Edit anything below, then proceed to payment to publish.{% else %}Reach thousands of purpose-driven professionals.{% endif %}</p>
             </div>
 
             <!-- Pricing & Features -->

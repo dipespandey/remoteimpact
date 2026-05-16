@@ -51,6 +51,7 @@ class JobListView(ListView):
             "educations": self.request.GET.getlist("education"),
             "skills": self.request.GET.getlist("skill"),
             "posted": self.request.GET.get("posted", ""),
+            "direct_apply": self.request.GET.get("direct_apply", ""),
             # Keep single value versions for backward compatibility
             "country": self.request.GET.get("country", ""),
             "organization": self.request.GET.get("organization", ""),
@@ -291,29 +292,19 @@ class JobDetailView(DetailView):
                 if seeker.wizard_completed:
                     context["seeker_profile"] = seeker
                     job = self.object
-                    if seeker.embedding is not None and job.embedding is not None:
-                        # Get semantic score via cosine distance
-                        from pgvector.django import CosineDistance
-                        distance = Job.objects.filter(pk=job.pk).annotate(
-                            dist=CosineDistance('embedding', seeker.embedding)
-                        ).values_list('dist', flat=True).first() or 0
-                        semantic_score = (1 - distance) * 100
-
-                        # Get full match using unified service
-                        result = UnifiedMatchingService._score_candidate(
-                            seeker, job, semantic_score
-                        )
-                        context["match_data"] = {
-                            "total": int(result.score),
-                            "breakdown": {
-                                "Semantic": int(result.semantic_score),
-                                "Profile": int(result.profile_score),
-                                "Impact": int(result.impact_score),
-                            },
-                            "impact_tier": result.impact_tier,
-                            "reasons": result.reasons,
-                            "impact_reasons": result.impact_reasons,
-                        }
+                    result = UnifiedMatchingService.score_job_for_seeker(seeker, job)
+                    context["match_data"] = {
+                        "total": int(result.score),
+                        "breakdown": {
+                            "Semantic": int(result.semantic_score),
+                            "Profile": int(result.profile_score),
+                            "Impact": int(result.impact_score),
+                        },
+                        "impact_tier": result.impact_tier,
+                        "reasons": result.reasons,
+                        "gaps": result.gaps,
+                        "impact_reasons": result.impact_reasons,
+                    }
             except SeekerProfile.DoesNotExist:
                 pass
 

@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+    .hfm-demo-header {
+        background: linear-gradient(135deg, #f5f3ed 0%, #faf8f3 100%);
+        padding: 60px 20px;
+        text-align: center;
+    }
+    .hfm-demo-header h1 {
+        font-size: 2.5em;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 15px;
+    }
+    .hfm-demo-header p {
+        font-size: 1.1em;
+        color: #666;
+    }
+    .hfm-demo-container {
+        max-width: 1100px;
+        margin: 60px auto;
+        padding: 0 20px;
+    }
+    .hfm-workflow {
+        display: grid;
+        gap: 30px;
+    }
+    .hfm-workflow-step {
+        display: grid;
+        grid-template-columns: 80px 1fr;
+        gap: 30px;
+        align-items: flex-start;
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        border-left: 4px solid #7FD556;
+        transition: all 0.3s ease;
+    }
+    .hfm-workflow-step:hover {
+        box-shadow: 0 4px 12px rgba(127, 213, 86, 0.15);
+    }
+    .hfm-step-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 70px;
+        height: 70px;
+        background: #7FD556;
+        color: #1a1a1a;
+        border-radius: 50%;
+        font-size: 1.8em;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    .hfm-step-content h3 {
+        color: #1a1a1a;
+        margin-bottom: 10px;
+        font-size: 1.3em;
+        font-weight: 700;
+    }
+    .hfm-step-content p {
+        color: #666;
+        line-height: 1.6;
+        font-size: 0.95em;
+    }
+    .hfm-timeline-connector {
+        display: flex;
+        justify-content: center;
+        margin: 10px 0;
+        color: #7FD556;
+        font-size: 1.5em;
+        height: 20px;
+    }
+    .hfm-demo-h2 {
+        font-size: 2em;
+        font-weight: 700;
+        color: #1a1a1a;
+        text-align: center;
+        margin-bottom: 50px;
+        border-bottom: 2px solid #7FD556;
+        padding-bottom: 20px;
+    }
+    .hfm-demo-footer {
+        text-align: center;
+        margin-top: 60px;
+        padding: 40px 20px;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+    }
+    .hfm-demo-footer h3 {
+        font-size: 1.4em;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 15px;
+    }
+    .hfm-demo-footer p {
+        color: #666;
+        font-size: 1em;
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+    .hfm-cta-primary {
+        display: inline-block;
+        background: #7FD556;
+        color: #1a1a1a;
+        padding: 12px 30px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        margin-top: 20px;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    .hfm-cta-primary:hover {
+        background: #6ac043;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(127, 213, 86, 0.3);
+    }
+    .hfm-demo-footer a {
+        color: #7FD556;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .hfm-demo-footer a:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="hfm-demo-header">
+    <h1>🎯 How Hire for Mission Works</h1>
+    <p>An 8-step journey from job posting to hiring the right candidate</p>
+</div>
+
+<!-- Workflow -->
+<div class="hfm-demo-container">
+    <div class="hfm-workflow">
+        {% for step in workflow_steps %}
+        <div>
+            <div class="hfm-workflow-step">
+                <div class="hfm-step-number">{{ step.number }}</div>
+                <div class="hfm-step-content">
+                    <h3>{{ step.title }}</h3>
+                    <p>{{ step.description }}</p>
+                </div>
+            </div>
+            {% if not forloop.last %}
+            <div class="hfm-timeline-connector">↓</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- CTA Footer -->
+<div class="hfm-demo-container" style="margin-top: 60px; margin-bottom: 60px;">
+    <div class="hfm-demo-footer">
+        <h3>Ready to Try It?</h3>
+        <p>Post a job on Remote Impact and generate AI screening questions in 30 seconds.</p>
+        <a href="/accounts/login/" class="hfm-cta-primary">Get Started</a>
+        <p style="margin-top: 30px; font-size: 0.95em;">
+            Already have an account? <a href="/hire-for-mission/dashboard/">Go to Dashboard</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

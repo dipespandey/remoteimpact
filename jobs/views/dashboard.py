@@ -40,25 +40,35 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             context["is_employer"] = True
             posted_jobs = list(user.posted_jobs.all().order_by("-posted_at"))
             context["posted_jobs"] = posted_jobs
+            context["active_jobs_count"] = sum(1 for j in posted_jobs if j.is_active)
+            context["total_candidates"] = sum(j.applications.count() for j in posted_jobs)
             context["organization"] = user.organizations.first()
 
             # Top matching candidates for each active job (attached to job objects)
             try:
-                from ..services.vector_search import search_candidates_for_job
+                from ..services.unified_matching_service import UnifiedMatchingService
                 for job in posted_jobs:
-                    if job.is_active and job.embedding is not None:
+                    if job.is_active:
                         try:
-                            results = search_candidates_for_job(job, limit=5)
+                            job.matching_data_quality = UnifiedMatchingService._job_data_quality(job)
+                            results = UnifiedMatchingService.get_candidate_matches(job, limit=5)
                             job.top_candidates = [
-                                {"seeker": s, "score": round(score * 100)}
-                                for s, score, _, _, _ in results[:5]
+                                {
+                                    "seeker": result.seeker,
+                                    "score": int(result.score),
+                                    "reasons": result.reasons[:2],
+                                }
+                                for result in results[:5]
                             ]
                         except Exception:
+                            job.matching_data_quality = 0
                             job.top_candidates = []
                     else:
+                        job.matching_data_quality = 0
                         job.top_candidates = []
             except (ImportError, Exception):
                 for job in posted_jobs:
+                    job.matching_data_quality = 0
                     job.top_candidates = []
 
         elif profile.account_type == UserProfile.AccountType.SEEKER:

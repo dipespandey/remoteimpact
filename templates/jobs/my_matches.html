@@ -140,22 +140,22 @@
                         <div class="bg-gray-50 rounded-lg p-2">
                             <div class="font-bold text-gray-900">{{ match.semantic }}%</div>
                             <div class="text-gray-500">Semantic</div>
-                            <div class="text-[10px] text-gray-400">35% weight</div>
+                            <div class="text-[10px] text-gray-400">40% weight</div>
                         </div>
                         <div class="bg-gray-50 rounded-lg p-2">
                             <div class="font-bold text-gray-900">{{ match.lexical }}%</div>
                             <div class="text-gray-500">Keywords</div>
-                            <div class="text-[10px] text-gray-400">15% weight</div>
+                            <div class="text-[10px] text-gray-400">10% weight</div>
                         </div>
                         <div class="bg-gray-50 rounded-lg p-2">
                             <div class="font-bold text-gray-900">{{ match.profile }}%</div>
                             <div class="text-gray-500">Profile</div>
-                            <div class="text-[10px] text-gray-400">30% weight</div>
+                            <div class="text-[10px] text-gray-400">35% weight</div>
                         </div>
                         <div class="{% if match.impact >= 70 %}bg-purple-50{% else %}bg-gray-50{% endif %} rounded-lg p-2">
                             <div class="font-bold {% if match.impact >= 70 %}text-purple-800{% else %}text-gray-900{% endif %}">{{ match.impact }}%</div>
                             <div class="{% if match.impact >= 70 %}text-purple-600{% else %}text-gray-500{% endif %}">Impact</div>
-                            <div class="text-[10px] text-gray-400">20% weight</div>
+                            <div class="text-[10px] text-gray-400">15% weight</div>
                         </div>
                     </div>
 

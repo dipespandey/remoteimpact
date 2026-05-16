@@ -27,14 +27,20 @@
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-lg flex-shrink-0">
-                            {{ app.applicant.first_name|default:app.applicant.email|slice:":1"|upper }}
+                            {{ app.full_name|default:app.applicant.email|slice:":1"|upper }}
                         </div>
                         <div>
                             <h3 class="font-bold text-gray-900">
-                                {{ app.applicant.first_name }} {{ app.applicant.last_name }}
-                                {% if not app.applicant.first_name %}{{ app.applicant.email }}{% endif %}
+                                {{ app.full_name|default:app.applicant.email }}
                             </h3>
-                            <p class="text-sm text-gray-500">{{ app.applicant.email }}</p>
+                            <p class="text-sm text-gray-500">
+                                {{ app.email|default:app.applicant.email }}
+                                {% if app.phone %} · {{ app.phone }}{% endif %}
+                            </p>
+                            <div class="flex flex-wrap gap-3 mt-1 text-xs text-gray-500">
+                                {% if app.linkedin_url %}<a href="{{ app.linkedin_url }}" target="_blank" rel="noopener" class="text-brand-600 hover:underline">LinkedIn</a>{% endif %}
+                                {% if app.portfolio_url %}<a href="{{ app.portfolio_url }}" target="_blank" rel="noopener" class="text-brand-600 hover:underline">Portfolio</a>{% endif %}
+                            </div>
                             <p class="text-xs text-gray-400 mt-1">Applied {{ app.applied_at|date:"M d, Y" }}</p>
                         </div>
                     </div>
@@ -58,6 +64,46 @@
                         {% endif %}
                     </div>
                 </div>
+                {% if app.years_experience or app.current_location or app.available_from or app.salary_expectation or app.willing_to_relocate %}
+                <div class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                    {% if app.years_experience %}
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-400 font-bold">Experience</p>
+                        <p class="text-gray-700">{{ app.get_years_experience_display }}</p>
+                    </div>
+                    {% endif %}
+                    {% if app.current_location %}
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-400 font-bold">Location</p>
+                        <p class="text-gray-700">{{ app.current_location }}</p>
+                    </div>
+                    {% endif %}
+                    {% if app.available_from %}
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-400 font-bold">Available from</p>
+                        <p class="text-gray-700">{{ app.available_from|date:"M d, Y" }}</p>
+                    </div>
+                    {% endif %}
+                    {% if app.salary_expectation %}
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-400 font-bold">Salary expectation</p>
+                        <p class="text-gray-700">{{ app.salary_expectation }}</p>
+                    </div>
+                    {% endif %}
+                    {% if app.willing_to_relocate %}
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-400 font-bold">Relocation</p>
+                        <p class="text-gray-700">Open to relocating</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% if app.why_great_fit %}
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <p class="text-xs uppercase tracking-wide text-gray-500 font-bold mb-2">Why a great fit</p>
+                    <p class="text-gray-600 text-sm whitespace-pre-line">{{ app.why_great_fit|truncatewords:80 }}</p>
+                </div>
+                {% endif %}
                 {% if app.cover_letter %}
                 <div class="mt-4 pt-4 border-t border-gray-100">
                     <p class="text-xs uppercase tracking-wide text-gray-500 font-bold mb-2">Cover Letter</p>

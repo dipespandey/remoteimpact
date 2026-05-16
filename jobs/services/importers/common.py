@@ -234,7 +234,7 @@ def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
         "experience_level": payload.get("experience_level"),
         "education_level": payload.get("education_level"),
         "country": payload.get("country"),
-        "is_active": True,
+        "is_active": payload.get("is_active", True),
         "is_featured": payload.get("is_featured", False),
         "posted_at": payload.get("posted_at", timezone.now()),
         "expires_at": payload.get("expires_at"),

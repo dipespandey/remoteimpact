@@ -1,0 +1,20 @@
+name: Deploy to Hetzner
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to simpleclaw-2
+        run: |
+          echo "${{ secrets.DEPLOY_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          ssh -o StrictHostKeyChecking=no -i /tmp/deploy_key root@${{ secrets.DEPLOY_HOST }} "
+            cd /opt/easyclaw &&
+            git -C repo pull &&
+            docker compose build web &&
+            docker compose up -d web
+          "

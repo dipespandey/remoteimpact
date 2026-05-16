@@ -1,6 +1,42 @@
 import re
 
 
+class SecurityHeadersMiddleware:
+    """Add conservative browser security headers site-wide."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        response.setdefault(
+            "Content-Security-Policy",
+            (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+                "https://www.googletagmanager.com https://www.google-analytics.com "
+                "https://js.stripe.com https://www.gstatic.com; "
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+                "font-src 'self' https://fonts.gstatic.com data:; "
+                "img-src 'self' data: https:; "
+                "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://api.stripe.com; "
+                "frame-src 'self' https://js.stripe.com https://hooks.stripe.com; "
+                "base-uri 'self'; "
+                "form-action 'self' https://checkout.stripe.com; "
+                "frame-ancestors 'none'; "
+                "upgrade-insecure-requests"
+            ),
+        )
+        response.setdefault(
+            "Permissions-Policy",
+            "camera=(), microphone=(), geolocation=(), payment=(self), usb=(), interest-cohort=()",
+        )
+        response.setdefault("Cross-Origin-Resource-Policy", "same-origin")
+        response.setdefault("X-Permitted-Cross-Domain-Policies", "none")
+        return response
+
+
 class ReferralMiddleware:
     """Capture ?ref=CODE from any URL and store in session."""
 
@@ -25,8 +61,7 @@ class CloudflareEdgeCacheMiddleware:
     # URL patterns and their edge cache TTLs (in seconds)
     # More specific patterns first
     CACHE_RULES = [
-        # NOTE: Homepage excluded - shows personalized content for logged-in users
-        # (r'^/$', 300),                            # Homepage: DO NOT CACHE (personalized)
+        (r'^/$', 300),                              # Homepage: 5 min for anonymous users
         (r'^/domains/$', 600),                      # All domains: 10 min
         (r'^/domains/[^/]+/$', 600),                # Domain landing pages: 10 min
         (r'^/organizations/$', 300),                # Org list: 5 min
@@ -48,6 +83,8 @@ class CloudflareEdgeCacheMiddleware:
         (r'^/jobs/$', 60),                          # Job list (no filters): 1 min
         (r'^/jobs/category/[^/]+/$', 120),          # Category pages: 2 min
         (r'^/jobs/[^/]+/$', 300),                   # Job detail: 5 min
+        (r'^/remote-[^/]+-jobs/$', 300),            # Role landing pages: 5 min
+        (r'^/impact/[^/]+/$', 300),                 # Keyword landing pages: 5 min
         
         # Blog
         (r'^/blog/$', 600),                         # Blog list: 10 min
@@ -61,7 +98,6 @@ class CloudflareEdgeCacheMiddleware:
     
     # Never cache these paths (authenticated/dynamic/personalized)
     NO_CACHE_PATTERNS = [
-        r'^/$',                 # Homepage - shows personalized content
         r'^/admin/',
         r'^/accounts/',
         r'^/account/',
@@ -87,8 +123,8 @@ class CloudflareEdgeCacheMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
         
-        # Only cache GET requests
-        if request.method != 'GET':
+        # Only cache safe read requests
+        if request.method not in ('GET', 'HEAD'):
             return response
         
         # Don't cache for authenticated users

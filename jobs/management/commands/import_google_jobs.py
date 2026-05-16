@@ -125,6 +125,6 @@ class Command(BaseCommand):
             self.stdout.write("")
             self.stdout.write(
                 self.style.NOTICE(
-                    "Note: Jobs have placeholder data. Run the crawler to fetch full details."
+                    "Note: Jobs are saved as unpublished placeholders. Run the crawler to fetch full details."
                 )
             )

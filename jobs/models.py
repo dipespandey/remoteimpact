@@ -352,6 +352,11 @@ class Job(models.Model):
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
 
+    is_paid = models.BooleanField(default=False)
+    stripe_checkout_session_id = models.CharField(max_length=255, blank=True, default="", db_index=True)
+    stripe_payment_intent = models.CharField(max_length=255, blank=True, default="", db_index=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
     poster = models.ForeignKey(
         get_user_model(),
         on_delete=models.CASCADE,
@@ -459,6 +464,12 @@ class Application(models.Model):
         OFFER = "offer", "Offer"
         REJECTED = "rejected", "Rejected"
 
+    class YearsExperience(models.TextChoices):
+        ENTRY = "0-2", "0-2 years"
+        MID = "3-5", "3-5 years"
+        SENIOR = "6-10", "6-10 years"
+        LEAD = "10+", "10+ years"
+
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="applications")
     applicant = models.ForeignKey(
         get_user_model(), on_delete=models.CASCADE, related_name="applications"
@@ -466,8 +477,28 @@ class Application(models.Model):
     status = models.CharField(
         max_length=20, choices=Status.choices, default=Status.APPLIED
     )
-    cover_letter = models.TextField(blank=True, help_text="Optional cover note")
 
+    # Contact
+    full_name = models.CharField(max_length=200, blank=True)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=40, blank=True)
+    linkedin_url = models.URLField(blank=True)
+    portfolio_url = models.URLField(blank=True, help_text="Portfolio, website, or GitHub")
+
+    # Background
+    years_experience = models.CharField(
+        max_length=10, choices=YearsExperience.choices, blank=True
+    )
+    current_location = models.CharField(max_length=200, blank=True)
+
+    # About this role
+    available_from = models.DateField(null=True, blank=True, help_text="Earliest start date")
+    willing_to_relocate = models.BooleanField(default=False)
+    salary_expectation = models.CharField(max_length=120, blank=True)
+    why_great_fit = models.TextField(blank=True, help_text="Short pitch for this role")
+
+    # Existing
+    cover_letter = models.TextField(blank=True, help_text="Optional cover note")
     resume = models.FileField(
         upload_to="applications/resumes/%Y/%m/",
         blank=True,

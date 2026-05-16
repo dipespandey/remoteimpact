@@ -287,7 +287,7 @@
                     </div>
                     <div class="flex-1 relative overflow-hidden" id="featured-job-rotator">
                         {% for job in recent_jobs|slice:":3" %}
-                        <a href="{% url 'jobs:job_detail' job.id %}" 
+                        <a href="{{ job.get_absolute_url }}" 
                            class="featured-job-slide absolute inset-0 block group transition-opacity duration-300 {% if forloop.first %}opacity-100{% else %}opacity-0 pointer-events-none{% endif %}"
                            data-index="{{ forloop.counter0 }}">
                             <div class="space-y-3">

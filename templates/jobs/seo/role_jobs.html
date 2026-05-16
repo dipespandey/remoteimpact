@@ -29,28 +29,7 @@
         {
             "@type": "ListItem",
             "position": {{ forloop.counter }},
-            "item": {
-                "@type": "JobPosting",
-                "title": "{{ job.title|escapejs }}",
-                "hiringOrganization": {
-                    "@type": "Organization",
-                    "name": "{{ job.organization.name|escapejs }}"
-                },
-                "datePosted": "{{ job.posted_at|date:'Y-m-d' }}",
-                "jobLocationType": "TELECOMMUTE",
-                "url": "{{ SITE_URL }}{{ job.get_absolute_url }}"
-                {% if job.salary_min or job.salary_max %},
-                "baseSalary": {
-                    "@type": "MonetaryAmount",
-                    "currency": "{{ job.salary_currency|default:'USD' }}",
-                    "value": {
-                        "@type": "QuantitativeValue",
-                        {% if job.salary_min and job.salary_max %}"minValue": {{ job.salary_min }}, "maxValue": {{ job.salary_max }}{% elif job.salary_min %}"value": {{ job.salary_min }}{% else %}"value": {{ job.salary_max }}{% endif %},
-                        "unitText": "YEAR"
-                    }
-                }
-                {% endif %}
-            }
+            "url": "{{ SITE_URL }}{{ job.get_absolute_url }}"
         }{% if not forloop.last %},{% endif %}
         {% endfor %}
     ]

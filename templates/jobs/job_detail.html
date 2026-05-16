@@ -36,8 +36,8 @@
     "title": "{{ job.title|escapejs }}",
     "description": "{{ job|job_description_for_schema|striptags|truncatechars:5000|escapejs }}",
     "datePosted": "{{ job.posted_at|date:'c' }}",
-    "dateModified": "{{ job.updated_at|date:'c' }}",
-    "validThrough": "{{ job|default_expiry|date:'c' }}",
+    "dateModified": "{{ job.updated_at|date:'c' }}"{% if job.expires_at %},
+    "validThrough": "{{ job.expires_at|date:'c' }}"{% endif %},
     "employmentType": "{{ job.get_job_type_display|upper }}",
     "hiringOrganization": {
         "@type": "Organization",
@@ -52,10 +52,12 @@
         }
     },
     "jobLocationType": "TELECOMMUTE",
+    {% if job.country %}
     "applicantLocationRequirements": {
         "@type": "Country",
-        "name": "Worldwide"
+        "name": "{{ job.country|escapejs }}"
     },
+    {% endif %}
     {% if job.salary_min or job.salary_max %}
     "baseSalary": {
         "@type": "MonetaryAmount",
@@ -68,7 +70,7 @@
         }
     },
     {% endif %}
-    "directApply": true
+    "directApply": {% if job.source == 'manual' %}true{% else %}false{% endif %}
 }
 </script>
 {% endblock %}
@@ -306,7 +308,13 @@
                     📝 Application Guide
                 </a>
 
-                {% if job.application_url %}
+                {% if job.source == 'manual' %}
+                <a href="{% url 'jobs:apply_job' slug=job.slug %}"
+                    class="block w-full text-center px-6 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition shadow-lg shadow-brand-300/30"
+                    data-track="apply_inplatform" data-track-category="job_action" data-track-label="{{ job.slug }}">
+                    Apply on Remote Impact →
+                </a>
+                {% elif job.application_url %}
                 <a href="{{ job.application_url }}" target="_blank" rel="noopener noreferrer"
                     class="block w-full text-center px-6 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition shadow-lg shadow-brand-300/30"
                     data-track="apply_click" data-track-category="job_action" data-track-label="{{ job.slug }}">

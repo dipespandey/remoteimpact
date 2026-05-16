@@ -219,8 +219,10 @@ class Command(BaseCommand):
                     skip_existing=new_only,
                 )
 
-                # Then crawl the job details from the APIs (parallel with optional AI)
-                if not dry_run and summaries["jobboards"]["created"] > 0:
+                # Then crawl job details from the APIs. Do this on every run, not
+                # only when new URLs are created, so previously missed placeholders
+                # get repaired instead of staying public with empty descriptions.
+                if not dry_run:
                     self.stdout.write(f"Crawling job details from APIs (batch_size={batch_size})...")
                     crawl_stats = await crawlers.crawl_jobs_async(
                         limit=limit,

@@ -34,23 +34,88 @@
             </div>
             {% endif %}
 
-            <div>
-                <label for="id_cover_letter" class="block text-sm font-semibold text-gray-900 mb-2">Cover Letter</label>
-                <p class="text-sm text-gray-500 mb-2">Optional — tell the organization why you're a great fit.</p>
-                {{ form.cover_letter }}
-                {% if form.cover_letter.errors %}
-                <p class="mt-1 text-sm text-red-600">{{ form.cover_letter.errors.0 }}</p>
-                {% endif %}
-            </div>
+            <fieldset class="space-y-4">
+                <legend class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">Contact</legend>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="{{ form.full_name.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">{{ form.full_name.label }}{% if form.full_name.field.required %} <span class="text-red-500">*</span>{% endif %}</label>
+                        {{ form.full_name }}
+                        {% if form.full_name.errors %}<p class="mt-1 text-sm text-red-600">{{ form.full_name.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">{{ form.email.label }}{% if form.email.field.required %} <span class="text-red-500">*</span>{% endif %}</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}<p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.phone.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">{{ form.phone.label }}</label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}<p class="mt-1 text-sm text-red-600">{{ form.phone.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.linkedin_url.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">{{ form.linkedin_url.label }}</label>
+                        {{ form.linkedin_url }}
+                        {% if form.linkedin_url.errors %}<p class="mt-1 text-sm text-red-600">{{ form.linkedin_url.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="{{ form.portfolio_url.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">{{ form.portfolio_url.label }}</label>
+                        {{ form.portfolio_url }}
+                        {% if form.portfolio_url.errors %}<p class="mt-1 text-sm text-red-600">{{ form.portfolio_url.errors.0 }}</p>{% endif %}
+                    </div>
+                </div>
+            </fieldset>
 
-            <div>
-                <label for="id_resume" class="block text-sm font-semibold text-gray-900 mb-2">Resume</label>
-                <p class="text-sm text-gray-500 mb-2">{{ form.resume.help_text }}</p>
-                {{ form.resume }}
-                {% if form.resume.errors %}
-                <p class="mt-1 text-sm text-red-600">{{ form.resume.errors.0 }}</p>
-                {% endif %}
-            </div>
+            <fieldset class="space-y-4 pt-2 border-t border-gray-100">
+                <legend class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3 pt-4">Your background</legend>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="{{ form.years_experience.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">{{ form.years_experience.label }}</label>
+                        {{ form.years_experience }}
+                        {% if form.years_experience.errors %}<p class="mt-1 text-sm text-red-600">{{ form.years_experience.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.current_location.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">{{ form.current_location.label }}</label>
+                        {{ form.current_location }}
+                        {% if form.current_location.errors %}<p class="mt-1 text-sm text-red-600">{{ form.current_location.errors.0 }}</p>{% endif %}
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="space-y-4 pt-2 border-t border-gray-100">
+                <legend class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3 pt-4">About this role</legend>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="{{ form.available_from.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">{{ form.available_from.label }}</label>
+                        {{ form.available_from }}
+                        {% if form.available_from.errors %}<p class="mt-1 text-sm text-red-600">{{ form.available_from.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.salary_expectation.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">{{ form.salary_expectation.label }}</label>
+                        {{ form.salary_expectation }}
+                        {% if form.salary_expectation.errors %}<p class="mt-1 text-sm text-red-600">{{ form.salary_expectation.errors.0 }}</p>{% endif %}
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 pt-1">
+                    {{ form.willing_to_relocate }}
+                    <label for="{{ form.willing_to_relocate.id_for_label }}" class="text-sm text-gray-700">{{ form.willing_to_relocate.label }}</label>
+                </div>
+                <div>
+                    <label for="{{ form.why_great_fit.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">{{ form.why_great_fit.label }}</label>
+                    {{ form.why_great_fit }}
+                    {% if form.why_great_fit.errors %}<p class="mt-1 text-sm text-red-600">{{ form.why_great_fit.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.cover_letter.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">{{ form.cover_letter.label }}</label>
+                    {{ form.cover_letter }}
+                    {% if form.cover_letter.errors %}<p class="mt-1 text-sm text-red-600">{{ form.cover_letter.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.resume.id_for_label }}" class="block text-sm font-semibold text-gray-900 mb-2">{{ form.resume.label }}</label>
+                    {% if form.resume.help_text %}<p class="text-sm text-gray-500 mb-2">{{ form.resume.help_text }}</p>{% endif %}
+                    {{ form.resume }}
+                    {% if form.resume.errors %}<p class="mt-1 text-sm text-red-600">{{ form.resume.errors.0 }}</p>{% endif %}
+                </div>
+            </fieldset>
 
             <div class="pt-4 flex items-center gap-4">
                 <button type="submit"

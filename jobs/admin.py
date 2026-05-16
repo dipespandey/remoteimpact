@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import (
+    Application,
     Job,
     Organization,
     Category,
@@ -157,20 +158,35 @@ class JobAdmin(admin.ModelAdmin):
         "job_type",
         "source",
         "is_active",
+        "is_paid",
         "is_featured",
+        "paid_at",
         "posted_at",
     ]
     list_filter = [
         "is_active",
+        "is_paid",
         "is_featured",
         "job_type",
         "category",
         "source",
         "posted_at",
+        "paid_at",
     ]
     prepopulated_fields = {"slug": ("title",)}
-    search_fields = ["title", "description", "organization__name"]
+    search_fields = [
+        "title",
+        "description",
+        "organization__name",
+        "stripe_checkout_session_id",
+        "stripe_payment_intent",
+    ]
     date_hierarchy = "posted_at"
+    readonly_fields = (
+        "stripe_checkout_session_id",
+        "stripe_payment_intent",
+        "paid_at",
+    )
     fieldsets = (
         (
             "Basic Information",
@@ -198,6 +214,17 @@ class JobAdmin(admin.ModelAdmin):
                     "source",
                     "external_id",
                 )
+            },
+        ),
+        (
+            "Payment",
+            {
+                "fields": (
+                    "is_paid",
+                    "paid_at",
+                    "stripe_checkout_session_id",
+                    "stripe_payment_intent",
+                ),
             },
         ),
         ("Metadata", {"fields": ("raw_data",), "classes": ("collapse",)}),
@@ -234,6 +261,57 @@ class StoryAdmin(admin.ModelAdmin):
         ("Engagement", {"fields": ["resonate_count", "view_count"]}),
         ("Status", {"fields": ["status", "published_at", "created_at", "updated_at"]}),
     ]
+
+
+@admin.register(Application)
+class ApplicationAdmin(admin.ModelAdmin):
+    list_display = [
+        "applicant",
+        "job",
+        "full_name",
+        "email",
+        "years_experience",
+        "current_location",
+        "status",
+        "applied_at",
+    ]
+    list_filter = ["status", "years_experience", "willing_to_relocate", "applied_at"]
+    search_fields = [
+        "full_name",
+        "email",
+        "applicant__email",
+        "applicant__first_name",
+        "applicant__last_name",
+        "job__title",
+        "job__organization__name",
+    ]
+    autocomplete_fields = ["job", "applicant"]
+    date_hierarchy = "applied_at"
+    readonly_fields = ["applied_at", "updated_at"]
+    fieldsets = (
+        ("Application", {"fields": ("job", "applicant", "status")}),
+        (
+            "Contact",
+            {"fields": ("full_name", "email", "phone", "linkedin_url", "portfolio_url")},
+        ),
+        (
+            "Background",
+            {"fields": ("years_experience", "current_location")},
+        ),
+        (
+            "About this role",
+            {
+                "fields": (
+                    "available_from",
+                    "willing_to_relocate",
+                    "salary_expectation",
+                    "why_great_fit",
+                )
+            },
+        ),
+        ("Materials", {"fields": ("cover_letter", "resume")}),
+        ("Timestamps", {"fields": ("applied_at", "updated_at"), "classes": ("collapse",)}),
+    )
 
 
 @admin.register(StoryResonance)

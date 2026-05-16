@@ -1,7 +1,20 @@
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
 from django.utils import timezone
+from datetime import timedelta
 from .models import Job, Category, SeekerProfile, Organization
+
+
+def visible_jobs():
+    """Jobs that have a public detail page and valid search/indexing value."""
+    now = timezone.now()
+    cutoff = now - timedelta(days=180)
+    return Job.objects.filter(is_active=True).exclude(
+        expires_at__lt=now,
+    ).exclude(
+        expires_at__isnull=True,
+        posted_at__lt=cutoff,
+    )
 
 
 class JobSitemap(Sitemap):
@@ -11,7 +24,7 @@ class JobSitemap(Sitemap):
     limit = 5000  # Google recommends max 50,000 URLs per sitemap
 
     def items(self):
-        return Job.objects.filter(is_active=True).select_related('organization').order_by('-posted_at')
+        return visible_jobs().select_related('organization').order_by('-posted_at')
 
     def location(self, obj):
         return reverse('jobs:job_detail', args=[obj.slug])
@@ -28,7 +41,7 @@ class CategorySitemap(Sitemap):
     def items(self):
         # Only include categories with active jobs
         return Category.objects.filter(
-            jobs__is_active=True
+            jobs__in=visible_jobs()
         ).distinct().order_by('name')
 
     def location(self, obj):
@@ -36,7 +49,7 @@ class CategorySitemap(Sitemap):
 
     def lastmod(self, obj):
         # Use the most recent job update time
-        latest_job = obj.jobs.filter(is_active=True).order_by('-updated_at').first()
+        latest_job = visible_jobs().filter(category=obj).order_by('-updated_at').first()
         if latest_job:
             return latest_job.updated_at
         return timezone.now()
@@ -50,7 +63,7 @@ class OrganizationSitemap(Sitemap):
     def items(self):
         # Only include organizations with active job listings
         return Organization.objects.filter(
-            jobs__is_active=True
+            jobs__in=visible_jobs()
         ).distinct().order_by('name')
 
     def location(self, obj):
@@ -58,7 +71,7 @@ class OrganizationSitemap(Sitemap):
 
     def lastmod(self, obj):
         # Use the most recent job update time
-        latest_job = obj.jobs.filter(is_active=True).order_by('-updated_at').first()
+        latest_job = visible_jobs().filter(organization=obj).order_by('-updated_at').first()
         if latest_job:
             return latest_job.updated_at
         return timezone.now()
@@ -93,14 +106,14 @@ class ToolsSitemap(Sitemap):
     def location(self, item):
         return reverse(item[0])
 
-    def _priority(self, item):
+    def priority(self, item):
         return item[1]
 
-    def _changefreq(self, item):
+    def changefreq(self, item):
         return item[2]
 
     def lastmod(self, item):
-        return timezone.now()
+        return None
 
 
 class GuidesSitemap(Sitemap):
@@ -127,11 +140,11 @@ class GuidesSitemap(Sitemap):
             'cluster_slug': cluster_slug,
         })
 
-    def _priority(self, item):
+    def priority(self, item):
         return item[3]
 
     def lastmod(self, item):
-        return timezone.now()
+        return None
 
 
 class RolePagesSitemap(Sitemap):
@@ -147,7 +160,9 @@ class RolePagesSitemap(Sitemap):
         return reverse('jobs:role_jobs', kwargs={'role_slug': item['slug']})
 
     def lastmod(self, item):
-        return timezone.now()
+        return visible_jobs().order_by('-updated_at').values_list(
+            'updated_at', flat=True
+        ).first()
 
 
 class KeywordPagesSitemap(Sitemap):
@@ -163,7 +178,9 @@ class KeywordPagesSitemap(Sitemap):
         return reverse('jobs:keyword_jobs', kwargs={'keyword_slug': item['slug']})
 
     def lastmod(self, item):
-        return timezone.now()
+        return visible_jobs().order_by('-updated_at').values_list(
+            'updated_at', flat=True
+        ).first()
 
 
 class StaticSitemap(Sitemap):
@@ -186,14 +203,14 @@ class StaticSitemap(Sitemap):
     def location(self, item):
         return reverse(item[0])
 
-    def _priority(self, item):
+    def priority(self, item):
         return item[1]
 
-    def _changefreq(self, item):
+    def changefreq(self, item):
         return item[2]
 
     def lastmod(self, item):
-        return timezone.now()
+        return None
 
 
 class TalentSitemap(Sitemap):

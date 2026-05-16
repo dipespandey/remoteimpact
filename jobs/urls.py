@@ -21,11 +21,13 @@ urlpatterns = [
     path("jobs/<slug:slug>/application-guide/", views.ApplicationGuideView.as_view(), name="application_guide"),
     path("jobs/<slug:slug>/og-image/", views.JobOGImageView.as_view(), name="job_og_image"),
     path("jobs/<slug:slug>/save/", views.SaveJobView.as_view(), name="save_job"),
+    path("jobs/<slug:slug>/checkout/", views.JobCheckoutView.as_view(), name="job_checkout"),
     path("applications/<int:pk>/job/", views.AppliedJobDetailView.as_view(), name="applied_job_detail"),
     # API
     path("api/organizations/search/", views.OrganizationSearchView.as_view(), name="organization_search"),
     # Account / Onboarding
     path("account/", views.DashboardView.as_view(), name="account"),
+    path("account/company/edit/", views.EditCompanyProfileView.as_view(), name="edit_company_profile"),
     path("onboarding/", views.StartOnboardingView.as_view(), name="start_onboarding"),
     path(
         "onboarding/select-type/",
@@ -78,6 +80,7 @@ urlpatterns = [
         "payment/success/", views.PaymentSuccessView.as_view(), name="payment_success"
     ),
     path("payment/cancel/", views.PaymentCancelView.as_view(), name="payment_cancel"),
+    path("webhook/stripe/", views.StripeWebhookView.as_view(), name="stripe_webhook"),
     # Tools
     path("tools/", views.ToolsIndexView.as_view(), name="tools_index"),
     path("tools/salary-to-hourly-calculator/", views.SalaryToHourlyView.as_view(), name="salary_to_hourly"),

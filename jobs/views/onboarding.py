@@ -1,7 +1,9 @@
 from urllib.parse import urlencode
 
-from django.views.generic import FormView, RedirectView
+from django.contrib import messages
+from django.views.generic import FormView, RedirectView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import Http404
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
@@ -86,6 +88,25 @@ class OnboardingEmployerView(LoginRequiredMixin, FormView):
         # Run auto-detection for org signals
         OrgSignalsService.update_org_signals(org)
         return super().form_valid(form)
+
+
+class EditCompanyProfileView(LoginRequiredMixin, UpdateView):
+    """Edit the current user's existing organization (name/website/bio)."""
+
+    template_name = "jobs/onboarding/company_edit.html"
+    form_class = EmployerOnboardingForm
+    success_url = reverse_lazy("jobs:account")
+
+    def get_object(self, queryset=None):
+        org = self.request.user.organizations.first()
+        if not org:
+            raise Http404("No organization to edit")
+        return org
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Company profile updated.")
+        return response
 
 
 class OnboardingImpactProfileView(LoginRequiredMixin, FormView):

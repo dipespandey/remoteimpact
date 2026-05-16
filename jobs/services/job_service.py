@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from pgvector.django import CosineDistance
 from ..models import Job, Category, SavedJob, Organization
+from ..utils import unique_slug
 
 
 class JobService:
@@ -51,6 +52,10 @@ class JobService:
         job_types = [t for t in job_types if t]
         if job_types:
             jobs = jobs.filter(job_type__in=job_types)
+
+        # Application path - direct applications are jobs posted on Remote Impact.
+        if filters.get("direct_apply"):
+            jobs = jobs.filter(source=Job.Source.MANUAL)
 
         # Organization - support multiple selections
         if hasattr(filters, "getlist"):
@@ -258,17 +263,22 @@ class JobService:
         """
         Create a job instance from form data.
         """
-        # Logic extracted from post_job view
+        if organization is None:
+            org_name = (data.get("organization_name") or "").strip()
+            # Tolerate legacy duplicate Organization rows (no unique constraint
+            # on name): take the first match, otherwise create a fresh row.
+            organization = (
+                Organization.objects.filter(name=org_name).order_by("id").first()
+                or Organization.objects.create(
+                    name=org_name,
+                    website=data.get("organization_website") or "",
+                    description=data.get("organization_description") or "",
+                )
+            )
+
         job = Job(
             title=data.get("title"),
-            organization=organization
-            or Organization.objects.get_or_create(
-                name=data.get("organization_name"),
-                defaults={
-                    "website": data.get("organization_website"),
-                    "description": data.get("organization_description"),
-                },
-            )[0],
+            organization=organization,
             category=data.get("category"),
             description=data.get("description"),
             requirements=data.get("requirements"),
@@ -299,6 +309,51 @@ class JobService:
         # Default to inactive until paid (payment service handles activation)
         job.is_active = False
         job.is_paid = False
+
+        job.slug = unique_slug(Job, f"{job.title}-{job.organization.name}")
+
+        job.save()
+        return job
+
+    @staticmethod
+    def update_job(job: Job, data: dict) -> Job:
+        """Apply form data to an existing draft Job. Caller is responsible for ownership checks."""
+        org_name = (data.get("organization_name") or "").strip()
+        if org_name and org_name != job.organization.name:
+            organization = (
+                Organization.objects.filter(name=org_name).order_by("id").first()
+                or Organization.objects.create(
+                    name=org_name,
+                    website=data.get("organization_website") or "",
+                    description=data.get("organization_description") or "",
+                )
+            )
+            job.organization = organization
+        else:
+            org = job.organization
+            org.website = data.get("organization_website") or org.website
+            org.description = data.get("organization_description") or org.description
+            org.save()
+
+        job.title = data.get("title") or job.title
+        job.category = data.get("category") or job.category
+        job.description = data.get("description") or job.description
+        job.requirements = data.get("requirements") or job.requirements
+        job.location = data.get("location") or job.location
+        job.salary_min = data.get("salary_min")
+        job.salary_max = data.get("salary_max")
+        job.salary_currency = data.get("salary_currency") or job.salary_currency
+        job.application_url = data.get("application_url") or job.application_url
+        job.application_email = data.get("application_email") or job.application_email
+
+        raw_payload = {
+            "internal_contact": data.get("contact_email"),
+            "start_timeline": data.get("start_timeline"),
+            "impact": data.get("impact"),
+            "benefits": data.get("benefits"),
+            "how_to_apply": data.get("how_to_apply"),
+        }
+        job.raw_data = {k: v for k, v in raw_payload.items() if v}
 
         job.save()
         return job
