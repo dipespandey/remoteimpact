@@ -18,6 +18,7 @@ import jwt
 import requests
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from django.utils import timezone
 
 from jobs.models import Job
@@ -92,8 +93,11 @@ class Command(BaseCommand):
             cutoff = timezone.now() - timedelta(hours=options["hours"])
             qs = Job.objects.filter(updated_at__gte=cutoff)
 
+        now = timezone.now()
         if options["type"] == "URL_UPDATED":
-            qs = qs.filter(is_active=True).exclude(expires_at__lt=timezone.now())
+            qs = qs.filter(is_active=True).exclude(expires_at__lt=now)
+        else:
+            qs = qs.filter(Q(is_active=False) | Q(expires_at__lt=now))
 
         qs = qs.order_by("-updated_at").only("slug")[:limit]
         return [f"{site_url}{job.get_absolute_url()}" for job in qs]
