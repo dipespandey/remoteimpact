@@ -9,7 +9,7 @@ Handles dynamic SEO landing pages for role-based searches:
 
 from django.views.generic import ListView
 from django.http import Http404
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.utils import timezone
 from datetime import timedelta
 
@@ -206,6 +206,12 @@ class KeywordJobsView(ListView):
         if filter_type == 'all':
             # All jobs on the platform (all are impact jobs)
             return base_qs.order_by('-posted_at')
+
+        elif filter_type == 'category':
+            category_slug = self.config.get('category_slug')
+            if category_slug:
+                return base_qs.filter(category__slug=category_slug).order_by('-posted_at')
+            return base_qs.none()
         
         elif filter_type == 'nonprofit':
             # Filter by organization type or keywords
@@ -244,20 +250,20 @@ class KeywordJobsView(ListView):
         context['keyword'] = self.config['keyword']
         
         # Get category breakdown
-        category_counts = {}
         jobs_qs = self.get_queryset()
-        for job in jobs_qs.values('category__name', 'category__slug').distinct():
-            cat_name = job['category__name']
-            cat_slug = job['category__slug']
-            if cat_name and cat_slug:
-                count = jobs_qs.filter(category__slug=cat_slug).count()
-                category_counts[cat_name] = {'slug': cat_slug, 'count': count}
-        
-        context['category_breakdown'] = sorted(
-            category_counts.items(), 
-            key=lambda x: x[1]['count'], 
-            reverse=True
-        )[:8]
+        category_rows = (
+            jobs_qs.values('category__name', 'category__slug')
+            .exclude(category__name__isnull=True)
+            .annotate(count=Count('id'))
+            .order_by('-count')[:8]
+        )
+        context['category_breakdown'] = [
+            (
+                row['category__name'],
+                {'slug': row['category__slug'], 'count': row['count']},
+            )
+            for row in category_rows
+        ]
         
         # Salary stats
         jobs_with_salary = jobs_qs.exclude(salary_min__isnull=True)
