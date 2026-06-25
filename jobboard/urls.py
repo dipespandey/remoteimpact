@@ -52,30 +52,58 @@ Disallow: /checkout/
 
 User-agent: GPTBot
 Allow: /
+Disallow: /admin/
+Disallow: /accounts/
+Disallow: /api/
+Disallow: /checkout/
 Crawl-delay: 2
 
 User-agent: ChatGPT-User
 Allow: /
+Disallow: /admin/
+Disallow: /accounts/
+Disallow: /api/
+Disallow: /checkout/
 Crawl-delay: 2
 
 User-agent: ClaudeBot
 Allow: /
+Disallow: /admin/
+Disallow: /accounts/
+Disallow: /api/
+Disallow: /checkout/
 Crawl-delay: 2
 
 User-agent: Claude-Web
 Allow: /
+Disallow: /admin/
+Disallow: /accounts/
+Disallow: /api/
+Disallow: /checkout/
 Crawl-delay: 2
 
 User-agent: Anthropic-ai
 Allow: /
+Disallow: /admin/
+Disallow: /accounts/
+Disallow: /api/
+Disallow: /checkout/
 Crawl-delay: 2
 
 User-agent: PerplexityBot
 Allow: /
+Disallow: /admin/
+Disallow: /accounts/
+Disallow: /api/
+Disallow: /checkout/
 Crawl-delay: 2
 
 User-agent: Google-Extended
 Allow: /
+Disallow: /admin/
+Disallow: /accounts/
+Disallow: /api/
+Disallow: /checkout/
 Crawl-delay: 2
 
 # Block low-value scrapers
@@ -83,6 +111,21 @@ User-agent: Bytespider
 Disallow: /
 
 User-agent: CCBot
+Disallow: /
+
+User-agent: DataForSeoBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: PetalBot
 Disallow: /
 
 # Sitemaps
