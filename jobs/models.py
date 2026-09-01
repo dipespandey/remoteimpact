@@ -1,4 +1,5 @@
 import uuid
+from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -415,6 +416,19 @@ class Job(models.Model):
     @property
     def is_available(self):
         return self.is_active and not self.is_expired()
+
+    @property
+    def is_fresh(self):
+        """Whether the role was posted within the last seven days."""
+        return self.posted_at >= timezone.now() - timedelta(days=7)
+
+    @property
+    def is_closing_soon(self):
+        """Whether a live role has a deadline in the next seven days."""
+        if not self.expires_at:
+            return False
+        now = timezone.now()
+        return now <= self.expires_at <= now + timedelta(days=7)
 
     @property
     def is_entry_level_friendly(self):

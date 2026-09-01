@@ -206,13 +206,18 @@ class JobService:
             # Return early - ordering is handled by search
             return jobs
 
-        # Default ordering for non-search results
-        if sort == "date":
-            return jobs.order_by("-is_featured", "-posted_at")
-        elif sort == "relevance":
-            return jobs.order_by("-is_featured", "-posted_at")
-        
-        return jobs.order_by("-is_featured", "-posted_at")
+        # Keep each sort option truthful. Featured jobs get a visual treatment,
+        # but must not jump ahead of newer jobs when "Newest" is selected.
+        if sort == "salary-high":
+            return jobs.annotate(
+                effective_salary=Coalesce("salary_max", "salary_min")
+            ).order_by(F("effective_salary").desc(nulls_last=True), "-posted_at", "-pk")
+        if sort == "salary-low":
+            return jobs.annotate(
+                effective_salary=Coalesce("salary_min", "salary_max")
+            ).order_by(F("effective_salary").asc(nulls_last=True), "-posted_at", "-pk")
+
+        return jobs.order_by("-posted_at", "-pk")
 
     @staticmethod
     def _apply_smart_search(queryset, query, sort=""):
@@ -253,10 +258,18 @@ class JobService:
         # Order by user preference: date (default) or relevance
         if sort == "relevance":
             # Sort by FTS relevance, date as tiebreaker
-            return queryset.order_by('-is_featured', '-fts_rank', '-posted_at')
+            return queryset.order_by('-fts_rank', '-posted_at', '-pk')
+        if sort == "salary-high":
+            return queryset.annotate(
+                effective_salary=Coalesce("salary_max", "salary_min")
+            ).order_by(F("effective_salary").desc(nulls_last=True), "-posted_at", "-pk")
+        if sort == "salary-low":
+            return queryset.annotate(
+                effective_salary=Coalesce("salary_min", "salary_max")
+            ).order_by(F("effective_salary").asc(nulls_last=True), "-posted_at", "-pk")
         else:
             # Default (including "date" or empty): sort by date posted (newest first)
-            return queryset.order_by('-is_featured', '-posted_at', '-fts_rank')
+            return queryset.order_by('-posted_at', '-fts_rank', '-pk')
 
     @staticmethod
     def create_job(data: dict, user=None, organization=None) -> Job:
