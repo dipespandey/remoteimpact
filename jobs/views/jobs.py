@@ -156,19 +156,6 @@ class JobListView(ListView):
             except SeekerProfile.DoesNotExist:
                 pass
 
-        # Handle sort options
-        sort = self.request.GET.get("sort")
-        if sort == "salary-high":
-            jobs = list(context.get("object_list", []))
-            jobs.sort(key=lambda j: j.salary_max or 0, reverse=True)
-            context["jobs"] = jobs
-            context["object_list"] = jobs
-        elif sort == "salary-low":
-            jobs = list(context.get("object_list", []))
-            jobs.sort(key=lambda j: j.salary_min or float("inf"))
-            context["jobs"] = jobs
-            context["object_list"] = jobs
-
         # If no results, get recommended organizations
         if not context.get("object_list") or context["page_obj"].paginator.count == 0:
             context["recommended_orgs"] = self._get_recommended_organizations(
