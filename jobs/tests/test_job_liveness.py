@@ -643,3 +643,60 @@ class LocationBlockedScoutTests(TestCase):
         self.assertContains(page, "limited to other countries")
         self.assertContains(page, "/gigs/ai-evaluation/")
         self.assertNotContains(page, "Upgrade to Pro to keep watching")
+
+
+from django.test import override_settings
+
+
+@override_settings(EMAIL_PROVIDER="cloudflare", CLOUDFLARE_ACCOUNT_ID="acc123", CLOUDFLARE_EMAIL_TOKEN="tok",
+                   DEFAULT_FROM_EMAIL="Remote Impact Jobs <hello@remoteimpact.org>")
+class CloudflareEmailTests(TestCase):
+    def response(self, status=200, payload=None):
+        import json as _json
+        resp = mock.Mock(status_code=status, ok=status < 400)
+        resp.content = b"{}"
+        resp.json.return_value = payload if payload is not None else {
+            "success": True, "errors": [], "result": {"delivered": ["a@example.org"], "permanent_bounces": [], "queued": []}}
+        return resp
+
+    def service(self):
+        from jobs.services.email_service import EmailService
+        return EmailService()
+
+    def test_sends_through_cloudflare_with_unsubscribe_headers(self):
+        with mock.patch("requests.post", return_value=self.response()) as post, \
+                mock.patch("jobs.services.email_service.resend") as resend:
+            ok = self.service().send_email(to="a@example.org", subject="s", html="<p>h</p>", text="h",
+                                            unsubscribe_url="https://x/u/1/")
+        self.assertTrue(ok)
+        url = post.call_args.args[0]
+        body = post.call_args.kwargs["json"]
+        self.assertEqual(url, "https://api.cloudflare.com/client/v4/accounts/acc123/email/sending/send")
+        self.assertEqual(post.call_args.kwargs["headers"]["Authorization"], "Bearer tok")
+        self.assertEqual(body["to"], ["a@example.org"])
+        self.assertEqual(body["from"], "Remote Impact Jobs <hello@remoteimpact.org>")
+        self.assertEqual(body["headers"]["List-Unsubscribe-Post"], "List-Unsubscribe=One-Click")
+        resend.Emails.send.assert_not_called()
+
+    def test_retries_with_bare_sender_address_when_display_name_is_rejected(self):
+        rejected = self.response(400, {"success": False, "errors": [{"message": "Invalid from address"}]})
+        with mock.patch("requests.post", side_effect=[rejected, self.response()]) as post:
+            self.assertTrue(self.service().send_email(to="a@example.org", subject="s", html="h"))
+        self.assertEqual(post.call_args_list[1].kwargs["json"]["from"], "hello@remoteimpact.org")
+
+    def test_falls_back_to_resend_when_cloudflare_fails(self):
+        with mock.patch("requests.post", return_value=self.response(403, {"success": False, "errors": [{"message": "not onboarded"}]})), \
+                mock.patch("jobs.services.email_service.resend") as resend:
+            service = self.service()  # __init__ sets resend.api_key from settings
+            resend.api_key = "re_test"
+            resend.Emails.send.return_value = {"id": "1"}
+            self.assertTrue(service.send_email(to="a@example.org", subject="s", html="h"))
+        resend.Emails.send.assert_called_once()
+
+    def test_hard_bounce_is_not_resent_through_resend(self):
+        bounced = self.response(payload={"success": True, "errors": [],
+                                         "result": {"delivered": [], "permanent_bounces": ["a@example.org"], "queued": []}})
+        with mock.patch("requests.post", return_value=bounced), \
+                mock.patch("jobs.services.email_service.resend") as resend:
+            self.assertFalse(self.service().send_email(to="a@example.org", subject="s", html="h"))
+        resend.Emails.send.assert_not_called()

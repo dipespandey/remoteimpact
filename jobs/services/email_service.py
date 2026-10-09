@@ -1,5 +1,6 @@
-"""Email service for sending newsletters and notifications via Resend."""
+"""Email service: newsletters and notifications via Cloudflare Email Service or Resend."""
 
+import json
 import logging
 from typing import Optional
 from urllib.parse import urlencode
@@ -50,14 +51,30 @@ class EmailService:
         unsubscribe_url: Optional[str] = None,
     ) -> bool:
         """
-        Send an email via Resend.
+        Send an email via the configured provider (Cloudflare Email Service or Resend).
 
-        Returns True if successful, False otherwise.
+        If Cloudflare is configured but a send fails for a reason other than a hard
+        bounce, falls back to Resend so a misconfiguration never silently drops mail.
+        Returns True if a provider accepted the message.
         """
+        headers = {}
+        if unsubscribe_url:
+            # One-click unsubscribe (RFC 8058), required by Gmail/Yahoo for bulk mail.
+            headers = {
+                "List-Unsubscribe": f"<{unsubscribe_url}>",
+                "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+            }
+        if getattr(settings, "EMAIL_PROVIDER", "resend") == "cloudflare":
+            outcome = self._send_cloudflare(to, subject, html, text, headers)
+            if outcome != "retry":
+                return outcome == "sent"
+            logger.warning("Cloudflare email failed for %s; falling back to Resend", to)
+        return self._send_resend(to, subject, html, text, headers)
+
+    def _send_resend(self, to, subject, html, text, headers) -> bool:
         if not resend.api_key:
             logger.warning("RESEND_API_KEY not configured, skipping email send")
             return False
-
         try:
             params = {
                 "from": self.from_email,
@@ -67,19 +84,54 @@ class EmailService:
             }
             if text:
                 params["text"] = text
-            if unsubscribe_url:
-                # One-click unsubscribe (RFC 8058), required by Gmail/Yahoo for bulk mail.
-                params["headers"] = {
-                    "List-Unsubscribe": f"<{unsubscribe_url}>",
-                    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-                }
-
+            if headers:
+                params["headers"] = headers
             response = resend.Emails.send(params)
             logger.info(f"Email sent to {to}: {response.get('id', 'unknown')}")
             return True
         except Exception as e:
             logger.error(f"Failed to send email to {to}: {e}")
             return False
+
+    def _send_cloudflare(self, to, subject, html, text, headers) -> str:
+        """POST to Cloudflare Email Service. Returns "sent", "bounced" or "retry"."""
+        import requests
+        from email.utils import parseaddr
+
+        account = getattr(settings, "CLOUDFLARE_ACCOUNT_ID", "")
+        token = getattr(settings, "CLOUDFLARE_EMAIL_TOKEN", "")
+        url = f"https://api.cloudflare.com/client/v4/accounts/{account}/email/sending/send"
+        name, address = parseaddr(self.from_email)
+        body = {"to": [to], "subject": subject, "html": html}
+        if text:
+            body["text"] = text
+        if headers:
+            body["headers"] = headers
+        # The display name form isn't documented; try "Name <address>", then the bare address.
+        senders = [self.from_email, address] if name and address else [self.from_email]
+        for sender in senders:
+            try:
+                response = requests.post(
+                    url, json={**body, "from": sender}, timeout=20,
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+                data = response.json() if response.content else {}
+            except (requests.RequestException, ValueError) as exc:
+                logger.error("Cloudflare email request failed for %s: %s", to, exc)
+                return "retry"
+            if response.ok and data.get("success"):
+                result = data.get("result") or {}
+                if result.get("permanent_bounces"):
+                    logger.warning("Cloudflare reported a permanent bounce for %s", to)
+                    return "bounced"
+                logger.info("Email sent to %s via Cloudflare", to)
+                return "sent"
+            errors = json.dumps(data.get("errors") or [])[:300]
+            if response.status_code in (400, 422) and "from" in errors.lower() and sender != senders[-1]:
+                continue  # sender format rejected; try the bare address
+            logger.error("Cloudflare email rejected for %s: HTTP %s %s", to, response.status_code, errors)
+            return "retry"
+        return "retry"
 
     def send_pro_trial_ending(self, user, trial_end, match_count: int = 0) -> bool:
         """Remind a trialing subscriber before the first charge."""

@@ -294,13 +294,30 @@ DEFAULT_FROM_EMAIL = os.getenv(
     "DEFAULT_FROM_EMAIL", "Remote Impact Jobs <hello@remoteimpact.org>"
 )
 
-# Email settings - Resend SMTP
+# Email provider: "resend" (default) or "cloudflare" (Cloudflare Email Service).
+# Cloudflare needs the Workers Paid plan, remoteimpact.org onboarded under
+# Email Service > Email Sending, and an account API token with "Email Sending: Edit".
+CLOUDFLARE_ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID", "")
+CLOUDFLARE_EMAIL_TOKEN = os.getenv("CLOUDFLARE_EMAIL_TOKEN", "")
+EMAIL_PROVIDER = os.getenv("EMAIL_PROVIDER", "resend").strip().lower()
+if EMAIL_PROVIDER == "cloudflare" and not (CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_EMAIL_TOKEN):
+    EMAIL_PROVIDER = "resend"  # never switch to a half-configured provider
+
+# Django's own mail (password resets, allauth) goes over SMTP to the same provider.
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.resend.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "resend"
-EMAIL_HOST_PASSWORD = os.getenv("RESEND_API_KEY", "")
+if EMAIL_PROVIDER == "cloudflare":
+    EMAIL_HOST = "smtp.mx.cloudflare.net"
+    EMAIL_PORT = 465
+    EMAIL_USE_SSL = True  # implicit TLS; Cloudflare doesn't offer STARTTLS on 587
+    EMAIL_USE_TLS = False
+    EMAIL_HOST_USER = "api_token"
+    EMAIL_HOST_PASSWORD = CLOUDFLARE_EMAIL_TOKEN
+else:
+    EMAIL_HOST = "smtp.resend.com"
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = "resend"
+    EMAIL_HOST_PASSWORD = os.getenv("RESEND_API_KEY", "")
 ACCOUNT_EMAIL_VERIFICATION = "none"
 # New allauth settings (replaces deprecated ACCOUNT_EMAIL_REQUIRED, ACCOUNT_AUTHENTICATION_METHOD, ACCOUNT_USERNAME_REQUIRED)
 ACCOUNT_LOGIN_METHODS = {"email"}
