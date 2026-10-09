@@ -126,3 +126,38 @@ class OrganizationInterleavingTests(TestCase):
         titles = list(JobService.get_filtered_jobs({}).values_list("title", flat=True))
         self.assertEqual(titles[:2], ["Big 0", "Small role"])
         self.assertEqual(titles[-1], "Yesterday")
+
+
+class SingleWordPrecisionTests(TestCase):
+    def setUp(self):
+        org = Organization.objects.create(name="Grid Co", slug="grid-co")
+        for i in range(10):
+            Job.objects.create(title=f"Communications Manager {i}", slug=f"comms-{i}", organization=org,
+                               description="Lead our storytelling.")
+        Job.objects.create(title="Field Technician", slug="field-tech", organization=org,
+                           description="Good communications skills and operations experience required.")
+        Job.objects.create(title="Data Engineer", slug="data-eng", organization=org, description="Build pipelines.",
+                           skills=["python", "sql"])
+
+    def titles(self, q):
+        return set(JobService.get_filtered_jobs({"q": q}).values_list("title", flat=True))
+
+    def test_body_only_mentions_drop_out_when_there_are_enough_real_matches(self):
+        found = self.titles("communications")
+        self.assertNotIn("Field Technician", found)
+        self.assertEqual(len(found), 10)
+
+    def test_skills_count_as_a_real_match_and_body_is_a_fallback(self):
+        self.assertIn("Data Engineer", self.titles("python"))
+        self.assertIn("Field Technician", self.titles("operations"))
+
+
+class SoftSkillSearchTests(TestCase):
+    def test_soft_skill_tags_do_not_count_as_a_match(self):
+        org = Organization.objects.create(name="Soft Org", slug="soft-org")
+        for i in range(10):
+            Job.objects.create(title=f"Communications Lead {i}", slug=f"comms-lead-{i}", organization=org, description="x")
+        Job.objects.create(title="Grid Engineer", slug="grid-eng", organization=org, description="x",
+                           skills=["communication", "power-systems"])
+        found = set(JobService.get_filtered_jobs({"q": "communications"}).values_list("title", flat=True))
+        self.assertNotIn("Grid Engineer", found)

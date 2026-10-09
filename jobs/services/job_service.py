@@ -258,6 +258,12 @@ class JobService:
             ),
         ).order_by("-_day", "_org_turn", "-posted_at", "-id")
 
+    MIN_STRONG_SEARCH_RESULTS = 10
+    SOFT_SKILL_STEMS = {
+        "communication", "teamwork", "leadership", "collaboration", "presentation", "writing",
+        "problem-solving", "organization", "organisation", "time-management", "negotiation",
+        "stakeholder", "interpersonal", "adaptability", "creativity", "attention",
+    }
     SEARCH_NOISE_WORDS = {
         "remote", "job", "jobs", "role", "roles", "position", "positions", "opportunity",
         "opportunities", "career", "careers", "hiring", "vacancy", "vacancies", "work", "openings",
@@ -362,12 +368,25 @@ class JobService:
                 )
             queryset = strict
         else:
-            # Single-word searches can reasonably match title or body text.
-            body_q = (
-                Q(fts_rank__gt=0.01) if connection.vendor == "postgresql"
-                else JobService._word_q("description", phrase)  # local SQLite has no FTS
-            )
-            queryset = queryset.filter(body_q | title_phrase_q | organization_q)
+            # Single words like "communications" or "python" appear somewhere in most
+            # descriptions, so a body match alone says little. Prefer roles whose title,
+            # skills, area or organization carry the word; fall back to body text only
+            # when that leaves too few results to be useful.
+            stem = re.sub(r"(?:es|s)$", "", phrase.lower()) if len(phrase) > 4 else phrase.lower()
+            skill_q = Q(pk__in=[])
+            if stem not in JobService.SOFT_SKILL_STEMS:
+                # Soft skills ("communication") are tagged on most roles and mean nothing here.
+                skill_q = Q(skills__icontains=f'"{stem}') | Q(skills__icontains=f'-{stem}')
+            strong_q = title_phrase_q | organization_q | skill_q | Q(category__name__icontains=stem)
+            strong = queryset.filter(strong_q)
+            if strong.count() >= JobService.MIN_STRONG_SEARCH_RESULTS:
+                queryset = strong
+            else:
+                body_q = (
+                    Q(fts_rank__gt=0.01) if connection.vendor == "postgresql"
+                    else JobService._word_q("description", phrase)  # local SQLite has no FTS
+                )
+                queryset = queryset.filter(body_q | strong_q)
         
         if sort == "relevance":
             return queryset.order_by(
