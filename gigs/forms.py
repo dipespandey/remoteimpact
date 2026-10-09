@@ -417,15 +417,15 @@ class EvaluatorInterestForm(forms.ModelForm):
         fields = ["email", "country", "languages", "background", "hours_per_week", "note", "is_adult"]
         labels = {
             "country": "Country you live in",
-            "languages": "Languages besides English",
+            "languages": "Languages you work in, besides English (or \"English only\")",
             "background": "Your main background",
             "hours_per_week": "Hours a week you could give",
             "note": "Anything else (optional)",
         }
         widgets = {
             "email": forms.EmailInput(attrs={"class": "input", "placeholder": "you@example.com"}),
-            "country": forms.TextInput(attrs={"class": "input", "placeholder": "Nepal"}),
-            "languages": forms.TextInput(attrs={"class": "input", "placeholder": "Nepali, Maithili, Hindi"}),
+            "country": forms.TextInput(attrs={"class": "input", "placeholder": "Country you live in"}),
+            "languages": forms.TextInput(attrs={"class": "input", "placeholder": "Spanish, Portuguese"}),
             "background": forms.Select(attrs={"class": "input select"}),
             "hours_per_week": forms.NumberInput(attrs={"class": "input", "min": 2, "max": 40}),
             "note": forms.Textarea(attrs={"class": "textarea", "rows": 3,
