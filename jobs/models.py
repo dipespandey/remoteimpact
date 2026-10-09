@@ -942,6 +942,8 @@ class ConsumerFunnelEvent(models.Model):
         PAYMENT_COMPLETED = "payment_completed", "Payment completed"
         SUBSCRIPTION_CANCELLED = "subscription_cancelled", "Subscription cancelled"
         TRIAL_REMINDER_SENT = "trial_reminder_sent", "Pro trial reminder sent"
+        CHECKOUT_RECOVERY_SENT = "checkout_recovery_sent", "Checkout follow-up sent"
+        WINBACK_SENT = "winback_sent", "Scout win-back email sent"
         MATCH_RELEVANT = "match_relevant", "Match marked relevant"
         MATCH_NOT_RELEVANT = "match_not_relevant", "Match marked not relevant"
         SHORTLIST_VIEWED = "shortlist_viewed", "Private shortlist viewed"
@@ -1753,3 +1755,24 @@ class JobFeaturePurchase(models.Model):
 
     def __str__(self):
         return f"Feature {self.job_id} until {self.featured_until:%Y-%m-%d}"
+
+
+class EmployerOutreach(models.Model):
+    """Staff-tracked sales outreach to an organization (one row per org)."""
+
+    class Status(models.TextChoices):
+        NEW = "new", "Not contacted"
+        CONTACTED = "contacted", "Contacted"
+        REPLIED = "replied", "Replied"
+        WON = "won", "Paid"
+        NOT_INTERESTED = "not_interested", "Not interested"
+
+    organization = models.OneToOneField(Organization, on_delete=models.CASCADE, related_name="outreach")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.NEW, db_index=True)
+    contact = models.CharField(max_length=254, blank=True, help_text="Email or name of the person contacted")
+    notes = models.TextField(blank=True)
+    contacted_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.organization.name}: {self.get_status_display()}"

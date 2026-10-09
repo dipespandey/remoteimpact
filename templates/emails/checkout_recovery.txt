@@ -1,0 +1,14 @@
+Hi {{ user.first_name|default:"there" }},
+
+You started setting up Remote Impact Pro yesterday but didn't finish. No problem, nothing was charged.
+
+{% if trial %}Pro is free for 7 days, then $10 a month, and you can cancel any time before the trial ends.{% else %}Pro is $10 a month, or $24 once for three months with no renewal.{% endif %} It keeps your Scouts checking every new role and emails you the ones that fit.
+
+Pick up where you left off: {{ resume_url }}
+
+If something got in the way (price, payment method, or the checkout itself), just reply and tell me. I read every reply.
+
+{{ sender }}
+Remote Impact
+
+Don't want emails like this? {{ unsubscribe_url }}

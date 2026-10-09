@@ -41,7 +41,7 @@ SEEKER_FUNNEL = [
     (CE.SCOUT_CREATED, "Scout created"),
     (CE.INITIAL_EMAIL_SENT, "First matches emailed"),
     (CE.UPGRADE_CLICKED, "Upgrade clicked"),
-    (CE.CHECKOUT_STARTED, "Checkout started"),
+    ((CE.CHECKOUT_CREATED, CE.CHECKOUT_STARTED), "Checkout started"),  # current flow records CHECKOUT_CREATED
     (CE.PAYMENT_COMPLETED, "Paid or trial started"),
 ]
 EMPLOYER_FUNNEL = [
@@ -94,10 +94,11 @@ def _funnel(model, steps, since, until=None):
     if until:
         qs = qs.filter(created_at__lt=until)
     counts = dict(qs.values_list("event").annotate(n=Count("id")))
-    top = max((counts.get(event, 0) for event, _ in steps), default=0)
+    top = max((sum(counts.get(e, 0) for e in (event if isinstance(event, tuple) else (event,))) for event, _ in steps), default=0)
     out, prev = [], None
     for event, label in steps:
-        n = counts.get(event, 0)
+        events = event if isinstance(event, tuple) else (event,)
+        n = sum(counts.get(e, 0) for e in events)
         out.append({
             "label": label, "count": n, "pct": round(100 * n / top) if top else 0,
             # Events aren't a strict sequence; a rate above 100% would be misleading.

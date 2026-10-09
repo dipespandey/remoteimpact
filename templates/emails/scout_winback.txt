@@ -1,0 +1,14 @@
+Hi {{ user.first_name|default:"there" }},
+
+A while ago you asked Remote Impact to look for{% if brief %}: "{{ brief }}"{% else %} remote impact roles for you{% endif %}.
+
+That search ran once. You can now keep it running every day: Pro checks each new role (we add and verify roles daily, straight from employers' own job boards) and emails you only the ones that fit. It's free for 7 days, then $10 a month, and you can cancel any time.
+
+Keep my search running: {{ resume_url }}
+
+Not looking anymore? No action needed, this is the only email like this you'll get.
+
+{{ sender }}
+Remote Impact
+
+Unsubscribe: {{ unsubscribe_url }}

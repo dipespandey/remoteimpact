@@ -58,6 +58,19 @@ def _save_interpretation(alert, preferences):
     )
 
 
+def _empty_because_of_location(alert):
+    """True when a Scout's first run found nothing mainly because roles were limited to other countries."""
+    event = (
+        ConsumerFunnelEvent.objects.filter(alert=alert, event=ConsumerFunnelEvent.Event.INITIAL_MATCHES_EMPTY)
+        .order_by("-created_at").first()
+    )
+    rejections = ((event.metadata or {}).get("matching") or {}).get("hard_rejections") or {} if event else {}
+    if not rejections:
+        return False
+    top = max(rejections, key=rejections.get)
+    return top in ("location", "location_rejected", "excluded_location")
+
+
 def _send_initial_matches(alert, *, source=""):
     diagnostics = {}
     matches = JobScoutService.get_matches(
@@ -172,6 +185,8 @@ class JobAlertListView(LoginRequiredMixin, ListView):
                         limit=5,
                     )
                 context["preview_jobs"] = preview_jobs
+                if not preview_jobs:
+                    context["location_blocked"] = _empty_because_of_location(created)
         return context
 
 

@@ -97,9 +97,14 @@
             </li>
             {% endfor %}
         </ul>
+        {% elif location_blocked %}
+        <div class="mt-4 px-1 text-sm leading-6 text-muted-foreground">
+            <p><strong class="font-medium text-foreground">Most current roles like this are limited to other countries.</strong> Many remote employers can only hire in the US or Europe, so we'd rather tell you now than charge you to wait.</p>
+            <p class="mt-2">Two things that help: add "worldwide" or nearby regions to your description, or join our waitlist for <a class="font-medium text-foreground underline decoration-border hover:decoration-foreground" href="{% url 'gigs:ai_evaluation' %}?source=empty_scout">paid AI evaluation work, open to every country</a>.</p>
+        </div>
         {% else %}<p class="mt-4 px-1 text-sm leading-6 text-muted-foreground"><strong class="font-medium text-foreground">No strong match among current listings.</strong>{% if is_pro %} Your scout will email you when a suitable new job appears.{% else %} Upgrade to Pro to keep watching for new jobs.{% endif %}</p>{% endif %}
 
-        {% if not is_pro and created_alert.frequency == 'once' %}
+        {% if not is_pro and created_alert.frequency == 'once' and not location_blocked %}
         <div class="surface mt-4 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <p class="text-sm font-medium text-foreground">Keep this exact search running</p>

@@ -616,6 +616,8 @@ urlpatterns = [
     ),
     path("healthz/", healthz, name="healthz"),
     path("admin/analytics/", admin.site.admin_view(admin_analytics.analytics), name="admin_analytics"),
+    path("admin/outreach/", admin.site.admin_view(admin_analytics.outreach), name="admin_outreach"),
+    path("admin/outreach/<int:org_id>/", admin.site.admin_view(admin_analytics.outreach_update), name="admin_outreach_update"),
     path("admin/", admin.site.urls),
     # A few historical clients appended a literal null path segment to these
     # auth pages. Keep the canonical destination instead of a repeat 404.

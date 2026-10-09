@@ -98,6 +98,37 @@ class EmailService:
             text=render_to_string("emails/pro_trial_ending.txt", context),
         )
 
+    def send_checkout_recovery(self, user, *, trial: bool, resume_url: str, sender: str = "Dipesh") -> bool:
+        """One follow-up to someone who opened Pro checkout and left without paying."""
+        if not user.email:
+            return False
+        unsubscribe_url = self._get_unsubscribe_url(user.id)
+        context = {"user": user, "trial": trial, "resume_url": resume_url, "sender": sender,
+                   "unsubscribe_url": unsubscribe_url}
+        subject = "Your 7-day Pro trial is one click away" if trial else "Finish setting up Remote Impact Pro"
+        return self.send_email(
+            to=user.email,
+            subject=subject,
+            html=render_to_string("emails/checkout_recovery.html", context),
+            text=render_to_string("emails/checkout_recovery.txt", context),
+            unsubscribe_url=unsubscribe_url,
+        )
+
+    def send_scout_winback(self, user, *, brief: str, resume_url: str, sender: str = "Dipesh") -> bool:
+        """One email inviting someone whose free Scout ran once to keep it running with Pro."""
+        if not user.email:
+            return False
+        unsubscribe_url = self._get_unsubscribe_url(user.id)
+        context = {"user": user, "brief": brief, "resume_url": resume_url, "sender": sender,
+                   "unsubscribe_url": unsubscribe_url}
+        return self.send_email(
+            to=user.email,
+            subject="Keep your job search running, free for 7 days",
+            html=render_to_string("emails/scout_winback.html", context),
+            text=render_to_string("emails/scout_winback.txt", context),
+            unsubscribe_url=unsubscribe_url,
+        )
+
     def send_weekly_digest(
         self,
         user,

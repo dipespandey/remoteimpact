@@ -536,3 +536,110 @@ class UnsubscribeTests(TestCase):
             params = resend.Emails.send.call_args.args[0]
         self.assertEqual(params["headers"]["List-Unsubscribe"], "<https://x/u/1/>")
         self.assertEqual(params["headers"]["List-Unsubscribe-Post"], "List-Unsubscribe=One-Click")
+
+
+class OutreachQueueTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        from jobs.models import JobDailyStat
+        self.staff = get_user_model().objects.create_user("ops", "ops@example.org", "pw-test-123", is_staff=True,
+                                                          first_name="Dipesh")
+        self.busy = Organization.objects.create(name="Busy Climate", slug="busy-climate")
+        self.quiet = Organization.objects.create(name="Quiet Health", slug="quiet-health")
+        now = timezone.now()
+        job = make_job(self.busy, "busy-role", "https://boards.greenhouse.io/busy/jobs/1", last_seen_at=now,
+                       application_email="jobs@busy.example")
+        make_job(self.quiet, "quiet-role", "https://boards.greenhouse.io/quiet/jobs/2", last_seen_at=now)
+        JobDailyStat.objects.create(job=job, date=timezone.localdate(), views=40, apply_clicks=9)
+
+    def test_ranks_by_engagement_and_drafts_an_email_with_real_numbers(self):
+        from jobs.services.outreach import outreach_targets
+        rows = outreach_targets(days=7, sender="Dipesh")
+        self.assertEqual(rows[0]["org"], self.busy)
+        self.assertIn("9 people clicked to apply", rows[0]["subject"])
+        self.assertIn("viewed 40 times", rows[0]["body"])
+        self.assertIn("/employers/report/", rows[0]["body"])
+        self.assertIn("/feature/?source=outreach", rows[0]["body"])
+        self.assertTrue(rows[0]["mailto"].startswith("mailto:jobs%40busy.example?"))
+
+    def test_staff_page_and_status_tracking(self):
+        from jobs.models import EmployerOutreach
+        url = reverse("admin_outreach")
+        self.assertEqual(self.client.get(url).status_code, 302)
+        self.client.force_login(self.staff)
+        page = self.client.get(url)
+        self.assertContains(page, "Busy Climate")
+        self.client.post(reverse("admin_outreach_update", args=[self.busy.pk]), {"status": "contacted", "contact": "ana@busy.example"})
+        record = EmployerOutreach.objects.get(organization=self.busy)
+        self.assertEqual((record.status, record.contact), ("contacted", "ana@busy.example"))
+        self.assertIsNotNone(record.contacted_at)
+        self.assertContains(self.client.get(url, {"status": "contacted"}), "Busy Climate")
+        self.assertNotContains(self.client.get(url, {"status": "contacted"}), "Quiet Health")
+
+
+class SeekerConversionEmailTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        from jobs.models import ConsumerFunnelEvent, JobAlert
+        User = get_user_model()
+        self.left = User.objects.create_user("left", "left@example.org", "pw-test-123", first_name="Lee")
+        self.unsub = User.objects.create_user("unsub", "unsub@example.org", "pw-test-123")
+        old = timezone.now() - timedelta(hours=5)
+        for user in (self.left, self.unsub):
+            event = ConsumerFunnelEvent.objects.create(user=user, event="checkout_created", metadata={"plan": "monthly"})
+            ConsumerFunnelEvent.objects.filter(pk=event.pk).update(created_at=old)
+            alert = JobAlert.objects.create(user=user, name="Climate policy roles", frequency="once")
+            JobAlert.objects.filter(pk=alert.pk).update(created_at=timezone.now() - timedelta(days=3))
+        from jobs.models import UserProfile
+        UserProfile.objects.create(user=self.unsub, email_newsletter_unsubscribed_at=timezone.now())
+
+    def run_cmd(self, name, *args):
+        out = StringIO()
+        with mock.patch("jobs.services.email_service.EmailService.send_email", return_value=True) as send:
+            call_command(name, *args, stdout=out)
+        return out.getvalue(), send
+
+    def test_checkout_recovery_is_dry_run_by_default_and_sends_once(self):
+        from jobs.models import ConsumerFunnelEvent
+        out, send = self.run_cmd("send_checkout_recovery")
+        self.assertIn("would send 1", out)
+        send.assert_not_called()
+        out, send = self.run_cmd("send_checkout_recovery", "--send")
+        self.assertEqual(send.call_count, 1)
+        self.assertEqual(send.call_args.kwargs["to"], "left@example.org")
+        self.assertIn("one click away", send.call_args.kwargs["subject"])
+        self.assertTrue(ConsumerFunnelEvent.objects.filter(user=self.left, event="checkout_recovery_sent").exists())
+        _, send = self.run_cmd("send_checkout_recovery", "--send")
+        send.assert_not_called()
+
+    def test_winback_skips_unsubscribed_and_sends_once(self):
+        out, send = self.run_cmd("send_scout_winback")
+        self.assertIn("would send 1", out)
+        send.assert_not_called()
+        _, send = self.run_cmd("send_scout_winback", "--send")
+        self.assertEqual(send.call_count, 1)
+        self.assertIn("Climate policy roles", send.call_args.kwargs["html"])
+        _, send = self.run_cmd("send_scout_winback", "--send")
+        send.assert_not_called()
+
+
+class LocationBlockedScoutTests(TestCase):
+    def test_empty_scout_blocked_by_location_gets_honest_advice_not_a_pro_pitch(self):
+        from django.contrib.auth import get_user_model
+        from jobs.models import ConsumerFunnelEvent, JobAlert
+        site = Site.objects.get_current()
+        for provider, provider_id in (("google", ""), ("openid_connect", "linkedin")):
+            app = SocialApp.objects.create(provider=provider, provider_id=provider_id, name=provider_id or provider,
+                                           client_id="x", secret="x",
+                                           settings={"server_url": "https://www.linkedin.com/oauth"} if provider_id else {})
+            app.sites.add(site)
+        user = get_user_model().objects.create_user("pk", "pk@example.org", "pw-test-123")
+        alert = JobAlert.objects.create(user=user, intent_text="Social media roles, I'm in Pakistan", frequency="once")
+        ConsumerFunnelEvent.objects.create(user=user, alert=alert, event="initial_matches_empty",
+                                           metadata={"matching": {"hard_rejections": {"location": 118}}})
+        self.client.force_login(user)
+        with mock.patch("jobs.services.job_scout_service.JobScoutService.get_matches", return_value=[]):
+            page = self.client.get(reverse("jobs:job_alerts"), {"created": alert.pk})
+        self.assertContains(page, "limited to other countries")
+        self.assertContains(page, "/gigs/ai-evaluation/")
+        self.assertNotContains(page, "Upgrade to Pro to keep watching")
