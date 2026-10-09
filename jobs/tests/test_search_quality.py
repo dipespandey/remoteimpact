@@ -161,3 +161,40 @@ class SoftSkillSearchTests(TestCase):
                            skills=["communication", "power-systems"])
         found = set(JobService.get_filtered_jobs({"q": "communications"}).values_list("title", flat=True))
         self.assertNotIn("Grid Engineer", found)
+
+
+class GenericListingTests(TestCase):
+    def test_open_applications_in_other_languages_are_not_openings(self):
+        from jobs.services.importers.common import _is_generic_listing_title
+        for title in ["Initiativbewerbung (m/w/d)", "Initiativbewerbung (all genders) - Gestalte mit uns die Energiewende",
+                      "Can’t Find the Right Role? Join Our Talent Network", "Candidature spontanée"]:
+            self.assertTrue(_is_generic_listing_title(title), title)
+        self.assertFalse(_is_generic_listing_title("Network Engineer"))
+
+
+class LocationVariantTests(TestCase):
+    def test_same_role_posted_many_times_is_listed_once(self):
+        org = Organization.objects.create(name="Writer Org", slug="writer-org")
+        for i in range(3):
+            Job.objects.create(title="Grant Writer", slug=f"gw-{i}", organization=org, description="x")
+        Job.objects.create(title="Program Officer", slug="po", organization=org, description="x")
+        titles = list(JobService.get_filtered_jobs({}).values_list("title", flat=True))
+        self.assertEqual(sorted(titles), ["Grant Writer", "Program Officer"])
+        self.assertEqual(JobService.get_filtered_jobs({"q": "grant writer"}).count(), 1)
+
+
+class RoleSearchBroadeningTests(TestCase):
+    def test_rare_role_title_falls_back_to_subject_word(self):
+        org = Organization.objects.create(name="Policy Org", slug="policy-org")
+        for title in ["Associate Policy Analyst", "Senior Policy Advisor", "Policy Manager", "Sales Manager"]:
+            Job.objects.create(title=title, slug=title.lower().replace(" ", "-"), organization=org, description="x")
+        found = set(JobService.get_filtered_jobs({"q": "policy analyst"}).values_list("title", flat=True))
+        self.assertEqual(found, {"Associate Policy Analyst", "Senior Policy Advisor", "Policy Manager"})
+
+
+class ListingLanguageTests(TestCase):
+    def test_detects_german_and_french_but_not_english(self):
+        from jobs.services.listing_language import listing_language
+        self.assertEqual(listing_language("Projektleitung (m/w/d)", "Wir suchen dich für unser Team und die Energiewende mit uns."), "German")
+        self.assertEqual(listing_language("Chargé de projet", "Nous recherchons une personne pour rejoindre notre équipe avec des compétences dans les projets et des partenaires."), "French")
+        self.assertEqual(listing_language("Program Manager", "You will lead our programs and work with the team on climate projects for our partners."), "")

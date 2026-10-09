@@ -54,6 +54,10 @@ _NON_OPENING_LISTING_PATTERNS = (
     r"\b(?:don(?:'?| t )see (?:the )?right role|stay in touch)\b",
     r"^any job$",
     r"^get career (?:advising|advice)$",
+    r"\binitiativbewerbung\b",
+    r"\bcandidatur[ae] spontan",
+    r"\btalent network\b",
+    r"\bcan t find (?:the |a )?right role\b",
 )
 
 PUBLIC_DESCRIPTION_MIN_LENGTH = 120

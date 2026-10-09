@@ -83,6 +83,8 @@ class HomeView(TemplateView):
 
         # Latest Jobs: one per organization, so a single employer posting the same role
         # for five regions doesn't fill the list.
+        from ..services.listing_language import listing_language
+
         latest_jobs, seen_orgs = [], set()
         for job in (
             available_jobs
@@ -90,7 +92,7 @@ class HomeView(TemplateView):
             .select_related("organization", "category")
             .order_by("-posted_at")[:80]
         ):
-            if job.organization_id in seen_orgs:
+            if job.organization_id in seen_orgs or listing_language(job.title, job.description):
                 continue
             seen_orgs.add(job.organization_id)
             latest_jobs.append(job)
@@ -209,9 +211,10 @@ PREVIEW_AREAS = [  # (category slug, tab label, noun for "See all N … roles")
 
 
 def _one_per_org(queryset, limit):
+    from ..services.listing_language import listing_language
     picked, seen = [], set()
     for job in queryset.select_related("organization", "category").order_by("-posted_at")[: limit * 12]:
-        if job.organization_id in seen:
+        if job.organization_id in seen or listing_language(job.title, job.description):
             continue
         seen.add(job.organization_id)
         picked.append(job)

@@ -246,3 +246,9 @@ def initials(name):
         return "?"
     letters = (words[0][0] + (words[1][0] if len(words) > 1 else "")).upper()
     return letters
+
+
+@register.filter(name="listing_language")
+def listing_language_filter(job):
+    from jobs.services.listing_language import listing_language
+    return listing_language(getattr(job, "title", ""), getattr(job, "description", ""))

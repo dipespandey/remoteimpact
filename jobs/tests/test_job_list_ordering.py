@@ -30,7 +30,7 @@ class JobListOrderingTest(TestCase):
     def test_full_salary_slider_range_keeps_unknown_and_uncapped_jobs(self):
         organization = Organization.objects.create(name="Salary Default Org")
         jobs = [Job.objects.create(
-            title="Available role", slug=f"salary-default-{i}", organization=organization,
+            title=f"Available role {i}", slug=f"salary-default-{i}", organization=organization,
             salary_min=minimum, salary_max=maximum,
         ) for i, (minimum, maximum) in enumerate(((None, None), (60000, 80000), (1500000, 2000000)))]
         results = JobService.get_filtered_jobs({"salary_min": "0", "salary_max": "1000000"})
@@ -42,7 +42,7 @@ class JobListOrderingTest(TestCase):
         organization = Organization.objects.create(name="Salary Sort Org")
         now = timezone.now()
         jobs = [Job.objects.create(
-            title="Salary role", slug=f"global-salary-sort-{i}", organization=organization,
+            title=f"Salary role {i}", slug=f"global-salary-sort-{i}", organization=organization,
             salary_min=50000 + i * 1000, salary_max=60000 + i * 1000,
             posted_at=now - timedelta(days=i),
         ) for i in range(25)]

@@ -176,8 +176,8 @@ class MatchingSourceTests(TestCase):
   from jobs.services.job_service import JobService
   from django.http import QueryDict
   hourly=self.make(req='PAY')
-  hourly.salary_min=93600;hourly.salary_max=114400;hourly.raw_data={'salaryPeriod':'HOUR','salaryMinimum':'45','salaryMaximum':'55'};hourly.save()
-  annual=self.make(req='ANNUAL');annual.salary_min=95000;annual.salary_max=110000;annual.raw_data={};annual.save()
+  hourly.salary_min=93600;hourly.salary_max=114400;hourly.raw_data={'salaryPeriod':'HOUR','salaryMinimum':'45','salaryMaximum':'55'};hourly.title='Hourly role';hourly.save()
+  annual=self.make(req='ANNUAL');annual.salary_min=95000;annual.salary_max=110000;annual.raw_data={};annual.title='Annual role';annual.save()
   self.assertEqual(set(JobService.get_filtered_jobs(QueryDict('salary_min=90000')).values_list('pk',flat=True)),{annual.pk})
   self.assertEqual(set(JobService.get_filtered_jobs(QueryDict('salary_min=inf')).values_list('pk',flat=True)),{annual.pk,hourly.pk})
 

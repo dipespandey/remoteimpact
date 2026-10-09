@@ -213,13 +213,51 @@ class JobService:
         
         if query:
             query = query.strip()
+            # Search first, so "too few exact matches" counts every posting; then show
+            # one row per role. Ordering set by the search is kept.
             jobs = JobService._apply_smart_search(jobs, query, sort=sort)
-            # Return early - ordering is handled by search
-            return jobs
+            return JobService._collapse_location_variants(jobs)
+
+        jobs = JobService._collapse_location_variants(jobs)
 
         # The public feed is a chronological feed. Personalization belongs on
         # My Matches, and featured status must not make stale roles look new.
         return JobService._order_jobs(jobs, sort, interleave=True)
+
+    @staticmethod
+    def _collapse_location_variants(jobs):
+        """Show one row per organization and title.
+
+        Employers often post the same role once per location ("Grant Writer (Canada)",
+        "(Europe)", ...) or as several identical requisitions. Listing each copy pushes
+        everything else off the page, so keep the newest and let the job page link the rest.
+        """
+        from django.db.models import F, Window
+        from django.db.models.functions import RowNumber
+        representatives = (
+            Job.objects.filter(pk__in=jobs.values("pk"))
+            .annotate(_variant=Window(
+                expression=RowNumber(),
+                partition_by=[F("organization_id"), JobService._title_without_location()],
+                order_by=[F("posted_at").desc(), F("id").desc()],
+            ))
+            .filter(_variant=1)
+            .values("pk")
+        )
+        return jobs.filter(pk__in=representatives)
+
+    @staticmethod
+    def _title_without_location():
+        """Lower-cased title without a trailing location qualifier.
+
+        'Grant Writer (Canada)' and 'Grant Writer (Europe)' share a key. SQLite (tests)
+        has no regex replace, so there it falls back to the plain title.
+        """
+        from django.db.models import F, Func, Value
+        from django.db.models.functions import Lower
+        if connection.vendor != "postgresql":
+            return Lower(F("title"))
+        return Lower(Func(F("title"), Value(r"\s*[(\[][^)\]]*[)\]]\s*$"), Value(""), function="REGEXP_REPLACE"))
 
     @staticmethod
     def _annual_salary_jobs(jobs):
@@ -259,6 +297,11 @@ class JobService:
         ).order_by("-_day", "_org_turn", "-posted_at", "-id")
 
     MIN_STRONG_SEARCH_RESULTS = 10
+    ROLE_WORDS = {
+        "analyst", "associate", "advisor", "adviser", "officer", "specialist", "manager", "coordinator",
+        "designer", "engineer", "developer", "lead", "director", "scientist", "researcher", "writer",
+        "assistant", "consultant", "intern", "head", "senior", "junior",
+    }
     SOFT_SKILL_STEMS = {
         "communication", "teamwork", "leadership", "collaboration", "presentation", "writing",
         "problem-solving", "organization", "organisation", "time-management", "negotiation",
@@ -358,6 +401,14 @@ class JobService:
             # Body-only FTS matches otherwise let adjacent roles such as sales
             # engineers outrank the role the user explicitly requested.
             strict = queryset.filter(title_phrase_q | title_all_words_q | organization_q)
+            subject_words = [w for w in query_words if w.lower() not in JobService.ROLE_WORDS]
+            if subject_words and len(subject_words) < len(query_words) and strict.count() < 5:
+                # "policy analyst" finds one role; also show Policy Associate/Advisor/Manager
+                # rather than make people guess the exact title an employer used.
+                subject_q = Q()
+                for word in subject_words:
+                    subject_q &= JobService._word_q("title", word)
+                strict = queryset.filter(title_phrase_q | title_all_words_q | organization_q | subject_q)
             if connection.vendor == "postgresql" and not strict.exists():
                 # Topic searches ("climate policy") rarely appear verbatim in
                 # titles; rather than show nothing, require every word in the
