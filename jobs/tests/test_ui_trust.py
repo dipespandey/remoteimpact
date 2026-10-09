@@ -83,56 +83,26 @@ class UITrustTests(SimpleTestCase):
             self.assertNotIn(name, ['onfocus', 'onerror', 'autofocus'])
         self.assertNotIn('current_categories|safe', (Path(settings.BASE_DIR) / 'templates/jobs/job_list.html').read_text())
 
-    def test_analytics_requires_consent_and_strips_sensitive_fields(self):
+    def test_analytics_loads_and_strips_sensitive_fields(self):
+        source = (Path(settings.BASE_DIR) / 'templates/base.html').read_text()
+        self.assertIn('googletagmanager.com/gtag/js?id=G-H35R4HM1TG', source)
         node = shutil.which('node')
         if not node:
             self.skipTest('Node is required for executable browser analytics guard tests')
-        source = (Path(settings.BASE_DIR) / 'templates/base.html').read_text()
-        script = re.search(r'<script id="analytics-consent-script">(.*?)</script>', source, re.S).group(1)
+        script = re.search(r'<script id="analytics-script">(.*?)</script>', source, re.S).group(1)
         harness = r'''
 const assert = require('assert');
 const vm = require('vm');
-const script = SCRIPT;
-function setup(choice, inaccessible=false) {
-    const handlers = {}, scripts = [], buttons = {};
-    let stored = choice;
-    const status = {textContent: ''};
-    const document = {
-        cookie: '_ga=old; sessionid=essential',
-        head: {appendChild: x => scripts.push(x)},
-        createElement: () => ({}),
-        getElementById: () => status,
-        addEventListener: (name, cb) => handlers[name] = cb,
-        querySelectorAll: () => ['allow', 'reject'].map(choice => ({dataset: {analyticsChoice: choice}, addEventListener: (_, cb) => buttons[choice] = cb}))
-    };
-    const window = {location: {origin: 'https://remoteimpact.org', hostname: 'remoteimpact.org', pathname: '/scout/preview/', search: '?intent=private'}, addEventListener: (name, cb) => handlers[name] = cb};
-    const localStorage = {getItem: () => {if(inaccessible) throw Error('blocked'); return stored;}, setItem: (_, v) => {if(inaccessible) throw Error('blocked'); stored=v;}};
-    vm.runInNewContext(script, {window, document, localStorage, Date});
-    handlers.DOMContentLoaded();
-    return {window, document, handlers, scripts, buttons, status};
-}
-const ctx = setup(null);
-assert.equal(ctx.scripts.length, 0);
-ctx.window.gtag('event', 'search', {event_label: 'private email', intent: 'secret'});
-assert.equal(ctx.window.dataLayer.length, 0);
-ctx.buttons.allow();
-assert.equal(ctx.scripts.length, 1);
-ctx.buttons.allow();
-assert.equal(ctx.scripts.length, 1);
-ctx.window.gtag('event', 'search', {event_category: 'engagement', event_label: 'private email', intent: 'secret'});
-const serialized = JSON.stringify(ctx.window.dataLayer);
+const handlers = {};
+const document = {addEventListener: (name, cb) => handlers[name] = cb};
+const window = {location: {origin: 'https://remoteimpact.org', pathname: '/scout/preview/', search: '?intent=private'}};
+vm.runInNewContext(SCRIPT, {window, document, Date});
+window.gtag('event', 'search', {event_category: 'engagement', event_label: 'private email', intent: 'secret'});
+window.gtag('config', 'X', {page_path: '/secret'});
+const serialized = JSON.stringify(window.dataLayer);
 assert(!serialized.includes('private') && !serialized.includes('secret') && !serialized.includes('?intent'));
-assert(serialized.includes('page_view'));
-const count = ctx.window.dataLayer.length;
-ctx.buttons.reject();
-ctx.window.gtag('event', 'search', {});
-assert.equal(ctx.window.dataLayer.length, count);
-assert.equal(ctx.window['ga-disable-G-H35R4HM1TG'], true);
-assert.equal(setup('reject').scripts.length, 0);
-assert.equal(setup('allow').scripts.length, 1);
-assert.equal(setup(null, true).scripts.length, 0);
-ctx.handlers.storage({key:'ri_analytics_consent', newValue:'allow'});
-assert.equal(ctx.window['ga-disable-G-H35R4HM1TG'], false);
+assert(serialized.includes('https://remoteimpact.org/scout/preview/'));
+assert(serialized.includes('allow_ad_personalization_signals'));
 '''.replace('SCRIPT', json.dumps(script))
         result = subprocess.run([node, '-e', harness], capture_output=True, text=True, timeout=10)
         self.assertEqual(result.returncode, 0, result.stderr)
