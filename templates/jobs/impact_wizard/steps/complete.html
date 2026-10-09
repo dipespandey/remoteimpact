@@ -1,44 +1,38 @@
 <!-- Wizard Complete -->
-<div class="text-center py-8">
-    <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
-        <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-    </div>
+<div>
+    <h1 class="text-lg font-semibold tracking-tight text-foreground sm:text-xl">Your profile is saved</h1>
 
-    <h2 class="text-3xl font-bold text-gray-900 mb-4">
-        You're All Set!
-    </h2>
-
-    <p class="text-lg text-gray-600 mb-8 max-w-md mx-auto">
-        Your Impact Profile is ready. We'll now show you personalized job matches based on your profile.
+    <p class="mt-2 max-w-prose text-sm text-muted-foreground">
+        Job listings can now be sorted by how well they match your profile.
     </p>
 
-    <div class="bg-brand-50 rounded-2xl p-6 mb-8 max-w-md mx-auto">
-        <div class="flex items-center justify-between mb-4">
-            <span class="text-sm font-medium text-gray-600">Profile Completeness</span>
-            <span class="text-sm font-bold text-brand-600">{{ profile.profile_completeness }}%</span>
+    <div class="mt-6 rounded-2xl bg-muted p-4 sm:p-5">
+        <div class="mb-2 flex items-center justify-between text-sm">
+            <span class="font-medium text-foreground">Profile completeness</span>
+            <span class="font-semibold tabular-nums text-foreground">{{ profile.profile_completeness }}%</span>
         </div>
-        <div class="h-3 bg-brand-100 rounded-full overflow-hidden">
-            <div class="h-full bg-brand-500 rounded-full transition-all duration-1000"
+        <div class="h-1 overflow-hidden rounded-full bg-card" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ profile.profile_completeness }}" aria-label="Profile completeness">
+            <div class="h-full rounded-full bg-foreground"
                  style="width: {{ profile.profile_completeness }}%"></div>
         </div>
     </div>
 
-    <div class="space-y-4">
-        <a href="{% url 'jobs:job_list' %}"
-           class="inline-block bg-brand-500 hover:bg-brand-600 text-white font-bold py-4 px-10 rounded-full shadow-lg transition transform hover:-translate-y-0.5">
-            View My Top Matches
-            <svg class="inline-block w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-            </svg>
+    <div class="mt-6 flex flex-wrap items-center gap-3">
+        <a href="{% url 'jobs:job_list' %}?sort=best-match" class="btn btn-primary">
+            See jobs ranked for you
         </a>
+        <a href="{% url 'jobs:account' %}" class="btn btn-ghost">
+            Go to dashboard
+        </a>
+    </div>
 
-        <div>
-            <a href="{% url 'jobs:account' %}"
-               class="text-gray-500 hover:text-gray-700 font-medium">
-                Go to Dashboard
-            </a>
-        </div>
+    <div class="mt-8">
+        <h2 class="text-base font-semibold text-foreground">Get one free email of jobs matched to your profile</h2>
+        <p class="mt-1 max-w-prose text-sm leading-6 text-muted-foreground">Your profile will prefill the brief. Review it, then we will send the strongest current matches once.</p>
+        <a href="{{ scout_url|default:'/alerts/?source=profile_complete' }}"
+           class="btn btn-outline mt-4"
+           data-track="profile_complete_scout" data-track-category="job_scout_acquisition" data-track-label="profile_complete">
+            Email me relevant jobs
+        </a>
     </div>
 </div>

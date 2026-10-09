@@ -1,98 +1,128 @@
 {% extends "base.html" %}
+{% load job_extras form_tags %}
 
 {% block title %}Application - {{ gig.title }}{% endblock %}
 
 {% block content %}
-<section class="bg-gray-50 pt-16 pb-20">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
-            <a href="{% url 'gigs:gig_list' %}" class="hover:text-brand-600 transition">Gigs</a>
-            <span>•</span>
-            <a href="{{ gig.get_absolute_url }}" class="hover:text-brand-600 transition">{{ gig.title }}</a>
-            <span>•</span>
-            <span class="text-gray-900">Application</span>
-        </nav>
+<section class="page">
+    <nav aria-label="Breadcrumb" class="flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground">
+        <a href="{% url 'gigs:gig_list' %}" class="hover:text-foreground">Gigs</a>
+        <span aria-hidden="true">/</span>
+        <a href="{{ gig.get_absolute_url }}" class="line-clamp-1 hover:text-foreground">{{ gig.title|display_title }}</a>
+        <span aria-hidden="true">/</span>
+        <span class="text-foreground">Application</span>
+    </nav>
 
-        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Application for {{ gig.title }}</h1>
+    <h1 class="page-title mt-3">Application for {{ gig.title|display_title }}</h1>
 
-        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-            {% if trial and trial.funding_status == "funded" %}
-            <div class="mb-4 p-4 rounded-2xl bg-brand-50 border border-brand-100 text-brand-800">
-                Trial funded. Full brief unlocked below.
-            </div>
-            <div class="text-gray-600 leading-relaxed prose prose-gray max-w-none">
-                {{ gig.brief_full|linebreaks }}
-            </div>
-            {% else %}
-            <p class="text-gray-400">Full brief unlocks after funding.</p>
-            {% endif %}
-        </div>
-
-        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-            <div class="grid md:grid-cols-2 gap-6">
-                <div>
-                    <p class="text-sm text-gray-500 mb-1">Status</p>
-                    <p class="text-gray-900 font-semibold">{{ application.get_status_display }}</p>
-                    <p class="text-sm text-gray-500 mb-1 mt-4">Trial funding</p>
-                    <p class="text-gray-900 font-semibold">{% if trial %}{{ trial.get_funding_status_display }}{% else %}Not created{% endif %}</p>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-500 mb-1">Trial fee</p>
-                    <p class="text-gray-900 font-semibold">{% if trial %}$ {% widthratio trial.fee_cents 100 1 %} {{ trial.currency }}{% else %}-{% endif %}</p>
-                    <p class="text-sm text-gray-500 mb-1 mt-4">Due at</p>
-                    <p class="text-gray-900 font-semibold">{% if trial and trial.due_at %}{{ trial.due_at }}{% else %}TBD{% endif %}</p>
-                </div>
+    <div class="mt-6 max-w-4xl space-y-6">
+        <div class="card">
+            <div class="card-content pt-5 sm:pt-6">
+                <dl class="grid gap-5 text-sm sm:grid-cols-2">
+                    <div>
+                        <dt class="text-muted-foreground">Status</dt>
+                        <dd class="mt-0.5 font-medium text-foreground">{{ application.get_status_display }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-muted-foreground">Trial funding</dt>
+                        <dd class="mt-0.5 font-medium text-foreground">{% if trial %}{{ trial.get_funding_status_display }}{% else %}Not created{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-muted-foreground">Trial fee</dt>
+                        <dd class="mt-1 font-medium tabular-nums text-foreground">{% if trial %}{% widthratio trial.fee_cents 100 1 %} {{ trial.currency }}{% else %}-{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-muted-foreground">Due</dt>
+                        <dd class="mt-1 font-medium tabular-nums text-foreground">{% if trial and trial.due_at %}{{ trial.due_at }}{% else %}Not set{% endif %}</dd>
+                    </div>
+                </dl>
             </div>
         </div>
+
+        <section class="card">
+            <div class="card-header">
+                <h2 class="card-title">Full brief</h2>
+            </div>
+            <div class="card-content">
+                {% if trial and trial.funding_status == "funded" %}
+                <div class="alert alert-success mb-5">Trial funded. The full brief is below.</div>
+                <div class="prose prose-slate max-w-none leading-7 text-muted-foreground">
+                    {{ gig.brief_full|linebreaks }}
+                </div>
+                {% else %}
+                <p class="text-sm text-muted-foreground">The full brief is shared here once the employer funds your trial.</p>
+                {% endif %}
+            </div>
+        </section>
 
         {% if submission %}
-        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Submitted trial</h2>
-            <div class="space-y-3">
-                <p><strong class="text-gray-900">Links:</strong> <span class="text-gray-600">{{ submission.artifact_links|join:", " }}</span></p>
+        <section class="card">
+            <div class="card-header">
+                <h2 class="card-title">Submitted trial</h2>
+            </div>
+            <div class="card-content space-y-3 text-sm">
+                <p><span class="font-medium text-foreground">Links:</span> <span class="break-words text-muted-foreground">{{ submission.artifact_links|join:", " }}</span></p>
                 {% if submission.artifact_files %}
                 <p>
-                    <a href="{{ submission.artifact_files.url }}" class="inline-block px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-gray-700 hover:border-brand-300 hover:text-brand-600 transition">
-                        Download file
-                    </a>
+                    <a href="{{ submission.artifact_files.url }}" class="btn btn-outline btn-sm">Download file</a>
                 </p>
                 {% endif %}
-                <p class="text-gray-600">{{ submission.notes }}</p>
+                <p class="leading-6 text-muted-foreground">{{ submission.notes }}</p>
             </div>
-        </div>
+        </section>
         {% elif trial and trial.funding_status == "funded" %}
-        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-            <h2 class="text-lg font-semibold text-gray-900 mb-6">Upload submission</h2>
-            <form method="post" enctype="multipart/form-data" class="space-y-6">
-                {% csrf_token %}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.artifact_links_text.label }}</label>
-                    {{ form.artifact_links_text }}
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.artifact_files.label }}</label>
-                    {{ form.artifact_files }}
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.notes.label }}</label>
-                    {{ form.notes }}
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Field evidence (optional)</label>
-                    <div class="space-y-2">
-                        {{ form.geo_photos }} {{ form.receipts }} {{ form.call_logs }}
-                        {{ form.witness_contact }}
+        <section class="card">
+            <div class="card-header">
+                <h2 class="card-title">Upload submission</h2>
+            </div>
+            <div class="card-content">
+                <form method="post" enctype="multipart/form-data" class="space-y-6">
+                    {% csrf_token %}
+                    <div>
+                        <label class="label" for="{{ form.artifact_links_text.id_for_label }}">{{ form.artifact_links_text.label }}</label>
+                        {{ form.artifact_links_text|add_class:"textarea" }}
+                        {% if form.artifact_links_text.help_text %}<p class="help">{{ form.artifact_links_text.help_text }}</p>{% endif %}
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">For country-embedded gigs: include GPS photos, receipts, or call logs.</p>
-                </div>
-                <button type="submit" class="px-6 py-4 rounded-full bg-brand-500 text-white font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/30">
-                    Submit trial
-                </button>
-            </form>
-        </div>
+                    <div>
+                        <label class="label" for="{{ form.artifact_files.id_for_label }}">{{ form.artifact_files.label }}</label>
+                        {{ form.artifact_files|add_class:"block w-full text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-muted file:px-3.5 file:py-1.5 file:text-[13px] file:font-medium file:text-foreground hover:file:bg-accent" }}
+                    </div>
+                    <div>
+                        <label class="label" for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+                        {{ form.notes|add_class:"textarea" }}
+                    </div>
+                    <fieldset>
+                        <legend class="label">Field evidence (optional)</legend>
+                        <p class="help mt-0 mb-3">For country-embedded gigs: include GPS photos, receipts or call logs.</p>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-xs font-medium text-muted-foreground" for="{{ form.geo_photos.id_for_label }}">{{ form.geo_photos.label }}</label>
+                                {{ form.geo_photos|add_class:"mt-1 block w-full text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-muted file:px-3.5 file:py-1.5 file:text-[13px] file:font-medium file:text-foreground hover:file:bg-accent" }}
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-muted-foreground" for="{{ form.receipts.id_for_label }}">{{ form.receipts.label }}</label>
+                                {{ form.receipts|add_class:"mt-1 block w-full text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-muted file:px-3.5 file:py-1.5 file:text-[13px] file:font-medium file:text-foreground hover:file:bg-accent" }}
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-muted-foreground" for="{{ form.call_logs.id_for_label }}">{{ form.call_logs.label }}</label>
+                                {{ form.call_logs|add_class:"mt-1 block w-full text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-muted file:px-3.5 file:py-1.5 file:text-[13px] file:font-medium file:text-foreground hover:file:bg-accent" }}
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-muted-foreground" for="{{ form.witness_contact.id_for_label }}">{{ form.witness_contact.label }}</label>
+                                {{ form.witness_contact|add_class:"input mt-1" }}
+                            </div>
+                        </div>
+                    </fieldset>
+                    <button type="submit" class="btn btn-primary">Submit trial</button>
+                </form>
+            </div>
+        </section>
         {% else %}
-        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm text-center">
-            <p class="text-gray-500">Waiting for trial funding to upload submission.</p>
+        <div class="card">
+            <div class="card-content pt-5 sm:pt-6">
+                <p class="text-sm text-muted-foreground">Nothing to upload yet. You can submit your trial work here once the employer funds the trial.</p>
+                <a href="{{ gig.get_absolute_url }}" class="btn btn-outline btn-sm mt-4">View gig details</a>
+            </div>
         </div>
         {% endif %}
     </div>

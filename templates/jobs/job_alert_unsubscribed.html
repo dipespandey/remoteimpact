@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Job Scout Unsubscribed - Remote Impact{% endblock %}
+
+{% block content %}
+<div class="page-narrow">
+    <section class="card mx-auto max-w-md p-6 sm:p-8">
+        {% if success %}
+            <h1 class="text-xl font-semibold tracking-tight text-foreground">Job Scout paused</h1>
+            <p class="mt-2 text-sm leading-6 text-muted-foreground"><strong class="font-medium text-foreground">{{ alert_name }}</strong> will no longer send job matches to {{ email }}.</p>
+            <a href="{% url 'jobs:job_alerts' %}" class="btn btn-outline mt-5">Manage Job Scouts</a>
+        {% else %}
+            <h1 class="text-xl font-semibold tracking-tight text-foreground">Unable to unsubscribe</h1>
+            <p class="mt-2 text-sm leading-6 text-muted-foreground">{{ error }}</p>
+            <a href="{% url 'jobs:home' %}" class="btn btn-outline mt-5">Back to Remote Impact</a>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

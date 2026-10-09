@@ -2,17 +2,23 @@ import json
 import logging
 from django.conf import settings
 from openai import OpenAI
+from jobs.services.json_utils import parse_json_object
 
 logger = logging.getLogger(__name__)
 
 
 class JobParser:
     def __init__(self):
-        self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        if not settings.DEEPSEEK_API_KEY:
+            raise RuntimeError("DEEPSEEK_API_KEY is required for job parsing.")
+        self.client = OpenAI(
+            api_key=settings.DEEPSEEK_API_KEY,
+            base_url="https://api.deepseek.com",
+        )
 
     def parse(self, text: str) -> dict:
         """
-        Parses raw job text into structured data using OpenAI.
+        Parses raw job text into structured data using DeepSeek.
         Returns a dictionary with keys matching Job model and raw_data fields.
         """
         prompt = """
@@ -47,7 +53,7 @@ class JobParser:
 
         try:
             response = self.client.chat.completions.create(
-                model="gpt-4o",  # Using a high-quality model for extraction
+                model=settings.DEEPSEEK_MODEL,
                 messages=[
                     {
                         "role": "system",
@@ -57,11 +63,11 @@ class JobParser:
                 ],
                 response_format={"type": "json_object"},
                 temperature=0.1,  # Low temperature for consistent extraction
+                extra_body={"thinking": {"type": "disabled"}},
             )
 
             content = response.choices[0].message.content
-            data = json.loads(content)
-            return data
+            return parse_json_object(content)
 
         except Exception as e:
             logger.error(f"Error parsing job text with AI: {e}")

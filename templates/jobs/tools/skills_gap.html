@@ -2,180 +2,147 @@
 
 {% block title %}Free Skills Gap Analyzer | Compare Your Resume to Any Job - Remote Impact{% endblock %}
 
-{% block meta_description %}Instantly analyze the gap between your skills and any job description. See matching, missing & transferable skills plus a personalized action plan. Free AI-powered tool.{% endblock %}
+{% block meta_description %}Compare your resume to any job description. See matching, missing and transferable skills, plus an action plan to close the gap. Free skills gap analyzer.{% endblock %}
 
 {% block content %}
-<style>
-  .panel{border:1px solid rgba(15,23,42,.1);background:linear-gradient(135deg,#fff,#faf7f2);box-shadow:0 4px 20px rgba(15,23,42,.08);border-radius:1rem}
-  .input-base{background:#fff;border:1px solid rgba(15,23,42,.15);border-radius:.75rem;padding:.75rem 1rem;width:100%;transition:border-color .15s,box-shadow .15s}
-  .input-base:focus{outline:none;border-color:#6EAA1C;box-shadow:0 0 0 3px rgba(110,170,28,.2)}
-  .spinner{border:3px solid rgba(110,170,28,.2);border-top-color:#6EAA1C;border-radius:9999px;width:28px;height:28px;animation:spin .8s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .btn-primary{display:inline-flex;align-items:center;justify-content:center;padding:.75rem 1.5rem;border-radius:.75rem;background:#6EAA1C;color:#fff;font-weight:600;transition:background .15s}
-  .btn-primary:hover{background:#5d9416}
-  .faq-toggle:checked+label+div{max-height:500px;padding-top:.75rem}
-  .faq-answer{max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease}
-  .score-ring{width:120px;height:120px}
-  .score-ring circle{fill:none;stroke-width:10;stroke-linecap:round}
-  .score-ring .bg{stroke:#e5e7eb}
-  .score-ring .fg{stroke:#6EAA1C;transition:stroke-dashoffset .8s ease}
-</style>
+<div class="container py-8 sm:py-10" x-data="skillsGap()">
 
-<section class="py-12 md:py-16 bg-[#F3F2EE]" x-data="skillsGap()">
-  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+  <header class="max-w-3xl">
+    <h1 class="page-title">Skills gap analyzer</h1>
+    <p class="page-lede">Paste your resume and a job description to see which skills match, which are missing, and what to do about the gap.</p>
+  </header>
 
-    <!-- Hero -->
-    <div class="text-center space-y-4 mb-10">
-      <p class="uppercase text-xs tracking-[0.3em] text-gray-500">Free Tool</p>
-      <h1 class="text-3xl md:text-5xl font-semibold text-gray-900 leading-tight">Free Skills Gap Analyzer</h1>
-      <p class="text-lg text-gray-600 max-w-2xl mx-auto">Compare your resume to any job description and discover exactly which skills you have, which you need, and how to close the gap.</p>
-    </div>
+  <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
 
-    <!-- Input Form -->
-    <div class="panel p-6 md:p-8 mb-10">
-      <h2 class="text-xl font-semibold text-gray-900 mb-6">Paste Your Details</h2>
-      <div class="grid md:grid-cols-2 gap-6">
+    <!-- Inputs -->
+    <section class="min-w-0 rounded-[1.25rem] bg-card p-4 shadow-lift sm:p-6" aria-labelledby="sg-form-title">
+      <h2 id="sg-form-title" class="card-title">Paste your details</h2>
+      <div class="mt-5 space-y-4">
         <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1">Your Skills / Resume *</label>
-          <textarea x-model="resume" class="input-base text-gray-900 h-48 resize-y" placeholder="Paste your resume, skills list, or LinkedIn summary here…"></textarea>
+          <label class="label" for="sg-resume">Your skills or resume <span class="text-muted-foreground">(required)</span></label>
+          <textarea id="sg-resume" x-model="resume" class="textarea h-48 resize-y" placeholder="Paste your resume, a skills list, or your LinkedIn summary"></textarea>
         </div>
         <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1">Job Description *</label>
-          <textarea x-model="jobDesc" class="input-base text-gray-900 h-48 resize-y" placeholder="Paste the full job description or requirements here…"></textarea>
+          <label class="label" for="sg-job">Job description <span class="text-muted-foreground">(required)</span></label>
+          <textarea id="sg-job" x-model="jobDesc" class="textarea h-48 resize-y" placeholder="Paste the full job description or its requirements"></textarea>
         </div>
       </div>
 
-      <div class="mt-6 flex items-center gap-4">
-        <button @click="analyze()" :disabled="loading" class="btn-primary gap-2">
-          <template x-if="loading"><span class="spinner !w-5 !h-5 !border-2"></span></template>
-          <span x-text="loading ? 'Analyzing…' : '🔍 Analyze Gap'"></span>
+      <div class="mt-6 flex flex-row-reverse flex-wrap items-center justify-between gap-3">
+        <button type="button" @click="analyze()" :disabled="loading" class="btn btn-primary">
+          <template x-if="loading"><span class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true"></span></template>
+          <span x-text="loading ? 'Analyzing…' : 'Analyze gap'">Analyze gap</span>
         </button>
-        <p x-show="error" x-text="error" class="text-red-600 text-sm font-medium"></p>
       </div>
-    </div>
+      <p x-show="error" x-cloak x-text="error" class="alert alert-destructive mt-4" role="alert"></p>
+    </section>
 
     <!-- Results -->
-    <template x-if="result">
-      <div class="space-y-8">
+    <section class="card min-w-0 p-5 sm:p-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto" aria-labelledby="sg-results-title" aria-live="polite">
+      <h2 id="sg-results-title" class="text-sm font-medium text-muted-foreground">Results</h2>
 
-        <!-- Score -->
-        <div class="panel p-6 md:p-8 flex flex-col items-center text-center">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">Overall Match Score</h2>
-          <svg class="score-ring" viewBox="0 0 120 120">
-            <circle class="bg" cx="60" cy="60" r="50"/>
-            <circle class="fg" cx="60" cy="60" r="50"
-              :stroke-dasharray="314"
-              :stroke-dashoffset="314 - (314 * result.match_score / 100)"
-              transform="rotate(-90 60 60)"/>
-            <text x="60" y="66" text-anchor="middle" class="text-2xl font-bold fill-gray-900" x-text="result.match_score + '%'"></text>
-          </svg>
-          <p class="mt-3 text-gray-600 text-sm max-w-md" x-text="result.match_summary || ''"></p>
-        </div>
+      <div x-show="!result" class="mt-4 flex min-h-[16rem] items-center justify-center p-6 text-center text-sm text-muted-foreground">
+        <p x-show="!loading">Your match score, skill lists and action plan will appear here.</p>
+        <p x-show="loading" x-cloak class="inline-flex items-center gap-2">
+          <span class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-foreground" aria-hidden="true"></span>
+          Comparing your background with the job…
+        </p>
+      </div>
 
-        <!-- Skills Cards Grid -->
-        <div class="grid md:grid-cols-3 gap-6">
-          <!-- Matching Skills -->
-          <div class="panel p-6">
-            <div class="flex items-center gap-2 mb-4">
-              <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-              </span>
-              <h3 class="font-semibold text-gray-900">Matching Skills</h3>
+      <template x-if="result">
+        <div class="mt-4 space-y-7">
+
+          <!-- Score -->
+          <div>
+            <div class="flex items-baseline justify-between gap-3">
+              <h3 class="text-sm font-medium text-muted-foreground">Overall match</h3>
+              <p class="stat-value" x-text="result.match_score + '%'"></p>
             </div>
-            <ul class="space-y-2">
+            <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="result.match_score">
+              <div class="h-2 rounded-full bg-primary transition-all" :style="'width:' + Math.max(0, Math.min(100, result.match_score)) + '%'"></div>
+            </div>
+            <p class="mt-3 text-sm leading-6 text-muted-foreground" x-text="result.match_summary || ''"></p>
+          </div>
+
+          <!-- Matching Skills -->
+          <div>
+            <h3 class="flex items-center gap-2 text-[15px] font-semibold text-foreground">
+              Matching skills
+              <span class="badge badge-outline tabular-nums" x-text="result.matching_skills.length"></span>
+            </h3>
+            <ul class="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-6 text-foreground marker:text-muted-foreground">
               <template x-for="skill in result.matching_skills" :key="skill">
-                <li class="flex items-start gap-2 text-sm text-gray-700">
-                  <span class="text-green-500 mt-0.5">✓</span>
-                  <span x-text="skill"></span>
-                </li>
+                <li class="break-words" x-text="skill"></li>
               </template>
             </ul>
-            <p x-show="!result.matching_skills.length" class="text-sm text-gray-400 italic">None identified</p>
+            <p x-show="!result.matching_skills.length" class="text-sm text-muted-foreground">None identified</p>
           </div>
 
           <!-- Missing Skills -->
-          <div class="panel p-6">
-            <div class="flex items-center gap-2 mb-4">
-              <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-100 text-red-600">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-              </span>
-              <h3 class="font-semibold text-gray-900">Missing Skills</h3>
-            </div>
-            <ul class="space-y-3">
+          <div>
+            <h3 class="flex items-center gap-2 text-[15px] font-semibold text-foreground">
+              Missing skills
+              <span class="badge badge-outline tabular-nums" x-text="result.missing_skills.length"></span>
+            </h3>
+            <ul class="mt-3 space-y-3 text-sm">
               <template x-for="item in result.missing_skills" :key="item.skill">
-                <li class="text-sm">
-                  <span class="flex items-start gap-2 text-gray-700">
-                    <span class="text-red-500 mt-0.5">✗</span>
-                    <span>
-                      <strong x-text="item.skill"></strong>
-                      <span class="block text-xs text-gray-500 mt-0.5" x-text="'→ ' + item.resource"></span>
-                    </span>
-                  </span>
+                <li class="break-words">
+                  <strong class="font-medium text-foreground" x-text="item.skill"></strong>
+                  <span class="mt-0.5 block text-muted-foreground" x-text="item.resource"></span>
                 </li>
               </template>
             </ul>
-            <p x-show="!result.missing_skills.length" class="text-sm text-gray-400 italic">None identified</p>
+            <p x-show="!result.missing_skills.length" class="text-sm text-muted-foreground">None identified</p>
           </div>
 
           <!-- Transferable Skills -->
-          <div class="panel p-6">
-            <div class="flex items-center gap-2 mb-4">
-              <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-600">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-              </span>
-              <h3 class="font-semibold text-gray-900">Transferable Skills</h3>
-            </div>
-            <ul class="space-y-3">
+          <div>
+            <h3 class="flex items-center gap-2 text-[15px] font-semibold text-foreground">
+              Transferable skills
+              <span class="badge badge-outline tabular-nums" x-text="result.transferable_skills.length"></span>
+            </h3>
+            <ul class="mt-3 space-y-3 text-sm">
               <template x-for="item in result.transferable_skills" :key="item.skill">
-                <li class="text-sm">
-                  <span class="flex items-start gap-2 text-gray-700">
-                    <span class="text-amber-500 mt-0.5">⚡</span>
-                    <span>
-                      <strong x-text="item.skill"></strong>
-                      <span class="block text-xs text-gray-500 mt-0.5" x-text="item.relevance"></span>
-                    </span>
-                  </span>
+                <li class="break-words">
+                  <strong class="font-medium text-foreground" x-text="item.skill"></strong>
+                  <span class="mt-0.5 block text-muted-foreground" x-text="item.relevance"></span>
                 </li>
               </template>
             </ul>
-            <p x-show="!result.transferable_skills.length" class="text-sm text-gray-400 italic">None identified</p>
+            <p x-show="!result.transferable_skills.length" class="text-sm text-muted-foreground">None identified</p>
+          </div>
+
+          <!-- Action Plan -->
+          <div>
+            <h3 class="text-[15px] font-semibold text-foreground">Action plan</h3>
+            <ol class="mt-3 list-decimal space-y-2 pl-5 text-sm leading-6 text-foreground marker:text-muted-foreground">
+              <template x-for="(step, i) in result.action_plan" :key="i">
+                <li class="break-words" x-text="step"></li>
+              </template>
+            </ol>
           </div>
         </div>
-
-        <!-- Action Plan -->
-        <div class="panel p-6 md:p-8">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">🎯 Your Action Plan</h2>
-          <ol class="space-y-4">
-            <template x-for="(step, i) in result.action_plan" :key="i">
-              <li class="flex items-start gap-3">
-                <span class="flex-shrink-0 w-7 h-7 rounded-full bg-[#6EAA1C] text-white flex items-center justify-center text-sm font-bold" x-text="i + 1"></span>
-                <span class="text-gray-700" x-text="step"></span>
-              </li>
-            </template>
-          </ol>
-        </div>
-      </div>
-    </template>
-
-    <!-- FAQ -->
-    <div class="mt-16">
-      <h2 class="text-2xl font-semibold text-gray-900 text-center mb-8">Frequently Asked Questions</h2>
-      <div class="max-w-3xl mx-auto space-y-3">
-        {% for faq in faqs %}
-        <div class="panel px-5 py-4">
-          <input type="checkbox" id="faq-{{ forloop.counter }}" class="faq-toggle hidden peer">
-          <label for="faq-{{ forloop.counter }}" class="flex items-center justify-between cursor-pointer font-semibold text-gray-900 text-sm">
-            {{ faq.q }}
-            <svg class="w-4 h-4 text-gray-400 peer-checked:rotate-180 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-          </label>
-          <div class="faq-answer text-sm text-gray-600 leading-relaxed">{{ faq.a }}</div>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-
+      </template>
+    </section>
   </div>
-</section>
+
+  <!-- FAQ -->
+  <section class="mt-12 max-w-3xl" aria-labelledby="sg-faq-title">
+    <h2 id="sg-faq-title" class="section-title">Frequently asked questions</h2>
+    <div class="surface mt-5 p-1.5">
+      {% for faq in faqs %}
+      <details id="faq-{{ forloop.counter }}" class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground [&::-webkit-details-marker]:hidden">
+          <span class="min-w-0">{{ faq.q }}</span>
+          <svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">{{ faq.a }}</p>
+      </details>
+      {% endfor %}
+    </div>
+  </section>
+
+</div>
 
 <!-- JSON-LD FAQ -->
 <script type="application/ld+json">

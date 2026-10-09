@@ -69,9 +69,10 @@ class Command(BaseCommand):
             queryset = queryset.filter(source=source)
         else:
             # Process sources that have structured raw_data
-            queryset = queryset.filter(
-                source__in=["climatebase", "80000hours", "idealist", "reliefweb"]
-            )
+            queryset = queryset.filter(source__in=[
+                "climatebase", "80000hours", "idealist", "reliefweb",
+                "greenhouse", "lever", "ashby", "probablygood",
+            ])
 
         queryset = queryset.exclude(raw_data__isnull=True).exclude(raw_data={})
 

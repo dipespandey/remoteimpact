@@ -186,7 +186,7 @@ All tests use mocking to avoid LLM calls during testing.
 - Force regenerate option for updates
 
 ### LLM Integration
-- Uses existing AIClient (DeepSeek → Groq → OpenAI fallback)
+- Uses the existing DeepSeek-backed AIClient
 - JSON parsing with markdown code block handling
 - All responses validated before storage
 - Graceful degradation on LLM failures

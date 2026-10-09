@@ -1,0 +1,12 @@
+Hi {{ user.first_name|default:"there" }},
+
+Describe your ideal role in plain language. Mention the work, skills, location, salary, and anything you want to avoid.
+
+We will send your strongest current matches once. Upgrade only when you want ongoing alerts for newly published jobs.
+
+Describe my ideal job: {{ scout_url }}
+
+- The Remote Impact Team
+{{ site_url }}
+
+Unsubscribe: {{ unsubscribe_url }}

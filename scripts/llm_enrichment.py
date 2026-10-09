@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 """
 LLM Job Enrichment Script
-Fetches job pages and uses Groq/DeepSeek to extract structured data
+Fetches job pages and uses DeepSeek to extract structured data
 """
 import os
 import sys
 import json
-import re
 import time
 import requests
 from urllib.parse import urlparse
@@ -21,9 +20,9 @@ django.setup()
 from django.db.models.functions import Length
 from jobs.models import Job
 
-# Groq API settings
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
-GROQ_MODEL = "deepseek-r1-distill-llama-70b"
+# DeepSeek API settings
+DEEPSEEK_API_KEY = os.environ.get('DEEPSEEK_API_KEY', '')
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash")
 
 def fetch_page_content(url):
     """Fetch and extract text from a URL"""
@@ -71,8 +70,8 @@ def fetch_page_content(url):
         return f"Error fetching: {e}"
 
 def extract_job_data(page_text, job_title):
-    """Use Groq to extract structured job data"""
-    if not GROQ_API_KEY:
+    """Use DeepSeek to extract structured job data."""
+    if not DEEPSEEK_API_KEY:
         return None
         
     prompt = f"""Extract job posting information from this page content.
@@ -96,26 +95,34 @@ Return ONLY valid JSON, no markdown, no explanation."""
 
     try:
         resp = requests.post(
-            'https://api.groq.com/openai/v1/chat/completions',
+            'https://api.deepseek.com/chat/completions',
             headers={
-                'Authorization': f'Bearer {GROQ_API_KEY}',
+                'Authorization': f'Bearer {DEEPSEEK_API_KEY}',
                 'Content-Type': 'application/json'
             },
             json={
-                'model': GROQ_MODEL,
+                'model': DEEPSEEK_MODEL,
                 'messages': [{'role': 'user', 'content': prompt}],
                 'temperature': 0.1,
-                'max_tokens': 2000
+                'max_tokens': 2000,
+                'response_format': {'type': 'json_object'},
+                'thinking': {'type': 'disabled'},
             },
             timeout=60
         )
         resp.raise_for_status()
         content = resp.json()['choices'][0]['message']['content']
         
-        # Extract JSON from response (handle markdown code blocks)
-        json_match = re.search(r'\{[\s\S]*\}', content)
-        if json_match:
-            return json.loads(json_match.group())
+        # Extract JSON from response (including a fence or short prose).
+        decoder = json.JSONDecoder()
+        for start, character in enumerate(content or ""):
+            if character != '{':
+                continue
+            try:
+                parsed, _ = decoder.raw_decode(content[start:])
+            except json.JSONDecodeError:
+                continue
+            return parsed if isinstance(parsed, dict) else None
         return None
     except Exception as e:
         print(f"  LLM Error: {e}")

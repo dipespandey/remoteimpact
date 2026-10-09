@@ -6,6 +6,66 @@ import pgvector.django.indexes
 import pgvector.django.vector
 from django.conf import settings
 from django.db import migrations
+from jobs.db_indexes import PostgresOnlyGinIndex, PostgresOnlyHnswIndex
+
+
+def add_postgres_indexes(apps, schema_editor):
+    """Create vector/search indexes only on the production PostgreSQL backend.
+
+    SQLite is still useful for local development and test discovery, but cannot
+    execute PostgreSQL GIN/HNSW index SQL.
+    """
+    if schema_editor.connection.vendor != "postgresql":
+        return
+
+    Job = apps.get_model("jobs", "Job")
+    SeekerProfile = apps.get_model("jobs", "SeekerProfile")
+    schema_editor.add_index(
+        Job,
+        PostgresOnlyGinIndex(
+            fields=["search_vector"], name="job_search_idx"
+        ),
+    )
+    schema_editor.add_index(
+        Job,
+        PostgresOnlyHnswIndex(
+            ef_construction=64,
+            fields=["embedding"],
+            m=16,
+            name="job_embedding_idx",
+            opclasses=["vector_cosine_ops"],
+        ),
+    )
+    schema_editor.add_index(
+        SeekerProfile,
+        PostgresOnlyGinIndex(
+            fields=["search_vector"], name="seeker_search_idx"
+        ),
+    )
+    schema_editor.add_index(
+        SeekerProfile,
+        PostgresOnlyHnswIndex(
+            ef_construction=64,
+            fields=["embedding"],
+            m=16,
+            name="seeker_embedding_idx",
+            opclasses=["vector_cosine_ops"],
+        ),
+    )
+
+
+def remove_postgres_indexes(apps, schema_editor):
+    if schema_editor.connection.vendor != "postgresql":
+        return
+    Job = apps.get_model("jobs", "Job")
+    SeekerProfile = apps.get_model("jobs", "SeekerProfile")
+    for model, name in (
+        (Job, "job_search_idx"),
+        (Job, "job_embedding_idx"),
+        (SeekerProfile, "seeker_search_idx"),
+        (SeekerProfile, "seeker_embedding_idx"),
+    ):
+        schema_editor.remove_index(model, name)
 
 
 class Migration(migrations.Migration):
@@ -36,20 +96,30 @@ class Migration(migrations.Migration):
             name='search_vector',
             field=django.contrib.postgres.search.SearchVectorField(blank=True, null=True),
         ),
-        migrations.AddIndex(
-            model_name='job',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['search_vector'], name='job_search_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='job',
-            index=pgvector.django.indexes.HnswIndex(ef_construction=64, fields=['embedding'], m=16, name='job_embedding_idx', opclasses=['vector_cosine_ops']),
-        ),
-        migrations.AddIndex(
-            model_name='seekerprofile',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['search_vector'], name='seeker_search_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='seekerprofile',
-            index=pgvector.django.indexes.HnswIndex(ef_construction=64, fields=['embedding'], m=16, name='seeker_embedding_idx', opclasses=['vector_cosine_ops']),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunPython(
+                    add_postgres_indexes,
+                    remove_postgres_indexes,
+                )
+            ],
+            state_operations=[
+                migrations.AddIndex(
+                    model_name='job',
+                    index=PostgresOnlyGinIndex(fields=['search_vector'], name='job_search_idx'),
+                ),
+                migrations.AddIndex(
+                    model_name='job',
+                    index=PostgresOnlyHnswIndex(ef_construction=64, fields=['embedding'], m=16, name='job_embedding_idx', opclasses=['vector_cosine_ops']),
+                ),
+                migrations.AddIndex(
+                    model_name='seekerprofile',
+                    index=PostgresOnlyGinIndex(fields=['search_vector'], name='seeker_search_idx'),
+                ),
+                migrations.AddIndex(
+                    model_name='seekerprofile',
+                    index=PostgresOnlyHnswIndex(ef_construction=64, fields=['embedding'], m=16, name='seeker_embedding_idx', opclasses=['vector_cosine_ops']),
+                ),
+            ],
         ),
     ]

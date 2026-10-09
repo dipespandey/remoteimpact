@@ -9,86 +9,83 @@
 {% block twitter_description %}Real stories from professionals making a difference through remote work in impact-focused organizations.{% endblock %}
 
 {% block content %}
-<div class="stories-page max-w-2xl mx-auto px-4 py-8">
+<div class="container py-8 sm:py-10">
+<div class="stories-page mx-auto max-w-2xl">
 
-    <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold mb-2 text-gray-900">Real impact from real people</h1>
-        <p class="text-gray-600">See what meaningful work actually looks like</p>
-    </div>
+    <header class="page-header">
+        <h1 class="page-title">Stories from people in impact work</h1>
+        <p class="page-lede">Short first-hand accounts of what the work involves, from people at impact organisations.</p>
+    </header>
 
-    <div class="space-y-3 mb-8 max-w-2xl mx-auto">
-        <div id="pill-row" class="flex flex-wrap gap-2 justify-center items-center">
+    <div class="space-y-3">
+        <div id="pill-row" class="flex flex-wrap items-center gap-2">
             {% if current_category_slugs %}
             {% for cat in categories %}
             {% if cat.slug in current_category_slugs %}
-            <button type="button" data-slug="{{ cat.slug }}"
-                class="cat-toggle px-4 py-2 rounded-full text-sm font-medium transition bg-brand-300 text-gray-900 hover:bg-brand-400">
-                {{ cat.icon }} {{ cat.name }} ✕
+            <button type="button" data-slug="{{ cat.slug }}" aria-pressed="true" aria-label="Remove filter: {{ cat.name }}"
+                class="cat-toggle inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] transition-colors bg-foreground text-background">
+                {{ cat.name }}
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18 18 6M6 6l12 12"/></svg>
             </button>
             {% endif %}
             {% endfor %}
             {% endif %}
-           
+
             {% if current_category_slugs %}
-            <a href="{% url 'jobs:stories_feed' %}"
-                class="px-4 py-2 rounded-full text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition">
-                Clear all
-            </a>
+            <a href="{% url 'jobs:stories_feed' %}" class="btn btn-ghost btn-sm">Clear all</a>
             {% endif %}
         </div>
         {% if current_category_slugs %}
-        <div class="flex flex-wrap gap-2 justify-center items-center">
+        <div class="flex flex-wrap items-center gap-2">
             {% for cat in categories %}
-            {% if cat.slug not in current_category_slugs and forloop.counter0 < 5 %} <button type="button"
-                data-slug="{{ cat.slug }}"
-                class="cat-toggle px-4 py-2 rounded-full text-sm font-medium transition bg-white border border-gray-200 text-gray-700 hover:bg-gray-50">
-                {{ cat.icon }} {{ cat.name }}
-                </button>
-                {% endif %}
-                {% endfor %}
+            {% if cat.slug not in current_category_slugs and forloop.counter0 < 5 %}
+            <button type="button" data-slug="{{ cat.slug }}" aria-pressed="false"
+                class="cat-toggle rounded-full px-3 py-1.5 text-[13px] transition-colors bg-muted text-foreground hover:bg-accent">
+                {{ cat.name }}
+            </button>
+            {% endif %}
+            {% endfor %}
         </div>
         {% else %}
-        <div class="flex flex-wrap gap-2 justify-center items-center">
+        <div class="flex flex-wrap items-center gap-2">
             {% for cat in categories|slice:":5" %}
-            <button type="button" data-slug="{{ cat.slug }}"
-                class="cat-toggle px-4 py-2 rounded-full text-sm font-medium transition bg-white border border-gray-200 text-gray-700 hover:bg-gray-50">
-                {{ cat.icon }} {{ cat.name }}
+            <button type="button" data-slug="{{ cat.slug }}" aria-pressed="false"
+                class="cat-toggle rounded-full px-3 py-1.5 text-[13px] transition-colors bg-muted text-foreground hover:bg-accent">
+                {{ cat.name }}
             </button>
             {% endfor %}
         </div>
         {% endif %}
         <div class="relative">
-            <input id="category-filter" type="text" placeholder="Search or pick a cause…"
-                class="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder-gray-500 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none">
+            <label for="category-filter" class="sr-only">Search causes</label>
+            <input id="category-filter" type="text" placeholder="Search or pick a cause" autocomplete="off" class="input">
             <div id="category-dropdown"
-                class="absolute mt-2 w-full max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-xl hidden z-10">
+                class="absolute z-10 mt-2 hidden max-h-64 w-full overflow-y-auto rounded-2xl bg-card p-1.5 shadow-lift">
                 {% for cat in categories %}
                 <button type="button" data-slug="{{ cat.slug }}" data-label="{{ cat.name|lower }}"
-                    class="category-option w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
-                    {{ cat.icon }} {{ cat.name }}
+                    class="category-option block w-full rounded-xl px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted">
+                    {{ cat.name }}
                 </button>
                 {% endfor %}
             </div>
         </div>
-        <div class="flex justify-center items-center gap-3">
-            <button id="toggle-categories"
-                class="px-4 py-2 rounded-full text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition">
-                More categories
-            </button>
+        <div>
+            <button id="toggle-categories" type="button" class="btn btn-ghost btn-sm -ml-3">More categories</button>
         </div>
     </div>
 
-    <div id="stories-container" class="space-y-6">
+    <div id="stories-container" class="mt-6 space-y-3">
         {% include 'stories/partials/story_list.html' %}
     </div>
 
     {% if stories.has_next %}
     <div hx-get="{% url 'jobs:stories_feed' %}?page={{ stories.next_page_number }}{% if current_category_slugs %}{% for slug in current_category_slugs %}&category={{ slug }}{% endfor %}{% endif %}"
-        hx-trigger="revealed" hx-target="#stories-container" hx-swap="beforeend" class="py-8 flex justify-center">
-        <span class="animate-pulse text-gray-400">Loading more...</span>
+        hx-trigger="revealed" hx-target="#stories-container" hx-swap="beforeend" class="flex justify-center py-8">
+        <span class="animate-pulse text-[13px] text-muted-foreground">Loading more stories</span>
     </div>
     {% endif %}
 
+</div>
 </div>
 {% endblock %}
 
@@ -111,15 +108,18 @@
         document.querySelectorAll('.cat-toggle, .category-option').forEach((el) => {
             const slug = el.dataset.slug;
             const isActive = selected.has(slug);
-            el.classList.toggle('bg-brand-300', isActive);
-            el.classList.toggle('text-gray-900', isActive);
-            el.classList.toggle('hover:bg-brand-400', isActive);
+            if (el.classList.contains('category-option')) {
+                el.classList.toggle('font-semibold', isActive);
+                el.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                return;
+            }
+            el.classList.toggle('bg-foreground', isActive);
+            el.classList.toggle('text-background', isActive);
 
-            el.classList.toggle('bg-white', !isActive);
-            el.classList.toggle('border', !isActive);
-            el.classList.toggle('border-gray-200', !isActive);
-            el.classList.toggle('text-gray-700', !isActive);
-            el.classList.toggle('hover:bg-gray-50', !isActive);
+            el.classList.toggle('bg-muted', !isActive);
+            el.classList.toggle('text-foreground', !isActive);
+            el.classList.toggle('hover:bg-accent', !isActive);
+            el.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
     }
 
@@ -148,8 +148,7 @@
             const text = (el.dataset.label || el.textContent).toLowerCase();
             const isMatch = text.includes(term);
             el.classList.toggle('hidden', !isMatch);
-            el.classList.toggle('bg-brand-50/50', isMatch);
-        });
+                    });
         if (term && dropdown.classList.contains('hidden')) {
             dropdown.classList.remove('hidden');
             categoriesToggleBtn.textContent = 'Hide categories';

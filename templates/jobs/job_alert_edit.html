@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load form_tags %}
+
+{% block title %}Edit Job Scout - Remote Impact{% endblock %}
+
+{% block content %}
+<div class="page-narrow">
+    <header class="page-header">
+    <a href="{% url 'jobs:job_alerts' %}" class="text-[13px] text-muted-foreground hover:text-foreground">Back to Job Scouts</a>
+    <h1 class="page-title mt-1 break-words">Edit {{ object.name|default:"Job Scout" }}</h1>
+    <p class="page-lede">Change your description and we will work out the matching criteria again.</p>
+    </header>
+    <form method="post" class="card space-y-5 p-5 sm:p-6">
+        {% csrf_token %}
+        <div>
+            <label class="label" for="{{ form.intent_text.id_for_label }}">{{ form.intent_text.label }}</label>
+            {% if form %}{{ form.intent_text|add_class:"textarea min-h-[152px] resize-y" }}{% endif %}
+            {% if form.intent_text.errors %}<p class="field-error">{{ form.intent_text.errors|striptags }}</p>{% endif %}
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+            <div><label class="label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>{% if form %}{{ form.name|add_class:"input" }}{% endif %}</div>
+            <div><label class="label" for="{{ form.frequency.id_for_label }}">{{ form.frequency.label }}</label>{% if form %}{{ form.frequency|add_class:"select" }}{% endif %}{% if not is_pro %}<p class="help">Recurring alerts are included with Pro.</p>{% endif %}</div>
+        </div>
+        <p class="help">Your brief may be sent to DeepSeek to interpret preferences. If AI matching is enabled, your brief, preferences and public job evidence may also be processed for matching. Avoid sensitive personal information. <a href="{% url 'jobs:privacy' %}" class="underline underline-offset-2 hover:text-foreground">Privacy details</a>.</p>
+        <div class="flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary">Save changes</button>
+            <a href="{% url 'jobs:job_alerts' %}" class="btn btn-ghost">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

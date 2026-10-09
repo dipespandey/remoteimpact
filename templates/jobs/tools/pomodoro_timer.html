@@ -2,133 +2,130 @@
 {% load static %}
 
 {% block title %}Free Pomodoro Timer Online | Remote Workers{% endblock %}
-{% block meta_description %}Free online Pomodoro Timer for remote workers. 25-minute focused work sessions with short and long breaks. Boost productivity with task tracking, browser notifications, and audio alerts.{% endblock %}
+{% block meta_description %}Free online Pomodoro timer for remote workers. 25-minute focused work sessions with short and long breaks, adjustable durations, a task list, browser notifications and an audio alert.{% endblock %}
 
 {% block content %}
-<section class="min-h-screen bg-[#F3F2EE] py-12 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-3xl mx-auto" x-data="pomodoroTimer()">
+<div class="container py-8 sm:py-10">
+  <nav aria-label="Breadcrumb" class="!border-b-0">
+    <ol class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+      <li><a href="{% url 'jobs:resources' %}" class="hover:text-foreground hover:underline">Resources</a></li>
+      <li aria-hidden="true">/</li>
+      <li class="text-foreground" aria-current="page">Pomodoro timer</li>
+    </ol>
+  </nav>
 
-    <!-- SEO Header -->
-    <div class="text-center mb-10">
-      <h1 class="text-4xl font-bold text-gray-900 mb-3">Free Pomodoro Timer Online</h1>
-      <p class="text-lg text-gray-600 max-w-xl mx-auto">Stay focused and productive with timed work sessions and breaks — built for remote workers.</p>
-    </div>
+  <div class="mx-auto mt-4 max-w-3xl" x-data="pomodoroTimer()">
 
-    <!-- Timer Card -->
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 mb-8">
+    <header>
+      <h1 class="page-title">Pomodoro timer</h1>
+      <p class="page-lede">Work in 25-minute sessions with short breaks in between and a longer break after every fourth session.</p>
+    </header>
 
-      <!-- Mode Tabs -->
-      <div class="flex justify-center gap-2 mb-8">
-        <template x-for="m in modes" :key="m.key">
-          <button
-            x-on:click="switchMode(m.key)"
-            x-text="m.label"
-            :class="mode === m.key ? 'bg-brand-300 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
-            class="px-5 py-2 rounded-full text-sm font-medium transition-colors">
-          </button>
-        </template>
+    <!-- Timer -->
+    <div class="card mt-8 p-5 sm:p-8">
+
+      <div class="flex justify-center">
+        <div class="tabs max-w-full" role="tablist" aria-label="Timer mode">
+          <template x-for="m in modes" :key="m.key">
+            <button type="button" role="tab"
+              x-on:click="switchMode(m.key)"
+              x-text="m.label"
+              :aria-selected="mode === m.key"
+              :class="mode === m.key ? 'tab-active' : ''"
+              class="tab">
+            </button>
+          </template>
+        </div>
       </div>
 
-      <!-- SVG Circular Timer -->
-      <div class="flex justify-center mb-8">
-        <div class="relative w-64 h-64">
-          <svg class="w-full h-full -rotate-90" viewBox="0 0 200 200">
-            <circle cx="100" cy="100" r="90" fill="none" stroke="#e5e7eb" stroke-width="8" />
+      <div class="mt-8 flex justify-center">
+        <div class="relative h-60 w-60 sm:h-64 sm:w-64">
+          <svg class="h-full w-full -rotate-90" viewBox="0 0 200 200" aria-hidden="true">
+            <circle cx="100" cy="100" r="90" fill="none" stroke="currentColor" class="text-muted" stroke-width="8" />
             <circle cx="100" cy="100" r="90" fill="none" stroke="currentColor"
-              class="text-brand-300 transition-all duration-1000"
+              class="text-foreground transition-all duration-1000"
               stroke-width="8" stroke-linecap="round"
               :stroke-dasharray="circumference"
               :stroke-dashoffset="dashOffset" />
           </svg>
           <div class="absolute inset-0 flex flex-col items-center justify-center">
-            <span class="text-5xl font-mono font-bold text-gray-900" x-text="display"></span>
-            <span class="text-sm text-gray-500 mt-1 capitalize" x-text="modeLabel"></span>
+            <span class="text-[3rem] font-semibold leading-none tabular-nums tracking-tight text-foreground" x-text="display" role="timer" aria-live="off"></span>
+            <span class="mt-1 text-sm text-muted-foreground" x-text="modeLabel"></span>
           </div>
         </div>
       </div>
 
-      <!-- Controls -->
-      <div class="flex justify-center gap-3 mb-8">
-        <button x-on:click="toggle()"
-          :class="running ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-brand-300 hover:bg-brand-400'"
-          class="text-white px-8 py-3 rounded-xl font-semibold text-lg transition-colors">
+      <div class="mt-8 flex justify-center gap-3">
+        <button type="button" x-on:click="toggle()" class="btn btn-primary btn-lg min-w-[8rem]">
           <span x-text="running ? 'Pause' : 'Start'"></span>
         </button>
-        <button x-on:click="reset()"
-          class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-8 py-3 rounded-xl font-semibold text-lg transition-colors">
+        <button type="button" x-on:click="reset()" class="btn btn-outline btn-lg min-w-[8rem]">
           Reset
         </button>
       </div>
 
-      <!-- Session Counter -->
-      <div class="text-center mb-6">
-        <p class="text-sm text-gray-500">Sessions completed: <span class="font-bold text-brand-600" x-text="sessions"></span></p>
-        <p class="text-xs text-gray-400 mt-1">(Long break every 4 sessions)</p>
-      </div>
+      <p class="mt-6 text-center text-sm text-muted-foreground">
+        Sessions completed: <span class="font-medium tabular-nums text-foreground" x-text="sessions"></span>
+        <span class="block text-xs">Long break every 4 sessions</span>
+      </p>
 
-      <!-- Settings -->
-      <div x-show="!running" x-transition class="border-t border-gray-100 pt-6">
-        <h2 class="text-sm font-semibold text-gray-700 mb-3 text-center">Configure Durations (minutes)</h2>
-        <div class="flex justify-center gap-6 flex-wrap">
+      <div x-show="!running" x-transition class="surface mt-6 p-4 sm:p-5">
+        <h2 class="text-sm font-medium text-foreground">Durations (minutes)</h2>
+        <div class="mt-3 grid grid-cols-3 gap-3">
           <template x-for="s in settings" :key="s.key">
-            <label class="flex flex-col items-center gap-1">
-              <span class="text-xs text-gray-500" x-text="s.label"></span>
-              <input type="number" min="1" max="120"
+            <label class="min-w-0">
+              <span class="mb-1 block text-xs text-muted-foreground" x-text="s.label"></span>
+              <input type="number" min="1" max="120" inputmode="numeric"
                 x-model.number="durations[s.key]"
                 x-on:change="resetIfSameMode(s.key)"
-                class="w-20 text-center border border-gray-200 rounded-lg py-1.5 text-sm focus:ring-2 focus:ring-brand-300 focus:border-brand-300 outline-none" />
+                class="input bg-card text-center tabular-nums" />
             </label>
           </template>
         </div>
       </div>
     </div>
 
-    <!-- Task List Card -->
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 mb-8">
-      <h2 class="text-xl font-bold text-gray-900 mb-4">Task List</h2>
-      <div class="flex gap-2 mb-4">
-        <input type="text" x-model="newTask" x-on:keydown.enter="addTask()"
-          placeholder="Add a task…"
-          class="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-300 focus:border-brand-300 outline-none" />
-        <button x-on:click="addTask()"
-          class="bg-brand-300 hover:bg-brand-400 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors">
+    <!-- Tasks -->
+    <div class="card mt-6 p-5 sm:p-6">
+      <h2 class="section-title">Tasks</h2>
+      <div class="mt-4 flex gap-2">
+        <label for="pomodoro-new-task" class="sr-only">New task</label>
+        <input id="pomodoro-new-task" type="text" x-model="newTask" x-on:keydown.enter="addTask()"
+          placeholder="Add a task"
+          class="input min-w-0 flex-1" />
+        <button type="button" x-on:click="addTask()" class="btn btn-outline">
           Add
         </button>
       </div>
-      <ul class="space-y-2">
+      <ul class="-mx-2 mt-3">
         <template x-for="(task, idx) in tasks" :key="idx">
-          <li class="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors">
-            <input type="checkbox" x-model="task.done"
-              class="w-4 h-4 text-brand-300 border-gray-300 rounded focus:ring-brand-300" />
-            <span :class="task.done ? 'line-through text-gray-400' : 'text-gray-800'" x-text="task.text" class="text-sm flex-1"></span>
-            <button x-on:click="tasks.splice(idx, 1)" class="text-gray-300 hover:text-red-400 text-lg leading-none">&times;</button>
+          <li class="flex items-center gap-3 rounded-xl px-2 py-1.5 transition-colors hover:bg-muted">
+            <input type="checkbox" x-model="task.done" class="checkbox" :aria-label="'Mark ' + task.text + ' as done'" />
+            <span :class="task.done ? 'line-through text-muted-foreground' : 'text-foreground'" x-text="task.text" class="min-w-0 flex-1 break-words text-sm"></span>
+            <button type="button" x-on:click="tasks.splice(idx, 1)" class="btn btn-ghost btn-sm text-muted-foreground" aria-label="Remove task">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+            </button>
           </li>
         </template>
       </ul>
-      <p x-show="tasks.length === 0" class="text-sm text-gray-400 text-center py-4">No tasks yet. Add one above!</p>
+      <p x-show="tasks.length === 0" class="pt-3 text-sm text-muted-foreground">No tasks yet. Add what you plan to work on in the next session.</p>
     </div>
 
-    <!-- FAQ Section -->
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-      <h2 class="text-xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
-      <div class="space-y-4" x-data="{ openFaq: null }">
+    <!-- FAQ -->
+    <section class="mt-12">
+      <h2 class="section-title">Questions</h2>
+      <div class="surface mt-4 p-1.5">
         <template x-for="(faq, i) in faqs" :key="i">
-          <div class="border border-gray-100 rounded-xl overflow-hidden">
-            <button x-on:click="openFaq = openFaq === i ? null : i"
-              class="w-full flex justify-between items-center px-5 py-4 text-left text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors">
-              <span x-text="faq.q"></span>
-              <svg :class="openFaq === i ? 'rotate-180' : ''" class="w-4 h-4 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            <div x-show="openFaq === i" x-transition class="px-5 pb-4 text-sm text-gray-600 leading-relaxed" x-text="faq.a"></div>
-          </div>
+          <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+            <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span x-text="faq.q"></span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+            <p class="mt-2 text-sm leading-6 text-muted-foreground" x-text="faq.a"></p>
+          </details>
         </template>
       </div>
-    </div>
+    </section>
 
   </div>
-</section>
+</div>
 
 <!-- FAQ JSON-LD -->
 <script type="application/ld+json">
@@ -157,7 +154,7 @@
       "name": "Can I customize the timer durations?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes! You can adjust the work session, short break, and long break durations using the configuration inputs below the timer. Changes take effect on the next session."
+        "text": "Yes. You can adjust the work session, short break, and long break durations using the configuration inputs below the timer. Changes take effect on the next session."
       }
     },
     {
@@ -185,20 +182,20 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('pomodoroTimer', () => ({
     modes: [
       { key: 'work', label: 'Work' },
-      { key: 'shortBreak', label: 'Short Break' },
-      { key: 'longBreak', label: 'Long Break' }
+      { key: 'shortBreak', label: 'Short break' },
+      { key: 'longBreak', label: 'Long break' }
     ],
     settings: [
       { key: 'work', label: 'Work' },
-      { key: 'shortBreak', label: 'Short Break' },
-      { key: 'longBreak', label: 'Long Break' }
+      { key: 'shortBreak', label: 'Short break' },
+      { key: 'longBreak', label: 'Long break' }
     ],
     faqs: [
       { q: 'What is the Pomodoro Technique?', a: 'The Pomodoro Technique is a time management method that uses a timer to break work into 25-minute focused intervals (called pomodoros), separated by short 5-minute breaks. After four pomodoros, you take a longer 15-minute break.' },
-      { q: 'Why is the Pomodoro Technique effective for remote workers?', a: 'Remote workers often struggle with distractions at home. The Pomodoro Technique provides structure, creates urgency with time-boxed sessions, and ensures regular breaks to prevent burnout.' },
-      { q: 'Can I customize the timer durations?', a: 'Yes! You can adjust the work session, short break, and long break durations using the configuration inputs below the timer. Changes take effect on the next session.' },
-      { q: 'How do browser notifications work?', a: 'When a session ends, the timer sends a browser notification and plays an audio beep. You will be prompted to allow notifications the first time you start the timer.' },
-      { q: 'How many pomodoros should I do per day?', a: 'Most productivity experts recommend 8 to 12 pomodoros per day for knowledge workers — roughly 4 to 6 hours of deep focused work.' }
+      { q: 'Why is the Pomodoro Technique effective for remote workers?', a: 'Working from home comes with its own distractions. Time-boxed sessions give the day structure and a clear finish line, and the scheduled breaks help you avoid burnout.' },
+      { q: 'Can I customize the timer durations?', a: 'Yes. Set the work, short break and long break lengths under the timer while it is paused. A change applies straight away if you are in that mode, otherwise from the next session.' },
+      { q: 'How do browser notifications work?', a: 'When a session ends, the timer plays a short beep and, if you allow it, shows a browser notification. Your browser asks for permission the first time you press Start.' },
+      { q: 'How many pomodoros should I do per day?', a: 'A common target for knowledge work is 8 to 12 pomodoros a day, which is roughly 4 to 6 hours of focused work.' }
     ],
     durations: { work: 25, shortBreak: 5, longBreak: 15 },
     mode: 'work',
@@ -244,7 +241,7 @@ document.addEventListener('alpine:init', () => {
       }
     },
     start() {
-      if (Notification.permission === 'default') {
+      if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
         Notification.requestPermission();
       }
       this.running = true;
@@ -303,8 +300,8 @@ document.addEventListener('alpine:init', () => {
       } catch (e) {}
     },
     notify() {
-      if (Notification.permission === 'granted') {
-        const title = this.mode === 'work' ? 'Work session complete!' : 'Break is over!';
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        const title = this.mode === 'work' ? 'Work session complete' : 'Break is over';
         new Notification(title, { body: 'Pomodoro Timer — time to switch.', icon: '/static/img/favicon.png' });
       }
     },

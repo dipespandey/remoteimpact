@@ -1,148 +1,147 @@
 <!-- Step 6: Preferences -->
 <div>
-    <div class="text-center mb-8">
-        <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-            What matters to you in a role?
-        </h2>
-        <p class="text-gray-600">Help us find roles that fit your lifestyle</p>
+    <div class="mb-6">
+        <h1 class="text-lg font-semibold tracking-tight text-foreground sm:text-xl">What do you need from a role?</h1>
+        <p class="mt-1 text-sm text-muted-foreground">All of these are optional. Skip anything you have no preference on.</p>
     </div>
 
     <form hx-post="{% url 'jobs:impact_wizard_step' 'preferences' %}"
           hx-target="#wizard-content"
-          hx-swap="innerHTML">
+          hx-swap="innerHTML"
+          class="space-y-7">
         {% csrf_token %}
 
         <!-- Remote Preference -->
-        <div class="mb-8">
-            <label class="block text-sm font-semibold text-gray-700 mb-3">Remote preference</label>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <fieldset>
+            <legend class="label">Remote preference</legend>
+            <div class="tabs flex-wrap">
                 {% for value, label in remote_choices %}
-                <label class="cursor-pointer">
+                <label class="relative cursor-pointer">
                     <input type="radio"
                            name="remote_preference"
                            value="{{ value }}"
                            {% if profile.remote_preference == value %}checked{% endif %}
                            class="peer sr-only">
-                    <div class="p-3 text-center text-sm rounded-xl border-2 border-gray-200 bg-white peer-checked:border-brand-500 peer-checked:bg-brand-50 hover:bg-gray-50 transition">
-                        {{ label }}
-                    </div>
-                </label>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Job Types -->
-        <div class="mb-8">
-            <label class="block text-sm font-semibold text-gray-700 mb-3">Job types (select all that apply)</label>
-            <div class="flex flex-wrap gap-2">
-                {% for value, label in job_types %}
-                <label class="cursor-pointer">
-                    <input type="checkbox"
-                           name="job_types"
-                           value="{{ value }}"
-                           {% if value in profile.job_types %}checked{% endif %}
-                           class="peer sr-only">
-                    <span class="inline-block px-4 py-2 text-sm rounded-full border-2 border-gray-200 bg-white peer-checked:border-brand-500 peer-checked:bg-brand-50 hover:bg-gray-50 transition">
+                    <span class="block rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:text-foreground peer-checked:bg-card peer-checked:text-foreground peer-checked:shadow-soft peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
                         {{ label }}
                     </span>
                 </label>
                 {% endfor %}
             </div>
-        </div>
+        </fieldset>
+
+        <!-- Job Types -->
+        <fieldset>
+            <legend class="label">Job types</legend>
+            <div class="flex flex-wrap gap-2">
+                {% for value, label in job_types %}
+                <label class="relative cursor-pointer">
+                    <input type="checkbox"
+                           name="job_types"
+                           value="{{ value }}"
+                           {% if value in profile.job_types %}checked{% endif %}
+                           class="peer sr-only">
+                    <span class="inline-block rounded-full bg-muted px-3.5 py-1.5 text-[13px] text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
+                        {{ label }}
+                    </span>
+                </label>
+                {% endfor %}
+            </div>
+            <p class="help">Select all that apply.</p>
+        </fieldset>
 
         <!-- Salary Range -->
-        <div class="mb-8">
-            <label class="block text-sm font-semibold text-gray-700 mb-3">Salary expectations (USD/year, optional)</label>
+        <fieldset>
+            <legend class="label">Salary range (USD per year)</legend>
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs text-gray-500 mb-1">Minimum</label>
+                    <label for="salary_min" class="mb-1 block text-[13px] text-muted-foreground">Minimum</label>
                     <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                        <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground" aria-hidden="true">$</span>
                         <input type="text"
+                               id="salary_min"
                                name="salary_min"
+                               inputmode="numeric"
                                value="{% if profile.salary_min %}{{ profile.salary_min }}{% endif %}"
                                placeholder="50,000"
-                               class="w-full pl-8 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition">
+                               class="input pl-7 tabular-nums">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-500 mb-1">Maximum</label>
+                    <label for="salary_max" class="mb-1 block text-[13px] text-muted-foreground">Maximum</label>
                     <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                        <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground" aria-hidden="true">$</span>
                         <input type="text"
+                               id="salary_max"
                                name="salary_max"
+                               inputmode="numeric"
                                value="{% if profile.salary_max %}{{ profile.salary_max }}{% endif %}"
                                placeholder="120,000"
-                               class="w-full pl-8 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition">
+                               class="input pl-7 tabular-nums">
                     </div>
                 </div>
             </div>
-        </div>
+        </fieldset>
 
         <!-- Location Preferences -->
-        <div class="mb-8">
-            <label class="block text-sm font-semibold text-gray-700 mb-3">Location preferences (optional)</label>
+        <fieldset>
+            <legend class="label">Locations</legend>
             <div class="flex flex-wrap gap-2">
-                <label class="cursor-pointer">
+                <label class="relative cursor-pointer">
                     <input type="checkbox" name="locations" value="US" {% if "US" in profile.location_preferences %}checked{% endif %} class="peer sr-only">
-                    <span class="inline-block px-4 py-2 text-sm rounded-full border-2 border-gray-200 bg-white peer-checked:border-brand-500 peer-checked:bg-brand-50 hover:bg-gray-50 transition">United States</span>
+                    <span class="inline-block rounded-full bg-muted px-3.5 py-1.5 text-[13px] text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">United States</span>
                 </label>
-                <label class="cursor-pointer">
+                <label class="relative cursor-pointer">
                     <input type="checkbox" name="locations" value="GB" {% if "GB" in profile.location_preferences %}checked{% endif %} class="peer sr-only">
-                    <span class="inline-block px-4 py-2 text-sm rounded-full border-2 border-gray-200 bg-white peer-checked:border-brand-500 peer-checked:bg-brand-50 hover:bg-gray-50 transition">United Kingdom</span>
+                    <span class="inline-block rounded-full bg-muted px-3.5 py-1.5 text-[13px] text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">United Kingdom</span>
                 </label>
-                <label class="cursor-pointer">
+                <label class="relative cursor-pointer">
                     <input type="checkbox" name="locations" value="EU" {% if "EU" in profile.location_preferences %}checked{% endif %} class="peer sr-only">
-                    <span class="inline-block px-4 py-2 text-sm rounded-full border-2 border-gray-200 bg-white peer-checked:border-brand-500 peer-checked:bg-brand-50 hover:bg-gray-50 transition">Europe</span>
+                    <span class="inline-block rounded-full bg-muted px-3.5 py-1.5 text-[13px] text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">Europe</span>
                 </label>
-                <label class="cursor-pointer">
+                <label class="relative cursor-pointer">
                     <input type="checkbox" name="locations" value="ASIA" {% if "ASIA" in profile.location_preferences %}checked{% endif %} class="peer sr-only">
-                    <span class="inline-block px-4 py-2 text-sm rounded-full border-2 border-gray-200 bg-white peer-checked:border-brand-500 peer-checked:bg-brand-50 hover:bg-gray-50 transition">Asia</span>
+                    <span class="inline-block rounded-full bg-muted px-3.5 py-1.5 text-[13px] text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">Asia</span>
                 </label>
-                <label class="cursor-pointer">
+                <label class="relative cursor-pointer">
                     <input type="checkbox" name="locations" value="REMOTE" {% if "REMOTE" in profile.location_preferences %}checked{% endif %} class="peer sr-only">
-                    <span class="inline-block px-4 py-2 text-sm rounded-full border-2 border-gray-200 bg-white peer-checked:border-brand-500 peer-checked:bg-brand-50 hover:bg-gray-50 transition">Anywhere (Remote)</span>
+                    <span class="inline-block rounded-full bg-muted px-3.5 py-1.5 text-[13px] text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">Anywhere (remote)</span>
                 </label>
             </div>
-        </div>
+        </fieldset>
 
         <!-- Country of Work Eligibility -->
-        <div class="mb-8">
-            <label class="block text-sm font-semibold text-gray-700 mb-3">Country where you're eligible to work</label>
+        <div>
+            <label for="country_eligibility" class="label">Countries where you can work</label>
             <input type="text"
+                   id="country_eligibility"
                    name="country_eligibility"
                    value="{{ profile.country_eligibility }}"
-                   placeholder="e.g., United States, United Kingdom, Germany"
-                   class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition">
+                   placeholder="e.g. United States, United Kingdom, Germany"
+                   class="input">
         </div>
 
         <!-- LinkedIn URL -->
-        <div class="mb-8">
-            <label class="block text-sm font-semibold text-gray-700 mb-3">LinkedIn profile URL (optional)</label>
+        <div>
+            <label for="linkedin_url" class="label">LinkedIn profile URL</label>
             <input type="url"
+                   id="linkedin_url"
                    name="linkedin_url"
                    value="{{ profile.linkedin_url }}"
                    placeholder="https://linkedin.com/in/yourprofile"
-                   class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition">
+                   class="input">
         </div>
 
-        <div class="flex justify-between items-center pt-4 border-t border-gray-100">
+        <div class="flex items-center justify-between pt-2">
             <a href="{% url 'jobs:impact_wizard_step' 'skills' %}"
                hx-get="{% url 'jobs:impact_wizard_step' 'skills' %}"
                hx-target="#wizard-content"
                hx-swap="innerHTML"
-               class="text-gray-500 hover:text-gray-700 font-medium">
-                <svg class="inline-block w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path>
-                </svg>
+               class="btn btn-ghost">
                 Back
             </a>
-            <button type="submit"
-                    class="bg-brand-300 hover:bg-brand-400 text-gray-900 font-bold py-3 px-8 rounded-full shadow-lg transition">
+            <button type="submit" class="btn btn-primary">
                 Continue
-                <svg class="inline-block w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                </svg>
             </button>
         </div>
     </form>

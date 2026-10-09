@@ -1,714 +1,351 @@
 {% extends 'base.html' %}
-{% load humanize %}
+{% load humanize job_extras %}
 
-{% block title %}Remote Impact | Verified Remote Jobs in Climate, AI Safety & Social Impact{% endblock %}
+{% block title %}Remote Impact: remote jobs in climate, global health and social impact{% endblock %}
 
-{% block meta_description %}Remote Impact is a curated job board for builders and strategists driven by social good. Find {{ active_jobs_count|intcomma }}+ active roles at {{ organizations_count|intcomma }}+ verified organizations focused on climate, biosecurity, and social equity. Start your Impact Profile today.{% endblock %}
+{% block meta_description %}Describe your ideal remote impact job in your own words. Remote Impact finds strong matches across {{ active_jobs_count|intcomma }}+ current roles and can watch for new ones.{% endblock %}
 
 {% block content %}
 <style>
-    .featured-card-rotate {
-        position: relative;
-        overflow: hidden;
-        border-color: rgba(255, 255, 255, 0.18);
-        transition: transform 0.45s ease, opacity 0.45s ease;
-        will-change: transform, opacity;
-        min-height: clamp(360px, 50vh, 420px);
-        max-height: clamp(360px, 50vh, 420px);
-        display: flex;
-        padding: clamp(1.5rem, 3vw, 2.25rem);
-    }
-
-    .featured-card-rotate::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        border-radius: 1.5rem;
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        pointer-events: none;
-        z-index: 0;
-    }
-
-    .featured-card-rotate::after {
-        content: '';
-        position: absolute;
-        inset: -15%;
-        border-radius: 2rem;
-        background:
-            radial-gradient(circle at top, rgba(230, 255, 100, 0.12), transparent 60%),
-            radial-gradient(circle at bottom, rgba(88, 246, 199, 0.07), transparent 55%);
-        opacity: 0.4;
-        pointer-events: none;
-        z-index: 0;
-    }
-
-    .featured-card-rotate::after,
-    .featured-card-rotate::before {
-        mask-image: linear-gradient(#000, #000);
-    }
-
-    .featured-card-rotate::before {
-        background: transparent;
-    }
-
-    .featured-card-rotate>* {
-        position: relative;
-        z-index: 1;
-    }
-
-    .featured-card-rotate.is-swapping {
-        transform: translateY(-8px);
-        opacity: 0.35;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        .featured-card-rotate {
-            transition: none;
-        }
-
-        .featured-card-rotate.is-swapping {
-            transform: none;
-            opacity: 1;
-        }
-    }
-
-    .featured-card-content {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-        flex: 1;
-    }
-
-    .featured-card-head {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-        flex: 1;
-    }
-
-    .featured-card-title {
-        font-size: clamp(1.8rem, 3vw, 2.2rem);
-        line-height: 1.18;
-        word-break: break-word;
-        hyphens: auto;
-        text-wrap: balance;
-        display: block;
-        overflow: visible;
-        max-height: none;
-    }
-
-    .featured-card-org {
-        color: rgba(255, 255, 255, 0.75);
-        line-height: 1.35;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        font-size: 0.95rem;
-    }
-
-    .featured-card-meta {
-        margin-top: auto;
-    }
-
-    .featured-meta-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-    }
-
-    .featured-meta-value {
-        max-width: 55%;
-        text-align: right;
-        white-space: normal;
-        overflow: visible;
-        word-break: break-word;
-    }
-
-    .card-meta-time {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .featured-card-rotate .featured-streak,
-    .featured-card-rotate .featured-streak span {
-        position: absolute;
-        pointer-events: none;
-    }
-
-    .featured-card-rotate .featured-streak {
-        inset: 0;
-        border-radius: 1.5rem;
-        z-index: 0;
-        overflow: hidden;
-    }
-
-    .featured-card-rotate .featured-streak span {
-        display: block;
-        background: linear-gradient(90deg, transparent, rgba(230, 255, 100, 0.9), transparent);
-        height: 1px;
-        width: 160%;
-        top: 0;
-        left: -30%;
-        border-radius: 999px;
-        animation: streakOrbit 6s linear infinite;
-    }
-
-    .featured-card-rotate .featured-streak span:nth-child(2) {
-        width: 1px;
-        height: 160%;
-        background: linear-gradient(180deg, transparent, rgba(88, 246, 199, 0.9), transparent);
-        top: -30%;
-        left: 0;
-        animation-delay: 3s;
-    }
-
-    @keyframes streakOrbit {
-        0% {
-            transform: translate(0, 0);
-        }
-
-        25% {
-            transform: translate(0, calc(100% - 2px));
-        }
-
-        50% {
-            transform: translate(calc(100% - 2px), calc(100% - 2px));
-        }
-
-        75% {
-            transform: translate(calc(100% - 2px), 0);
-        }
-
-        100% {
-            transform: translate(0, 0);
-        }
-    }
-
-    .timezone-pill {
-        padding: 0.5rem 1.25rem;
-        border-radius: 9999px;
-        border: 1px solid rgba(15, 23, 42, 0.2);
-        background-color: rgba(255, 255, 255, 0.6);
-        font-size: 0.7rem;
-        font-weight: 500;
-        color: rgba(15, 23, 42, 0.8);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
+    /* Single-line prompt inside the Scout launcher. */
+    .hero-scout-launcher-copy { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .scout-composer-modal[hidden] { display: none; }
 </style>
-<!-- Hero Section -->
-<section class="relative overflow-hidden bg-hero-gradient text-white pt-20 pb-20">
-    <div class="absolute inset-0 pointer-events-none">
-        <div class="absolute -top-32 right-0 w-[600px] h-[600px] bg-brand-500/30 blur-[180px]"></div>
-        <div class="absolute top-10 left-10 w-32 h-32 border border-white/20 rounded-full animate-pulse"></div>
-    </div>
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-16 lg:gap-20 items-start">
-        <div>
-            <p class="uppercase text-sm tracking-[0.5em] text-white/70 mb-6">Remote · Purpose-led · Verified</p>
-            <h1 class="text-3xl md:text-5xl font-display font-semibold leading-tight mb-8">
-                Remote Impact: <span>Curated Remote Jobs for Social Good</span>.
+
+<!-- Hero -->
+<section>
+    <div class="container grid gap-10 pb-10 pt-10 sm:pt-14 lg:grid-cols-12 lg:gap-12 lg:pb-14">
+        <div class="min-w-0 lg:col-span-7">
+            <h1 class="text-balance text-3xl font-semibold leading-[1.15] tracking-tight text-foreground sm:text-[2.25rem]">
+                Remote jobs in climate, global health, AI safety and social impact
             </h1>
-            <p class="text-lg text-white/70 mb-6 max-w-xl">
-                Stop searching through noise. Discover remote impact jobs in climate tech, AI safety, nonprofits, global health, and social impact—curated from over {{ organizations_count|intcomma }}+ purpose-led organizations.
+            <p class="mt-3 max-w-xl text-base leading-relaxed text-muted-foreground">
+                {{ active_jobs_count|intcomma }} open roles from {{ organizations_count|intcomma }}+ organizations, each linked to the original posting and checked for closures. Describe what you're looking for and we'll email the ones that fit.
             </p>
-            {% if not has_impact_profile %}
-            <p class="text-sm text-white/50 mb-10 flex items-center gap-2">
-                <svg class="w-4 h-4 text-neon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-                <span>Build your <a href="{% url 'jobs:impact_wizard' %}" class="text-neon hover:underline">Impact Profile</a> to get jobs ranked by how well they fit you</span>
-            </p>
-            {% else %}
-            <p class="text-sm text-white/50 mb-10 flex items-center gap-2">
-                <svg class="w-4 h-4 text-neon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span>Your Impact Profile is active. <a href="{% url 'jobs:my_matches' %}" class="text-neon hover:underline">View your top matches</a></span>
+            {% if trust.confirmed_open %}
+            <p class="mt-2 flex max-w-xl items-start gap-1.5 text-[13px] leading-5 text-muted-foreground">
+                <svg class="mt-0.5 h-4 w-4 shrink-0 text-success" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>{{ trust.confirmed_open|intcomma }} confirmed open on the employer's own job board today{% if trust.removed_7d %}; {{ trust.removed_7d|intcomma }} closed or office-based listings taken down this week{% endif %}. <a href="{% url 'jobs:how_we_check' %}" class="font-medium text-foreground underline decoration-border hover:decoration-foreground">How we check</a></span>
             </p>
             {% endif %}
-            <div class="flex flex-col sm:flex-row gap-4">
-                <a href="{% url 'jobs:job_list' %}"
-                    class="inline-flex items-center justify-center whitespace-nowrap px-8 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold text-lg shadow-glow hover:bg-brand-400 transition"
-                    data-track="browse_roles" data-track-category="cta" data-track-label="hero"
-                    aria-label="Browse remote impact jobs">
-                    <span>Browse impact jobs</span>
-                    <svg class="w-5 h-5 ml-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                            d="M5 12h14m0 0-6-6m6 6-6 6" />
-                    </svg>
-                </a>
-                <a href="{% url 'jobs:resources' %}#career-guides"
-                class="inline-flex items-center justify-center whitespace-nowrap px-8 py-4 rounded-full border-2 border-white/50 text-white font-semibold text-lg hover:border-white hover:text-white transition"
-                data-track="career_guides" data-track-category="cta" data-track-label="hero">
-                    <svg class="w-5 h-5 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                    </svg>
-                    <span>Explore Career Paths</span>
-                </a>
-            </div>
-            <div class="mt-12 grid grid-cols-2 gap-x-10 gap-y-6 text-white/70">
-                <div>
-                    <p class="text-4xl font-semibold text-white">{{ active_jobs_count }}+</p>
-                    <p class="uppercase text-xs tracking-[0.4em]">Active roles</p>
-                </div>
-                <div>
-                    <p class="text-4xl font-semibold text-white">{{ categories_count }}</p>
-                    <p class="uppercase text-xs tracking-[0.4em]">Impact verticals</p>
-                </div>
-                <div>
-                    <p class="text-4xl font-semibold text-white">{{ organizations_count }}+</p>
-                    <p class="uppercase text-xs tracking-[0.4em]">Organizations</p>
-                </div>
-                <div>
-                    <p class="text-4xl font-semibold text-white">{{ professionals_this_month }}</p>
-                    <p class="uppercase text-xs tracking-[0.4em]">Joined this month</p>
-                </div>
-            </div>
-        </div>
-        <div class="relative mt-8 md:mt-12">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Featured Jobs Widget -->
-                {% if recent_jobs %}
-                <div class="rounded-3xl border border-white/10 bg-card-gradient p-6 backdrop-blur flex flex-col h-[280px]">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-6">
-                            <p class="text-sm uppercase tracking-[0.4em] text-white/60">Featured Jobs</p>
-                            <a href="{% url 'jobs:job_list' %}" class="text-neon text-sm hover:underline whitespace-nowrap">View all</a>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            {% for job in recent_jobs|slice:":3" %}
-                            <button class="featured-job-dot w-2 h-2 rounded-full transition-all {% if forloop.first %}bg-neon w-6{% else %}bg-white/30{% endif %}" data-index="{{ forloop.counter0 }}"></button>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    <div class="flex-1 relative overflow-hidden" id="featured-job-rotator">
-                        {% for job in recent_jobs|slice:":3" %}
-                        <a href="{{ job.get_absolute_url }}" 
-                           class="featured-job-slide absolute inset-0 block group transition-opacity duration-300 {% if forloop.first %}opacity-100{% else %}opacity-0 pointer-events-none{% endif %}"
-                           data-index="{{ forloop.counter0 }}">
-                            <div class="space-y-3">
-                                <div class="flex items-center gap-3">
-                                    {% if job.organization.logo %}
-                                    <img src="{{ job.organization.logo.url }}" alt="{{ job.organization.name }}" class="w-12 h-12 rounded-xl object-cover flex-shrink-0 bg-white/10">
-                                    {% else %}
-                                    <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                                        <span class="text-xl">{{ job.organization.name|slice:":1" }}</span>
-                                    </div>
-                                    {% endif %}
-                                    <p class="text-sm text-white/60">{{ job.organization.name }}</p>
-                                </div>
-                                <h3 class="text-2xl font-semibold text-white group-hover:text-neon transition line-clamp-2">{{ job.title }}</h3>
-                                <p class="text-white/70 text-sm line-clamp-2">{{ job.description|striptags|truncatewords:20 }}</p>
-                            </div>
-                        </a>
-                        {% endfor %}
-                    </div>
-                </div>
-                <script>
-                (function() {
-                    const slides = document.querySelectorAll('.featured-job-slide');
-                    const dots = document.querySelectorAll('.featured-job-dot');
-                    if (slides.length <= 1) return;
-                    let current = 0;
-                    function showSlide(index) {
-                        slides.forEach((s, i) => {
-                            s.classList.toggle('opacity-100', i === index);
-                            s.classList.toggle('opacity-0', i !== index);
-                            s.classList.toggle('pointer-events-none', i !== index);
-                        });
-                        dots.forEach((d, i) => {
-                            d.classList.toggle('bg-neon', i === index);
-                            d.classList.toggle('w-6', i === index);
-                            d.classList.toggle('bg-white/30', i !== index);
-                            d.classList.toggle('w-2', i !== index);
-                        });
-                        current = index;
-                    }
-                    dots.forEach(dot => {
-                        dot.addEventListener('click', () => showSlide(parseInt(dot.dataset.index)));
-                    });
-                    setInterval(() => {
-                        showSlide((current + 1) % slides.length);
-                    }, 5000);
-                })();
-                </script>
-                {% endif %}
-                <div
-                    class="rounded-3xl border border-white/10 bg-card-gradient p-6 backdrop-blur flex flex-col justify-between min-h-[280px]">
-                    <div class="space-y-4">
-                        <p class="text-sm uppercase tracking-[0.4em] text-white/60">How we curate</p>
-                        <div class="space-y-1">
-                            <p class="text-2xl font-semibold">AI vetted with human oversight</p>
-                            <p class="text-white/70 text-sm">Every role is reviewed by our team before it goes live.</p>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex flex-wrap items-center gap-3">
-                            <span class="timezone-pill">Human-vetted</span>
-                            <span class="timezone-pill">AI summaries</span>
-                            <span class="timezone-pill">Organic fit</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
 
-<!-- Trust signals -->
-<section class="py-16 border-b border-white/5 bg-gradient-to-b from-twilight-900 to-twilight-900/40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p class="text-center text-white/50 uppercase tracking-[0.6em] text-xs mb-8">Organizations hiring</p>
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-8 text-white/70 text-lg font-semibold text-center">
-            {% for org in featured_orgs %}
-            <span>{{ org.name }}</span>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-
-<!-- Featured Think Tanks & Policy Organizations - SEO Internal Links -->
-<section class="py-12 bg-twilight-900/60">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p class="text-center text-white/50 uppercase tracking-[0.4em] text-xs mb-6">Top Policy & Research Organizations</p>
-        <div class="flex flex-wrap justify-center gap-4 md:gap-6">
-            <a href="/org/carnegie-endowment-for-international-peace/" class="px-4 py-2 rounded-full border border-white/10 bg-white/5 text-white/80 hover:border-brand-300/50 hover:text-neon transition text-sm">
-                Carnegie Endowment for International Peace Internships
-            </a>
-            <a href="/org/chatham-house/" class="px-4 py-2 rounded-full border border-white/10 bg-white/5 text-white/80 hover:border-brand-300/50 hover:text-neon transition text-sm">
-                Chatham House Jobs
-            </a>
-            <a href="/org/brookings-institution/" class="px-4 py-2 rounded-full border border-white/10 bg-white/5 text-white/80 hover:border-brand-300/50 hover:text-neon transition text-sm">
-                Brookings Institution
-            </a>
-            <a href="/org/council-on-foreign-relations/" class="px-4 py-2 rounded-full border border-white/10 bg-white/5 text-white/80 hover:border-brand-300/50 hover:text-neon transition text-sm">
-                Council on Foreign Relations
-            </a>
-            <a href="/org/rand-corporation/" class="px-4 py-2 rounded-full border border-white/10 bg-white/5 text-white/80 hover:border-brand-300/50 hover:text-neon transition text-sm">
-                RAND Corporation
-            </a>
-        </div>
-    </div>
-</section>
-
-<!-- Personalized Matching CTA -->
-<section class="pt-16 pb-10 bg-twilight-900">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="rounded-2xl border border-white/10 bg-card-gradient px-8 py-10 md:px-12 md:py-12 backdrop-blur flex flex-col items-center text-center gap-6">
-            <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-neon/20">
-                <svg class="w-7 h-7 text-neon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
+            <div id="hero-job-scout" class="hero-scout mt-7 max-w-2xl" data-user-state="{% if user.is_authenticated %}authenticated{% else %}guest{% endif %}">
+                <p class="hero-scout-label sr-only">Describe the job you want</p>
+                <button id="hero-job-scout-launcher" type="button" class="hero-scout-launcher flex w-full items-center gap-3 rounded-[1.4rem] bg-card p-2 pl-4 text-left shadow-lift transition-shadow hover:shadow-[0_0_0_1px_rgb(20_20_25/0.08),0_10px_28px_-10px_rgb(20_20_25/0.18)]" aria-haspopup="dialog" aria-controls="job-scout-composer" aria-expanded="false">
+                    <span class="flex min-h-[44px] min-w-0 flex-1 items-center gap-3">
+                        <svg class="h-4 w-4 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg>
+                        <span class="hero-scout-launcher-copy block text-[15px] text-muted-foreground">Describe the job you want: role, skills, where you can work, pay</span>
+                    </span>
+                    <span class="hero-scout-submit btn btn-primary shrink-0">Email my matches</span>
+                </button>
+                <div class="hero-scout-examples mt-3 flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground" aria-label="Example searches">
+                    <button type="button" class="hero-scout-example rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" data-scout-example="Remote software engineering roles using Python in Europe, mid-level, no internships.">Python in Europe</button>
+                    <button type="button" class="hero-scout-example rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" data-scout-example="Remote climate policy roles, open to Europe, at least $70k.">Climate policy</button>
+                    <button type="button" class="hero-scout-example rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" data-scout-example="Remote communications roles at global health nonprofits, full-time.">Global health communications</button>
+                </div>
+                <p class="hero-scout-meta mt-4 text-[13px] text-muted-foreground">
+                    Your first set of matches is free. <a href="{% url 'jobs:job_list' %}" class="font-medium text-foreground underline decoration-border hover:decoration-foreground" data-track="home_hero_browse_jobs" data-track-category="job_scout_acquisition" data-track-label="hero_secondary">Or browse all {{ active_jobs_count|intcomma }} roles</a>
+                </p>
             </div>
             {% if has_impact_profile %}
-            <div>
-                <h2 class="text-xl md:text-2xl font-semibold">Your Impact Profile is active</h2>
-                <p class="text-white/70 text-base mt-2">Jobs are ranked by how well they match your skills and goals.</p>
-            </div>
-            <a href="{% url 'jobs:my_matches' %}"
-                class="inline-flex items-center justify-center px-10 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition shadow-[0_0_30px_rgba(230,255,100,0.5)] whitespace-nowrap text-lg">
-                View Your Matches
-                <svg class="w-6 h-6 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                </svg>
-            </a>
-            {% else %}
-            <div>
-                <h2 class="text-xl md:text-2xl font-semibold">Want personalized job matches?</h2>
-                <p class="text-white/70 text-base mt-2">Tell us your skills and impact goals. Our algorithm will rank opportunities by fit.</p>
-            </div>
-            <a href="{% url 'jobs:impact_wizard' %}"
-                class="inline-flex items-center justify-center px-10 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition shadow-[0_0_30px_rgba(230,255,100,0.5)] whitespace-nowrap text-lg">
-                Build Your Profile
-                <svg class="w-6 h-6 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                </svg>
-            </a>
+            <p class="mt-3 text-[13px] text-muted-foreground">Your profile is set up. <a href="{% url 'jobs:my_matches' %}" class="font-medium text-foreground underline decoration-border">See your matches</a></p>
             {% endif %}
         </div>
+
+        <aside class="min-w-0 lg:col-span-5" aria-labelledby="new-roles-heading">
+            <div class="flex items-baseline justify-between px-1">
+                <h2 id="new-roles-heading" class="text-sm font-medium text-muted-foreground">Just posted</h2>
+                <a href="{% url 'jobs:job_list' %}" class="text-[13px] text-muted-foreground hover:text-foreground">All new roles</a>
+            </div>
+            <ul class="list-surface mt-2">
+                {% for job in recent_jobs|slice:":6" %}
+                <li>
+                    <a href="{{ job.get_absolute_url }}" class="block rounded-xl px-3.5 py-2.5 transition-colors hover:bg-muted">
+                        <p class="line-clamp-1 text-sm font-medium text-foreground">{{ job.title|display_title }}</p>
+                        <p class="mt-0.5 flex flex-wrap gap-x-1.5 text-[13px] text-muted-foreground">
+                            <span class="truncate">{{ job.organization.name|display_title }}</span>
+                            <span aria-hidden="true">·</span><span>{{ job.location|default:"Remote" }}</span>
+                            {% if job.posted_at %}<span aria-hidden="true">·</span><span>{{ job.posted_at|naturalday:"M j" }}</span>{% endif %}
+                        </p>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </aside>
     </div>
 </section>
 
-<!-- Categories Section -->
-{% if categories %}
-<section id="categories" class="pt-24 pb-16 bg-twilight-900">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
-            <div>
-                <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-2">Impact domains</p>
-                <h2 class="text-4xl font-semibold">Find the mission that aligns with your craft.</h2>
-            </div>
-            <a href="{% url 'jobs:all_domains' %}" class="inline-flex items-center text-neon font-semibold">
-                View all domains
-                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                        d="M5 12h14m0 0-6-6m6 6-6 6" />
-                </svg>
-            </a>
+{% if featured_jobs %}
+<section aria-labelledby="featured-roles-heading" class="section">
+    <div class="container">
+        <div class="flex items-baseline justify-between px-1">
+            <h2 id="featured-roles-heading" class="section-title">Featured by employers</h2>
+            <a href="{% url 'jobs:employers' %}" class="text-[13px] text-muted-foreground hover:text-foreground">About featured listings</a>
         </div>
-        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {% for category in categories|slice:":12" %}
-            <a href="{% url 'jobs:category_landing' slug=category.slug %}"
-                class="group relative overflow-hidden rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur hover:border-white/30 transition">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="text-4xl">{{ category.icon|default:"🌍" }}</div>
-                    <span
-                        class="text-sm uppercase tracking-[0.4em] text-white/50 group-hover:text-white/80 transition">Remote</span>
-                </div>
-                <h3 class="text-2xl font-semibold mb-4">{{ category.name }}</h3>
-                <p class="text-white/60 text-sm">Roles curated weekly from orgs delivering measurable change in {{category.name }}.</p>
-            </a>
+        <ul class="list-surface mt-3 grid gap-0.5 md:grid-cols-2">
+            {% for job in featured_jobs %}
+            <li>
+                <a href="{{ job.get_absolute_url }}?source=featured_slot" class="job-row">
+                    <span class="badge badge-featured">Featured</span>
+                    <h3 class="job-title mt-1.5">{{ job.title|display_title }}</h3>
+                    <p class="job-meta"><span class="font-medium text-foreground">{{ job.organization.name|display_title }}</span><span>{{ job.location|default:"Remote" }}</span>{% if job|compensation_display %}<span>{{ job|compensation_display }}</span>{% endif %}</p>
+                </a>
+            </li>
             {% endfor %}
-        </div>
+        </ul>
     </div>
 </section>
 {% endif %}
 
-<!-- Career Guides Section -->
-<section class="pt-16 pb-10 bg-twilight-900">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
-            <div>
-                <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-2">Career guides</p>
-                <h2 class="text-4xl font-semibold">Deep-dive guides for impact careers</h2>
+<!-- Browse -->
+<section id="categories" aria-labelledby="categories-heading" class="section">
+    <div class="container grid gap-10 lg:grid-cols-12">
+        <div class="lg:col-span-8">
+            <div class="flex items-baseline justify-between px-1">
+                <h2 id="categories-heading" class="section-title">Browse by area</h2>
+                <a href="{% url 'jobs:all_domains' %}" class="text-[13px] text-muted-foreground hover:text-foreground">All areas</a>
             </div>
-            <a href="{% url 'jobs:resources' %}" class="inline-flex items-center text-neon font-semibold">
-                All resources
-                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14m0 0-6-6m6 6-6 6" />
-                </svg>
-            </a>
-        </div>
-        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            <a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}"
-               class="group rounded-2xl border border-white/10 bg-card-gradient p-6 backdrop-blur hover:border-white/30 transition">
-                <div class="text-2xl mb-3">🌍</div>
-                <h3 class="text-lg font-semibold mb-1 group-hover:text-neon transition">Climate & Environment</h3>
-                <p class="text-white/60 text-sm">Renewables, conservation, carbon accounting</p>
-            </a>
-            <a href="{% url 'jobs:pillar_detail' pillar_slug='ai-safety-careers' %}"
-               class="group rounded-2xl border border-white/10 bg-card-gradient p-6 backdrop-blur hover:border-white/30 transition">
-                <div class="text-2xl mb-3">🤖</div>
-                <h3 class="text-lg font-semibold mb-1 group-hover:text-neon transition">AI Safety & Governance</h3>
-                <p class="text-white/60 text-sm">Alignment, policy, responsible AI</p>
-            </a>
-            <a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}"
-               class="group rounded-2xl border border-white/10 bg-card-gradient p-6 backdrop-blur hover:border-white/30 transition">
-                <div class="text-2xl mb-3">🏥</div>
-                <h3 class="text-lg font-semibold mb-1 group-hover:text-neon transition">Global Health</h3>
-                <p class="text-white/60 text-sm">WHO, MSF, health-tech, remote roles</p>
-            </a>
-            <a href="{% url 'jobs:pillar_detail' pillar_slug='humanitarian-ingo-careers' %}"
-               class="group rounded-2xl border border-white/10 bg-card-gradient p-6 backdrop-blur hover:border-white/30 transition">
-                <div class="text-2xl mb-3">🕊️</div>
-                <h3 class="text-lg font-semibold mb-1 group-hover:text-neon transition">Humanitarian & INGO</h3>
-                <p class="text-white/60 text-sm">UN, NGOs, M&E, consultancies</p>
-            </a>
-            <a href="{% url 'jobs:pillar_detail' pillar_slug='effective-altruism-careers' %}"
-               class="group rounded-2xl border border-white/10 bg-card-gradient p-6 backdrop-blur hover:border-white/30 transition">
-                <div class="text-2xl mb-3">🎯</div>
-                <h3 class="text-lg font-semibold mb-1 group-hover:text-neon transition">Effective Altruism</h3>
-                <p class="text-white/60 text-sm">Operations, grantmaking, research</p>
-            </a>
-        </div>
-    </div>
-</section>
-
-<!-- Browse by Role Section -->
-<section class="pt-16 pb-10 bg-twilight-900">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
-            <div>
-                <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-2">Browse by role</p>
-                <h2 class="text-4xl font-semibold">Find your perfect position</h2>
-            </div>
-            <a href="{% url 'jobs:all_role_pages' %}" class="inline-flex items-center text-neon font-semibold">
-                View all roles
-                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14m0 0-6-6m6 6-6 6" />
-                </svg>
-            </a>
-        </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <a href="/remote-software-engineer-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
-                <div class="text-3xl mb-2">💻</div>
-                <h3 class="font-medium text-sm group-hover:text-neon transition">Software Engineer</h3>
-            </a>
-            <a href="/remote-data-scientist-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
-                <div class="text-3xl mb-2">📊</div>
-                <h3 class="font-medium text-sm group-hover:text-neon transition">Data Scientist</h3>
-            </a>
-            <a href="/remote-product-manager-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
-                <div class="text-3xl mb-2">🎯</div>
-                <h3 class="font-medium text-sm group-hover:text-neon transition">Product Manager</h3>
-            </a>
-            <a href="/remote-program-manager-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
-                <div class="text-3xl mb-2">🎪</div>
-                <h3 class="font-medium text-sm group-hover:text-neon transition">Program Manager</h3>
-            </a>
-            <a href="/remote-policy-analyst-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
-                <div class="text-3xl mb-2">🏛️</div>
-                <h3 class="font-medium text-sm group-hover:text-neon transition">Policy Analyst</h3>
-            </a>
-            <a href="/remote-research-scientist-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
-                <div class="text-3xl mb-2">🔬</div>
-                <h3 class="font-medium text-sm group-hover:text-neon transition">Research Scientist</h3>
-            </a>
-            <a href="/remote-marketing-manager-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
-                <div class="text-3xl mb-2">📣</div>
-                <h3 class="font-medium text-sm group-hover:text-neon transition">Marketing Manager</h3>
-            </a>
-            <a href="/remote-operations-manager-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
-                <div class="text-3xl mb-2">⚙️</div>
-                <h3 class="font-medium text-sm group-hover:text-neon transition">Operations Manager</h3>
-            </a>
-            <a href="/remote-ux-designer-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
-                <div class="text-3xl mb-2">🎨</div>
-                <h3 class="font-medium text-sm group-hover:text-neon transition">UX Designer</h3>
-            </a>
-            <a href="/remote-communications-manager-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
-                <div class="text-3xl mb-2">✍️</div>
-                <h3 class="font-medium text-sm group-hover:text-neon transition">Communications</h3>
-            </a>
-            <a href="/remote-finance-manager-jobs/" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition text-center">
-                <div class="text-3xl mb-2">💰</div>
-                <h3 class="font-medium text-sm group-hover:text-neon transition">Finance Manager</h3>
-            </a>
-            <a href="{% url 'jobs:all_role_pages' %}" class="group rounded-2xl border border-brand-300/30 bg-gradient-to-br from-brand-300/10 to-transparent p-5 hover:border-brand-300/50 transition text-center flex flex-col items-center justify-center">
-                <div class="text-2xl mb-2">→</div>
-                <h3 class="font-medium text-sm text-neon">View all roles</h3>
-            </a>
-        </div>
-    </div>
-</section>
-
-<!-- Impact Metrics -->
-<!-- <section id="success" class="py-24 bg-twilight-900">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-16 items-center">
-        <div>
-            <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-2">Why Remote Impact</p>
-            <h2 class="text-4xl font-semibold mb-6">We operate like a product team for your career.</h2>
-            <p class="text-white/70 mb-8">We interview every partner, audit culture, and map real responsibilities so you can spend more time evaluating fit instead of verifying legitimacy.</p>
-            <ul class="space-y-4 text-white/80">
-                <li class="flex items-start space-x-4">
-                    <span class="text-neon text-xl mt-1">✺</span>
-                    <div>
-                        <h3 class="text-lg font-semibold">Curated and human-vetted</h3>
-                        <p class="text-white/60">Every listing is reviewed by our team and backed by transparent compensation ranges.</p>
-                    </div>
+            <ul class="list-surface mt-3 grid sm:grid-cols-2">
+                {% for category in categories|slice:":16" %}
+                <li>
+                    <a href="{% url 'jobs:category_landing' slug=category.slug %}" class="flex items-baseline justify-between gap-4 rounded-xl px-3.5 py-2.5 text-sm transition-colors hover:bg-muted">
+                        <span class="font-medium text-foreground">{{ category.name }}</span>
+                        <span class="tabular-nums text-[13px] text-muted-foreground">{{ category.job_count|intcomma }}</span>
+                    </a>
                 </li>
-                <li class="flex items-start space-x-4">
-                    <span class="text-neon text-xl mt-1">✺</span>
-                    <div>
-                        <h3 class="text-lg font-semibold">Timezone aware</h3>
-                        <p class="text-white/60">Filters designed for async teams so you can stay aligned with life outside work.</p>
-                    </div>
-                </li>
+                {% endfor %}
             </ul>
         </div>
-        <div class="grid gap-6">
-            <div class="rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur">
-                <p class="text-5xl font-semibold text-white mb-2">72%</p>
-                <p class="text-white/60">of talent hired through Remote Impact identify as underrepresented in tech.</p>
+        <div class="lg:col-span-4">
+            <div class="flex items-baseline justify-between px-1">
+                <h2 id="orgs-heading" class="section-title">Hiring now</h2>
+                <a href="{% url 'jobs:organization_directory' %}" class="text-[13px] text-muted-foreground hover:text-foreground">All</a>
             </div>
-            <div class="rounded-3xl border border-white/10 bg-card-gradient p-8 backdrop-blur">
-                <p class="text-5xl font-semibold text-white mb-2">14 days</p>
-                <p class="text-white/60">Average time from listing to first interview.</p>
-            </div>
-        </div>
-    </div>
-</section> -->
-
-<!-- Free Career Tools Section -->
-<section class="pt-10 pb-12 bg-twilight-900">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-3">Free Career Tools</p>
-            <h2 class="text-3xl md:text-4xl font-semibold mb-4">Level up your job search</h2>
-            <p class="text-white/60 max-w-2xl mx-auto">AI-powered tools and calculators to help you land your dream impact role</p>
-        </div>
-        
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            <!-- AI Tools -->
-            <a href="{% url 'jobs:cover_letter_generator' %}" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition">
-                <div class="text-3xl mb-3">✉️</div>
-                <h3 class="font-semibold mb-1 group-hover:text-neon transition">Cover Letter Generator</h3>
-                <p class="text-sm text-white/50">AI-crafted in seconds</p>
-            </a>
-            
-            <a href="{% url 'jobs:interview_prep' %}" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition">
-                <div class="text-3xl mb-3">🎯</div>
-                <h3 class="font-semibold mb-1 group-hover:text-neon transition">Interview Prep</h3>
-                <p class="text-sm text-white/50">Practice Q&A with AI</p>
-            </a>
-            
-            <a href="{% url 'jobs:salary_negotiation' %}" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition">
-                <div class="text-3xl mb-3">💬</div>
-                <h3 class="font-semibold mb-1 group-hover:text-neon transition">Salary Negotiation</h3>
-                <p class="text-sm text-white/50">Scripts that work</p>
-            </a>
-            
-            <a href="{% url 'jobs:remote_readiness_quiz' %}" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition">
-                <div class="text-3xl mb-3">🏠</div>
-                <h3 class="font-semibold mb-1 group-hover:text-neon transition">Remote Readiness Quiz</h3>
-                <p class="text-sm text-white/50">Are you ready?</p>
-            </a>
-            
-            <!-- Calculators -->
-            <a href="{% url 'jobs:salary_to_hourly' %}" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition">
-                <div class="text-3xl mb-3">💵</div>
-                <h3 class="font-semibold mb-1 group-hover:text-neon transition">Salary Calculator</h3>
-                <p class="text-sm text-white/50">Annual ↔ hourly</p>
-            </a>
-            
-            <a href="{% url 'jobs:freelance_rate' %}" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition">
-                <div class="text-3xl mb-3">📊</div>
-                <h3 class="font-semibold mb-1 group-hover:text-neon transition">Freelance Rate</h3>
-                <p class="text-sm text-white/50">Find your ideal rate</p>
-            </a>
-            
-            <a href="{% url 'jobs:skills_gap' %}" class="group rounded-2xl border border-white/10 bg-card-gradient p-5 hover:border-brand-300/50 hover:bg-white/5 transition">
-                <div class="text-3xl mb-3">🎯</div>
-                <h3 class="font-semibold mb-1 group-hover:text-neon transition">Skills Gap Analyzer</h3>
-                <p class="text-sm text-white/50">Find what you need</p>
-            </a>
-            
-            <a href="{% url 'jobs:tools_index' %}" class="group rounded-2xl border border-white/10 bg-gradient-to-br from-brand-300/20 to-brand-300/5 p-5 hover:border-brand-300/50 transition flex flex-col justify-center items-center text-center">
-                <div class="text-3xl mb-3">🧰</div>
-                <h3 class="font-semibold mb-1 group-hover:text-neon transition">View All 15 Tools</h3>
-                <p class="text-sm text-white/50">Calculators, quizzes & more</p>
-            </a>
+            <ul class="list-surface mt-3">
+                {% for org in featured_orgs %}
+                <li>
+                    <a href="{% url 'jobs:organization_profile' slug=org.slug %}" class="flex items-baseline justify-between gap-4 rounded-xl px-3.5 py-2.5 text-sm transition-colors hover:bg-muted">
+                        <span class="truncate font-medium text-foreground">{{ org.name|display_title }}</span>
+                        <span class="shrink-0 tabular-nums text-[13px] text-muted-foreground">{{ org.open_roles }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
 </section>
 
-<!-- Employer CTA Section -->
-<section class="py-10 bg-[#F3F2EE]">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-white rounded-2xl border border-gray-100 px-8 py-10 md:px-12 md:py-12 flex flex-col items-center text-center gap-6 shadow-sm">
-            <div class="flex items-center justify-center w-14 h-14 rounded-full bg-brand-100">
-                <svg class="w-7 h-7 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                </svg>
-            </div>
-            <div>
-                <h2 class="text-xl md:text-2xl font-bold text-gray-900">For Employers: Want to post a job?</h2>
-                <p class="text-gray-600 text-base mt-2">Reach thousands of mission-driven professionals actively looking for impact roles.</p>
-            </div>
-            <a href="{% url 'jobs:post_job' %}"
-               class="inline-flex items-center px-10 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition shadow-[0_0_30px_rgba(230,255,100,0.5)] whitespace-nowrap text-lg">
-                Explore Prices
-                <svg class="w-6 h-6 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                </svg>
-            </a>
+<!-- Popular searches -->
+<section aria-labelledby="roles-heading" class="pb-10">
+    <div class="container">
+        <h2 id="roles-heading" class="px-1 text-sm font-medium text-muted-foreground">Popular searches</h2>
+        <ul class="mt-3 flex flex-wrap gap-2 text-[13px]">
+            <li><a class="inline-block rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" href="/remote-program-manager-jobs/">Program manager</a></li>
+            <li><a class="inline-block rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" href="/remote-software-engineer-jobs/">Software engineer</a></li>
+            <li><a class="inline-block rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" href="/remote-data-scientist-jobs/">Data scientist</a></li>
+            <li><a class="inline-block rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" href="/remote-policy-analyst-jobs/">Policy analyst</a></li>
+            <li><a class="inline-block rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" href="/remote-operations-manager-jobs/">Operations manager</a></li>
+            <li><a class="inline-block rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" href="/remote-communications-manager-jobs/">Communications</a></li>
+            <li><a class="inline-block rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" href="/remote-product-manager-jobs/">Product manager</a></li>
+            <li><a class="inline-block rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" href="/remote-research-scientist-jobs/">Research scientist</a></li>
+            <li><a class="inline-block rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" href="/remote-finance-manager-jobs/">Finance</a></li>
+            <li><a class="inline-block rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" href="/remote-marketing-manager-jobs/">Marketing</a></li>
+            <li><a class="inline-block rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" href="/remote-ux-designer-jobs/">UX designer</a></li>
+            <li><a class="inline-block rounded-full px-3 py-1.5 font-medium text-foreground underline decoration-border hover:decoration-foreground" href="{% url 'jobs:all_role_pages' %}">All roles</a></li>
+        </ul>
+    </div>
+</section>
+
+<!-- Tools and guides -->
+<section aria-labelledby="tools-heading" class="section">
+    <div class="container grid gap-4 lg:grid-cols-2">
+        <div class="surface p-5 sm:p-6">
+            <h2 id="tools-heading" class="section-title">Applying</h2>
+            <p class="mt-1 text-sm text-muted-foreground">Free drafts to start from. You'll want to edit them.</p>
+            <ul class="mt-4 space-y-1">
+                <li><a href="{% url 'jobs:cover_letter_generator' %}" class="block rounded-xl px-3 py-2.5 transition-colors hover:bg-card"><span class="block text-sm font-medium text-foreground">Cover letter draft</span><span class="block text-[13px] text-muted-foreground">Paste a job post and a few lines about you.</span></a></li>
+                <li><a href="{% url 'jobs:interview_prep' %}" class="block rounded-xl px-3 py-2.5 transition-colors hover:bg-card"><span class="block text-sm font-medium text-foreground">Interview questions</span><span class="block text-[13px] text-muted-foreground">Likely questions for a role, with what interviewers look for.</span></a></li>
+                <li><a href="{% url 'jobs:salary_negotiation' %}" class="block rounded-xl px-3 py-2.5 transition-colors hover:bg-card"><span class="block text-sm font-medium text-foreground">Salary negotiation</span><span class="block text-[13px] text-muted-foreground">What to say when an offer arrives.</span></a></li>
+            </ul>
+            <a href="{% url 'jobs:tools_index' %}" class="mt-3 inline-block px-3 text-[13px] text-muted-foreground hover:text-foreground">All tools</a>
+        </div>
+        <div class="surface p-5 sm:p-6">
+            <h2 id="guides-heading" class="section-title">Career guides</h2>
+            <p class="mt-1 text-sm text-muted-foreground">How people move into these fields, what the roles are and what they pay.</p>
+            <ul class="mt-4 space-y-1 text-sm">
+                <li><a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}" class="block rounded-xl px-3 py-2.5 font-medium text-foreground transition-colors hover:bg-card">Climate and environment</a></li>
+                <li><a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}" class="block rounded-xl px-3 py-2.5 font-medium text-foreground transition-colors hover:bg-card">Global health</a></li>
+                <li><a href="{% url 'jobs:pillar_detail' pillar_slug='ai-safety-careers' %}" class="block rounded-xl px-3 py-2.5 font-medium text-foreground transition-colors hover:bg-card">AI safety and governance</a></li>
+                <li><a href="{% url 'jobs:pillar_detail' pillar_slug='humanitarian-ingo-careers' %}" class="block rounded-xl px-3 py-2.5 font-medium text-foreground transition-colors hover:bg-card">Humanitarian and INGOs</a></li>
+                <li><a href="{% url 'jobs:pillar_detail' pillar_slug='effective-altruism-careers' %}" class="block rounded-xl px-3 py-2.5 font-medium text-foreground transition-colors hover:bg-card">Effective altruism</a></li>
+            </ul>
+            <a href="{% url 'jobs:resources' %}" class="mt-3 inline-block px-3 text-[13px] text-muted-foreground hover:text-foreground">All guides</a>
         </div>
     </div>
 </section>
+
+<!-- Pricing -->
+<section aria-labelledby="pricing-heading" class="pb-6">
+    <div class="container">
+        <h2 id="pricing-heading" class="sr-only">Pricing</h2>
+        <div class="grid gap-4 md:grid-cols-2">
+            <div class="card p-5 sm:p-6">
+                <h3 class="text-base font-semibold text-foreground">Looking for work</h3>
+                <p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">Searching and applying are free, and so is your first set of Scout matches. Pro keeps up to five Scouts checking new roles every day: $10 a month after a 7-day free trial, or $24 for three months.</p>
+                <a href="{% url 'jobs:public_pricing' %}" class="btn btn-secondary btn-sm mt-4">See plans</a>
+            </div>
+            <div class="card p-5 sm:p-6">
+                <h3 class="text-base font-semibold text-foreground">Hiring</h3>
+                <p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">Post a role for $99, or pay $49 to feature one that's already listed here. Featured roles sit at the top of matching searches for 30 days, and you can see their views and apply clicks.</p>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <a href="{% url 'jobs:employers' %}?source=home" class="btn btn-primary btn-sm">For employers</a>
+                    <a href="{% url 'jobs:post_job' %}?source=home_employer" class="btn btn-ghost btn-sm">Post a role</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div id="job-scout-composer" class="scout-composer-modal fixed inset-0 z-[70] grid place-items-center p-4 sm:p-5" hidden>
+    <div class="scout-composer-backdrop absolute inset-0 bg-secondary/50 backdrop-blur-sm" data-scout-composer-close></div>
+    <section class="scout-composer-dialog card relative max-h-[calc(100vh-2rem)] w-full max-w-[680px] overflow-auto p-5 shadow-lift sm:p-8" role="dialog" aria-modal="true" aria-labelledby="scout-composer-title">
+        <div class="scout-composer-topline flex items-center justify-between gap-4">
+            <p class="scout-composer-kicker kicker">AI Job Scout</p>
+            <button type="button" class="scout-composer-close btn btn-ghost btn-sm px-2" data-scout-composer-close aria-label="Close job brief editor">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <h2 id="scout-composer-title" class="mt-3 font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">Tell us what a good next role looks like.</h2>
+        <p class="scout-composer-intro mt-2 text-muted-foreground">Write naturally. Include the role, skills, location, seniority, salary, mission, or anything you want excluded.</p>
+        <form id="job-scout-composer-form" method="get" action="{% url 'jobs:job_scout_preview' %}">
+            <input id="job-scout-composer-source" type="hidden" name="source" value="home_hero_modal">
+            <div class="scout-composer-field mt-6">
+                <label for="job-scout-composer-intent" class="label">Your job brief</label>
+                <textarea id="job-scout-composer-intent" name="intent" required minlength="20" maxlength="2000" autocomplete="off" class="textarea min-h-[158px] resize-y text-base" placeholder="For example: I am looking for remote Python or data engineering roles at climate organizations. I am mid-level, open to Europe, and want at least $70k. Please exclude sales and internships."></textarea>
+            </div>
+            <div class="scout-composer-footer mt-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                <p class="scout-composer-hint help mt-0">Specific details help us return better matches.</p>
+                <p id="job-scout-composer-count" class="scout-composer-count help mt-0 whitespace-nowrap tabular-nums" aria-live="polite">0 / 2000</p>
+            </div>
+            <div class="scout-composer-examples mt-4 flex flex-wrap gap-2" aria-label="Example briefs">
+                <button type="button" class="scout-composer-example badge badge-primary cursor-pointer text-left transition-colors hover:border-ring" data-scout-example="Remote climate policy roles in Europe, mid-level, at least $70k, no internships.">Climate policy in Europe</button>
+                <button type="button" class="scout-composer-example badge badge-primary cursor-pointer text-left transition-colors hover:border-ring" data-scout-example="Remote Python or data engineering roles at mission-driven organizations. Open to Europe or worldwide, no sales roles.">Python for social impact</button>
+                <button type="button" class="scout-composer-example badge badge-primary cursor-pointer text-left transition-colors hover:border-ring" data-scout-example="Remote communications or content roles at global health nonprofits. I have five years of experience and prefer full-time work.">Global health communications</button>
+            </div>
+            <button type="submit" class="scout-composer-submit btn btn-primary btn-lg btn-block mt-6">Preview my best matches <span aria-hidden="true">&rarr;</span></button>
+            <p class="scout-composer-note help mt-3 text-center">Your brief may be sent to DeepSeek to interpret preferences; job evidence may also be processed for matching. Avoid sensitive personal information. <a href="{% url 'jobs:privacy' %}" class="underline">Privacy details</a>.</p>
+            <p class="scout-composer-note help mt-1 text-center">Free: one matching email, no card required. Pro adds recurring alerts.</p>
+        </form>
+    </section>
+</div>
 {% endblock %}
 
-<!-- Featured job rotation removed -->
+{% block extra_js %}
+<script>
+(function () {
+    const hero = document.getElementById('hero-job-scout');
+    const launcher = document.getElementById('hero-job-scout-launcher');
+    const modal = document.getElementById('job-scout-composer');
+    const form = document.getElementById('job-scout-composer-form');
+    const input = document.getElementById('job-scout-composer-intent');
+    const sourceInput = document.getElementById('job-scout-composer-source');
+    const count = document.getElementById('job-scout-composer-count');
+    if (!hero || !launcher || !modal || !form || !input || !sourceInput || !count) return;
+
+    const userState = hero.dataset.userState;
+    let viewed = false;
+    let lastFocused = null;
+
+    const track = function (eventName, extra) {
+        if (typeof gtag !== 'function') return;
+        gtag('event', eventName, Object.assign({
+            event_category: 'job_scout_acquisition',
+            event_label: userState,
+            placement: 'homepage_hero'
+        }, extra || {}));
+    };
+
+    const updateCount = function () { count.textContent = input.value.length + ' / ' + input.maxLength; };
+    const openComposer = function (source, seed) {
+        lastFocused = document.activeElement;
+        if (source) sourceInput.value = source;
+        if (seed && !input.value) input.value = seed;
+        updateCount();
+        modal.hidden = false;
+        launcher.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+        if (typeof window.suppressLoginPopup === 'function') window.suppressLoginPopup();
+        window.setTimeout(function () { input.focus(); }, 0);
+        track('job_scout_composer_opened', { interaction: source });
+    };
+    const closeComposer = function () {
+        modal.hidden = true;
+        launcher.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+        if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+    };
+
+    launcher.addEventListener('click', function () { openComposer('home_hero_launcher'); });
+    launcher.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openComposer('home_hero_keyboard');
+        } else if (event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey) {
+            event.preventDefault();
+            openComposer('home_hero_typing', event.key);
+        }
+    });
+    modal.querySelectorAll('[data-scout-composer-close]').forEach(function (button) {
+        button.addEventListener('click', closeComposer);
+    });
+    document.addEventListener('keydown', function (event) {
+        if (modal.hidden) return;
+        if (event.key === 'Escape') closeComposer();
+        if (event.key === 'Tab') {
+            const controls = Array.from(modal.querySelectorAll('button, textarea, a[href]')).filter(function (control) { return !control.disabled && control.getClientRects().length; });
+            const first = controls[0];
+            const last = controls[controls.length - 1];
+            if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+            else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+        }
+    });
+    input.addEventListener('input', updateCount);
+    document.querySelectorAll('[data-scout-example]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const seed = button.dataset.scoutExample || '';
+            if (modal.hidden) openComposer('home_hero_example', seed);
+            else {
+                input.value = seed;
+                updateCount();
+                input.focus();
+            }
+            track('job_scout_composer_example_used');
+        });
+    });
+
+    form.addEventListener('submit', function () {
+        track('job_scout_composer_submit', {
+            intent_length: input.value.trim().length
+        });
+    });
+
+    if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver(function (entries) {
+            if (!viewed && entries.some(function (entry) { return entry.isIntersecting; })) {
+                viewed = true;
+                track('job_scout_hero_view');
+                observer.disconnect();
+            }
+        }, { threshold: 0.5 });
+        observer.observe(hero);
+    } else {
+        track('job_scout_hero_view');
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('scout') === '1') {
+        openComposer(params.get('source') || 'homepage_query');
+    }
+})();
+</script>
+{% endblock %}

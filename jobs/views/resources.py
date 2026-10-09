@@ -1,21 +1,32 @@
+import logging
 from django.views.generic import TemplateView, View
 from django.db.models import Count, Q
-from django.http import Http404, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect
+from django.urls import reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.decorators import method_decorator
+from django.utils import timezone
+from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.cache import cache_page
 from django.conf import settings
+from django.template import TemplateDoesNotExist
+from django.template.loader import get_template
+from functools import lru_cache
 import json
+from datetime import date, timedelta
 import re
 
-import requests
+from jobs.services.safe_fetch import fetch_public_html
 from bs4 import BeautifulSoup
+
+logger = logging.getLogger(__name__)
 
 from ..models import Job, Category, SeekerProfile
 from ..services.ai import AIClient
 from ..services.payment_service import PaymentService
+from ..services.job_service import JobService
 
 
 class CostOfLivingComparisonView(TemplateView):
@@ -34,6 +45,11 @@ class TermsOfServiceView(TemplateView):
     template_name = "jobs/terms.html"
 
 
+class PublicPricingView(TemplateView):
+    """Public pricing and product comparison page for acquisition traffic."""
+    template_name = "jobs/public_pricing.html"
+
+
 @method_decorator(cache_page(getattr(settings, 'CACHE_TTL_MEDIUM', 300)), name='dispatch')
 class HomeView(TemplateView):
     template_name = "jobs/home.html"
@@ -41,28 +57,41 @@ class HomeView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        available_jobs = JobService.get_available_jobs()
+
         # Featured Jobs
-        featured_jobs = (
-            Job.objects.filter(is_active=True, is_featured=True)
+        # "Featured" means an employer paid for placement.
+        featured_jobs = list(
+            available_jobs.filter(Job.sponsored_filter())
             .select_related("organization", "category")
-            .order_by("-posted_at")[:6]
+            .order_by("featured_until")[:6]
         )
 
-        # Latest Jobs
-        latest_jobs = (
-            Job.objects.filter(is_active=True)
+        # Latest Jobs: one per organization, so a single employer posting the same role
+        # for five regions doesn't fill the list.
+        latest_jobs, seen_orgs = [], set()
+        for job in (
+            available_jobs
             .exclude(id__in=[j.id for j in featured_jobs])
             .select_related("organization", "category")
-            .order_by("-posted_at")[:12]
-        )
+            .order_by("-posted_at")[:80]
+        ):
+            if job.organization_id in seen_orgs:
+                continue
+            seen_orgs.add(job.organization_id)
+            latest_jobs.append(job)
+            if len(latest_jobs) == 12:
+                break
 
         # Categories with counts
         categories = Category.objects.annotate(
-            job_count=Count("jobs", filter=Q(jobs__is_active=True))
-        ).order_by("name")
+            job_count=Count("jobs", filter=Q(jobs__in=available_jobs))
+        ).filter(job_count__gt=0).order_by("-job_count", "name")
+
+        from ..services.trust_stats import trust_stats
 
         # Stats for hero section (rounded down to nearest 100)
-        active_jobs_count = Job.objects.filter(is_active=True).count()
+        active_jobs_count = available_jobs.count()
         active_jobs_rounded = (active_jobs_count // 100) * 100
         categories_count = Category.objects.count()
 
@@ -70,7 +99,7 @@ class HomeView(TemplateView):
         from ..models import Organization
         from django.utils import timezone
         from datetime import timedelta
-        org_count = Organization.objects.filter(jobs__is_active=True).distinct().count()
+        org_count = Organization.objects.filter(jobs__in=available_jobs).distinct().count()
         org_count_rounded = (org_count // 100) * 100
 
         # Professionals joined this month
@@ -82,10 +111,13 @@ class HomeView(TemplateView):
 
         # Featured organizations (ones with active jobs)
         from ..models import Organization
+        # Organizations hiring most right now, not alphabetical ("0Labs" first).
         featured_orgs = (
-            Organization.objects.filter(jobs__is_active=True)
-            .distinct()
-            .order_by("name")[:5]
+            Organization.objects.filter(jobs__in=available_jobs)
+            .exclude(name__iexact="Unknown Organization")
+            .exclude(slug="")
+            .annotate(open_roles=Count("jobs", filter=Q(jobs__in=available_jobs)))
+            .order_by("-open_roles", "name")[:8]
         )
 
         # Check if user has completed impact profile
@@ -108,6 +140,7 @@ class HomeView(TemplateView):
                 "professionals_this_month": professionals_this_month,
                 "featured_orgs": featured_orgs,
                 "has_impact_profile": has_impact_profile,
+                "trust": trust_stats(),
             }
         )
         return context
@@ -126,6 +159,148 @@ class AllDomainsView(TemplateView):
 
 class ToolsIndexView(TemplateView):
     template_name = "jobs/tools/index.html"
+
+
+@method_decorator(cache_page(getattr(settings, 'CACHE_TTL_LONG', 3600)), name='dispatch')
+class PartnerResourcesView(TemplateView):
+    """Public distribution page for communities that share impact jobs."""
+    template_name = "jobs/partner_resources.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        available_jobs = JobService.get_available_jobs()
+        context.update(
+            {
+                "active_jobs_count": available_jobs.count(),
+                "jobs_feed_url": self.request.build_absolute_uri(reverse("jobs:jobs_feed")),
+                "category_feed_url": self.request.build_absolute_uri(
+                    reverse("jobs:category_feed", kwargs={"slug": "climate-environment"})
+                ),
+                "scout_preview_url": (
+                    self.request.build_absolute_uri(reverse("jobs:job_scout_preview"))
+                    + "?intent=Remote%20impact%20jobs%20in%20climate%20and%20social%20good"
+                    + "&source=partner_page"
+                ),
+            }
+        )
+        return context
+
+
+@method_decorator(cache_page(getattr(settings, 'CACHE_TTL_LONG', 3600)), name='dispatch')
+class HowWeCheckView(TemplateView):
+    """Public methodology for keeping listings live, remote and real, with today's numbers."""
+    template_name = "jobs/how_we_check.html"
+
+    def get_context_data(self, **kwargs):
+        from ..services.trust_stats import trust_stats
+        context = super().get_context_data(**kwargs)
+        context["stats"] = trust_stats()
+        return context
+
+
+class ImpactJobsSnapshotView(TemplateView):
+    """Transparent, dated market snapshot that partners can cite."""
+    template_name = "jobs/impact_jobs_snapshot.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        now = timezone.now()
+        active_jobs = JobService.get_available_jobs()
+        active_count = active_jobs.count()
+
+        explicitly_global_query = (
+            Q(location__iregex=r"(^|[^a-z])(worldwide|anywhere|global|work from anywhere)([^a-z]|$)")
+            | Q(country__iexact="worldwide")
+            | Q(country__iexact="global")
+            | Q(country__iexact="anywhere")
+        )
+        named_geography_query = (
+            Q(country__isnull=False)
+            & ~Q(country="")
+            & ~Q(country__iexact="worldwide")
+            & ~Q(country__iexact="global")
+            & ~Q(country__iexact="anywhere")
+        )
+        explicitly_global_count = active_jobs.filter(explicitly_global_query).count()
+        named_geography_count = active_jobs.filter(named_geography_query).exclude(
+            explicitly_global_query
+        ).count()
+        unclear_scope_count = max(
+            active_count - explicitly_global_count - named_geography_count,
+            0,
+        )
+
+        def percent(count):
+            return round((count / active_count) * 100) if active_count else 0
+
+        def coverage(query):
+            covered = active_jobs.filter(query).count()
+            return {
+                "count": covered,
+                "percent": percent(covered),
+            }
+
+        source_labels = dict(Job.Source.choices)
+        sources = [
+            {
+                "name": source_labels.get(row["source"], row["source"]),
+                "count": row["job_count"],
+                "percent": round((row["job_count"] / active_count) * 100) if active_count else 0,
+            }
+            for row in active_jobs.values("source")
+            .annotate(job_count=Count("id"))
+            .order_by("-job_count")
+        ]
+        domains = [
+            {
+                "name": row["category__name"] or "Uncategorized",
+                "slug": row["category__slug"],
+                "count": row["job_count"],
+                "percent": round((row["job_count"] / active_count) * 100) if active_count else 0,
+            }
+            for row in active_jobs.values("category__name", "category__slug")
+            .annotate(job_count=Count("id"))
+            .order_by("-job_count")[:10]
+        ]
+
+        context.update(
+            {
+                "snapshot_date": timezone.localdate(),
+                "snapshot_updated_at": now,
+                "active_count": active_count,
+                "last_7_days": active_jobs.filter(posted_at__gte=now - timedelta(days=7)).count(),
+                "last_30_days": active_jobs.filter(posted_at__gte=now - timedelta(days=30)).count(),
+                "remote_scope": {
+                    "explicitly_global": {
+                        "count": explicitly_global_count,
+                        "percent": percent(explicitly_global_count),
+                    },
+                    "named_geography": {
+                        "count": named_geography_count,
+                        "percent": percent(named_geography_count),
+                    },
+                    "unclear": {
+                        "count": unclear_scope_count,
+                        "percent": percent(unclear_scope_count),
+                    },
+                },
+                "worldwide_scout_url": (
+                    self.request.build_absolute_uri(reverse("jobs:job_scout_preview"))
+                    + "?intent=Remote%20impact%20jobs%20I%20can%20do%20from%20anywhere%20in%20the%20world"
+                    + "&source=remote_scope_snapshot"
+                ),
+                "sources": sources,
+                "domains": domains,
+                "coverage": [
+                    ("Salary", coverage(Q(salary_min__gt=0) | Q(salary_max__gt=0))),
+                    ("Normalized country", coverage(~Q(country=""))),
+                    ("Experience level", coverage(~Q(experience_level=""))),
+                    ("Education level", coverage(~Q(education_level=""))),
+                    ("Extracted skills", coverage(~Q(skills=[]))),
+                ],
+            }
+        )
+        return context
 
 
 @method_decorator(cache_page(getattr(settings, 'CACHE_TTL_LONG', 3600)), name='dispatch')
@@ -319,10 +494,9 @@ def _fetch_job_description(job_url: str) -> str:
     if not job_url:
         return ""
     try:
-        resp = requests.get(
-            job_url, timeout=10, headers={"User-Agent": "RemoteImpactBot/1.0"}
-        )
-        resp.raise_for_status()
+        resp = fetch_public_html(job_url, total_timeout=10)
+        if resp.status != "ok":
+            return ""
         text_content = resp.text
         if BeautifulSoup:
             soup = BeautifulSoup(text_content, "html.parser")
@@ -340,13 +514,68 @@ def _fetch_job_description(job_url: str) -> str:
         return ""
 
 
+# Drafts are sent by real people under their own names; they must not read as generated.
+HUMAN_WRITING_RULES = (
+    "You write for job seekers and hiring teams. Write the way a thoughtful, experienced "
+    "person writes: plain words, short sentences, specific details. Never use clichés such as "
+    "'I am writing to express my interest', 'I am excited/thrilled to apply', 'passionate', "
+    "'leverage', 'synergy', 'dynamic', 'fast-paced', 'unlock', 'elevate', 'journey', "
+    "'dream job', 'make a difference' or 'stand out'. No exclamation marks and no emoji. "
+    "Never invent facts, numbers, names or achievements: use only what you are given, and "
+    "where a detail is missing write a short placeholder in square brackets, e.g. [project name]."
+)
+
+
+LLM_FAILED = "LLM call failed: We couldn't write a draft just now. Please try again in a minute."
+
+
 def _call_llm(prompt: str, ai_client: AIClient | None = None) -> str:
     """Call AI service; injectable for testing or alternate providers."""
     client = ai_client or AIClient()
     try:
-        return client.generate(prompt)
-    except Exception as exc:
-        return f"LLM call failed: {exc}"
+        return client.generate(prompt, system_message=HUMAN_WRITING_RULES)
+    except Exception:
+        logger.exception("Tool generation failed")
+        # Callers detect this prefix; provider details stay in the logs.
+        return LLM_FAILED
+
+
+def _request_data(request):
+    """Return POST-style data for form, HTMX, and JSON tool submissions."""
+    if len(request.body) > 50_000:
+        raise ValueError("Payload too large")
+    content_type = request.META.get("CONTENT_TYPE", "")
+    if "application/json" in content_type:
+        try:
+            return json.loads(request.body.decode("utf-8") or "{}")
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            raise ValueError("Invalid JSON payload")
+    return request.POST
+
+
+def _plain_text_result_html(title: str, content: str) -> str:
+    return (
+        '<div class="card p-6 sm:p-8">'
+        f'<h2 class="card-title mb-4">{escape(title)}</h2>'
+        f'<div class="whitespace-pre-wrap text-sm leading-7 text-foreground">{escape(content)}</div>'
+        "</div>"
+    )
+
+
+def _check_anonymous_ai_limit(request, tool_name: str, limit: int = 10):
+    """Bound unauthenticated AI spend per browser session and calendar day."""
+    if request.user.is_authenticated:
+        return None
+    key = f"ai_limit:{tool_name}:{date.today().isoformat()}"
+    count = request.session.get(key, 0)
+    if count >= limit:
+        return JsonResponse(
+            {"error": "Free daily limit reached. Please try again tomorrow or sign in."},
+            status=429,
+        )
+    request.session[key] = count + 1
+    request.session.modified = True
+    return None
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -373,7 +602,7 @@ class ApplicantAssistantGenerateView(View):
             )
 
         try:
-            data = request.POST
+            data = _request_data(request)
             job_url = (data.get("job_url") or "").strip()
             job_description = (data.get("job_description") or "").strip()
             user_resume = (data.get("resume") or "").strip()
@@ -425,7 +654,7 @@ Voice: confident, concise, specific. Avoid filler. Show measurable outcomes. Kee
 
             # Check if LLM call failed
             if content.startswith("LLM call failed:"):
-                return JsonResponse({"error": content}, status=500)
+                return JsonResponse({"error": "We couldn't write a draft just now. Please try again in a minute."}, status=500)
 
             # Save the generation to history
             AssistantGeneration.objects.create(
@@ -446,25 +675,19 @@ Voice: confident, concise, specific. Avoid filler. Show measurable outcomes. Kee
                 "is_subscribed": subscription.is_subscribed,
             })
 
-        except json.JSONDecodeError:
+        except ValueError:
             return JsonResponse({"error": "Invalid JSON payload"}, status=400)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
 
 class AssistantSubscribeView(LoginRequiredMixin, View):
-    """Redirect to Stripe checkout for Assistant Pro subscription."""
+    """Send assistant users through the shared Pro confirmation step."""
 
     def get(self, request, *args, **kwargs):
-        domain_url = request.build_absolute_uri("/").rstrip("/")
-        try:
-            checkout_url = PaymentService.create_assistant_subscription_session(
-                request.user, domain_url
-            )
-            return redirect(checkout_url)
-        except Exception as e:
-            # Log error and redirect back with error message
-            return redirect("jobs:applicant_assistant")
+        return redirect(
+            f"{reverse('jobs:job_scout_subscribe')}?source=applicant_assistant"
+        )
 
 
 class ResignationLetterView(TemplateView):
@@ -473,8 +696,8 @@ class ResignationLetterView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["faqs"] = [
-            {"q": "Is this resignation letter generator really free?", "a": "Yes! You can generate up to 3 resignation letters for free without creating an account. Sign up for a free account to get more."},
-            {"q": "Can I edit the generated resignation letter?", "a": "Absolutely. The generated letter is a starting point. We recommend reviewing and personalizing it before sending to your employer."},
+            {"q": "Is this resignation letter generator really free?", "a": "Yes. You can generate up to 3 resignation letters for free without creating an account. Sign up for a free account to get more."},
+            {"q": "Can I edit the generated resignation letter?", "a": "Yes. The generated letter is a starting point. We recommend reviewing and personalizing it before sending to your employer."},
             {"q": "How much notice should I give when resigning?", "a": "Two weeks is standard in most industries, but check your employment contract. Some senior roles or contracts may require 30 days or more."},
             {"q": "Should I give a reason for leaving in my resignation letter?", "a": "It's courteous but not required. A brief, positive reason is sufficient. Our generator helps you frame your reason professionally."},
             {"q": "Is my data stored when I use this tool?", "a": "We do not store the personal details you enter in the form. The generated letter is created on-the-fly and only exists in your browser."},
@@ -486,9 +709,11 @@ class ResignationLetterView(TemplateView):
 @method_decorator(csrf_exempt, name="dispatch")
 class ResignationLetterGenerateView(View):
     def post(self, request, *args, **kwargs):
+        if response := _check_anonymous_ai_limit(request, "resignation"):
+            return response
         try:
-            data = request.POST
-        except json.JSONDecodeError:
+            data = _request_data(request)
+        except ValueError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
 
         name = (data.get("name") or "").strip()
@@ -568,9 +793,11 @@ class JobDescriptionGenerateView(View):
     """AJAX endpoint that generates a job description via AI."""
 
     def post(self, request, *args, **kwargs):
+        if response := _check_anonymous_ai_limit(request, "job-description"):
+            return response
         try:
-            data = request.POST
-        except json.JSONDecodeError:
+            data = _request_data(request)
+        except ValueError:
             return JsonResponse({"error": "Invalid JSON payload"}, status=400)
 
         job_title = (data.get("job_title") or "").strip()
@@ -614,7 +841,7 @@ Keep it under 600 words. Be specific, avoid jargon, and emphasize mission alignm
 
         try:
             ai_client = AIClient()
-            content = ai_client.generate(prompt, max_tokens=2000)
+            content = ai_client.generate(prompt, max_tokens=2000, system_message=HUMAN_WRITING_RULES)
         except Exception as exc:
             return JsonResponse({"error": f"AI generation failed: {exc}"}, status=500)
 
@@ -638,9 +865,11 @@ class InterviewPrepView(TemplateView):
 
 class InterviewPrepGenerateView(View):
     def post(self, request, *args, **kwargs):
+        if response := _check_anonymous_ai_limit(request, "interview"):
+            return response
         try:
-            data = request.POST
-        except json.JSONDecodeError:
+            data = _request_data(request)
+        except ValueError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
 
         job_title = (data.get("job_title") or "").strip()
@@ -649,11 +878,24 @@ class InterviewPrepGenerateView(View):
         focus = (data.get("focus_area") or "behavioral").strip()
 
         if not job_title:
+            if request.headers.get("HX-Request"):
+                return HttpResponse(
+                    _plain_text_result_html("Something needs fixing", "Job title is required."),
+                    status=400,
+                )
             return JsonResponse({"error": "Job title is required."}, status=400)
 
         if not request.user.is_authenticated:
             count = request.session.get("ip_gen_count", 0)
             if count >= 3:
+                if request.headers.get("HX-Request"):
+                    return HttpResponse(
+                        _plain_text_result_html(
+                            "Free limit reached",
+                            "Create a free account to continue generating interview questions.",
+                        ),
+                        status=429,
+                    )
                 return JsonResponse({"error": "Free limit reached. Please sign up to continue.", "requires_signup": True}, status=429)
             request.session["ip_gen_count"] = count + 1
 
@@ -668,7 +910,15 @@ Format as numbered list. Make questions specific to remote work and the impact/n
         content = _call_llm(prompt)
 
         if content.startswith("LLM call failed:"):
+            if request.headers.get("HX-Request"):
+                return HttpResponse(
+                    _plain_text_result_html("Generation failed", "Please try again."),
+                    status=500,
+                )
             return JsonResponse({"error": "Generation failed. Please try again."}, status=500)
+
+        if request.headers.get("HX-Request"):
+            return HttpResponse(_plain_text_result_html("Your Interview Questions", content))
 
         return JsonResponse({"result": content})
 
@@ -683,8 +933,8 @@ class SalaryNegotiationView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["faqs"] = [
-            {"q": "Is this salary negotiation script generator really free?", "a": "Yes! You can generate up to 3 scripts for free without creating an account. Sign up to unlock more."},
-            {"q": "Will this work for remote job negotiations?", "a": "Absolutely. The scripts are tailored for modern remote and hybrid roles, including language about distributed teams, location-based pay, and remote-specific benefits."},
+            {"q": "Is this salary negotiation script generator really free?", "a": "Yes. You can generate up to 3 scripts for free without creating an account. Sign up to unlock more."},
+            {"q": "Will this work for remote job negotiations?", "a": "Yes. The scripts are tailored for modern remote and hybrid roles, including language about distributed teams, location-based pay, and remote-specific benefits."},
             {"q": "What if my employer says 'that's above our budget'?", "a": "Your generated script includes responses to common objections like budget constraints. It helps you pivot to alternative compensation like equity, bonuses, or extra PTO."},
             {"q": "Should I negotiate salary via email or in a call?", "a": "A live conversation (video or phone) is usually more effective for the initial negotiation. Use your script to prepare, then follow up in writing to confirm agreements."},
             {"q": "Is my data stored when I use this tool?", "a": "No. Your details are processed in real-time to generate the script and are not saved on our servers."},
@@ -696,9 +946,11 @@ class SalaryNegotiationView(TemplateView):
 @method_decorator(csrf_exempt, name="dispatch")
 class SalaryNegotiationGenerateView(View):
     def post(self, request, *args, **kwargs):
+        if response := _check_anonymous_ai_limit(request, "salary-negotiation"):
+            return response
         try:
-            data = request.POST
-        except json.JSONDecodeError:
+            data = _request_data(request)
+        except ValueError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
 
         job_title = (data.get("job_title") or "").strip()
@@ -765,7 +1017,7 @@ class SkillsGapView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["faqs"] = [
-            {"q": "Is the Skills Gap Analyzer really free?", "a": "Yes! You can run up to 3 analyses for free without creating an account. Sign up for a free account to unlock more."},
+            {"q": "Is the Skills Gap Analyzer really free?", "a": "Yes. You can run up to 3 analyses for free without creating an account. Sign up for a free account to unlock more."},
             {"q": "What should I paste in the resume field?", "a": "Anything that describes your experience — your full resume, a skills list, or even your LinkedIn summary. The more detail, the better the analysis."},
             {"q": "How accurate is the match score?", "a": "The AI compares keywords, concepts, and context between your background and the job description. It's a strong directional indicator but not a guarantee of interview outcomes."},
             {"q": "Does this tool store my resume or job description?", "a": "No. Your data is analyzed on-the-fly and is not stored on our servers. It only exists in your browser session."},
@@ -778,9 +1030,11 @@ class SkillsGapView(TemplateView):
 @method_decorator(csrf_exempt, name="dispatch")
 class SkillsGapAnalyzeView(View):
     def post(self, request, *args, **kwargs):
+        if response := _check_anonymous_ai_limit(request, "skills-gap"):
+            return response
         try:
-            data = request.POST
-        except json.JSONDecodeError:
+            data = _request_data(request)
+        except ValueError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
 
         resume = (data.get("resume") or "").strip()
@@ -859,9 +1113,9 @@ class ThankYouEmailView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["faqs"] = [
-            {"q": "Is this thank you email generator really free?", "a": "Yes! You can generate up to 3 thank you emails for free without creating an account. Sign up for a free account to get more."},
+            {"q": "Is this thank you email generator really free?", "a": "Yes. You can generate up to 3 thank you emails for free without creating an account. Sign up for a free account to get more."},
             {"q": "When should I send a thank you email after an interview?", "a": "Ideally within 24 hours. Same-day is best — it shows enthusiasm and keeps you top of mind while the conversation is fresh."},
-            {"q": "Should I send a thank you email after a phone screen?", "a": "Absolutely. Even a brief thank you after a phone screen sets you apart. Most candidates skip this step, so it's an easy way to stand out."},
+            {"q": "Should I send a thank you email after a phone screen?", "a": "Yes. Even a brief thank you after a phone screen sets you apart. Most candidates skip this step, so it's an easy way to stand out."},
             {"q": "What if I interviewed with multiple people?", "a": "Send a personalized thank you to each interviewer. Reference something specific from your conversation with each person. Use this tool once per interviewer."},
             {"q": "Is my data stored when I use this tool?", "a": "We do not store the personal details you enter in the form. The generated email is created on-the-fly and only exists in your browser."},
             {"q": "Can I edit the generated email before sending?", "a": "Of course! The generated email is a strong starting point. We recommend reviewing it, adding personal touches, and proofreading before you send."},
@@ -872,9 +1126,11 @@ class ThankYouEmailView(TemplateView):
 @method_decorator(csrf_exempt, name="dispatch")
 class ThankYouEmailGenerateView(View):
     def post(self, request, *args, **kwargs):
+        if response := _check_anonymous_ai_limit(request, "thank-you"):
+            return response
         try:
-            data = request.POST
-        except json.JSONDecodeError:
+            data = _request_data(request)
+        except ValueError:
             return JsonResponse({"error": "Invalid JSON"}, status=400)
 
         interviewer = (data.get("interviewer") or "").strip()
@@ -981,6 +1237,20 @@ CLUSTER_MAP = {
 }
 
 
+@lru_cache(maxsize=None)
+def guide_template_exists(template_name):
+    """Planned guides can be mapped before their template is written."""
+    try:
+        get_template(template_name)
+    except TemplateDoesNotExist:
+        return False
+    return True
+
+
+def published_clusters():
+    return [key for key, template in CLUSTER_MAP.items() if guide_template_exists(template)]
+
+
 class PillarDetailView(TemplateView):
     def get_template_names(self):
         slug = self.kwargs["pillar_slug"]
@@ -998,10 +1268,10 @@ class PillarDetailView(TemplateView):
 class ClusterDetailView(TemplateView):
     def get_template_names(self):
         key = (self.kwargs["pillar_slug"], self.kwargs["cluster_slug"])
-        try:
-            return [CLUSTER_MAP[key]]
-        except KeyError:
+        template = CLUSTER_MAP.get(key)
+        if not template or not guide_template_exists(template):
             raise Http404
+        return [template]
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

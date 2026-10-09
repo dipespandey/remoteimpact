@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Remote Impact Jobs Feed for Communities &amp; Career Centers{% endblock %}
+{% block meta_description %}Share source-tracked remote jobs in climate, AI safety, global health, nonprofits, and social impact with your community using Remote Impact's free RSS feeds.{% endblock %}
+{% block og_title %}Share Remote Impact Jobs with Your Community{% endblock %}
+{% block og_description %}Free job feeds and links for career centers, newsletters, Slack communities, and impact-career resources.{% endblock %}
+{% block twitter_title %}Share Remote Impact Jobs with Your Community{% endblock %}
+{% block twitter_description %}Free job feeds and links for career centers, newsletters, Slack communities, and impact-career resources.{% endblock %}
+{% block canonical %}{{ SITE_URL }}{% url 'jobs:partner_resources' %}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Share Remote Impact Jobs with Your Community",
+  "description": "Free job feeds and links for communities that share impact careers.",
+  "url": "{{ SITE_URL }}{% url 'jobs:partner_resources' %}",
+  "isPartOf": {"@type": "WebSite", "name": "Remote Impact", "url": "{{ SITE_URL }}"}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container py-8 sm:py-10">
+  <header class="page-header max-w-3xl">
+    <p class="kicker">For communities and career centers</p>
+    <h1 class="page-title mt-1">Give your community a better way to find impact jobs.</h1>
+    <p class="page-lede">Remote Impact tracks current remote roles across climate, global health, AI safety, nonprofits, and other social-impact fields. Share the live job list or subscribe your audience to a feed that updates as new roles arrive.</p>
+    <div class="mt-5 flex flex-wrap gap-2">
+      <a href="{% url 'jobs:job_list' %}" data-track="partner_browse_jobs" data-track-category="distribution" class="btn btn-primary">Browse current jobs <span aria-hidden="true">&rarr;</span></a>
+      <a href="#feeds" data-track="partner_view_feeds" data-track-category="distribution" class="btn btn-outline">View free feeds</a>
+      <a href="{% url 'jobs:impact_jobs_snapshot' %}" data-track="partner_view_snapshot" data-track-category="distribution" class="btn btn-ghost">View jobs snapshot</a>
+    </div>
+  </header>
+
+  <section id="feeds" class="scroll-mt-24" aria-labelledby="feeds-heading">
+    <div class="grid gap-4 lg:grid-cols-3">
+      <article class="card p-5 sm:p-6 lg:col-span-2">
+        <h2 id="feeds-heading" class="section-title">Live RSS feed, updated daily</h2>
+        <p class="mt-2 max-w-[68ch] text-[15px] leading-7 text-muted-foreground">Use this feed in a newsletter, Slack workflow, career-center page, or community digest. It links back to the original Remote Impact job page so readers can review the source and apply.</p>
+        <div class="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
+          <code class="min-w-0 flex-1 overflow-x-auto rounded-xl bg-muted px-4 py-2.5 font-mono text-[13px] text-foreground">{{ jobs_feed_url }}</code>
+          <a href="{% url 'jobs:jobs_feed' %}" data-track="partner_open_jobs_feed" data-track-category="distribution" class="btn btn-outline shrink-0">Open feed
+            <svg class="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
+          </a>
+        </div>
+        <div class="mt-3 flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:gap-2">
+          <span class="font-medium text-foreground">Climate feed:</span>
+          <a href="{% url 'jobs:category_feed' slug='climate-environment' %}" class="min-w-0 truncate font-mono text-[13px] text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">{{ category_feed_url }}</a>
+        </div>
+        <p class="help mt-3">Please keep the Remote Impact link and source attribution when republishing.</p>
+      </article>
+      <aside class="surface p-5 sm:p-6">
+        {% if active_jobs_count %}
+        <p class="text-sm text-muted-foreground"><span class="font-semibold tabular-nums text-foreground">{{ active_jobs_count }}</span> roles currently listed</p>
+        {% endif %}
+        <ul class="check-list {% if active_jobs_count %}mt-3 {% endif %}space-y-1 text-sm leading-6 text-muted-foreground">
+          <li>Source-tracked listings</li>
+          <li>Impact-focused categories</li>
+          <li>Remote and distributed roles</li>
+        </ul>
+      </aside>
+    </div>
+
+    <div class="mt-8 grid gap-6 md:grid-cols-3">
+      <article>
+        <h2 class="text-[15px] font-semibold text-foreground">Career centers</h2>
+        <p class="mt-1 text-sm leading-6 text-muted-foreground">Give students and alumni one place to find remote roles in climate, public health, equity, and social good.</p>
+      </article>
+      <article>
+        <h2 class="text-[15px] font-semibold text-foreground">Newsletters</h2>
+        <p class="mt-1 text-sm leading-6 text-muted-foreground">Add the feed to a recurring jobs section, or link to a filtered category page when your audience has a specific cause area.</p>
+      </article>
+      <article>
+        <h2 class="text-[15px] font-semibold text-foreground">Communities</h2>
+        <p class="mt-1 text-sm leading-6 text-muted-foreground">Share a dependable jobs link in Slack, Discord, or a resource page without maintaining a separate list by hand.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="blurb-heading">
+    <div class="card p-5 sm:p-6">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div class="max-w-2xl">
+          <h2 id="blurb-heading" class="section-title">Copy-ready description</h2>
+          <p class="mt-1 text-sm leading-6 text-muted-foreground">Paste this short description into a resource page, newsletter, Slack post, or career-center email. Please keep the link so people can see the current catalogue.</p>
+        </div>
+        <button type="button" id="copy-partner-blurb" data-track="partner_copy_blurb" data-track-category="distribution" class="btn btn-outline shrink-0">
+          <svg class="h-4 w-4 text-muted-foreground" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 8h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V8Zm-4 8V6a2 2 0 0 1 2-2h10"/></svg>
+          <span>Copy blurb</span>
+        </button>
+      </div>
+      <textarea id="partner-blurb" readonly rows="3" class="textarea mt-4 min-h-0 resize-y" aria-label="Ready-to-publish Remote Impact description">Remote Impact helps people find current remote jobs in climate, global health, AI safety, nonprofits, and social impact. Browse the live catalogue: {{ SITE_URL }}{% url 'jobs:job_list' %}?utm_source=partner&amp;utm_medium=referral&amp;utm_campaign=community_distribution</textarea>
+      <p id="copy-partner-blurb-status" class="mt-2 min-h-[1.25rem] text-[13px] text-emerald-700" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section aria-labelledby="share-links-heading">
+    <h2 id="share-links-heading" class="section-title">Links to share</h2>
+    <p class="mt-1 text-sm text-muted-foreground">Point people to the page that fits what they are looking for.</p>
+    <ul class="list-surface mt-4 grid gap-0.5 sm:grid-cols-2 lg:grid-cols-3">
+      <li><a href="{% url 'jobs:job_list' %}" data-track="partner_link_jobs" data-track-category="distribution" class="block rounded-xl px-4 py-3 transition-colors hover:bg-muted"><span class="block text-[15px] font-medium text-foreground">All remote jobs</span><span class="mt-0.5 block text-[13px] text-muted-foreground">Browse the live catalogue</span></a></li>
+      <li><a href="{% url 'jobs:category_landing' slug='climate-environment' %}" data-track="partner_link_climate" data-track-category="distribution" class="block rounded-xl px-4 py-3 transition-colors hover:bg-muted"><span class="block text-[15px] font-medium text-foreground">Climate jobs</span><span class="mt-0.5 block text-[13px] text-muted-foreground">Climate and environment roles</span></a></li>
+      <li><a href="{% url 'jobs:resources' %}" data-track="partner_link_resources" data-track-category="distribution" class="block rounded-xl px-4 py-3 transition-colors hover:bg-muted"><span class="block text-[15px] font-medium text-foreground">Career resources</span><span class="mt-0.5 block text-[13px] text-muted-foreground">Guides, tools, and communities</span></a></li>
+      <li><a href="{{ scout_preview_url }}" data-track="partner_link_scout" data-track-category="distribution" class="block rounded-xl px-4 py-3 transition-colors hover:bg-muted"><span class="block text-[15px] font-medium text-foreground">Job Scout</span><span class="mt-0.5 block text-[13px] text-muted-foreground">Describe the role you want and get matching jobs by email</span></a></li>
+      <li><a href="{% url 'jobs:impact_jobs_snapshot' %}" data-track="partner_link_snapshot" data-track-category="distribution" class="block rounded-xl px-4 py-3 transition-colors hover:bg-muted"><span class="block text-[15px] font-medium text-foreground">Jobs snapshot</span><span class="mt-0.5 block text-[13px] text-muted-foreground">Dated data on current remote roles</span></a></li>
+    </ul>
+    <p class="mt-6 max-w-[68ch] text-sm leading-6 text-muted-foreground">If you maintain an impact-career resource list, you can link to this page, the live jobs catalogue, or the feed. For editorial questions or partnership ideas, email <a class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground" href="mailto:hello@remoteimpact.org">hello@remoteimpact.org</a>.</p>
+  </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (() => {
+    const button = document.getElementById('copy-partner-blurb');
+    const textarea = document.getElementById('partner-blurb');
+    const status = document.getElementById('copy-partner-blurb-status');
+    if (!button || !textarea || !status) return;
+
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(textarea.value);
+      } catch (error) {
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        textarea.setSelectionRange(0, 0);
+      }
+      status.textContent = 'Copied to your clipboard.';
+      button.querySelector('span').textContent = 'Copied';
+      window.setTimeout(() => {
+        status.textContent = '';
+        button.querySelector('span').textContent = 'Copy blurb';
+      }, 2200);
+    });
+  })();
+</script>
+{% endblock %}

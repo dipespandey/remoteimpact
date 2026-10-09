@@ -9,6 +9,10 @@ Defines role patterns, metadata, and content for SEO pages like:
 
 # Role configurations for SEO pages
 # Each role has: slug, display_name, search_patterns, meta info
+# Landing pages with fewer live jobs than this are thin: keep them reachable but out of
+# search indexes and sitemaps until the inventory fills back in.
+MIN_INDEXABLE_JOBS = 3
+
 ROLE_SEO_PAGES = [
     {
         'slug': 'remote-software-engineer-jobs',
@@ -26,7 +30,7 @@ ROLE_SEO_PAGES = [
         'patterns': ['data scientist', 'data science'],
         'h1': 'Remote Data Scientist Jobs',
         'title': 'Remote Data Scientist Jobs (2026) | {count}+ Impact Roles',
-        'meta_desc': 'Find {count}+ remote data scientist jobs at purpose-driven organizations. Apply ML and analytics to climate, health, and social impact.',
+        'meta_desc': 'Find {count}+ remote data scientist jobs at nonprofits and impact-focused companies. Apply ML and analytics to climate, health, and social impact.',
         'intro': 'Data scientists are uncovering insights that drive impact. From predicting disease outbreaks to optimizing clean energy, your models can change the world.',
         'icon': '📊',
     },
@@ -56,7 +60,7 @@ ROLE_SEO_PAGES = [
         'patterns': ['project manager', 'project lead', 'project coordinator'],
         'h1': 'Remote Project Manager Jobs',
         'title': 'Remote Project Manager Jobs (2026) | {count}+ Roles',
-        'meta_desc': 'Find {count}+ remote project manager jobs at purpose-driven organizations. Lead initiatives in climate, global health, and social impact.',
+        'meta_desc': 'Find {count}+ remote project manager jobs at nonprofits and impact-focused companies. Lead initiatives in climate, global health, and social impact.',
         'intro': 'Project managers keep impact initiatives on track. From coordinating global health programs to launching climate campaigns, you\'ll make things happen.',
         'icon': '📋',
     },
@@ -96,7 +100,7 @@ ROLE_SEO_PAGES = [
         'patterns': ['executive director', 'ed ', 'managing director'],
         'h1': 'Remote Executive Director Jobs',
         'title': 'Remote Executive Director Jobs (2026) | {count}+ Roles',
-        'meta_desc': 'Find {count}+ remote executive director jobs at purpose-driven organizations. Lead teams tackling climate, health, and social challenges.',
+        'meta_desc': 'Find {count}+ remote executive director jobs at nonprofits and impact-focused companies. Lead teams tackling climate, health, and social challenges.',
         'intro': 'Executive directors set the vision and lead organizations to impact. These leadership roles combine strategy, fundraising, and team building.',
         'icon': '👔',
     },
@@ -177,7 +181,7 @@ ROLE_SEO_PAGES = [
         'h1': 'Remote HR Jobs',
         'title': 'Remote HR Jobs (2026) | {count}+ People & Talent Roles',
         'meta_desc': 'Find {count}+ remote HR jobs at impact organizations. Browse people operations, HR generalist, recruiting, and talent roles.',
-        'intro': 'Remote HR teams help purpose-driven organizations hire, support, and retain great people. Find people operations and human resources roles with real impact.',
+        'intro': 'Remote HR teams help nonprofits and impact-focused companies hire, support, and retain great people. Find people operations and human resources roles with real impact.',
         'icon': '🤝',
     },
     {
@@ -375,7 +379,7 @@ KEYWORD_SEO_PAGES = [
         'h1': 'Remote Part-Time Jobs',
         'title': 'Remote Part-Time Jobs (2026) | {count}+ Flexible Impact Roles',
         'meta_desc': 'Find {count}+ remote part-time jobs at nonprofits, climate organizations, health teams, and mission-driven companies.',
-        'intro': 'Remote part-time jobs can still be meaningful. Browse flexible roles at purpose-driven organizations hiring for part-time remote work.',
+        'intro': 'Remote part-time jobs can still be meaningful. Browse flexible roles at nonprofits and impact-focused companies hiring for part-time remote work.',
         'icon': '⏱️',
         'filter_type': 'job_type',
         'job_type': 'part-time',

@@ -18,6 +18,17 @@ from .common import (
 logger = logging.getLogger(__name__)
 
 
+def _idealist_url(value) -> str:
+    if isinstance(value, dict):
+        value = value.get("en") or value.get("es") or value.get("pt") or ""
+    if not isinstance(value, str):
+        return ""
+    value = value.strip()
+    if value.startswith("/"):
+        return f"https://www.idealist.org{value}"
+    return value
+
+
 def _build_idealist_payload() -> Dict:
     return {
         "requests": [
@@ -59,15 +70,7 @@ def _transform_idealist_hit(hit: Dict) -> Dict:
         location_bits.append(hit["remoteZone"])
     location = " · ".join(location_bits)
 
-    if isinstance(hit.get("url"), dict):
-        primary_url = (
-            hit["url"].get("en") or hit["url"].get("es") or hit["url"].get("pt")
-        )
-    else:
-        primary_url = hit.get("url")
-    application_url = primary_url
-    if application_url and application_url.startswith("/"):
-        application_url = f"https://www.idealist.org{application_url}"
+    application_url = _idealist_url(hit.get("url"))
 
     areas = hit.get("areasOfFocus") or ["Impact Careers"]
     if isinstance(areas, str):
@@ -100,7 +103,7 @@ def _transform_idealist_hit(hit: Dict) -> Dict:
         "category_name": category_name,
         "organization_name": hit.get("orgName") or "Unknown Organization",
         "organization_description": hit.get("orgDescription", ""),
-        "organization_url": hit.get("orgUrl", ""),
+        "organization_url": _idealist_url(hit.get("orgUrl")),
         "is_featured": False,
         "raw_data": hit,
     }
@@ -124,7 +127,7 @@ async def import_idealist(
         use_ai: If True, use AI to enrich job descriptions
         batch_size: Number of concurrent AI requests (default: 20)
         progress_callback: Optional callback(completed, total) for progress updates
-        provider: LLM provider ('deepseek', 'groq', 'mistral', or None for auto)
+        provider: DeepSeek, or None for the production default
         skip_existing: If True, skip jobs already imported (for incremental imports)
 
     Returns:

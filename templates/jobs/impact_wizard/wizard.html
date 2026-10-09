@@ -3,43 +3,42 @@
 {% block title %}Build Your Impact Profile - Remote Impact{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-[#F3F2EE] py-8 md:py-16">
-    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="page-narrow">
 
-        <!-- Progress Bar -->
-        <div id="wizard-progress" class="mb-8">
-            <div class="flex justify-between text-sm text-gray-500 mb-2">
-                <span id="wizard-step-text">Step {{ step_index|add:1 }} of {{ steps|length }}</span>
-                <span id="wizard-percent-text">{{ current_step.progress }}% complete</span>
-            </div>
-            <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div id="wizard-progress-bar" class="h-full bg-brand-500 rounded-full transition-all duration-500"
-                     style="width: {{ current_step.progress }}%"></div>
-            </div>
+    <!-- Progress -->
+    <div id="wizard-progress" class="mb-6">
+        <div class="mb-2 flex justify-between text-[13px] text-muted-foreground tabular-nums">
+            <span id="wizard-step-text">Step {{ step_index|add:1 }} of {{ steps|length }}</span>
+            <span id="wizard-percent-text">{{ current_step.progress }}% complete</span>
         </div>
-
-        <!-- Wizard Content Container -->
-        <div id="wizard-content"
-             hx-get="{% url 'jobs:impact_wizard_step' current_step.slug %}"
-             hx-trigger="load"
-             hx-swap="innerHTML show:window:top"
-             class="bg-white rounded-3xl shadow-xl p-6 md:p-10">
-            <!-- Step content loaded here via HTMX -->
-            <div class="flex items-center justify-center py-12">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
-            </div>
+        <div class="h-1 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ current_step.progress }}" aria-label="Profile progress">
+            <div id="wizard-progress-bar" class="h-full rounded-full bg-foreground transition-all duration-500"
+                 style="width: {{ current_step.progress }}%"></div>
         </div>
-
-        <!-- Step indicators -->
-        <div id="wizard-indicators" class="mt-8 flex justify-center">
-            <div class="flex items-center gap-2">
-                {% for step in steps %}
-                <div class="w-2 h-2 rounded-full {% if forloop.counter0 <= step_index %}bg-brand-500{% else %}bg-gray-300{% endif %}"></div>
-                {% endfor %}
-            </div>
-        </div>
-
     </div>
+
+    <!-- Step content -->
+    <div id="wizard-content"
+         hx-get="{% url 'jobs:impact_wizard_step' current_step.slug %}"
+         hx-trigger="load"
+         hx-swap="innerHTML show:window:top"
+         class="card p-5 sm:p-7">
+        <!-- Step content loaded here via HTMX -->
+        <div class="flex items-center justify-center py-12" role="status">
+            <div class="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-foreground" aria-hidden="true"></div>
+            <span class="sr-only">Loading</span>
+        </div>
+    </div>
+
+    <!-- Step indicators -->
+    <div id="wizard-indicators" class="mt-6 flex justify-center" aria-hidden="true">
+        <div class="flex items-center gap-1.5">
+            {% for step in steps %}
+            <div class="h-1.5 w-1.5 rounded-full {% if forloop.counter0 <= step_index %}bg-foreground{% else %}bg-border{% endif %}"></div>
+            {% endfor %}
+        </div>
+    </div>
+
 </div>
 
 <script>

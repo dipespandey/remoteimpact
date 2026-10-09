@@ -9,6 +9,7 @@ import hashlib
 from typing import Optional, Dict, Any
 
 from django.conf import settings
+from .json_utils import parse_json_object
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +97,13 @@ Generate JSON with these fields (be specific to THIS role and company, not gener
     "day_in_life": "2-3 sentences describing what a typical day might look like in this role"
 }}
 
-Be specific, actionable, and tailored to this exact position. Avoid generic advice like "proofread your resume"."""
+Be specific, actionable, and tailored to this exact position. Avoid generic advice like "proofread your resume".
+
+STYLE RULES:
+- Plain, direct English. Short sentences. No marketing adjectives ("exciting", "dynamic", "passionate", "meaningful", "supportive").
+- Only state facts that appear in the details above. If something is unknown (team, culture, daily routine), say what to ask or check instead of guessing.
+- Never use: unlock, elevate, empower, journey, dream job, stand out, leverage, thrive, game-changer, mission-aligned, exclamation marks.
+- Use the job title in normal capitalisation even if it is written in capitals above."""
 
     # Try different AI providers
     content = None
@@ -104,14 +111,6 @@ Be specific, actionable, and tailored to this exact position. Avoid generic advi
     # Try DeepSeek first (cheapest)
     if os.getenv("DEEPSEEK_API_KEY"):
         content = _call_deepseek(prompt)
-    
-    # Fall back to Groq
-    if not content and os.getenv("GROQ_API_KEY"):
-        content = _call_groq(prompt)
-    
-    # Fall back to OpenAI
-    if not content and os.getenv("OPENAI_API_KEY"):
-        content = _call_openai(prompt)
     
     if content:
         return content
@@ -124,8 +123,8 @@ def _call_deepseek(prompt: str) -> Optional[Dict]:
     """Call DeepSeek API."""
     import os
     import httpx
-    
-    try:
+
+    def request_content(temperature: float) -> str:
         response = httpx.post(
             "https://api.deepseek.com/chat/completions",
             headers={
@@ -133,118 +132,70 @@ def _call_deepseek(prompt: str) -> Optional[Dict]:
                 "Content-Type": "application/json",
             },
             json={
-                "model": "deepseek-chat",
+                "model": os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash"),
                 "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.7,
+                "temperature": temperature,
                 "response_format": {"type": "json_object"},
+                "thinking": {"type": "disabled"},
             },
             timeout=30,
         )
         response.raise_for_status()
-        data = response.json()
-        content = data["choices"][0]["message"]["content"]
-        return json.loads(content)
+        return response.json()["choices"][0]["message"]["content"]
+
+    try:
+        return parse_json_object(request_content(0.7))
+    except ValueError:
+        # A second deterministic request handles the occasional malformed
+        # payload without silently switching providers or returning partial data.
+        try:
+            return parse_json_object(request_content(0.0))
+        except Exception as retry_error:
+            logger.warning(f"DeepSeek JSON retry failed: {retry_error}")
+            return None
     except Exception as e:
         logger.warning(f"DeepSeek API error: {e}")
         return None
 
 
-def _call_groq(prompt: str) -> Optional[Dict]:
-    """Call Groq API."""
-    import os
-    import httpx
-    
-    try:
-        response = httpx.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {os.getenv('GROQ_API_KEY')}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": "llama-3.1-70b-versatile",
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.7,
-                "response_format": {"type": "json_object"},
-            },
-            timeout=30,
-        )
-        response.raise_for_status()
-        data = response.json()
-        content = data["choices"][0]["message"]["content"]
-        return json.loads(content)
-    except Exception as e:
-        logger.warning(f"Groq API error: {e}")
-        return None
-
-
-def _call_openai(prompt: str) -> Optional[Dict]:
-    """Call OpenAI API."""
-    import os
-    import httpx
-    
-    try:
-        response = httpx.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": "gpt-4o-mini",
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.7,
-                "response_format": {"type": "json_object"},
-            },
-            timeout=30,
-        )
-        response.raise_for_status()
-        data = response.json()
-        content = data["choices"][0]["message"]["content"]
-        return json.loads(content)
-    except Exception as e:
-        logger.warning(f"OpenAI API error: {e}")
-        return None
-
-
 def _get_default_content(job) -> Dict[str, Any]:
-    """Return default content if AI generation fails."""
+    """Fallback when AI generation fails: honest, general guidance with no invented details."""
+    from jobs.templatetags.job_extras import display_title
+
     org_name = job.organization.name if job.organization else "this organization"
-    
+    title = display_title(job.title)
     return {
-        "company_intro": f"{org_name} is an organization focused on making a positive impact. They're looking for dedicated individuals to join their mission-driven team.",
-        "role_overview": f"The {job.title} position offers an opportunity to contribute meaningfully while developing your skills in a supportive environment.",
+        "company_intro": f"Read {org_name}'s own website and recent updates before applying: what they work on, who funds them and what they have published in the last year.",
+        "role_overview": f"The posting for {title} is the best source on what the job involves. Note the three or four responsibilities it mentions first; those usually matter most.",
         "ideal_candidate": [
-            "Passionate about the organization's mission",
-            "Strong communication and collaboration skills",
-            "Self-motivated with attention to detail",
-            "Eager to learn and grow",
+            "Meets the requirements listed in the posting, or can show equivalent experience",
+            "Can point to specific results from similar work",
+            "Is eligible to work from the locations the posting allows",
         ],
         "application_tips": [
-            f"Research {org_name}'s recent projects and initiatives before applying",
-            "Tailor your cover letter to explain why you're drawn to their specific mission",
-            "Highlight relevant experience, even if from different sectors",
-            "Show concrete examples of your impact in previous roles",
-            "Demonstrate your understanding of the challenges in this space",
+            f"Name one thing {org_name} has done recently and why it matters to you",
+            "Match your CV wording to the responsibilities in the posting",
+            "Give numbers where you can: budgets, people, outcomes",
+            "Check the location and time-zone limits before applying",
+            "Apply through the original posting so your application reaches the employer",
         ],
-        "cover_letter_focus": f"Focus on your alignment with {org_name}'s mission, relevant transferable skills, and specific contributions you could make to the team.",
+        "cover_letter_focus": f"Lead with why {org_name}'s work matters to you, then two or three results that match the posting's main responsibilities.",
         "interview_topics": [
-            "Your motivation for working in the impact sector",
-            "Specific examples of relevant past work",
-            "How you handle challenges and ambiguity",
-            "Your understanding of the organization's work",
-            "Questions about team culture and growth opportunities",
+            "Why this organization and this role",
+            "A recent project like the work in the posting, and what you did",
+            "How you work across time zones and with remote colleagues",
+            "What you would focus on in your first three months",
+            "Your questions about the team, priorities and how success is measured",
         ],
         "research_suggestions": [
-            f"Review {org_name}'s website, recent news, and social media",
-            "Understand their key programs and initiatives",
-            "Research their leadership team and organizational values",
-            "Look for any recent reports or publications they've released",
+            f"{org_name}'s website, annual report or recent publications",
+            "Their main programs or products and who they serve",
+            "Who leads the team you would join, if it is public",
         ],
         "red_flags_to_avoid": [
-            "Generic applications that don't mention the specific organization",
-            "Focusing only on what you'll gain rather than what you'll contribute",
-            "Not demonstrating knowledge of the sector or mission area",
+            "A generic letter that could be sent to any organization",
+            "Ignoring the location or eligibility requirements",
+            "Listing duties instead of results",
         ],
-        "day_in_life": f"As {job.title}, you'd likely spend your time contributing to meaningful projects, collaborating with mission-aligned colleagues, and seeing the direct impact of your work.",
+        "day_in_life": "The posting doesn't describe a typical day. Ask in the interview how the team plans its week and which meetings the role joins.",
     }

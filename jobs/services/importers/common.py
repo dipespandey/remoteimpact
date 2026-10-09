@@ -1,25 +1,267 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
+import re
 from copy import deepcopy
 from datetime import datetime, timezone as dt_timezone
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
+from urllib.parse import urlsplit
 
 import requests
 from asgiref.sync import sync_to_async
-from django.db import close_old_connections, transaction
+from django.db import connections, transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from jobs.models import Category, Job, Organization
 from jobs.utils import unique_slug
 from jobs.constants import IMPACT_AREAS
 from jobs.services.location_normalizer import normalize_location
+from jobs.services.job_enrichment import enrich_job_payload
+from jobs.services.job_quality import refresh_job_quality
 
 logger = logging.getLogger(__name__)
 
 # Build lookup for standard impact areas
 _IMPACT_AREA_BY_SLUG = {area["slug"]: area for area in IMPACT_AREAS}
+
+_GENERIC_LISTING_TITLES = {
+    "expression of interest",
+    "general application",
+    "general applications",
+    "internship",
+    "internships",
+    "open application",
+    "volunteer",
+}
+
+_NON_OPENING_LISTING_PATTERNS = (
+    r"\b(?:talent community|talent pool|candidate pool)\b",
+    r"\b(?:future talent|future role|future openings?)\b",
+    r"\b(?:general interest|general applicant|general application|general applications)\b",
+    r"\b(?:open application|open applications|unsolicited application|unsolicited applications)\b",
+    r"\b(?:speculative application|proactive application|initiative application)\b",
+    r"\b(?:join our team|interested in joining(?: our team)?|your \(role\) here)\b",
+    r"\b(?:your )?\(?role\)? here\b",
+    r"\b(?:don(?:'?| t )see (?:the )?role|submit your (?:cv|resume))\b",
+    r"\b(?:intrigued\?? apply here|general submission|general role)\b",
+    r"\b(?:list of events|career development and transition funding|exceptional talent application)\b",
+    r"^volunteers?$",
+    r"\b(?:submit your resume|drop your resume|cv database)\b",
+    r"\b(?:future opportunit(?:y|ies)|expression of interest)\b",
+    r"\b(?:don(?:'?| t )see (?:the )?right role|stay in touch)\b",
+    r"^any job$",
+    r"^get career (?:advising|advice)$",
+)
+
+PUBLIC_DESCRIPTION_MIN_LENGTH = 120
+
+
+def _public_listing_quality_ready(payload: Dict[str, Any]) -> bool:
+    """Return whether a newly imported external record is safe to publish."""
+    if payload.get("source") == Job.Source.MANUAL:
+        return True
+    description = " ".join(str(payload.get("description") or "").split())
+    has_destination = bool(
+        str(payload.get("application_url") or "").strip()
+        or str(payload.get("application_email") or "").strip()
+    )
+    # Job-board search results are intentionally persisted as inactive
+    # placeholders so the detail crawler can repair them before publication.
+    needs_crawling = bool((payload.get("raw_data") or {}).get("needs_crawling"))
+    return (
+        len(description) >= PUBLIC_DESCRIPTION_MIN_LENGTH
+        and has_destination
+        and not needs_crawling
+    )
+
+
+def _normalize_duplicate_text(value: Any) -> str:
+    return " ".join(str(value or "").strip().split()).lower()
+
+
+def _normalize_duplicate_url(value: Any) -> str:
+    return " ".join(str(value or "").strip().split()).rstrip("/").lower()
+
+
+def _sanitize_public_url(value: Any) -> str:
+    """Return a safe absolute web URL for public organization links."""
+    if not isinstance(value, str):
+        return ""
+    value = value.strip()
+    if not value or any(character in value for character in ("{", "}", "'", '"')):
+        return ""
+    if value.startswith("//"):
+        value = f"https:{value}"
+    elif not re.match(r"^https?://", value, flags=re.IGNORECASE):
+        if re.match(r"^[a-z0-9.-]+\.[a-z]{2,}(?:[/:?#].*)?$", value, flags=re.IGNORECASE):
+            value = f"https://{value}"
+        else:
+            return ""
+    try:
+        parsed = urlsplit(value)
+    except ValueError:
+        return ""
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.netloc:
+        return ""
+    if any(character.isspace() for character in parsed.netloc):
+        return ""
+    return value
+
+
+def _normalize_duplicate_title(value: Any) -> str:
+    title = _normalize_duplicate_text(value)
+    title = re.sub(
+        r"\s*[-–—|]\s*(remote|hybrid|full[- ]time|part[- ]time)\s*$",
+        "",
+        title,
+    )
+    title = re.sub(r"[^a-z0-9+#.]+", " ", title)
+    return _normalize_duplicate_text(title)
+
+
+def _is_generic_listing_title(value: Any) -> bool:
+    """Reject talent pools and generic forms that are not concrete openings."""
+    title = _normalize_duplicate_title(value)
+    return title in _GENERIC_LISTING_TITLES or any(
+        re.search(pattern, title, flags=re.IGNORECASE)
+        for pattern in _NON_OPENING_LISTING_PATTERNS
+    )
+
+
+def _canonical_duplicate_url(value: Any) -> str:
+    """Collapse known ATS URLs that differ only by per-location posting IDs."""
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    try:
+        parts = urlsplit(raw)
+    except ValueError:
+        return ""
+
+    host = parts.netloc.lower().removeprefix("www.")
+    path = re.sub(r"/+", "/", parts.path).rstrip("/").lower()
+    if not host or not path:
+        return ""
+
+    uuid_pattern = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+    for ats_host, prefix in (("jobs.ashbyhq.com", "ashby"), ("jobs.lever.co", "lever")):
+        if host == ats_host:
+            match = re.fullmatch(rf"/([^/]+)/({uuid_pattern})(?:/application|/apply)?", path)
+            if match:
+                return f"{prefix}:{match.group(1)}:{match.group(2)}"
+    if host in {"boards.greenhouse.io", "job-boards.greenhouse.io"}:
+        match = re.fullmatch(r"/([^/]+)/jobs/(\d+)(?:/application)?", path)
+        if match:
+            return f"greenhouse:{match.group(1)}:{match.group(2)}"
+
+    if "smartrecruiters.com" in host:
+        path_parts = [part for part in path.split("/") if part]
+        if len(path_parts) >= 2:
+            role_slug = re.sub(r"^\d+[-_]*", "", path_parts[1])
+            if role_slug:
+                return f"smartrecruiters:{path_parts[0]}:{role_slug}"
+
+    if host.endswith("breezy.hr") or ".breezy.hr" in host:
+        match = re.search(r"/p/(?:[a-f0-9]+-)?([^/]+)", path)
+        if match:
+            return f"breezy:{host}:{match.group(1)}"
+
+    if "idealist.org" in host:
+        match = re.search(r"/nonprofit-job/(?:[a-f0-9]{16,}-)?([^/]+)", path)
+        if match:
+            return f"idealist:{match.group(1)}"
+
+    return ""
+
+
+def _duplicate_url_variants(value: Any) -> list[str]:
+    normalized = _normalize_duplicate_url(value)
+    if not normalized:
+        return []
+    return [normalized, f"{normalized}/"]
+
+
+def _payload_duplicate_key(payload: Dict) -> tuple[str, str, str, str] | None:
+    source = _normalize_duplicate_text(payload.get("source"))
+    app_url = (
+        _canonical_duplicate_url(payload.get("application_url"))
+        or _normalize_duplicate_url(payload.get("application_url"))
+    )
+    title = _normalize_duplicate_title(payload.get("title"))
+    organization_name = _normalize_duplicate_text(payload.get("organization_name"))
+    if app_url.startswith(("ashby:", "lever:", "greenhouse:")):
+        organization_name = "unique-ats-posting"
+    if not (source and app_url and title and organization_name):
+        return None
+    return source, app_url, title, organization_name
+
+
+def _raw_description_signature(value: Any) -> str:
+    text = str(value or "")
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
+    if len(text) < 80:
+        return ""
+    return hashlib.sha1(text.encode("utf-8")).hexdigest()
+
+
+def _payload_raw_description_signature(payload: Dict) -> str:
+    raw_data = payload.get("raw_data") or {}
+    for key in (
+        "description",
+        "description_html",
+        "description_text",
+        "description_plain",
+        "description_plaintext",
+        "description_plain_text",
+    ):
+        signature = _raw_description_signature(raw_data.get(key))
+        if signature:
+            return signature
+    return _raw_description_signature(payload.get("description"))
+
+
+def _job_raw_description_signature(job: Job) -> str:
+    raw_data = job.raw_data or {}
+    for key in (
+        "description",
+        "description_html",
+        "description_text",
+        "description_plain",
+        "description_plaintext",
+        "description_plain_text",
+    ):
+        signature = _raw_description_signature(raw_data.get(key))
+        if signature:
+            return signature
+    return _raw_description_signature(job.description)
+
+
+# Statuses written by check_stale_jobs ("dead") and verify_ats_jobs ("closed", "not_remote").
+BLOCKING_VERIFICATION_STATUSES = {"dead", "closed", "not_remote"}
+
+
+def verification_blocks_listing(raw: Dict) -> bool:
+    """A feed sighting must not resurrect a listing the employer's own site says is gone."""
+    raw = raw or {}
+    return ((raw.get("source_verification") or {}).get("status") in BLOCKING_VERIFICATION_STATUSES
+            or (raw.get("source_page_enrichment") or {}).get("status") in {"http_404", "http_410"})
+
+
+def _mark_job_seen(source: str, external_id: str) -> None:
+    if source and external_id:
+        updates = {"last_seen_at": timezone.now()}
+        # Greenhouse, Lever, and Ashby URLs come from search results. A result
+        # may remain indexed after the posting closes, so only the board API is
+        # allowed to reactivate these records.
+        if source not in {"greenhouse", "lever", "ashby", "workable", "recruitee", "personio", "bamboohr"}:
+            raw = Job.objects.filter(source=source, external_id=external_id).values_list("raw_data", flat=True).first() or {}
+            if not verification_blocks_listing(raw):
+                updates["is_active"] = True
+        Job.objects.filter(source=source, external_id=external_id).update(**updates)
 
 
 async def _async_return(value):
@@ -96,24 +338,66 @@ def _get_or_create_category(name: Optional[str]) -> Optional[Category]:
     return _get_or_create_category_by_slug("other")
 
 
-def is_duplicate_job(application_url: str, source: str = None) -> bool:
+def _reset_idle_connections():
+    """Never close a connection that belongs to an active import transaction."""
+    for connection in connections.all(initialized_only=True):
+        if not connection.in_atomic_block:
+            connection.close_if_unusable_or_obsolete()
+
+
+def is_duplicate_job(
+    application_url: str,
+    source: str = None,
+    title: str | None = None,
+    organization_name: str | None = None,
+) -> bool:
     """
-    Check if a job with the same application URL already exists.
+    Check if a matching job from another source already exists.
+
+    Matching on title and organization when available avoids treating two
+    different roles from the same company board URL as duplicates.
     Returns True if duplicate found (should skip).
     """
     if not application_url:
         return False  # Can't detect duplicates without URL
 
     # Reset stale connections before database query (important for long-running async imports)
-    close_old_connections()
+    _reset_idle_connections()
+    canonical_url = _canonical_duplicate_url(application_url)
+    unique_ats_posting = canonical_url.startswith(("ashby:", "lever:", "greenhouse:"))
     query = Job.objects.filter(
-        application_url=application_url.strip(),
+        application_url__in=_duplicate_url_variants(application_url),
         is_active=True,
     )
     if source:
-        # Exclude jobs from the same source (they'll be updated, not duplicated)
+        # Same-source duplicates are handled by _upsert_job so changed upstream
+        # IDs can still refresh the existing row instead of being skipped.
         query = query.exclude(source=source)
-    return query.exists()
+    if title:
+        query = query.filter(title__iexact=title.strip())
+    if organization_name and not unique_ats_posting:
+        query = query.filter(organization__name__iexact=organization_name.strip())
+    if query.exists():
+        return True
+
+    if not canonical_url:
+        return False
+
+    canonical_query = Job.objects.filter(is_active=True)
+    if source:
+        # Same-source duplicates are handled by _upsert_job so changed upstream
+        # IDs can still refresh the existing row instead of being skipped.
+        canonical_query = canonical_query.exclude(source=source)
+    if title:
+        canonical_query = canonical_query.filter(title__iexact=title.strip())
+    if organization_name and not unique_ats_posting:
+        canonical_query = canonical_query.filter(
+            organization__name__iexact=organization_name.strip()
+        )
+    return any(
+        _canonical_duplicate_url(job.application_url) == canonical_url
+        for job in canonical_query.only("application_url").iterator(chunk_size=500)
+    )
 
 
 def job_exists_in_source(source: str, external_id: str) -> bool:
@@ -124,7 +408,7 @@ def job_exists_in_source(source: str, external_id: str) -> bool:
     if not source or not external_id:
         return False
     # Reset stale connections before database query (important for long-running async imports)
-    close_old_connections()
+    _reset_idle_connections()
     return Job.objects.filter(source=source, external_id=str(external_id)).exists()
 
 
@@ -153,6 +437,7 @@ def _get_or_create_org(
 ) -> Organization:
     if not name:
         name = "Unknown Organization"
+    website = _sanitize_public_url(website)
     org, created = Organization.objects.get_or_create(
         name=name,
         defaults={
@@ -190,6 +475,62 @@ def _ensure_job_slug(title: str, organization_name: str) -> str:
     return unique_slug(Job, f"{title}-{organization_name}")
 
 
+def _find_same_source_duplicate_job(payload: Dict, organization: Organization) -> Optional[Job]:
+    app_url = payload.get("application_url", "")
+    title = payload.get("title", "")
+    url_variants = _duplicate_url_variants(app_url)
+    if not (title and payload.get("source")):
+        return None
+
+    if url_variants:
+        exact_match = (
+            Job.objects.filter(
+                source=payload["source"],
+                organization=organization,
+                application_url__in=url_variants,
+                title__iexact=title.strip(),
+                is_active=True,
+            )
+            .order_by("-posted_at", "-id")
+            .first()
+        )
+        if exact_match:
+            return exact_match
+
+    base_query = Job.objects.filter(
+        source=payload["source"],
+        organization=organization,
+        title__iexact=title.strip(),
+        is_active=True,
+    )
+
+    canonical_url = _canonical_duplicate_url(app_url)
+    if canonical_url:
+        canonical_query = base_query
+        if canonical_url.startswith(("ashby:", "lever:", "greenhouse:")):
+            canonical_query = Job.objects.filter(
+                source=payload["source"], title__iexact=title.strip(), is_active=True,
+            )
+        for job in canonical_query.only("id", "application_url", "posted_at").order_by(
+            "-posted_at", "-id"
+        ):
+            if _canonical_duplicate_url(job.application_url) == canonical_url:
+                return job
+
+    raw_signature = _payload_raw_description_signature(payload)
+    if raw_signature:
+        normalized_location = normalize_location(payload.get("location", "Remote"))
+        for job in (
+            base_query.filter(location=normalized_location)
+            .only("id", "raw_data", "description", "posted_at")
+            .order_by("-posted_at", "-id")
+        ):
+            if _job_raw_description_signature(job) == raw_signature:
+                return job
+
+    return None
+
+
 def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
     """
     Persist a job dict returning (job, created?).
@@ -197,6 +538,10 @@ def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
 
     Note: AI processing should be done via batch_upsert_jobs() before calling this.
     """
+    source_location = payload.get("location")
+    source_country = payload.get("country")
+    payload = enrich_job_payload(payload)
+
     organization = _get_or_create_org(
         payload["organization_name"],
         website=payload.get("organization_url", ""),
@@ -239,6 +584,7 @@ def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
         "posted_at": payload.get("posted_at", timezone.now()),
         "expires_at": payload.get("expires_at"),
         "raw_data": payload.get("raw_data", {}),
+        "last_seen_at": timezone.now(),
     }
 
     job = Job.objects.filter(
@@ -246,20 +592,69 @@ def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
         external_id=payload["external_id"],
     ).first()
 
+    if not job:
+        job = _find_same_source_duplicate_job(payload, organization)
+
     if job:
         old_title = job.title
+        old_raw = job.raw_data or {}
+        same_destination = job.application_url == defaults["application_url"]
+        confirmed_dead = same_destination and verification_blocks_listing(old_raw)
+        if confirmed_dead:
+            defaults["is_active"] = False
+        if not source_location and job.location:
+            defaults["location"] = job.location
+        if not source_country and defaults["country"] == "Worldwide" and source_location in (None, "", "Remote") and job.country:
+            defaults["country"] = job.country
+        for field in ("description", "requirements", "country", "skills", "experience_level", "education_level", "benefits"):
+            if defaults[field] in (None, "", []) and getattr(job, field):
+                defaults[field] = getattr(job, field)
+        if len(defaults["description"].strip()) < PUBLIC_DESCRIPTION_MIN_LENGTH and len((job.description or "").strip()) >= PUBLIC_DESCRIPTION_MIN_LENGTH:
+            defaults["description"] = job.description
+            defaults["requirements"] = job.requirements
+            defaults["skills"] = sorted(set(job.skills or []) | set(defaults["skills"] or []))
+        if defaults["salary_min"] is None and defaults["salary_max"] is None:
+            for field in ("salary_min", "salary_max", "salary_currency"):
+                defaults[field] = getattr(job, field)
+        incoming_raw = dict(defaults["raw_data"] or {})
+        for key in ("quality_enrichment", "source_page_enrichment", "source_verification", "last_stale_check", "crawl_error", "ats", "ats_check"):
+            if key in old_raw and key not in incoming_raw and (same_destination or key == "quality_enrichment"):
+                incoming_raw[key] = old_raw[key]
+        defaults["raw_data"] = incoming_raw
+        if job.category_id and (category is None or category.slug == "other"):
+            category = job.category
         for field, value in defaults.items():
             setattr(job, field, value)
+        # Do not let a transiently incomplete refresh hide a previously valid
+        # active role. New records are gated below; crawler updates explicitly
+        # reactivate a record once its detail page is complete.
+        if job.is_active and not _public_listing_quality_ready(payload):
+            job.is_active = True
         job.organization = organization
         job.category = category
         # Update slug if title changed from placeholder
         new_title = defaults.get("title", old_title)
         if old_title != new_title and job.slug.startswith("job-at-"):
             job.slug = _ensure_job_slug(new_title, organization.name)
+        refresh_job_quality(job)
         job.save()
         return job, False
 
     slug = _ensure_job_slug(payload["title"], organization.name)
+    if not _public_listing_quality_ready(payload):
+        defaults["is_active"] = False
+        raw_data = dict(defaults.get("raw_data") or {})
+        quality = dict(raw_data.get("quality_enrichment") or {})
+        quality["publication_gate"] = {
+            "method": "minimum_listing_quality_v1",
+            "description_min_length": PUBLIC_DESCRIPTION_MIN_LENGTH,
+            "has_application_destination": bool(
+                defaults.get("application_url") or defaults.get("application_email")
+            ),
+            "needs_crawling": bool(raw_data.get("needs_crawling")),
+        }
+        raw_data["quality_enrichment"] = quality
+        defaults["raw_data"] = raw_data
     job = Job(
         slug=slug,
         organization=organization,
@@ -268,6 +663,7 @@ def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
         external_id=payload["external_id"],
         **defaults,
     )
+    refresh_job_quality(job)
     job.save()
     return job, True
 
@@ -275,7 +671,7 @@ def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
 def _upsert_job_sync(payload: Dict) -> Tuple[Job, bool]:
     """Synchronous wrapper for _upsert_job with transaction."""
     # Reset stale connections before database write (important for long-running async imports)
-    close_old_connections()
+    _reset_idle_connections()
     with transaction.atomic():
         return _upsert_job(payload)
 
@@ -301,7 +697,7 @@ async def batch_upsert_jobs(
         progress_callback: Optional callback(completed, total) for progress updates
         skip_duplicates: Skip jobs that already exist with same URL from different source
         skip_existing: Skip jobs that already exist in the same source (for incremental imports)
-        provider: LLM provider to use ('deepseek', 'groq', 'mistral', or None for auto)
+        provider: DeepSeek, or None for the production default
 
     Returns:
         Dict with keys: created, updated, fetched, skipped
@@ -309,7 +705,16 @@ async def batch_upsert_jobs(
     if not payloads:
         return {"fetched": 0, "created": 0, "updated": 0, "skipped": 0}
 
-    stats = {"fetched": len(payloads), "created": 0, "updated": 0, "skipped": 0}
+    stats = {"fetched": len(payloads), "created": 0, "updated": 0, "skipped": 0, "failed": 0}
+
+    publishable_payloads = [
+        payload for payload in payloads if not _is_generic_listing_title(payload.get("title"))
+    ]
+    stats["skipped"] += len(payloads) - len(publishable_payloads)
+    payloads = publishable_payloads
+
+    if not payloads:
+        return stats
 
     # Skip jobs that already exist in the same source (for incremental imports)
     if skip_existing:
@@ -320,6 +725,7 @@ async def batch_upsert_jobs(
             external_id = payload.get("external_id", "")
             if source and external_id and await check_exists(source, external_id):
                 stats["skipped"] += 1
+                await sync_to_async(_mark_job_seen, thread_sensitive=True)(source, external_id)
             else:
                 filtered_payloads.append(payload)
         payloads = filtered_payloads
@@ -330,10 +736,24 @@ async def batch_upsert_jobs(
     if skip_duplicates:
         check_duplicate = sync_to_async(is_duplicate_job, thread_sensitive=True)
         filtered_payloads = []
+        seen_duplicate_keys = set()
         for payload in payloads:
+            duplicate_key = _payload_duplicate_key(payload)
+            if duplicate_key and duplicate_key in seen_duplicate_keys:
+                stats["skipped"] += 1
+                logger.debug("Skipping repeated payload for %s", payload.get("title", "Untitled"))
+                continue
+            if duplicate_key:
+                seen_duplicate_keys.add(duplicate_key)
+
             app_url = payload.get("application_url", "")
             source = payload.get("source", "")
-            if app_url and await check_duplicate(app_url, source):
+            if app_url and await check_duplicate(
+                app_url,
+                source,
+                payload.get("title"),
+                payload.get("organization_name"),
+            ):
                 stats["skipped"] += 1
                 logger.debug(f"Skipping duplicate URL: {app_url[:50]}...")
             else:
@@ -395,6 +815,7 @@ async def batch_upsert_jobs(
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 logger.error(f"Failed to save job: {result}")
+                stats["failed"] += 1
             else:
                 job, created = result
                 if created:
@@ -410,7 +831,10 @@ async def batch_upsert_jobs(
         if batch_end < total:
             await asyncio.sleep(0.1)
 
-    logger.info(f"Import complete: {stats['created']} created, {stats['updated']} updated")
+    logger.info(
+        "Import complete: %s created, %s updated, %s failed",
+        stats["created"], stats["updated"], stats["failed"],
+    )
     return stats
 
 
@@ -528,3 +952,45 @@ def _paginate_algolia(
         page += 1
         if page >= result.get("nbPages", 0):
             break
+
+
+FEED_SOURCES = {"80000hours", "idealist", "reliefweb", "climatebase", "probablygood"}
+
+
+def retire_unseen_listings(source: str, run_started: datetime, fetched: int, grace_days: int = 2) -> dict:
+    """Take down listings a full feed fetch no longer contains.
+
+    Aggregators drop a listing when the employer closes it. Every successful fetch
+    marks the listings it contains as seen, so anything unseen for `grace_days`
+    has been removed upstream. A sighting later reactivates it (see _mark_job_seen).
+    Listings the employer's own ATS confirmed open recently are kept.
+    """
+    from datetime import timedelta
+
+    if source not in FEED_SOURCES:
+        return {"retired": 0, "skipped": "not a feed source"}
+    if fetched < 20:
+        return {"retired": 0, "skipped": f"only {fetched} fetched"}
+    recent = Job.objects.filter(
+        source=source, is_active=True, last_seen_at__gte=run_started - timedelta(days=grace_days)
+    ).count()
+    # Guard against partial or broken fetches: a feed that suddenly returns far fewer
+    # listings than it showed in the last couple of days is not trusted to retire anything.
+    if fetched < 0.5 * recent:
+        return {"retired": 0, "skipped": f"fetched {fetched} vs {recent} recently seen"}
+    cutoff = run_started - timedelta(days=grace_days)
+    ats_fresh = (run_started - timedelta(days=3)).isoformat()
+    stale = Job.objects.filter(source=source, is_active=True).filter(
+        Q(last_seen_at__lt=cutoff) | Q(last_seen_at__isnull=True, posted_at__lt=cutoff)
+    )
+    retired = 0
+    now = timezone.now()
+    for job in stale.only("id", "raw_data").iterator(chunk_size=500):
+        raw = dict(job.raw_data or {})
+        check = raw.get("source_verification") or {}
+        if check.get("method") == "ats_api" and check.get("status") == "open" and str(check.get("checked_at", "")) >= ats_fresh:
+            continue
+        raw["removed_from_source_at"] = now.isoformat()
+        Job.objects.filter(pk=job.pk).update(is_active=False, raw_data=raw)
+        retired += 1
+    return {"retired": retired, "skipped": ""}

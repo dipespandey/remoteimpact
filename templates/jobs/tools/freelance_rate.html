@@ -3,10 +3,10 @@
 
 {% block title %}Free Freelance Rate Calculator | Set Your Remote Consulting Rate{% endblock %}
 
-{% block meta_description %}Calculate your ideal freelance hourly rate based on desired income, expenses, and availability. Free tool for remote consultants and independent professionals.{% endblock %}
+{% block meta_description %}Free freelance rate calculator. Work out the hourly, daily and monthly rate you need from your target income, business expenses, days off and tax rate. For remote consultants and independent professionals.{% endblock %}
 
 {% block content %}
-<section class="bg-[#F3F2EE] min-h-screen py-12 px-4 sm:px-6 lg:px-8"
+<div class="container py-8 sm:py-10"
   x-data="{
     income: 80000,
     expenses: 10000,
@@ -32,228 +32,209 @@
     get expensePercent() { return this.grossIncome > 0 ? (this.expenses / this.grossIncome * 100) : 0 },
     fmt(v) { return this.sym + Math.round(v).toLocaleString() },
     marketRanges: [
-      { label: 'Junior / Entry-level', min: 25, max: 60 },
-      { label: 'Mid-level Consultant', min: 60, max: 120 },
-      { label: 'Senior / Specialist', min: 120, max: 250 },
-      { label: 'Expert / Niche Advisory', min: 250, max: 500 }
+      { label: 'Junior / entry level', min: 25, max: 60 },
+      { label: 'Mid-level consultant', min: 60, max: 120 },
+      { label: 'Senior / specialist', min: 120, max: 250 },
+      { label: 'Expert / niche advisory', min: 250, max: 500 }
     ],
     rateInRange(min, max) {
       return this.hourlyRate >= min && this.hourlyRate <= max;
     }
   }">
 
-  <div class="max-w-5xl mx-auto">
-    <!-- Header -->
-    <div class="text-center mb-10">
-      <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Free Freelance Rate Calculator</h1>
-      <h2 class="text-lg text-gray-600 max-w-2xl mx-auto">Set your remote consulting rate with confidence. Enter your goals and see your ideal hourly, daily, and monthly rates instantly.</h2>
-    </div>
+  <nav aria-label="Breadcrumb" class="!border-b-0">
+    <ol class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+      <li><a href="{% url 'jobs:resources' %}" class="hover:text-foreground hover:underline">Resources</a></li>
+      <li aria-hidden="true">/</li>
+      <li class="text-foreground" aria-current="page">Freelance rate calculator</li>
+    </ol>
+  </nav>
 
-    <div class="grid lg:grid-cols-5 gap-8">
-      <!-- Inputs Card -->
-      <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5 h-fit">
-        <h3 class="text-lg font-semibold text-gray-900 mb-1">Your Details</h3>
+  <header class="mt-4 max-w-3xl">
+    <h1 class="page-title">Freelance rate calculator</h1>
+    <p class="page-lede">Enter the income you want to take home and your costs. The calculator shows the hourly, daily and monthly rate you need to charge.</p>
+  </header>
 
-        <!-- Currency -->
+  <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-5">
+    <!-- Inputs -->
+    <div class="surface min-w-0 p-5 sm:p-6 lg:col-span-2 lg:self-start">
+      <h2 class="text-sm font-medium text-foreground">Your numbers</h2>
+      <div class="mt-5 space-y-5">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-          <select x-model="currency" class="w-full rounded-lg border-gray-200 bg-brand-50 text-brand-600 font-medium px-3 py-2 focus:ring-brand-300 focus:border-brand-300">
+          <label for="fr-currency" class="label">Currency</label>
+          <select id="fr-currency" x-model="currency" class="select bg-card">
             <template x-for="c in ['USD','EUR','GBP','CAD','AUD']" :key="c">
               <option :value="c" x-text="c" :selected="c === currency"></option>
             </template>
           </select>
         </div>
 
-        <!-- Annual Income -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Desired Annual Income (net)</label>
+          <label for="fr-income" class="label">Take-home income per year (after tax)</label>
           <div class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" x-text="sym"></span>
-            <input type="number" x-model.number="income" min="0" step="1000" class="w-full pl-10 pr-3 py-2 rounded-lg border-gray-200 focus:ring-brand-300 focus:border-brand-300">
+            <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground" x-text="sym"></span>
+            <input id="fr-income" type="number" inputmode="decimal" x-model.number="income" min="0" step="1000" class="input bg-card pl-12 tabular-nums">
           </div>
         </div>
 
-        <!-- Expenses -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Annual Business Expenses</label>
+          <label for="fr-expenses" class="label">Business expenses per year</label>
           <div class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" x-text="sym"></span>
-            <input type="number" x-model.number="expenses" min="0" step="500" class="w-full pl-10 pr-3 py-2 rounded-lg border-gray-200 focus:ring-brand-300 focus:border-brand-300">
+            <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground" x-text="sym"></span>
+            <input id="fr-expenses" type="number" inputmode="decimal" x-model.number="expenses" min="0" step="500" class="input bg-card pl-12 tabular-nums">
           </div>
+          <p class="help">Software, equipment, insurance, accounting, co-working.</p>
         </div>
 
-        <!-- Days off -->
-        <div class="grid grid-cols-3 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">Vacation Days</label>
-            <input type="number" x-model.number="vacationDays" min="0" max="365" class="w-full px-3 py-2 rounded-lg border-gray-200 focus:ring-brand-300 focus:border-brand-300 text-sm">
+        <fieldset>
+          <legend class="label">Days off per year</legend>
+          <div class="grid grid-cols-3 gap-3">
+            <div class="min-w-0">
+              <label for="fr-vacation" class="mb-1 block text-xs text-muted-foreground">Vacation</label>
+              <input id="fr-vacation" type="number" inputmode="numeric" x-model.number="vacationDays" min="0" max="365" class="input bg-card tabular-nums">
+            </div>
+            <div class="min-w-0">
+              <label for="fr-sick" class="mb-1 block text-xs text-muted-foreground">Sick</label>
+              <input id="fr-sick" type="number" inputmode="numeric" x-model.number="sickDays" min="0" max="365" class="input bg-card tabular-nums">
+            </div>
+            <div class="min-w-0">
+              <label for="fr-holidays" class="mb-1 block text-xs text-muted-foreground">Holidays</label>
+              <input id="fr-holidays" type="number" inputmode="numeric" x-model.number="holidays" min="0" max="365" class="input bg-card tabular-nums">
+            </div>
           </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">Sick Days</label>
-            <input type="number" x-model.number="sickDays" min="0" max="365" class="w-full px-3 py-2 rounded-lg border-gray-200 focus:ring-brand-300 focus:border-brand-300 text-sm">
+          <p class="help">Weekends (104 days) are already excluded.</p>
+        </fieldset>
+
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-1">
+          <div class="min-w-0">
+            <label for="fr-hours" class="label">Billable hours per day</label>
+            <input id="fr-hours" type="number" inputmode="decimal" x-model.number="billableHours" min="1" max="16" step="0.5" class="input bg-card tabular-nums">
           </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">Holidays</label>
-            <input type="number" x-model.number="holidays" min="0" max="365" class="w-full px-3 py-2 rounded-lg border-gray-200 focus:ring-brand-300 focus:border-brand-300 text-sm">
+          <div class="min-w-0">
+            <label for="fr-tax" class="label">Estimated tax rate (%)</label>
+            <input id="fr-tax" type="number" inputmode="decimal" x-model.number="taxRate" min="0" max="80" class="input bg-card tabular-nums">
           </div>
         </div>
-
-        <!-- Billable hours -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Billable Hours / Day</label>
-          <input type="number" x-model.number="billableHours" min="1" max="16" step="0.5" class="w-full px-3 py-2 rounded-lg border-gray-200 focus:ring-brand-300 focus:border-brand-300">
-        </div>
-
-        <!-- Tax Rate -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Estimated Tax Rate (%)</label>
-          <input type="number" x-model.number="taxRate" min="0" max="80" class="w-full px-3 py-2 rounded-lg border-gray-200 focus:ring-brand-300 focus:border-brand-300">
-        </div>
-      </div>
-
-      <!-- Results Column -->
-      <div class="lg:col-span-3 space-y-6">
-
-        <!-- Summary Stats -->
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-1">Availability</h3>
-          <div class="grid grid-cols-2 gap-4 mt-4">
-            <div class="bg-brand-50 rounded-xl p-4 text-center">
-              <p class="text-2xl font-bold text-brand-600" x-text="workingDays"></p>
-              <p class="text-xs text-gray-500 mt-1">Working Days / Year</p>
-            </div>
-            <div class="bg-brand-50 rounded-xl p-4 text-center">
-              <p class="text-2xl font-bold text-brand-600" x-text="billableHoursYear.toLocaleString()"></p>
-              <p class="text-xs text-gray-500 mt-1">Billable Hours / Year</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Rates Card -->
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Rates</h3>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div class="bg-brand-50 rounded-xl p-4 text-center">
-              <p class="text-xl sm:text-2xl font-bold text-brand-600" x-text="fmt(hourlyRate)"></p>
-              <p class="text-xs text-gray-500 mt-1">Hourly</p>
-            </div>
-            <div class="bg-brand-50 rounded-xl p-4 text-center">
-              <p class="text-xl sm:text-2xl font-bold text-brand-600" x-text="fmt(dailyRate)"></p>
-              <p class="text-xs text-gray-500 mt-1">Daily</p>
-            </div>
-            <div class="bg-brand-50 rounded-xl p-4 text-center">
-              <p class="text-xl sm:text-2xl font-bold text-brand-600" x-text="fmt(weeklyRate)"></p>
-              <p class="text-xs text-gray-500 mt-1">Weekly</p>
-            </div>
-            <div class="bg-brand-50 rounded-xl p-4 text-center">
-              <p class="text-xl sm:text-2xl font-bold text-brand-600" x-text="fmt(monthlyRate)"></p>
-              <p class="text-xs text-gray-500 mt-1">Monthly</p>
-            </div>
-          </div>
-          <div class="mt-4 bg-gray-50 rounded-xl p-4 text-center">
-            <p class="text-sm text-gray-500">Required Gross Income</p>
-            <p class="text-2xl font-bold text-gray-900" x-text="fmt(grossIncome)"></p>
-          </div>
-        </div>
-
-        <!-- Visual Breakdown -->
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">Income Breakdown</h3>
-          <!-- Stacked bar -->
-          <div class="w-full h-10 rounded-full overflow-hidden flex">
-            <div class="bg-brand-300 h-full transition-all duration-300" :style="'width:' + incomePercent + '%'" :title="'Take-home: ' + fmt(income)"></div>
-            <div class="bg-amber-400 h-full transition-all duration-300" :style="'width:' + taxPercent + '%'" :title="'Taxes: ' + fmt(taxAmount)"></div>
-            <div class="bg-rose-400 h-full transition-all duration-300" :style="'width:' + expensePercent + '%'" :title="'Expenses: ' + fmt(expenses)"></div>
-          </div>
-          <!-- Legend -->
-          <div class="flex flex-wrap gap-4 mt-4 text-sm">
-            <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-brand-300 inline-block"></span>
-              <span class="text-gray-600">Take-home <span class="font-semibold" x-text="fmt(income)"></span> (<span x-text="Math.round(incomePercent)"></span>%)</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-amber-400 inline-block"></span>
-              <span class="text-gray-600">Taxes <span class="font-semibold" x-text="fmt(taxAmount)"></span> (<span x-text="Math.round(taxPercent)"></span>%)</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-rose-400 inline-block"></span>
-              <span class="text-gray-600">Expenses <span class="font-semibold" x-text="fmt(expenses)"></span> (<span x-text="Math.round(expensePercent)"></span>%)</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Market Comparison -->
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Rate vs Market</h3>
-          <p class="text-sm text-gray-500 mb-4">Common hourly rate ranges for remote impact &amp; consulting work</p>
-          <div class="space-y-3">
-            <template x-for="range in marketRanges" :key="range.label">
-              <div>
-                <div class="flex justify-between text-sm mb-1">
-                  <span class="text-gray-700" x-text="range.label"></span>
-                  <span class="text-gray-400" x-text="sym + range.min + ' – ' + sym + range.max"></span>
-                </div>
-                <div class="relative w-full h-6 bg-gray-100 rounded-full overflow-hidden">
-                  <!-- Market range bar -->
-                  <div class="absolute h-full bg-gray-200 rounded-full"
-                    :style="'left:' + (range.min / 500 * 100) + '%; width:' + ((range.max - range.min) / 500 * 100) + '%'"></div>
-                  <!-- Your rate marker -->
-                  <div class="absolute top-0 h-full w-1 bg-brand-600 rounded-full transition-all duration-300"
-                    :style="'left: min(' + (hourlyRate / 500 * 100) + '%, 99.5%)'"></div>
-                </div>
-                <div x-show="rateInRange(range.min, range.max)" class="text-xs text-brand-600 font-medium mt-1">
-                  ✓ Your rate falls in this range
-                </div>
-              </div>
-            </template>
-          </div>
-          <p class="text-xs text-gray-400 mt-4">Green marker shows your calculated hourly rate. Ranges are approximate for remote consulting roles.</p>
-        </div>
-
-        <!-- FAQ -->
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-4">Frequently Asked Questions</h2>
-          <div class="divide-y divide-gray-100">
-            <div class="py-3">
-              <button x-on:click="showFaq[0] = !showFaq[0]" class="flex justify-between w-full text-left text-sm font-medium text-gray-800">
-                <span>How do I calculate my freelance hourly rate?</span>
-                <span x-text="showFaq[0] ? '−' : '+'" class="text-brand-600 ml-2"></span>
-              </button>
-              <p x-show="showFaq[0]" x-cloak class="mt-2 text-sm text-gray-600">Add your desired net income and business expenses, divide by (1 minus your tax rate) to get gross income, then divide by your total billable hours per year. This calculator does it all automatically.</p>
-            </div>
-            <div class="py-3">
-              <button x-on:click="showFaq[1] = !showFaq[1]" class="flex justify-between w-full text-left text-sm font-medium text-gray-800">
-                <span>What are typical billable hours for freelancers?</span>
-                <span x-text="showFaq[1] ? '−' : '+'" class="text-brand-600 ml-2"></span>
-              </button>
-              <p x-show="showFaq[1]" x-cloak class="mt-2 text-sm text-gray-600">Most freelancers bill 5–7 hours per day. The rest goes to admin, marketing, learning, and breaks. We default to 6 hours, which is realistic for sustainable consulting work.</p>
-            </div>
-            <div class="py-3">
-              <button x-on:click="showFaq[2] = !showFaq[2]" class="flex justify-between w-full text-left text-sm font-medium text-gray-800">
-                <span>Should I charge hourly or daily rates?</span>
-                <span x-text="showFaq[2] ? '−' : '+'" class="text-brand-600 ml-2"></span>
-              </button>
-              <p x-show="showFaq[2]" x-cloak class="mt-2 text-sm text-gray-600">Daily or project rates are often preferred for consulting engagements. They reduce time-tracking overhead and align incentives around outcomes. Use your hourly rate as a baseline, then quote daily or project fees.</p>
-            </div>
-            <div class="py-3">
-              <button x-on:click="showFaq[3] = !showFaq[3]" class="flex justify-between w-full text-left text-sm font-medium text-gray-800">
-                <span>How much should I budget for taxes as a freelancer?</span>
-                <span x-text="showFaq[3] ? '−' : '+'" class="text-brand-600 ml-2"></span>
-              </button>
-              <p x-show="showFaq[3]" x-cloak class="mt-2 text-sm text-gray-600">In most countries, freelancers should set aside 25–35% of gross income for taxes (income tax + self-employment tax). Consult a local accountant for your exact situation.</p>
-            </div>
-            <div class="py-3">
-              <button x-on:click="showFaq[4] = !showFaq[4]" class="flex justify-between w-full text-left text-sm font-medium text-gray-800">
-                <span>What expenses should I include?</span>
-                <span x-text="showFaq[4] ? '−' : '+'" class="text-brand-600 ml-2"></span>
-              </button>
-              <p x-show="showFaq[4]" x-cloak class="mt-2 text-sm text-gray-600">Include software subscriptions, equipment, co-working space, insurance, professional development, accounting fees, internet, and any other costs of running your freelance business.</p>
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
+
+    <!-- Results -->
+    <div class="min-w-0 space-y-6 lg:col-span-3" aria-live="polite">
+      <div class="card p-5 sm:p-6">
+        <h2 class="text-sm font-medium text-muted-foreground">Hourly rate to charge</h2>
+        <p class="mt-1 break-words text-3xl font-semibold tabular-nums tracking-tight text-foreground sm:text-[2.25rem]" x-text="fmt(hourlyRate)"></p>
+        <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div class="stat min-w-0">
+            <p class="stat-value break-words" x-text="fmt(dailyRate)"></p>
+            <p class="stat-label">Daily</p>
+          </div>
+          <div class="stat min-w-0">
+            <p class="stat-value break-words" x-text="fmt(weeklyRate)"></p>
+            <p class="stat-label">Weekly</p>
+          </div>
+          <div class="stat min-w-0">
+            <p class="stat-value break-words" x-text="fmt(monthlyRate)"></p>
+            <p class="stat-label">Monthly</p>
+          </div>
+        </div>
+        <dl class="mt-5 grid grid-cols-1 gap-2 px-1 text-sm sm:grid-cols-3">
+          <div class="flex items-baseline justify-between gap-3 sm:block">
+            <dt class="text-muted-foreground">Gross income needed</dt>
+            <dd class="font-semibold tabular-nums text-foreground" x-text="fmt(grossIncome)"></dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-3 sm:block">
+            <dt class="text-muted-foreground">Working days a year</dt>
+            <dd class="font-semibold tabular-nums text-foreground" x-text="workingDays"></dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-3 sm:block">
+            <dt class="text-muted-foreground">Billable hours a year</dt>
+            <dd class="font-semibold tabular-nums text-foreground" x-text="billableHoursYear.toLocaleString()"></dd>
+          </div>
+        </dl>
+      </div>
+
+      <!-- Breakdown -->
+      <div class="card p-5 sm:p-6">
+        <h2 class="card-title">Where the money goes</h2>
+        <div class="mt-4 flex h-2 w-full gap-0.5 overflow-hidden rounded-full bg-muted">
+          <div class="h-full bg-foreground transition-all duration-300" :style="'width:' + incomePercent + '%'" :title="'Take-home: ' + fmt(income)"></div>
+          <div class="h-full bg-foreground/45 transition-all duration-300" :style="'width:' + taxPercent + '%'" :title="'Taxes: ' + fmt(taxAmount)"></div>
+          <div class="h-full bg-foreground/20 transition-all duration-300" :style="'width:' + expensePercent + '%'" :title="'Expenses: ' + fmt(expenses)"></div>
+        </div>
+        <ul class="mt-4 space-y-2 text-sm">
+          <li class="flex items-center gap-2">
+            <span class="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-foreground" aria-hidden="true"></span>
+            <span class="text-muted-foreground">Take-home</span>
+            <span class="ml-auto font-semibold tabular-nums text-foreground"><span x-text="fmt(income)"></span> <span class="font-normal text-muted-foreground">(<span x-text="Math.round(incomePercent)"></span>%)</span></span>
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-foreground/45" aria-hidden="true"></span>
+            <span class="text-muted-foreground">Taxes</span>
+            <span class="ml-auto font-semibold tabular-nums text-foreground"><span x-text="fmt(taxAmount)"></span> <span class="font-normal text-muted-foreground">(<span x-text="Math.round(taxPercent)"></span>%)</span></span>
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-foreground/20" aria-hidden="true"></span>
+            <span class="text-muted-foreground">Expenses</span>
+            <span class="ml-auto font-semibold tabular-nums text-foreground"><span x-text="fmt(expenses)"></span> <span class="font-normal text-muted-foreground">(<span x-text="Math.round(expensePercent)"></span>%)</span></span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Market comparison -->
+      <div class="card p-5 sm:p-6">
+        <h2 class="card-title">Your rate against typical ranges</h2>
+        <p class="card-description mt-1">Rough hourly ranges for remote consulting work. They are a guide, not survey data.</p>
+        <div class="mt-4 space-y-4">
+          <template x-for="range in marketRanges" :key="range.label">
+            <div>
+              <div class="mb-1 flex justify-between gap-3 text-sm">
+                <span class="text-foreground" x-text="range.label"></span>
+                <span class="tabular-nums text-muted-foreground" x-text="sym + range.min + ' – ' + sym + range.max"></span>
+              </div>
+              <div class="relative h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div class="absolute h-full rounded-full bg-foreground/15"
+                  :style="'left:' + (range.min / 500 * 100) + '%; width:' + ((range.max - range.min) / 500 * 100) + '%'"></div>
+                <div class="absolute top-0 h-full w-1 rounded-full bg-foreground transition-all duration-300"
+                  :style="'left: min(' + (hourlyRate / 500 * 100) + '%, 99.5%)'"></div>
+              </div>
+              <p x-show="rateInRange(range.min, range.max)" class="mt-1 text-[13px] font-medium text-foreground">Your rate is in this range</p>
+            </div>
+          </template>
+        </div>
+        <p class="help mt-4">The dark marker is your calculated hourly rate.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <section class="mt-12 max-w-3xl">
+    <h2 class="section-title">Questions</h2>
+    <div class="surface mt-4 p-1.5">
+      <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>How do I calculate my freelance hourly rate?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">Add your target take-home income and business expenses, divide by (1 minus your tax rate) to get gross income, then divide by your billable hours per year. The calculator above does this for you.</p>
+      </details>
+      <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>What are typical billable hours for freelancers?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">Most freelancers bill 5–7 hours a day. The rest goes to admin, finding clients, learning and breaks. The calculator starts at 6 hours, which is realistic for consulting work you can keep up.</p>
+      </details>
+      <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>Should I charge hourly or daily rates?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">Consulting clients often prefer daily or project rates. They cut time-tracking overhead and tie fees to outcomes. Use your hourly rate as a floor, then quote daily or project fees.</p>
+      </details>
+      <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>How much should I budget for taxes as a freelancer?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">In many countries freelancers set aside 25–35% of gross income for income tax and self-employment tax. Check your exact situation with a local accountant.</p>
+      </details>
+      <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>What expenses should I include?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">Software subscriptions, equipment, co-working space, insurance, training, accounting fees, internet and any other cost of running your freelance business.</p>
+      </details>
+    </div>
+  </section>
+
+  <div class="mt-10 max-w-3xl text-sm text-muted-foreground">
+    Looking for clients? <a href="{% url 'gigs:gig_list' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Browse short-term remote projects</a>
   </div>
 
   <!-- JSON-LD FAQPage Schema -->
@@ -305,5 +286,5 @@
     ]
   }
   </script>
-</section>
+</div>
 {% endblock %}

@@ -4,7 +4,6 @@ Post a daily LinkedIn roundup of the latest complete Remote Impact jobs.
 Required environment variables for live posting:
     LINKEDIN_ACCESS_TOKEN
     LINKEDIN_AUTHOR_URN
-    OPENAI_API_KEY
 
 LINKEDIN_AUTHOR_URN should look like one of:
     urn:li:organization:123456
@@ -14,8 +13,6 @@ Usage:
     python manage.py post_linkedin_jobs
 """
 
-import io
-import base64
 import os
 from decimal import Decimal
 
@@ -46,11 +43,6 @@ class Command(BaseCommand):
         parser.add_argument("--dry-run", action="store_true", help="Print copy and write image without posting.")
         parser.add_argument("--count", type=int, default=10, help="Number of jobs to include.")
         parser.add_argument(
-            "--no-openai-image",
-            action="store_true",
-            help="Skip OpenAI image generation and use the local Pillow fallback.",
-        )
-        parser.add_argument(
             "--min-description-length",
             type=int,
             default=300,
@@ -70,7 +62,7 @@ class Command(BaseCommand):
             raise CommandError(f"Only found {len(jobs)} complete jobs; need {count}. Not posting.")
 
         copy = self.build_post_copy(jobs)
-        image_bytes = self.build_image(jobs, use_openai=not options["no_openai_image"])
+        image_bytes = self.build_image(jobs)
 
         with open(options["output"], "wb") as f:
             f.write(image_bytes)
@@ -136,36 +128,8 @@ class Command(BaseCommand):
         )
         return "\n".join(lines)
 
-    def build_image(self, jobs, use_openai=True):
-        if use_openai and os.environ.get("OPENAI_API_KEY"):
-            try:
-                return self.build_openai_image(jobs)
-            except Exception as exc:
-                self.stderr.write(f"OpenAI image generation failed, using fallback image: {exc}")
-
+    def build_image(self, jobs):
         return self.build_fallback_image(jobs)
-
-    def build_openai_image(self, jobs):
-        prompt = self.build_image_prompt(jobs)
-
-        from openai import OpenAI
-
-        client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-        response = client.images.generate(
-            model=os.environ.get("LINKEDIN_IMAGE_MODEL", "gpt-image-1"),
-            prompt=prompt,
-            size="1536x1024",
-            quality=os.environ.get("LINKEDIN_IMAGE_QUALITY", "medium"),
-            n=1,
-        )
-
-        image_b64 = response.data[0].b64_json
-        if not image_b64:
-            raise CommandError("OpenAI image response did not include image data.")
-
-        generated = Image.open(io.BytesIO(base64.b64decode(image_b64))).convert("RGB")
-        generated = generated.resize((self.WIDTH, self.HEIGHT))
-        return self.overlay_jobs_on_image(generated, jobs)
 
     def build_image_prompt(self, jobs):
         categories = sorted({job.category.name for job in jobs if job.category})[:5]

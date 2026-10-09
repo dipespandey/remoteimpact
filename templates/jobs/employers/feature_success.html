@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% load job_extras %}
+{% block title %}Your listing is featured | Remote Impact{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+<div class="page-narrow">
+  <span class="badge badge-featured">★ Featured</span>
+  <h1 class="page-title mt-3">“{{ job.title|display_title }}” is now featured</h1>
+  <p class="page-lede">It stays featured until {{ purchase.featured_until|date:"F j, Y" }}.</p>
+
+  <section class="card mt-6 p-5 sm:p-6">
+    <h2 class="text-base font-semibold text-foreground">Your private stats link</h2>
+    <p class="mt-1 text-sm leading-relaxed text-muted-foreground">Bookmark it. It shows views, apply clicks and AI Scout matches for every live role at {{ job.organization.name }}, and you can share it with your team.</p>
+    <div class="mt-5 flex flex-wrap gap-2">
+      <a class="btn btn-primary" href="{{ job.get_absolute_url }}">View the listing</a>
+      <a class="btn btn-outline" href="{{ report_url }}">Open my stats</a>
+    </div>
+  </section>
+  <p class="mt-6 text-[13px] text-muted-foreground">Anything wrong with the listing? Email <a class="font-medium text-foreground underline decoration-border hover:decoration-foreground" href="mailto:hello@remoteimpact.org">hello@remoteimpact.org</a> and we will fix it within one business day.</p>
+</div>
+{% endblock %}

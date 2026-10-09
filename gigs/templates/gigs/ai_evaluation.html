@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Paid AI evaluation work in your language | Remote Impact{% endblock %}
+{% block meta_description %}We're forming a small, paid cohort of adults who test AI systems in their own languages and local context. Pay floor published before any work starts. Join the waitlist.{% endblock %}
+{% block og_title %}Paid AI evaluation work in your language{% endblock %}
+{% block og_description %}A small, paid cohort testing AI systems in local languages and context. Adults only, pay floor published upfront.{% endblock %}
+{% block canonical %}{{ SITE_URL }}{% url 'gigs:ai_evaluation' %}{% endblock %}
+
+{% block content %}
+<section class="page">
+    <nav class="mb-4 text-[13px] text-muted-foreground" aria-label="Breadcrumb">
+        <a href="{% url 'gigs:gig_list' %}" class="hover:text-foreground">Gigs</a> / <span class="text-foreground">AI evaluation</span>
+    </nav>
+    <div class="max-w-3xl">
+        <h1 class="page-title">Paid AI evaluation work in your language</h1>
+        <p class="page-lede">AI models are mostly tested in English and by people in a few countries. We're forming a small, paid cohort of people who test them in their own languages and local context: checking answers for accuracy, spotting harmful or biased output, and writing the hard questions models get wrong.</p>
+    </div>
+
+    <div class="mt-8 grid gap-8 lg:grid-cols-[3fr_2fr] lg:gap-10">
+        <div class="max-w-2xl space-y-8">
+            <div class="alert alert-info">
+                <span>This is a waitlist. The cohort isn't running yet; we'll only start once the first project is funded, and we'll email everyone on the list before then.</span>
+            </div>
+
+            <div>
+                <h2 class="section-title">What the work looks like</h2>
+                <ul class="check-list mt-3 space-y-2 leading-7 text-muted-foreground">
+                    <li>Reading AI answers in your language and marking what is wrong, unclear or unsafe.</li>
+                    <li>Writing questions and scenarios from your country that models handle badly.</li>
+                    <li>Checking translations and local facts in health, law, education and public services.</li>
+                    <li>Remote and part-time, a few hours a week, with written instructions and examples.</li>
+                </ul>
+            </div>
+
+            <div>
+                <h2 class="section-title">Our commitments</h2>
+                <dl class="surface mt-3 space-y-0.5 p-1.5 text-sm">
+                    <div class="grid gap-0.5 rounded-xl px-3.5 py-2.5 sm:grid-cols-[11rem_1fr] sm:gap-4">
+                        <dt class="font-medium text-foreground">Pay</dt>
+                        <dd class="text-muted-foreground">A published hourly pay floor before anyone starts, and payment for all accepted work.</dd>
+                    </div>
+                    <div class="grid gap-0.5 rounded-xl px-3.5 py-2.5 sm:grid-cols-[11rem_1fr] sm:gap-4">
+                        <dt class="font-medium text-foreground">Adults only</dt>
+                        <dd class="text-muted-foreground">You must be 18 or older. We check this before the first project.</dd>
+                    </div>
+                    <div class="grid gap-0.5 rounded-xl px-3.5 py-2.5 sm:grid-cols-[11rem_1fr] sm:gap-4">
+                        <dt class="font-medium text-foreground">No disturbing content</dt>
+                        <dd class="text-muted-foreground">The first projects won't include graphic or traumatic material.</dd>
+                    </div>
+                    <div class="grid gap-0.5 rounded-xl px-3.5 py-2.5 sm:grid-cols-[11rem_1fr] sm:gap-4">
+                        <dt class="font-medium text-foreground">Your data</dt>
+                        <dd class="text-muted-foreground">We use your details only for this cohort and delete them if you ask.</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="surface p-5">
+                <h2 class="section-title">For AI labs and research teams</h2>
+                <p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">If you need evaluation or red-teaming in low-resource languages or South Asian context, email <a class="font-medium text-foreground underline decoration-border hover:decoration-foreground" href="mailto:hello@remoteimpact.org?subject=AI%20evaluation%20cohort">hello@remoteimpact.org</a>. We'll tell you who is on the list and what we can run.</p>
+            </div>
+        </div>
+
+        <aside>
+            <div class="card lg:sticky lg:top-24">
+                <div class="card-header">
+                    <h2 class="card-title">Join the waitlist</h2>
+                    <p class="card-description">{% if waitlist_count >= 25 %}{{ waitlist_count }} people have joined. {% endif %}Takes a minute. We'll only email you about this cohort.</p>
+                </div>
+                <div class="card-content">
+                    <form method="post" class="space-y-4" novalidate>
+                        {% csrf_token %}
+                        {% for field in form %}
+                        {% if field.name == "is_adult" %}
+                        <div class="flex items-start gap-2.5">
+                            <input type="checkbox" name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="checkbox mt-1" {% if field.value %}checked{% endif %}>
+                            <label for="{{ field.id_for_label }}" class="text-sm text-foreground">{{ field.label }}</label>
+                        </div>
+                        {% else %}
+                        <div>
+                            <label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                        </div>
+                        {% endif %}
+                        {% if field.errors %}<p class="field-error">{{ field.errors.0 }}</p>{% endif %}
+                        {% endfor %}
+                        <button type="submit" class="btn btn-primary btn-block">Join the waitlist</button>
+                    </form>
+                </div>
+            </div>
+        </aside>
+    </div>
+</section>
+{% endblock %}

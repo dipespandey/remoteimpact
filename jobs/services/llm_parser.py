@@ -1,10 +1,7 @@
 """
 Multi-provider job description parser with batch processing support.
 
-Supports multiple LLM providers:
-- DeepSeek (default, cheapest: $0.14-0.28/1M tokens)
-- Groq (fastest, free tier available)
-- Mistral (original)
+Uses DeepSeek for consistent, low-cost structured extraction.
 
 This module provides async batch processing of job descriptions to extract
 structured fields for the job detail page display sections:
@@ -24,8 +21,9 @@ from typing import Any
 
 from django.conf import settings
 from jobs.constants import IMPACT_AREAS_FOR_PROMPT
-from jobs.constants.skills import SKILLS_FOR_PROMPT
+from jobs.constants.skills import SKILLS_FOR_PROMPT, normalize_skill_slugs
 from jobs.services.experience_classifier import ExperienceClassifier
+from jobs.services.json_utils import parse_json_object
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +87,12 @@ Choose the BEST match based on the organization's mission and role focus. Use "o
 15. **skills**: Array of skill slugs required/preferred for this role. Select 3-10 from this list:
 {skills_list}
 
+16. **experience_evidence**: An exact, short quote supporting experience_level, or null.
+
+17. **education_evidence**: An exact, short quote supporting education_level, or null.
+
+18. **salary_evidence**: An exact, short quote supporting the salary fields, or null.
+
 Use exact slugs from the list. Only include skills explicitly mentioned or strongly implied by the requirements.
 
 ## GUIDELINES:
@@ -104,45 +108,28 @@ Organization: {organization}
 Raw Description:
 {description}
 
-Return JSON with keys: mission, profile, impact, benefits, about_org, impact_area, location, job_type, experience_level, education_level, country, salary_min, salary_max, salary_currency, skills
+Never infer experience, education, or salary without an exact supporting quote from the posting.
+
+Return JSON with keys: mission, profile, impact, benefits, about_org, impact_area, location, job_type, experience_level, experience_evidence, education_level, education_evidence, country, salary_min, salary_max, salary_currency, salary_evidence, skills
 """
 
 # Provider configurations
 PROVIDERS = {
     "deepseek": {
         "base_url": "https://api.deepseek.com",
-        "model": "deepseek-chat",
+        "model": getattr(settings, "DEEPSEEK_MODEL", "deepseek-v4-flash"),
         "env_key": "DEEPSEEK_API_KEY",
         "max_concurrent": 50,  # DeepSeek has very generous rate limits
         "batch_delay": 0.5,
-    },
-    "groq": {
-        "base_url": "https://api.groq.com/openai/v1",
-        "model": "llama-3.1-8b-instant",  # Fast and free
-        "env_key": "GROQ_API_KEY",
-        "max_concurrent": 20,  # Groq is fast
-        "batch_delay": 1,
-    },
-    "mistral": {
-        "base_url": None,  # Uses native Mistral client
-        "model": "mistral-small-latest",
-        "env_key": "MISTRAL_API_KEY",
-        "max_concurrent": 10,
-        "batch_delay": 2,
     },
 }
 
 
 def get_default_provider() -> str:
-    """Get the best available provider based on configured API keys."""
-    # Priority: DeepSeek (cheapest) > Groq (free) > Mistral (original)
+    """Return the production structured-extraction provider."""
     if getattr(settings, "DEEPSEEK_API_KEY", None):
         return "deepseek"
-    if getattr(settings, "GROQ_API_KEY", None):
-        return "groq"
-    if getattr(settings, "MISTRAL_API_KEY", None):
-        return "mistral"
-    raise ValueError("No LLM API key configured. Set DEEPSEEK_API_KEY, GROQ_API_KEY, or MISTRAL_API_KEY.")
+    raise ValueError("DEEPSEEK_API_KEY is required for LLM job enrichment.")
 
 
 class JobParser:
@@ -153,7 +140,7 @@ class JobParser:
         Initialize parser with specified provider.
 
         Args:
-            provider: One of 'deepseek', 'groq', 'mistral', or None for auto-detect
+            provider: 'deepseek' or None for the production default
         """
         self.provider_name = provider or get_default_provider()
         self.config = PROVIDERS[self.provider_name]
@@ -164,25 +151,19 @@ class JobParser:
 
         self._semaphore = asyncio.Semaphore(self.config["max_concurrent"])
 
-        if self.provider_name == "mistral":
-            from mistralai import Mistral
-            self.client = Mistral(api_key=api_key)
-            self._parse_fn = self._parse_mistral
-        else:
-            # OpenAI-compatible providers (DeepSeek, Groq)
-            from openai import AsyncOpenAI
-            self.client = AsyncOpenAI(
-                api_key=api_key,
-                base_url=self.config["base_url"],
-            )
-            self._parse_fn = self._parse_openai_compat
+        from openai import AsyncOpenAI
+        self.client = AsyncOpenAI(
+            api_key=api_key,
+            base_url=self.config["base_url"],
+        )
+        self._parse_fn = self._parse_openai_compat
 
         logger.info(f"Initialized JobParser with provider: {self.provider_name}")
 
     async def _parse_openai_compat(
         self, title: str, organization: str, description: str
     ) -> dict[str, Any]:
-        """Parse using OpenAI-compatible API (DeepSeek, Groq)."""
+        """Parse using DeepSeek's OpenAI-compatible API."""
         prompt = EXTRACTION_PROMPT.format(
             title=title,
             organization=organization,
@@ -204,60 +185,21 @@ class JobParser:
                     ],
                     response_format={"type": "json_object"},
                     temperature=0.1,
+                    extra_body={"thinking": {"type": "disabled"}},
                 )
 
                 content = response.choices[0].message.content
-                data = json.loads(content)
+                data = parse_json_object(content)
 
                 # Small delay to respect rate limits
                 await asyncio.sleep(0.2)
                 return data
 
-            except json.JSONDecodeError as e:
+            except ValueError as e:
                 logger.error(f"Failed to parse JSON response for '{title}': {e}")
                 return {}
             except Exception as e:
                 logger.error(f"Error parsing job '{title}' with {self.provider_name}: {e}")
-                raise
-
-    async def _parse_mistral(
-        self, title: str, organization: str, description: str
-    ) -> dict[str, Any]:
-        """Parse using native Mistral client."""
-        prompt = EXTRACTION_PROMPT.format(
-            title=title,
-            organization=organization,
-            description=description,
-            impact_areas=IMPACT_AREAS_FOR_PROMPT,
-            skills_list=SKILLS_FOR_PROMPT,
-        )
-
-        async with self._semaphore:
-            try:
-                response = await self.client.chat.complete_async(
-                    model=self.config["model"],
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": "You are a helpful assistant that extracts structured data from job postings. Always respond with valid JSON only.",
-                        },
-                        {"role": "user", "content": prompt},
-                    ],
-                    response_format={"type": "json_object"},
-                    temperature=0.1,
-                )
-
-                content = response.choices[0].message.content
-                data = json.loads(content)
-
-                await asyncio.sleep(0.5)
-                return data
-
-            except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse JSON response for '{title}': {e}")
-                return {}
-            except Exception as e:
-                logger.error(f"Error parsing job '{title}' with Mistral: {e}")
                 raise
 
     async def parse_single(
@@ -338,43 +280,44 @@ class JobParser:
 
         enriched = payload.copy()
         if parsed:
-            # Text sections (HTML formatted)
-            if parsed.get("mission"):
-                enriched["description"] = parsed["mission"]
-            if parsed.get("profile"):
-                enriched["requirements"] = parsed["profile"]
-            if parsed.get("impact"):
-                enriched["impact"] = parsed["impact"]
-            if parsed.get("benefits"):
-                enriched["benefits"] = parsed["benefits"]
-            if parsed.get("about_org"):
-                enriched["company_description"] = parsed["about_org"]
+            # Keep the source text authoritative. AI output is enrichment, not a
+            # replacement for qualifications, legal terms, or application details.
+            raw_data = dict(enriched.get("raw_data") or {})
+            raw_data["ai_enrichment"] = {
+                "mission": parsed.get("mission"),
+                "profile": parsed.get("profile"),
+                "impact": parsed.get("impact"),
+                "benefits": parsed.get("benefits"),
+                "about_org": parsed.get("about_org"),
+            }
+            enriched["raw_data"] = raw_data
 
             # Structured fields
             if parsed.get("impact_area"):
                 enriched["category_slug"] = parsed["impact_area"]
-            if parsed.get("location"):
+            if parsed.get("location") and not enriched.get("location"):
                 enriched["location"] = parsed["location"]
-            if parsed.get("job_type"):
+            if parsed.get("job_type") and not enriched.get("job_type"):
                 enriched["job_type"] = parsed["job_type"]
-            if parsed.get("experience_level"):
+            if parsed.get("experience_level") and not enriched.get("experience_level") and _evidence_is_present(parsed.get("experience_evidence"), desc):
                 enriched["experience_level"] = parsed["experience_level"]
-            if parsed.get("education_level"):
+            if parsed.get("education_level") and not enriched.get("education_level") and _evidence_is_present(parsed.get("education_evidence"), desc):
                 enriched["education_level"] = parsed["education_level"]
-            if parsed.get("country"):
+            if parsed.get("country") and not enriched.get("country"):
                 enriched["country"] = parsed["country"]
 
             # Salary fields (only if extracted and not already set)
-            if parsed.get("salary_min") and not enriched.get("salary_min"):
+            salary_supported = _evidence_is_present(parsed.get("salary_evidence"), desc)
+            if salary_supported and parsed.get("salary_min") and not enriched.get("salary_min"):
                 enriched["salary_min"] = parsed["salary_min"]
-            if parsed.get("salary_max") and not enriched.get("salary_max"):
+            if salary_supported and parsed.get("salary_max") and not enriched.get("salary_max"):
                 enriched["salary_max"] = parsed["salary_max"]
-            if parsed.get("salary_currency") and not enriched.get("salary_currency"):
+            if salary_supported and parsed.get("salary_currency") and not enriched.get("salary_currency"):
                 enriched["salary_currency"] = parsed["salary_currency"]
 
             # Skills (for matching)
             if parsed.get("skills") and isinstance(parsed["skills"], list):
-                enriched["skills"] = parsed["skills"]
+                enriched["skills"] = normalize_skill_slugs(parsed["skills"])
 
 
         # Refine experience_level with rule-based classifier (catches what LLM missed)
@@ -415,5 +358,13 @@ class JobParser:
         return {}
 
 
-# Backwards compatibility alias
+# Backwards compatibility alias for legacy imports; parsing is DeepSeek-only.
 MistralJobParser = JobParser
+
+
+def _evidence_is_present(evidence: Any, source_text: str) -> bool:
+    """Require an LLM quote to be traceable to the original posting."""
+    if not isinstance(evidence, str) or len(evidence.strip()) < 4:
+        return False
+    normalize = lambda value: " ".join(value.lower().split())
+    return normalize(evidence) in normalize(source_text)

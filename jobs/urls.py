@@ -1,24 +1,44 @@
 from django.urls import path
 from django.views.generic import RedirectView
 from . import views
+from .views import shortlists, tracking, employers
 from .feeds import LatestJobsFeed, CategoryJobsFeed, IndeedXMLFeed, LinkedInXMLFeed
 
 app_name = "jobs"
 
 urlpatterns = [
+    path("shortlist/", shortlists.shortlist, name="shortlist"),
+    path("shortlist/share/", shortlists.share, name="share_shortlist"),
+    path("collections/tech-for-impact/", shortlists.tech_collection, name="tech_collection"),
+    path("shortlists/<uuid:token>/", shortlists.shared, name="shared_shortlist"),
+    path("shortlists/<uuid:token>/revoke/", shortlists.revoke, name="revoke_shortlist"),
+    path("jobs/<slug:slug>/interest/", shortlists.interest, name="job_interest"),
+    path("employers/jobs/<slug:slug>/shortlist/", shortlists.employer_shortlist, name="employer_shortlist"),
+    path("employers/jobs/<slug:slug>/shortlist/<int:pk>/stage/", shortlists.employer_stage, name="employer_interest_stage"),
     # Public
     path("", views.HomeView.as_view(), name="home"),
     path("resources/", views.ResourcesView.as_view(), name="resources"),
+    path("resources/remote-impact-jobs/", views.PartnerResourcesView.as_view(), name="partner_resources"),
+    path("insights/remote-impact-jobs/", views.ImpactJobsSnapshotView.as_view(), name="impact_jobs_snapshot"),
+    path("how-we-check/", views.HowWeCheckView.as_view(), name="how_we_check"),
     path("domains/", views.AllDomainsView.as_view(), name="all_domains"),
     path("salaries/", views.SalaryBenchmarksView.as_view(), name="salary_benchmarks"),
     path("privacy/", views.PrivacyPolicyView.as_view(), name="privacy"),
     path("terms/", views.TermsOfServiceView.as_view(), name="terms"),
+    path("pricing/", views.PublicPricingView.as_view(), name="public_pricing"),
     # Jobs
     path("jobs/", views.JobListView.as_view(), name="job_list"),
     path("jobs/post/", views.PostJobView.as_view(), name="post_job"),
+    path("employers/", employers.EmployerLandingView.as_view(), name="employers"),
+    path("employers/pricing/", RedirectView.as_view(pattern_name="jobs:employers", permanent=True), name="employer_pricing"),
+    path("employers/report/<str:token>/", employers.EmployerReportView.as_view(), name="employer_report"),
+    path("jobs/<slug:slug>/feature/", employers.FeatureJobView.as_view(), name="feature_job"),
+    path("jobs/<slug:slug>/feature/success/", employers.FeatureJobSuccessView.as_view(), name="feature_job_success"),
     path("jobs/category/<slug:slug>/", views.CategoryLandingView.as_view(), name="category_landing"),
     path("jobs/<slug:slug>/", views.JobDetailView.as_view(), name="job_detail"),
     path("jobs/<slug:slug>/application-guide/", views.ApplicationGuideView.as_view(), name="application_guide"),
+    path("jobs/<slug:slug>/v/", tracking.JobViewBeaconView.as_view(), name="job_view_beacon"),
+    path("jobs/<slug:slug>/go/", tracking.JobApplyRedirectView.as_view(), name="job_apply_redirect"),
     path("jobs/<slug:slug>/og-image/", views.JobOGImageView.as_view(), name="job_og_image"),
     path("jobs/<slug:slug>/save/", views.SaveJobView.as_view(), name="save_job"),
     path("jobs/<slug:slug>/checkout/", views.JobCheckoutView.as_view(), name="job_checkout"),
@@ -27,6 +47,7 @@ urlpatterns = [
     path("api/organizations/search/", views.OrganizationSearchView.as_view(), name="organization_search"),
     # Account / Onboarding
     path("account/", views.DashboardView.as_view(), name="account"),
+    path("account/delete/", views.AccountDeleteView.as_view(), name="account_delete"),
     path("account/company/edit/", views.EditCompanyProfileView.as_view(), name="edit_company_profile"),
     path("onboarding/", views.StartOnboardingView.as_view(), name="start_onboarding"),
     path(
@@ -81,6 +102,7 @@ urlpatterns = [
     ),
     path("payment/cancel/", views.PaymentCancelView.as_view(), name="payment_cancel"),
     path("webhook/stripe/", views.StripeWebhookView.as_view(), name="stripe_webhook"),
+    path("account/billing/", views.ProBillingPortalView.as_view(), name="pro_billing_portal"),
     # Tools
     path("tools/", views.ToolsIndexView.as_view(), name="tools_index"),
     path("tools/salary-to-hourly-calculator/", views.SalaryToHourlyView.as_view(), name="salary_to_hourly"),
@@ -181,16 +203,32 @@ urlpatterns = [
     # Referral System
     path("referral/", views.ReferralDashboardView.as_view(), name="referral_dashboard"),
     # Job Alerts
+    path("alerts/preview/", views.JobScoutPreviewView.as_view(), name="job_scout_preview"),
+    path("alerts/signup/", views.JobScoutSignupStartView.as_view(), name="job_scout_signup_start"),
     path("alerts/", views.JobAlertListView.as_view(), name="job_alerts"),
     path("alerts/create/", views.JobAlertCreateView.as_view(), name="job_alert_create"),
+    path(
+        "alerts/unsubscribe/<str:token>/",
+        views.JobAlertUnsubscribeView.as_view(),
+        name="job_alert_unsubscribe",
+    ),
+    path("alerts/<int:pk>/edit/", views.JobAlertUpdateView.as_view(), name="job_alert_edit"),
     path("alerts/<int:pk>/delete/", views.JobAlertDeleteView.as_view(), name="job_alert_delete"),
     path("alerts/<int:pk>/toggle/", views.JobAlertToggleView.as_view(), name="job_alert_toggle"),
+    path("alerts/deliveries/<int:pk>/feedback/", views.JobAlertFeedbackView.as_view(), name="job_alert_feedback"),
+    path("alerts/pro/subscribe/", views.JobScoutSubscribeView.as_view(), name="job_scout_subscribe"),
+    path("alerts/pro/success/", views.JobScoutSubscribeSuccessView.as_view(), name="job_scout_subscribe_success"),
     # Talent Invitations
     path("invitations/", views.InvitationInboxView.as_view(), name="invitations"),
     path("invitations/<int:pk>/decline/", views.InvitationDeclineView.as_view(), name="invitation_decline"),
     # Visibility Settings
     path("profile/visibility/", views.VisibilitySettingsView.as_view(), name="visibility_settings"),
     # SEO alias for cover letter generator
+    path(
+        "tools/cover-letter-generator/null",
+        RedirectView.as_view(url="/tools/cover-letter-generator/", permanent=True),
+        name="cover_letter_generator_null_redirect",
+    ),
     path("tools/cover-letter-generator/", views.ApplicantAssistantView.as_view(), name="cover_letter_generator"),
     # Job Description Generator
     path("tools/job-description-generator/", views.JobDescriptionGeneratorView.as_view(), name="jd_generator"),
@@ -198,6 +236,11 @@ urlpatterns = [
     path("tools/word-counter/", views.WordCounterView.as_view(), name="word_counter"),
     path("tools/pomodoro-timer/", views.PomodoroTimerView.as_view(), name="pomodoro_timer"),
     path("tools/interview-prep/", views.InterviewPrepView.as_view(), name="interview_prep"),
+    path(
+        "tools/interview-prep/null",
+        RedirectView.as_view(url="/tools/interview-prep/", permanent=True),
+        name="interview_prep_null_redirect",
+    ),
     path("tools/interview-prep/generate/", views.InterviewPrepGenerateView.as_view(), name="interview_prep_generate"),
     path("tools/freelance-rate-calculator/", views.FreelanceRateView.as_view(), name="freelance_rate"),
     path("tools/salary-negotiation-script/", views.SalaryNegotiationView.as_view(), name="salary_negotiation"),

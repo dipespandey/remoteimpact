@@ -2,7 +2,6 @@
 
 import logging
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
@@ -19,7 +18,6 @@ from ..models import (
     UserProfile,
     Organization,
 )
-from ..services.email_service import EmailService
 
 logger = logging.getLogger(__name__)
 
@@ -138,85 +136,96 @@ class TalentProfileView(LoginRequiredMixin, DetailView):
 
 
 class TalentInviteView(LoginRequiredMixin, View):
-    """Invite a seeker to apply for one of your jobs."""
+    """Invite a seeker to apply for one of your jobs.
 
-    def get(self, request, user_id):
-        seeker = get_object_or_404(
+    Public profiles can be invited to any of your active roles. People who chose
+    "visible to matching orgs only" can be invited only to a paid posting, which is
+    where they are suggested as a match.
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return super().dispatch(request, *args, **kwargs)
+        try:
+            is_employer = request.user.profile.account_type == UserProfile.AccountType.EMPLOYER
+        except UserProfile.DoesNotExist:
+            is_employer = False
+        has_paid_post = Job.objects.filter(poster=request.user, is_paid=True).exists()
+        if not (is_employer or has_paid_post or request.user.is_staff):
+            raise Http404
+        return super().dispatch(request, *args, **kwargs)
+
+    @staticmethod
+    def _seeker(user_id):
+        return get_object_or_404(
             SeekerProfile.objects.select_related("user"),
             user_id=user_id,
-            visibility="public",
+            visibility__in=[SeekerProfile.Visibility.PUBLIC, SeekerProfile.Visibility.MATCHING],
+            is_actively_looking=True,
+            wizard_completed=True,
         )
-        org = request.user.organizations.first()
+
+    @staticmethod
+    def _organization(user):
+        org = user.organizations.first()
+        if org:
+            return org
+        latest = Job.objects.filter(poster=user).select_related("organization").order_by("-posted_at").first()
+        return latest.organization if latest else None
+
+    @staticmethod
+    def _jobs(user, seeker):
+        jobs = Job.objects.filter(poster=user, is_active=True)
+        if seeker.visibility != SeekerProfile.Visibility.PUBLIC:
+            jobs = jobs.filter(is_paid=True)
+        return jobs.order_by("-posted_at")
+
+    @staticmethod
+    def _back(seeker, job=None):
+        if seeker.visibility == SeekerProfile.Visibility.PUBLIC:
+            return redirect("jobs:talent_profile", user_id=seeker.user_id)
+        if job:
+            return redirect("jobs:employer_shortlist", slug=job.slug)
+        return redirect("jobs:account")
+
+    def get(self, request, user_id):
+        seeker = self._seeker(user_id)
+        org = self._organization(request.user)
         if not org:
             messages.error(request, "You need an organization to invite candidates.")
-            return redirect("jobs:talent_profile", user_id=user_id)
-
-        active_jobs = Job.objects.filter(
-            poster=request.user, is_active=True
-        ).order_by("-posted_at")
-
-        existing = TalentInvitation.objects.filter(
-            seeker=seeker, organization=org
-        ).values_list("job_id", flat=True)
-
+            return self._back(seeker)
+        existing = TalentInvitation.objects.filter(seeker=seeker, organization=org).values_list("job_id", flat=True)
+        selected = request.GET.get("job", "")
         return render(request, "jobs/talent/invite.html", {
             "seeker": seeker,
+            "is_public": seeker.visibility == SeekerProfile.Visibility.PUBLIC,
             "organization": org,
-            "active_jobs": active_jobs,
+            "active_jobs": self._jobs(request.user, seeker),
             "existing_invitations": set(existing),
+            "selected_job_id": int(selected) if selected.isdigit() else None,
         })
 
     def post(self, request, user_id):
-        seeker = get_object_or_404(
-            SeekerProfile.objects.select_related("user"),
-            user_id=user_id,
-            visibility="public",
-        )
-        org = request.user.organizations.first()
+        seeker = self._seeker(user_id)
+        org = self._organization(request.user)
         if not org:
             messages.error(request, "You need an organization to invite candidates.")
-            return redirect("jobs:talent_profile", user_id=user_id)
+            return self._back(seeker)
 
         job_id = request.POST.get("job_id")
         message_text = request.POST.get("message", "").strip()
-
         if not job_id or not message_text:
             messages.error(request, "Please select a job and write a message.")
             return redirect("jobs:talent_invite", user_id=user_id)
 
-        job = get_object_or_404(Job, id=job_id, poster=request.user, is_active=True)
-
+        job = get_object_or_404(self._jobs(request.user, seeker), id=job_id)
         if TalentInvitation.objects.filter(job=job, seeker=seeker).exists():
             messages.warning(request, "You've already invited this candidate for this role.")
-            return redirect("jobs:talent_profile", user_id=user_id)
+            return self._back(seeker, job)
 
-        TalentInvitation.objects.create(
-            organization=org,
-            job=job,
-            seeker=seeker,
-            message=message_text,
-        )
-
-        # Send email
-        try:
-            email_service = EmailService()
-            site_url = getattr(settings, "SITE_URL", "https://remoteimpact.org")
-            job_url = f"{site_url}{job.get_absolute_url()}"
-            subject = f"{org.name} thinks you'd be a great fit for {job.title}"
-            html = f"""
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #1a202c;">You've been invited to apply!</h2>
-                <p><strong>{org.name}</strong> thinks you'd be a great fit for <strong>{job.title}</strong>.</p>
-                <div style="background: #f7fafc; padding: 16px; border-radius: 8px; margin: 16px 0;">
-                    <p style="margin: 0; color: #4a5568;"><em>"{message_text}"</em></p>
-                </div>
-                <p><a href="{job_url}" style="display: inline-block; background: #8AD425; color: #1a202c; padding: 12px 24px; border-radius: 24px; text-decoration: none; font-weight: bold;">View Job &amp; Apply</a></p>
-                <p style="color: #a0aec0; font-size: 12px; margin-top: 24px;">You received this because your profile is public on Remote Impact.</p>
-            </div>
-            """
-            email_service.send_email(to=seeker.user.email, subject=subject, html=html)
-        except Exception as e:
-            logger.error(f"Failed to send invitation email: {e}")
-
-        messages.success(request, f"Invitation sent to {seeker.user.first_name or 'candidate'} for {job.title}!")
-        return redirect("jobs:talent_profile", user_id=user_id)
+        TalentInvitation.objects.create(organization=org, job=job, seeker=seeker, message=message_text)
+        # The TalentInvitation post_save signal sends the (escaped, templated)
+        # invitation email; sending here too emailed candidates twice.
+        name = seeker.user.first_name if seeker.visibility == SeekerProfile.Visibility.PUBLIC else ""
+        messages.success(request, f"Invitation sent{' to ' + name if name else ''} for {job.title}.")
+        return self._back(seeker, job)

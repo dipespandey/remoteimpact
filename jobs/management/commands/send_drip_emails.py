@@ -21,7 +21,7 @@ from django.core.management.base import BaseCommand
 from django.template.loader import render_to_string
 from django.utils import timezone
 
-from jobs.models import DripEmailLog, Job, SeekerProfile
+from jobs.models import DripEmailLog, Job, JobAlert, SeekerProfile
 from jobs.services.email_service import email_service
 
 User = get_user_model()
@@ -35,6 +35,13 @@ DRIP_SCHEDULE = [
         "skip_if_wizard_completed": True,
     },
     {
+        "drip_type": "day3_scout",
+        "day": 3,
+        "subject": "Describe your ideal job. We will find the matches.",
+        "template": "emails/drip_day3_scout",
+        "skip_if_has_scout": True,
+    },
+    {
         "drip_type": "day5_jobs",
         "day": 5,
         "subject": "Top impact jobs for you this week",
@@ -43,7 +50,7 @@ DRIP_SCHEDULE = [
     {
         "drip_type": "day10_assistant",
         "day": 10,
-        "subject": "Apply smarter with our AI Assistant ✨",
+        "subject": "Let Remote Impact watch for your next job",
         "template": "emails/drip_day10_assistant",
     },
 ]
@@ -82,6 +89,8 @@ class Command(BaseCommand):
                 is_active=True,
             ).exclude(
                 drip_emails__drip_type=drip_type,
+            ).exclude(
+                profile__email_newsletter_unsubscribed_at__isnull=False,
             )
 
             if specific_user:
@@ -98,12 +107,19 @@ class Command(BaseCommand):
                         except SeekerProfile.DoesNotExist:
                             pass
 
+                    if drip.get("skip_if_has_scout") and JobAlert.objects.filter(
+                        user=user
+                    ).exists():
+                        skipped += 1
+                        continue
+
                     # Build context
                     unsubscribe_url = email_service._get_unsubscribe_url(user.id)
                     context = {
                         "user": user,
                         "site_url": site_url,
                         "unsubscribe_url": unsubscribe_url,
+                        "scout_url": f"{site_url}/alerts/?source=day3_scout_email",
                     }
 
                     # Day 5: add jobs

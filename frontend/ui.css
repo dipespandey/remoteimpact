@@ -1,0 +1,137 @@
+/* Remote Impact UI v3: calm, neutral, app-like.
+ * Inspired by the ChatGPT/Codex apps and the S-Process sandbox: near-white
+ * surfaces, ink text and actions, colour only where it carries meaning,
+ * soft corners, very few borders, compact headings.
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 60 11% 99%;          /* #fcfcfb */
+    --foreground: 240 6% 12%;          /* ink */
+    --card: 0 0% 100%;
+    --card-foreground: 240 6% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 6% 12%;
+    --primary: 240 6% 12%;             /* ink buttons */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 60 5% 95%;            /* soft grey buttons, fills */
+    --secondary-foreground: 240 6% 12%;
+    --muted: 60 5% 95.5%;              /* #f4f4f2 surfaces */
+    --muted-foreground: 240 3% 42%;
+    --accent: 60 5% 94%;               /* hover / selected fill */
+    --accent-foreground: 240 6% 12%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 57% 30%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 240 6% 12%;
+    --border: 60 5% 92%;               /* faint, used sparingly */
+    --input: 60 5% 90%;
+    --ring: 217 91% 60%;               /* focus blue, like the sandbox */
+    --brand: 85 62% 40%;               /* the logo green: tiny accents only */
+    --radius: 0.75rem;
+  }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01";
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  h1, h2, h3, .font-display { font-family: Geist, Inter, system-ui, sans-serif; letter-spacing: -0.012em; }
+  :focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+  input::placeholder, textarea::placeholder { color: hsl(var(--muted-foreground) / 0.8); opacity: 1; }
+  ::selection { background: hsl(var(--ring) / 0.18); }
+  a { text-underline-offset: 3px; }
+}
+
+@layer components {
+  /* Layout: compact headers, generous but not cavernous spacing */
+  .page { @apply container py-8 sm:py-10; }
+  .page-narrow { @apply mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10; }
+  .page-header { @apply mb-6 sm:mb-8; }
+  .kicker { @apply text-xs font-medium text-muted-foreground; }
+  .page-title { @apply text-balance text-2xl font-semibold tracking-tight text-foreground sm:text-[1.75rem] sm:leading-tight; }
+  .page-lede { @apply mt-2 max-w-2xl text-[15px] leading-relaxed text-muted-foreground; }
+  .section-title { @apply text-base font-semibold tracking-tight text-foreground sm:text-lg; }
+  .muted { @apply text-muted-foreground; }
+  .section { @apply py-8 sm:py-10; }
+
+  /* Button: pill, ink primary, soft secondary */
+  .btn { @apply inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50; }
+  .btn-primary { @apply bg-primary text-primary-foreground hover:bg-primary/85; }
+  .btn-secondary { @apply bg-secondary text-secondary-foreground hover:bg-accent; }
+  .btn-outline { @apply border border-input bg-card text-foreground hover:bg-muted; }
+  .btn-ghost { @apply text-foreground hover:bg-muted; }
+  .btn-link { @apply h-auto rounded-none px-0 font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground; }
+  .btn-destructive { @apply bg-destructive text-destructive-foreground hover:bg-destructive/90; }
+  .btn-sm { @apply h-8 px-3 text-[13px]; }
+  .btn-lg { @apply h-11 px-5 text-[15px]; }
+  .btn-block { @apply w-full; }
+
+  /* Surfaces: fills and soft shadows instead of borders */
+  .card { @apply rounded-2xl bg-card text-card-foreground shadow-soft; }
+  .card-header { @apply flex flex-col gap-1 p-5 sm:p-6; }
+  .card-title { @apply text-base font-semibold leading-snug tracking-tight; }
+  .card-description { @apply text-sm text-muted-foreground; }
+  .card-content { @apply p-5 pt-0 sm:p-6 sm:pt-0; }
+  .card-footer { @apply flex items-center gap-2 p-5 pt-0 sm:p-6 sm:pt-0; }
+  .card-interactive { @apply transition-colors hover:bg-muted/60; }
+  .surface { @apply rounded-2xl bg-muted; }
+
+  /* Badge: quiet chips */
+  .badge { @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium; }
+  .badge-default { @apply bg-foreground text-background; }
+  .badge-primary { @apply bg-muted text-foreground; }
+  .badge-outline { @apply bg-muted text-muted-foreground; }
+  .badge-featured { @apply bg-amber-50 text-amber-800; }
+  .badge-success { @apply bg-emerald-50 text-emerald-800; }
+  .badge-warning { @apply bg-amber-50 text-amber-800; }
+
+  /* Forms: filled, borderless until focus */
+  .label { @apply mb-1.5 block text-sm font-medium text-foreground; }
+  .input, .select, .textarea { @apply block w-full rounded-xl border border-transparent bg-muted px-3.5 py-2.5 text-[15px] text-foreground transition-colors placeholder:text-muted-foreground/80 hover:bg-accent focus:border-ring/40 focus:bg-card focus:outline-none focus:ring-4 focus:ring-ring/15; }
+  select.select { @apply appearance-none bg-no-repeat pr-9; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b6b70'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E"); background-position: right 0.7rem center; background-size: 1.1rem; }
+  .textarea { @apply min-h-[120px] leading-6; }
+  .help { @apply mt-1.5 text-[13px] text-muted-foreground; }
+  .checkbox { @apply h-4 w-4 rounded border-input text-foreground focus:ring-ring; }
+  .field-error { @apply mt-1.5 text-[13px] text-destructive; }
+
+  /* Alert: tinted fill, no border */
+  .alert { @apply flex gap-3 rounded-xl p-4 text-sm; }
+  .alert-info { @apply bg-muted text-foreground; }
+  .alert-success { @apply bg-emerald-50 text-emerald-900; }
+  .alert-warning { @apply bg-amber-50 text-amber-900; }
+  .alert-destructive { @apply bg-red-50 text-red-900; }
+
+  /* Stat */
+  .stat { @apply rounded-2xl bg-muted p-4; }
+  .stat-value { @apply text-xl font-semibold tabular-nums tracking-tight text-foreground sm:text-2xl; }
+  .stat-label { @apply mt-0.5 text-[13px] text-muted-foreground; }
+
+  /* Table */
+  .table-wrap { @apply w-full overflow-x-auto rounded-2xl bg-card shadow-soft; }
+  .table { @apply w-full caption-bottom text-sm; }
+  .table thead th { @apply h-10 whitespace-nowrap px-4 text-left text-[13px] font-medium text-muted-foreground; }
+  .table tbody td { @apply border-t border-border px-4 py-3 align-top; }
+  .table tbody tr:hover { @apply bg-muted/50; }
+
+  /* Tabs / segmented */
+  .tabs { @apply inline-flex items-center gap-1 rounded-full bg-muted p-1; }
+  .tab { @apply rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:text-foreground; }
+  .tab-active { @apply bg-card text-foreground shadow-soft; }
+
+  /* Job lists: rows on a surface, hover fill, no borders */
+  .job-row { @apply block rounded-xl px-4 py-3.5 transition-colors hover:bg-muted sm:px-5; }
+  .job-title { @apply text-[15px] font-semibold leading-snug text-foreground sm:text-base; }
+  .job-meta { @apply mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[13px] text-muted-foreground; }
+  .list-surface { @apply rounded-2xl bg-card p-1.5 shadow-soft; }
+
+  .separator { @apply h-px w-full bg-border; }
+  .check-list > li { @apply relative pl-6; }
+  .check-list > li::before { content: ""; @apply absolute left-1 top-[0.6em] h-1.5 w-1.5 rounded-full bg-foreground/40; }
+}

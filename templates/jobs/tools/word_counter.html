@@ -50,127 +50,124 @@
 {% endblock %}
 
 {% block content %}
-<div class="bg-amber-50/40 min-h-screen" x-data="wordCounter()">
+<div class="container py-8 sm:py-10" x-data="wordCounter()">
 
-  <!-- Hero -->
-  <section class="py-12 sm:py-16 text-center">
-    <div class="mx-auto max-w-3xl px-4">
-      <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Free Word Counter &amp; Reading Time Calculator</h1>
-      <p class="text-lg text-gray-600 max-w-2xl mx-auto">Paste your text below to instantly see word count, character count, reading time, keyword density, and readability score.</p>
-    </div>
-  </section>
+  <nav aria-label="Breadcrumb" class="!border-b-0">
+    <ol class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+      <li><a href="{% url 'jobs:resources' %}" class="hover:text-foreground hover:underline">Resources</a></li>
+      <li aria-hidden="true">/</li>
+      <li class="text-foreground" aria-current="page">Word counter</li>
+    </ol>
+  </nav>
 
-  <!-- Main Tool -->
-  <section class="pb-12 px-4">
-    <div class="mx-auto max-w-5xl">
+  <header class="mt-4 max-w-3xl">
+    <h1 class="page-title">Word counter and reading time</h1>
+    <p class="page-lede">Paste your text to count words, characters and sentences, estimate reading and speaking time, and check keyword density and readability.</p>
+  </header>
 
-      <!-- Textarea Card -->
-      <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-8">
-        <label for="text-input" class="block text-sm font-medium text-gray-700 mb-2">Paste or type your text</label>
-        <textarea
-          id="text-input"
-          x-model="text"
-          rows="10"
-          class="w-full rounded-xl border border-gray-200 p-4 text-gray-800 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none resize-y text-base leading-relaxed"
-          placeholder="Start typing or paste your content here…"
-        ></textarea>
-        <div class="mt-3 flex items-center gap-4">
-          <button
-            x-on:click="text = ''"
-            class="text-sm text-gray-500 hover:text-red-500 transition-colors"
-          >Clear text</button>
-          <span class="text-xs text-gray-400" x-show="text.length > 0" x-text="words + ' words'"></span>
-        </div>
+  <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <!-- Text input -->
+    <div class="min-w-0 rounded-[1.25rem] bg-card p-4 shadow-lift transition-shadow focus-within:ring-2 focus-within:ring-ring/25 sm:p-5 lg:col-span-2">
+      <label for="text-input" class="sr-only">Your text</label>
+      <textarea
+        id="text-input"
+        x-model="text"
+        rows="12"
+        class="block min-h-[18rem] w-full resize-y border-0 bg-transparent p-1 text-base leading-7 text-foreground placeholder:text-muted-foreground/80 focus:outline-none focus:ring-0 focus-visible:outline-none"
+        placeholder="Type or paste your text here"
+      ></textarea>
+      <div class="mt-3 flex items-center justify-between gap-4">
+        <span class="px-1 text-[13px] tabular-nums text-muted-foreground" x-text="words + ' words'"></span>
+        <button type="button" x-on:click="text = ''" class="btn btn-ghost btn-sm" :disabled="text.length === 0">Clear text</button>
       </div>
+    </div>
 
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+    <!-- Counts -->
+    <div class="min-w-0" aria-live="polite">
+      <h2 class="sr-only">Counts</h2>
+      <div class="grid grid-cols-2 gap-3">
         <template x-for="stat in statsCards" :key="stat.label">
-          <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm text-center">
-            <div class="text-3xl font-bold text-brand-600" x-text="stat.value"></div>
-            <div class="text-sm text-gray-500 mt-1" x-text="stat.label"></div>
+          <div class="stat min-w-0">
+            <div class="stat-value break-words" x-text="stat.value"></div>
+            <div class="stat-label" x-text="stat.label"></div>
           </div>
         </template>
       </div>
+    </div>
+  </div>
 
-      <!-- Two-column: Keyword Density + Readability -->
-      <div class="grid lg:grid-cols-2 gap-8">
-
-        <!-- Keyword Density -->
-        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">Keyword Density</h2>
-          <div x-show="keywords.length === 0" class="text-gray-400 text-sm">Type some text to see keyword density.</div>
-          <table x-show="keywords.length > 0" class="w-full text-sm">
-            <thead>
-              <tr class="text-left text-gray-500 border-b border-gray-100">
-                <th class="pb-2 font-medium">Keyword</th>
-                <th class="pb-2 font-medium text-right">Count</th>
-                <th class="pb-2 font-medium text-right">Density</th>
+  <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <!-- Keyword density -->
+    <div class="card min-w-0 p-5 sm:p-6">
+      <h2 class="card-title">Keyword density</h2>
+      <p x-show="keywords.length === 0" class="mt-3 text-sm text-muted-foreground">Add some text to see the most used words.</p>
+      <div x-show="keywords.length > 0" class="-mx-1 mt-3 overflow-x-auto">
+        <table class="table tabular-nums">
+          <thead>
+            <tr>
+              <th>Keyword</th>
+              <th class="!text-right">Count</th>
+              <th class="!text-right">Density</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="kw in keywords" :key="kw.word">
+              <tr>
+                <td class="break-all font-medium text-foreground" x-text="kw.word"></td>
+                <td class="text-right text-muted-foreground" x-text="kw.count"></td>
+                <td class="text-right text-foreground" x-text="kw.density + '%'"></td>
               </tr>
-            </thead>
-            <tbody>
-              <template x-for="kw in keywords" :key="kw.word">
-                <tr class="border-b border-gray-50">
-                  <td class="py-2 text-gray-800 font-medium" x-text="kw.word"></td>
-                  <td class="py-2 text-right text-gray-600" x-text="kw.count"></td>
-                  <td class="py-2 text-right">
-                    <span class="inline-block bg-brand-50 text-brand-600 text-xs font-semibold px-2 py-0.5 rounded-full" x-text="kw.density + '%'"></span>
-                  </td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
+            </template>
+          </tbody>
+        </table>
+      </div>
+      <p class="help mt-3">Common words such as "the", "and" and "is" are left out.</p>
+    </div>
 
-        <!-- Readability -->
-        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">Readability Score</h2>
-          <div x-show="words === 0" class="text-gray-400 text-sm">Type some text to see readability analysis.</div>
-          <div x-show="words > 0">
-            <div class="flex items-center gap-4 mb-4">
-              <div class="text-5xl font-bold" :class="readabilityColor" x-text="readability"></div>
-              <div>
-                <div class="font-semibold text-gray-900" x-text="readabilityLabel"></div>
-                <div class="text-sm text-gray-500">Flesch-Kincaid Reading Ease</div>
-              </div>
-            </div>
-            <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-              <div class="h-3 rounded-full transition-all duration-300" :class="readabilityBarColor" :style="'width:' + Math.min(Math.max(readability, 0), 100) + '%'"></div>
-            </div>
-            <div class="flex justify-between text-xs text-gray-400 mt-1">
-              <span>Very Difficult</span>
-              <span>Very Easy</span>
-            </div>
-            <div class="mt-4 text-sm text-gray-600" x-text="readabilityDesc"></div>
+    <!-- Readability -->
+    <div class="card min-w-0 p-5 sm:p-6">
+      <h2 class="card-title">Readability</h2>
+      <p x-show="words === 0" class="mt-3 text-sm text-muted-foreground">Add some text to see a readability score. It needs at least 10 words.</p>
+      <div x-show="words > 0" class="mt-4">
+        <div class="flex items-center gap-4">
+          <div class="text-3xl font-semibold tabular-nums tracking-tight text-foreground" x-text="readability"></div>
+          <div class="min-w-0">
+            <div class="font-medium text-foreground" x-text="readabilityLabel"></div>
+            <div class="text-sm text-muted-foreground">Flesch reading ease (0–100)</div>
           </div>
         </div>
-
+        <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+          <div class="h-1.5 rounded-full bg-foreground transition-all duration-300" :style="'width:' + Math.min(Math.max(readability, 0), 100) + '%'"></div>
+        </div>
+        <div class="mt-1 flex justify-between text-xs text-muted-foreground">
+          <span>Very difficult</span>
+          <span>Very easy</span>
+        </div>
+        <p class="mt-4 text-sm text-muted-foreground" x-text="readabilityDesc"></p>
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- FAQ Section -->
-  <section class="py-12 px-4">
-    <div class="mx-auto max-w-3xl">
-      <h2 class="text-2xl font-bold text-gray-900 mb-8 text-center">Frequently Asked Questions</h2>
-      <div class="space-y-4">
-        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h3 class="font-semibold text-gray-900 mb-2">How is reading time calculated?</h3>
-          <p class="text-gray-600 text-sm">Reading time is estimated at 238 words per minute, the average silent reading speed for adults. Simply divide your total word count by 238.</p>
-        </div>
-        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h3 class="font-semibold text-gray-900 mb-2">How is speaking time calculated?</h3>
-          <p class="text-gray-600 text-sm">Speaking time uses 150 words per minute — the average pace for presentations and public speaking. Great for planning speeches, podcasts, and video scripts.</p>
-        </div>
-        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h3 class="font-semibold text-gray-900 mb-2">What is the Flesch-Kincaid readability score?</h3>
-          <p class="text-gray-600 text-sm">It rates text on a 0–100 scale. Higher scores mean easier reading: 90–100 is very easy (5th grade), 60–70 is standard (8th–9th grade), and below 30 is very difficult (college graduate level).</p>
-        </div>
-        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h3 class="font-semibold text-gray-900 mb-2">What are stop words?</h3>
-          <p class="text-gray-600 text-sm">Stop words are common words like "the", "and", "is" that carry little meaning. They're excluded from keyword density analysis to surface the most relevant terms in your content.</p>
-        </div>
-      </div>
+  <!-- FAQ -->
+  <section class="mt-12 max-w-3xl">
+    <h2 class="section-title">Questions</h2>
+    <div class="surface mt-4 p-1.5">
+      <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>How is reading time calculated?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">Reading time assumes 238 words per minute, the average silent reading speed for adults. The word count is divided by 238 and rounded up.</p>
+      </details>
+      <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>How is speaking time calculated?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">Speaking time uses 150 words per minute, a typical pace for presentations. Use it to plan talks, podcasts and video scripts.</p>
+      </details>
+      <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>What is the Flesch-Kincaid readability score?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">The Flesch reading ease score rates text from 0 to 100. Higher is easier: 90–100 is very easy (5th grade), 60–70 is plain English (8th–9th grade), and below 30 is very difficult (college graduate level).</p>
+      </details>
+      <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>What are stop words?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">Stop words are common words like "the", "and" and "is" that carry little meaning. They are left out of keyword density so the words that matter in your text show up.</p>
+      </details>
     </div>
   </section>
 
@@ -210,8 +207,8 @@ function wordCounter() {
         { label: 'Characters (no spaces)', value: this.charsNoSpaces },
         { label: 'Sentences', value: this.sentences },
         { label: 'Paragraphs', value: this.paragraphs },
-        { label: 'Reading Time', value: this.readingTime },
-        { label: 'Speaking Time', value: this.speakingTime },
+        { label: 'Reading time', value: this.readingTime },
+        { label: 'Speaking time', value: this.speakingTime },
         { label: 'Readability', value: this.readability },
       ];
     },
@@ -246,23 +243,23 @@ function wordCounter() {
     },
     get readabilityColor() {
       const s = this.readability;
-      if (s >= 70) return 'text-green-600';
-      if (s >= 50) return 'text-yellow-600';
-      return 'text-red-600';
+      if (s >= 70) return 'text-success';
+      if (s >= 50) return 'text-amber-700';
+      return 'text-destructive';
     },
     get readabilityBarColor() {
       const s = this.readability;
-      if (s >= 70) return 'bg-green-500';
-      if (s >= 50) return 'bg-yellow-500';
-      return 'bg-red-500';
+      if (s >= 70) return 'bg-success';
+      if (s >= 50) return 'bg-amber-500';
+      return 'bg-destructive';
     },
     get readabilityLabel() {
       const s = this.readability;
-      if (s >= 90) return 'Very Easy';
+      if (s >= 90) return 'Very easy';
       if (s >= 70) return 'Easy';
-      if (s >= 50) return 'Fairly Difficult';
+      if (s >= 50) return 'Fairly difficult';
       if (s >= 30) return 'Difficult';
-      return 'Very Difficult';
+      return 'Very difficult';
     },
     get readabilityDesc() {
       const s = this.readability;

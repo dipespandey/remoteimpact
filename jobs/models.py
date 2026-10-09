@@ -2,12 +2,12 @@ import uuid
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
-from pgvector.django import HnswIndex, VectorField
+from pgvector.django import VectorField
+from jobs.db_indexes import PostgresOnlyGinIndex, PostgresOnlyHnswIndex
 
 
 class Organization(models.Model):
@@ -201,7 +201,7 @@ class UserProfile(models.Model):
 
     # Email preferences
     email_newsletter = models.BooleanField(
-        default=True, help_text="Receive weekly job digest emails"
+        default=False, help_text="Receive weekly job digest emails"
     )
     email_newsletter_unsubscribed_at = models.DateTimeField(null=True, blank=True)
 
@@ -241,6 +241,10 @@ class Job(models.Model):
         LEVER = "lever", "Lever"
         ASHBY = "ashby", "Ashby"
         PROBABLYGOOD = "probablygood", "Probably Good"
+        WORKABLE = "workable", "Workable"
+        RECRUITEE = "recruitee", "Recruitee"
+        PERSONIO = "personio", "Personio"
+        BAMBOOHR = "bamboohr", "BambooHR"
 
     JOB_TYPE_CHOICES = [
         ("full-time", "Full-time"),
@@ -353,13 +357,19 @@ class Job(models.Model):
         max_length=255, blank=True, null=True, help_text="ID from the upstream source"
     )
     raw_data = models.JSONField(default=dict, blank=True)
+    last_seen_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    quality_score = models.PositiveSmallIntegerField(default=0, db_index=True)
+    quality_issues = models.JSONField(default=list, blank=True)
 
     # Vector search fields
     embedding = VectorField(dimensions=384, null=True, blank=True)
+    embedding_content_hash = models.CharField(max_length=64, blank=True, default="")
     search_vector = SearchVectorField(null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
+    # Paid placement window. "Featured" on the site means an employer paid.
+    featured_until = models.DateTimeField(null=True, blank=True, db_index=True)
 
     is_paid = models.BooleanField(default=False)
     stripe_checkout_session_id = models.CharField(max_length=255, blank=True, default="", db_index=True)
@@ -384,8 +394,8 @@ class Job(models.Model):
             models.Index(fields=["is_active", "-posted_at"]),
             models.Index(fields=["category", "is_active"]),
             models.Index(fields=["source", "external_id"]),
-            GinIndex(fields=["search_vector"], name="job_search_idx"),
-            HnswIndex(
+            PostgresOnlyGinIndex(fields=["search_vector"], name="job_search_idx"),
+            PostgresOnlyHnswIndex(
                 name="job_embedding_idx",
                 fields=["embedding"],
                 m=16,
@@ -407,14 +417,61 @@ class Job(models.Model):
     def get_absolute_url(self):
         return reverse("jobs:job_detail", kwargs={"slug": self.slug})
 
+    PUBLIC_STALE_DAYS = 90
+    # Imported listings are refreshed by every feed fetch and by verify_ats_jobs, so one
+    # nobody has seen for a month has almost certainly been taken down upstream.
+    IMPORTED_UNSEEN_DAYS = 30
+
+    @classmethod
+    def availability_filter(cls, now=None, stale_days=None, include_quality=True):
+        """Public inventory policy; source sightings indicate freshness, not an open role."""
+        from datetime import timedelta
+
+        now = now or timezone.now()
+        days = cls.PUBLIC_STALE_DAYS if stale_days is None else stale_days
+        cutoff = now - timedelta(days=days)
+        seen_cutoff = now - timedelta(days=min(days, cls.IMPORTED_UNSEEN_DAYS))
+        manual = models.Q(source=cls.Source.MANUAL)
+        fresh = (manual & (models.Q(posted_at__gte=cutoff) | models.Q(last_seen_at__gte=cutoff))) | (
+            ~manual & (
+                models.Q(last_seen_at__gte=seen_cutoff)
+                | (models.Q(last_seen_at__isnull=True) & models.Q(posted_at__gte=cutoff))
+            )
+        )
+        available = models.Q(is_active=True) & (
+            models.Q(expires_at__gte=now) | (models.Q(expires_at__isnull=True) & fresh)
+        ) & ~models.Q(organization__verification_status=Organization.VerificationStatus.REJECTED)
+        if include_quality:
+            available &= models.Q(quality_score__gte=55) | models.Q(quality_score=0)
+        return available
+
     def is_expired(self):
-        if self.expires_at:
-            return timezone.now() > self.expires_at
-        return False
+        return bool(self.expires_at and timezone.now() > self.expires_at)
+
+    @property
+    def is_sponsored(self):
+        return bool(self.featured_until and self.featured_until > timezone.now())
+
+    @classmethod
+    def sponsored_filter(cls, now=None):
+        return models.Q(featured_until__gt=now or timezone.now())
 
     @property
     def is_available(self):
-        return self.is_active and not self.is_expired()
+        from datetime import timedelta
+
+        now = timezone.now()
+        cutoff = now - timedelta(days=self.PUBLIC_STALE_DAYS)
+        if self.expires_at:
+            fresh = self.expires_at >= now
+        elif self.source == self.Source.MANUAL:
+            fresh = self.posted_at >= cutoff or bool(self.last_seen_at and self.last_seen_at >= cutoff)
+        elif self.last_seen_at:
+            fresh = self.last_seen_at >= now - timedelta(days=self.IMPORTED_UNSEEN_DAYS)
+        else:
+            fresh = self.posted_at >= cutoff
+        rejected = self.organization.verification_status == Organization.VerificationStatus.REJECTED
+        return self.is_active and fresh and not rejected and (self.quality_score == 0 or self.quality_score >= 55)
 
     @property
     def is_entry_level_friendly(self):
@@ -822,6 +879,89 @@ class UserPath(models.Model):
         )
 
 
+class EmployerFunnelEvent(models.Model):
+    """Minimal server-side conversion events for the employer journey."""
+
+    class Event(models.TextChoices):
+        POST_JOB_VIEWED = "post_job_viewed", "Post job viewed"
+        JOB_DRAFT_CREATED = "job_draft_created", "Job draft created"
+        CHECKOUT_STARTED = "checkout_started", "Checkout started"
+        PAYMENT_COMPLETED = "payment_completed", "Payment completed"
+        PAYMENT_CANCELLED = "payment_cancelled", "Payment cancelled"
+        CHECKOUT_FAILED = "checkout_failed", "Checkout failed"
+
+        SHORTLIST_VIEWED = "shortlist_viewed", "Candidate shortlist viewed"
+        CANDIDATE_REVIEWED = "candidate_reviewed", "Candidate stage updated"
+
+    user = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL, related_name="employer_funnel_events"
+    )
+    job = models.ForeignKey(
+        "Job", null=True, blank=True, on_delete=models.SET_NULL, related_name="funnel_events"
+    )
+    event = models.CharField(max_length=32, choices=Event.choices)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["event", "-created_at"]), models.Index(fields=["user", "-created_at"])]
+
+
+class ConsumerFunnelEvent(models.Model):
+    """Server-side conversion events for Remote Impact Pro and Job Scout."""
+
+    class Event(models.TextChoices):
+        ACCOUNT_CREATED = "account_created", "Account created"
+        SCOUT_LANDED = "scout_landed", "Scout page viewed"
+        SCOUT_JOB_VIEWED = "scout_job_viewed", "Scout job viewed"
+        SCOUT_PREVIEWED = "scout_previewed", "Scout previewed"
+        SCOUT_SIGNUP_STARTED = "scout_signup_started", "Scout signup started"
+        SCOUT_CREATED = "scout_created", "Scout created"
+        INITIAL_EMAIL_SENT = "initial_email_sent", "Initial email sent"
+        INITIAL_EMAIL_FAILED = "initial_email_failed", "Initial email failed"
+        INITIAL_MATCHES_EMPTY = "initial_matches_empty", "Initial Scout had no matches"
+        UPGRADE_CLICKED = "upgrade_clicked", "Upgrade clicked"
+        CHECKOUT_STARTED = "checkout_started", "Checkout started"
+        CHECKOUT_CREATED = "checkout_created", "Stripe checkout created"
+        CHECKOUT_EXPIRED = "checkout_expired", "Stripe checkout expired"
+        CHECKOUT_FAILED = "checkout_failed", "Checkout failed"
+        PAYMENT_COMPLETED = "payment_completed", "Payment completed"
+        SUBSCRIPTION_CANCELLED = "subscription_cancelled", "Subscription cancelled"
+        TRIAL_REMINDER_SENT = "trial_reminder_sent", "Pro trial reminder sent"
+        MATCH_RELEVANT = "match_relevant", "Match marked relevant"
+        MATCH_NOT_RELEVANT = "match_not_relevant", "Match marked not relevant"
+        SHORTLIST_VIEWED = "shortlist_viewed", "Private shortlist viewed"
+        INTEREST_SAVED = "interest_saved", "Job interest saved"
+        EMPLOYER_OPT_IN = "employer_opt_in", "Candidate opted in to an employer"
+        COLLECTION_CREATED = "collection_created", "Job collection shared"
+        COLLECTION_VIEWED = "collection_viewed", "Shared job collection viewed"
+
+    user = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="consumer_funnel_events",
+    )
+    alert = models.ForeignKey(
+        "JobAlert",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="funnel_events",
+    )
+    event = models.CharField(max_length=32, choices=Event.choices)
+    metadata = models.JSONField(default=dict, blank=True)
+    dedupe_key = models.CharField(max_length=160, null=True, blank=True, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["event", "-created_at"]),
+            models.Index(fields=["user", "-created_at"]),
+        ]
+
+
 # =============================================================================
 # Impact Match - Seeker Profile & Matching Models
 # =============================================================================
@@ -973,6 +1113,7 @@ class SeekerProfile(models.Model):
     # -------------------------------------------------------------------------
 
     embedding = VectorField(dimensions=384, null=True, blank=True)
+    embedding_content_hash = models.CharField(max_length=64, blank=True, default="")
     search_vector = SearchVectorField(null=True, blank=True)
 
     # -------------------------------------------------------------------------
@@ -980,7 +1121,7 @@ class SeekerProfile(models.Model):
     # -------------------------------------------------------------------------
 
     visibility = models.CharField(
-        max_length=20, choices=Visibility.choices, default=Visibility.PUBLIC
+        max_length=20, choices=Visibility.choices, default=Visibility.MATCHING
     )
     is_actively_looking = models.BooleanField(
         default=True, help_text="Currently seeking opportunities"
@@ -1009,8 +1150,8 @@ class SeekerProfile(models.Model):
         verbose_name = "Seeker Profile"
         verbose_name_plural = "Seeker Profiles"
         indexes = [
-            GinIndex(fields=["search_vector"], name="seeker_search_idx"),
-            HnswIndex(
+            PostgresOnlyGinIndex(fields=["search_vector"], name="seeker_search_idx"),
+            PostgresOnlyHnswIndex(
                 name="seeker_embedding_idx",
                 fields=["embedding"],
                 m=16,
@@ -1235,7 +1376,7 @@ class CoverLetter(models.Model):
 
 
 class AssistantSubscription(models.Model):
-    """Tracks user subscription and usage for the Applicant Assistant (cover letter writer)."""
+    """Tracks the bundled Remote Impact Pro subscription and assistant usage."""
 
     user = models.OneToOneField(
         get_user_model(), on_delete=models.CASCADE, related_name="assistant_subscription"
@@ -1249,10 +1390,13 @@ class AssistantSubscription(models.Model):
     is_subscribed = models.BooleanField(default=False)
     stripe_subscription_id = models.CharField(max_length=100, blank=True)
     stripe_customer_id = models.CharField(max_length=100, blank=True)
+    stripe_checkout_session_id = models.CharField(max_length=255, blank=True)
+    stripe_checkout_expires_at = models.DateTimeField(null=True, blank=True)
 
     # Subscription dates
     subscribed_at = models.DateTimeField(null=True, blank=True)
     expires_at = models.DateTimeField(null=True, blank=True)
+    free_job_scout_used_at = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -1273,6 +1417,12 @@ class AssistantSubscription(models.Model):
                 return False
             return True
         return self.free_uses_remaining > 0
+
+    def is_pro_active(self) -> bool:
+        """Return whether the bundled Pro entitlement is currently active."""
+        if not self.is_subscribed:
+            return False
+        return not self.expires_at or self.expires_at >= timezone.now()
 
     def record_usage(self):
         """Record a usage of the assistant."""
@@ -1333,6 +1483,7 @@ class DripEmailLog(models.Model):
 
     DRIP_TYPES = [
         ('day2_profile', 'Day 2 – Complete Profile'),
+        ('day3_scout', 'Day 3 – AI Job Scout'),
         ('day5_jobs', 'Day 5 – Top Jobs'),
         ('day10_assistant', 'Day 10 – AI Assistant'),
     ]
@@ -1435,9 +1586,11 @@ class ReferralSignup(models.Model):
 
 
 class JobAlert(models.Model):
-    """User-configured job alert with categories, keywords, and frequency."""
+    """AI-interpreted job scout with structured matching preferences."""
 
     class Frequency(models.TextChoices):
+        ONCE = "once", "One-time"
+        INSTANT = "instant", "As soon as possible"
         DAILY = "daily", "Daily"
         WEEKLY = "weekly", "Weekly"
 
@@ -1447,8 +1600,17 @@ class JobAlert(models.Model):
     name = models.CharField(max_length=100, blank=True, help_text="Optional label for this alert")
     categories = models.ManyToManyField(Category, blank=True, related_name="alerts")
     keywords = models.TextField(blank=True, help_text="Comma-separated keywords to match")
+    intent_text = models.TextField(
+        blank=True,
+        help_text="The user's natural-language description of the work they want",
+    )
+    parsed_preferences = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Structured criteria interpreted from intent_text",
+    )
     frequency = models.CharField(
-        max_length=10, choices=Frequency.choices, default=Frequency.WEEKLY
+        max_length=10, choices=Frequency.choices, default=Frequency.ONCE
     )
     is_active = models.BooleanField(default=True)
     last_sent_at = models.DateTimeField(null=True, blank=True)
@@ -1464,29 +1626,48 @@ class JobAlert(models.Model):
 
     def get_matching_jobs(self, since=None):
         """Find jobs matching this alert's criteria since a given date."""
-        from django.db.models import Q
-        from django.utils import timezone
-        from datetime import timedelta
+        from jobs.services.job_scout_service import JobScoutService
 
-        if since is None:
-            since = self.last_sent_at or (timezone.now() - timedelta(days=7))
+        return JobScoutService.get_matches(self, since=since)
 
-        qs = Job.objects.filter(is_active=True, posted_at__gte=since)
 
-        # Filter by categories if set
-        cats = self.categories.all()
-        if cats.exists():
-            qs = qs.filter(category__in=cats)
+class JobAlertDelivery(models.Model):
+    """A job already delivered for a scout, used for reliable deduplication."""
 
-        # Filter by keywords if set
-        if self.keywords.strip():
-            kw_list = [k.strip() for k in self.keywords.split(",") if k.strip()]
-            kw_q = Q()
-            for kw in kw_list:
-                kw_q |= Q(title__icontains=kw) | Q(description__icontains=kw)
-            qs = qs.filter(kw_q)
+    class Feedback(models.TextChoices):
+        RELEVANT = "relevant", "Relevant"
+        NOT_RELEVANT = "not_relevant", "Not relevant"
 
-        return qs.select_related("organization", "category").order_by("-posted_at")
+    alert = models.ForeignKey(
+        JobAlert, on_delete=models.CASCADE, related_name="deliveries"
+    )
+    job = models.ForeignKey(
+        Job, on_delete=models.CASCADE, related_name="alert_deliveries"
+    )
+    sent_at = models.DateTimeField(auto_now_add=True)
+    match_score = models.PositiveSmallIntegerField(default=0)
+    match_reasons = models.JSONField(default=list, blank=True)
+    feedback = models.CharField(
+        max_length=20, choices=Feedback.choices, blank=True
+    )
+    feedback_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-sent_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["alert", "job"], name="unique_job_alert_delivery"
+            )
+        ]
+        indexes = [
+            models.Index(
+                fields=["alert", "-sent_at"],
+                name="jobs_jobale_alert_i_9e2095_idx",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.alert} -> {self.job}"
 
 
 class ProfileView(models.Model):
@@ -1506,3 +1687,55 @@ class ProfileView(models.Model):
 
     def __str__(self):
         return f"{self.viewer} viewed {self.seeker} at {self.viewed_at}"
+
+
+from .shortlist_models import JobInterest, SharedShortlist  # noqa: E402,F401
+
+
+class JobDailyStat(models.Model):
+    """Per-job engagement by day, reported back to employers.
+
+    Views come from a client-side beacon (bots rarely run it); apply clicks from
+    the outbound redirect.
+    """
+
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="daily_stats")
+    date = models.DateField(db_index=True)
+    views = models.PositiveIntegerField(default=0)
+    apply_clicks = models.PositiveIntegerField(default=0)
+    scout_deliveries = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["job", "date"], name="unique_job_daily_stat")]
+        indexes = [models.Index(fields=["job", "-date"])]
+
+    def __str__(self):
+        return f"{self.job_id} {self.date}: {self.views} views, {self.apply_clicks} clicks"
+
+
+class JobSlugRedirect(models.Model):
+    """Old job URLs that must keep resolving after a slug changes."""
+
+    old_slug = models.SlugField(max_length=255, unique=True)
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="slug_redirects")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.old_slug} -> {self.job_id}"
+
+
+class JobFeaturePurchase(models.Model):
+    """A paid 30-day featured placement for one job (also a revenue record)."""
+
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="feature_purchases")
+    stripe_checkout_session_id = models.CharField(max_length=255, unique=True)
+    amount_cents = models.PositiveIntegerField(default=0)
+    purchaser_email = models.EmailField(blank=True)
+    featured_until = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Feature {self.job_id} until {self.featured_until:%Y-%m-%d}"

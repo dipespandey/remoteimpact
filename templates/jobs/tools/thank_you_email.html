@@ -1,174 +1,135 @@
 {% extends 'base.html' %}
 
-{% block title %}Free Thank You Email After Interview Generator | AI-Powered - Remote Impact{% endblock %}
+{% block title %}Free Thank You Email After Interview Generator | Remote Impact{% endblock %}
 
-{% block meta_description %}Generate a polished post-interview thank you email in seconds with our free AI tool. Choose your tone, mention key topics, and impress your interviewer.{% endblock %}
+{% block meta_description %}Free thank you email generator for after an interview. Add the interviewer, role and topics you discussed, choose a tone, and copy a polished post-interview thank you email.{% endblock %}
 
 {% block content %}
-<style>
-  .panel{border:1px solid rgba(15,23,42,.1);background:linear-gradient(135deg,#fff,#faf7f2);box-shadow:0 4px 20px rgba(15,23,42,.08);border-radius:1rem}
-  .input-base{background:#fff;border:1px solid rgba(15,23,42,.15);border-radius:.75rem;padding:.75rem 1rem;width:100%;transition:border-color .15s,box-shadow .15s}
-  .input-base:focus{outline:none;border-color:#6EAA1C;box-shadow:0 0 0 3px rgba(110,170,28,.2)}
-  select.input-base{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 1rem center}
-  .spinner{border:3px solid rgba(110,170,28,.2);border-top-color:#6EAA1C;border-radius:9999px;width:28px;height:28px;animation:spin .8s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .btn-primary{display:inline-flex;align-items:center;justify-content:center;padding:.75rem 1.5rem;border-radius:.75rem;background:#6EAA1C;color:#fff;font-weight:600;transition:background .15s}
-  .btn-primary:hover{background:#5d9416}
-  .btn-secondary{display:inline-flex;align-items:center;justify-content:center;padding:.75rem 1.5rem;border-radius:.75rem;background:#f3f4f6;color:#374151;font-weight:600;transition:background .15s}
-  .btn-secondary:hover{background:#e5e7eb}
-  .faq-toggle:checked+label+div{max-height:500px;padding-top:.75rem}
-  .faq-answer{max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease}
-</style>
+<div class="container py-8 sm:py-10" x-data="thankYouApp()">
 
-<section class="py-12 md:py-16 bg-[#F3F2EE]" x-data="thankYouApp()">
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+  <header class="max-w-3xl">
+    <h1 class="page-title">Thank-you email after an interview</h1>
+    <p class="page-lede">Add your interview details and get a short thank-you email to edit and send, ideally within 24 hours.</p>
+  </header>
 
-    <!-- Hero / H1 -->
-    <div class="text-center space-y-4 mb-10">
-      <p class="uppercase text-xs tracking-[0.3em] text-gray-500">Free Tool</p>
-      <h1 class="text-3xl md:text-5xl font-semibold text-gray-900 leading-tight">Free Thank You Email After Interview Generator</h1>
-      <p class="text-lg text-gray-600 max-w-2xl mx-auto">Create a polished post-interview thank you email in seconds. AI-powered — just fill in your interview details and copy.</p>
-    </div>
+  <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
 
-    <!-- Generator Form -->
-    <div class="panel p-6 md:p-8 space-y-6 mb-12">
-      <h2 class="text-xl font-semibold text-gray-900">Interview Details</h2>
+    <!-- Inputs -->
+    <section class="min-w-0 rounded-[1.25rem] bg-card p-4 shadow-lift sm:p-6" aria-labelledby="ty-form-title">
+      <h2 id="ty-form-title" class="card-title">Interview details</h2>
 
-      <div class="grid md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1" for="ty-interviewer">Interviewer's Name *</label>
-          <input id="ty-interviewer" type="text" class="input-base text-gray-900" placeholder="Sarah Johnson" x-model="form.interviewer" required />
+      <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="min-w-0">
+          <label class="label" for="ty-interviewer">Interviewer's name <span class="text-muted-foreground">(required)</span></label>
+          <input id="ty-interviewer" type="text" class="input" placeholder="Sarah Johnson" x-model="form.interviewer" required />
         </div>
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1" for="ty-company">Company Name *</label>
-          <input id="ty-company" type="text" class="input-base text-gray-900" placeholder="Acme Corp" x-model="form.company" required />
+        <div class="min-w-0">
+          <label class="label" for="ty-company">Company <span class="text-muted-foreground">(required)</span></label>
+          <input id="ty-company" type="text" class="input" placeholder="Acme Corp" x-model="form.company" required />
         </div>
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1" for="ty-position">Position Applied For *</label>
-          <input id="ty-position" type="text" class="input-base text-gray-900" placeholder="Product Manager" x-model="form.position" required />
+        <div class="min-w-0">
+          <label class="label" for="ty-position">Position <span class="text-muted-foreground">(required)</span></label>
+          <input id="ty-position" type="text" class="input" placeholder="Product Manager" x-model="form.position" required />
         </div>
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1" for="ty-type">Interview Type *</label>
-          <select id="ty-type" class="input-base text-gray-900" x-model="form.interview_type">
-            <option value="phone">Phone Screen</option>
-            <option value="video">Video Call</option>
-            <option value="onsite">On-Site</option>
-            <option value="panel">Panel Interview</option>
+        <div class="min-w-0">
+          <label class="label" for="ty-type">Interview type</label>
+          <select id="ty-type" class="select" x-model="form.interview_type">
+            <option value="phone">Phone screen</option>
+            <option value="video">Video call</option>
+            <option value="onsite">On-site</option>
+            <option value="panel">Panel interview</option>
           </select>
         </div>
       </div>
 
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-1" for="ty-topics">Key Topics Discussed *</label>
-        <textarea id="ty-topics" rows="3" class="input-base text-gray-900" placeholder="E.g., discussed the team's roadmap for Q3, my experience with cross-functional collaboration, remote work culture..." x-model="form.topics"></textarea>
+      <div class="mt-4">
+        <label class="label" for="ty-topics">Topics you discussed <span class="text-muted-foreground">(required)</span></label>
+        <textarea id="ty-topics" rows="3" class="textarea" placeholder="The team's Q3 roadmap, my cross-functional work, how the team handles remote collaboration" x-model="form.topics"></textarea>
       </div>
 
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-1">Tone</label>
-        <div class="flex flex-wrap gap-3">
+      <fieldset class="mt-5">
+        <legend class="label">Tone</legend>
+        <div class="tabs flex-wrap">
           <template x-for="t in ['professional', 'warm', 'enthusiastic']" :key="t">
             <label class="cursor-pointer">
-              <input type="radio" name="tone" :value="t" x-model="form.tone" class="sr-only peer" />
-              <span class="px-4 py-2 rounded-full border border-gray-300 text-sm font-medium text-gray-700 peer-checked:bg-brand-300 peer-checked:border-brand-400 peer-checked:text-gray-900 transition capitalize" x-text="t"></span>
+              <input type="radio" name="tone" :value="t" x-model="form.tone" class="peer sr-only" />
+              <span class="tab inline-block capitalize peer-checked:bg-card peer-checked:text-foreground peer-checked:shadow-soft peer-focus-visible:ring-2 peer-focus-visible:ring-ring" x-text="t"></span>
             </label>
           </template>
         </div>
-      </div>
+      </fieldset>
 
-      <div class="flex flex-col sm:flex-row gap-3">
-        <button type="button" @click="generate()" class="btn-primary" :disabled="loading" :style="loading && 'opacity:0.6'">
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-          Generate Thank You Email
+      <div class="mt-6 flex flex-row-reverse flex-wrap items-center justify-between gap-3">
+        <button type="button" @click="generate()" class="btn btn-primary" :disabled="loading" :style="loading && 'opacity:0.6'">
+          <span x-show="loading" x-cloak class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true"></span>
+          <span x-text="loading ? 'Writing your email…' : 'Generate email'">Generate email</span>
         </button>
-        <span class="text-sm text-gray-500 self-center" x-text="usageText"></span>
+        <span class="text-sm text-muted-foreground" x-text="usageText" aria-live="polite"></span>
       </div>
-    </div>
+    </section>
 
     <!-- Output -->
-    <div class="panel p-6 md:p-8 space-y-4 mb-12" x-show="showOutput" x-cloak>
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h2 class="text-xl font-semibold text-gray-900">Your Thank You Email</h2>
-        <button type="button" @click="copyEmail()" class="btn-secondary text-sm">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-          <span x-text="copied ? 'Copied!' : 'Copy'"></span>
+    <section class="card min-w-0 p-5 sm:p-6 lg:sticky lg:top-24" aria-labelledby="ty-output-title">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 id="ty-output-title" class="text-sm font-medium text-muted-foreground">Your email</h2>
+        <button type="button" @click="copyEmail()" :disabled="!result" class="btn btn-ghost btn-sm">
+          <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
         </button>
       </div>
-      <div class="relative">
-        <textarea x-ref="output" rows="16" class="w-full px-4 py-4 rounded-xl bg-white border border-gray-200 text-gray-900 text-sm leading-relaxed" readonly x-model="result"></textarea>
-        <div x-show="loading" class="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl">
-          <div class="spinner"></div>
+      <div class="relative mt-4">
+        <textarea x-ref="output" rows="16" class="block w-full resize-y border-0 bg-transparent p-0 text-[15px] leading-7 text-foreground placeholder:text-muted-foreground/80 focus:outline-none focus:ring-0 focus-visible:outline-none min-h-[16rem]" placeholder="Your email will appear here. Add a personal touch and proofread it before sending." aria-label="Generated thank-you email" readonly x-model="result"></textarea>
+        <div x-show="loading" x-cloak class="absolute inset-0 flex items-center justify-center rounded-xl bg-card/80">
+          <span class="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-foreground" aria-hidden="true"></span>
+          <span class="sr-only">Generating</span>
         </div>
       </div>
-    </div>
-
-    <!-- Rate limit modal -->
-    <div x-show="showLimitModal" x-cloak class="fixed inset-0 z-50">
-      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showLimitModal=false"></div>
-      <div class="relative max-w-md mx-auto mt-24 px-4">
-        <div class="bg-white rounded-2xl p-6 space-y-4 shadow-xl text-center">
-          <h3 class="text-xl font-semibold text-gray-900">Free Limit Reached</h3>
-          <p class="text-gray-600">You've used your 3 free generations. Sign up for a free account to continue.</p>
-          <a href="{% url 'account_signup' %}?next={{ request.path }}" class="btn-primary w-full">Create Free Account</a>
-          <button @click="showLimitModal=false" class="text-sm text-gray-500 hover:text-gray-700">Maybe later</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- How It Works -->
-    <div class="panel p-6 md:p-8 mb-12">
-      <h2 class="text-2xl font-semibold text-gray-900 text-center mb-8">How It Works</h2>
-      <div class="grid md:grid-cols-3 gap-8">
-        <div class="text-center space-y-3">
-          <div class="w-12 h-12 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center mx-auto text-lg">1</div>
-          <h3 class="font-semibold text-gray-900">Enter Interview Details</h3>
-          <p class="text-sm text-gray-600">Add the interviewer's name, company, position, and key topics you discussed.</p>
-        </div>
-        <div class="text-center space-y-3">
-          <div class="w-12 h-12 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center mx-auto text-lg">2</div>
-          <h3 class="font-semibold text-gray-900">Pick Your Tone</h3>
-          <p class="text-sm text-gray-600">Choose professional, warm, or enthusiastic to match the interview vibe.</p>
-        </div>
-        <div class="text-center space-y-3">
-          <div class="w-12 h-12 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center mx-auto text-lg">3</div>
-          <h3 class="font-semibold text-gray-900">Copy &amp; Send</h3>
-          <p class="text-sm text-gray-600">Copy your polished thank you email and send it within 24 hours of your interview.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tips Section -->
-    <div class="panel p-6 md:p-8 mb-12 space-y-6">
-      <h2 class="text-2xl font-semibold text-gray-900">5 Rules for Post-Interview Thank You Emails</h2>
-      <div class="prose prose-gray max-w-none text-gray-600 space-y-4">
-        <ol class="list-decimal pl-5 space-y-3">
-          <li><strong>Send within 24 hours:</strong> Timing matters. Send your thank you email the same day or by the next morning while the conversation is still fresh in everyone's mind.</li>
-          <li><strong>Reference something specific:</strong> Mention a topic, project, or insight from the interview. This proves you were engaged and helps the interviewer remember you.</li>
-          <li><strong>Reaffirm your interest:</strong> Clearly state that you're excited about the role and the company. Enthusiasm is a signal that you'll accept an offer.</li>
-          <li><strong>Keep it concise:</strong> Three to four short paragraphs is ideal. Your interviewer is busy — respect their time with a focused, scannable email.</li>
-          <li><strong>Proofread twice:</strong> Typos in a thank you email can undo a great interview. Read it aloud, then read it again before hitting send.</li>
-        </ol>
-      </div>
-    </div>
-
-    <!-- FAQ -->
-    <div class="panel p-6 md:p-8 mb-12">
-      <h2 class="text-2xl font-semibold text-gray-900 mb-6">Frequently Asked Questions</h2>
-      <div class="divide-y divide-gray-200">
-        {% for faq in faqs %}
-        <div class="py-4">
-          <input type="checkbox" id="faq-{{ forloop.counter }}" class="faq-toggle sr-only" />
-          <label for="faq-{{ forloop.counter }}" class="flex items-center justify-between cursor-pointer group">
-            <span class="font-semibold text-gray-900 group-hover:text-brand-600 transition">{{ faq.q }}</span>
-            <svg class="w-5 h-5 text-gray-400 group-hover:text-brand-600 transition flex-shrink-0 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-          </label>
-          <div class="faq-answer text-gray-600 text-sm leading-relaxed">{{ faq.a }}</div>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-
+    </section>
   </div>
-</section>
+
+  <!-- Rate limit modal -->
+  <div x-show="showLimitModal" x-cloak class="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-labelledby="ty-limit-title">
+    <div class="absolute inset-0 bg-foreground/25 backdrop-blur-sm" @click="showLimitModal=false"></div>
+    <div class="relative mx-auto mt-24 max-w-md px-4">
+      <div class="card space-y-4 p-6">
+        <h2 id="ty-limit-title" class="card-title">Free limit reached</h2>
+        <p class="text-sm text-muted-foreground">You've used your 3 free emails. Create a free account to keep going.</p>
+        <div class="flex flex-col gap-2 sm:flex-row-reverse sm:justify-start">
+          <a href="{% url 'account_signup' %}?next={{ request.path }}" class="btn btn-primary">Create free account</a>
+          <button type="button" @click="showLimitModal=false" class="btn btn-ghost">Maybe later</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tips -->
+  <section class="mt-12 max-w-3xl" aria-labelledby="ty-tips-title">
+    <h2 id="ty-tips-title" class="section-title text-balance">Five rules for post-interview thank-you emails</h2>
+    <ol class="mt-5 list-decimal space-y-3 pl-5 leading-7 text-foreground marker:text-muted-foreground">
+      <li><strong class="font-medium">Send within 24 hours.</strong> <span class="text-muted-foreground">Send it the same day or the next morning, while the conversation is still fresh.</span></li>
+      <li><strong class="font-medium">Mention something specific.</strong> <span class="text-muted-foreground">A topic, project or idea from the interview shows you were listening and helps the interviewer remember you.</span></li>
+      <li><strong class="font-medium">Restate your interest.</strong> <span class="text-muted-foreground">Say plainly that you want the role and why. It tells them you're likely to accept an offer.</span></li>
+      <li><strong class="font-medium">Keep it short.</strong> <span class="text-muted-foreground">Three or four short paragraphs. Your interviewer is busy.</span></li>
+      <li><strong class="font-medium">Proofread twice.</strong> <span class="text-muted-foreground">A typo can undo a good interview. Read it aloud, then read it again before you send it.</span></li>
+    </ol>
+  </section>
+
+  <!-- FAQ -->
+  <section class="mt-12 max-w-3xl" aria-labelledby="ty-faq-title">
+    <h2 id="ty-faq-title" class="section-title">Frequently asked questions</h2>
+    <div class="surface mt-5 p-1.5">
+      {% for faq in faqs %}
+      <details id="faq-{{ forloop.counter }}" class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground [&::-webkit-details-marker]:hidden">
+          <span class="min-w-0">{{ faq.q }}</span>
+          <svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">{{ faq.a }}</p>
+      </details>
+      {% endfor %}
+    </div>
+  </section>
+
+</div>
 
 <!-- JSON-LD FAQPage Schema -->
 <script type="application/ld+json">

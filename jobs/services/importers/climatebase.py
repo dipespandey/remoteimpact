@@ -98,6 +98,23 @@ def _pick_application_url(hit: Dict) -> str:
     return ""
 
 
+def _pick_location(hit: Dict, remote_pref: str) -> str:
+    locations: List[str] = []
+    raw_locations = hit.get("locations")
+    if isinstance(raw_locations, list):
+        locations = [str(loc).strip() for loc in raw_locations if str(loc).strip()]
+    elif isinstance(raw_locations, str) and raw_locations.strip():
+        locations = [raw_locations.strip()]
+
+    location = locations[0] if locations else "Remote"
+    if "remote" not in remote_pref:
+        return location
+
+    if not location or location.lower() in {"remote", "remote, global", "global"}:
+        return "Remote"
+    return f"Remote ({location})"
+
+
 def _transform_climatebase_hit(hit: Dict) -> Optional[Dict]:
     remote_pref_value = hit.get("remote_preferences")
     if isinstance(remote_pref_value, list):
@@ -109,15 +126,7 @@ def _transform_climatebase_hit(hit: Dict) -> Optional[Dict]:
     if remote_pref and "remote" not in remote_pref:
         return None
 
-    locations: List[str] = []
-    raw_locations = hit.get("locations")
-    if isinstance(raw_locations, list):
-        locations = [loc for loc in raw_locations if loc]
-    elif isinstance(raw_locations, str):
-        locations = [raw_locations]
-    location = locations[0] if locations else "Remote"
-    if "remote" in remote_pref:
-        location = "Remote"
+    location = _pick_location(hit, remote_pref)
 
     sectors = hit.get("sectors") or hit.get("tags") or []
     if isinstance(sectors, str):
@@ -205,7 +214,7 @@ async def import_climatebase(
         use_ai: If True, use AI to enrich job descriptions
         batch_size: Number of concurrent AI requests (default: 20)
         progress_callback: Optional callback(completed, total) for progress updates
-        provider: LLM provider ('deepseek', 'groq', 'mistral', or None for auto)
+        provider: DeepSeek, or None for the production default
         skip_existing: If True, skip jobs already imported (for incremental imports)
 
     Returns:

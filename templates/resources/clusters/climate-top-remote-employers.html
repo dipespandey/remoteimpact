@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'resources/pillars/_guide_base.html' %}
 
 {# ──────────────────────────────────────────────────────────
    CLUSTER POST: 10 Orgs Hiring Remote Climate Pros in 2026
@@ -50,325 +50,93 @@
 </script>
 {% endblock %}
 
-{% block extra_head %}
-<style>
-/* Callout Boxes */
-.callout { position: relative; padding: 1.25rem 1.25rem 1.25rem 3.5rem; border-radius: 1rem; margin: 1.5rem 0; border: 1px solid; }
-.callout::before { position: absolute; left: 1rem; top: 1.25rem; font-size: 1.25rem; }
-.callout-info { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-color: #93c5fd; }
-.callout-info::before { content: '💡'; }
-.callout-tip { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-color: #86efac; }
-.callout-tip::before { content: '✨'; }
-/* Stats Row */
-.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin: 2rem 0; }
-.stat-card { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.25rem; text-align: center; }
-.stat-number { font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #16803c 0%, #22c55e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.2; }
-.stat-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-top: 0.25rem; }
-/* Org Cards */
-.org-card { background: white; border: 1px solid #e5e7eb; border-radius: 1rem; padding: 1.5rem; margin: 1.5rem 0; display: flex; gap: 1.25rem; align-items: flex-start; }
-.org-card-badge { flex-shrink: 0; width: 3.5rem; height: 3.5rem; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 1rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
-.org-card-content h3 { font-size: 1.15rem; font-weight: 600; color: #111827; margin: 0 0 0.5rem 0; }
-.org-card-content p { font-size: 0.95rem; color: #4b5563; margin: 0; line-height: 1.6; }
-.org-card-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
-.org-tag { font-size: 0.75rem; padding: 0.25rem 0.625rem; background: #f3f4f6; color: #374151; border-radius: 9999px; }
-/* TL;DR Box */
-.tldr-box { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #86efac; border-radius: 1.25rem; padding: 1.5rem; margin: 2rem 0; }
-.tldr-box h4 { display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; font-weight: 700; color: #166534; margin: 0 0 1rem 0; text-transform: uppercase; letter-spacing: 0.05em; }
-.tldr-box ul { list-style: none; padding: 0; margin: 0; }
-.tldr-box li { position: relative; padding-left: 1.5rem; margin-bottom: 0.5rem; color: #166534; font-weight: 500; }
-.tldr-box li::before { content: '✓'; position: absolute; left: 0; color: #16803c; font-weight: bold; }
-/* TOC Box */
-.toc-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.25rem 1.5rem; margin: 2rem 0; }
-.toc-box h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin: 0 0 0.75rem 0; }
-.toc-box ol { list-style: decimal; padding-left: 1.25rem; margin: 0; }
-.toc-box li { margin-bottom: 0.375rem; }
-.toc-box a { color: #374151; text-decoration: none; font-size: 0.9rem; }
-.toc-box a:hover { color: #16803c; }
-/* Section Divider */
-.section-divider { display: flex; align-items: center; gap: 1rem; margin: 2.5rem 0; color: #9ca3af; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; }
-.section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, #e5e7eb, transparent); }
-/* Icon List */
-.icon-list { list-style: none !important; padding-left: 0 !important; margin: 1.5rem 0; }
-.icon-list li { position: relative; padding-left: 2rem; margin-bottom: 0.75rem; }
-.icon-list.check li::before { content: '✓'; position: absolute; left: 0; color: #16803c; font-weight: bold; }
-/* Reading Progress */
-.reading-progress { position: fixed; top: 0; left: 0; width: 0%; height: 3px; background: linear-gradient(90deg, #16803c 0%, #22c55e 100%); z-index: 9999; transition: width 0.1s ease; }
-/* Read Time */
-.read-time { display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.8rem; color: #6b7280; background: #f3f4f6; padding: 0.25rem 0.75rem; border-radius: 9999px; }
-.read-time svg { width: 0.875rem; height: 0.875rem; }
-@media (max-width: 640px) { .org-card { flex-direction: column; } .stats-row { grid-template-columns: repeat(2, 1fr); } }
-</style>
+{% block guide_breadcrumb %}
+<li aria-hidden="true">/</li>
+<li><a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}" class="hover:text-foreground">Climate &amp; Environment Careers</a></li>
+<li aria-hidden="true">/</li>
+<li aria-current="page" class="text-foreground">Top Employers</li>
 {% endblock %}
 
-{% block content %}
-<div class="reading-progress" id="reading-progress"></div>
+{% block guide_title %}10 organisations hiring remote climate professionals in 2026{% endblock %}
 
-<section class="bg-gray-50 pt-16 pb-12">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
-            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
-            <span>&rsaquo;</span>
-            <a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Resources</a>
-            <span>&rsaquo;</span>
-            <a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}" class="hover:text-brand-600 transition">Climate &amp; Environment Careers</a>
-            <span>&rsaquo;</span>
-            <span class="text-gray-900">Top Employers</span>
-        </nav>
+{% block guide_lede %}Many organisations in the <a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">climate and environment sector</a> now hire remotely. These ten employers, from established NGOs to startups and think tanks, are worth watching whether you are experienced or new to climate work.{% endblock %}
 
-        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm">
-            <div class="not-prose mb-8">
-                <div class="flex items-center gap-3 mb-4">
-                    <span class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold">Cluster Guide</span>
-                    <span class="read-time">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        8 min read
-                    </span>
-                </div>
-                <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
-                    10 Organisations Hiring Remote Climate Professionals in 2026
-                </h1>
-                <p class="text-xl text-gray-600 leading-relaxed">
-                    The <a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}" class="text-brand-600 hover:underline">climate and environment sector</a> is booming, and an increasing number of organisations are embracing remote work. Whether you're a seasoned professional or just starting your climate career, these ten employers are worth watching this year.
-                </p>
-            </div>
+{% block guide_summary %}
+<aside class="surface mt-8 max-w-[68ch] p-5 sm:p-6" aria-labelledby="summary-heading">
+    <h2 id="summary-heading" class="text-sm font-semibold text-foreground">In short</h2>
+    <ul class="mt-2 list-disc space-y-1.5 pl-5 text-sm leading-6 text-foreground/80 marker:text-muted-foreground">
+        <li>Climate organisations hire across tech, policy and operations</li>
+        <li>Startups (Watershed, Pachama) tend to pay more but move faster</li>
+        <li>NGOs (WWF, TNC) prioritise mission alignment and global reach</li>
+        <li>Remote roles span engineering, data science, policy and communications</li>
+    </ul>
+</aside>
+{% endblock %}
 
-            <!-- TL;DR Box -->
-            <div class="tldr-box not-prose">
-                <h4>⚡ Key Takeaways</h4>
-                <ul>
-                    <li>Climate orgs are actively hiring across tech, policy, and operations</li>
-                    <li>Startups (Watershed, Pachama) offer higher salaries but faster pace</li>
-                    <li>NGOs (WWF, TNC) prioritize mission alignment and global reach</li>
-                    <li>Remote roles span engineering, data science, policy, and comms</li>
-                </ul>
-            </div>
+{% block guide_body %}
+<h2>Established NGOs and research bodies</h2>
 
-            <!-- Table of Contents -->
-            <div class="toc-box not-prose">
-                <h4>In This Guide</h4>
-                <ol>
-                    <li><a href="#ngos">Established NGOs & Research Bodies</a></li>
-                    <li><a href="#startups">Climate-Tech Startups</a></li>
-                    <li><a href="#advocacy">Think Tanks & Advocacy Organisations</a></li>
-                    <li><a href="#tips">How to Stand Out When Applying</a></li>
-                </ol>
-            </div>
+<h3>1. WWF (World Wildlife Fund)</h3>
+<p>WWF works in more than 100 countries on conservation, biodiversity and climate adaptation. Its remote-friendly roles span policy, communications, fundraising and programme management, with frequent hiring for advocacy and stakeholder engagement positions.</p>
+<p><em>Focus:</em> policy, communications, fundraising.</p>
 
-            <div class="prose prose-gray max-w-none">
-                
-                <!-- Stats Row -->
-                <div class="stats-row not-prose">
-                    <div class="stat-card">
-                        <div class="stat-number">$1.4T</div>
-                        <div class="stat-label">Global Climate Funding</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">85%</div>
-                        <div class="stat-label">Offer Remote Options</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">3.2M</div>
-                        <div class="stat-label">Jobs by 2030</div>
-                    </div>
-                </div>
+<h3>2. The Nature Conservancy (TNC)</h3>
+<p>TNC is one of the largest environmental nonprofits, protecting lands and waters on every continent. It regularly lists remote roles in data science, GIS analysis, donor relations and conservation finance, and values people who can work across time zones.</p>
+<p><em>Focus:</em> data science, GIS, conservation finance.</p>
 
-                <h2 id="ngos">🌍 Established NGOs &amp; Research Bodies</h2>
-                
-                <div class="org-card not-prose">
-                    <div class="org-card-badge">🐼</div>
-                    <div class="org-card-content">
-                        <h3>1. WWF (World Wildlife Fund)</h3>
-                        <p>WWF works across more than 100 countries on conservation, biodiversity, and climate adaptation. Their remote-friendly roles span policy, communications, fundraising, and programme management. WWF is particularly strong in hiring for advocacy and stakeholder engagement positions.</p>
-                        <div class="org-card-tags">
-                            <span class="org-tag">🌐 100+ Countries</span>
-                            <span class="org-tag">📝 Policy</span>
-                            <span class="org-tag">📣 Comms</span>
-                            <span class="org-tag">💰 Fundraising</span>
-                        </div>
-                    </div>
-                </div>
+<h3>3. World Resources Institute (WRI)</h3>
+<p>WRI is a global research organisation focused on food, forests, water, energy and cities. It hires remote researchers, data analysts, policy advisors and communications staff. A good fit if you like turning data into policy recommendations.</p>
+<p><em>Focus:</em> research, data analysis, policy.</p>
 
-                <div class="org-card not-prose">
-                    <div class="org-card-badge">🌳</div>
-                    <div class="org-card-content">
-                        <h3>2. The Nature Conservancy (TNC)</h3>
-                        <p>TNC is one of the world's largest environmental non-profits, protecting lands and waters on every continent. They regularly list remote roles in data science, GIS analysis, donor relations, and conservation finance. Their global reach means they value professionals who can work across time zones.</p>
-                        <div class="org-card-tags">
-                            <span class="org-tag">📊 Data Science</span>
-                            <span class="org-tag">🗺️ GIS</span>
-                            <span class="org-tag">💼 Conservation Finance</span>
-                        </div>
-                    </div>
-                </div>
+<h3>4. UNEP (United Nations Environment Programme)</h3>
+<p>UNEP coordinates environmental work within the UN system. It offers remote consultancies and fixed-term contracts in areas like climate law, environmental governance and science communication. Roles are competitive.</p>
+<p><em>Focus:</em> climate law, governance.</p>
 
-                <div class="org-card not-prose">
-                    <div class="org-card-badge">📊</div>
-                    <div class="org-card-content">
-                        <h3>3. World Resources Institute (WRI)</h3>
-                        <p>WRI is a global research organisation focused on food, forests, water, energy, and cities. They hire remote researchers, data analysts, policy advisors, and communications staff. If you enjoy translating data into policy recommendations, WRI is an excellent fit.</p>
-                        <div class="org-card-tags">
-                            <span class="org-tag">🔬 Research</span>
-                            <span class="org-tag">📈 Data Analysis</span>
-                            <span class="org-tag">📝 Policy</span>
-                        </div>
-                    </div>
-                </div>
+<h2>Climate-tech startups</h2>
+<p><strong>Ask about equity.</strong> Climate-tech startups often offer stock options on top of salary, so raise them during negotiations.</p>
 
-                <div class="org-card not-prose">
-                    <div class="org-card-badge">🇺🇳</div>
-                    <div class="org-card-content">
-                        <h3>4. UNEP (United Nations Environment Programme)</h3>
-                        <p>UNEP sets the global environmental agenda and promotes sustainable development within the UN system. They offer remote consultancies and fixed-term contracts in areas like climate law, environmental governance, and science communication. Roles are competitive but offer unmatched global influence.</p>
-                        <div class="org-card-tags">
-                            <span class="org-tag">⚖️ Climate Law</span>
-                            <span class="org-tag">🏛️ Governance</span>
-                            <span class="org-tag">🎓 Competitive</span>
-                        </div>
-                    </div>
-                </div>
+<h3>5. Watershed</h3>
+<p>Watershed is an enterprise climate platform that helps companies measure, report and reduce their carbon emissions. It hires remote software engineers, product managers, climate data scientists and customer success managers.</p>
+<p><em>Focus:</em> engineering, product, data science.</p>
 
-                <div class="section-divider not-prose">Startups</div>
+<h3>6. Pachama</h3>
+<p>Pachama uses satellite imagery and machine learning to verify and monitor forest carbon projects. It hires remotely for machine learning engineering, remote sensing, carbon credit analysis and business development. Suits people working where tech meets nature-based solutions.</p>
+<p><em>Focus:</em> machine learning, remote sensing, carbon credits.</p>
 
-                <h2 id="startups">🚀 Climate-Tech Startups</h2>
+<h3>7. Climeworks</h3>
+<p>Climeworks builds direct air capture plants that remove CO2 from the atmosphere. Engineering roles tend to be on-site in Switzerland and Iceland, but it hires remotely for business development, marketing, policy and corporate partnerships.</p>
+<p><em>Focus:</em> carbon removal, business development. <em>Location:</em> Swiss HQ.</p>
 
-                <div class="callout callout-tip not-prose">
-                    <strong>Pro tip:</strong> Climate-tech startups often offer equity compensation on top of competitive salaries. Ask about stock options during negotiations — early employees at successful climate startups have seen significant upside.
-                </div>
+<h3>8. Stripe Climate</h3>
+<p>Stripe Climate directs a fraction of Stripe's revenue into permanent carbon removal purchases. The team evaluates emerging removal technologies, manages supplier relationships and publishes open research. Remote roles typically focus on climate science, procurement analysis and programme operations.</p>
+<p><em>Focus:</em> climate science, procurement, open research.</p>
 
-                <div class="org-card not-prose">
-                    <div class="org-card-badge">💧</div>
-                    <div class="org-card-content">
-                        <h3>5. Watershed</h3>
-                        <p>Watershed is an enterprise climate platform that helps companies measure, report, and reduce their carbon emissions. As a fast-growing startup, they hire remote software engineers, product managers, climate data scientists, and customer success managers. Strong engineering culture with a mission-driven team.</p>
-                        <div class="org-card-tags">
-                            <span class="org-tag">👩‍💻 Engineering</span>
-                            <span class="org-tag">📦 Product</span>
-                            <span class="org-tag">📊 Data Science</span>
-                            <span class="org-tag">💰 Well-funded</span>
-                        </div>
-                    </div>
-                </div>
+<h2>Think tanks and advocacy organisations</h2>
 
-                <div class="org-card not-prose">
-                    <div class="org-card-badge">🛰️</div>
-                    <div class="org-card-content">
-                        <h3>6. Pachama</h3>
-                        <p>Pachama uses satellite imagery and machine learning to verify and monitor forest carbon projects. They hire remotely for roles in machine learning engineering, remote sensing, carbon credit analysis, and business development. Ideal for those at the intersection of tech and nature-based solutions.</p>
-                        <div class="org-card-tags">
-                            <span class="org-tag">🤖 Machine Learning</span>
-                            <span class="org-tag">🛰️ Remote Sensing</span>
-                            <span class="org-tag">🌲 Carbon Credits</span>
-                        </div>
-                    </div>
-                </div>
+<h3>9. RMI (Rocky Mountain Institute)</h3>
+<p>RMI works to transform energy systems through market-driven solutions. It hires remote staff in energy policy, building decarbonisation, industrial strategy and clean transportation. Its pragmatic, business-oriented approach suits candidates with private-sector experience.</p>
+<p><em>Focus:</em> energy policy, buildings, transport.</p>
 
-                <div class="org-card not-prose">
-                    <div class="org-card-badge">🏭</div>
-                    <div class="org-card-content">
-                        <h3>7. Climeworks</h3>
-                        <p>Climeworks builds direct air capture plants that remove CO2 from the atmosphere. While their engineering roles tend to be on-site in Switzerland and Iceland, they hire remotely for business development, marketing, policy, and corporate partnerships. A pioneer in carbon removal technology.</p>
-                        <div class="org-card-tags">
-                            <span class="org-tag">🇨🇭 Swiss HQ</span>
-                            <span class="org-tag">📈 Biz Dev</span>
-                            <span class="org-tag">🎯 Carbon Removal</span>
-                        </div>
-                    </div>
-                </div>
+<h3>10. Carbon180</h3>
+<p>Carbon180 is a Washington DC-based NGO focused on carbon removal policy. It advocates for federal and state policies that support carbon removal. Remote roles include policy analysts, communications managers and research associates on a small team.</p>
+<p><em>Focus:</em> policy, advocacy. <em>Location:</em> DC-based.</p>
 
-                <div class="org-card not-prose">
-                    <div class="org-card-badge">💳</div>
-                    <div class="org-card-content">
-                        <h3>8. Stripe Climate</h3>
-                        <p>Stripe Climate channels a fraction of Stripe's revenue into permanent carbon removal purchases. Their team evaluates emerging removal technologies, manages supplier relationships, and publishes open research. Remote roles typically focus on climate science, procurement analysis, and programme operations.</p>
-                        <div class="org-card-tags">
-                            <span class="org-tag">🔬 Climate Science</span>
-                            <span class="org-tag">📋 Procurement</span>
-                            <span class="org-tag">📖 Open Research</span>
-                        </div>
-                    </div>
-                </div>
+<h2>Applying to these organisations</h2>
+<ul>
+    <li><strong>Tailor every application.</strong> Reference the specific programme or technology the organisation works on. Generic cover letters get filtered out quickly.</li>
+    <li><strong>Show climate literacy.</strong> Even if the role is non-technical, show that you understand the organisation's theory of change and where your function fits within it.</li>
+    <li><strong>Show you can work remotely.</strong> Mention tools you use (Notion, Slack, Asana), your experience with asynchronous communication, and any cross-timezone collaboration you have managed.</li>
+    <li><strong>Build a climate portfolio.</strong> Contribute to open-source climate projects, write about climate topics, or volunteer with climate organisations.</li>
+</ul>
+<p>For a broader overview of skills, salaries and how to get started, read the <a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}">guide to remote climate and environment careers</a>.</p>
+{% endblock %}
 
-                <div class="section-divider not-prose">Think Tanks</div>
+{% block guide_cta %}
+<div class="mt-10 max-w-[68ch]"><a href="/jobs/?category=climate-environment" class="btn btn-primary">Browse remote climate jobs</a></div>
+{% endblock %}
 
-                <h2 id="advocacy">🏛️ Think Tanks &amp; Advocacy Organisations</h2>
-
-                <div class="org-card not-prose">
-                    <div class="org-card-badge">⛰️</div>
-                    <div class="org-card-content">
-                        <h3>9. RMI (Rocky Mountain Institute)</h3>
-                        <p>RMI works to transform global energy systems through market-driven solutions. They hire remote professionals in energy policy, building decarbonisation, industrial strategy, and clean transportation. Their approach is pragmatic and business-oriented, making them a strong fit for candidates with private-sector experience.</p>
-                        <div class="org-card-tags">
-                            <span class="org-tag">⚡ Energy Policy</span>
-                            <span class="org-tag">🏢 Buildings</span>
-                            <span class="org-tag">🚗 Transport</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="org-card not-prose">
-                    <div class="org-card-badge">🎯</div>
-                    <div class="org-card-content">
-                        <h3>10. Carbon180</h3>
-                        <p>Carbon180 is a Washington, D.C.-based NGO focused on carbon removal policy. They advocate for federal and state policies that accelerate carbon removal innovation. Remote roles include policy analysts, communications managers, and research associates. A smaller team, but with outsized influence on U.S. climate legislation.</p>
-                        <div class="org-card-tags">
-                            <span class="org-tag">🇺🇸 DC-based</span>
-                            <span class="org-tag">📜 Policy</span>
-                            <span class="org-tag">📢 Advocacy</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="section-divider not-prose">Application Tips</div>
-
-                <h2 id="tips">✨ How to Stand Out When Applying</h2>
-
-                <ul class="icon-list check not-prose">
-                    <li><strong>Tailor every application.</strong> Reference the specific programme or technology the organisation works on. Generic cover letters get filtered out quickly.</li>
-                    <li><strong>Show climate literacy.</strong> Even if the role is non-technical, demonstrate that you understand the organisation's theory of change and where your function fits within it.</li>
-                    <li><strong>Highlight remote competence.</strong> Mention tools you use (Notion, Slack, Asana), your experience with asynchronous communication, and any cross-timezone collaboration you have managed.</li>
-                    <li><strong>Build a climate portfolio.</strong> Contribute to open-source climate projects, write about climate topics, or volunteer with climate orgs to demonstrate genuine commitment.</li>
-                </ul>
-
-                <div class="callout callout-info not-prose">
-                    <strong>Want more?</strong> For a broader overview of skills, salaries, and how to get started, read our <a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}" class="text-blue-700 hover:underline">complete guide to remote climate and environment careers</a>.
-                </div>
-
-            </div>
-
-            <!-- CTA Card -->
-            <div class="bg-gradient-to-br from-brand-50 to-brand-100 border border-brand-200 rounded-2xl p-8 mt-10 not-prose text-center">
-                <h3 class="text-xl font-bold text-gray-900 mb-2">Ready to start your climate career?</h3>
-                <p class="text-gray-600 mb-4">Browse {{ climate_job_count|default:"500+" }} open remote climate positions on Remote Impact.</p>
-                <a href="/jobs/?category=climate-environment" class="inline-flex items-center gap-2 px-6 py-3 bg-brand-500 text-white font-semibold rounded-full hover:bg-brand-600 transition">
-                    Browse Climate Jobs
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                </a>
-            </div>
-
-            <div class="bg-gray-50 border border-gray-200 rounded-2xl p-6 mt-8 not-prose">
-                <a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}" class="text-brand-600 hover:text-brand-700 font-medium">&larr; Back to Climate &amp; Environment Careers</a>
-            </div>
-        </article>
-    </div>
-</section>
-
-<script>
-// Reading progress bar
-window.addEventListener('scroll', function() {
-    const article = document.querySelector('article');
-    const progressBar = document.getElementById('reading-progress');
-    if (!article || !progressBar) return;
-    
-    const articleTop = article.offsetTop;
-    const articleHeight = article.offsetHeight;
-    const windowHeight = window.innerHeight;
-    const scrollY = window.scrollY;
-    
-    const progress = Math.min(100, Math.max(0, 
-        ((scrollY - articleTop + windowHeight * 0.3) / (articleHeight - windowHeight * 0.5)) * 100
-    ));
-    
-    progressBar.style.width = progress + '%';
-});
-</script>
+{% block guide_related %}
+<p class="mt-12 text-sm text-muted-foreground">
+    Part of the <a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Climate and Environment Careers</a> guide, which covers more roles, skills and employers in this field.
+</p>
 {% endblock %}

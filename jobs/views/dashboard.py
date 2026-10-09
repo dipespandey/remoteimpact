@@ -1,17 +1,37 @@
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, View
+from django.contrib import messages
+from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
+from django.db.models import Count
 from django.shortcuts import redirect
 from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
-from ..models import UserProfile, SeekerProfile, Referral, JobAlert, TalentInvitation
+from ..models import (
+    UserProfile,
+    SeekerProfile,
+    Referral,
+    JobAlert,
+    TalentInvitation,
+    Organization,
+    UserPath,
+    NewsletterSubscriber,
+    AssistantSubscription,
+)
 from ..services.onboarding_service import OnboardingService
+from .impact_wizard import profile_scout_url
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = "account/dashboard.html"
 
     def dispatch(self, request, *args, **kwargs):
+        # LoginRequiredMixin must get the first chance to reject anonymous
+        # requests before onboarding touches the profile relation.
+        if not request.user.is_authenticated:
+            return super().dispatch(request, *args, **kwargs)
+
         # Ensure onboarding is complete
         redirect_url = OnboardingService.get_redirect_for_state(request.user)
         if redirect_url:
@@ -21,6 +41,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
+        context["delete_account_identifier"] = user.email or user.username
 
         # Referral info for all users
         referral = Referral.get_or_create_for_user(user)
@@ -30,6 +51,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
         # Job alerts count
         context["alert_count"] = JobAlert.objects.filter(user=user, is_active=True).count()
+        context["pro_subscription"] = AssistantSubscription.get_or_create_for_user(user)
 
         try:
             profile = user.profile
@@ -86,6 +108,17 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 seeker_profile = user.seeker_profile
                 context["seeker_profile"] = seeker_profile
                 context["has_impact_profile"] = seeker_profile.wizard_completed
+                context["profile_scout_url"] = profile_scout_url(seeker_profile)
+                context["show_profile_scout_cta"] = (
+                    seeker_profile.wizard_completed
+                    and not context["pro_subscription"].is_pro_active()
+                    and context["pro_subscription"].free_job_scout_used_at is None
+                )
+                context["show_profile_pro_cta"] = (
+                    seeker_profile.wizard_completed
+                    and not context["pro_subscription"].is_pro_active()
+                    and context["pro_subscription"].free_job_scout_used_at is not None
+                )
 
                 # Talent invitations count
                 context["invitation_count"] = TalentInvitation.objects.filter(
@@ -107,3 +140,48 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 context["new_invitation_count"] = 0
 
         return context
+
+
+class AccountDeleteView(LoginRequiredMixin, View):
+    """Permanently delete the current user's account and owned user data."""
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        identifier = user.email or user.username
+        confirmation = request.POST.get("confirmation", "").strip()
+
+        if confirmation != identifier:
+            messages.error(
+                request,
+                f"Type {identifier} exactly to confirm account deletion.",
+            )
+            return redirect("jobs:account")
+
+        user_id = user.id
+        user_email = user.email
+        signup_org_ids = list(
+            user.organizations.filter(
+                source__in=[
+                    Organization.OrganizationSource.SIGNUP,
+                    Organization.OrganizationSource.CLAIMED,
+                ]
+            )
+            .annotate(member_count=Count("members"))
+            .filter(member_count=1)
+            .values_list("id", flat=True)
+        )
+
+        with transaction.atomic():
+            if user_email:
+                NewsletterSubscriber.objects.filter(email__iexact=user_email).delete()
+            UserPath.objects.filter(converted_user_id=user_id).delete()
+            user.delete()
+            if signup_org_ids:
+                Organization.objects.filter(
+                    id__in=signup_org_ids,
+                    members__isnull=True,
+                ).delete()
+
+        auth_logout(request)
+        messages.success(request, "Your account and related data have been deleted.")
+        return redirect("jobs:home")

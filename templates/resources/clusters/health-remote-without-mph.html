@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'resources/pillars/_guide_base.html' %}
 
 {# ──────────────────────────────────────────────────────────
    CLUSTER POST: Remote Global Health Jobs Without an MPH
@@ -50,70 +50,56 @@
 </script>
 {% endblock %}
 
-{% block content %}
-<section class="bg-gray-50 pt-16 pb-12">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
-            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
-            <span>&rsaquo;</span>
-            <a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Resources</a>
-            <span>&rsaquo;</span>
-            <a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}" class="hover:text-brand-600 transition">Global Health Careers</a>
-            <span>&rsaquo;</span>
-            <span class="text-gray-900">Without an MPH</span>
-        </nav>
+{% block guide_breadcrumb %}
+<li aria-hidden="true">/</li>
+<li><a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}" class="hover:text-foreground">Global Health Careers</a></li>
+<li aria-hidden="true">/</li>
+<li aria-current="page" class="text-foreground">Without an MPH</li>
+{% endblock %}
 
-        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm prose prose-gray max-w-none">
-            <p class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold mb-2">Cluster Guide</p>
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
-                Remote Global Health Jobs Without an MPH
-            </h1>
+{% block guide_title %}Remote global health jobs without an MPH{% endblock %}
 
-            <p class="text-xl text-gray-600 leading-relaxed mb-8">
-                The Master of Public Health is often treated as the golden ticket into global health. But dozens of impactful remote roles actively seek candidates with backgrounds in technology, communications, data science, finance, and logistics. Here are six career paths that can get you into the sector without ever setting foot in a public health programme.
-            </p>
+{% block guide_lede %}A Master of Public Health is often treated as the way into global health, but many remote roles hire for technology, communications, data, finance and logistics skills instead. Here are six paths into the sector that do not need a public health degree.{% endblock %}
 
-            <h2>1. Data Analyst</h2>
-            <p>
-                Global health organisations generate enormous datasets from disease surveillance, clinical trials, and programme monitoring. If you are proficient in SQL, R, Python, or Stata, you can build dashboards, run impact evaluations, and turn messy field data into actionable insights. Organisations like the <strong>Global Fund</strong>, <strong>PATH</strong>, and <strong>Clinton Health Access Initiative (CHAI)</strong> regularly hire remote data analysts with quantitative degrees in economics, statistics, or computer science rather than public health.
-            </p>
+{% block guide_body %}
+<h2>1. Data analyst</h2>
+<p>
+    Global health organisations generate large datasets from disease surveillance, clinical trials, and programme monitoring. If you are proficient in SQL, R, Python, or Stata, you can build dashboards, run impact evaluations, and turn messy field data into actionable insights. Organisations like the <strong>Global Fund</strong>, <strong>PATH</strong>, and <strong>Clinton Health Access Initiative (CHAI)</strong> regularly hire remote data analysts with quantitative degrees in economics, statistics, or computer science rather than public health.
+</p>
 
-            <h2>2. Software Developer (Health-Tech)</h2>
-            <p>
-                Digital health is booming. Companies like <strong>Dimagi</strong> (makers of CommCare), <strong>Medic</strong>, and <strong>Zipline</strong> hire full-stack developers, mobile engineers, and DevOps specialists. The requirement is strong software skills, not an MPH. A computer science degree or equivalent bootcamp experience paired with an interest in impact is what these teams look for. Many of these roles are fully remote and open globally.
-            </p>
+<h2>2. Software developer (health tech)</h2>
+<p>
+    Organisations like <strong>Dimagi</strong> (makers of CommCare), <strong>Medic</strong>, and <strong>Zipline</strong> hire full-stack developers, mobile engineers, and DevOps specialists. The requirement is strong software skills, not an MPH. A computer science degree or equivalent bootcamp experience paired with an interest in impact is what these teams look for. Some of these roles are remote.
+</p>
 
-            <h2>3. Communications Officer</h2>
-            <p>
-                Every health agency needs people who can translate complex science into compelling stories. <strong>WHO</strong>, <strong>UNICEF</strong>, and NGOs like <strong>Partners in Health</strong> hire communications specialists with backgrounds in journalism, marketing, or media studies. Your job might include writing press releases, managing social media, or producing video content about field programmes. A portfolio of strong writing matters far more than clinical credentials.
-            </p>
+<h2>3. Communications officer</h2>
+<p>
+    Every health agency needs people who can explain complex science clearly. <strong>WHO</strong>, <strong>UNICEF</strong>, and NGOs like <strong>Partners in Health</strong> hire communications specialists with backgrounds in journalism, marketing, or media studies. Your job might include writing press releases, managing social media, or producing video content about field programmes. A portfolio of strong writing matters far more than clinical credentials.
+</p>
 
-            <h2>4. Grants Manager</h2>
-            <p>
-                Global health runs on donor funding. Grants managers coordinate proposal writing, budget tracking, and compliance reporting for funders such as USAID, the Bill &amp; Melinda Gates Foundation, and the European Commission. Backgrounds in business administration, nonprofit management, or finance are typical entry points. <strong>FHI 360</strong> and <strong>John Snow Inc. (JSI)</strong> frequently list remote grants management positions.
-            </p>
+<h2>4. Grants manager</h2>
+<p>
+    Global health runs on donor funding. Grants managers coordinate proposal writing, budget tracking, and compliance reporting for funders such as the Gates Foundation and the European Commission. Backgrounds in business administration, nonprofit management, or finance are typical entry points. <strong>FHI 360</strong> and <strong>John Snow Inc. (JSI)</strong> frequently list remote grants management positions.
+</p>
 
-            <h2>5. Supply-Chain Coordinator</h2>
-            <p>
-                Getting vaccines, medicines, and diagnostic kits to remote clinics requires sophisticated logistics. Supply-chain coordinators with experience in procurement, warehousing, or transportation planning are in steady demand. <strong>Gavi</strong>, <strong>UNICEF Supply Division</strong>, and <strong>Chemonics</strong> hire professionals whose backgrounds span industrial engineering, operations management, or business logistics, not epidemiology.
-            </p>
+<h2>5. Supply-chain coordinator</h2>
+<p>
+    Getting vaccines, medicines, and diagnostic kits to remote clinics takes careful logistics. Supply-chain coordinators with experience in procurement, warehousing, or transportation planning are in steady demand. <strong>Gavi</strong>, <strong>UNICEF Supply Division</strong>, and <strong>Chemonics</strong> hire professionals whose backgrounds span industrial engineering, operations management, or business logistics, not epidemiology.
+</p>
 
-            <h2>6. UX Researcher</h2>
-            <p>
-                Digital health tools only work if frontline health workers can actually use them. UX researchers conduct usability studies, field interviews, and design sprints that improve app adoption. Organisations like <strong>Dimagi</strong>, <strong>Medic</strong>, and <strong>Living Goods</strong> seek candidates with backgrounds in human-computer interaction, psychology, or design research. Experience with low-resource or multilingual user testing is a major plus.
-            </p>
+<h2>6. UX researcher</h2>
+<p>
+    Digital health tools only work if frontline health workers can actually use them. UX researchers conduct usability studies, field interviews, and design sprints that improve app adoption. Organisations like <strong>Dimagi</strong>, <strong>Medic</strong>, and <strong>Living Goods</strong> seek candidates with backgrounds in human-computer interaction, psychology, or design research. Experience with low-resource or multilingual user testing is a major plus.
+</p>
 
-            <h2>How to position yourself</h2>
-            <p>
-                If you lack an MPH, lean into your transferable skills. Tailor your CV to highlight results: dashboards built, grants managed, features shipped. Volunteer for open-source health projects like OpenMRS or DHIS2 to gain domain vocabulary. Take a short online course in global health fundamentals from Coursera or edX to signal genuine interest. And start browsing <a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}">our complete global health career guide</a> for the full picture of what is out there.
-            </p>
+<h2>How to position yourself</h2>
+<p>
+    If you lack an MPH, lean into your transferable skills. Tailor your CV to highlight results: dashboards built, grants managed, features shipped. Volunteer for open-source health projects like OpenMRS or DHIS2 to gain domain vocabulary. Take a short online course in global health fundamentals from Coursera or edX to signal genuine interest. Our <a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}">global health career guide</a> covers the wider field.
+</p>
+{% endblock %}
 
-            <div class="bg-brand-50 border border-brand-200 rounded-2xl p-6 mt-8 not-prose">
-                <a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}" class="text-brand-600 hover:text-brand-700 font-medium text-sm">
-                    &larr; Back to Global Health Careers Guide
-                </a>
-            </div>
-        </article>
-    </div>
-</section>
+{% block guide_related %}
+<p class="mt-12 text-sm text-muted-foreground">
+    Part of the <a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Global Health Careers</a> guide, which covers more roles, skills and employers in this field.
+</p>
 {% endblock %}

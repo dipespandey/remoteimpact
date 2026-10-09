@@ -1,4 +1,11 @@
+import logging
 import re
+
+import requests
+from django.contrib import messages
+from django.shortcuts import redirect
+
+logger = logging.getLogger(__name__)
 
 
 class SecurityHeadersMiddleware:
@@ -16,7 +23,8 @@ class SecurityHeadersMiddleware:
                 "default-src 'self'; "
                 "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
                 "https://www.googletagmanager.com https://www.google-analytics.com "
-                "https://js.stripe.com https://www.gstatic.com; "
+                "https://js.stripe.com https://www.gstatic.com "
+                "https://unpkg.com https://cdn.jsdelivr.net; "
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
                 "font-src 'self' https://fonts.gstatic.com data:; "
                 "img-src 'self' data: https:; "
@@ -37,6 +45,33 @@ class SecurityHeadersMiddleware:
         return response
 
 
+class SocialLoginNetworkErrorMiddleware:
+    """Send people back to sign-in when a provider (LinkedIn, Google) is unreachable.
+
+    allauth fetches provider metadata on every login click, so an outbound
+    network or DNS blip otherwise surfaces as a 500.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        return self.get_response(request)
+
+    def process_exception(self, request, exception):
+        if not isinstance(exception, requests.RequestException):
+            return None
+        if not request.path.startswith("/accounts/"):
+            return None
+        logger.warning("Social login provider unreachable at %s: %s", request.path, exception)
+        messages.error(
+            request,
+            "We couldn't reach the sign-in provider just now. Please try again in a minute, "
+            "or sign in with your email.",
+        )
+        return redirect("account_login")
+
+
 class ReferralMiddleware:
     """Capture ?ref=CODE from any URL and store in session."""
 
@@ -47,6 +82,30 @@ class ReferralMiddleware:
         ref_code = request.GET.get("ref")
         if ref_code and not request.user.is_authenticated:
             request.session["referral_code"] = ref_code
+        return self.get_response(request)
+
+
+class AcquisitionAttributionMiddleware:
+    """Keep non-personal campaign labels through the signup flow."""
+
+    SESSION_KEY = "acquisition_attribution"
+    PARAMS = ("utm_source", "utm_medium", "utm_campaign", "utm_content", "source")
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.method == "GET":
+            stored = request.session.get(self.SESSION_KEY, {})
+            attribution = dict(stored) if isinstance(stored, dict) else {}
+            changed = False
+            for param in self.PARAMS:
+                value = " ".join(request.GET.get(param, "").split())[:100]
+                if value and attribution.get(param) != value:
+                    attribution[param] = value
+                    changed = True
+            if changed:
+                request.session[self.SESSION_KEY] = attribution
         return self.get_response(request)
 
 

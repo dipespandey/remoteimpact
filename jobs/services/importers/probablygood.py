@@ -1,8 +1,8 @@
 """
 Probably Good job board importer.
 
-Scrapes remote jobs from https://jobs.probablygood.org/?remote=remote
-Webflow-based site with server-side rendering.
+Reads the public search index used by https://jobs.probablygood.org and keeps
+only listings explicitly marked remote.
 """
 from __future__ import annotations
 
@@ -33,6 +33,7 @@ FETCH_HEADERS = {
 
 BASE_URL = "https://jobs.probablygood.org"
 REMOTE_JOBS_URL = f"{BASE_URL}/?remote=remote"
+API_URL = "https://backend.jobs.probablygood.org/api/graphql/AlgoliaSearchKey"
 
 # Pagination query param discovered from the site
 PAGE_PARAM = "b74fbe7d_page"
@@ -468,97 +469,212 @@ def fetch_descriptions_batch(
     return updated_payloads
 
 
+def _get_algolia_config() -> Dict[str, str]:
+    query = """query AlgoliaSearchKey {
+  algolia_search_key {
+    api_key
+    app_id
+    index_name
+    index_name_sorted_by_votes
+    index_name_profiles
+    index_name_jobs
+    index_name_jobs_sorted_by_closes_at
+    jobs_object_id_field
+    __typename
+  }
+}"""
+    response = requests.post(
+        API_URL,
+        json={
+            "operationName": "AlgoliaSearchKey",
+            "variables": {},
+            "query": query,
+        },
+        headers=FETCH_HEADERS,
+        timeout=30,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    config = (payload.get("data") or {}).get("algolia_search_key") or {}
+    required = {"api_key", "app_id", "index_name_jobs"}
+    if not required.issubset(config):
+        raise ValueError("Probably Good search configuration is unavailable")
+    return config
+
+
+def _parse_algolia_salary(text: str) -> tuple[Optional[float], Optional[float], str]:
+    """Parse annual salary text without treating hourly rates as annual pay."""
+    text = str(text or "").strip()
+    lowered = text.lower()
+    if not text or any(unit in lowered for unit in ("/hour", "per hour", "hourly")):
+        return None, None, ""
+
+    currency = "USD"
+    if "c$" in lowered or "cad" in lowered:
+        currency = "CAD"
+    elif "a$" in lowered or "aud" in lowered:
+        currency = "AUD"
+    elif "£" in text or "gbp" in lowered:
+        currency = "GBP"
+    elif "€" in text or "eur" in lowered:
+        currency = "EUR"
+    elif "₹" in text or "inr" in lowered:
+        currency = "INR"
+
+    amounts = []
+    for number, thousands in re.findall(r"(\d[\d,]*(?:\.\d+)?)\s*([kK]?)", text):
+        value = float(number.replace(",", ""))
+        if thousands:
+            value *= 1000
+        if 10000 <= value <= 2_000_000:
+            amounts.append(value)
+    if not amounts:
+        return None, None, ""
+    return min(amounts), max(amounts) if len(amounts) > 1 else None, currency
+
+
+def _parse_algolia_datetime(value: str) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+
+
+def _tag_names(hit: Dict, key: str) -> List[str]:
+    return [
+        str(tag.get("name", "")).strip()
+        for tag in hit.get(key, [])
+        if isinstance(tag, dict) and str(tag.get("name", "")).strip()
+    ]
+
+
+def _skill_slug(value: str) -> str:
+    return re.sub(r"[^a-z0-9+#.]+", "-", value.lower()).strip("-")
+
+
+def _extract_job_from_algolia_hit(hit: Dict) -> Optional[Dict]:
+    remote_locations = [
+        location
+        for location in hit.get("locations", [])
+        if isinstance(location, dict)
+        and (location.get("is_remote") or location.get("type") == "REMOTE")
+    ]
+    title = str(hit.get("title") or "").strip()
+    description = str(hit.get("description") or "").strip()
+    organization = hit.get("org") or {}
+    external_id = str(hit.get("id") or hit.get("objectID") or "").strip()
+    if (
+        not remote_locations
+        or not title
+        or not description
+        or not external_id
+        or not organization.get("name")
+    ):
+        return None
+
+    slug = str(hit.get("slug") or hit.get("objectID") or external_id).strip()
+    detail_url = f"{BASE_URL}/jobs/{slug}"
+    salary_min, salary_max, salary_currency = _parse_algolia_salary(
+        hit.get("salary_text", "")
+    )
+    workload = _tag_names(hit, "tags_workload")
+    area_tags = _tag_names(hit, "tags_area")
+    skill_names = _tag_names(hit, "tags_skill")
+    location = "; ".join(
+        dict.fromkeys(str(item.get("name") or item.get("remote_name") or "Remote") for item in remote_locations)
+    )
+    expires_at = _parse_algolia_datetime(hit.get("closes_at"))
+    if expires_at and expires_at <= timezone.now():
+        return None
+
+    return {
+        "source": Job.Source.PROBABLYGOOD,
+        "external_id": external_id,
+        "title": title,
+        "description": description,
+        "requirements": "",
+        "location": location or "Remote",
+        "job_type": _map_job_type(workload[0] if workload else "full-time"),
+        "application_url": str(hit.get("url_external") or detail_url).strip(),
+        "application_email": "",
+        "salary_min": salary_min,
+        "salary_max": salary_max,
+        "salary_currency": salary_currency,
+        "posted_at": _parse_algolia_datetime(hit.get("published_at")) or timezone.now(),
+        "expires_at": expires_at,
+        "category_name": area_tags[0] if area_tags else "Other Impact Areas",
+        "organization_name": str(organization.get("name") or "").strip(),
+        "organization_description": str(organization.get("description") or "").strip(),
+        "organization_url": str(organization.get("website") or "").strip(),
+        "skills": [slug for slug in (_skill_slug(name) for name in skill_names) if slug],
+        "is_featured": bool(organization.get("is_highlighted")),
+        "raw_data": {
+            "probablygood_url": detail_url,
+            "salary_text": hit.get("salary_text") or "",
+            "source_ext": hit.get("source_ext"),
+            "locations": remote_locations,
+            "tags_area": area_tags,
+            "tags_skill": skill_names,
+            "tags_experience": _tag_names(hit, "tags_experience"),
+            "tags_education": _tag_names(hit, "tags_education"),
+            "needs_crawling": False,
+        },
+    }
+
+
 def fetch_job_listings(
     max_pages: Optional[int] = 60,
     delay: float = 1.0,
+    limit: Optional[int] = None,
 ) -> List[Dict]:
-    """
-    Fetch all remote job listings from Probably Good.
-
-    Args:
-        max_pages: Maximum pages to fetch (default 60, ~1500 jobs)
-        delay: Delay between requests in seconds
-
-    Returns:
-        List of job payload dicts
-    """
-    jobs = []
-    page = 1
-    logger.info(f"Starting Probably Good listing fetch (max_pages={max_pages})")
-
+    """Fetch newest remote listings from Probably Good's public search index."""
+    config = _get_algolia_config()
+    app_id = config["app_id"]
+    search_url = f"https://{app_id.lower()}-dsn.algolia.net/1/indexes/*/queries"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Content-Type": "application/json",
+        "X-Algolia-Application-Id": app_id,
+        "X-Algolia-API-Key": config["api_key"],
     }
+    jobs = []
+    page = 0
+    page_size = 100
+    logger.info("Starting Probably Good Algolia fetch (max_pages=%s)", max_pages)
 
-    while True:
-        if max_pages and page > max_pages:
+    while max_pages is None or page < max_pages:
+        response = requests.post(
+            search_url,
+            json={
+                "requests": [
+                    {
+                        "indexName": config["index_name_jobs"],
+                        "query": "",
+                        "hitsPerPage": page_size,
+                        "page": page,
+                    }
+                ]
+            },
+            headers=headers,
+            timeout=30,
+        )
+        response.raise_for_status()
+        result = response.json()["results"][0]
+        hits = result.get("hits", [])
+        if not hits:
             break
-
-        # Build URL with pagination
-        if page == 1:
-            url = REMOTE_JOBS_URL
-        else:
-            url = f"{REMOTE_JOBS_URL}&{PAGE_PARAM}={page}"
-
-        logger.info(f"Fetching page {page}: {url}")
-
-        try:
-            response = requests.get(url, headers=headers, timeout=30)
-            response.raise_for_status()
-        except requests.RequestException as e:
-            logger.error(f"Failed to fetch page {page}: {e}")
-            break
-
-        soup = BeautifulSoup(response.text, "html.parser")
-
-        # Find job cards - look for elements containing job posting links
-        # The exact structure depends on Webflow's output
-        job_links = soup.find_all("a", href=lambda x: x and "/job-postings/" in x)
-
-        if not job_links:
-            logger.info(f"No more jobs found on page {page}")
-            break
-
-        # Group links by their parent containers to get job cards
-        seen_urls = set()
-        page_jobs = []
-
-        for link in job_links:
-            href = link.get("href", "")
-            if href in seen_urls:
-                continue
-            seen_urls.add(href)
-
-            # Find the parent card element (walk up to find a reasonable container)
-            card = link
-            for _ in range(5):  # Walk up max 5 levels
-                parent = card.parent
-                if parent and parent.name in ["div", "article", "li", "section"]:
-                    # Check if this parent contains more job-related content
-                    parent_text = parent.get_text()
-                    if "Added" in parent_text or "$" in parent_text:
-                        card = parent
-                        break
-                    card = parent
-                else:
-                    break
-
-            job_data = _extract_job_from_card(card, soup)
-            if job_data and job_data["external_id"] not in [j["external_id"] for j in jobs]:
-                page_jobs.append(job_data)
-
-        jobs.extend(page_jobs)
-        logger.info(f"Page {page}: Found {len(page_jobs)} jobs (total: {len(jobs)})")
-
-        # Check for next page
-        next_link = soup.find("a", href=lambda x: x and f"{PAGE_PARAM}={page + 1}" in x)
-        if not next_link:
-            logger.info(f"No next page link found, stopping at page {page}")
-            break
-
+        for hit in hits:
+            payload = _extract_job_from_algolia_hit(hit)
+            if payload:
+                jobs.append(payload)
+                if limit and len(jobs) >= limit:
+                    return jobs[:limit]
         page += 1
-        time.sleep(delay)
+        if page >= result.get("nbPages", 0):
+            break
+        if delay:
+            time.sleep(min(delay, 1.0))
 
     return jobs
 
@@ -568,7 +684,7 @@ async def import_probablygood(
     max_pages: Optional[int] = None,
     dry_run: bool = False,
     use_ai: bool = False,
-    fetch_descriptions: bool = True,
+    fetch_descriptions: bool = False,
     batch_size: int = 20,
     delay: float = 1.0,
     progress_callback: Optional[Callable[[int, int], None]] = None,
@@ -580,26 +696,26 @@ async def import_probablygood(
 
     Args:
         limit: Maximum number of jobs to import
-        max_pages: Maximum pages to scrape (25 jobs/page). Default: 10 for incremental, 60 for full.
+        max_pages: Maximum Algolia pages to fetch (100 jobs/page). Default: 60 (the whole feed).
         dry_run: If True, fetch but don't save to database
         use_ai: If True, use AI to enrich job descriptions
-        fetch_descriptions: If True, fetch full descriptions from external URLs
+        fetch_descriptions: Re-fetch descriptions from employer URLs. Normally unnecessary because the feed includes them.
         batch_size: Number of concurrent AI requests
         delay: Delay between page requests
         progress_callback: Optional callback(completed, total)
-        provider: LLM provider ('deepseek', 'groq', 'mistral', or None for auto)
+        provider: DeepSeek, or None for the production default
         skip_existing: If True, skip jobs already imported (for incremental imports)
 
     Returns:
         Dict with keys: fetched, created, updated
     """
-    # Use smaller page limit for incremental imports (new jobs are on first pages)
+    # Always fetch the whole feed: existing listings are skipped cheaply, and a complete
+    # fetch is what lets retire_unseen_listings take down roles the feed has dropped.
     if max_pages is None:
-        max_pages = 10 if skip_existing else 60
-        logger.info(f"Using default max_pages={max_pages} ({'incremental' if skip_existing else 'full'} mode)")
+        max_pages = 60
 
     # Fetch all job listings from Probably Good
-    all_payloads = fetch_job_listings(max_pages=max_pages, delay=delay)
+    all_payloads = fetch_job_listings(max_pages=max_pages, delay=delay, limit=limit)
 
     if limit:
         all_payloads = all_payloads[:limit]

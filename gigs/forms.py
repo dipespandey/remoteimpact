@@ -1,6 +1,7 @@
 from django import forms
 
 from .models import (
+    EvaluatorInterest,
     Gig,
     GigApplication,
     GigInterest,
@@ -403,3 +404,39 @@ class GigInterestForm(forms.ModelForm):
                 "placeholder": "Tell us what interests you about Impact Gigs (optional)..."
             }),
         }
+
+
+class EvaluatorInterestForm(forms.ModelForm):
+    is_adult = forms.BooleanField(
+        required=True, label="I am 18 or older",
+        error_messages={"required": "This cohort is only open to adults."},
+    )
+
+    class Meta:
+        model = EvaluatorInterest
+        fields = ["email", "country", "languages", "background", "hours_per_week", "note", "is_adult"]
+        labels = {
+            "country": "Country you live in",
+            "languages": "Languages besides English",
+            "background": "Your main background",
+            "hours_per_week": "Hours a week you could give",
+            "note": "Anything else (optional)",
+        }
+        widgets = {
+            "email": forms.EmailInput(attrs={"class": "input", "placeholder": "you@example.com"}),
+            "country": forms.TextInput(attrs={"class": "input", "placeholder": "Nepal"}),
+            "languages": forms.TextInput(attrs={"class": "input", "placeholder": "Nepali, Maithili, Hindi"}),
+            "background": forms.Select(attrs={"class": "input select"}),
+            "hours_per_week": forms.NumberInput(attrs={"class": "input", "min": 2, "max": 40}),
+            "note": forms.Textarea(attrs={"class": "textarea", "rows": 3,
+                                          "placeholder": "Degree, work experience, or AI tools you use"}),
+        }
+
+    def clean_hours_per_week(self):
+        hours = self.cleaned_data["hours_per_week"]
+        if not 2 <= hours <= 40:
+            raise forms.ValidationError("Choose between 2 and 40 hours.")
+        return hours
+
+    def clean_email(self):
+        return self.cleaned_data["email"].strip().lower()

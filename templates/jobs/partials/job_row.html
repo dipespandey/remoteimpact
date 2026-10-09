@@ -1,0 +1,27 @@
+{% load humanize job_extras %}{# One job row for list-surface lists. Expects `job`. Optional: `heading` ("h3", default h2), `featured_slot` (adds ?source=featured_slot and the Featured badge), `show_org` (default true). #}
+<article class="job-row relative">
+    <div class="flex items-start gap-3">
+        {% if job.organization.logo %}
+        <img src="{{ job.organization.logo.url }}" alt="" loading="lazy" class="mt-0.5 hidden h-9 w-9 shrink-0 rounded-lg bg-muted object-cover sm:block">
+        {% endif %}
+        <div class="min-w-0 flex-1">
+            {% if featured_slot or job.is_sponsored %}<span class="badge badge-featured mb-1.5">★ Featured</span>{% endif %}
+            <div class="flex items-baseline justify-between gap-4">
+                {% if heading == "h3" %}<h3 class="job-title min-w-0">{% else %}<h2 class="job-title min-w-0">{% endif %}
+                    <a href="{{ job.get_absolute_url }}{% if featured_slot %}?source=featured_slot{% endif %}" class="line-clamp-2 after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring">{{ job.title|display_title }}</a>
+                {% if heading == "h3" %}</h3>{% else %}</h2>{% endif %}
+                {% if job.posted_at %}<span class="shrink-0 text-[13px] tabular-nums text-muted-foreground" title="Posted {{ job.posted_at|date:'M j, Y' }}">{{ job.posted_at|naturalday:"M j" }}</span>{% endif %}
+            </div>
+            <p class="job-meta">
+                {% if show_org is not False and job.organization %}<span class="font-medium text-foreground">{{ job.organization.name|display_title }}</span>{% endif %}
+                <span>{{ job.location|default:"Remote" }}</span>
+                {% if job.get_job_type_display %}<span>{{ job.get_job_type_display }}</span>{% endif %}
+                {% if job|compensation_display %}<span class="tabular-nums text-foreground">{{ job|compensation_display }}</span>{% endif %}
+                {% if job.expires_at %}<span class="tabular-nums text-amber-800" title="Application deadline">Closes {{ job.expires_at|date:"M j" }}</span>{% endif %}
+                {% if job.source == 'manual' %}<span class="badge badge-primary" title="Apply through Remote Impact">Apply directly</span>{% endif %}
+                {% if job.is_entry_level_friendly %}<span class="badge badge-success" title="Open to people early in their career or switching fields">Entry-level</span>{% endif %}
+                {% if job.category %}<span class="badge badge-outline">{{ job.category.name }}</span>{% endif %}
+            </p>
+        </div>
+    </div>
+</article>

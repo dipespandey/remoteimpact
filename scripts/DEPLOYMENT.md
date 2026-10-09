@@ -42,27 +42,24 @@ Make sure your production `.env` file has these keys:
 # Required for job imports
 DJANGO_SETTINGS_MODULE=jobboard.settings
 
-# LLM API Keys for AI-enhanced job parsing (pick one, priority order shown)
-# 1. DeepSeek - Cheapest ($0.14-0.28/1M tokens) - https://platform.deepseek.com/api_keys
+# LLM API key and model for AI-enhanced job parsing
+# DeepSeek V4 Flash is the low-cost production default:
+# https://platform.deepseek.com/api_keys
 DEEPSEEK_API_KEY=your_deepseek_api_key
+# Optional; defaults to deepseek-v4-flash
+DEEPSEEK_MODEL=deepseek-v4-flash
 
-# 2. Groq - Free tier (14,400 req/day) - https://console.groq.com/keys
-GROQ_API_KEY=your_groq_api_key
-
-# 3. Mistral - More expensive, fallback
-MISTRAL_API_KEY=your_mistral_api_key
 
 # Optional: For Google Custom Search
 GOOGLE_CSE_API_KEY=your_google_api_key
 GOOGLE_CSE_CX=your_search_engine_id
 ```
 
-**Cost comparison for ~4000 jobs/day:**
-| Provider | Cost/Day | Monthly |
-|----------|----------|---------|
-| DeepSeek | ~$0.10 | ~$3 |
-| Groq | Free | Free |
-| Mistral | ~$3.00 | ~$90 |
+DeepSeek V4 Flash pricing varies by cache hit and peak/off-peak hours. The
+application uses the non-thinking mode for routine extraction and matching,
+with thinking explicitly disabled for routine tasks. This is the lowest-cost
+configuration. See the official pricing page for
+current rates: https://api-docs.deepseek.com/quick_start/pricing/
 
 ### 5. Test the script manually
 

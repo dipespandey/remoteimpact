@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Hire for impact: post or feature a remote role | Remote Impact{% endblock %}
+{% block meta_description %}Reach people actively looking for remote work in climate, global health, AI safety and social impact. Post a featured role for ${{ post_price }} or feature a listing that's already on Remote Impact for ${{ feature_price }}.{% endblock %}
+
+{% block content %}
+<section class="container py-8 sm:py-10">
+  <h1 class="page-title max-w-3xl">Post or feature a remote impact role</h1>
+  <p class="page-lede">People come to Remote Impact to find remote work in climate, global health, AI safety and social impact. Put your role in front of them and see how it performs.</p>
+  <div class="mt-6 flex flex-wrap gap-2">
+    <a href="{% url 'jobs:post_job' %}?source=employers_hero" class="btn btn-primary btn-lg" data-track="employer_post_start" data-track-category="employer">Post a featured role · ${{ post_price }}</a>
+    <a href="#feature" class="btn btn-outline btn-lg" data-track="employer_feature_scroll" data-track-category="employer">Feature an existing listing · ${{ feature_price }}</a>
+  </div>
+
+  <p class="mt-6 max-w-2xl text-[13px] leading-relaxed text-muted-foreground">
+    <span class="font-medium tabular-nums text-foreground">{{ audience.active_jobs|intcomma }}</span> open remote roles listed{% if audience.views_30d >= 1000 %}, <span class="font-medium tabular-nums text-foreground">{{ audience.views_30d|intcomma }}</span> job page views and <span class="font-medium tabular-nums text-foreground">{{ audience.apply_clicks_30d|intcomma }}</span> apply clicks in the last 30 days{% endif %}.
+    {% if audience.views_30d >= 1000 %}Views and apply clicks are counted from real browsers; obvious bots are excluded.{% endif %}
+  </p>
+</section>
+
+<section class="container section pt-0 sm:pt-0" id="pricing">
+  <div class="max-w-2xl px-1">
+    <h2 class="section-title">Pricing</h2>
+    <p class="mt-1 text-sm text-muted-foreground">Pay per role, no subscription. Every option includes a private stats link you can share with your team.</p>
+  </div>
+
+  <div class="mt-4 grid gap-4 lg:grid-cols-2">
+    <article class="card flex flex-col p-5 sm:p-6">
+      <h3 class="text-base font-semibold text-foreground">Post a featured role</h3>
+      <p class="mt-0.5 text-[13px] text-muted-foreground">For a role that is not on Remote Impact yet.</p>
+      <p class="mt-3 text-3xl font-semibold tabular-nums tracking-tight">${{ post_price }} <span class="text-[15px] font-normal tracking-normal text-muted-foreground">for {{ post_days }} days</span></p>
+      <ul class="check-list mt-5 flex-1 space-y-2 text-sm">
+        <li>A structured job page with salary, eligibility and how to apply</li>
+        <li><span class="font-medium">Featured</span> label and a pinned slot at the top of matching search and category pages</li>
+        <li>Shown in the Featured roles section of the homepage</li>
+        <li>Eligible for AI Job Scout matches when it fits someone's brief</li>
+        <li>Applicants go to your own application link, or apply on Remote Impact</li>
+        <li>Opt-in shortlist of candidates who share their details with you</li>
+        <li>Suggested matches from people actively looking, with the skills they share with the role, ready to invite</li>
+        <li>Views, apply clicks and Scout matches for your role</li>
+      </ul>
+      <a href="{% url 'jobs:post_job' %}?source=employers_pricing" class="btn btn-outline btn-block mt-6" data-track="employer_post_start" data-track-category="employer">Post a role</a>
+    </article>
+
+    <article class="card flex flex-col p-5 sm:p-6" id="feature">
+      <h3 class="text-base font-semibold text-foreground">Feature an existing listing</h3>
+      <p class="mt-0.5 text-[13px] text-muted-foreground">Many roles reach Remote Impact from public job boards and careers pages. If yours is already listed, you can feature it.</p>
+      <p class="mt-3 text-3xl font-semibold tabular-nums tracking-tight">${{ feature_price }} <span class="text-[15px] font-normal tracking-normal text-muted-foreground">for {{ feature_days }} days</span></p>
+      <ul class="check-list mt-5 space-y-2 text-sm">
+        <li><span class="font-medium">Featured</span> label and a pinned slot at the top of matching search and category pages</li>
+        <li>Shown in the Featured roles section of the homepage</li>
+        <li>Keeps sending applicants to your own application link</li>
+        <li>Views and apply clicks for every live role at your organization</li>
+      </ul>
+      <p class="mt-5 flex-1 text-[13px] leading-relaxed text-muted-foreground">Open your job on Remote Impact and choose <span class="font-medium text-foreground">Feature this listing</span>, or <a class="font-medium text-foreground underline decoration-border hover:decoration-foreground" href="mailto:hello@remoteimpact.org?subject=Feature%20our%20roles">email us</a> and we will set it up for every role you have.</p>
+      <a href="{% url 'jobs:organization_directory' %}?source=employers_feature" class="btn btn-outline btn-block mt-6">Find my organization's roles</a>
+    </article>
+  </div>
+</section>
+
+<section class="container section pt-2 sm:pt-2">
+  <div class="grid gap-6 lg:grid-cols-[1fr_2fr] lg:gap-10">
+    <h2 class="section-title px-1">Questions</h2>
+    <dl class="space-y-5 text-sm">
+      <div><dt class="font-semibold">How do I pay?</dt><dd class="mt-1 text-muted-foreground">Once, by card, Apple Pay or Google Pay. Stripe sends a receipt and an invoice for your records.</dd></div>
+      <div><dt class="font-semibold">Does paying change AI Job Scout matches?</dt><dd class="mt-1 text-muted-foreground">No. Featured roles are pinned and labelled where people browse, but Scout matching is based on fit only.</dd></div>
+      <div><dt class="font-semibold">How do I see results?</dt><dd class="mt-1 text-muted-foreground">A private link shows views, apply clicks and Scout matches for each live role.</dd></div>
+      <div><dt class="font-semibold">Do you guarantee applicants?</dt><dd class="mt-1 text-muted-foreground">No. We guarantee placement and transparent numbers, not outcomes. If something is not right, email us and we will sort it out.</dd></div>
+      <div><dt class="font-semibold">Can I change a posted role?</dt><dd class="mt-1 text-muted-foreground">Yes. Email hello@remoteimpact.org with the change and we will update it within one business day.</dd></div>
+      <div><dt class="font-semibold">What do you remove?</dt><dd class="mt-1 text-muted-foreground">Roles that are not remote, are not real openings, or ask candidates to pay. Paid listings that break these rules are refunded and removed.</dd></div>
+      <div><dt class="font-semibold">Do job seekers pay to apply?</dt><dd class="mt-1 text-muted-foreground">Never. Applying and expressing interest are always free.</dd></div>
+    </dl>
+  </div>
+</section>
+{% endblock %}

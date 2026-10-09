@@ -191,7 +191,7 @@ async def import_reliefweb(
         use_ai: If True, use AI to enrich job descriptions
         batch_size: Number of concurrent AI requests (default: 20)
         progress_callback: Optional callback(completed, total) for progress updates
-        provider: LLM provider ('deepseek', 'groq', 'mistral', or None for auto)
+        provider: DeepSeek, or None for the production default
         skip_existing: If True, skip jobs already imported (for incremental imports)
 
     Returns:

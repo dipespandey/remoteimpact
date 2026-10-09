@@ -1,0 +1,47 @@
+{% extends "jobs/shortlists/base.html" %}
+{% load job_extras %}
+{% block title %}My interest in {{ job.title }} | Remote Impact{% endblock %}
+{% block content %}
+<style>
+  /* Form widgets come from forms.py without classes; style them with design tokens. */
+  /* v3 filled inputs: muted fill, no border until focus. */
+  .interest-form input:not([type=checkbox]):not([type=hidden]), .interest-form select, .interest-form textarea {
+    display: block; width: 100%; border-radius: .875rem; border: 1px solid transparent;
+    background: hsl(var(--muted)); color: hsl(var(--foreground)); font-size: 15px; padding: .625rem .875rem;
+    transition: background-color .15s, border-color .15s, box-shadow .15s;
+  }
+  .interest-form input:not([type=checkbox]):not([type=hidden]):hover, .interest-form select:hover, .interest-form textarea:hover { background: hsl(var(--accent)); }
+  .interest-form textarea { min-height: 120px; line-height: 1.5rem; }
+  .interest-form input:focus, .interest-form select:focus, .interest-form textarea:focus { outline: none; background: hsl(var(--card)); border-color: hsl(var(--ring) / .4); box-shadow: 0 0 0 4px hsl(var(--ring) / .15); }
+  .interest-form label { display: block; margin-bottom: .375rem; font-size: .875rem; font-weight: 500; color: hsl(var(--foreground)); }
+  .interest-form .helptext { display: block; margin-top: .375rem; font-size: 13px; color: hsl(var(--muted-foreground)); }
+  .interest-form .errorlist { margin: .375rem 0 0; padding: 0; list-style: none; font-size: 13px; color: hsl(var(--destructive)); }
+  .interest-form input[type=checkbox] { height: 1rem; width: 1rem; flex-shrink: 0; margin-top: .2rem; accent-color: hsl(var(--foreground)); }
+</style>
+<div class="page">
+  <header class="page-header flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div class="min-w-0">
+      <h1 class="page-title break-words">{{ job.title|display_title }}</h1>
+      <p class="page-lede">{{ job.organization.name }} · {{ job.location|default:"Location not specified" }}</p>
+    </div>
+    <a class="btn btn-outline shrink-0" href="{% url 'jobs:shortlist' %}">My shortlist</a>
+  </header>
+  <div class="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(240px,1fr)] lg:gap-12">
+    <form method="post" class="interest-form card grid gap-5 p-5 sm:p-6">{% csrf_token %}{{ form.non_field_errors }}
+      {% for field in form %}{% if field.name != 'share_with_employer' %}<div>{{ field.label_tag }}{{ field }}{% if field.help_text %}<span class="helptext">{{ field.help_text }}</span>{% endif %}{{ field.errors }}</div>{% endif %}{% endfor %}
+      {% if can_share %}<div class="surface flex items-start gap-3 p-4 text-sm leading-6 text-foreground">{{ form.share_with_employer }}<label for="{{ form.share_with_employer.id_for_label }}" class="!m-0 !font-normal">I want {{ job.organization.name }} to contact me about this role. Share the details above and my account email ({{ user.email }}) with this role's poster for up to 90 days. My other saved jobs and searches stay private.</label></div>{{ form.share_with_employer.errors }}{% endif %}
+      <div class="flex flex-wrap gap-2"><button class="btn btn-primary" type="submit">Save my interest</button><a href="{{ job.get_absolute_url }}" class="btn btn-ghost">Back to role</a></div>
+    </form>
+    <aside class="text-sm">
+      <h2 class="text-base font-semibold text-foreground">{% if can_share %}Introduce yourself to the employer{% else %}Your private job tracker{% endif %}</h2>
+      {% if can_share %}
+      <p class="mt-2 leading-6 text-muted-foreground">Sharing is optional and free. Your experience and work eligibility are self-reported, not verified by Remote Impact. You can turn sharing off at any time. An employer may keep information they have already received.</p>
+      <p class="mt-2 leading-6 text-muted-foreground">This records your interest. It is not a formal application and does not guarantee a response, so follow the application instructions on the role page too.</p>
+      {% else %}
+      <p class="mt-2 leading-6 text-muted-foreground">We will not send your details to this employer. Apply through the role page, then update your progress here.</p>
+      {% if interest.share_with_employer %}<p class="mt-2 leading-6 text-muted-foreground">This role is no longer accepting introductions. Saving will withdraw your previous sharing permission.</p>{% endif %}
+      {% endif %}
+    </aside>
+  </div>
+</div>
+{% endblock %}

@@ -2,6 +2,7 @@
 
 import logging
 from typing import Optional
+from urllib.parse import urlencode
 
 import resend
 from django.conf import settings
@@ -31,6 +32,13 @@ class EmailService:
         """Get the full unsubscribe URL for a user."""
         token = self._generate_unsubscribe_token(user_id)
         path = reverse("jobs:newsletter_unsubscribe", kwargs={"token": token})
+        return f"{self.site_url}{path}"
+
+    def _get_job_alert_unsubscribe_url(self, alert) -> str:
+        """Get a permanent signed unsubscribe URL for one Job Scout."""
+        signer = TimestampSigner(salt="job-alert-unsubscribe")
+        token = signer.sign(str(alert.pk))
+        path = reverse("jobs:job_alert_unsubscribe", kwargs={"token": token})
         return f"{self.site_url}{path}"
 
     def send_email(
@@ -66,6 +74,23 @@ class EmailService:
             logger.error(f"Failed to send email to {to}: {e}")
             return False
 
+    def send_pro_trial_ending(self, user, trial_end, match_count: int = 0) -> bool:
+        """Remind a trialing subscriber before the first charge."""
+        if not user.email:
+            return False
+        context = {
+            "user": user,
+            "trial_end": trial_end,
+            "match_count": match_count,
+            "account_url": f"{self.site_url}{reverse('jobs:account')}",
+        }
+        return self.send_email(
+            to=user.email,
+            subject="Your Remote Impact Pro trial ends soon",
+            html=render_to_string("emails/pro_trial_ending.html", context),
+            text=render_to_string("emails/pro_trial_ending.txt", context),
+        )
+
     def send_weekly_digest(
         self,
         user,
@@ -93,7 +118,8 @@ class EmailService:
             }
             job_data.append(data)
 
-        # Generate unsubscribe URL
+        # This digest is not tied to a single Job Scout, so it uses the
+        # account-level newsletter preference link.
         unsubscribe_url = self._get_unsubscribe_url(user.id)
 
         # Determine if user has personalized recommendations
@@ -138,7 +164,7 @@ class EmailService:
         subject = f"{invitation.organization.name} thinks you'd be great for {invitation.job.title}"
         return self.send_email(to=seeker_user.email, subject=subject, html=html)
 
-    def send_job_alert(self, alert, jobs: list) -> bool:
+    def send_job_alert(self, alert, jobs: list, is_initial: bool = False) -> bool:
         """
         Send job alert email to a user.
 
@@ -149,7 +175,7 @@ class EmailService:
         Returns:
             True if sent successfully
         """
-        if not jobs:
+        if not jobs and not is_initial:
             return False
 
         user = alert.user
@@ -157,9 +183,22 @@ class EmailService:
         display_jobs = list(jobs[:10])  # Show max 10 jobs
         more_jobs = max(0, job_count - 10)
 
+        # Keep alert traffic attributable without putting user data in links.
+        # The source is also useful for analytics when a recipient is logged out.
+        for job in display_jobs:
+            job.alert_email_url = (
+                f"{self.site_url}{job.get_absolute_url()}?"
+                f"{urlencode({'source': 'scout_email', 'alert_id': alert.pk})}"
+            )
+
         # Generate URLs
-        unsubscribe_url = self._get_unsubscribe_url(user.id)
+        unsubscribe_url = self._get_job_alert_unsubscribe_url(alert)
         alerts_url = f"{self.site_url}/alerts/"
+        review_url = f"{alerts_url}?created={alert.pk}&source=scout_email_feedback"
+        upgrade_url = (
+            f"{self.site_url}{reverse('jobs:job_scout_subscribe')}"
+            "?source=free_scout_email"
+        )
 
         # Build context
         context = {
@@ -172,14 +211,22 @@ class EmailService:
             "frequency": alert.get_frequency_display().lower(),
             "site_url": self.site_url,
             "alerts_url": alerts_url,
+            "review_url": review_url,
+            "upgrade_url": upgrade_url,
             "unsubscribe_url": unsubscribe_url,
+            "is_initial": is_initial,
+            "is_one_time": alert.frequency == alert.Frequency.ONCE,
         }
 
         html = render_to_string("emails/job_alert.html", context)
         text = render_to_string("emails/job_alert.txt", context)
 
         # Build subject
-        subject = f"🔔 {job_count} new job{'s' if job_count != 1 else ''}"
+        subject = (
+            f"{job_count} job match{'es' if job_count != 1 else ''}"
+            if job_count
+            else "No strong current job matches"
+        )
         if alert.name:
             subject += f' for "{alert.name}"'
 

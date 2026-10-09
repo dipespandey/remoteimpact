@@ -4,315 +4,251 @@
 {% block title %}{% if is_edit %}Finish &amp; Pay{% else %}Post a Job{% endif %} - Remote Impact Jobs{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-[#F3F2EE] pt-20 pb-24">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<style>
+    /* Form widgets get legacy classes from forms.py; give them the v3 filled-input look here. */
+    .post-job-form input:not([type=hidden]):not([type=checkbox]):not([type=radio]),
+    .post-job-form select,
+    .post-job-form textarea {
+        display: block; width: 100%; border-radius: 0.875rem;
+        border: 1px solid transparent; background-color: hsl(var(--muted));
+        color: hsl(var(--foreground)); font-size: 15px; line-height: 1.5rem;
+        padding: 0.625rem 0.875rem; box-shadow: none;
+        transition: background-color .15s, border-color .15s, box-shadow .15s;
+    }
+    .post-job-form input:not([type=hidden]):not([type=checkbox]):not([type=radio]):hover,
+    .post-job-form select:hover, .post-job-form textarea:hover { background-color: hsl(var(--accent)); }
+    .post-job-form textarea { min-height: 120px; }
+    .post-job-form input::placeholder,
+    .post-job-form textarea::placeholder { color: hsl(var(--muted-foreground) / 0.8); opacity: 1; }
+    .post-job-form input:focus, .post-job-form select:focus, .post-job-form textarea:focus {
+        outline: none; background-color: hsl(var(--card)); border-color: hsl(var(--ring) / 0.4); box-shadow: 0 0 0 4px hsl(var(--ring) / 0.15);
+    }
+    .post-job-form .errorlist { margin: 0; padding: 0; list-style: none; }
+    .post-job-form [data-question-list] textarea { min-height: 0; }
+</style>
+<div class="container py-8 sm:py-10">
+    <header class="page-header max-w-2xl">
+        <h1 class="page-title">{% if is_edit %}Review and pay{% else %}Post a role{% endif %}</h1>
+        <p class="page-lede">{% if is_edit %}Edit anything below, then continue to payment to publish.{% else %}Reach people looking for remote work at impact organizations. Your listing goes live as soon as payment completes and stays up for 30 days.{% endif %}</p>
+    </header>
 
-        <div class="space-y-12">
-            <!-- Header -->
-            <div class="text-center max-w-2xl mx-auto">
-                <h1 class="text-4xl font-bold text-gray-900 tracking-tight mb-4">{% if is_edit %}Review &amp; Pay{% else %}Post a Role{% endif %}</h1>
-                <p class="text-xl text-gray-600">{% if is_edit %}Edit anything below, then proceed to payment to publish.{% else %}Reach thousands of purpose-driven professionals.{% endif %}</p>
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10">
+        <!-- Pricing & FAQ: above the form on mobile, sticky right column on desktop -->
+        <aside class="min-w-0 lg:col-start-2 lg:row-start-1">
+            <div class="space-y-8 lg:sticky lg:top-24">
+                <section class="surface p-5 sm:p-6">
+                    <h2 class="text-sm font-semibold text-foreground">Standard posting</h2>
+                    <p class="mt-1.5 flex items-baseline gap-1.5">
+                        <span class="text-3xl font-semibold tabular-nums tracking-tight text-foreground">$99</span>
+                        <span class="text-[13px] text-muted-foreground">/ post</span>
+                    </p>
+                    <ul class="check-list mt-4 space-y-2 text-[13px] leading-relaxed text-muted-foreground">
+                        <li>Active for <span class="font-medium text-foreground">30 days</span></li>
+                        <li><span class="font-medium text-foreground">Featured</span> label and a pinned slot at the top of matching search and category pages</li>
+                        <li>Shown in the homepage Featured roles section</li>
+                        <li>Eligible for AI Job Scout matches when it fits someone's brief, plus views and apply-click stats</li>
+                    </ul>
+                </section>
+
+                <section class="px-1">
+                    <h2 class="text-sm font-semibold text-foreground">Questions</h2>
+                    <div class="mt-3 space-y-4">
+                        <div>
+                            <h3 class="text-[13px] font-medium text-foreground">When does my listing go live?</h3>
+                            <p class="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">As soon as payment completes. We remove and refund listings that aren't remote, aren't real openings, or ask candidates to pay.</p>
+                        </div>
+                        <div>
+                            <h3 class="text-[13px] font-medium text-foreground">What if I need to edit my post?</h3>
+                            <p class="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">Email hello@remoteimpact.org with the change and we'll update it within one business day.</p>
+                        </div>
+                        <div>
+                            <h3 class="text-[13px] font-medium text-foreground">Do you offer bulk discounts?</h3>
+                            <p class="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">If you are hiring for three or more roles, email hello@remoteimpact.org and we will quote a package.</p>
+                        </div>
+                    </div>
+                </section>
             </div>
+        </aside>
 
-            <!-- Pricing & Features -->
-            <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-                <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm relative overflow-hidden">
-                    <div class="absolute top-0 right-0 p-4 opacity-10">
-                        <svg class="w-32 h-32" fill="currentColor" viewBox="0 0 20 20">
-                            <path
-                                d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z">
-                            </path>
-                        </svg>
-                    </div>
-                    <div class="relative z-10">
-                        <h2 class="text-2xl font-bold mb-2 text-gray-900">Standard Posting</h2>
-                        <div class="flex items-baseline mb-4">
-                            <span class="text-5xl font-extrabold text-brand-600">$100</span>
-                            <span class="ml-2 text-gray-400">/ post</span>
-                        </div>
-                        <ul class="space-y-3 mb-6">
-                            <li class="flex items-start">
-                                <svg class="w-6 h-6 text-brand-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-gray-600">Active for <strong class="text-gray-900">30
-                                        days</strong></span>
-                            </li>
-                            <li class="flex items-start">
-                                <svg class="w-6 h-6 text-brand-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-gray-600">Featured in our <strong class="text-gray-900">weekly
-                                        newsletter</strong> (15k+
-                                    subs)</span>
-                            </li>
-                            <li class="flex items-start">
-                                <svg class="w-6 h-6 text-brand-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-gray-600">Shared on our social channels</span>
-                            </li>
-                            <li class="flex items-start">
-                                <svg class="w-6 h-6 text-brand-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-gray-600">Smart matching with relevant candidates</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+        <!-- Form -->
+        <form method="post" class="post-job-form min-w-0 space-y-4 lg:col-start-1 lg:row-start-1">
+            {% csrf_token %}
 
-                <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-center">
-                    <h3 class="text-xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <h4 class="font-semibold text-gray-900 mb-1">How long does approval take?</h4>
-                            <p class="text-gray-600 text-sm">Most jobs are reviewed and approved within 2-4 hours during
-                                business days.</p>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-gray-900 mb-1">What if I need to edit my post?</h4>
-                            <p class="text-gray-600 text-sm">You can edit your job at any time from your dashboard even
-                                after it's live.</p>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-gray-900 mb-1">Do you offer bulk discounts?</h4>
-                            <p class="text-gray-600 text-sm">Yes! Contact us for packages if you're hiring for 3+ roles.
-                            </p>
-                        </div>
+            {% if form.errors %}
+            <div class="alert alert-destructive" role="alert">
+                <div>
+                    <h3 class="font-semibold">Please fix the errors below</h3>
+                    <div class="mt-1">
+                        {{ form.non_field_errors }}
                     </div>
                 </div>
             </div>
+            {% endif %}
 
-            <!-- Form -->
-            <form method="post" class="space-y-6 max-w-4xl mx-auto">
-                {% csrf_token %}
-
-                {% if form.errors %}
-                <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-lg">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <h3 class="text-sm font-medium text-red-800">There were errors with your submission</h3>
-                            <div class="mt-2 text-sm text-red-700">
-                                {{ form.non_field_errors }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
+            <div class="card space-y-10 p-5 sm:p-6">
                 <!-- Organization -->
-                <div class="climate-card p-6">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600">
-                            <span class="font-bold">1</span>
-                        </div>
-                        <h2 class="text-xl font-bold text-gray-900">Organization Details</h2>
-                    </div>
+                <section>
+                    <h2 class="section-title">Organization</h2>
 
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <div class="md:col-span-2">
-                            <label for="{{ form.organization_name.id_for_label }}" class="climate-label">Organization
-                                Name</label>
+                    <div class="mt-4 space-y-5">
+                        <div>
+                            <label for="{{ form.organization_name.id_for_label }}" class="label">Organization name</label>
                             {{ form.organization_name }}
                             {% if form.organization_name.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.organization_name.errors.0 }}</p>
+                            <p class="field-error">{{ form.organization_name.errors.0 }}</p>
                             {% endif %}
                         </div>
 
-                        <div class="md:col-span-2">
-                            <label for="{{ form.organization_website.id_for_label }}"
-                                class="climate-label">Website</label>
+                        <div>
+                            <label for="{{ form.organization_website.id_for_label }}" class="label">Website</label>
                             {{ form.organization_website }}
                             {% if form.organization_website.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.organization_website.errors.0 }}</p>
+                            <p class="field-error">{{ form.organization_website.errors.0 }}</p>
                             {% endif %}
                         </div>
 
-                        <div class="md:col-span-2">
-                            <label for="{{ form.organization_description.id_for_label }}" class="climate-label">About
-                                the Organization</label>
+                        <div>
+                            <label for="{{ form.organization_description.id_for_label }}" class="label">About the organization</label>
                             {{ form.organization_description }}
-                            <p class="text-xs text-gray-500 mt-2">Brief mission statement or bio.</p>
+                            <p class="help">A short description of what your organization does.</p>
                             {% if form.organization_description.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.organization_description.errors.0 }}</p>
+                            <p class="field-error">{{ form.organization_description.errors.0 }}</p>
                             {% endif %}
                         </div>
                     </div>
-                </div>
+                </section>
 
                 <!-- Role Basics -->
-                <div class="climate-card p-6">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600">
-                            <span class="font-bold">2</span>
-                        </div>
-                        <h2 class="text-xl font-bold text-gray-900">The Role</h2>
-                    </div>
+                <section>
+                    <h2 class="section-title">Role</h2>
 
-                    <div class="space-y-4">
+                    <div class="mt-4 space-y-5">
                         <div>
-                            <label for="{{ form.title.id_for_label }}" class="climate-label">Job Title</label>
+                            <label for="{{ form.title.id_for_label }}" class="label">Job title</label>
                             {{ form.title }}
                             {% if form.title.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.title.errors.0 }}</p>
+                            <p class="field-error">{{ form.title.errors.0 }}</p>
                             {% endif %}
                         </div>
 
-                        <div class="grid md:grid-cols-2 gap-6">
+                        <div class="grid gap-5 md:grid-cols-2">
                             <div>
-                                <label for="{{ form.category.id_for_label }}" class="climate-label">Category</label>
+                                <label for="{{ form.category.id_for_label }}" class="label">Category</label>
                                 {{ form.category }}
                                 {% if form.category.errors %}
-                                <p class="text-red-500 text-xs mt-1">{{ form.category.errors.0 }}</p>
+                                <p class="field-error">{{ form.category.errors.0 }}</p>
                                 {% endif %}
                             </div>
                             <div>
-                                <label for="{{ form.job_type.id_for_label }}" class="climate-label">Job Type</label>
+                                <label for="{{ form.job_type.id_for_label }}" class="label">Job type</label>
                                 {{ form.job_type }}
                             </div>
                         </div>
                         <div>
-                            <label for="{{ form.location.id_for_label }}" class="climate-label">Location</label>
+                            <label for="{{ form.location.id_for_label }}" class="label">Location</label>
                             {{ form.location }}
-                            <p class="text-xs text-gray-500 mt-2">e.g. "Remote", "London, UK", "New York (Hybrid)"</p>
+                            <p class="help">For example "Remote", "Remote (Europe time zones)" or "London, UK (hybrid)"</p>
                         </div>
                     </div>
-                </div>
+                </section>
+            </div>
 
+            <div class="card space-y-10 p-5 sm:p-6">
                 <!-- Role Details -->
-                <div class="climate-card p-6">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600">
-                            <span class="font-bold">3</span>
-                        </div>
-                        <h2 class="text-xl font-bold text-gray-900">Role Details</h2>
-                    </div>
+                <section>
+                    <h2 class="section-title">Role details</h2>
 
-                    <div class="space-y-4">
+                    <div class="mt-4 space-y-5">
                         <div>
-                            <label for="{{ form.description.id_for_label }}" class="climate-label">Mission /
-                                Description</label>
+                            <label for="{{ form.description.id_for_label }}" class="label">Description</label>
                             {{ form.description }}
-                            <p class="text-xs text-gray-500 mt-2">What will this person be responsible for? (Markdown
-                                supported)</p>
+                            <p class="help">What this person will be responsible for. Markdown is supported.</p>
                         </div>
 
                         <div>
-                            <label for="{{ form.requirements.id_for_label }}" class="climate-label">Requirements /
-                                Profile</label>
+                            <label for="{{ form.requirements.id_for_label }}" class="label">Requirements</label>
                             {{ form.requirements }}
-                            <p class="text-xs text-gray-500 mt-2">Skills and experience needed.</p>
+                            <p class="help">Skills and experience needed.</p>
                         </div>
 
-                        <div class="grid md:grid-cols-2 gap-6">
+                        <div class="grid gap-5 md:grid-cols-2">
                             <div>
-                                <label for="{{ form.impact.id_for_label }}" class="climate-label">Impact
-                                    (Optional)</label>
+                                <label for="{{ form.impact.id_for_label }}" class="label">Impact (optional)</label>
                                 {{ form.impact }}
-                                <p class="text-xs text-gray-500 mt-2">Specific outcomes they will drive.</p>
+                                <p class="help">The outcomes this role is responsible for.</p>
                             </div>
                             <div>
-                                <label for="{{ form.benefits.id_for_label }}" class="climate-label">Benefits
-                                    (Optional)</label>
+                                <label for="{{ form.benefits.id_for_label }}" class="label">Benefits (optional)</label>
                                 {{ form.benefits }}
-                                <p class="text-xs text-gray-500 mt-2">Perks, culture, insurance, etc.</p>
+                                <p class="help">Leave, health cover, equipment budget and similar.</p>
                             </div>
                         </div>
 
                         <div class="pt-2" data-custom-questions>
                             {{ form.custom_questions }}
                             {{ form.custom_questions.value|default:"[]"|json_script:"custom-questions-initial" }}
-                            <div class="flex items-center justify-between gap-4 mb-3">
+                            <div class="mb-3 flex items-center justify-between gap-4">
                                 <div>
-                                    <h3 class="climate-label mb-1">Custom Questions (Optional)</h3>
-                                    <p class="text-xs text-gray-500">Ask applicants up to 5 short questions.</p>
+                                    <h3 class="text-sm font-medium text-foreground">Screening questions (optional)</h3>
+                                    <p class="help mt-0.5">Ask applicants up to 5 short questions.</p>
                                 </div>
                                 <button type="button" data-add-question
-                                    class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-brand-200 bg-brand-50 text-2xl leading-none text-brand-700 hover:bg-brand-100 focus:outline-none focus:ring-4 focus:ring-brand-100"
-                                    aria-label="Add custom question">+</button>
+                                    class="btn btn-outline btn-sm flex-shrink-0"
+                                    aria-label="Add custom question"><span aria-hidden="true">+</span> Add</button>
                             </div>
                             <div data-question-list class="space-y-3"></div>
                             {% if form.custom_questions.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.custom_questions.errors.0 }}</p>
+                            <p class="field-error">{{ form.custom_questions.errors.0 }}</p>
                             {% endif %}
                         </div>
                     </div>
-                </div>
+                </section>
 
                 <!-- Compensation -->
-                <div class="climate-card p-6">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600">
-                            <span class="font-bold">4</span>
-                        </div>
-                        <h2 class="text-xl font-bold text-gray-900">Compensation</h2>
-                    </div>
+                <section>
+                    <h2 class="section-title">Compensation</h2>
 
-                    <div class="grid md:grid-cols-3 gap-6">
+                    <div class="mt-4 grid gap-5 sm:grid-cols-3">
                         <div>
-                            <label for="{{ form.salary_currency.id_for_label }}" class="climate-label">Currency</label>
+                            <label for="{{ form.salary_currency.id_for_label }}" class="label">Currency</label>
                             {{ form.salary_currency }}
                         </div>
                         <div>
-                            <label for="{{ form.salary_min.id_for_label }}" class="climate-label">Min</label>
+                            <label for="{{ form.salary_min.id_for_label }}" class="label">Minimum</label>
                             {{ form.salary_min }}
                         </div>
                         <div>
-                            <label for="{{ form.salary_max.id_for_label }}" class="climate-label">Max</label>
+                            <label for="{{ form.salary_max.id_for_label }}" class="label">Maximum</label>
                             {{ form.salary_max }}
                         </div>
                     </div>
-                </div>
+                </section>
 
                 <!-- Application -->
-                <div class="climate-card p-6">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600">
-                            <span class="font-bold">5</span>
-                        </div>
-                        <h2 class="text-xl font-bold text-gray-900">Application Flow</h2>
-                    </div>
+                <section>
+                    <h2 class="section-title">How to apply</h2>
 
-                    <div class="space-y-4">
+                    <div class="mt-4 space-y-5">
                         <div>
-                            <label for="{{ form.application_url.id_for_label }}" class="climate-label">External
-                                Application Link (Optional)</label>
+                            <label for="{{ form.application_url.id_for_label }}" class="label">Application link (optional)</label>
                             {{ form.application_url }}
-                            <p class="text-xs text-gray-500 mt-2">{{ form.application_url.help_text }}</p>
+                            <p class="help">{{ form.application_url.help_text }}</p>
                         </div>
                         <div>
-                            <label for="{{ form.application_email.id_for_label }}" class="climate-label">Or
-                                Email (Optional)</label>
+                            <label for="{{ form.application_email.id_for_label }}" class="label">Or application email (optional)</label>
                             {{ form.application_email }}
-                            <p class="text-xs text-gray-500 mt-2">Leave both blank to collect applications directly on Remote Impact.</p>
+                            <p class="help">Leave both blank to collect applications directly on Remote Impact.</p>
                         </div>
                     </div>
-                </div>
+                </section>
+            </div>
 
-                <div class="flex justify-end pt-6 pb-20">
-                    <button type="submit"
-                        class="bg-brand-300 hover:bg-brand-400 text-gray-900 text-xl font-bold py-4 px-12 rounded-full shadow-lg transform transition hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-brand-200">
-                        Proceed to Payment ($100)
-                    </button>
-                </div>
-            </form>
-        </div>
+            <div class="flex pt-2 sm:justify-end">
+                <button type="submit" class="btn btn-primary btn-lg w-full sm:w-auto">
+                    Continue to payment ($99)
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 <script>
@@ -355,7 +291,7 @@
                 input.maxLength = 300;
                 input.value = question;
                 input.placeholder = "Example: What mission outcome are you most proud of contributing to?";
-                input.className = "w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition";
+                input.className = "textarea";
                 input.addEventListener("input", function () {
                     questions[index] = input.value;
                     sync();
@@ -363,9 +299,9 @@
 
                 const remove = document.createElement("button");
                 remove.type = "button";
-                remove.className = "mt-1 inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-gray-200 text-xl leading-none text-gray-500 hover:bg-gray-50";
+                remove.className = "btn btn-ghost h-10 w-10 flex-shrink-0 p-0 text-lg leading-none text-muted-foreground";
                 remove.setAttribute("aria-label", "Remove custom question");
-                remove.textContent = "x";
+                remove.textContent = "×";
                 remove.addEventListener("click", function () {
                     questions.splice(index, 1);
                     render();

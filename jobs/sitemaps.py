@@ -1,20 +1,23 @@
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
 from django.utils import timezone
-from datetime import timedelta
+from django.db.models import Count, Q
+
 from .models import Job, Category, SeekerProfile, Organization
+from .seo_config import MIN_INDEXABLE_JOBS
 
 
 def visible_jobs():
     """Jobs that have a public detail page and valid search/indexing value."""
-    now = timezone.now()
-    cutoff = now - timedelta(days=180)
-    return Job.objects.filter(is_active=True).exclude(
-        expires_at__lt=now,
-    ).exclude(
-        expires_at__isnull=True,
-        posted_at__lt=cutoff,
-    )
+    return Job.objects.filter(Job.availability_filter())
+
+
+def _live_count(view_name, config):
+    """Live jobs on a programmatic landing page, using the page's own query."""
+    from .views import seo_pages
+    view = getattr(seo_pages, view_name)()
+    view.config = config
+    return view.get_queryset().count()
 
 
 class JobSitemap(Sitemap):
@@ -40,9 +43,9 @@ class CategorySitemap(Sitemap):
 
     def items(self):
         # Only include categories with active jobs
-        return Category.objects.filter(
-            jobs__in=visible_jobs()
-        ).distinct().order_by('name')
+        return Category.objects.annotate(
+            live=Count('jobs', filter=Q(jobs__in=visible_jobs()))
+        ).filter(live__gte=MIN_INDEXABLE_JOBS).order_by('name')
 
     def location(self, obj):
         return reverse('jobs:category_landing', args=[obj.slug])
@@ -121,13 +124,13 @@ class GuidesSitemap(Sitemap):
     changefreq = "weekly"
 
     def items(self):
-        from .views.resources import PILLAR_MAP, CLUSTER_MAP
+        from .views.resources import PILLAR_MAP, published_clusters
         entries = []
         # Pillars (priority 0.8)
         for slug in PILLAR_MAP:
             entries.append(('pillar', slug, None, 0.8))
         # Clusters (priority 0.7)
-        for (pillar_slug, cluster_slug) in CLUSTER_MAP:
+        for (pillar_slug, cluster_slug) in published_clusters():
             entries.append(('cluster', pillar_slug, cluster_slug, 0.7))
         return entries
 
@@ -154,7 +157,7 @@ class RolePagesSitemap(Sitemap):
 
     def items(self):
         from .seo_config import ROLE_SEO_PAGES
-        return ROLE_SEO_PAGES
+        return [page for page in ROLE_SEO_PAGES if _live_count('RoleJobsView', page) >= MIN_INDEXABLE_JOBS]
 
     def location(self, item):
         return reverse('jobs:role_jobs', kwargs={'role_slug': item['slug']})
@@ -172,7 +175,7 @@ class KeywordPagesSitemap(Sitemap):
 
     def items(self):
         from .seo_config import KEYWORD_SEO_PAGES
-        return KEYWORD_SEO_PAGES
+        return [page for page in KEYWORD_SEO_PAGES if _live_count('KeywordJobsView', page) >= MIN_INDEXABLE_JOBS]
 
     def location(self, item):
         return reverse('jobs:keyword_jobs', kwargs={'keyword_slug': item['slug']})
@@ -193,6 +196,13 @@ class StaticSitemap(Sitemap):
             ('jobs:home', 1.0, 'daily'),
             ('jobs:job_list', 0.9, 'hourly'),
             ('jobs:resources', 0.7, 'weekly'),
+            ('jobs:partner_resources', 0.8, 'weekly'),
+            ('jobs:tech_collection', 0.7, 'daily'),
+            ('jobs:employers', 0.7, 'monthly'),
+            ('jobs:impact_jobs_snapshot', 0.8, 'weekly'),
+            ('jobs:how_we_check', 0.7, 'weekly'),
+            ('gigs:ai_evaluation', 0.6, 'monthly'),
+            ('jobs:public_pricing', 0.7, 'monthly'),
             ('jobs:salary_benchmarks', 0.8, 'daily'),  # Salary data page - high value SEO
             ('jobs:post_job', 0.5, 'monthly'),
             ('gigs:gig_list', 0.8, 'daily'),

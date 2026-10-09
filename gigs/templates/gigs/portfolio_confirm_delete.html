@@ -3,25 +3,23 @@
 {% block title %}Delete Portfolio Item{% endblock %}
 
 {% block content %}
-<section class="bg-gray-50 pt-16 pb-20">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
-            <a href="{% url 'gigs:portfolio_list' %}" class="hover:text-brand-600 transition">Portfolio</a>
-            <span>•</span>
-            <span class="text-gray-900">Delete</span>
-        </nav>
+<section class="page-narrow">
+    <nav aria-label="Breadcrumb" class="flex items-center gap-2 text-[13px] text-muted-foreground">
+        <a href="{% url 'gigs:portfolio_list' %}" class="hover:text-foreground">Portfolio</a>
+        <span aria-hidden="true">/</span>
+        <span class="text-foreground">Delete</span>
+    </nav>
 
-        <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-            <h1 class="text-2xl font-semibold text-gray-900 mb-4">Delete "{{ object.title }}"?</h1>
-            <p class="text-gray-600 mb-6">This cannot be undone.</p>
+    <div class="card mt-6">
+        <div class="card-header">
+            <h1 class="text-lg font-semibold tracking-tight text-foreground">Delete "{{ object.title }}"?</h1>
+            <p class="card-description">This removes the item from your portfolio and cannot be undone.</p>
+        </div>
+        <div class="card-content">
             <form method="post" class="flex gap-3">
                 {% csrf_token %}
-                <button type="submit" class="px-6 py-3 rounded-full bg-red-600 text-white font-semibold hover:bg-red-700 transition">
-                    Delete
-                </button>
-                <a href="{% url 'gigs:portfolio_list' %}" class="px-6 py-3 rounded-full border border-gray-200 text-gray-700 font-semibold hover:border-brand-300 hover:text-brand-600 transition">
-                    Cancel
-                </a>
+                <button type="submit" class="btn btn-destructive">Delete item</button>
+                <a href="{% url 'gigs:portfolio_list' %}" class="btn btn-outline">Cancel</a>
             </form>
         </div>
     </div>

@@ -44,7 +44,7 @@ def is_cluttered(description: str) -> bool:
     return False
 
 
-def format_with_llm(description: str, job_title: str, provider: str = "groq") -> str:
+def format_with_llm(description: str, job_title: str, provider: str = "deepseek") -> str:
     """Use LLM to restructure description into clean markdown."""
     
     prompt = f"""Restructure this job description into clean, well-formatted markdown. 
@@ -64,30 +64,7 @@ Original description:
 Return ONLY the formatted markdown, no explanation."""
 
     try:
-        if provider == "groq":
-            api_key = getattr(settings, 'GROQ_API_KEY', None)
-            if not api_key:
-                return ""
-            
-            response = requests.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": "llama-3.1-8b-instant",
-                    "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.1,
-                    "max_tokens": 4000,
-                },
-                timeout=60,
-            )
-            
-            if response.status_code == 200:
-                return response.json()["choices"][0]["message"]["content"].strip()
-        
-        elif provider == "deepseek":
+        if provider == "deepseek":
             api_key = getattr(settings, 'DEEPSEEK_API_KEY', None)
             if not api_key:
                 return ""
@@ -99,10 +76,11 @@ Return ONLY the formatted markdown, no explanation."""
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": "deepseek-chat",
+                    "model": getattr(settings, "DEEPSEEK_MODEL", "deepseek-v4-flash"),
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.1,
                     "max_tokens": 4000,
+                    "thinking": {"type": "disabled"},
                 },
                 timeout=60,
             )
@@ -130,7 +108,7 @@ class Command(BaseCommand):
             "--provider",
             type=str,
             default="deepseek",
-            choices=["deepseek", "groq"],
+            choices=["deepseek"],
             help="LLM provider (default: deepseek)",
         )
         parser.add_argument(

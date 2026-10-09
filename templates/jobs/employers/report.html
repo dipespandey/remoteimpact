@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load humanize job_extras %}
+
+{% block title %}{{ organization.name }} on Remote Impact: last 30 days{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+<div class="page">
+  <header class="page-header">
+    <p class="kicker">Private report, last 30 days</p>
+    <h1 class="page-title mt-1">{{ organization.name }} on Remote Impact</h1>
+    <p class="page-lede">How people engaged with your live remote roles. Anyone with this link can see this page; it isn't listed anywhere.</p>
+  </header>
+
+  <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div class="stat"><p class="stat-value">{{ rows|length }}</p><p class="stat-label">Live roles</p></div>
+    <div class="stat"><p class="stat-value">{{ total_views|intcomma }}</p><p class="stat-label">Job page views</p></div>
+    <div class="stat"><p class="stat-value">{{ total_clicks|intcomma }}</p><p class="stat-label">Apply clicks</p></div>
+    <div class="stat"><p class="stat-value">{{ total_deliveries|intcomma }}</p><p class="stat-label">Sent by AI Scouts</p></div>
+  </div>
+
+  {% if rows %}
+  <div class="table-wrap mt-6">
+    <table class="table">
+      <thead><tr><th>Role</th><th class="text-right">Views</th><th class="text-right">Apply clicks</th><th class="text-right">Scout matches</th><th></th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>
+            <a class="font-medium hover:underline" href="{{ row.job.get_absolute_url }}">{{ row.job.title|display_title }}</a>
+            {% if row.job.is_sponsored %}<span class="badge badge-featured ml-2">★ Featured until {{ row.job.featured_until|date:"M j" }}</span>{% endif %}
+            <p class="text-[13px] text-muted-foreground">Posted {{ row.job.posted_at|date:"M j, Y" }}</p>
+          </td>
+          <td class="text-right tabular-nums">{{ row.views|intcomma }}</td>
+          <td class="text-right tabular-nums">{{ row.apply_clicks|intcomma }}</td>
+          <td class="text-right tabular-nums">{{ row.scout_deliveries|intcomma }}</td>
+          <td class="text-right">{% if not row.job.is_sponsored %}<a class="btn btn-outline btn-sm" href="{% url 'jobs:feature_job' row.job.slug %}?source=employer_report">Feature · ${{ feature_price }}</a>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-info mt-6"><p>No live roles right now. <a class="font-medium underline" href="{% url 'jobs:post_job' %}?source=employer_report">Post a role</a> to reach people looking for impact work.</p></div>
+  {% endif %}
+
+  <section class="surface mt-8 p-5 sm:p-6">
+    <h2 class="text-base font-semibold text-foreground">Feature a role</h2>
+    <p class="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">Featuring pins a role to the top of matching search and category pages for {{ feature_days }} days and shows it on the homepage, for ${{ feature_price }} per role.</p>
+    <div class="mt-4 flex flex-wrap gap-2"><a class="btn btn-outline" href="{% url 'jobs:employers' %}?source=employer_report">See employer options</a><a class="btn btn-ghost hover:bg-card" href="mailto:hello@remoteimpact.org?subject={{ organization.name|urlencode }}%20on%20Remote%20Impact">Talk to us</a></div>
+  </section>
+  <p class="help mt-6">Views are counted once per visitor per day from real browsers; apply clicks when someone follows your application link. Tracking began on 9 October 2026, so earlier activity is not included.</p>
+</div>
+{% endblock %}

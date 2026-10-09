@@ -1,223 +1,156 @@
 {% extends "base.html" %}
+{% load job_extras %}
 
 {% block title %}My Top Matches - Remote Impact Jobs{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-[#F3F2EE] py-8 md:py-16">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="page-narrow max-w-4xl">
 
-        <!-- Header -->
-        <div class="flex items-center justify-between mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">Your Top Matches</h1>
-                <p class="text-gray-600 mt-1">Jobs ranked by how well they fit your Impact Profile</p>
-            </div>
-            <a href="{% url 'jobs:impact_profile' %}"
-               class="text-brand-600 hover:text-brand-700 font-medium flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>
-                Back to Profile
-            </a>
+    <header class="page-header flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div class="min-w-0">
+            <h1 class="page-title">Your top matches</h1>
+            <p class="page-lede">Current jobs ranked by how well they fit your impact profile.</p>
         </div>
+        <a href="{% url 'jobs:impact_profile' %}" class="btn btn-ghost btn-sm self-start text-muted-foreground">
+            Back to profile
+        </a>
+    </header>
 
-        {% if needs_profile %}
-        <!-- No Profile CTA -->
-        <div class="bg-white rounded-2xl p-8 border border-gray-100 text-center">
-            <div class="text-5xl mb-4">🎯</div>
-            <h2 class="text-2xl font-bold text-gray-900 mb-2">Complete Your Impact Profile</h2>
-            <p class="text-gray-600 mb-6">Tell us about your skills, interests, and preferences to see personalized job matches.</p>
-            <a href="{% url 'jobs:impact_wizard' %}"
-               class="inline-flex items-center px-6 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-full transition">
-                Build Your Profile
-                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                </svg>
-            </a>
+    {% if seeker_profile and not is_pro and not has_job_scout %}
+    <section class="surface mb-6 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between" aria-label="Job Scout invitation">
+        <div class="min-w-0">
+            <h2 class="text-[15px] font-semibold text-foreground">Get one free email of jobs matched to your profile</h2>
+            <p class="mt-1 text-sm leading-6 text-muted-foreground">Check the brief we build from your profile, then get your strongest current roles by email. Recurring alerts are part of Pro.</p>
         </div>
+        <a href="{{ profile_scout_url }}" class="btn btn-primary w-full shrink-0 sm:w-auto" data-track="my_matches_scout_cta" data-track-category="job_scout_acquisition" data-track-label="completed_profile_no_alert">
+            Email my matches
+        </a>
+    </section>
+    {% endif %}
+    {% if seeker_profile and not is_pro and has_job_scout %}
+    <section class="surface mb-6 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between" aria-label="Remote Impact Pro invitation">
+        <div class="min-w-0">
+            <h2 class="text-[15px] font-semibold text-foreground">Keep receiving new matches as they are published</h2>
+            <p class="mt-1 text-sm leading-6 text-muted-foreground">Remote Impact Pro keeps watching for roles that fit your brief, plus unlimited application tools. 7 days free, then $10/month. Cancel anytime.</p>
+        </div>
+        <a href="{% url 'jobs:job_scout_subscribe' %}?source=my_matches_pro_nudge" class="btn btn-primary w-full shrink-0 sm:w-auto" data-track="my_matches_pro_cta" data-track-category="job_scout_acquisition" data-track-label="free_scout_used">
+            Keep getting matches
+        </a>
+    </section>
+    {% endif %}
 
-        {% elif matches %}
-        <!-- Match List -->
-        <div class="space-y-4">
-            {% for match in matches %}
-            <div class="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition">
-                <div class="flex items-start justify-between gap-4">
-                    <!-- Job Info -->
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-3 mb-2">
-                            <!-- Match Score Badge -->
-                            <span class="px-3 py-1.5 rounded-full text-sm font-bold
-                                {% if match.score >= 80 %}bg-green-100 text-green-800 border border-green-300
-                                {% elif match.score >= 60 %}bg-yellow-100 text-yellow-800 border border-yellow-300
-                                {% else %}bg-gray-100 text-gray-700 border border-gray-300{% endif %}">
-                                {{ match.score }}% match
-                            </span>
-                            <span class="text-sm text-gray-500">#{{ forloop.counter }}</span>
+    {% if needs_profile %}
+    <div class="card p-6 text-center sm:p-10">
+        <h2 class="section-title">Complete your impact profile</h2>
+        <p class="mx-auto mt-1.5 max-w-lg text-sm leading-6 text-muted-foreground">Add your skills, causes and work preferences, and we will rank current jobs by how well they fit.</p>
+        <a href="{% url 'jobs:impact_wizard' %}" class="btn btn-primary mt-5">Build your profile</a>
+    </div>
 
-                            <!-- Impact Tier Badge -->
-                            {% if match.impact_tier == "exceptional" %}
-                            <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-300">
-                                High Impact
-                            </span>
-                            {% elif match.impact_tier == "high" %}
-                            <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                                Strong Impact
-                            </span>
-                            {% endif %}
-                        </div>
-
-                        <h3 class="text-xl font-bold text-gray-900 mb-1">
-                            <a href="{{ match.job.get_absolute_url }}" class="hover:text-brand-600 transition">
-                                {{ match.job.title }}
-                            </a>
-                        </h3>
-
-                        {% if match.job.organization %}
-                        <div class="flex items-center gap-2 mb-3">
-                            <p class="text-gray-600">{{ match.job.organization.name }}</p>
-                            {% if match.job.organization.has_verified_signals %}
-                            <span class="inline-flex items-center text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
-                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                                </svg>
-                                Verified
-                            </span>
-                            {% endif %}
-                        </div>
-                        {% endif %}
-
-                        <!-- Match Indicators -->
-                        <div class="flex flex-wrap gap-2 mb-3">
-                            {% if match.job.category %}
-                            <span class="inline-flex items-center text-xs text-blue-700 bg-blue-50 px-2 py-1 rounded-full">
-                                {{ match.job.category.name }}
-                            </span>
-                            {% endif %}
-                            {% if match.job.job_type %}
-                            <span class="inline-flex items-center text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
-                                {{ match.job.get_job_type_display }}
-                            </span>
-                            {% endif %}
-                            {% if match.job.salary_min %}
-                            <span class="inline-flex items-center text-xs text-green-700 bg-green-50 px-2 py-1 rounded-full">
-                                ${{ match.job.salary_min|floatformat:0 }}+
-                            </span>
-                            {% endif %}
-                        </div>
-
-                        <!-- Quick Match Reasons -->
-                        {% if match.reasons %}
-                        <div class="flex flex-wrap gap-1.5 text-xs text-gray-600">
-                            {% for reason in match.reasons|slice:":3" %}
-                            <span class="inline-flex items-center">
-                                <svg class="w-3 h-3 mr-1 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                {{ reason }}
-                            </span>
-                            {% if not forloop.last %}<span class="text-gray-300">|</span>{% endif %}
-                            {% endfor %}
-                        </div>
+    {% elif matches %}
+    <ol class="list-surface">
+        {% for match in matches %}
+        <li>
+        <article class="rounded-xl px-4 py-4 transition-colors hover:bg-muted/60 sm:px-5">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                <div class="min-w-0 flex-1">
+                    <div class="mb-1.5 flex flex-wrap items-center gap-2">
+                        <span class="text-[13px] tabular-nums text-muted-foreground">{{ forloop.counter }}.</span>
+                        <span class="badge {% if match.score >= 80 %}badge-success{% elif match.score >= 60 %}badge-primary{% else %}badge-outline{% endif %} tabular-nums">{{ match.score }}% match</span>
+                        {% if match.impact_tier == "exceptional" %}
+                        <span class="badge badge-primary">High impact</span>
+                        {% elif match.impact_tier == "high" %}
+                        <span class="badge badge-outline">Strong impact</span>
                         {% endif %}
                     </div>
 
-                    <!-- Action -->
-                    <div class="shrink-0">
-                        <a href="{{ match.job.get_absolute_url }}"
-                           class="inline-flex items-center px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-full text-sm transition">
-                            View Job
-                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </a>
+                    <h3 class="job-title break-words">
+                        <a href="{{ match.job.get_absolute_url }}" class="hover:underline">{{ match.job.title|display_title }}</a>
+                    </h3>
+
+                    <p class="job-meta">
+                        {% if match.job.organization %}<span class="font-medium text-foreground">{{ match.job.organization.name }}</span>{% if match.job.organization.has_verified_signals %}<span class="inline-flex items-center gap-1 text-emerald-800"><svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Verified</span>{% endif %}{% endif %}
+                        {% if match.job.category %}<span>{{ match.job.category.name }}</span>{% endif %}
+                        {% if match.job.job_type %}<span>{{ match.job.get_job_type_display }}</span>{% endif %}
+                        {% if match.job|compensation_display %}<span class="tabular-nums">{{ match.job|compensation_display }}</span>{% endif %}
+                    </p>
+
+                    {% if match.reasons %}
+                    <ul class="mt-2 flex flex-col items-start gap-1 text-[13px] leading-5 text-muted-foreground" aria-label="Why this matched">
+                        {% for reason in match.reasons|slice:":3" %}
+                        {% if reason|slice:":6" == "Check:" %}<li><span class="badge badge-warning whitespace-normal">{{ reason }}</span></li>{% else %}<li>{{ reason }}</li>{% endif %}
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+
+                <div class="shrink-0">
+                    <a href="{{ match.job.get_absolute_url }}" class="btn btn-outline btn-sm">View job</a>
+                </div>
+            </div>
+
+            <details class="group mt-3">
+                <summary class="inline-flex cursor-pointer list-none items-center gap-1 text-[13px] font-medium text-muted-foreground hover:text-foreground">
+                    <svg class="h-3.5 w-3.5 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7"/></svg>
+                    View score breakdown
+                </summary>
+                <div class="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+                    <div class="rounded-xl bg-muted px-3 py-2.5">
+                        <div class="text-sm font-semibold tabular-nums text-foreground">{{ match.semantic }}%</div>
+                        <div class="text-muted-foreground">Semantic &middot; 40% weight</div>
+                    </div>
+                    <div class="rounded-xl bg-muted px-3 py-2.5">
+                        <div class="text-sm font-semibold tabular-nums text-foreground">{{ match.lexical }}%</div>
+                        <div class="text-muted-foreground">Keywords &middot; 10% weight</div>
+                    </div>
+                    <div class="rounded-xl bg-muted px-3 py-2.5">
+                        <div class="text-sm font-semibold tabular-nums text-foreground">{{ match.profile }}%</div>
+                        <div class="text-muted-foreground">Profile &middot; 35% weight</div>
+                    </div>
+                    <div class="rounded-xl bg-muted px-3 py-2.5">
+                        <div class="text-sm font-semibold tabular-nums {% if match.impact >= 70 %}text-emerald-800{% else %}text-foreground{% endif %}">{{ match.impact }}%</div>
+                        <div class="text-muted-foreground">Impact &middot; 15% weight</div>
                     </div>
                 </div>
 
-                <!-- Score Breakdown (collapsible) -->
-                <details class="mt-4 pt-4 border-t border-gray-100">
-                    <summary class="text-sm text-gray-500 cursor-pointer hover:text-gray-700">View score breakdown</summary>
-                    <div class="mt-3 grid grid-cols-4 gap-2 text-center text-xs">
-                        <div class="bg-gray-50 rounded-lg p-2">
-                            <div class="font-bold text-gray-900">{{ match.semantic }}%</div>
-                            <div class="text-gray-500">Semantic</div>
-                            <div class="text-[10px] text-gray-400">40% weight</div>
-                        </div>
-                        <div class="bg-gray-50 rounded-lg p-2">
-                            <div class="font-bold text-gray-900">{{ match.lexical }}%</div>
-                            <div class="text-gray-500">Keywords</div>
-                            <div class="text-[10px] text-gray-400">10% weight</div>
-                        </div>
-                        <div class="bg-gray-50 rounded-lg p-2">
-                            <div class="font-bold text-gray-900">{{ match.profile }}%</div>
-                            <div class="text-gray-500">Profile</div>
-                            <div class="text-[10px] text-gray-400">35% weight</div>
-                        </div>
-                        <div class="{% if match.impact >= 70 %}bg-purple-50{% else %}bg-gray-50{% endif %} rounded-lg p-2">
-                            <div class="font-bold {% if match.impact >= 70 %}text-purple-800{% else %}text-gray-900{% endif %}">{{ match.impact }}%</div>
-                            <div class="{% if match.impact >= 70 %}text-purple-600{% else %}text-gray-500{% endif %}">Impact</div>
-                            <div class="text-[10px] text-gray-400">15% weight</div>
-                        </div>
+                {% if match.impact_reasons %}
+                <div class="mt-3 px-1">
+                    <p class="text-[13px] font-medium text-foreground">Impact signals</p>
+                    <ul class="check-list mt-1 space-y-1 text-[13px] text-muted-foreground">
+                        {% for reason in match.impact_reasons %}<li>{{ reason }}</li>{% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% if match.gaps %}
+                <div class="mt-3 px-1">
+                    <p class="text-[13px] font-medium text-foreground">Skills to develop</p>
+                    <div class="mt-1.5 flex flex-wrap gap-1.5">
+                        {% for gap in match.gaps %}<span class="badge badge-warning">{{ gap }}</span>{% endfor %}
                     </div>
+                </div>
+                {% endif %}
+            </details>
+        </article>
+        </li>
+        {% endfor %}
+    </ol>
 
-                    <!-- Impact Reasons -->
-                    {% if match.impact_reasons %}
-                    <div class="mt-3 p-3 bg-purple-50 rounded-lg">
-                        <div class="text-xs font-medium text-purple-800 mb-2">Impact Signals</div>
-                        <div class="space-y-1">
-                            {% for reason in match.impact_reasons %}
-                            <div class="flex items-center text-xs text-purple-700">
-                                <svg class="w-3 h-3 mr-1.5 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                                </svg>
-                                {{ reason }}
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <!-- Skill Gaps -->
-                    {% if match.gaps %}
-                    <div class="mt-3 p-3 bg-amber-50 rounded-lg">
-                        <div class="text-xs font-medium text-amber-800 mb-2">Skills to Develop</div>
-                        <div class="flex flex-wrap gap-1.5">
-                            {% for gap in match.gaps %}
-                            <span class="inline-flex items-center text-xs text-amber-700 bg-white px-2 py-0.5 rounded border border-amber-200">
-                                {{ gap }}
-                            </span>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-                </details>
-            </div>
-            {% endfor %}
-        </div>
-
-        <!-- View All Link -->
-        <div class="mt-8 text-center">
-            <a href="{% url 'jobs:job_list' %}?sort=best-match"
-               class="inline-flex items-center text-brand-600 hover:text-brand-700 font-medium">
-                View all jobs sorted by match
-                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                </svg>
-            </a>
-        </div>
-
-        {% else %}
-        <!-- No Matches -->
-        <div class="bg-white rounded-2xl p-8 border border-gray-100 text-center">
-            <div class="text-5xl mb-4">🔍</div>
-            <h2 class="text-2xl font-bold text-gray-900 mb-2">No Matches Yet</h2>
-            <p class="text-gray-600 mb-6">We're still finding jobs that match your profile. Check back soon!</p>
-            <a href="{% url 'jobs:job_list' %}"
-               class="inline-flex items-center px-6 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-full transition">
-                Browse All Jobs
-            </a>
-        </div>
-        {% endif %}
-
+    <div class="mt-6 text-center">
+        <a href="{% url 'jobs:job_list' %}?sort=best-match" class="btn btn-link text-sm">
+            View all jobs sorted by match
+        </a>
     </div>
+
+    {% else %}
+    <div class="surface p-6 text-center sm:p-10">
+        <h2 class="section-title">No matches yet</h2>
+        <p class="mx-auto mt-1.5 max-w-lg text-sm leading-6 text-muted-foreground">None of the current listings fit your profile closely. Broaden your causes or location preferences, or browse all jobs.</p>
+        <div class="mt-5 flex flex-wrap justify-center gap-2">
+            <a href="{% url 'jobs:job_list' %}" class="btn btn-primary">Browse all jobs</a>
+            <a href="{% url 'jobs:impact_wizard' %}" class="btn btn-outline">Edit your profile</a>
+        </div>
+    </div>
+    {% endif %}
+
 </div>
 {% endblock %}

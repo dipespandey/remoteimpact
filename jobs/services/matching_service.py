@@ -17,7 +17,7 @@ from typing import Optional
 from django.db.models import QuerySet
 
 from jobs.models import Job, SeekerProfile, JobMatch, Category
-from jobs.constants.skills import SKILLS_BY_SLUG
+from jobs.constants.skills import SKILL_ALIASES, SKILLS_BY_SLUG
 
 
 # Stopwords to filter out common words
@@ -359,16 +359,31 @@ class MatchingService:
 
     @staticmethod
     def _extract_skills_from_text(text: str) -> set:
-        """Extract skill slugs from text by keyword matching."""
-        text_lower = text.lower()
+        """Extract only explicit, boundary-delimited skills from job text."""
         found_skills = set()
 
         for slug, skill in SKILLS_BY_SLUG.items():
-            # Check for skill label in text
-            if skill.label.lower() in text_lower:
-                found_skills.add(slug)
-            # Also check for slug (with hyphens replaced)
-            elif slug.replace("-", " ") in text_lower:
+            if slug == "r":
+                # R must be explicitly capitalized as a standalone language.
+                # The former substring check matched the letter inside ordinary
+                # words such as "representative".
+                if re.search(r"(?<!\w)R(?!\w)", text):
+                    found_skills.add(slug)
+                continue
+            phrases = {
+                skill.label.lower(),
+                slug.replace("-", " ").lower(),
+                *SKILL_ALIASES.get(slug, ()),
+            }
+            if any(
+                len(phrase) > 1
+                and re.search(
+                    r"(?<!\w)" + re.escape(phrase).replace(r"\ ", r"\s+") + r"(?!\w)",
+                    text,
+                    re.IGNORECASE,
+                )
+                for phrase in phrases
+            ):
                 found_skills.add(slug)
 
         return found_skills

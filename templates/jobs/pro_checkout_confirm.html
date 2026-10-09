@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Choose Remote Impact Pro{% endblock %}
+{% block meta_description %}Keep your AI Job Scouts watching for new remote impact jobs. Try Pro free, or buy a one-time 3-month Job Search Pass.{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+<div class="container max-w-4xl py-8 sm:py-10">
+  <a class="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground" href="{% url 'jobs:job_alerts' %}"><span aria-hidden="true">&larr;</span> Back to AI Job Scout</a>
+  {% if checkout_cancelled %}<div class="alert alert-warning mt-4" role="status"><p>No payment was made. Your free account and saved Scout are unchanged.</p></div>{% endif %}
+
+  <header class="page-header mt-4">
+    <h1 class="page-title">Keep your Scouts running</h1>
+    <p class="page-lede">Pro checks every new remote impact role as it is published{% if fresh_jobs_count %} (<span class="tabular-nums">{{ fresh_jobs_count }}</span> added in the last 7 days){% endif %} and emails you only the ones that fit your brief.</p>
+  </header>
+
+  <div class="grid gap-4 md:grid-cols-2">
+    <section class="card flex flex-col p-5 sm:p-6" aria-label="Pro monthly">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h2 class="text-base font-semibold text-foreground">Pro monthly</h2>
+        {% if trial_eligible %}<span class="badge badge-primary">{{ trial_days }} days free</span>{% endif %}
+      </div>
+      <p class="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-foreground">$10<span class="text-[15px] font-normal text-muted-foreground"> / month</span></p>
+      <p class="mt-1 text-[13px] leading-relaxed text-muted-foreground">{% if trial_eligible %}Free for {{ trial_days }} days, then $10 a month. Cancel before the trial ends and you pay nothing.{% else %}Billed monthly. Cancel any time from your account.{% endif %}</p>
+      <ul class="check-list mt-5 flex-1 space-y-2 text-sm text-foreground">
+        <li>Up to five AI Job Scouts running at once</li>
+        <li>Emails as soon as a strong new match is published</li>
+        <li>Unlimited cover letters and interview prep</li>
+      </ul>
+      <form method="post" class="mt-6">
+        {% csrf_token %}
+        <input type="hidden" name="source" value="{{ source }}">
+        <input type="hidden" name="plan" value="monthly">
+        <button class="btn btn-primary btn-lg btn-block" type="submit" data-track="pro_checkout_monthly" data-track-category="checkout">{% if trial_eligible %}Start {{ trial_days }}-day free trial{% else %}Continue with monthly{% endif %}</button>
+      </form>
+      <p class="help text-center">{% if trial_eligible %}We will email you before the trial ends.{% else %}Secure checkout with Stripe.{% endif %}</p>
+    </section>
+
+    <section class="surface flex flex-col p-5 sm:p-6" aria-label="3-month Job Search Pass">
+      <h2 class="text-base font-semibold text-foreground">3-month Job Search Pass</h2>
+      <p class="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-foreground">$24<span class="text-[15px] font-normal text-muted-foreground"> once</span></p>
+      <p class="mt-1 text-[13px] leading-relaxed text-muted-foreground">Everything in Pro for 90 days. One payment, no subscription, nothing renews.</p>
+      <ul class="check-list mt-5 flex-1 space-y-2 text-sm text-foreground">
+        <li>Works out at <span class="tabular-nums">$8</span> a month</li>
+        <li>No card kept on file for renewals</li>
+      </ul>
+      <form method="post" class="mt-6">
+        {% csrf_token %}
+        <input type="hidden" name="source" value="{{ source }}">
+        <input type="hidden" name="plan" value="pass">
+        <button class="btn btn-outline btn-lg btn-block" type="submit" data-track="pro_checkout_pass" data-track-category="checkout">Get the 3-month pass</button>
+      </form>
+      <p class="help text-center">Secure checkout with Stripe.</p>
+    </section>
+  </div>
+
+  {% load job_extras %}
+  {% if recent_matches %}
+  <section class="mt-10" aria-label="Matches your Scout already found">
+    <h2 class="px-1 text-sm font-medium text-muted-foreground">Your Scout has found <span class="tabular-nums">{{ delivered_count }}</span> match{{ delivered_count|pluralize:"es" }} so far, including:</h2>
+    <ul class="list-surface mt-2">
+      {% for delivery in recent_matches %}
+      <li><a class="block rounded-xl px-3.5 py-2.5 transition-colors hover:bg-muted" href="{{ delivery.job.get_absolute_url }}"><span class="block text-sm font-medium text-foreground">{{ delivery.job.title|display_title }}</span> <span class="block text-[13px] text-muted-foreground">at {{ delivery.job.organization.name }}</span></a></li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% elif latest_scout %}
+  <section class="surface mt-10 p-5 sm:p-6" aria-label="Your Scout">
+    <h2 class="text-base font-semibold text-foreground">Your first Scout has not found a strong match yet</h2>
+    <p class="mt-1.5 max-w-prose text-sm leading-6 text-muted-foreground">Usually the brief is very narrow, or the right role has not been published yet. Pro keeps checking every new job, and you can run up to five briefs with different angles. You can also adjust your brief for free first.</p>
+    <a class="btn btn-outline btn-sm mt-4" href="{% url 'jobs:job_alerts' %}">Adjust my brief</a>
+  </section>
+  {% endif %}
+
+  <p class="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-center text-[13px] text-muted-foreground"><span>Payments handled by Stripe</span><span>Cards, Apple Pay and Google Pay</span><span>Cancel or manage billing from your account</span></p>
+</div>
+{% endblock %}

@@ -18,13 +18,15 @@ import re
 from dataclasses import dataclass
 from typing import Optional
 
+from django.core.cache import cache
 from django.contrib.postgres.search import SearchQuery, SearchRank
-from django.db.models import Q
+from django.db.models import Q, Case, When, IntegerField
 from pgvector.django import CosineDistance
 
 from jobs.models import Job, SeekerProfile
 from jobs.services.embedding_service import embed_job, embed_seeker
 from jobs.services.impact_potential_service import ImpactPotentialService
+from jobs.services.job_service import JobService
 from jobs.constants.skills import SKILLS_BY_SLUG
 
 
@@ -143,6 +145,20 @@ class UnifiedMatchingService:
     # Retrieval parameters
     CANDIDATE_LIMIT = 150      # How many to retrieve from HNSW
     FINAL_LIMIT = 25           # How many to return after re-ranking
+    MATCH_CACHE_TTL = 15 * 60  # User-facing matches can be a few minutes stale.
+
+    @classmethod
+    def order_jobs_for_seeker(cls, queryset, seeker: SeekerProfile):
+        """Show a fresh chronological feed from a pool of relevant jobs."""
+        matches = cls.get_matches(seeker, limit=100)
+        ranked_ids = [result.job.id for result in matches]
+        if not ranked_ids:
+            return queryset.order_by("-posted_at", "-id")
+
+        # Keep relevance as the candidate pool, then let publication date be
+        # the visible ordering. This prevents an old but semantically strong
+        # role from pushing genuinely new opportunities below the fold.
+        return queryset.filter(pk__in=ranked_ids).order_by("-posted_at", "-id")
 
     @classmethod
     def get_matches(
@@ -158,21 +174,42 @@ class UnifiedMatchingService:
         2. SCORE: Re-rank with semantic + lexical + profile + impact
         3. RETURN: Top N with detailed breakdown
         """
+        cache_key = cls._matches_cache_key(seeker, limit)
+        cached = cache.get(cache_key)
+        if cached:
+            hydrated = cls._hydrate_cached_matches(cached)
+            if hydrated:
+                return hydrated
+
         # Stage 1: Retrieve candidates via vector search
         candidates = cls._retrieve_candidates(seeker, limit=cls.CANDIDATE_LIMIT)
 
         if not candidates:
             return []
 
+        match_context = cls._build_match_context(seeker)
+        lexical_scores = cls._bulk_lexical_scores(
+            [job.id for job, _ in candidates],
+            match_context["search_terms"],
+        )
+
         # Stage 2: Score each candidate with all components
         results = []
         for job, semantic_score in candidates:
-            result = cls._score_candidate(seeker, job, semantic_score)
+            result = cls._score_candidate(
+                seeker,
+                job,
+                semantic_score,
+                lexical_score=lexical_scores.get(job.id, 50.0),
+                match_context=match_context,
+            )
             results.append(result)
 
         # Stage 3: Sort by final score and return top N
         results.sort(key=lambda r: r.score, reverse=True)
-        return results[:limit]
+        results = results[:limit]
+        cache.set(cache_key, [cls._serialize_match(result) for result in results], cls.MATCH_CACHE_TTL)
+        return results
 
     @classmethod
     def get_candidate_matches(
@@ -216,7 +253,12 @@ class UnifiedMatchingService:
     ) -> MatchResult:
         """Score a single job for a seeker, used by the job detail page."""
         semantic_score = cls._semantic_score_for_pair(seeker, job)
-        return cls._score_candidate(seeker, job, semantic_score)
+        return cls._score_candidate(
+            seeker,
+            job,
+            semantic_score,
+            match_context=cls._build_match_context(seeker),
+        )
 
     @classmethod
     def _retrieve_candidates(
@@ -228,18 +270,19 @@ class UnifiedMatchingService:
         Fast retrieval using HNSW vector index.
         Returns list of (job, semantic_score) tuples.
         """
-        query_embedding = embed_seeker(seeker)
+        query_embedding = seeker.embedding if seeker.embedding is not None else embed_seeker(seeker)
 
         if query_embedding is None:
             # Fallback: return recent jobs without semantic scoring
-            jobs = Job.objects.filter(
-                is_active=True
-            ).select_related("organization", "category").order_by('-posted_at')[:limit]
+            jobs = JobService.get_available_jobs().select_related("organization", "category").order_by('-posted_at', '-id')[:limit]
             return [(job, 50.0) for job in jobs]
 
+        if seeker.embedding is None:
+            SeekerProfile.objects.filter(pk=seeker.pk).update(embedding=query_embedding)
+            seeker.embedding = query_embedding
+
         # Vector search with cosine distance
-        qs = Job.objects.filter(
-            is_active=True,
+        qs = JobService.get_available_jobs().filter(
             embedding__isnull=False,
         ).select_related(
             "organization", "category",
@@ -349,6 +392,8 @@ class UnifiedMatchingService:
         seeker: SeekerProfile,
         job: Job,
         semantic_score: float,
+        lexical_score: Optional[float] = None,
+        match_context: Optional[dict] = None,
     ) -> MatchResult:
         """
         Score a single candidate with all 4 components.
@@ -359,16 +404,19 @@ class UnifiedMatchingService:
             cls._semantic_cap_for_job_quality(job_data_quality),
         )
 
-        # Get lexical score via FTS
-        lexical_score = cls._calculate_lexical_score(seeker, job)
+        # Get lexical score via FTS. List pages pass precomputed bulk ranks.
+        if lexical_score is None:
+            lexical_score = cls._calculate_lexical_score(seeker, job, match_context)
 
         # Get profile match score
-        profile_score, profile_reasons, gaps = cls._calculate_profile_score(seeker, job)
+        profile_score, profile_reasons, gaps = cls._calculate_profile_score(
+            seeker, job, match_context
+        )
 
         # Get impact potential score
         impact_data = ImpactPotentialService.calculate_impact_potential(seeker, job)
         impact_potential_score = impact_data['score'] * 100
-        impact_alignment_score = cls._score_impact_area(seeker, job)
+        impact_alignment_score = cls._score_impact_area(seeker, job, match_context=match_context)
         impact_score = (
             impact_alignment_score * 0.55 +
             impact_potential_score * 0.45
@@ -463,12 +511,17 @@ class UnifiedMatchingService:
         cls,
         seeker: SeekerProfile,
         job: Job,
+        match_context: Optional[dict] = None,
     ) -> float:
         """
         Calculate lexical score using PostgreSQL FTS.
         """
         # Build search query from seeker profile
-        search_terms = cls._build_search_query(seeker)
+        search_terms = (
+            match_context.get("search_terms")
+            if match_context
+            else cls._build_search_query(seeker)
+        )
 
         if not search_terms or not job.search_vector:
             return 50.0  # Neutral if no search data
@@ -482,20 +535,40 @@ class UnifiedMatchingService:
             ).first()
 
             if ranked and ranked.rank:
-                # Treat FTS as an exact-term bonus. Raw ranks are often tiny,
-                # so use log scaling and keep non-matches neutral instead of
-                # letting lexical noise punish otherwise good vector matches.
-                rank = float(ranked.rank)
-                if rank <= 0:
-                    return 50.0
-                return min(100.0, 50.0 + math.log1p(rank * 1000) * 10)
+                return cls._lexical_score_from_rank(ranked.rank)
         except Exception:
             pass
 
         return 50.0
 
+    @staticmethod
+    def _lexical_score_from_rank(rank) -> float:
+        # Treat FTS as an exact-term bonus. Raw ranks are often tiny, so use
+        # log scaling and keep non-matches neutral instead of punishing otherwise
+        # good vector matches.
+        rank = float(rank or 0)
+        if rank <= 0:
+            return 50.0
+        return min(100.0, 50.0 + math.log1p(rank * 1000) * 10)
+
     @classmethod
-    def _build_search_query(cls, seeker: SeekerProfile) -> str:
+    def _bulk_lexical_scores(cls, job_ids: list[int], search_terms: str) -> dict[int, float]:
+        if not job_ids or not search_terms:
+            return {}
+
+        try:
+            search_query = SearchQuery(search_terms, search_type='websearch')
+            rows = (
+                Job.objects.filter(pk__in=job_ids)
+                .annotate(rank=SearchRank('search_vector', search_query))
+                .values_list("pk", "rank")
+            )
+            return {job_id: cls._lexical_score_from_rank(rank) for job_id, rank in rows}
+        except Exception:
+            return {}
+
+    @classmethod
+    def _build_search_query(cls, seeker: SeekerProfile, impact_areas=None) -> str:
         """Build FTS search query from seeker profile."""
         terms = []
 
@@ -509,7 +582,8 @@ class UnifiedMatchingService:
                     terms.append(slug.replace("-", " "))
 
         # Add impact areas
-        for area in seeker.impact_areas.all()[:5]:
+        areas = impact_areas if impact_areas is not None else seeker.impact_areas.all()
+        for area in list(areas)[:5]:
             terms.append(area.name)
 
         # Add work style keywords
@@ -525,6 +599,7 @@ class UnifiedMatchingService:
         cls,
         seeker: SeekerProfile,
         job: Job,
+        match_context: Optional[dict] = None,
     ) -> tuple[float, list, list]:
         """
         Calculate profile match score based on structured data.
@@ -535,7 +610,9 @@ class UnifiedMatchingService:
         gaps = []
 
         # 1. Impact Area Alignment
-        scores['impact_area'] = cls._score_impact_area(seeker, job, reasons)
+        scores['impact_area'] = cls._score_impact_area(
+            seeker, job, reasons, match_context=match_context
+        )
 
         # 2. Skills Match
         scores['skills'], skill_gaps = cls._score_skills(seeker, job, reasons)
@@ -567,12 +644,16 @@ class UnifiedMatchingService:
         seeker: SeekerProfile,
         job: Job,
         reasons: Optional[list] = None,
+        match_context: Optional[dict] = None,
     ) -> float:
         """Score based on impact area alignment."""
         if not job.category:
             return 60.0  # Neutral if no category
 
-        seeker_areas = set(seeker.impact_areas.values_list("id", flat=True))
+        if match_context and "impact_area_ids" in match_context:
+            seeker_areas = match_context["impact_area_ids"]
+        else:
+            seeker_areas = set(seeker.impact_areas.values_list("id", flat=True))
 
         if not seeker_areas:
             return 60.0  # Neutral if seeker has no preference
@@ -585,6 +666,62 @@ class UnifiedMatchingService:
         # Category labels are broad and upstream classification can be noisy, so
         # mismatches lower the score without burying an otherwise strong role.
         return 45.0
+
+    @classmethod
+    def _build_match_context(cls, seeker: SeekerProfile) -> dict:
+        impact_areas = list(seeker.impact_areas.all())
+        return {
+            "impact_area_ids": {area.id for area in impact_areas},
+            "search_terms": cls._build_search_query(seeker, impact_areas=impact_areas),
+        }
+
+    @classmethod
+    def _matches_cache_key(cls, seeker: SeekerProfile, limit: int) -> str:
+        updated_at = seeker.updated_at.timestamp() if seeker.updated_at else 0
+        return f"matches:v5:{seeker.pk}:{int(updated_at)}:{limit}"
+
+    @staticmethod
+    def _serialize_match(result: MatchResult) -> dict:
+        return {
+            "job_id": result.job_id if hasattr(result, "job_id") else result.job.id,
+            "score": result.score,
+            "semantic_score": result.semantic_score,
+            "lexical_score": result.lexical_score,
+            "profile_score": result.profile_score,
+            "impact_score": result.impact_score,
+            "impact_tier": result.impact_tier,
+            "reasons": result.reasons,
+            "gaps": result.gaps,
+            "impact_reasons": result.impact_reasons,
+        }
+
+    @classmethod
+    def _hydrate_cached_matches(cls, cached: list[dict]) -> list[MatchResult]:
+        job_ids = [item["job_id"] for item in cached if item.get("job_id")]
+        jobs = JobService.get_available_jobs().filter(
+            id__in=job_ids,
+        ).select_related("organization", "category")
+        jobs_by_id = {job.id: job for job in jobs}
+
+        results = []
+        for item in cached:
+            job = jobs_by_id.get(item.get("job_id"))
+            if not job:
+                continue
+            results.append(MatchResult(
+                job=job,
+                score=item["score"],
+                semantic_score=item["semantic_score"],
+                lexical_score=item["lexical_score"],
+                profile_score=item["profile_score"],
+                impact_score=item["impact_score"],
+                impact_tier=item["impact_tier"],
+                reasons=item["reasons"],
+                gaps=item["gaps"],
+                impact_reasons=item["impact_reasons"],
+            ))
+
+        return results
 
     @classmethod
     def _score_skills(

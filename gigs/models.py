@@ -350,3 +350,34 @@ class GigInterest(models.Model):
 
     def __str__(self):
         return f"{self.email} - {self.submitted_at.strftime('%Y-%m-%d')}"
+
+
+class EvaluatorInterest(models.Model):
+    """Waitlist for the managed AI-evaluation cohort (a demand test, not a marketplace)."""
+
+    class Background(models.TextChoices):
+        HEALTH = "health", "Health or medicine"
+        LAW = "law", "Law or policy"
+        EDUCATION = "education", "Education"
+        ENGINEERING = "engineering", "Software or engineering"
+        SCIENCE = "science", "Science or research"
+        FINANCE = "finance", "Finance or economics"
+        LANGUAGE = "language", "Translation, writing or linguistics"
+        OTHER = "other", "Something else"
+
+    email = models.EmailField()
+    country = models.CharField(max_length=80)
+    languages = models.CharField(max_length=200, help_text="Languages they can evaluate in, besides English")
+    background = models.CharField(max_length=20, choices=Background.choices)
+    hours_per_week = models.PositiveSmallIntegerField(default=10)
+    note = models.TextField(blank=True)
+    is_adult = models.BooleanField(default=False)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="evaluator_interest")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [models.UniqueConstraint(fields=["email"], name="unique_evaluator_interest_email")]
+
+    def __str__(self):
+        return f"{self.email} ({self.country}, {self.languages})"

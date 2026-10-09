@@ -1,14 +1,14 @@
 Hi {{ user.first_name|default:"there" }},
 
-Welcome to Remote Impact — the job board for remote roles that make a difference.
+Welcome to Remote Impact, the job board for remote roles that make a difference.
 
-Here's how to get started:
+Describe the work you want in plain English. Your AI Job Scout will search the current inventory and email one free set of your strongest matches:
 
-1. Complete your Impact Profile: {{ site_url }}/impact-profile/wizard/
-2. Browse impact jobs: {{ site_url }}/jobs/
-3. Get a weekly digest of jobs matched to your values
+{{ site_url }}/alerts/?source=welcome_email
+
+You can also browse the newest jobs at {{ site_url }}/jobs/ or complete your Impact Profile at {{ site_url }}/impact-profile/wizard/.
 
 Happy job hunting!
-— The Remote Impact Team
+- The Remote Impact Team
 
 {{ site_url }}

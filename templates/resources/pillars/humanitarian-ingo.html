@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'resources/pillars/_guide_base.html' %}
 
 {# ──────────────────────────────────────────────────────────
    PILLAR PAGE: Humanitarian & INGO Careers
@@ -88,103 +88,69 @@
 </script>
 {% endblock %}
 
-{% block content %}
-<section class="bg-gray-50 pt-16 pb-12">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
-            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
-            <span>&rsaquo;</span>
-            <a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Resources</a>
-            <span>&rsaquo;</span>
-            <span class="text-gray-900">Humanitarian & INGO Careers</span>
-        </nav>
+{% block guide_breadcrumb %}
+<li aria-hidden="true">/</li>
+<li aria-current="page" class="text-foreground">Humanitarian & INGO Careers</li>
+{% endblock %}
 
-        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm prose prose-gray max-w-none">
-            <p class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold mb-2">Pillar Guide</p>
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
-                Remote Humanitarian &amp; INGO Jobs: The Complete Career Guide
-            </h1>
+{% block guide_title %}Remote humanitarian and INGO jobs: a career guide{% endblock %}
 
-            <p class="text-xl text-gray-600 leading-relaxed mb-8">
-                International non-governmental organisations (INGOs) and humanitarian agencies form the backbone of the global aid system. Contrary to popular belief, you don't need to be in a conflict zone to make a difference — thousands of impactful roles are performed entirely remotely.
-            </p>
+{% block guide_lede %}International NGOs and humanitarian agencies hire for many roles that do not need field deployment: grant management, monitoring and evaluation, communications, data and IT. This guide covers the skills they ask for, how to get a first role, and typical pay.{% endblock %}
 
-            <h2>What are humanitarian and INGO careers?</h2>
-            <p>
-                Humanitarian careers encompass any work that responds to, prepares for, or helps communities recover from crises — armed conflict, natural disasters, famine, displacement. INGO careers more broadly include development work aimed at long-term poverty reduction, governance strengthening, and capacity building. The sector is enormous: the UN system alone employs over 120,000 staff, and the major INGOs collectively employ hundreds of thousands more.
-            </p>
-            <p>
-                Remote roles in this sector tend to cluster in headquarters functions: grant management, donor relations, monitoring and evaluation, communications, data analysis, information management, and technology. Programme design and technical advisory roles are also increasingly remote, with experts providing guidance to field teams via video calls and shared platforms.
-            </p>
+{% block guide_body %}
+<h2>What are humanitarian and INGO careers?</h2>
+<p>
+    Humanitarian careers encompass any work that responds to, prepares for, or helps communities recover from crises — armed conflict, natural disasters, famine, displacement. INGO careers more broadly include development work aimed at long-term poverty reduction, governance strengthening, and capacity building.
+</p>
+<p>
+    Remote roles in this sector tend to cluster in headquarters functions: grant management, donor relations, monitoring and evaluation, communications, data analysis, information management, and technology. Programme design and technical advisory roles are also increasingly remote, with experts providing guidance to field teams via video calls and shared platforms.
+</p>
 
-            <h2>Key skills employers look for</h2>
-            <ul>
-                <li><strong>Programme &amp; project management</strong> — Logical frameworks, results-based management, donor reporting (USAID, ECHO, DFID formats).</li>
-                <li><strong>Monitoring, evaluation &amp; learning (MEL)</strong> — Survey design, qualitative methods, data visualisation, DHIS2/KoboToolbox.</li>
-                <li><strong>Grant writing &amp; proposal development</strong> — Crafting competitive bids for institutional donors.</li>
-                <li><strong>Languages</strong> — French, Arabic, and Spanish dramatically expand your opportunities.</li>
-                <li><strong>Information management</strong> — Humanitarian data standards (HDX, IATI), GIS mapping, dashboard creation.</li>
-                <li><strong>Protection &amp; safeguarding</strong> — Understanding of humanitarian principles, do-no-harm frameworks, and child protection policies.</li>
-            </ul>
+<h2>Key skills employers look for</h2>
+<ul>
+    <li><strong>Programme &amp; project management</strong> — Logical frameworks, results-based management, donor reporting (ECHO, FCDO and UN agency formats).</li>
+    <li><strong>Monitoring, evaluation &amp; learning (MEL)</strong> — Survey design, qualitative methods, data visualisation, DHIS2/KoboToolbox.</li>
+    <li><strong>Grant writing &amp; proposal development</strong> — Crafting competitive bids for institutional donors.</li>
+    <li><strong>Languages</strong> — French, Arabic and Spanish widen the roles you can apply for.</li>
+    <li><strong>Information management</strong> — Humanitarian data standards (HDX, IATI), GIS mapping, dashboard creation.</li>
+    <li><strong>Protection &amp; safeguarding</strong> — Understanding of humanitarian principles, do-no-harm frameworks, and child protection policies.</li>
+</ul>
 
-            <h2>How to get started</h2>
-            <p>
-                If you lack field experience, start with domestic volunteer work: refugee resettlement agencies, disaster-preparedness organisations, or local Red Cross chapters. Apply for remote internships at smaller INGOs (they are less competitive than the UN). Build MEL or grant-writing skills through free courses on DisasterReady.org or Kaya (Humanitarian Leadership Academy). Consider a short-term consultancy listed on ReliefWeb to get your first INGO credential on your CV.
-            </p>
+<h2>How to get started</h2>
+<p>
+    If you lack field experience, start with domestic volunteer work: refugee resettlement agencies, disaster-preparedness organisations, or local Red Cross chapters. Apply for remote internships at smaller INGOs (they are less competitive than the UN). Build MEL or grant-writing skills through free courses on DisasterReady.org or Kaya (Humanitarian Leadership Academy). Consider a short-term consultancy listed on ReliefWeb to get your first INGO credential on your CV.
+</p>
 
-            <h2>Frequently asked questions</h2>
+<h2>Frequently asked questions</h2>
 
-            <h3>Can I get a remote INGO job without field experience?</h3>
-            <p>
-                Yes. Many INGO roles are headquarters-based and fully remote: grant management, donor reporting, communications, data analysis, HR, and IT. Field experience is valuable but not required for most support functions.
-            </p>
+<h3>Can I get a remote INGO job without field experience?</h3>
+<p>
+    Yes. Many INGO roles are headquarters-based and fully remote: grant management, donor reporting, communications, data analysis, HR, and IT. Field experience is valuable but not required for most support functions.
+</p>
 
-            <h3>What are the largest INGOs that hire remotely?</h3>
-            <p>
-                The largest remote-friendly INGOs include IRC, Save the Children, Mercy Corps, CARE International, World Vision, ICRC, Oxfam, and MSF. UN agencies like UNHCR, UNICEF, WFP, and OCHA also list remote consultancies.
-            </p>
+<h3>What are the largest INGOs that hire remotely?</h3>
+<p>
+    The largest remote-friendly INGOs include IRC, Save the Children, Mercy Corps, CARE International, World Vision, ICRC, Oxfam, and MSF. UN agencies like UNHCR, UNICEF, WFP, and OCHA also list remote consultancies.
+</p>
 
-            <h3>What skills do humanitarian employers value most?</h3>
-            <p>
-                Programme management, M&E, grant writing, logistics, protection knowledge, and language skills (French, Arabic, Spanish). Technical skills like GIS and mobile data collection are increasingly in demand.
-            </p>
+<h3>What skills do humanitarian employers value most?</h3>
+<p>
+    Programme management, M&E, grant writing, logistics, protection knowledge, and language skills (French, Arabic, Spanish). Technical skills like GIS and mobile data collection are increasingly in demand.
+</p>
 
-            <h3>How much do remote humanitarian jobs pay?</h3>
-            <p>
-                Entry-level: $40,000-$55,000. Mid-career: $65,000-$100,000. Senior: $100,000-$150,000+. UN consultancies bill at $300-$700/day. Browse current openings in our <a href="/jobs/?category=humanitarian">humanitarian category</a>.
-            </p>
+<h3>How much do remote humanitarian jobs pay?</h3>
+<p>
+    Entry-level: $40,000-$55,000. Mid-career: $65,000-$100,000. Senior: $100,000-$150,000+. UN consultancies bill at $300-$700/day. Browse current openings in our <a href="/jobs/?category=humanitarian">humanitarian category</a>.
+</p>
+{% endblock %}
 
-            <div class="bg-brand-50 border border-brand-200 rounded-2xl p-6 mt-8 not-prose">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Related reads</h3>
-                <ul class="space-y-2 text-sm">
-                    <li><a href="{% url 'jobs:cluster_detail' pillar_slug='humanitarian-ingo-careers' cluster_slug='remote-ingo-job-no-field-experience' %}" class="text-brand-600 hover:text-brand-700 font-medium">How to Land a Remote INGO Job Without Field Experience &rarr;</a></li>
-                    <li><a href="{% url 'jobs:cluster_detail' pillar_slug='humanitarian-ingo-careers' cluster_slug='un-consultancy-guide' %}" class="text-brand-600 hover:text-brand-700 font-medium">UN Remote Consultancies: How to Find and Win Them &rarr;</a></li>
-                    <li><a href="{% url 'jobs:cluster_detail' pillar_slug='humanitarian-ingo-careers' cluster_slug='mel-skills-humanitarian-career' %}" class="text-brand-600 hover:text-brand-700 font-medium">M&E Skills That Will Fast-Track Your Humanitarian Career &rarr;</a></li>
-                </ul>
-            </div>
-
-            <div class="bg-gray-50 border border-gray-200 rounded-2xl p-6 mt-8 not-prose">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Explore other impact career paths</h3>
-                <div class="grid sm:grid-cols-2 gap-3">
-                    <a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
-                        <span class="text-xl">🌍</span>
-                        <span class="text-brand-600 font-medium text-sm">Climate & Environment Careers</span>
-                    </a>
-                    <a href="{% url 'jobs:pillar_detail' pillar_slug='ai-safety-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
-                        <span class="text-xl">🤖</span>
-                        <span class="text-brand-600 font-medium text-sm">AI Safety & Governance Careers</span>
-                    </a>
-                    <a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
-                        <span class="text-xl">🏥</span>
-                        <span class="text-brand-600 font-medium text-sm">Global Health Careers</span>
-                    </a>
-                    <a href="{% url 'jobs:pillar_detail' pillar_slug='effective-altruism-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
-                        <span class="text-xl">🎯</span>
-                        <span class="text-brand-600 font-medium text-sm">Effective Altruism Careers</span>
-                    </a>
-                </div>
-            </div>
-        </article>
-    </div>
+{% block guide_related %}
+<section class="mt-12" aria-labelledby="related-guides-heading">
+    <h2 id="related-guides-heading" class="section-title">Related guides</h2>
+    <ul class="mt-3 space-y-1.5 text-sm">
+        <li><a href="{% url 'jobs:cluster_detail' pillar_slug='humanitarian-ingo-careers' cluster_slug='remote-ingo-job-no-field-experience' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Getting a remote INGO job without field experience</a></li>
+        <li><a href="{% url 'jobs:cluster_detail' pillar_slug='humanitarian-ingo-careers' cluster_slug='un-consultancy-guide' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">UN remote consultancies: how to find and win them</a></li>
+        <li><a href="{% url 'jobs:cluster_detail' pillar_slug='humanitarian-ingo-careers' cluster_slug='mel-skills-humanitarian-career' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">M&amp;E skills for a humanitarian career</a></li>
+    </ul>
 </section>
 {% endblock %}
