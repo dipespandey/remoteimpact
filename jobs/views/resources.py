@@ -54,6 +54,20 @@ class PublicPricingView(TemplateView):
 class HomeView(TemplateView):
     template_name = "jobs/home.html"
 
+    @staticmethod
+    def _preview_tabs(available_jobs, latest_jobs, total):
+        """Homepage preview: the latest roles, then the three biggest impact areas."""
+        tabs = [{"key": "latest", "label": "Latest", "jobs": latest_jobs[:4],
+                 "url": reverse("jobs:job_list"), "count": total, "noun": "open"}]
+        for slug, label, noun in PREVIEW_AREAS:
+            area_jobs = available_jobs.filter(category__slug=slug)
+            jobs = _one_per_org(area_jobs, 4)
+            if jobs:
+                tabs.append({"key": slug, "label": label, "jobs": jobs,
+                             "url": reverse("jobs:category_landing", kwargs={"slug": slug}),
+                             "count": area_jobs.count(), "noun": noun})
+        return tabs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
@@ -141,13 +155,7 @@ class HomeView(TemplateView):
                 "featured_orgs": featured_orgs,
                 "has_impact_profile": has_impact_profile,
                 "trust": trust_stats(),
-                "guide_links": [
-                    ("climate-environment-careers", "climate-environment", "Climate and environment"),
-                    ("global-health-careers", "global-health", "Global health"),
-                    ("ai-safety-careers", "ai-safety", "AI safety and governance"),
-                    ("humanitarian-ingo-careers", "humanitarian", "Humanitarian and INGOs"),
-                    ("effective-altruism-careers", "effective-altruism", "Effective altruism"),
-                ],
+                "preview_tabs": self._preview_tabs(available_jobs, latest_jobs, active_jobs_rounded),
             }
         )
         return context
@@ -193,6 +201,25 @@ class PartnerResourcesView(TemplateView):
         return context
 
 
+PREVIEW_AREAS = [  # (category slug, tab label, noun for "See all N … roles")
+    ("climate-environment", "Climate", "climate"),
+    ("ai-safety", "AI safety", "AI safety"),
+    ("global-health", "Health", "global health"),
+]
+
+
+def _one_per_org(queryset, limit):
+    picked, seen = [], set()
+    for job in queryset.select_related("organization", "category").order_by("-posted_at")[: limit * 12]:
+        if job.organization_id in seen:
+            continue
+        seen.add(job.organization_id)
+        picked.append(job)
+        if len(picked) == limit:
+            break
+    return picked
+
+
 @method_decorator(cache_page(getattr(settings, 'CACHE_TTL_LONG', 3600)), name='dispatch')
 class HowWeCheckView(TemplateView):
     """Public methodology for keeping listings live, remote and real, with today's numbers."""
@@ -205,6 +232,7 @@ class HowWeCheckView(TemplateView):
         return context
 
 
+@method_decorator(cache_page(getattr(settings, 'CACHE_TTL_LONG', 3600)), name='dispatch')
 class ImpactJobsSnapshotView(TemplateView):
     """Transparent, dated market snapshot that partners can cite."""
     template_name = "jobs/impact_jobs_snapshot.html"

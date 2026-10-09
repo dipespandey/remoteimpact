@@ -143,12 +143,13 @@
   .tone-red    { --tone-50: theme('colors.red.50');     --tone-100: theme('colors.red.100');     --tone-500: theme('colors.red.500');     --tone-700: theme('colors.red.700'); }
   .tone-teal   { --tone-50: theme('colors.teal.50');    --tone-100: theme('colors.teal.100');    --tone-500: theme('colors.teal.500');    --tone-700: theme('colors.teal.800'); }
   .tone-stone  { --tone-50: theme('colors.stone.100');  --tone-100: theme('colors.stone.200');  --tone-500: theme('colors.stone.500');   --tone-700: theme('colors.stone.700'); }
-  .tone-chip { @apply inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium; background: var(--tone-50); color: var(--tone-700); }
+  /* Colour stays in the dot; the label itself is neutral (Linear-style labels). */
+  .tone-chip { @apply inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground; }
   .tone-dot { @apply inline-block h-2 w-2 shrink-0 rounded-full; background: var(--tone-500); }
   .tone-tile { @apply block rounded-2xl p-4 transition-colors; background: var(--tone-50); }
   .tone-tile:hover { background: var(--tone-100); }
   .tone-text { color: var(--tone-700); }
-  .avatar { @apply inline-grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-semibold; background: var(--tone-100); color: var(--tone-700); }
+  .avatar { @apply inline-grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-muted text-[13px] font-semibold text-muted-foreground; }
   .avatar-sm { @apply h-7 w-7 rounded-lg text-xs; }
   .verified { @apply inline-flex items-center gap-1 text-[12px] font-medium text-emerald-700; }
 

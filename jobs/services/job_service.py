@@ -219,7 +219,7 @@ class JobService:
 
         # The public feed is a chronological feed. Personalization belongs on
         # My Matches, and featured status must not make stale roles look new.
-        return JobService._order_jobs(jobs, sort)
+        return JobService._order_jobs(jobs, sort, interleave=True)
 
     @staticmethod
     def _annual_salary_jobs(jobs):
@@ -231,7 +231,7 @@ class JobService:
         ).exclude(_source_pay_period__in=['HOUR','DAY','WEEK','hour','day','week']).exclude(_stored_pay_period__in=['hour','day','week'])
 
     @staticmethod
-    def _order_jobs(queryset, sort):
+    def _order_jobs(queryset, sort, interleave=False):
         if sort == "salary-high":
             return queryset.order_by(
                 Coalesce("salary_max", "salary_min").desc(nulls_last=True),
@@ -242,7 +242,21 @@ class JobService:
                 Coalesce("salary_min", "salary_max").asc(nulls_last=True),
                 "-posted_at", "-id",
             )
-        return queryset.order_by("-posted_at", "-id")
+        if not interleave:
+            return queryset.order_by("-posted_at", "-id")
+        # Browsing: newest first, but within a day interleave organizations (each org's newest role,
+        # then each org's second, ...) so one employer posting 40 roles at once doesn't
+        # bury everyone else. Days stay in order, so "Newest" still means newest.
+        from django.db.models import F, Window
+        from django.db.models.functions import RowNumber, TruncDate
+        return queryset.annotate(
+            _day=TruncDate("posted_at"),
+            _org_turn=Window(
+                expression=RowNumber(),
+                partition_by=[F("organization_id"), TruncDate("posted_at")],
+                order_by=[F("posted_at").desc(), F("id").desc()],
+            ),
+        ).order_by("-_day", "_org_turn", "-posted_at", "-id")
 
     SEARCH_NOISE_WORDS = {
         "remote", "job", "jobs", "role", "roles", "position", "positions", "opportunity",

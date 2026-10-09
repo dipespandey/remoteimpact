@@ -107,3 +107,22 @@ class EarlyCareerSeniorityTests(TestCase):
         self.assertTrue(JobScoutService.SENIOR_TITLE.search("Information Security Lead"))
         self.assertFalse(JobScoutService.SENIOR_TITLE.search("IT Support Associate"))
         self.assertFalse(JobScoutService.SENIOR_TITLE.search("Leadership Programs Coordinator"))
+
+
+class OrganizationInterleavingTests(TestCase):
+    def test_one_employer_does_not_fill_the_top_of_a_day(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        big = Organization.objects.create(name="Big Corp", slug="big-corp")
+        small = Organization.objects.create(name="Small NGO", slug="small-ngo")
+        now = timezone.now()
+        for i in range(5):
+            Job.objects.create(title=f"Big {i}", slug=f"big-{i}", organization=big, description="x",
+                               posted_at=now - timedelta(minutes=i))
+        Job.objects.create(title="Small role", slug="small-role", organization=small, description="x",
+                           posted_at=now - timedelta(minutes=30))
+        Job.objects.create(title="Yesterday", slug="yesterday", organization=small, description="x",
+                           posted_at=now - timedelta(days=1))
+        titles = list(JobService.get_filtered_jobs({}).values_list("title", flat=True))
+        self.assertEqual(titles[:2], ["Big 0", "Small role"])
+        self.assertEqual(titles[-1], "Yesterday")
