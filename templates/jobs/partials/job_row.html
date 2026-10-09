@@ -2,7 +2,9 @@
 <article class="job-row relative">
     <div class="flex items-start gap-3">
         {% if job.organization.logo %}
-        <img src="{{ job.organization.logo.url }}" alt="" loading="lazy" class="mt-0.5 hidden h-9 w-9 shrink-0 rounded-lg bg-muted object-cover sm:block">
+        <img src="{{ job.organization.logo.url }}" alt="" loading="lazy" class="mt-0.5 hidden h-9 w-9 shrink-0 rounded-xl bg-muted object-cover sm:block">
+        {% elif show_org is not False and job.organization %}
+        <span class="avatar mt-0.5 hidden sm:inline-grid {{ job.organization.name|org_tone }}" aria-hidden="true">{{ job.organization.name|initials }}</span>
         {% endif %}
         <div class="min-w-0 flex-1">
             {% if featured_slot or job.is_sponsored %}<span class="badge badge-featured mb-1.5">★ Featured</span>{% endif %}
@@ -20,7 +22,8 @@
                 {% if job.expires_at %}<span class="tabular-nums text-amber-800" title="Application deadline">Closes {{ job.expires_at|date:"M j" }}</span>{% endif %}
                 {% if job.source == 'manual' %}<span class="badge badge-primary" title="Apply through Remote Impact">Apply directly</span>{% endif %}
                 {% if job.is_entry_level_friendly %}<span class="badge badge-success" title="Open to people early in their career or switching fields">Entry-level</span>{% endif %}
-                {% if job.category %}<span class="badge badge-outline">{{ job.category.name }}</span>{% endif %}
+                {% if job.category %}<span class="tone-chip {{ job.category|area_tone }}"><span class="tone-dot" aria-hidden="true"></span>{{ job.category.name }}</span>{% endif %}
+                {% with check=job.raw_data.source_verification %}{% if check.method == 'ats_api' and check.status == 'open' %}<span class="verified" title="Confirmed open on the employer's own job board"><svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7"/></svg>Confirmed open</span>{% endif %}{% endwith %}
             </p>
         </div>
     </div>

@@ -141,6 +141,13 @@ class HomeView(TemplateView):
                 "featured_orgs": featured_orgs,
                 "has_impact_profile": has_impact_profile,
                 "trust": trust_stats(),
+                "guide_links": [
+                    ("climate-environment-careers", "climate-environment", "Climate and environment"),
+                    ("global-health-careers", "global-health", "Global health"),
+                    ("ai-safety-careers", "ai-safety", "AI safety and governance"),
+                    ("humanitarian-ingo-careers", "humanitarian", "Humanitarian and INGOs"),
+                    ("effective-altruism-careers", "effective-altruism", "Effective altruism"),
+                ],
             }
         )
         return context

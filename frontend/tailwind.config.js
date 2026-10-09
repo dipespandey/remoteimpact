@@ -15,6 +15,9 @@ module.exports = {
     "../blog/**/*.py",
     "../jobboard/**/*.py",
   ],
+  // Tone classes are chosen in Python (job_extras.area_tone / org_tone), so the scanner
+  // can't see them as literal strings.
+  safelist: [{ pattern: /^tone-(green|amber|indigo|rose|orange|sky|violet|red|teal|stone)$/ }],
   theme: {
     container: { center: true, padding: { DEFAULT: "1rem", sm: "1.5rem", lg: "2rem" }, screens: { "2xl": "1200px" } },
     extend: {

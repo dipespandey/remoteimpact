@@ -206,3 +206,43 @@ def skill_label(slug):
         return ""
     first = words[0] if words[0].isupper() else words[0].capitalize()
     return " ".join([first] + words[1:])
+
+
+AREA_TONES = {
+    "green": {"climate-environment", "coastal-ocean-sinks", "food-agriculture-land-use", "buildings",
+              "transportation", "materials-manufacturing"},
+    "amber": {"energy", "capital"},
+    "indigo": {"ai-safety", "nuclear-security", "biosecurity", "technology"},
+    "rose": {"global-health", "mental-health", "disability"},
+    "orange": {"animal-welfare"},
+    "sky": {"education", "children-youth", "communications"},
+    "violet": {"policy-advocacy", "advocacy-or-policy", "human-rights", "civic-engagement",
+               "gender-equality-social-inclusion"},
+    "red": {"humanitarian"},
+    "teal": {"community-development", "poverty-development", "nonprofit-charity", "effective-altruism"},
+}
+_SLUG_TONE = {slug: tone for tone, slugs in AREA_TONES.items() for slug in slugs}
+_ORG_TONES = ["green", "indigo", "rose", "sky", "violet", "amber", "teal", "orange"]
+
+
+@register.filter(name="area_tone")
+def area_tone(category):
+    """CSS tone class for an impact area (Category or slug)."""
+    slug = getattr(category, "slug", category) or ""
+    return f"tone-{_SLUG_TONE.get(str(slug), 'stone')}"
+
+
+@register.filter(name="org_tone")
+def org_tone(name):
+    """Stable tone for an organization avatar, so the same org always gets the same colour."""
+    import zlib
+    return f"tone-{_ORG_TONES[zlib.crc32(str(name or '').encode()) % len(_ORG_TONES)]}"
+
+
+@register.filter(name="initials")
+def initials(name):
+    words = [w for w in re.split(r"[\s\-_/&,.()]+", str(name or "")) if w and w[0].isalnum()]
+    if not words:
+        return "?"
+    letters = (words[0][0] + (words[1][0] if len(words) > 1 else "")).upper()
+    return letters

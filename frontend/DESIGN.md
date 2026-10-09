@@ -140,3 +140,21 @@ repo: `templates/jobs/home.html` and the nav in `templates/base.html`.
   rounded-2xl for cards/surfaces. No sharp corners, no `rounded-md` boxes.
 - **Density**: comfortable, not cavernous: sections `py-8 sm:py-10` (`.section`), cards
   `p-5 sm:p-6`, gaps of 4-6 between blocks.
+
+## v3.1: colour with meaning
+
+The neutral base stays. Colour is added only where it tells people something:
+
+- **Impact-area tones.** Each area family has one soft tone (`tone-green` climate,
+  `tone-rose` health, `tone-indigo` AI safety/tech, `tone-amber` energy, `tone-orange`
+  animal welfare, `tone-sky` education, `tone-violet` policy/rights, `tone-red`
+  humanitarian, `tone-teal` development/EA, `tone-stone` other). Pick it with the
+  `area_tone` filter; never hard-code a colour for an area.
+- **Organization avatars.** `avatar` + `org_tone` + `initials` when there is no logo.
+  The same organization always gets the same colour.
+- Components: `tone-chip` (area tag), `tone-dot`, `tone-tile` (tinted link tile),
+  `tone-text`, `avatar`/`avatar-sm`, `verified` (green check for roles confirmed on the
+  employer's own board).
+- Still no gradients, glows, emoji icons or decorative icon tiles. Text on tones uses the
+  700/800 shade for contrast. Tone classes are safelisted in `tailwind.config.js` because
+  they are chosen in Python.

@@ -58,15 +58,21 @@
                 <a href="{% url 'jobs:job_list' %}" class="text-[13px] text-muted-foreground hover:text-foreground">All new roles</a>
             </div>
             <ul class="list-surface mt-2">
-                {% for job in recent_jobs|slice:":6" %}
+                {% for job in recent_jobs|slice:":5" %}
                 <li>
-                    <a href="{{ job.get_absolute_url }}" class="block rounded-xl px-3.5 py-2.5 transition-colors hover:bg-muted">
-                        <p class="line-clamp-1 text-sm font-medium text-foreground">{{ job.title|display_title }}</p>
-                        <p class="mt-0.5 flex flex-wrap gap-x-1.5 text-[13px] text-muted-foreground">
-                            <span class="truncate">{{ job.organization.name|display_title }}</span>
-                            <span aria-hidden="true">·</span><span>{{ job.location|default:"Remote" }}</span>
-                            {% if job.posted_at %}<span aria-hidden="true">·</span><span>{{ job.posted_at|naturalday:"M j" }}</span>{% endif %}
-                        </p>
+                    <a href="{{ job.get_absolute_url }}" class="flex items-start gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-muted">
+                        <span class="avatar {{ job.organization.name|org_tone }}" aria-hidden="true">{{ job.organization.name|initials }}</span>
+                        <span class="min-w-0 flex-1">
+                            <span class="flex items-baseline justify-between gap-3">
+                                <span class="line-clamp-1 text-sm font-medium text-foreground">{{ job.title|display_title }}</span>
+                                {% if job.posted_at %}<span class="shrink-0 text-[12px] text-muted-foreground">{{ job.posted_at|naturalday:"M j" }}</span>{% endif %}
+                            </span>
+                            <span class="mt-0.5 block truncate text-[13px] text-muted-foreground">{{ job.organization.name|display_title }} · {{ job.location|default:"Remote" }}</span>
+                            <span class="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                                {% if job.category %}<span class="tone-chip {{ job.category|area_tone }}"><span class="tone-dot" aria-hidden="true"></span>{{ job.category.name }}</span>{% endif %}
+                                {% with check=job.raw_data.source_verification %}{% if check.method == 'ats_api' and check.status == 'open' %}<span class="verified"><svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7"/></svg>Confirmed open</span>{% endif %}{% endwith %}
+                            </span>
+                        </span>
                     </a>
                 </li>
                 {% endfor %}
@@ -99,41 +105,51 @@
 
 <!-- Browse -->
 <section id="categories" aria-labelledby="categories-heading" class="section">
-    <div class="container grid gap-10 lg:grid-cols-12">
-        <div class="lg:col-span-8">
-            <div class="flex items-baseline justify-between px-1">
-                <h2 id="categories-heading" class="section-title">Browse by area</h2>
-                <a href="{% url 'jobs:all_domains' %}" class="text-[13px] text-muted-foreground hover:text-foreground">All areas</a>
-            </div>
-            <ul class="list-surface mt-3 grid sm:grid-cols-2">
-                {% for category in categories|slice:":16" %}
-                <li>
-                    <a href="{% url 'jobs:category_landing' slug=category.slug %}" class="flex items-baseline justify-between gap-4 rounded-xl px-3.5 py-2.5 text-sm transition-colors hover:bg-muted">
-                        <span class="font-medium text-foreground">{{ category.name }}</span>
-                        <span class="tabular-nums text-[13px] text-muted-foreground">{{ category.job_count|intcomma }}</span>
-                    </a>
-                </li>
-                {% endfor %}
-            </ul>
+    <div class="container">
+        <div class="flex items-baseline justify-between px-1">
+            <h2 id="categories-heading" class="section-title">Browse by area</h2>
+            <a href="{% url 'jobs:all_domains' %}" class="text-[13px] text-muted-foreground hover:text-foreground">All areas</a>
         </div>
-        <div class="lg:col-span-4">
-            <div class="flex items-baseline justify-between px-1">
-                <h2 id="orgs-heading" class="section-title">Hiring now</h2>
-                <a href="{% url 'jobs:organization_directory' %}" class="text-[13px] text-muted-foreground hover:text-foreground">All</a>
-            </div>
-            <ul class="list-surface mt-3">
-                {% for org in featured_orgs %}
-                <li>
-                    <a href="{% url 'jobs:organization_profile' slug=org.slug %}" class="flex items-baseline justify-between gap-4 rounded-xl px-3.5 py-2.5 text-sm transition-colors hover:bg-muted">
-                        <span class="truncate font-medium text-foreground">{{ org.name|display_title }}</span>
-                        <span class="shrink-0 tabular-nums text-[13px] text-muted-foreground">{{ org.open_roles }}</span>
-                    </a>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
+        <ul class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {% for category in categories|slice:":12" %}
+            <li>
+                <a href="{% url 'jobs:category_landing' slug=category.slug %}" class="tone-tile {{ category|area_tone }} h-full">
+                    <span class="flex items-center gap-2">
+                        <span class="tone-dot" aria-hidden="true"></span>
+                        <span class="line-clamp-1 text-sm font-medium text-foreground">{{ category.name }}</span>
+                    </span>
+                    <span class="mt-4 block text-2xl font-semibold tabular-nums tracking-tight tone-text">{{ category.job_count|intcomma }}</span>
+                    <span class="block text-[12px] text-muted-foreground">open role{{ category.job_count|pluralize }}</span>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
     </div>
 </section>
+
+{% if featured_orgs %}
+<section aria-labelledby="orgs-heading" class="pb-10">
+    <div class="container">
+        <div class="flex items-baseline justify-between px-1">
+            <h2 id="orgs-heading" class="section-title">Hiring now</h2>
+            <a href="{% url 'jobs:organization_directory' %}" class="text-[13px] text-muted-foreground hover:text-foreground">All organizations</a>
+        </div>
+        <ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {% for org in featured_orgs %}
+            <li>
+                <a href="{% url 'jobs:organization_profile' slug=org.slug %}" class="card card-interactive flex h-full items-center gap-3 p-3.5">
+                    {% if org.logo %}<img src="{{ org.logo.url }}" alt="" loading="lazy" class="h-9 w-9 shrink-0 rounded-xl bg-muted object-cover">{% else %}<span class="avatar {{ org.name|org_tone }}" aria-hidden="true">{{ org.name|initials }}</span>{% endif %}
+                    <span class="min-w-0">
+                        <span class="block truncate text-sm font-medium text-foreground">{{ org.name|display_title }}</span>
+                        <span class="block text-[12px] text-muted-foreground"><span class="tabular-nums">{{ org.open_roles }}</span> open role{{ org.open_roles|pluralize }}</span>
+                    </span>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endif %}
 
 <!-- Popular searches -->
 <section aria-labelledby="roles-heading" class="pb-10">
@@ -172,12 +188,10 @@
         <div class="surface p-5 sm:p-6">
             <h2 id="guides-heading" class="section-title">Career guides</h2>
             <p class="mt-1 text-sm text-muted-foreground">How people move into these fields, what the roles are and what they pay.</p>
-            <ul class="mt-4 space-y-1 text-sm">
-                <li><a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}" class="block rounded-xl px-3 py-2.5 font-medium text-foreground transition-colors hover:bg-card">Climate and environment</a></li>
-                <li><a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}" class="block rounded-xl px-3 py-2.5 font-medium text-foreground transition-colors hover:bg-card">Global health</a></li>
-                <li><a href="{% url 'jobs:pillar_detail' pillar_slug='ai-safety-careers' %}" class="block rounded-xl px-3 py-2.5 font-medium text-foreground transition-colors hover:bg-card">AI safety and governance</a></li>
-                <li><a href="{% url 'jobs:pillar_detail' pillar_slug='humanitarian-ingo-careers' %}" class="block rounded-xl px-3 py-2.5 font-medium text-foreground transition-colors hover:bg-card">Humanitarian and INGOs</a></li>
-                <li><a href="{% url 'jobs:pillar_detail' pillar_slug='effective-altruism-careers' %}" class="block rounded-xl px-3 py-2.5 font-medium text-foreground transition-colors hover:bg-card">Effective altruism</a></li>
+            <ul class="mt-4 grid gap-2 sm:grid-cols-2">
+                {% for slug, area, label in guide_links %}
+                <li><a href="{% url 'jobs:pillar_detail' pillar_slug=slug %}" class="tone-tile {{ area|area_tone }} flex items-center gap-2.5 px-3.5 py-3 text-sm font-medium text-foreground"><span class="tone-dot" aria-hidden="true"></span>{{ label }}</a></li>
+                {% endfor %}
             </ul>
             <a href="{% url 'jobs:resources' %}" class="mt-3 inline-block px-3 text-[13px] text-muted-foreground hover:text-foreground">All guides</a>
         </div>

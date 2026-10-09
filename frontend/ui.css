@@ -131,6 +131,27 @@
   .job-meta { @apply mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[13px] text-muted-foreground; }
   .list-surface { @apply rounded-2xl bg-card p-1.5 shadow-soft; }
 
+  /* Tones: one soft colour per impact-area family (and for org avatars). Colour always
+     means something: which area a role belongs to, or which organization it is. */
+  .tone-green  { --tone-50: theme('colors.emerald.50'); --tone-100: theme('colors.emerald.100'); --tone-500: theme('colors.emerald.500'); --tone-700: theme('colors.emerald.700'); }
+  .tone-amber  { --tone-50: theme('colors.amber.50');   --tone-100: theme('colors.amber.100');   --tone-500: theme('colors.amber.500');   --tone-700: theme('colors.amber.800'); }
+  .tone-indigo { --tone-50: theme('colors.indigo.50');  --tone-100: theme('colors.indigo.100');  --tone-500: theme('colors.indigo.500');  --tone-700: theme('colors.indigo.700'); }
+  .tone-rose   { --tone-50: theme('colors.rose.50');    --tone-100: theme('colors.rose.100');    --tone-500: theme('colors.rose.500');    --tone-700: theme('colors.rose.700'); }
+  .tone-orange { --tone-50: theme('colors.orange.50');  --tone-100: theme('colors.orange.100');  --tone-500: theme('colors.orange.500');  --tone-700: theme('colors.orange.800'); }
+  .tone-sky    { --tone-50: theme('colors.sky.50');     --tone-100: theme('colors.sky.100');     --tone-500: theme('colors.sky.500');     --tone-700: theme('colors.sky.800'); }
+  .tone-violet { --tone-50: theme('colors.violet.50');  --tone-100: theme('colors.violet.100');  --tone-500: theme('colors.violet.500');  --tone-700: theme('colors.violet.700'); }
+  .tone-red    { --tone-50: theme('colors.red.50');     --tone-100: theme('colors.red.100');     --tone-500: theme('colors.red.500');     --tone-700: theme('colors.red.700'); }
+  .tone-teal   { --tone-50: theme('colors.teal.50');    --tone-100: theme('colors.teal.100');    --tone-500: theme('colors.teal.500');    --tone-700: theme('colors.teal.800'); }
+  .tone-stone  { --tone-50: theme('colors.stone.100');  --tone-100: theme('colors.stone.200');  --tone-500: theme('colors.stone.500');   --tone-700: theme('colors.stone.700'); }
+  .tone-chip { @apply inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium; background: var(--tone-50); color: var(--tone-700); }
+  .tone-dot { @apply inline-block h-2 w-2 shrink-0 rounded-full; background: var(--tone-500); }
+  .tone-tile { @apply block rounded-2xl p-4 transition-colors; background: var(--tone-50); }
+  .tone-tile:hover { background: var(--tone-100); }
+  .tone-text { color: var(--tone-700); }
+  .avatar { @apply inline-grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-semibold; background: var(--tone-100); color: var(--tone-700); }
+  .avatar-sm { @apply h-7 w-7 rounded-lg text-xs; }
+  .verified { @apply inline-flex items-center gap-1 text-[12px] font-medium text-emerald-700; }
+
   .separator { @apply h-px w-full bg-border; }
   .check-list > li { @apply relative pl-6; }
   .check-list > li::before { content: ""; @apply absolute left-1 top-[0.6em] h-1.5 w-1.5 rounded-full bg-foreground/40; }
