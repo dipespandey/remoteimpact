@@ -1,80 +1,78 @@
 {% extends "base.html" %}
+{% load job_extras %}
 
 {% block title %}Staff Queue{% endblock %}
 
 {% block content %}
-<section class="bg-gray-50 pt-16 pb-20">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Staff queue</h1>
+<section class="page space-y-6">
+    <h1 class="page-title">Staff queue</h1>
 
-        <div class="grid md:grid-cols-2 gap-8">
-            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-                <h2 class="text-lg font-semibold text-gray-900 mb-6">Organizations pending verification</h2>
-                <div class="space-y-4">
-                    {% for org in orgs_pending %}
-                    <div class="flex items-center justify-between py-4 px-4 border-b border-gray-100 last:border-0">
-                        <div>
-                            <p class="font-semibold text-gray-900">{{ org.name }}</p>
-                            <p class="text-sm text-gray-500">{{ org.website }}</p>
-                        </div>
-                        <div class="flex gap-2">
-                            <form method="post">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="verify_org">
-                                <input type="hidden" name="org_id" value="{{ org.id }}">
-                                <button class="px-4 py-2 rounded-full bg-brand-500 text-white text-sm font-semibold hover:bg-brand-600 transition">
-                                    Verify
-                                </button>
-                            </form>
-                            <form method="post">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="reject_org">
-                                <input type="hidden" name="org_id" value="{{ org.id }}">
-                                <button class="px-4 py-2 rounded-full border border-red-200 text-red-700 text-sm font-semibold hover:border-red-300 hover:bg-red-50 transition">
-                                    Reject
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <p class="text-gray-500 text-center py-8">No orgs pending.</p>
-                    {% endfor %}
-                </div>
+    <div class="grid gap-6 md:grid-cols-2">
+        <section>
+            <div class="px-1">
+                <h2 class="section-title">Organizations pending verification</h2>
             </div>
-            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-                <h2 class="text-lg font-semibold text-gray-900 mb-6">Gigs pending review</h2>
-                <div class="space-y-4">
-                    {% for gig in gigs_pending %}
-                    <div class="flex items-center justify-between py-4 px-4 border-b border-gray-100 last:border-0">
-                        <div>
-                            <p class="font-semibold text-gray-900">{{ gig.title }}</p>
-                            <p class="text-sm text-gray-500">{{ gig.organization.name }}</p>
-                        </div>
-                        <div class="flex gap-2">
-                            <form method="post">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="approve_gig">
-                                <input type="hidden" name="gig_id" value="{{ gig.id }}">
-                                <button class="px-4 py-2 rounded-full bg-brand-500 text-white text-sm font-semibold hover:bg-brand-600 transition">
-                                    Approve
-                                </button>
-                            </form>
-                            <form method="post">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="close_gig">
-                                <input type="hidden" name="gig_id" value="{{ gig.id }}">
-                                <button class="px-4 py-2 rounded-full border border-red-200 text-red-700 text-sm font-semibold hover:border-red-300 hover:bg-red-50 transition">
-                                    Close
-                                </button>
-                            </form>
-                        </div>
+            <div class="list-surface mt-3">
+                {% for org in orgs_pending %}
+                <div class="flex flex-col gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-muted/60 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                    <div class="min-w-0">
+                        <p class="text-sm font-medium text-foreground">{{ org.name }}</p>
+                        {% if org.website %}
+                        <a href="{{ org.website }}" target="_blank" rel="noopener nofollow" class="block truncate text-sm text-muted-foreground hover:text-foreground">{{ org.website }}</a>
+                        {% endif %}
                     </div>
-                    {% empty %}
-                    <p class="text-gray-500 text-center py-8">No gigs pending.</p>
-                    {% endfor %}
+                    <div class="flex shrink-0 gap-2">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="verify_org">
+                            <input type="hidden" name="org_id" value="{{ org.id }}">
+                            <button type="submit" class="btn btn-outline btn-sm">Verify</button>
+                        </form>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="reject_org">
+                            <input type="hidden" name="org_id" value="{{ org.id }}">
+                            <button type="submit" class="btn btn-ghost btn-sm text-destructive hover:bg-red-50">Reject</button>
+                        </form>
+                    </div>
                 </div>
+                {% empty %}
+                <p class="px-4 py-6 text-center text-sm text-muted-foreground">No organizations waiting for verification.</p>
+                {% endfor %}
             </div>
-        </div>
+        </section>
+
+        <section>
+            <div class="px-1">
+                <h2 class="section-title">Gigs pending review</h2>
+            </div>
+            <div class="list-surface mt-3">
+                {% for gig in gigs_pending %}
+                <div class="flex flex-col gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-muted/60 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                    <div class="min-w-0">
+                        <a href="{{ gig.get_absolute_url }}" class="text-sm font-medium text-foreground underline-offset-4 hover:underline">{{ gig.title|display_title }}</a>
+                        <p class="text-sm text-muted-foreground">{{ gig.organization.name }}</p>
+                    </div>
+                    <div class="flex shrink-0 gap-2">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="approve_gig">
+                            <input type="hidden" name="gig_id" value="{{ gig.id }}">
+                            <button type="submit" class="btn btn-outline btn-sm">Approve</button>
+                        </form>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="close_gig">
+                            <input type="hidden" name="gig_id" value="{{ gig.id }}">
+                            <button type="submit" class="btn btn-ghost btn-sm text-destructive hover:bg-red-50">Close</button>
+                        </form>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="px-4 py-6 text-center text-sm text-muted-foreground">No gigs waiting for review.</p>
+                {% endfor %}
+            </div>
+        </section>
     </div>
 </section>
 {% endblock %}

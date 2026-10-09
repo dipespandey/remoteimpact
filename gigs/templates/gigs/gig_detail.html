@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load job_extras %}
 
 {% block title %}{{ gig.title }} at {{ gig.organization.name }} - Remote Impact Gigs{% endblock %}
 
@@ -55,127 +56,141 @@
 {% endblock %}
 
 {% block content %}
-<section class="bg-gray-50 pt-16 pb-12">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <nav class="text-sm text-gray-500 flex items-center space-x-3">
-            <a href="{% url 'gigs:gig_list' %}" class="hover:text-brand-600 transition">Gigs</a>
-            <span>•</span>
-            <span class="text-gray-900 line-clamp-1">{{ gig.title }}</span>
-        </nav>
-    </div>
-</section>
+<section class="page">
+    <nav aria-label="Breadcrumb" class="flex items-center gap-2 text-[13px] text-muted-foreground">
+        <a href="{% url 'gigs:gig_list' %}" class="hover:text-foreground">Gigs</a>
+        <span aria-hidden="true">/</span>
+        <span class="line-clamp-1 text-foreground">{{ gig.title|display_title }}</span>
+    </nav>
 
-<section class="bg-gray-50 pb-20">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[2fr,1fr] gap-10">
-        <article class="space-y-6">
-            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-                <p class="text-gray-600 mb-2">{{ gig.organization.name }}</p>
-                <h1 class="text-4xl md:text-5xl font-bold leading-tight text-gray-900 mb-4">{{ gig.title }}</h1>
-                <div class="flex flex-wrap items-center gap-2 mb-6">
-                    <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-medium border border-gray-200">{{ gig.category }}</span>
-                    <span class="px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-medium border border-brand-100">
-                        {{ gig.get_remote_policy_display }}
-                    </span>
+    <div class="mt-6 grid gap-8 lg:grid-cols-[2fr_1fr] lg:gap-10">
+        <article class="min-w-0 space-y-8">
+            <header>
+                <p class="text-sm font-medium text-muted-foreground">{{ gig.organization.name }}</p>
+                <h1 class="page-title mt-1">{{ gig.title|display_title }}</h1>
+                <div class="mt-3 flex flex-wrap items-center gap-1.5">
+                    <span class="badge badge-outline">{{ gig.category }}</span>
+                    <span class="badge badge-primary">{{ gig.get_remote_policy_display }}</span>
                     {% if gig.requires_field_verification %}
-                    <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-medium border border-gray-200">Field verification</span>
+                    <span class="badge badge-outline">Field verification</span>
                     {% endif %}
                     {% if gig.nda_required %}
-                    <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-medium border border-gray-200">NDA required</span>
+                    <span class="badge badge-outline">NDA required</span>
                     {% endif %}
                 </div>
-                <p class="text-xl text-gray-600 leading-relaxed">{{ gig.brief_redacted }}</p>
-            </div>
+                <p class="mt-4 max-w-[70ch] text-base leading-7 text-muted-foreground">{{ gig.brief_redacted }}</p>
+            </header>
 
-            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-                <h2 class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">Deliverables</h2>
-                <ul class="space-y-2 text-gray-600">
-                    {% for item in gig.deliverables %}
-                    <li class="flex items-start">
-                        <span class="text-brand-600 mr-2">•</span>
-                        <span>{{ item }}</span>
-                    </li>
-                    {% empty %}
-                    <li class="text-gray-400">Not provided.</li>
-                    {% endfor %}
-                </ul>
-            </div>
-
-            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-                <h2 class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">Definition of done</h2>
-                <p class="text-gray-600 leading-relaxed">{{ gig.definition_of_done }}</p>
-            </div>
-
-            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-                <h2 class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">Rubric</h2>
-                <ul class="space-y-3 text-gray-600">
-                    {% for criterion in rubric %}
-                    <li>
-                        <strong class="text-gray-900">{{ criterion.label }}</strong> — {{ criterion.description }}
-                    </li>
-                    {% empty %}
-                    <li class="text-gray-400">No rubric yet.</li>
-                    {% endfor %}
-                </ul>
-            </div>
-
-            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-                <h2 class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">Full brief (unlocks after funding)</h2>
-                {% if can_view_full_brief %}
-                <div class="text-gray-600 leading-relaxed prose prose-gray max-w-none">
-                    {{ gig.brief_full|linebreaks }}
+            <section>
+                <h2 class="section-title">Deliverables</h2>
+                <div class="mt-3">
+                    <ul class="list-disc space-y-2 pl-5 leading-7 text-muted-foreground marker:text-muted-foreground">
+                        {% for item in gig.deliverables %}
+                        <li>{{ item }}</li>
+                        {% empty %}
+                        <li class="list-none -ml-5">Not provided.</li>
+                        {% endfor %}
+                    </ul>
                 </div>
-                {% else %}
-                <p class="text-gray-400">Full brief is shared once the trial is funded.</p>
-                {% endif %}
-            </div>
+            </section>
+
+            <section>
+                <h2 class="section-title">Definition of done</h2>
+                <div class="mt-3">
+                    <p class="max-w-[70ch] leading-7 text-muted-foreground">{{ gig.definition_of_done }}</p>
+                </div>
+            </section>
+
+            <section>
+                <h2 class="section-title">Rubric</h2>
+                    <p class="mt-0.5 text-sm text-muted-foreground">How the employer will score your trial.</p>
+                <div class="mt-3">
+                    <ul class="space-y-3 leading-7 text-muted-foreground">
+                        {% for criterion in rubric %}
+                        <li>
+                            <span class="font-medium text-foreground">{{ criterion.label }}</span>{% if criterion.description %}: {{ criterion.description }}{% endif %}
+                        </li>
+                        {% empty %}
+                        <li>No rubric yet.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2 class="section-title">Full brief</h2>
+                    {% if not can_view_full_brief %}
+                    <p class="mt-0.5 text-sm text-muted-foreground">Shared once your paid trial is funded.</p>
+                    {% endif %}
+                <div class="mt-3">
+                    {% if can_view_full_brief %}
+                    <div class="prose prose-neutral max-w-none leading-7 text-foreground/85">
+                        {{ gig.brief_full|linebreaks }}
+                    </div>
+                    {% else %}
+                    <p class="text-sm text-muted-foreground">Apply first. When the employer funds your trial, the full brief appears here.</p>
+                    {% endif %}
+                </div>
+            </section>
         </article>
 
         <aside class="space-y-6">
-            <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm sticky top-28 space-y-6">
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-600 text-sm">Budget</span>
-                        <strong class="text-gray-900">$ {% widthratio gig.budget_fixed_cents 100 1 %} {{ gig.currency }}</strong>
+            <div class="card lg:sticky lg:top-28">
+                <div class="card-content pt-5 sm:pt-6">
+                    <dl class="space-y-3 text-sm">
+                        <div class="flex items-center justify-between gap-4">
+                            <dt class="text-muted-foreground">Budget</dt>
+                            <dd class="font-medium tabular-nums text-foreground">{% widthratio gig.budget_fixed_cents 100 1 %} {{ gig.currency }}</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-4">
+                            <dt class="text-muted-foreground">Trial fee</dt>
+                            <dd class="font-medium tabular-nums text-foreground">{% widthratio gig.trial_fee_cents 100 1 %} {{ gig.currency }}</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-4">
+                            <dt class="text-muted-foreground">Trial hours cap</dt>
+                            <dd class="font-medium tabular-nums text-foreground">{{ gig.trial_hours_cap }} hours</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-4">
+                            <dt class="text-muted-foreground">Trial due</dt>
+                            <dd class="font-medium tabular-nums text-foreground">{{ gig.trial_due_days }} days</dd>
+                        </div>
+                    </dl>
+                    <div class="mt-5">
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'gigs:gig_apply' gig.slug %}" class="btn btn-primary btn-block">Apply with paid trial</a>
+                        {% else %}
+                        <a href="{% url 'account_login' %}" class="btn btn-primary btn-block">Sign in to apply</a>
+                        {% endif %}
+                        <p class="help mt-3">Every new engagement starts with a paid trial. The employer funds it before you begin.</p>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-600 text-sm">Trial fee</span>
-                        <strong class="text-gray-900">$ {% widthratio gig.trial_fee_cents 100 1 %} {{ gig.currency }}</strong>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-600 text-sm">Trial hours cap</span>
-                        <strong class="text-gray-900">{{ gig.trial_hours_cap }} hours</strong>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-600 text-sm">Trial due</span>
-                        <strong class="text-gray-900">{{ gig.trial_due_days }} days</strong>
-                    </div>
-                </div>
-                <div class="pt-4 border-t border-gray-100">
-                    {% if user.is_authenticated %}
-                    <a href="{% url 'gigs:gig_apply' gig.slug %}" class="block w-full text-center px-6 py-4 rounded-full bg-brand-500 text-white font-semibold hover:bg-brand-600 transition shadow-lg shadow-brand-500/30">
-                        Apply with paid trial
-                    </a>
-                    {% else %}
-                    <a href="{% url 'account_login' %}" class="block w-full text-center px-6 py-4 rounded-full border border-gray-200 text-gray-700 font-semibold hover:border-brand-300 hover:text-brand-600 transition">
-                        Sign in to apply
-                    </a>
-                    {% endif %}
-                    <p class="text-xs text-gray-500 mt-3 mb-0">Paid trial required for new work. Deliverables and rubric must be agreed before publishing.</p>
                 </div>
             </div>
 
-            <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
-                <h3 class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold mb-4">Eligibility</h3>
-                <div class="space-y-3 text-sm">
-                    <p><strong class="text-gray-900">Remote policy:</strong> <span class="text-gray-600">{{ gig.get_remote_policy_display }}</span></p>
-                    {% if gig.remote_policy == "country" %}
-                    <p><strong class="text-gray-900">Eligible countries:</strong> <span class="text-gray-600">{{ gig.eligible_countries|join:", " }}</span></p>
-                    {% endif %}
-                    {% if gig.timezone_overlap %}
-                    <p><strong class="text-gray-900">Timezone overlap:</strong> <span class="text-gray-600">{{ gig.timezone_overlap }}</span></p>
-                    {% endif %}
+            <div class="surface">
+                <div class="card-header">
+                    <h2 class="card-title">Eligibility</h2>
+                </div>
+                <div class="card-content">
+                    <dl class="space-y-3 text-sm">
+                        <div>
+                            <dt class="font-medium text-foreground">Remote policy</dt>
+                            <dd class="text-muted-foreground">{{ gig.get_remote_policy_display }}</dd>
+                        </div>
+                        {% if gig.remote_policy == "country" %}
+                        <div>
+                            <dt class="font-medium text-foreground">Eligible countries</dt>
+                            <dd class="text-muted-foreground">{{ gig.eligible_countries|join:", " }}</dd>
+                        </div>
+                        {% endif %}
+                        {% if gig.timezone_overlap %}
+                        <div>
+                            <dt class="font-medium text-foreground">Timezone overlap</dt>
+                            <dd class="text-muted-foreground">{{ gig.timezone_overlap }}</dd>
+                        </div>
+                        {% endif %}
+                    </dl>
                     {% if gig.requires_field_verification %}
-                    <p class="text-gray-600 text-xs pt-2 border-t border-gray-100">Field gigs require phone + ID verification and evidence uploads.</p>
+                    <p class="help mt-4">Field gigs require phone and ID verification, plus evidence uploads.</p>
                     {% endif %}
                 </div>
             </div>

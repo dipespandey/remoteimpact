@@ -20,6 +20,8 @@ from django.db.models.functions import Length
 from django.utils import timezone
 
 from jobs.models import Job
+from jobs.services.job_enrichment import enrich_job_payload, infer_country
+from jobs.services.job_quality import refresh_job_quality
 from jobs.services.location_normalizer import normalize_location
 
 logger = logging.getLogger(__name__)
@@ -253,6 +255,7 @@ def update_job_from_crawl(
     if location:
         # Normalize location to standard country/region value
         job.location = normalize_location(location)
+        job.country = infer_country(location)
 
     if job_type:
         job.job_type = job_type
@@ -295,6 +298,51 @@ def update_job_from_crawl(
     return job
 
 
+def _jobs_needing_crawl_queryset():
+    """Select new placeholders and active incomplete jobs, not closed failures."""
+    return (
+        Job.objects.select_related("organization", "category")
+        .annotate(description_length=Length("description"))
+        .filter(source__in=["greenhouse", "lever", "ashby", "probablygood"])
+        .filter(
+            Q(raw_data__needs_crawling=True)
+            | Q(is_active=True, description_length__lt=100)
+        )
+    )
+
+
+def _enrich_crawled_job(job: Job) -> Job:
+    enriched = enrich_job_payload({
+        "title": job.title,
+        "description": job.description,
+        "requirements": job.requirements,
+        "location": job.location,
+        "job_type": job.job_type,
+        "country": job.country,
+        "skills": job.skills,
+        "experience_level": job.experience_level,
+        "education_level": job.education_level,
+        "category_slug": (
+            job.category.slug
+            if job.category_id and job.category.slug != "other"
+            else ""
+        ),
+    })
+    for field in ("country", "skills", "experience_level", "education_level"):
+        if not getattr(job, field) and enriched.get(field):
+            setattr(job, field, enriched[field])
+    if (
+        (not job.category_id or job.category.slug == "other")
+        and enriched.get("category_slug")
+        and enriched["category_slug"] != "other"
+    ):
+        from jobs.models import Category
+
+        job.category = Category.objects.filter(slug=enriched["category_slug"]).first()
+    refresh_job_quality(job)
+    return job
+
+
 def crawl_jobs_needing_update(
     source: Optional[str] = None,
     limit: Optional[int] = None,
@@ -318,11 +366,7 @@ def crawl_jobs_needing_update(
     from . import crawl_greenhouse_job, crawl_lever_job, crawl_ashby_job, crawl_probablygood_job
 
     # Build query
-    queryset = (
-        Job.objects.annotate(description_length=Length("description"))
-        .filter(source__in=["greenhouse", "lever", "ashby", "probablygood"])
-        .filter(Q(raw_data__needs_crawling=True) | Q(description_length__lt=100))
-    )
+    queryset = _jobs_needing_crawl_queryset()
 
     if source:
         queryset = queryset.filter(source=source)
@@ -330,7 +374,7 @@ def crawl_jobs_needing_update(
     # Get jobs that need crawling
     jobs = list(queryset[:limit] if limit else queryset)
 
-    stats = {"success": 0, "failed": 0, "skipped": 0, "total": len(jobs)}
+    stats = {"success": 0, "closed": 0, "failed": 0, "skipped": 0, "total": len(jobs)}
 
     logger.info(f"Found {len(jobs)} jobs to crawl")
 
@@ -357,9 +401,14 @@ def crawl_jobs_needing_update(
 
             if updated_job and not dry_run:
                 with transaction.atomic():
+                    updated_job = _enrich_crawled_job(updated_job)
                     updated_job.save()
-                stats["success"] += 1
-                logger.info(f"  Updated: {updated_job.title}")
+                if updated_job.is_active:
+                    stats["success"] += 1
+                    logger.info(f"  Updated: {updated_job.title}")
+                else:
+                    stats["closed"] = stats.get("closed", 0) + 1
+                    logger.info(f"  Closed: {updated_job.title}")
             elif updated_job:
                 stats["success"] += 1
                 logger.info(f"  [DRY-RUN] Would update: {updated_job.title}")
@@ -408,12 +457,7 @@ async def crawl_jobs_async(
     from . import crawl_greenhouse_job, crawl_lever_job, crawl_ashby_job, crawl_probablygood_job
 
     # Build query with organization pre-fetched
-    queryset = (
-        Job.objects.select_related("organization")
-        .annotate(description_length=Length("description"))
-        .filter(source__in=["greenhouse", "lever", "ashby", "probablygood"])
-        .filter(Q(raw_data__needs_crawling=True) | Q(description_length__lt=100))
-    )
+    queryset = _jobs_needing_crawl_queryset()
 
     if source:
         queryset = queryset.filter(source=source)
@@ -422,7 +466,7 @@ async def crawl_jobs_async(
     get_jobs = sync_to_async(lambda: list(queryset[:limit] if limit else queryset), thread_sensitive=True)
     jobs = await get_jobs()
 
-    stats = {"success": 0, "failed": 0, "skipped": 0, "total": len(jobs)}
+    stats = {"success": 0, "closed": 0, "failed": 0, "skipped": 0, "total": len(jobs)}
 
     if not jobs:
         return stats
@@ -478,7 +522,7 @@ async def crawl_jobs_async(
                 else:
                     # Job was marked inactive (404)
                     jobs_to_save.append(updated_job)
-                    stats["failed"] += 1
+                    stats["closed"] += 1
             else:
                 stats["failed"] += 1
 
@@ -545,4 +589,5 @@ def _save_jobs_batch(jobs: List[Job]) -> None:
     """Save a batch of jobs in a single transaction."""
     with transaction.atomic():
         for job in jobs:
+            job = _enrich_crawled_job(job)
             job.save()

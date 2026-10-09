@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.utils import timezone
 
 from .models import (
+    EvaluatorInterest,
     FieldEvidence,
     FieldVerification,
     Gig,
@@ -129,3 +130,10 @@ class GigInterestAdmin(admin.ModelAdmin):
         return bool(obj.message)
     has_message.boolean = True
     has_message.short_description = "Has Message"
+
+
+@admin.register(EvaluatorInterest)
+class EvaluatorInterestAdmin(admin.ModelAdmin):
+    list_display = ("email", "country", "languages", "background", "hours_per_week", "created_at")
+    list_filter = ("background", "country")
+    search_fields = ("email", "country", "languages", "note")

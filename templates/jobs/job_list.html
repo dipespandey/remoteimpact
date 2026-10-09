@@ -2,6 +2,7 @@
 {% load job_extras %}
 
 {% block title %}Remote Impact Jobs | Social Impact, Climate & Nonprofit Remote Jobs{% endblock %}
+{% block robots %}{% if request.GET %}noindex, follow{% else %}index, follow{% endif %}{% endblock %}
 
 {% block meta_description %}Browse {{ page_obj.paginator.count|default:"8,000+" }} remote impact jobs in climate, AI safety, nonprofit, global health, education, and social good. Find purpose-driven remote roles updated daily.{% endblock %}
 
@@ -50,675 +51,620 @@
 </script>
 {% endblock %}
 
+
 {% block content %}
-<section class="bg-twilight-900 py-6 md:py-12">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 md:space-y-10">
-        <header class="space-y-2 md:space-y-3">
-            <p class="text-xs md:text-sm uppercase tracking-[0.3em] md:tracking-[0.4em] text-white/60">Remote impact jobs</p>
-            <h1 class="text-2xl md:text-4xl font-semibold text-white">
-                {% if search_query %}
-                    Results for "{{ search_query }}"
-                {% elif current_category_obj %}
-                    Remote {{ current_category_obj.name|lower }} impact jobs
-                {% else %}
-                    Remote Impact Jobs
-                {% endif %}
-            </h1>
-            <p class="text-white/70 text-sm md:text-base max-w-3xl">
-                Browse remote impact jobs in climate, AI safety, nonprofit, global health, education, and social good.
-                Every listing is remote-friendly and organized for mission-driven job seekers.
-            </p>
-            <p class="text-white/60 text-sm">{{ page_obj.paginator.count }} remote impact job{{ page_obj.paginator.count|pluralize }} found</p>
-        </header>
+<div class="page">
+    <header class="page-header">
+        <h1 class="page-title">
+            {% if search_query %}
+                Results for "{{ search_query }}"
+            {% elif current_category_obj %}
+                Remote {{ current_category_obj.name|lower }} impact jobs
+            {% else %}
+                Remote impact jobs
+            {% endif %}
+        </h1>
+        <p class="page-lede">
+            Remote roles at nonprofits, social enterprises and research groups working on climate, AI safety,
+            global health, education and other public-interest problems.
+        </p>
+    </header>
 
-        <form method="get" action="{% url 'jobs:job_list' %}" class="bg-card-gradient text-white rounded-2xl md:rounded-3xl border border-white/10 shadow-xl p-4 md:p-6 space-y-4 md:space-y-5 backdrop-blur overflow-visible relative z-20">
-            <!-- Search bar - always visible -->
-            <div class="flex flex-col md:flex-row gap-3 md:gap-4">
-                <div class="flex-1 relative">
-                    <span class="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-white/40">
-                        <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m21 21-4.35-4.35m0 0A7.5 7.5 0 1 0 5.64 5.64 7.5 7.5 0 0 0 16.65 16.65Z"/></svg>
-                    </span>
-                    <input type="text" name="q" value="{{ search_query|default:'' }}" placeholder="Search keywords..." class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-3 md:py-4 pl-10 md:pl-12 pr-4 text-sm md:text-base text-white placeholder-white/50 focus:ring-2 focus:ring-brand-300 focus:border-transparent">
-                </div>
-                <div class="flex gap-2">
-                    <!-- Mobile filter toggle -->
-                    <button type="button" id="filter-toggle-btn" class="md:hidden flex-1 px-4 py-3 rounded-xl border border-white/20 text-white/80 font-medium text-sm flex items-center justify-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75"/></svg>
-                        <span>Filters</span>
-                        <svg id="filter-chevron" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9-7 7-7-7"/></svg>
-                    </button>
-                    <button type="submit" class="flex-1 md:flex-none px-5 md:px-6 py-3 rounded-xl md:rounded-2xl bg-brand-300 text-gray-900 font-semibold text-sm md:text-base hover:bg-neon transition shadow-glow">Search</button>
+    {% if show_job_scout_nudge %}
+    <section class="card mb-6 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-5" aria-label="Personalized job matches">
+        <div class="min-w-0">
+            {% if job_scout_nudge_kind == 'pro' %}
+            <p class="text-sm font-medium text-foreground">Keep the right jobs coming</p>
+            <p class="mt-0.5 text-[13px] text-muted-foreground">Your free Scout is complete. Pro keeps watching for newly published roles that fit your brief.</p>
+            {% else %}
+            <p class="text-sm font-medium text-foreground">Want a shorter, more relevant list?</p>
+            <p class="mt-0.5 text-[13px] text-muted-foreground">Describe your ideal role once and we will email your strongest current matches. Free, no card required.</p>
+            {% endif %}
+        </div>
+        <a href="{{ job_scout_nudge_url }}" class="btn btn-primary btn-sm w-full shrink-0 sm:w-auto" data-track="job_scout_job_list_nudge" data-track-category="job_scout_acquisition" data-track-label="{{ job_scout_nudge_tracking_label }}">
+            {{ job_scout_nudge_label }}
+        </a>
+    </section>
+    {% endif %}
+
+    {{ current_categories|json_script:"job-filter-areas" }}
+    {{ filters.skills|json_script:"job-filter-skills" }}
+    {{ filters.educations|json_script:"job-filter-education" }}
+    {{ filters.experiences|json_script:"job-filter-experience" }}
+    {{ filters.countries|json_script:"job-filter-countries" }}
+    {{ current_types|json_script:"job-filter-role-types" }}
+    {{ skills_list|json_script:"job-filter-skill-options" }}
+
+    <form method="get" action="{% url 'jobs:job_list' %}" class="relative z-20" role="search">
+        {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
+        <!-- Keyword search + submit -->
+        <div class="flex items-center gap-2">
+            <label for="job-search" class="sr-only">Search jobs</label>
+            <div class="relative min-w-0 flex-1">
+                <svg class="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg>
+                <input id="job-search" type="text" name="q" value="{{ search_query|default:'' }}" placeholder="Title, organization or keyword" class="input h-11 pl-10">
+            </div>
+            <!-- Mobile filter toggle -->
+            <button type="button" id="filter-toggle-btn" aria-expanded="false" aria-controls="filters-section" class="btn btn-secondary h-11 w-11 shrink-0 px-0 md:hidden" aria-label="Show filters">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75"/></svg>
+            </button>
+            <button type="submit" class="btn btn-primary btn-lg shrink-0">Search</button>
+        </div>
+
+        <!-- Filters: one wrapping row of compact dropdown triggers; collapsed on mobile -->
+        <div id="filters-section" class="relative mt-3 hidden grid-cols-2 gap-2 md:flex md:flex-wrap md:items-center">
+
+            <!-- Impact area -->
+            <div x-data="{ open: false, selected: [] }" x-init="selected = JSON.parse(document.getElementById('job-filter-areas').textContent) || []" class="md:relative">
+                <label for="filter-areas" class="sr-only">Impact area</label>
+                <button id="filter-areas" type="button" :aria-expanded="open.toString()" aria-controls="options-areas" @keydown.escape="open = false" @click="open = !open"
+                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
+                    <span class="truncate" x-text="selected.length ? 'Impact area · ' + selected.length : 'Impact area'">Impact area</span>
+                    <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
+                </button>
+                <div id="options-areas" @keydown.escape="open = false; document.getElementById('filter-areas').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-72">
+                    <div x-show="selected.length > 0" class="sticky top-0 z-10 flex items-center justify-between bg-popover px-3 py-2">
+                        <span class="text-[13px] text-muted-foreground"><span x-text="selected.length"></span> selected</span>
+                        <button type="button" @click.stop="selected = []" class="text-[13px] font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                    </div>
+                    <div class="flex flex-col">
+                        {% for category in categories %}
+                        <label class="flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-muted" :class="{ 'order-first bg-muted': selected.includes('{{ category.slug|escapejs }}') }" @click.stop>
+                            <input type="checkbox" name="category" value="{{ category.slug }}"
+                                :checked="selected.includes('{{ category.slug|escapejs }}')"
+                                @change="selected.includes('{{ category.slug|escapejs }}') ? selected = selected.filter(x => x !== '{{ category.slug|escapejs }}') : selected.push('{{ category.slug|escapejs }}')"
+                                class="checkbox">
+                            <span class="text-sm text-foreground">{{ category.name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-3">
-                <label class="inline-flex items-center gap-3 rounded-xl md:rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 md:px-4 md:py-3 text-sm text-white hover:bg-white/10 transition cursor-pointer">
-                    <input type="checkbox" name="direct_apply" value="1"
-                           {% if filters.direct_apply %}checked{% endif %}
-                           class="h-4 w-4 rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300">
-                    <span class="inline-flex items-center gap-2">
-                        <svg class="h-4 w-4 text-brand-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                        </svg>
-                        <span class="font-medium">Apply directly</span>
-                    </span>
-                </label>
-                <span class="text-xs text-white/50">Show roles with applications handled on Remote Impact</span>
+            <!-- Skills (searchable) -->
+            <div x-data="{
+                open: false,
+                selected: [],
+                search: '',
+                skills: JSON.parse(document.getElementById('job-filter-skill-options').textContent) || [],
+                get filteredSkills() {
+                    if (!this.search) return this.skills;
+                    return this.skills.filter(s => s.display.toLowerCase().includes(this.search.toLowerCase()));
+                }
+            }" x-init="selected = JSON.parse(document.getElementById('job-filter-skills').textContent) || []" class="md:relative">
+                <label for="filter-skills" class="sr-only">Skills</label>
+                <button id="filter-skills" type="button" :aria-expanded="open.toString()" aria-controls="options-skills" @keydown.escape="open = false" @click="open = !open"
+                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
+                    <span class="truncate" x-text="selected.length ? 'Skills · ' + selected.length : 'Skills'">Skills</span>
+                    <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
+                </button>
+                <div id="options-skills" @keydown.escape="open = false; document.getElementById('filter-skills').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-80">
+                    <div class="sticky top-0 z-10 space-y-1 bg-popover pb-1">
+                        <input id="skill-search" aria-label="Search skills" type="text" x-model="search" placeholder="Search skills" @click.stop class="input h-9 py-1.5 text-sm">
+                        <div x-show="selected.length > 0" class="flex items-center justify-between px-3 py-1">
+                            <span class="text-[13px] text-muted-foreground"><span x-text="selected.length"></span> selected</span>
+                            <button type="button" @click.stop="selected = []" class="text-[13px] font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                        </div>
+                    </div>
+                    <div class="flex flex-col">
+                        <template x-for="skill in filteredSkills" :key="skill.slug">
+                            <label class="flex cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-2 hover:bg-muted"
+                                :class="{ 'bg-muted': selected.includes(skill.slug) }" @click.stop>
+                                <span class="flex min-w-0 items-center gap-2.5">
+                                    <input type="checkbox" name="skill" :value="skill.slug"
+                                        :checked="selected.includes(skill.slug)"
+                                        @change="selected.includes(skill.slug) ? selected = selected.filter(x => x !== skill.slug) : selected.push(skill.slug)"
+                                        class="checkbox">
+                                    <span class="truncate text-sm text-foreground" x-text="skill.display"></span>
+                                </span>
+                                <span class="text-xs tabular-nums text-muted-foreground" x-text="skill.count"></span>
+                            </label>
+                        </template>
+                    </div>
+                </div>
             </div>
 
-            <!-- Filters - collapsible on mobile -->
-            <!-- 2-row layout: Top row: Area of Impact, Skills, Education, Experience -->
-            <!-- Bottom row: Country/Region, Role Type, Date Posted, Salary -->
-            <div id="filters-section" class="hidden md:block overflow-visible">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 text-sm overflow-visible">
-                    
-                    <!-- ROW 1: Area of Impact, Skills, Education, Experience -->
-                    
-                    <!-- 1. Areas / Categories - Multiselect -->
-                    <div x-data="{ open: false, selected: [] }" x-init="selected = {{ current_categories|safe|default:'[]' }}" class="relative">
-                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Area of Impact</label>
-                        <button type="button" @click="open = !open"
-                            class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 text-white text-sm text-left flex justify-between items-center">
-                            <span x-text="selected.length ? selected.length + ' selected' : 'All areas'"></span>
-                            <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9-7 7-7-7"/></svg>
-                        </button>
-                        <div x-cloak x-show="open" @click.outside="open = false" x-transition class="absolute z-[100] mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-2xl max-h-72 overflow-y-scroll overscroll-contain">
-                            <div x-show="selected.length > 0" class="sticky top-0 p-2 bg-twilight-800 border-b border-white/10 z-10 flex justify-between items-center">
-                                <span class="text-white/60 text-xs"><span x-text="selected.length"></span> selected</span>
-                                <button type="button" @click.stop="selected = []" class="text-xs text-brand-300 hover:text-brand-200">Clear all</button>
-                            </div>
-                            <div class="flex flex-col">
-                                {% for category in categories %}
-                                <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" :class="{ 'order-first bg-white/5': selected.includes('{{ category.slug|escapejs }}') }" @click.stop>
-                                    <input type="checkbox" name="category" value="{{ category.slug }}"
-                                        :checked="selected.includes('{{ category.slug|escapejs }}')"
-                                        @change="selected.includes('{{ category.slug|escapejs }}') ? selected = selected.filter(x => x !== '{{ category.slug|escapejs }}') : selected.push('{{ category.slug|escapejs }}')"
-                                        class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
-                                    <span class="text-white text-sm">{{ category.name }}</span>
+            <!-- Country / region (searchable, with region shortcuts) -->
+            <div x-data="{
+                open: false,
+                selected: [],
+                search: '',
+                regions: {
+                    'Global (Anywhere)': ['Global'],
+                    'Europe': ['UK', 'Germany', 'France', 'Netherlands', 'Spain', 'Italy', 'Switzerland', 'Sweden', 'Belgium', 'Austria', 'Denmark', 'Ireland', 'Norway', 'Poland', 'Portugal', 'Finland', 'Czechia', 'Czech Republic', 'Greece', 'Hungary', 'Romania', 'Bulgaria', 'Estonia'],
+                    'North America': ['USA', 'Canada', 'Mexico'],
+                    'Asia Pacific': ['Australia', 'India', 'Japan', 'Singapore', 'New Zealand', 'China', 'South Korea', 'Hong Kong', 'Taiwan', 'Philippines', 'Malaysia', 'Thailand', 'Indonesia', 'Vietnam'],
+                    'Latin America': ['Brazil', 'Argentina', 'Colombia', 'Chile', 'Peru', 'Ecuador'],
+                    'Africa': ['South Africa', 'Nigeria', 'Kenya', 'Uganda', 'Egypt', 'Morocco', 'Ghana'],
+                    'Middle East': ['Israel', 'UAE', 'Qatar', 'Saudi Arabia']
+                },
+                allCountries: [{% for country in countries %}'{{ country|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+                toggleRegion(regionName) {
+                    const regionCountries = this.regions[regionName] || [];
+                    // For Global region, always include even if not in allCountries
+                    const available = regionName === 'Global (Anywhere)'
+                        ? regionCountries
+                        : regionCountries.filter(c => this.allCountries.includes(c));
+                    const allSelected = available.length > 0 && available.every(c => this.selected.includes(c));
+                    if (allSelected) {
+                        this.selected = this.selected.filter(c => !available.includes(c));
+                    } else {
+                        available.forEach(c => {
+                            if (!this.selected.includes(c)) this.selected.push(c);
+                        });
+                    }
+                },
+                isRegionSelected(regionName) {
+                    const regionCountries = this.regions[regionName] || [];
+                    // For Global region, always include
+                    const available = regionName === 'Global (Anywhere)'
+                        ? regionCountries
+                        : regionCountries.filter(c => this.allCountries.includes(c));
+                    return available.length > 0 && available.every(c => this.selected.includes(c));
+                },
+                get filteredCountries() {
+                    if (!this.search) return this.allCountries;
+                    return this.allCountries.filter(c => c.toLowerCase().includes(this.search.toLowerCase()));
+                }
+            }" x-init="selected = JSON.parse(document.getElementById('job-filter-countries').textContent) || []" class="md:relative">
+                <label for="filter-countries" class="sr-only">Country / Region</label>
+                <button id="filter-countries" type="button" :aria-expanded="open.toString()" aria-controls="options-countries" @keydown.escape="open = false" @click="open = !open"
+                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
+                    <span class="truncate" x-text="selected.length ? 'Location · ' + selected.length : 'Location'">Location</span>
+                    <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
+                </button>
+                <div id="options-countries" @keydown.escape="open = false; document.getElementById('filter-countries').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-80">
+                    <div class="sticky top-0 z-10 space-y-1 bg-popover pb-1">
+                        <input id="country-search" aria-label="Search countries" type="text" x-model="search" @click.stop placeholder="Search countries" class="input h-9 py-1.5 text-sm">
+                        <div x-show="selected.length > 0" class="flex items-center justify-between px-3 py-1">
+                            <span class="text-[13px] text-muted-foreground"><span x-text="selected.length"></span> selected</span>
+                            <button type="button" @click.stop="selected = []" class="text-[13px] font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                        </div>
+                    </div>
+                    <div class="flex flex-col">
+                        <!-- Region shortcuts -->
+                        <div x-show="!search" class="pb-1">
+                            <p class="px-3 pb-1 pt-2 text-xs font-medium text-muted-foreground">Regions</p>
+                            <template x-for="(countries, regionName) in regions" :key="regionName">
+                                <label class="flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-muted" :class="{ 'bg-muted': isRegionSelected(regionName) }" @click.stop>
+                                    <input type="checkbox" :checked="isRegionSelected(regionName)" @change="toggleRegion(regionName)"
+                                        class="checkbox">
+                                    <span class="text-sm font-medium text-foreground" x-text="regionName"></span>
                                 </label>
-                                {% endfor %}
-                            </div>
+                            </template>
+                            <p class="px-3 pb-1 pt-3 text-xs font-medium text-muted-foreground">Countries</p>
                         </div>
+                        <!-- Selected countries on top -->
+                        <template x-for="country in selected" :key="'sel-'+country">
+                            <label class="flex cursor-pointer items-center gap-2.5 rounded-xl bg-muted px-3 py-2" @click.stop>
+                                <input type="checkbox" name="country" :value="country" checked
+                                    @change="selected = selected.filter(x => x !== country)"
+                                    class="checkbox">
+                                <span class="text-sm text-foreground" x-text="country"></span>
+                            </label>
+                        </template>
+                        <!-- Filtered countries (not selected) -->
+                        <template x-for="country in filteredCountries.filter(c => !selected.includes(c))" :key="country">
+                            <label class="flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-muted" @click.stop>
+                                <input type="checkbox" name="country" :value="country"
+                                    @change="selected.push(country)"
+                                    class="checkbox">
+                                <span class="text-sm text-foreground" x-text="country"></span>
+                            </label>
+                        </template>
                     </div>
+                </div>
+            </div>
 
-                    <!-- 2. Skills - Multiselect with search -->
-                    <div x-data="{ 
-                        open: false, 
-                        selected: [], 
-                        search: '',
-                        skills: {{ skills_list|safe|default:'[]' }},
-                        get filteredSkills() {
-                            if (!this.search) return this.skills;
-                            return this.skills.filter(s => s.display.toLowerCase().includes(this.search.toLowerCase()));
-                        }
-                    }" x-init="selected = {{ filters.skills|safe|default:'[]' }}" class="relative">
-                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Skills</label>
-                        <button type="button" @click="open = !open"
-                            class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 text-white text-sm text-left flex justify-between items-center">
-                            <span x-text="selected.length ? selected.length + ' selected' : 'Any skills'"></span>
-                            <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9-7 7-7-7"/></svg>
-                        </button>
-                        <div x-cloak x-show="open" @click.outside="open = false" x-transition class="absolute z-[100] mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-2xl max-h-72 overflow-y-auto overscroll-contain">
-                            <!-- Search -->
-                            <div class="sticky top-0 p-2 bg-twilight-800 border-b border-white/10 z-10">
-                                <input type="text" x-model="search" placeholder="Search skills..." @click.stop
-                                    class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm placeholder-white/40 focus:outline-none focus:border-brand-300">
-                            </div>
-                            <!-- Selected count + clear -->
-                            <div x-show="selected.length > 0" class="sticky top-12 p-2 bg-twilight-800 border-b border-white/10 z-10 flex justify-between items-center">
-                                <span class="text-white/60 text-xs"><span x-text="selected.length"></span> selected</span>
-                                <button type="button" @click.stop="selected = []" class="text-xs text-brand-300 hover:text-brand-200">Clear all</button>
-                            </div>
-                            <!-- Skills list -->
-                            <div class="flex flex-col">
-                                <template x-for="skill in filteredSkills" :key="skill.slug">
-                                    <label class="flex items-center justify-between px-3 py-2 hover:bg-white/5 cursor-pointer" 
-                                        :class="{ 'bg-white/5': selected.includes(skill.slug) }" @click.stop>
-                                        <div class="flex items-center">
-                                            <input type="checkbox" name="skill" :value="skill.slug"
-                                                :checked="selected.includes(skill.slug)"
-                                                @change="selected.includes(skill.slug) ? selected = selected.filter(x => x !== skill.slug) : selected.push(skill.slug)"
-                                                class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
-                                            <span class="text-white text-sm" x-text="skill.display"></span>
-                                        </div>
-                                        <span class="text-white/40 text-sm" x-text="skill.count"></span>
-                                    </label>
-                                </template>
-                            </div>
-                        </div>
+            <!-- Role type -->
+            <div x-data="{ open: false, selected: [] }" x-init="selected = JSON.parse(document.getElementById('job-filter-role-types').textContent) || []" class="md:relative">
+                <label for="filter-role-types" class="sr-only">Role type</label>
+                <button id="filter-role-types" type="button" :aria-expanded="open.toString()" aria-controls="options-role-types" @keydown.escape="open = false" @click="open = !open"
+                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
+                    <span class="truncate" x-text="selected.length ? 'Role type · ' + selected.length : 'Role type'">Role type</span>
+                    <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
+                </button>
+                <div id="options-role-types" @keydown.escape="open = false; document.getElementById('filter-role-types').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-60">
+                    <div x-show="selected.length > 0" class="sticky top-0 z-10 flex items-center justify-between bg-popover px-3 py-2">
+                        <span class="text-[13px] text-muted-foreground"><span x-text="selected.length"></span> selected</span>
+                        <button type="button" @click.stop="selected = []" class="text-[13px] font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                     </div>
-
-                    <!-- 3. Education - Multiselect -->
-                    <div x-data="{ open: false, selected: [] }" x-init="selected = {{ filters.educations|safe|default:'[]' }}" class="relative">
-                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Education</label>
-                        <button type="button" @click="open = !open"
-                            class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 text-white text-sm text-left flex justify-between items-center">
-                            <span x-text="selected.length ? selected.length + ' selected' : 'Any'"></span>
-                            <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9-7 7-7-7"/></svg>
-                        </button>
-                        <div x-cloak x-show="open" @click.outside="open = false" x-transition class="absolute z-[100] mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-2xl max-h-72 overflow-y-scroll overscroll-contain">
-                            <div x-show="selected.length > 0" class="sticky top-0 p-2 bg-twilight-800 border-b border-white/10 z-10 flex justify-between items-center">
-                                <span class="text-white/60 text-xs"><span x-text="selected.length"></span> selected</span>
-                                <button type="button" @click.stop="selected = []" class="text-xs text-brand-300 hover:text-brand-200">Clear all</button>
-                            </div>
-                            <div class="flex flex-col">
-                                {% for level in knowledge_filters.education_levels %}
-                                <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" :class="{ 'order-first bg-white/5': selected.includes('{{ level.display|escapejs }}') }" @click.stop>
-                                    <input type="checkbox" name="education" value="{{ level.display }}"
-                                        :checked="selected.includes('{{ level.display|escapejs }}')"
-                                        @change="selected.includes('{{ level.display|escapejs }}') ? selected = selected.filter(x => x !== '{{ level.display|escapejs }}') : selected.push('{{ level.display|escapejs }}')"
-                                        class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
-                                    <span class="text-white text-sm">{{ level.display }}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
+                    <div class="flex flex-col">
+                        {% for jt in job_types %}
+                        <label class="flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-muted" :class="{ 'order-first bg-muted': selected.includes('{{ jt.value|escapejs }}') }" @click.stop>
+                            <input type="checkbox" name="type" value="{{ jt.value }}"
+                                :checked="selected.includes('{{ jt.value|escapejs }}')"
+                                @change="selected.includes('{{ jt.value|escapejs }}') ? selected = selected.filter(x => x !== '{{ jt.value|escapejs }}') : selected.push('{{ jt.value|escapejs }}')"
+                                class="checkbox">
+                            <span class="text-sm text-foreground">{{ jt.display }}</span>
+                        </label>
+                        {% endfor %}
                     </div>
+                </div>
+            </div>
 
-                    <!-- 4. Experience - Multiselect -->
-                    <div x-data="{ open: false, selected: [] }" x-init="selected = {{ filters.experiences|safe|default:'[]' }}" class="relative">
-                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Experience</label>
-                        <button type="button" @click="open = !open"
-                            class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 text-white text-sm text-left flex justify-between items-center">
-                            <span x-text="selected.length ? selected.length + ' selected' : 'Any'"></span>
-                            <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9-7 7-7-7"/></svg>
-                        </button>
-                        <div x-cloak x-show="open" @click.outside="open = false" x-transition class="absolute z-[100] mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-2xl max-h-72 overflow-y-scroll overscroll-contain">
-                            <div x-show="selected.length > 0" class="sticky top-0 p-2 bg-twilight-800 border-b border-white/10 z-10 flex justify-between items-center">
-                                <span class="text-white/60 text-xs"><span x-text="selected.length"></span> selected</span>
-                                <button type="button" @click.stop="selected = []" class="text-xs text-brand-300 hover:text-brand-200">Clear all</button>
-                            </div>
-                            <div class="flex flex-col">
-                                {% for level in knowledge_filters.experience_levels %}
-                                <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" :class="{ 'order-first bg-white/5': selected.includes('{{ level.display|escapejs }}') }" @click.stop>
-                                    <input type="checkbox" name="experience" value="{{ level.display }}"
-                                        :checked="selected.includes('{{ level.display|escapejs }}')"
-                                        @change="selected.includes('{{ level.display|escapejs }}') ? selected = selected.filter(x => x !== '{{ level.display|escapejs }}') : selected.push('{{ level.display|escapejs }}')"
-                                        class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
-                                    <span class="text-white text-sm">{{ level.display }}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
+            <!-- Experience -->
+            <div x-data="{ open: false, selected: [] }" x-init="selected = JSON.parse(document.getElementById('job-filter-experience').textContent) || []" class="md:relative">
+                <label for="filter-experience" class="sr-only">Experience</label>
+                <button id="filter-experience" type="button" :aria-expanded="open.toString()" aria-controls="options-experience" @keydown.escape="open = false" @click="open = !open"
+                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
+                    <span class="truncate" x-text="selected.length ? 'Experience · ' + selected.length : 'Experience'">Experience</span>
+                    <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
+                </button>
+                <div id="options-experience" @keydown.escape="open = false; document.getElementById('filter-experience').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-60">
+                    <div x-show="selected.length > 0" class="sticky top-0 z-10 flex items-center justify-between bg-popover px-3 py-2">
+                        <span class="text-[13px] text-muted-foreground"><span x-text="selected.length"></span> selected</span>
+                        <button type="button" @click.stop="selected = []" class="text-[13px] font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                     </div>
-
-                    <!-- ROW 2: Country/Region, Role Type, Date Posted, Salary -->
-
-                    <!-- 5. Country / Region - Multiselect with search and regions -->
-                    <div x-data="{
-                        open: false,
-                        selected: [],
-                        search: '',
-                        regions: {
-                            'Global (Anywhere)': ['Global'],
-                            'Europe': ['UK', 'Germany', 'France', 'Netherlands', 'Spain', 'Italy', 'Switzerland', 'Sweden', 'Belgium', 'Austria', 'Denmark', 'Ireland', 'Norway', 'Poland', 'Portugal', 'Finland', 'Czechia', 'Czech Republic', 'Greece', 'Hungary', 'Romania', 'Bulgaria', 'Estonia'],
-                            'North America': ['USA', 'Canada', 'Mexico'],
-                            'Asia Pacific': ['Australia', 'India', 'Japan', 'Singapore', 'New Zealand', 'China', 'South Korea', 'Hong Kong', 'Taiwan', 'Philippines', 'Malaysia', 'Thailand', 'Indonesia', 'Vietnam'],
-                            'Latin America': ['Brazil', 'Argentina', 'Colombia', 'Chile', 'Peru', 'Ecuador'],
-                            'Africa': ['South Africa', 'Nigeria', 'Kenya', 'Uganda', 'Egypt', 'Morocco', 'Ghana'],
-                            'Middle East': ['Israel', 'UAE', 'Qatar', 'Saudi Arabia']
-                        },
-                        allCountries: [{% for country in countries %}'{{ country|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
-                        toggleRegion(regionName) {
-                            const regionCountries = this.regions[regionName] || [];
-                            // For Global region, always include even if not in allCountries
-                            const available = regionName === 'Global (Anywhere)'
-                                ? regionCountries
-                                : regionCountries.filter(c => this.allCountries.includes(c));
-                            const allSelected = available.length > 0 && available.every(c => this.selected.includes(c));
-                            if (allSelected) {
-                                this.selected = this.selected.filter(c => !available.includes(c));
-                            } else {
-                                available.forEach(c => {
-                                    if (!this.selected.includes(c)) this.selected.push(c);
-                                });
-                            }
-                        },
-                        isRegionSelected(regionName) {
-                            const regionCountries = this.regions[regionName] || [];
-                            // For Global region, always include
-                            const available = regionName === 'Global (Anywhere)'
-                                ? regionCountries
-                                : regionCountries.filter(c => this.allCountries.includes(c));
-                            return available.length > 0 && available.every(c => this.selected.includes(c));
-                        },
-                        get filteredCountries() {
-                            if (!this.search) return this.allCountries;
-                            return this.allCountries.filter(c => c.toLowerCase().includes(this.search.toLowerCase()));
-                        }
-                    }" x-init="selected = {{ filters.countries|safe|default:'[]' }}" class="relative">
-                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Country / Region</label>
-                        <button type="button" @click="open = !open"
-                            class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 text-white text-sm text-left flex justify-between items-center">
-                            <span x-text="selected.length ? selected.length + ' selected' : 'Anywhere'"></span>
-                            <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9-7 7-7-7"/></svg>
-                        </button>
-                        <div x-cloak x-show="open" @click.outside="open = false" x-transition class="absolute z-[100] mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-2xl max-h-72 overflow-y-scroll overscroll-contain">
-                            <div class="sticky top-0 p-2 bg-twilight-800 border-b border-white/10 z-10 space-y-2">
-                                <input type="text" x-model="search" @click.stop placeholder="Search countries..." class="w-full px-2 py-1 text-sm bg-white/5 border border-white/10 rounded text-white placeholder-white/40">
-                                <div x-show="selected.length > 0" class="flex justify-between items-center">
-                                    <span class="text-white/60 text-xs"><span x-text="selected.length"></span> selected</span>
-                                    <button type="button" @click.stop="selected = []" class="text-xs text-brand-300 hover:text-brand-200">Clear all</button>
-                                </div>
-                            </div>
-                            <div class="flex flex-col">
-                                <!-- Region shortcuts -->
-                                <div x-show="!search" class="border-b border-white/10 py-1">
-                                    <div class="px-3 py-1 text-white/40 text-xs uppercase tracking-wide">Quick select</div>
-                                    <template x-for="(countries, regionName) in regions" :key="regionName">
-                                        <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" :class="{ 'bg-white/5': isRegionSelected(regionName) }" @click.stop>
-                                            <input type="checkbox" :checked="isRegionSelected(regionName)" @change="toggleRegion(regionName)"
-                                                class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
-                                            <span class="text-white text-sm font-medium" x-text="regionName"></span>
-                                        </label>
-                                    </template>
-                                </div>
-                                <!-- Selected countries on top -->
-                                <template x-for="country in selected" :key="'sel-'+country">
-                                    <label class="flex items-center px-3 py-2 bg-white/5 cursor-pointer" @click.stop>
-                                        <input type="checkbox" name="country" :value="country" checked
-                                            @change="selected = selected.filter(x => x !== country)"
-                                            class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
-                                        <span class="text-white text-sm" x-text="country"></span>
-                                    </label>
-                                </template>
-                                <!-- Filtered countries (not selected) -->
-                                <template x-for="country in filteredCountries.filter(c => !selected.includes(c))" :key="country">
-                                    <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" @click.stop>
-                                        <input type="checkbox" name="country" :value="country"
-                                            @change="selected.push(country)"
-                                            class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
-                                        <span class="text-white text-sm" x-text="country"></span>
-                                    </label>
-                                </template>
-                            </div>
-                        </div>
+                    <div class="flex flex-col">
+                        {% for level in knowledge_filters.experience_levels %}
+                        <label class="flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-muted" :class="{ 'order-first bg-muted': selected.includes('{{ level.display|escapejs }}') }" @click.stop>
+                            <input type="checkbox" name="experience" value="{{ level.display }}"
+                                :checked="selected.includes('{{ level.display|escapejs }}')"
+                                @change="selected.includes('{{ level.display|escapejs }}') ? selected = selected.filter(x => x !== '{{ level.display|escapejs }}') : selected.push('{{ level.display|escapejs }}')"
+                                class="checkbox">
+                            <span class="text-sm text-foreground">{{ level.display }}</span>
+                        </label>
+                        {% endfor %}
                     </div>
+                </div>
+            </div>
 
-                    <!-- 6. Role type - Multiselect -->
-                    <div x-data="{ open: false, selected: [] }" x-init="selected = {{ current_types|safe|default:'[]' }}" class="relative">
-                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Role type</label>
-                        <button type="button" @click="open = !open"
-                            class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 text-white text-sm text-left flex justify-between items-center">
-                            <span x-text="selected.length ? selected.length + ' selected' : 'All types'"></span>
-                            <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9-7 7-7-7"/></svg>
-                        </button>
-                        <div x-cloak x-show="open" @click.outside="open = false" x-transition class="absolute z-[100] mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-2xl max-h-72 overflow-y-scroll overscroll-contain">
-                            <div x-show="selected.length > 0" class="sticky top-0 p-2 bg-twilight-800 border-b border-white/10 z-10 flex justify-between items-center">
-                                <span class="text-white/60 text-xs"><span x-text="selected.length"></span> selected</span>
-                                <button type="button" @click.stop="selected = []" class="text-xs text-brand-300 hover:text-brand-200">Clear all</button>
-                            </div>
-                            <div class="flex flex-col">
-                                {% for jt in job_types %}
-                                <label class="flex items-center px-3 py-2 hover:bg-white/5 cursor-pointer" :class="{ 'order-first bg-white/5': selected.includes('{{ jt.value|escapejs }}') }" @click.stop>
-                                    <input type="checkbox" name="type" value="{{ jt.value }}"
-                                        :checked="selected.includes('{{ jt.value|escapejs }}')"
-                                        @change="selected.includes('{{ jt.value|escapejs }}') ? selected = selected.filter(x => x !== '{{ jt.value|escapejs }}') : selected.push('{{ jt.value|escapejs }}')"
-                                        class="rounded border-white/20 bg-white/5 text-brand-300 focus:ring-brand-300 mr-2">
-                                    <span class="text-white text-sm">{{ jt.display }}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
+            <!-- Education -->
+            <div x-data="{ open: false, selected: [] }" x-init="selected = JSON.parse(document.getElementById('job-filter-education').textContent) || []" class="md:relative">
+                <label for="filter-education" class="sr-only">Education</label>
+                <button id="filter-education" type="button" :aria-expanded="open.toString()" aria-controls="options-education" @keydown.escape="open = false" @click="open = !open"
+                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
+                    <span class="truncate" x-text="selected.length ? 'Education · ' + selected.length : 'Education'">Education</span>
+                    <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
+                </button>
+                <div id="options-education" @keydown.escape="open = false; document.getElementById('filter-education').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-60">
+                    <div x-show="selected.length > 0" class="sticky top-0 z-10 flex items-center justify-between bg-popover px-3 py-2">
+                        <span class="text-[13px] text-muted-foreground"><span x-text="selected.length"></span> selected</span>
+                        <button type="button" @click.stop="selected = []" class="text-[13px] font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                     </div>
-
-                    <!-- 7. Posted Date -->
-                    <div x-data="{ open: false, selected: '{{ filters.posted|default:'' }}' }" class="relative">
-                        <label class="text-white/70 font-medium mb-1.5 md:mb-2 block text-xs md:text-sm">Date Posted</label>
-                        <input type="hidden" name="posted" :value="selected">
-                        <button type="button" @click="open = !open"
-                            class="w-full border border-white/10 bg-white/5 rounded-xl md:rounded-2xl py-2.5 md:py-3 px-3 md:px-4 text-white text-sm text-left flex justify-between items-center">
-                            <span x-text="selected ? {
-                                '7': 'Less than 1 week',
-                                '14': '1-2 weeks',
-                                '28': '2-4 weeks',
-                                '29': 'More than 4 weeks'
-                            }[selected] || 'Any time' : 'Any time'"></span>
-                            <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9-7 7-7-7"/></svg>
-                        </button>
-                        <div x-cloak x-show="open" @click.outside="open = false" x-transition class="absolute z-[100] mt-1 w-full bg-twilight-800 border border-white/10 rounded-xl shadow-2xl overflow-hidden">
-                            <div class="flex flex-col">
-                                <button type="button" @click="selected = ''; open = false" class="px-3 py-2 text-left text-white text-sm hover:bg-white/5" :class="{ 'bg-white/5': !selected }">Any time</button>
-                                <button type="button" @click="selected = '7'; open = false" class="px-3 py-2 text-left text-white text-sm hover:bg-white/5" :class="{ 'bg-white/5': selected === '7' }">Less than 1 week</button>
-                                <button type="button" @click="selected = '14'; open = false" class="px-3 py-2 text-left text-white text-sm hover:bg-white/5" :class="{ 'bg-white/5': selected === '14' }">1-2 weeks</button>
-                                <button type="button" @click="selected = '28'; open = false" class="px-3 py-2 text-left text-white text-sm hover:bg-white/5" :class="{ 'bg-white/5': selected === '28' }">2-4 weeks</button>
-                                <button type="button" @click="selected = '29'; open = false" class="px-3 py-2 text-left text-white text-sm hover:bg-white/5" :class="{ 'bg-white/5': selected === '29' }">More than 4 weeks</button>
-                            </div>
-                        </div>
+                    <div class="flex flex-col">
+                        {% for level in knowledge_filters.education_levels %}
+                        <label class="flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-muted" :class="{ 'order-first bg-muted': selected.includes('{{ level.display|escapejs }}') }" @click.stop>
+                            <input type="checkbox" name="education" value="{{ level.display }}"
+                                :checked="selected.includes('{{ level.display|escapejs }}')"
+                                @change="selected.includes('{{ level.display|escapejs }}') ? selected = selected.filter(x => x !== '{{ level.display|escapejs }}') : selected.push('{{ level.display|escapejs }}')"
+                                class="checkbox">
+                            <span class="text-sm text-foreground">{{ level.display }}</span>
+                        </label>
+                        {% endfor %}
                     </div>
+                </div>
+            </div>
 
-                    <!-- 8. Salary Range Slider (Logarithmic, dual handle) -->
-                    <style>
-                        .salary-slider { padding-left: 0.5rem; padding-right: 0.75rem; max-width: 500px; width: 100%; --salary-color: #70ac1d; }
-                        .salary-slider .range-input {
-                            -webkit-appearance: none;
-                            appearance: none;
-                            pointer-events: none;
-                            position: absolute;
-                            inset: 0;
-                            width: 100%;
-                            height: 64px;
-                            background: transparent;
-                            margin: 0;
-                            padding: 0;
-                            z-index: 20;
-                            opacity: 0; /* hide native track background */
-                        }
-                        .salary-slider .range-input::-webkit-slider-thumb {
-                            -webkit-appearance: none;
-                            appearance: none;
-                            pointer-events: all;
-                            width: 34px;
-                            height: 34px;
-                            border-radius: 9999px;
-                            background: transparent;
-                        }
-                        .salary-slider .range-input::-moz-range-thumb {
-                            pointer-events: all;
-                            width: 36px;
-                            height: 36px;
-                            border-radius: 9999px;
-                            background: transparent;
-                            border: none;
-                        }
-                        .salary-slider .range-input::-webkit-slider-runnable-track {
-                            height: 6px;
-                            background: transparent;
-                            border: none;
-                        }
-                        .salary-slider .range-input::-moz-range-track {
-                            height: 6px;
-                            background: transparent;
-                            border: none;
-                        }
-                    </style>
-                    <div x-data="salarySlider({{ filters.salary_min|default:'0' }}, {{ filters.salary_max|default:'1000000' }})" class="salary-slider">
-                        <div class="flex items-center justify-between mb-2">
-                            <label class="text-white font-medium text-xs md:text-sm">Salary Range</label>
-                            <span class="text-white/90 font-medium text-xs uppercase tracking-wide" x-text="rangeLabel()"></span>
+            <!-- Date posted -->
+            <div x-data="{ open: false, selected: '{{ filters.posted|default:'' }}' }" class="md:relative">
+                <label for="filter-posted" class="sr-only">Date posted</label>
+                <input type="hidden" name="posted" :value="selected">
+                <button id="filter-posted" type="button" :aria-expanded="open.toString()" aria-controls="options-posted" @keydown.escape="open = false" @click="open = !open"
+                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected }">
+                    <span class="truncate" x-text="selected ? {
+                        '7': 'Past week',
+                        '14': '1-2 weeks',
+                        '28': '2-4 weeks',
+                        '29': 'Over 4 weeks'
+                    }[selected] || 'Date posted' : 'Date posted'">Date posted</span>
+                    <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
+                </button>
+                <div id="options-posted" @keydown.escape="open = false; document.getElementById('filter-posted').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-56">
+                    <div class="flex flex-col">
+                        <button type="button" @click="selected = ''; open = false" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': !selected }">Any time</button>
+                        <button type="button" @click="selected = '7'; open = false" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '7' }">Less than 1 week</button>
+                        <button type="button" @click="selected = '14'; open = false" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '14' }">1-2 weeks</button>
+                        <button type="button" @click="selected = '28'; open = false" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '28' }">2-4 weeks</button>
+                        <button type="button" @click="selected = '29'; open = false" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '29' }">More than 4 weeks</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Salary range: dual-handle slider in a popover -->
+            <style>
+                .salary-slider .range-input {
+                    -webkit-appearance: none;
+                    appearance: none;
+                    pointer-events: none;
+                    position: absolute;
+                    inset: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: transparent;
+                    margin: 0;
+                    padding: 0;
+                    z-index: 20;
+                    opacity: 0; /* hide native track background */
+                }
+                .salary-slider:focus-within { outline: 2px solid hsl(var(--ring)); outline-offset: 4px; border-radius: 0.75rem; }
+                .salary-slider .range-input::-webkit-slider-thumb {
+                    -webkit-appearance: none;
+                    appearance: none;
+                    pointer-events: all;
+                    width: 34px;
+                    height: 34px;
+                    border-radius: 9999px;
+                    background: transparent;
+                }
+                .salary-slider .range-input::-moz-range-thumb {
+                    pointer-events: all;
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 9999px;
+                    background: transparent;
+                    border: none;
+                }
+                .salary-slider .range-input::-webkit-slider-runnable-track {
+                    height: 6px;
+                    background: transparent;
+                    border: none;
+                }
+                .salary-slider .range-input::-moz-range-track {
+                    height: 6px;
+                    background: transparent;
+                    border: none;
+                }
+            </style>
+            <div x-data="salarySlider({{ filters.salary_min|default:'0' }}, {{ filters.salary_max|default:'1000000' }})" class="md:relative"
+                 @pointerdown.window="pressedInside = $refs.salaryPanel.contains($event.target)">
+                <button id="filter-salary" type="button" :aria-expanded="open.toString()" aria-controls="options-salary" @keydown.escape="open = false" @click="open = !open"
+                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': isActive() }">
+                    <span class="truncate tabular-nums" x-text="isActive() ? rangeLabel() : 'Salary'">Salary</span>
+                    <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
+                </button>
+                <div id="options-salary" x-ref="salaryPanel" @keydown.escape="open = false; document.getElementById('filter-salary').focus()" x-cloak x-show="open" @click.outside="if (!pressedInside) open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 rounded-2xl bg-popover p-4 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-80">
+                    <div class="salary-slider px-2.5">
+                        <div class="mb-1 flex items-center justify-between gap-2">
+                            <span class="text-sm font-medium text-foreground">Salary range</span>
+                            <span class="text-sm tabular-nums text-muted-foreground" x-text="rangeLabel()"></span>
                         </div>
-                        <div class="relative h-16 select-none px-1 -mt-2" x-ref="salaryTrack">
+                        <div class="relative h-11 select-none" x-ref="salaryTrack">
                             <!-- Background track -->
-                            <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-2 rounded-full bg-white/10 shadow-inner shadow-black/10"></div>
+                            <div class="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-muted"></div>
                             <!-- Active track -->
-                            <div class="absolute top-1/2 -translate-y-1/2 h-2 rounded-full"
-                                 style="background: linear-gradient(90deg, var(--salary-color), var(--salary-color)); box-shadow: 0 0 16px rgba(112,172,29,0.35);"
+                            <div class="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-foreground"
                                  :style="'left:' + loPct + '%; right:' + (100 - hiPct) + '%'"></div>
 
-                            <!-- Visible handles -->
-                            <div class="pointer-events-none absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center gap-1" :style="'left:' + loPct + '%'" aria-hidden="true">
-                                <div class="px-3 py-1 text-[11px] font-semibold rounded-full bg-white/15 border border-white/20 text-white shadow-lg backdrop-blur-sm" x-text="formatLabel(loVal)"></div>
-                                <div class="h-5 w-5 rounded-full border-2 border-white"
-                                     style="background: var(--salary-color); box-shadow: 0 6px 18px rgba(112,172,29,0.45);"></div>
-                            </div>
-                            <div class="pointer-events-none absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center gap-1" :style="'left:' + hiPct + '%'" aria-hidden="true">
-                                <div class="px-3 py-1 text-[11px] font-semibold rounded-full bg-white/15 border border-white/20 text-white shadow-lg backdrop-blur-sm" x-text="formatLabel(hiVal)"></div>
-                                <div class="h-5 w-5 rounded-full border-2 border-white"
-                                     style="background: var(--salary-color); box-shadow: 0 6px 18px rgba(112,172,29,0.45);"></div>
-                            </div>
+                            <!-- Visible thumbs, centred on the track -->
+                            <div class="pointer-events-none absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-card shadow-lift ring-1 ring-foreground/10" :style="'left:' + loPct + '%'" aria-hidden="true"></div>
+                            <div class="pointer-events-none absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-card shadow-lift ring-1 ring-foreground/10" :style="'left:' + hiPct + '%'" aria-hidden="true"></div>
 
                             <!-- Hidden native range inputs that drive the values -->
-                            <input class="range-input" type="range" min="0" max="1000" :value="loPos" style="z-index: 31;"
+                            <input aria-label="Minimum annual salary in USD" :aria-valuetext="formatLabel(loVal)" class="range-input" type="range" min="0" max="1000" :value="loPos" style="z-index: 31;"
                                    @input="loPos = +$event.target.value; if(loPos > hiPos) loPos = hiPos; updateVals()">
-                            <input class="range-input" type="range" min="0" max="1000" :value="hiPos" style="z-index: 32;"
+                            <input aria-label="Maximum annual salary in USD" :aria-valuetext="formatLabel(hiVal)" class="range-input" type="range" min="0" max="1000" :value="hiPos" style="z-index: 32;"
                                    @input="hiPos = +$event.target.value; if(hiPos < loPos) hiPos = loPos; updateVals()">
                             <!-- Click/drag overlay -->
                             <div class="absolute inset-0 cursor-pointer" @pointerdown.prevent="startDrag($event)"></div>
                         </div>
-                        <div class="flex justify-between text-[11px] text-white/50 mt-2">
-                            <span>$0</span>
-                            <span>$1,000,000+</span>
-                        </div>
-                        <input type="hidden" name="salary_min" :value="loVal">
-                        <input type="hidden" name="salary_max" :value="hiVal">
+                        <input type="hidden" name="salary_min" :value="loVal" :disabled="loVal <= 0">
+                        <input type="hidden" name="salary_max" :value="hiVal" :disabled="hiVal >= 1000000">
                     </div>
-                    <script>
-                    function salarySlider(initLo, initHi) {
-                        var MAX = 1000000;
-                        function valToPos(v) {
-                            v = Math.max(0, Math.min(MAX, v));
-                            return (v / MAX) * 1000;
-                        }
-                        function posToVal(p) {
-                            p = Math.max(0, Math.min(1000, p));
-                            var v = (p / 1000) * MAX;
-                            // finer steps near the bottom for better UX
-                            if (v < 50000) return Math.round(v / 500) * 500;
-                            if (v < 200000) return Math.round(v / 2000) * 2000;
-                            if (v < 600000) return Math.round(v / 5000) * 5000;
-                            return Math.round(v / 10000) * 10000;
-                        }
-                        function fmt(v) {
-                            v = +v;
-                            if (v <= 0) return '$0';
-                            if (v >= MAX) return '$1M+';
-                            if (v >= 100000) return '$' + Math.round(v / 1000) + 'k';
-                            if (v >= 1000) return '$' + (v / 1000).toFixed(1).replace(/\\.0$/, '') + 'k';
-                            return '$' + v.toLocaleString('en-US');
-                        }
-                        var initialLoPos = valToPos(initLo);
-                        var initialHiPos = valToPos(initHi);
-                        return {
-                            loPos: initialLoPos,
-                            hiPos: initialHiPos,
-                            loVal: posToVal(initialLoPos),
-                            hiVal: posToVal(initialHiPos),
-                            dragging: null,
-                            get loPct() { return (this.loPos / 1000) * 100; },
-                            get hiPct() { return (this.hiPos / 1000) * 100; },
-                            updateVals() {
-                                this.loVal = posToVal(this.loPos);
-                                this.hiVal = posToVal(this.hiPos);
-                            },
-                            startDrag(evt) {
-                                this.setFromEvent(evt, true);
-                                const move = e => this.setFromEvent(e, false);
-                                const up = () => {
-                                    this.dragging = null;
-                                    window.removeEventListener('pointermove', move);
-                                    window.removeEventListener('pointerup', up);
-                                };
-                                window.addEventListener('pointermove', move);
-                                window.addEventListener('pointerup', up);
-                            },
-                            setFromEvent(evt, pickHandle) {
-                                if (!this.$refs.salaryTrack) return;
-                                const rect = this.$refs.salaryTrack.getBoundingClientRect();
-                                const pct = Math.min(1, Math.max(0, (evt.clientX - rect.left) / rect.width));
-                                const pos = pct * 1000;
-                                if (pickHandle || !this.dragging) {
-                                    const distLo = Math.abs(pos - this.loPos);
-                                    const distHi = Math.abs(pos - this.hiPos);
-                                    this.dragging = distLo <= distHi ? 'lo' : 'hi';
-                                }
-                                if (this.dragging === 'lo') {
-                                    this.loPos = Math.min(pos, this.hiPos);
-                                } else {
-                                    this.hiPos = Math.max(pos, this.loPos);
-                                }
-                                this.updateVals();
-                            },
-                            formatLabel(v) {
-                                return fmt(v);
-                            },
-                            rangeLabel() {
-                                if (this.loVal <= 0 && this.hiVal >= MAX) return '$0 – $1M+';
-                                return fmt(this.loVal) + ' – ' + fmt(this.hiVal);
-                            }
+                    <p class="help mt-2">Includes annual USD ranges that reach your target. Starting pay may be lower.</p>
+                    <div class="mt-3 flex justify-end">
+                        <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+                    </div>
+                </div>
+            </div>
+            <script>
+            function salarySlider(initLo, initHi) {
+                var MAX = 1000000;
+                function valToPos(v) {
+                    v = Math.max(0, Math.min(MAX, v));
+                    return (v / MAX) * 1000;
+                }
+                function posToVal(p) {
+                    p = Math.max(0, Math.min(1000, p));
+                    var v = (p / 1000) * MAX;
+                    // finer steps near the bottom for better UX
+                    if (v < 50000) return Math.round(v / 500) * 500;
+                    if (v < 200000) return Math.round(v / 2000) * 2000;
+                    if (v < 600000) return Math.round(v / 5000) * 5000;
+                    return Math.round(v / 10000) * 10000;
+                }
+                function fmt(v) {
+                    v = +v;
+                    if (v <= 0) return '$0';
+                    if (v >= MAX) return '$1M+';
+                    if (v >= 100000) return '$' + Math.round(v / 1000) + 'k';
+                    if (v >= 1000) return '$' + (v / 1000).toFixed(1).replace(/\\.0$/, '') + 'k';
+                    return '$' + v.toLocaleString('en-US');
+                }
+                var initialLoPos = valToPos(initLo);
+                var initialHiPos = valToPos(initHi);
+                return {
+                    open: false,
+                    pressedInside: false,
+                    loPos: initialLoPos,
+                    hiPos: initialHiPos,
+                    loVal: posToVal(initialLoPos),
+                    hiVal: posToVal(initialHiPos),
+                    dragging: null,
+                    get loPct() { return (this.loPos / 1000) * 100; },
+                    get hiPct() { return (this.hiPos / 1000) * 100; },
+                    isActive() { return this.loVal > 0 || this.hiVal < MAX; },
+                    updateVals() {
+                        this.loVal = posToVal(this.loPos);
+                        this.hiVal = posToVal(this.hiPos);
+                    },
+                    startDrag(evt) {
+                        this.setFromEvent(evt, true);
+                        const move = e => this.setFromEvent(e, false);
+                        const up = () => {
+                            this.dragging = null;
+                            window.removeEventListener('pointermove', move);
+                            window.removeEventListener('pointerup', up);
                         };
+                        window.addEventListener('pointermove', move);
+                        window.addEventListener('pointerup', up);
+                    },
+                    setFromEvent(evt, pickHandle) {
+                        if (!this.$refs.salaryTrack) return;
+                        const rect = this.$refs.salaryTrack.getBoundingClientRect();
+                        const pct = Math.min(1, Math.max(0, (evt.clientX - rect.left) / rect.width));
+                        const pos = pct * 1000;
+                        if (pickHandle || !this.dragging) {
+                            const distLo = Math.abs(pos - this.loPos);
+                            const distHi = Math.abs(pos - this.hiPos);
+                            this.dragging = distLo <= distHi ? 'lo' : 'hi';
+                        }
+                        if (this.dragging === 'lo') {
+                            this.loPos = Math.min(pos, this.hiPos);
+                        } else {
+                            this.hiPos = Math.max(pos, this.loPos);
+                        }
+                        this.updateVals();
+                    },
+                    formatLabel(v) {
+                        return fmt(v);
+                    },
+                    rangeLabel() {
+                        if (this.loVal <= 0 && this.hiVal >= MAX) return '$0 – $1M+';
+                        return fmt(this.loVal) + ' – ' + fmt(this.hiVal);
                     }
-                    </script>
-                </div>
-            </div>
-        </form>
+                };
+            }
+            </script>
 
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm text-white/70 relative z-10">
-            <div>
-                Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} roles
-            </div>
-            <div class="flex items-center gap-4">
+            <!-- Apply directly toggle chip -->
+            <label for="filter-direct-apply" class="col-span-2 inline-flex h-9 cursor-pointer items-center gap-2 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:col-span-1" title="Roles with applications handled on Remote Impact">
+                <input id="filter-direct-apply" type="checkbox" name="direct_apply" value="1"
+                       {% if filters.direct_apply %}checked{% endif %}
+                       class="checkbox h-3.5 w-3.5">
+                Apply directly
+            </label>
+
+            {% if search_query or current_categories or current_types or filters.skills or filters.educations or filters.experiences or filters.countries or filters.posted or filters.salary_min or filters.salary_max or filters.direct_apply %}
+            <a href="{% url 'jobs:job_list' %}" class="col-span-2 inline-flex h-9 items-center justify-center px-2 text-[13px] text-muted-foreground hover:text-foreground md:col-span-1">Clear all</a>
+            {% endif %}
+        </div>
+    </form>
+
+    <div class="mt-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-1">
+        <p class="text-[13px] text-muted-foreground">
+            <span class="tabular-nums text-foreground">{{ page_obj.paginator.count }}</span> open role{{ page_obj.paginator.count|pluralize }}{% if page_obj.paginator.num_pages > 1 %}<span class="hidden sm:inline"> · showing <span class="tabular-nums">{{ page_obj.start_index }}–{{ page_obj.end_index }}</span></span>{% endif %}
+        </p>
+        <div class="flex items-center gap-2">
+            {% if seeker_profile %}
+            <a href="{% url 'jobs:my_matches' %}" class="btn btn-ghost btn-sm">My matches</a>
+            {% endif %}
+            <label for="sort-select" class="sr-only">Sort jobs</label>
+            <select id="sort-select" name="sort" class="select h-8 w-auto rounded-full py-0 pl-3.5 text-[13px] font-medium">
                 {% if seeker_profile %}
-                <a href="{% url 'jobs:my_matches' %}" class="text-sm font-medium text-brand-300 hover:text-brand-200 flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
-                    My Matches
-                </a>
+                <option value="best-match" {% if sort == 'best-match' %}selected{% endif %}>Best for you</option>
                 {% endif %}
-                <div class="flex items-center gap-2">
-                    <span class="text-white/50 text-sm">Sort:</span>
-                    <select id="sort-select" name="sort" class="border border-white/10 bg-white/5 rounded-lg py-2 px-3 focus:ring-brand-300 focus:border-transparent text-white text-sm">
-                        <option value="date" {% if sort == 'date' or not sort %}selected{% endif %}>Newest</option>
-                        {% if search_query %}
-                        <option value="relevance" {% if sort == 'relevance' %}selected{% endif %}>Most Relevant</option>
-                        {% endif %}
-                        <option value="salary-high" {% if sort == 'salary-high' %}selected{% endif %}>Salary (high to low)</option>
-                        <option value="salary-low" {% if sort == 'salary-low' %}selected{% endif %}>Salary (low to high)</option>
-                    </select>
-                </div>
+                <option value="date" {% if sort == 'date' or not sort %}selected{% endif %}>Newest</option>
+                {% if search_query %}
+                <option value="relevance" {% if sort == 'relevance' %}selected{% endif %}>Most relevant</option>
+                {% endif %}
+                <option value="salary-high" {% if sort == 'salary-high' %}selected{% endif %}>Salary (high to low)</option>
+                <option value="salary-low" {% if sort == 'salary-low' %}selected{% endif %}>Salary (low to high)</option>
+            </select>
+        </div>
+    </div>
+
+    <section class="relative z-10 mt-3" aria-label="Job results">
+        {% if jobs or sponsored_jobs %}
+        <ul class="list-surface">
+            {% include "jobs/partials/sponsored_jobs.html" %}
+            {% for job in jobs %}
+            <li>{% include "jobs/partials/job_row.html" %}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% if not jobs %}
+        <div class="card p-6 sm:p-8{% if sponsored_jobs %} mt-4{% endif %}">
+            <h2 class="section-title">No roles match these filters</h2>
+            <p class="mt-1.5 max-w-xl text-sm text-muted-foreground">Try removing a filter or using a broader search term. You can also set up a job alert and we will email you when a matching role is posted.</p>
+            <div class="mt-5 flex flex-wrap gap-2">
+                <a href="{% url 'jobs:job_list' %}" class="btn btn-primary btn-sm">Reset all filters</a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'jobs:job_alerts' %}" class="btn btn-outline btn-sm">Set up a job alert</a>
+                {% else %}
+                <a href="{% url 'account_signup' %}?next={% url 'jobs:job_alerts' %}" class="btn btn-outline btn-sm">Sign up for job alerts</a>
+                {% endif %}
             </div>
         </div>
 
-        <section class="space-y-3 relative z-10" aria-label="Job results">
-            {% if jobs %}
-                {% for job in jobs %}
-                <article class="group relative rounded-2xl border border-white/10 bg-white/[0.045] hover:bg-white/[0.075] hover:border-brand-300/40 transition duration-200 p-4 md:p-5">
-                    <a href="{{ job.get_absolute_url }}" class="absolute inset-0 rounded-2xl" aria-label="View {{ job.title }} at {{ job.organization.name }}"></a>
-                    <div class="relative pointer-events-none flex gap-3 md:gap-4 items-start">
-                    <div class="flex w-11 h-11 md:w-12 md:h-12 rounded-xl bg-white/10 border border-white/10 items-center justify-center text-white font-semibold text-xs md:text-sm shrink-0 overflow-hidden">
-                        {% if job.organization.logo %}
-                        <img src="{{ job.organization.logo.url }}" alt="" loading="lazy" class="w-full h-full object-cover">
-                        {% else %}
-                        {{ job.organization.name|default:"RI"|slice:":2"|upper }}
-                        {% endif %}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="min-w-0">
-                                <div class="flex flex-wrap items-center gap-2 text-xs mb-1.5">
-                                    {% if job.is_fresh %}<span class="font-semibold text-neon">New</span>{% endif %}
-                                    <span class="text-white/50">{{ job.posted_at|timesince|slice:":12" }} ago</span>
-                                    {% if job.is_featured %}<span class="px-2 py-0.5 rounded-full bg-amber-300/10 text-amber-200 border border-amber-300/20">Featured</span>{% endif %}
-                                </div>
-                                <h2 class="text-lg md:text-xl font-semibold text-white leading-snug group-hover:text-neon transition line-clamp-2">{{ job.title }}</h2>
-                                <p class="text-white/65 text-sm mt-0.5 truncate">{{ job.organization.name }}</p>
-                            </div>
-                            <span class="hidden sm:flex w-9 h-9 rounded-full border border-white/10 items-center justify-center text-white/50 group-hover:text-neon group-hover:border-brand-300/40 transition shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 5 7 7-7 7"/></svg>
-                            </span>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-x-3 gap-y-2 mt-3 text-xs md:text-sm text-white/65">
-                            <span class="inline-flex items-center gap-1.5">
-                                <svg class="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2.25c-3.728 0-6.75 3.022-6.75 6.75 0 5.062 6.75 12.75 6.75 12.75s6.75-7.688 6.75-12.75c0-3.728-3.022-6.75-6.75-6.75Zm0 9a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5Z"/></svg>
-                                {{ job.location|default:"Remote" }}
-                            </span>
-                            <span>{{ job.get_job_type_display }}</span>
-                            {% if job.category %}
-                            <span class="px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/10 text-white/75 text-xs">{{ job.category.name }}</span>
-                            {% endif %}
-                            {% if job.salary_min or job.salary_max %}
-                            <span class="text-brand-200 font-medium">{% if job.salary_currency == "GBP" %}£{% elif job.salary_currency == "EUR" %}€{% else %}${% endif %}{% if job.salary_min %}{{ job.salary_min|floatformat:0 }}{% endif %}{% if job.salary_min and job.salary_max %}–{% endif %}{% if job.salary_max %}{{ job.salary_max|floatformat:0 }}{% endif %} {{ job.salary_currency }}</span>
-                            {% endif %}
-                            {% if job.expires_at %}
-                            <span class="{% if job.is_closing_soon %}text-amber-300 font-medium{% else %}text-white/50{% endif %}">Closes {{ job.expires_at|date:"M j" }}</span>
-                            {% endif %}
-                            {% if job.is_entry_level_friendly %}<span class="text-emerald-300">Entry-level friendly</span>{% endif %}
-                            {% if job.source == 'manual' %}<span class="text-brand-200">Apply on Remote Impact</span>{% endif %}
-                        </div>
-                    </div>
-                    </div>
-                    </div>
-                </article>
+        {% if recommended_orgs %}
+        <div class="mt-8">
+            <div class="px-1">
+                <h3 class="section-title">Organizations to watch</h3>
+                <p class="mt-0.5 text-[13px] text-muted-foreground">Organizations with open roles related to your search.</p>
+            </div>
+            <ul class="list-surface mt-3 grid sm:grid-cols-2 lg:grid-cols-3">
+                {% for org in recommended_orgs %}
+                <li>
+                    <a href="{% url 'jobs:organization_profile' org.slug %}" class="flex items-baseline justify-between gap-4 rounded-xl px-3.5 py-2.5 text-sm transition-colors hover:bg-muted">
+                        <span class="truncate font-medium text-foreground">{{ org.name }}</span>
+                        <span class="shrink-0 tabular-nums text-[13px] text-muted-foreground">{{ org.job_count }} open</span>
+                    </a>
+                </li>
                 {% endfor %}
-            {% else %}
-                <!-- No Results Section -->
-                <div class="rounded-3xl border border-white/10 bg-card-gradient backdrop-blur text-white p-8 md:p-12 space-y-8">
-                    <!-- Main Message -->
-                    <div class="text-center">
-                        <div class="text-5xl mb-4">🔍</div>
-                        {% if user.is_authenticated %}
-                            <h3 class="text-2xl md:text-3xl font-semibold mb-3">We couldn't find an exact match right now</h3>
-                            <p class="text-white/70 max-w-xl mx-auto">Don't worry — we'll notify you as soon as something relevant pops up. Keep an eye on your inbox!</p>
-                        {% else %}
-                            <h3 class="text-2xl md:text-3xl font-semibold mb-3">No jobs here yet</h3>
-                            <p class="text-white/70 max-w-xl mx-auto mb-6">Want us to email you when a matching role pops up?</p>
-                            
-                            <!-- Email Signup Form -->
-                            <form action="{% url 'jobs:job_alerts' %}" method="get" class="max-w-md mx-auto flex flex-col sm:flex-row gap-3">
-                                <a href="{% url 'account_signup' %}?next={% url 'jobs:job_alerts' %}" 
-                                   class="flex-1 px-6 py-3 rounded-full bg-brand-300 text-twilight-900 font-semibold hover:bg-neon transition text-center">
-                                    Sign up for job alerts
-                                </a>
-                            </form>
-                        {% endif %}
-                    </div>
-
-                    <!-- Recommended Organizations -->
-                    {% if recommended_orgs %}
-                    <div class="border-t border-white/10 pt-8">
-                        <h4 class="text-lg font-semibold text-center mb-2">Organizations to watch</h4>
-                        <p class="text-white/60 text-sm text-center mb-6">Based on your search, these organizations might be worth following</p>
-                        
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {% for org in recommended_orgs %}
-                            <a href="{% url 'jobs:organization_profile' org.slug %}" 
-                               class="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition group">
-                                <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-white font-semibold text-sm shrink-0">
-                                    {% if org.logo %}
-                                    <img src="{{ org.logo.url }}" alt="{{ org.name }}" class="w-8 h-8 rounded object-cover">
-                                    {% else %}
-                                    {{ org.name|slice:":2"|upper }}
-                                    {% endif %}
-                                </div>
-                                <div class="min-w-0">
-                                    <p class="font-medium text-white truncate group-hover:text-neon transition">{{ org.name }}</p>
-                                    <p class="text-xs text-white/50">{{ org.job_count }} open role{{ org.job_count|pluralize }}</p>
-                                </div>
-                            </a>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <!-- Reset Filters Button -->
-                    <div class="text-center pt-4">
-                        <a href="{% url 'jobs:job_list' %}" class="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-white/20 text-white/80 font-medium hover:bg-white/5 transition">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
-                            Reset all filters
-                        </a>
-                    </div>
-                </div>
-            {% endif %}
-        </section>
-
-        <!-- Job Alert CTA -->        <div class="bg-gradient-to-r from-brand-50 to-purple-50 rounded-2xl md:rounded-3xl p-4 md:p-6 border border-brand-100 flex flex-col sm:flex-row items-center justify-between gap-4">            <div class="flex items-center gap-3">                <span class="text-2xl">🔔</span>                <div>                    <p class="font-bold text-gray-900">Get alerts for jobs like these</p>                    <p class="text-sm text-gray-600">We'll email you when new matching jobs are posted.</p>                </div>            </div>            <a href="{% url 'jobs:job_alerts' %}" class="px-5 py-2.5 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition shadow-sm whitespace-nowrap text-sm">Create Alert</a>        </div>
-        {% if page_obj.has_other_pages %}
-        <div class="pt-10 flex justify-center">
-            <nav class="inline-flex items-center gap-2 bg-white rounded-full p-2 shadow-sm border border-gray-200">
-                {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' and value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="px-5 py-2.5 rounded-full text-gray-700 hover:bg-gray-100 transition font-medium">Previous</a>
-                {% endif %}
-                <span class="px-5 py-2.5 rounded-full bg-brand-300 text-gray-900 font-semibold">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-                {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' and value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="px-5 py-2.5 rounded-full text-gray-700 hover:bg-gray-100 transition font-medium">Next</a>
-                {% endif %}
-            </nav>
+            </ul>
         </div>
         {% endif %}
+        {% endif %}
+    </section>
+
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-6 flex items-center justify-center gap-2" aria-label="Pagination">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if pagination_query %}&amp;{{ pagination_query }}{% endif %}" class="btn btn-secondary btn-sm" rel="prev">Previous</a>
+        {% endif %}
+        <span class="px-2 text-[13px] tabular-nums text-muted-foreground" aria-current="page">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if pagination_query %}&amp;{{ pagination_query }}{% endif %}" class="btn btn-secondary btn-sm" rel="next">Next</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+
+    <div class="surface mt-10 flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <div>
+            <p class="text-sm font-medium text-foreground">Get new matches by email</p>
+            <p class="mt-0.5 text-[13px] text-muted-foreground">Describe the role you want. Job Scout checks new listings and emails you the ones that fit.</p>
+        </div>
+        <a href="{% if show_job_scout_nudge %}{{ job_scout_nudge_url }}{% else %}{% url 'jobs:job_alerts' %}{% endif %}" class="btn btn-outline btn-sm w-full shrink-0 sm:w-auto" data-track="job_scout_job_list_footer" data-track-category="job_scout_acquisition">Set up Job Scout</a>
     </div>
-</section>
+</div>
 {% endblock %}
+
 
 {% block extra_js %}
 <script>
     // Filter toggle for mobile
     const filterToggleBtn = document.getElementById('filter-toggle-btn');
     const filtersSection = document.getElementById('filters-section');
-    const filterChevron = document.getElementById('filter-chevron');
 
     if (filterToggleBtn && filtersSection) {
         filterToggleBtn.addEventListener('click', function() {
-            filtersSection.classList.toggle('hidden');
-            filtersSection.classList.toggle('block');
-            filterChevron.classList.toggle('rotate-180');
+            const isOpen = filtersSection.classList.toggle('grid');
+            filtersSection.classList.toggle('hidden', !isOpen);
+            filterToggleBtn.setAttribute('aria-expanded', String(isOpen));
+            filterToggleBtn.classList.toggle('!bg-foreground', isOpen);
+            filterToggleBtn.classList.toggle('!text-background', isOpen);
         });
     }
 

@@ -1,14 +1,12 @@
 <!-- Step 5: Skills -->
 <div>
-    <div class="text-center mb-6">
-        <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-            What are your superpowers?
-        </h2>
-        <p class="text-gray-600">Select 3-15 skills that you bring to the table</p>
+    <div class="mb-6">
+        <h1 class="text-lg font-semibold tracking-tight text-foreground sm:text-xl">Which skills do you bring?</h1>
+        <p class="mt-1 text-sm text-muted-foreground">Pick between 3 and 15.</p>
     </div>
 
     {% if errors.skills %}
-    <div class="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-center">
+    <div class="alert alert-destructive mb-6" role="alert">
         {{ errors.skills }}
     </div>
     {% endif %}
@@ -18,86 +16,68 @@
         {% csrf_token %}
 
         <!-- Search/filter -->
-        <div class="mb-6">
-            <input type="text"
+        <div class="mb-5">
+            <label for="skill-search" class="sr-only">Search skills</label>
+            <input type="search"
                    id="skill-search"
-                   placeholder="Search skills..."
+                   placeholder="Search skills"
                    autocomplete="off"
-                   class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition">
+                   class="input">
         </div>
 
         <!-- Skills by category (scrollable) -->
-        <div class="max-h-[50vh] md:max-h-96 overflow-y-auto mb-6 space-y-6 pr-2" id="skills-container">
+        <div class="mb-4 max-h-[50vh] space-y-6 overflow-y-auto pr-2 md:max-h-96" id="skills-container">
             {% for category_label, skills in categorized_skills.items %}
-            <div class="skill-category" data-category="{{ category_label|slugify }}">
-                <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">{{ category_label }}</h4>
+            <fieldset class="skill-category" data-category="{{ category_label|slugify }}">
+                <legend class="mb-2 text-[13px] font-medium text-muted-foreground">{{ category_label }}</legend>
                 <div class="flex flex-wrap gap-2">
                     {% for slug, label in skills %}
-                    <div class="skill-item inline-block" data-skill="{{ label|lower }}">
+                    <label class="skill-item relative inline-block cursor-pointer" data-skill="{{ label|lower }}">
                         <input type="checkbox"
                                name="skills"
                                value="{{ slug }}"
                                {% if slug in selected_skills %}checked{% endif %}
-                               class="skill-checkbox"
-                               hidden>
-                        <span onclick="toggleSkill(this)"
-                              class="inline-block px-3 py-1.5 text-sm rounded-full border-2 cursor-pointer transition {% if slug in selected_skills %}border-brand-500 bg-brand-50 text-brand-700{% else %}border-gray-200 bg-white hover:bg-gray-50{% endif %}">
+                               class="skill-checkbox peer sr-only"
+                               onchange="updateSkillCount()">
+                        <span class="inline-block rounded-full bg-muted px-3 py-1.5 text-[13px] text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
                             {{ label }}
                         </span>
-                    </div>
+                    </label>
                     {% endfor %}
                 </div>
-            </div>
+            </fieldset>
             {% endfor %}
         </div>
 
-        <div class="text-center text-sm mb-6">
-            <span id="skill-count" class="text-gray-500">
-                <span id="count-number">{{ selected_skills|length }}</span> skills selected
+        <p class="text-sm tabular-nums" aria-live="polite">
+            <span id="skill-count" class="text-muted-foreground">
+                <span id="count-number">{{ selected_skills|length }}</span> selected
             </span>
-            <span class="text-gray-400">(3-15 required)</span>
-        </div>
+            <span class="text-muted-foreground">(3 to 15)</span>
+        </p>
 
-        <div class="flex justify-between items-center pt-4 border-t border-gray-100">
+        <div class="mt-8 flex items-center justify-between">
             <a href="{% url 'jobs:impact_wizard_step' 'experience' %}"
                hx-get="{% url 'jobs:impact_wizard_step' 'experience' %}"
                hx-target="#wizard-content"
                hx-swap="innerHTML"
-               class="text-gray-500 hover:text-gray-700 font-medium">
-                <svg class="inline-block w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path>
-                </svg>
+               class="btn btn-ghost">
                 Back
             </a>
-            <button type="submit"
-                    class="bg-brand-300 hover:bg-brand-400 text-gray-900 font-bold py-3 px-8 rounded-full shadow-lg transition">
+            <button type="submit" class="btn btn-primary">
                 Continue
-                <svg class="inline-block w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                </svg>
             </button>
         </div>
     </form>
 </div>
 
 <script>
-function toggleSkill(span) {
-    var checkbox = span.parentElement.querySelector('.skill-checkbox');
-    checkbox.checked = !checkbox.checked;
-    if (checkbox.checked) {
-        span.className = 'inline-block px-3 py-1.5 text-sm rounded-full border-2 cursor-pointer transition border-brand-500 bg-brand-50 text-brand-700';
-    } else {
-        span.className = 'inline-block px-3 py-1.5 text-sm rounded-full border-2 cursor-pointer transition border-gray-200 bg-white hover:bg-gray-50';
-    }
-    updateSkillCount();
-}
-
 function updateSkillCount() {
     var count = document.querySelectorAll('.skill-checkbox:checked').length;
     var countNum = document.getElementById('count-number');
     var countEl = document.getElementById('skill-count');
     if (countNum) countNum.textContent = count;
-    if (countEl) countEl.className = (count < 3 || count > 15) ? 'text-red-500' : 'text-gray-500';
+    if (countEl) countEl.className = (count < 3 || count > 15) ? 'font-medium text-destructive' : 'text-muted-foreground';
 }
 
 (function() {

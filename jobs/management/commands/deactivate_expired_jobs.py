@@ -9,7 +9,6 @@ Usage:
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from datetime import timedelta
 
 from jobs.models import Job
 
@@ -26,24 +25,27 @@ class Command(BaseCommand):
         parser.add_argument(
             "--stale-days",
             type=int,
-            default=180,
+            default=Job.PUBLIC_STALE_DAYS,
             help="Deactivate active jobs without expires_at after this many days",
         )
 
     def handle(self, *args, **options):
+        if options["stale_days"] < 1:
+            from django.core.management.base import CommandError
+            raise CommandError("stale-days must be positive")
         dry_run = options["dry_run"]
         now = timezone.now()
-        stale_cutoff = now - timedelta(days=options["stale_days"])
 
         # Find jobs that should no longer be public/indexable.
         expired_jobs = Job.objects.filter(
             is_active=True,
             expires_at__lt=now,
         )
+        # Ingestion sightings are freshness evidence, not opening verification.
         stale_jobs = Job.objects.filter(
-            is_active=True,
-            expires_at__isnull=True,
-            posted_at__lt=stale_cutoff,
+            is_active=True, expires_at__isnull=True,
+        ).exclude(
+            Job.availability_filter(now=now, stale_days=options["stale_days"], include_quality=False)
         )
 
         count = expired_jobs.count() + stale_jobs.count()

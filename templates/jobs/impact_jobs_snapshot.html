@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Does Remote Mean Worldwide? Remote Impact Jobs Data{% endblock %}
+{% block meta_description %}A dated analysis of current remote impact jobs, including how many explicitly accept worldwide applicants, recent posting volume, sources, domains, and data coverage.{% endblock %}
+{% block og_title %}Remote does not always mean worldwide{% endblock %}
+{% block og_description %}See how many current remote impact jobs explicitly advertise worldwide eligibility, based on a transparent, dated catalogue snapshot.{% endblock %}
+{% block twitter_title %}Remote does not always mean worldwide{% endblock %}
+{% block twitter_description %}A transparent, dated look at worldwide eligibility across current remote impact jobs.{% endblock %}
+{% block canonical %}{{ SITE_URL }}{% url 'jobs:impact_jobs_snapshot' %}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "Remote Impact Jobs Market Snapshot",
+  "description": "A dated snapshot of current remote jobs across climate, global health, AI safety, nonprofits, and social impact.",
+  "url": "{{ SITE_URL }}{% url 'jobs:impact_jobs_snapshot' %}",
+  "creator": {"@type": "Organization", "name": "Remote Impact", "url": "{{ SITE_URL }}"},
+  "dateModified": "{{ snapshot_updated_at|date:'c' }}",
+  "temporalCoverage": "{{ snapshot_date|date:'Y-m-d' }}",
+  "isAccessibleForFree": true
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container py-8 sm:py-10">
+  <header class="page-header max-w-3xl">
+    <p class="kicker">Remote impact jobs index</p>
+    <h1 class="page-title mt-1">What does the remote impact jobs market look like?</h1>
+    <p class="page-lede">A dated snapshot of the roles Remote Impact currently tracks, for job seekers, researchers and career communities who want to see where remote impact hiring stands.</p>
+    <p class="mt-3 text-[13px] tabular-nums text-muted-foreground">Updated {{ snapshot_date|date:"F j, Y" }} · {{ active_count|intcomma }} current roles</p>
+  </header>
+
+  <dl class="grid gap-3 sm:grid-cols-3">
+    <div class="stat"><dd class="stat-value">{{ active_count|intcomma }}</dd><dt class="stat-label">Current roles</dt></div>
+    <div class="stat"><dd class="stat-value">{{ last_7_days|intcomma }}</dd><dt class="stat-label">Posted in the last 7 days</dt></div>
+    <div class="stat"><dd class="stat-value">{{ last_30_days|intcomma }}</dd><dt class="stat-label">Posted in the last 30 days</dt></div>
+  </dl>
+
+  <section class="section scroll-mt-24" id="remote-scope" aria-labelledby="remote-scope-heading">
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] lg:items-start">
+      <div class="max-w-[68ch]">
+        <h2 id="remote-scope-heading" class="section-title">Remote does not always mean worldwide</h2>
+        <p class="mt-2 text-[15px] leading-7 text-foreground/85">Only <strong class="font-semibold tabular-nums text-foreground">{{ remote_scope.explicitly_global.percent }}%</strong> of current listings explicitly use worldwide, anywhere, global, or equivalent language. Most carry a named geography that applicants should check before applying.</p>
+        <p class="mt-3 text-sm leading-6 text-muted-foreground">A named geography is a structured catalogue signal, not proof that applicants elsewhere are ineligible. Employers may use it for payroll, time-zone, residency, travel, or team-location requirements. Always confirm the restriction on the original application page.</p>
+        <a href="{{ worldwide_scout_url }}" data-track="snapshot_worldwide_scout" data-track-category="job_scout_conversion" class="btn btn-primary mt-5">Find roles open worldwide <span aria-hidden="true">&rarr;</span></a>
+      </div>
+      <dl class="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+        <div class="stat"><dd class="stat-value">{{ remote_scope.explicitly_global.percent }}%</dd><dt class="mt-0.5 text-sm font-medium text-foreground">Explicitly worldwide</dt><dd class="text-[13px] tabular-nums text-muted-foreground">{{ remote_scope.explicitly_global.count|intcomma }} current listings</dd></div>
+        <div class="stat"><dd class="stat-value">{{ remote_scope.named_geography.percent }}%</dd><dt class="mt-0.5 text-sm font-medium text-foreground">Named geography</dt><dd class="text-[13px] tabular-nums text-muted-foreground">{{ remote_scope.named_geography.count|intcomma }} current listings</dd></div>
+        <div class="stat"><dd class="stat-value">{{ remote_scope.unclear.percent }}%</dd><dt class="mt-0.5 text-sm font-medium text-foreground">Unclear in structured data</dt><dd class="text-[13px] tabular-nums text-muted-foreground">{{ remote_scope.unclear.count|intcomma }} current listings</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    <section class="card p-5 sm:p-6" aria-labelledby="domains-heading">
+      <div class="flex items-baseline justify-between"><h2 id="domains-heading" class="section-title">By impact domain</h2><span class="text-[13px] text-muted-foreground">Top 10</span></div>
+      <div class="mt-4 space-y-3.5">
+        {% for domain in domains %}
+        <div>
+          <div class="flex items-center justify-between gap-4 text-sm"><span class="font-medium text-foreground">{% if domain.slug %}<a href="{% url 'jobs:category_landing' slug=domain.slug %}" class="hover:underline hover:decoration-border hover:underline-offset-4">{{ domain.name }}</a>{% else %}{{ domain.name }}{% endif %}</span><span class="text-[13px] tabular-nums text-muted-foreground">{{ domain.count|intcomma }} · {{ domain.percent }}%</span></div>
+          <div class="mt-1.5 h-1.5 rounded-full bg-muted" aria-hidden="true"><div class="h-1.5 rounded-full bg-foreground/70" style="width: {{ domain.percent }}%;"></div></div>
+        </div>
+        {% empty %}<p class="text-sm text-muted-foreground">No current roles are available for this snapshot. <a href="{% url 'jobs:job_list' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Browse the job board</a></p>{% endfor %}
+      </div>
+    </section>
+
+    <section class="card p-5 sm:p-6" aria-labelledby="sources-heading">
+      <div class="flex items-baseline justify-between"><h2 id="sources-heading" class="section-title">By listing source</h2><span class="text-[13px] text-muted-foreground">Current roles</span></div>
+      <div class="mt-4 space-y-3.5">
+        {% for source in sources %}
+        <div>
+          <div class="flex items-center justify-between gap-4 text-sm"><span class="font-medium text-foreground">{{ source.name }}</span><span class="text-[13px] tabular-nums text-muted-foreground">{{ source.count|intcomma }} · {{ source.percent }}%</span></div>
+          <div class="mt-1.5 h-1.5 rounded-full bg-muted" aria-hidden="true"><div class="h-1.5 rounded-full bg-foreground/40" style="width: {{ source.percent }}%;"></div></div>
+        </div>
+        {% empty %}<p class="text-sm text-muted-foreground">No current roles are available for this snapshot. <a href="{% url 'jobs:job_list' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Browse the job board</a></p>{% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <section class="section" aria-labelledby="coverage-heading">
+    <div class="max-w-[68ch]"><h2 id="coverage-heading" class="section-title">How complete is the catalogue?</h2><p class="mt-2 text-[15px] leading-7 text-muted-foreground">Coverage shows how often a current listing includes useful normalized fields. A missing field does not mean a role is low quality; it means the original posting did not provide enough structured information for that field.</p></div>
+    <dl class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      {% for label, stat in coverage %}
+      <div class="stat"><dd class="stat-value">{{ stat.percent }}%</dd><dt class="mt-0.5 text-sm font-medium text-foreground">{{ label }}</dt><dd class="text-[13px] tabular-nums text-muted-foreground">{{ stat.count|intcomma }} roles</dd></div>
+      {% endfor %}
+    </dl>
+  </section>
+
+  <section class="surface flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6" aria-labelledby="live-data-heading">
+    <div><h2 id="live-data-heading" class="section-title">Live data</h2><p class="mt-1 text-sm text-muted-foreground">Browse current roles, or add the free RSS feed to your community's site or newsletter.</p></div>
+    <div class="flex flex-wrap gap-2"><a href="{% url 'jobs:job_list' %}" data-track="snapshot_browse_jobs" data-track-category="distribution" class="btn btn-primary">Browse jobs</a><a href="{% url 'jobs:partner_resources' %}" data-track="snapshot_partner_page" data-track-category="distribution" class="btn btn-outline">Share the feed</a></div>
+  </section>
+
+  <p class="mt-8 max-w-[68ch] text-[13px] leading-6 text-muted-foreground">Methodology: this page uses the public catalogue returned by Remote Impact’s availability rules at the update time shown above. “Explicitly worldwide” requires worldwide, anywhere, global, or equivalent wording in the normalized country or displayed location. “Named geography” means a normalized country or region is present after excluding explicitly worldwide roles. These labels describe listing data and do not independently verify legal eligibility. Roles can be aggregated from public sources, normalized, deduplicated, or deactivated as source pages change. Percentages are rounded to the nearest whole number and may not add to exactly 100%.</p>
+</div>
+{% endblock %}

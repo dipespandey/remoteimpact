@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load humanize job_extras %}
+
+{% block title %}Feature "{{ job.title }}" | Remote Impact for employers{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+<div class="page-narrow">
+  <a href="{{ job.get_absolute_url }}" class="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground"><span aria-hidden="true">&larr;</span> Back to the listing</a>
+  {% if cancelled %}<div class="alert alert-warning mt-4" role="status"><p>No payment was made. You can try again whenever you are ready.</p></div>{% endif %}
+
+  <header class="page-header mt-4">
+    <h1 class="page-title break-words">Feature {{ job.title|display_title }}</h1>
+    <p class="page-lede">{{ job.organization.name }}{% if job.location %} · {{ job.location }}{% endif %}</p>
+  </header>
+
+  {% if job.is_sponsored %}
+  <div class="alert alert-success mb-6"><p>This listing is featured until <span class="font-medium">{{ job.featured_until|date:"F j, Y" }}</span>. Buying again adds another 30 days.</p></div>
+  {% endif %}
+
+  <div class="grid grid-cols-3 gap-3">
+    <div class="stat"><p class="stat-value">{{ stats.views|default:0|intcomma }}</p><p class="stat-label">Views, last 30 days</p></div>
+    <div class="stat"><p class="stat-value">{{ stats.apply_clicks|default:0|intcomma }}</p><p class="stat-label">Apply clicks</p></div>
+    <div class="stat"><p class="stat-value">{{ stats.scout_deliveries|default:0|intcomma }}</p><p class="stat-label">Sent by AI Scouts</p></div>
+  </div>
+
+  <section class="card mt-6 p-5 sm:p-6">
+    <h2 class="text-base font-semibold text-foreground">What featuring does</h2>
+    <p class="mt-0.5 text-[13px] text-muted-foreground">${{ price }} once, for {{ days }} days. No subscription.</p>
+    <ul class="check-list mt-4 space-y-2 text-sm">
+      <li>A <span class="font-medium">Featured</span> label and a pinned slot at the top of matching search and category pages</li>
+      <li>Shown in the Featured roles section of the homepage</li>
+      <li>Applicants still go straight to your application link</li>
+      <li>A private stats link for every live role at {{ job.organization.name }}</li>
+    </ul>
+    <p class="help mt-4">AI Job Scout matches are based on fit only, never on payment. We do not guarantee applicants or hires.</p>
+    <form method="post" class="mt-6">
+      {% csrf_token %}
+      <input type="hidden" name="source" value="{{ source }}">
+      <button type="submit" class="btn btn-primary btn-lg btn-block" data-track="feature_checkout" data-track-category="employer">Feature for ${{ price }}</button>
+    </form>
+    <p class="help text-center">Secure checkout with Stripe: cards, Apple Pay and Google Pay. You will get a receipt and an invoice.</p>
+  </section>
+</div>
+{% endblock %}

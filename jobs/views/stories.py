@@ -44,12 +44,12 @@ class WantToDoView(View):
 
 class SprintListView(ListView):
     model = Sprint
-    template_name = "sprints/list.html"
+    template_name = "stories/sprints_list.html"
     context_object_name = "sprints"
 
 
 class SprintDetailView(DetailView):
     model = Sprint
-    template_name = "sprints/detail.html"
+    template_name = "stories/sprint_detail.html"
     context_object_name = "sprint"
     pk_url_kwarg = "sprint_id"

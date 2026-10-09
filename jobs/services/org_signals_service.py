@@ -215,7 +215,6 @@ class OrgSignalsService:
             signals.append({
                 "name": "80,000 Hours",
                 "label": "Recommended by 80,000 Hours",
-                "icon": "🎯",
                 "verified": True,
                 "description": "This organization's jobs are listed on 80,000 Hours, "
                                "a leading career guide for high-impact work."
@@ -225,7 +224,6 @@ class OrgSignalsService:
             signals.append({
                 "name": "GiveWell",
                 "label": "GiveWell Top Charity",
-                "icon": "⭐",
                 "verified": True,
                 "description": "Rated as one of the most cost-effective charities "
                                "by GiveWell's rigorous analysis."
@@ -236,7 +234,6 @@ class OrgSignalsService:
             signals.append({
                 "name": "B Corp",
                 "label": f"Certified B Corp{score_str}",
-                "icon": "🌱",
                 "verified": True,
                 "url": org.bcorp_profile_url,
                 "description": "Certified to meet high standards of social and "
@@ -247,7 +244,6 @@ class OrgSignalsService:
             signals.append({
                 "name": "Impact Report",
                 "label": "Publishes Impact Report",
-                "icon": "📊",
                 "verified": False,  # Self-reported
                 "url": org.impact_report_url,
                 "description": "Organization publishes regular impact reports."
@@ -257,7 +253,6 @@ class OrgSignalsService:
             signals.append({
                 "name": "Financials",
                 "label": "Public Financials",
-                "icon": "📄",
                 "verified": False,
                 "url": org.financials_url,
                 "description": "Financial information is publicly available."

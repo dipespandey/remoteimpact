@@ -14,7 +14,9 @@ def unique_slug(model: Type[models.Model], value: str, slug_field: str = 'slug')
     This is intentionally simple but ensures that importers can create
     deterministic slugs without relying on admin prepopulation hooks.
     """
-    base_slug = slugify(value) or str(uuid.uuid4())
+    max_length = getattr(model._meta.get_field(slug_field), "max_length", None) or 255
+    # Leave room for a "-NNN" suffix so de-duplication never overflows the column.
+    base_slug = (slugify(value) or str(uuid.uuid4()))[:max_length - 6].rstrip("-")
     slug = base_slug
     counter = 1
 

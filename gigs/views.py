@@ -1,3 +1,4 @@
+from django.contrib.auth.views import redirect_to_login
 from datetime import timedelta
 
 from django.contrib import messages
@@ -22,6 +23,7 @@ from jobs.models import Organization, UserProfile
 from jobs.utils import unique_slug
 
 from .forms import (
+    EvaluatorInterestForm,
     GigApplicationForm,
     GigForm,
     GigInterestForm,
@@ -44,6 +46,8 @@ from .models import (
 
 class SeekerRequiredMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect_to_login(request.get_full_path())
         try:
             profile = request.user.profile
         except UserProfile.DoesNotExist:
@@ -56,6 +60,8 @@ class SeekerRequiredMixin(LoginRequiredMixin):
 
 class EmployerRequiredMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect_to_login(request.get_full_path())
         try:
             profile = request.user.profile
         except UserProfile.DoesNotExist:
@@ -208,6 +214,8 @@ class GigApplyView(SeekerRequiredMixin, FormView):
     form_class = GigApplicationForm
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect_to_login(request.get_full_path())
         self.gig = get_object_or_404(Gig, slug=kwargs["slug"])
         try:
             profile = request.user.profile
@@ -308,6 +316,8 @@ class ApplicationDetailView(SeekerRequiredMixin, FormView):
     form_class = SubmissionForm
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect_to_login(request.get_full_path())
         self.application = get_object_or_404(
             GigApplication, pk=kwargs["pk"], seeker=request.user
         )
@@ -390,6 +400,8 @@ class GigApplicationListView(EmployerRequiredMixin, TemplateView):
     template_name = "gigs/employer_gig_applications.html"
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect_to_login(request.get_full_path())
         self.gig = get_object_or_404(
             Gig, pk=kwargs["pk"], organization__members=request.user
         )
@@ -406,6 +418,8 @@ class EmployerApplicationReviewView(EmployerRequiredMixin, TemplateView):
     template_name = "gigs/employer_application_review.html"
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect_to_login(request.get_full_path())
         self.application = get_object_or_404(
             GigApplication,
             pk=kwargs["pk"],
@@ -527,3 +541,47 @@ class StaffQueueView(StaffRequiredMixin, TemplateView):
         else:
             messages.error(request, "Unknown action.")
         return redirect("gigs:staff_queue")
+
+
+class AIEvaluationView(FormView):
+    """Waitlist for a small, managed, paid AI-evaluation cohort.
+
+    This is a demand test. Nothing is promised beyond what the page says: adults only,
+    a published pay floor before any work starts, payment for all accepted work, and no
+    graphic or disturbing material in the first projects.
+    """
+
+    template_name = "gigs/ai_evaluation.html"
+    form_class = EvaluatorInterestForm
+    success_url = reverse_lazy("gigs:ai_evaluation")
+
+    def get_initial(self):
+        initial = super().get_initial()
+        if self.request.user.is_authenticated:
+            initial["email"] = self.request.user.email
+        return initial
+
+    def get_form_kwargs(self):
+        from .models import EvaluatorInterest
+
+        kwargs = super().get_form_kwargs()
+        email = (self.request.POST.get("email") or "").strip().lower()
+        if email:
+            # Signing up again updates the existing entry instead of failing on the unique email.
+            kwargs["instance"] = EvaluatorInterest.objects.filter(email=email).first()
+        return kwargs
+
+    def form_valid(self, form):
+        entry = form.save(commit=False)
+        if self.request.user.is_authenticated:
+            entry.user = self.request.user
+        entry.save()
+        messages.success(self.request, "You're on the list. We'll email you before the first projects start.")
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        from .models import EvaluatorInterest
+
+        context = super().get_context_data(**kwargs)
+        context["waitlist_count"] = EvaluatorInterest.objects.count()
+        return context

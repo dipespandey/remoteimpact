@@ -5,16 +5,24 @@ Multi-step onboarding wizard for building a seeker's Impact Profile.
 Supports save/resume functionality with HTMX for smooth transitions.
 """
 
+from urllib.parse import urlencode, urlparse
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import redirect, get_object_or_404
 from django.template.response import TemplateResponse
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import TemplateView
 
 from ..models import SeekerProfile, Category
-from ..constants.skills import SKILLS, SKILL_CATEGORIES, get_categorized_skill_choices
+from ..constants.skills import (
+    SKILLS,
+    SKILL_CATEGORIES,
+    get_categorized_skill_choices,
+    get_skill_label,
+)
 
 
 # Wizard step definitions
@@ -35,6 +43,56 @@ def get_or_create_seeker_profile(user):
     """Get or create a SeekerProfile for the user."""
     profile, created = SeekerProfile.objects.get_or_create(user=user)
     return profile
+
+
+def profile_scout_intent(profile):
+    """Build a concise, editable Scout brief from a completed profile."""
+    parts = []
+    if profile.headline:
+        parts.append(profile.headline.strip())
+
+    skill_labels = [
+        get_skill_label(slug) for slug in (profile.skills or [])[:6]
+    ]
+    if skill_labels:
+        parts.append("skills in " + ", ".join(skill_labels))
+
+    areas = list(profile.impact_areas.values_list("name", flat=True)[:3])
+    if areas:
+        parts.append("impact work in " + ", ".join(areas))
+
+    if profile.remote_preference == SeekerProfile.RemotePreference.REMOTE:
+        parts.insert(0, "remote")
+    elif profile.remote_preference == SeekerProfile.RemotePreference.HYBRID:
+        parts.insert(0, "remote-friendly or hybrid")
+
+    if profile.location_preferences:
+        parts.append("open to " + ", ".join(profile.location_preferences[:3]))
+    if profile.salary_min:
+        parts.append(f"at least ${profile.salary_min:,}")
+
+    intent = " ".join(parts).strip()
+    return intent[:2000] or "Remote impact roles that fit my profile"
+
+
+def profile_scout_url(profile):
+    return f"{reverse('jobs:job_alerts')}?{urlencode({'intent': profile_scout_intent(profile), 'source': 'profile_complete'})}"
+
+
+def profile_completion_url(request):
+    """Return the most useful safe destination after profile completion."""
+    next_url = request.GET.get("next", "").strip()
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        next_path = urlparse(next_url).path
+        if next_path == reverse("jobs:job_list") and "sort=" not in next_url:
+            separator = "&" if "?" in next_url else "?"
+            return f"{next_url}{separator}sort=best-match"
+        return next_url
+    return f"{reverse('jobs:job_list')}?sort=best-match"
 
 
 class ImpactWizardView(LoginRequiredMixin, TemplateView):
@@ -146,11 +204,14 @@ class ImpactWizardStepView(LoginRequiredMixin, View):
                 response = TemplateResponse(
                     request,
                     "jobs/impact_wizard/steps/complete.html",
-                    {"profile": profile},
+                    {
+                        "profile": profile,
+                        "scout_url": profile_scout_url(profile),
+                    },
                 )
                 response["HX-Push-Url"] = reverse("jobs:account")
                 return response
-            return redirect("jobs:account")
+            return redirect(profile_completion_url(request))
 
         # Update wizard progress
         profile.wizard_step = next_index

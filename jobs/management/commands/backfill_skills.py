@@ -9,13 +9,42 @@ Usage:
 
 import asyncio
 import time
+from asgiref.sync import sync_to_async
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 from django.utils import timezone
 from datetime import timedelta
 
 from jobs.models import Job
+from jobs.constants.skills import normalize_skill_slugs
+from jobs.services.job_quality import score_job
 from jobs.services.llm_parser import JobParser
+
+
+def _save_extracted_skills(job, skills):
+    raw_data = dict(job.raw_data or {})
+    quality = dict(raw_data.get("quality_enrichment") or {})
+    quality["skills"] = {
+        "method": "deepseek_v1",
+        "evidence": "DeepSeek extraction from the current title and description",
+    }
+    raw_data["quality_enrichment"] = quality
+    job.skills = skills
+    job.raw_data = raw_data
+    job.quality_score, job.quality_issues = score_job(job)
+    job.save(update_fields=["skills", "raw_data", "quality_score", "quality_issues"])
+
+
+def _mark_no_confident_skill(job, evidence):
+    raw_data = dict(job.raw_data or {})
+    quality = dict(raw_data.get("quality_enrichment") or {})
+    quality["skills"] = {
+        "method": "deepseek_no_confident_match_v1",
+        "evidence": evidence,
+    }
+    raw_data["quality_enrichment"] = quality
+    job.raw_data = raw_data
+    job.save(update_fields=["raw_data"])
 
 
 class Command(BaseCommand):
@@ -43,7 +72,7 @@ class Command(BaseCommand):
             "--provider",
             type=str,
             default=None,
-            help="LLM provider to use: deepseek, groq, or mistral (default: auto-detect)",
+            help="LLM provider to use: deepseek (default: DeepSeek)",
         )
         parser.add_argument(
             "--min-description-length",
@@ -103,14 +132,18 @@ class Command(BaseCommand):
             params=[min_desc_length]
         )
 
-        total_count = queryset.count()
-        self.stdout.write(f"\nFound {total_count} jobs needing skills backfill")
+        jobs_to_process = []
+        for job in queryset.select_related("organization").iterator(chunk_size=200):
+            skill_status = ((job.raw_data or {}).get("quality_enrichment") or {}).get("skills", {})
+            if str(skill_status.get("method") or "").startswith("deepseek_"):
+                continue
+            jobs_to_process.append(job)
+            if limit and len(jobs_to_process) >= limit:
+                break
+        self.stdout.write(f"\nFound {len(jobs_to_process)} jobs needing skills backfill")
 
         if limit:
-            queryset = queryset[:limit]
             self.stdout.write(f"Processing limited to {limit} jobs")
-
-        jobs_to_process = list(queryset.select_related("organization"))
         
         if not jobs_to_process:
             self.stdout.write(self.style.SUCCESS("No jobs to process. All done!"))
@@ -162,7 +195,7 @@ class Command(BaseCommand):
                 payload = {
                     "title": job.title,
                     "organization_name": job.organization.name if job.organization else "Unknown",
-                    "description": job.description or "",
+                    "description": (job.description or "")[:12000],
                 }
                 payloads.append(payload)
                 job_map[i] = job
@@ -187,11 +220,7 @@ class Command(BaseCommand):
                     
                     if skills and isinstance(skills, list) and len(skills) > 0:
                         # Clean and validate skills
-                        clean_skills = [
-                            s.strip().lower().replace(" ", "-") 
-                            for s in skills 
-                            if isinstance(s, str) and s.strip()
-                        ][:15]  # Limit to 15 skills
+                        clean_skills = normalize_skill_slugs(skills)[:15]
                         
                         if clean_skills:
                             if dry_run:
@@ -202,8 +231,9 @@ class Command(BaseCommand):
                                     f"        Would set skills: {clean_skills}"
                                 )
                             else:
-                                job.skills = clean_skills
-                                job.save(update_fields=["skills"])
+                                await sync_to_async(_save_extracted_skills, thread_sensitive=True)(
+                                    job, clean_skills
+                                )
                                 self.stdout.write(
                                     self.style.SUCCESS(
                                         f"  ✓ Job {job.id}: {len(clean_skills)} skills extracted"
@@ -214,10 +244,20 @@ class Command(BaseCommand):
                             self.stdout.write(
                                 f"  - Job {job.id}: No valid skills extracted"
                             )
+                            if not dry_run:
+                                await sync_to_async(_mark_no_confident_skill, thread_sensitive=True)(
+                                    job,
+                                    "DeepSeek found no taxonomy-approved skill in the current posting",
+                                )
                     else:
                         self.stdout.write(
                             f"  - Job {job.id}: No skills returned by LLM"
                         )
+                        if not dry_run:
+                            await sync_to_async(_mark_no_confident_skill, thread_sensitive=True)(
+                                job,
+                                "DeepSeek returned no taxonomy-approved skill for the current posting",
+                            )
 
             except Exception as e:
                 errors += len(batch)

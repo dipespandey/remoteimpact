@@ -50,7 +50,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="bg-[#F3F2EE] min-h-screen py-10 px-4"
+<div class="container py-8 sm:py-10"
   x-data="{
     tab: 'workdays',
 
@@ -176,165 +176,154 @@
     get du_weeks() { return (this.du_calendarDays / 7).toFixed(1); }
   }">
 
-  <div class="max-w-3xl mx-auto">
-    <!-- Header -->
-    <div class="text-center mb-8">
-      <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-3">PTO &amp; Work Days Calculator</h1>
-      <p class="text-lg text-gray-600 max-w-2xl mx-auto">Count work days between dates, calculate PTO accrual, or find how many business days until a deadline — all free, no signup.</p>
+  <header class="max-w-3xl">
+    <h1 class="page-title">PTO and work days calculator</h1>
+    <p class="page-lede">Count work days between two dates, estimate how much PTO you have accrued, or see how many business days are left until a date.</p>
+  </header>
+
+  <div class="mt-8 max-w-3xl">
+    <div class="tabs max-w-full flex-wrap" role="tablist" aria-label="Calculator">
+      <button type="button" role="tab" :aria-selected="tab === 'workdays'" @click="tab = 'workdays'" :class="tab === 'workdays' ? 'tab-active' : ''" class="tab">Work days</button>
+      <button type="button" role="tab" :aria-selected="tab === 'pto'" @click="tab = 'pto'" :class="tab === 'pto' ? 'tab-active' : ''" class="tab">PTO accrual</button>
+      <button type="button" role="tab" :aria-selected="tab === 'countdown'" @click="tab = 'countdown'" :class="tab === 'countdown' ? 'tab-active' : ''" class="tab">Days until</button>
     </div>
 
-    <!-- Tabs -->
-    <div class="flex flex-wrap justify-center gap-2 mb-6">
-      <button @click="tab = 'workdays'" :class="tab === 'workdays' ? 'bg-emerald-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100'" class="px-5 py-2.5 rounded-full font-medium text-sm transition-all">
-        📅 Work Days Counter
-      </button>
-      <button @click="tab = 'pto'" :class="tab === 'pto' ? 'bg-emerald-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100'" class="px-5 py-2.5 rounded-full font-medium text-sm transition-all">
-        🏖️ PTO Accrual
-      </button>
-      <button @click="tab = 'countdown'" :class="tab === 'countdown' ? 'bg-emerald-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100'" class="px-5 py-2.5 rounded-full font-medium text-sm transition-all">
-        ⏳ Days Until
-      </button>
-    </div>
+    <!-- Tab 1: Work days counter -->
+    <div x-show="tab === 'workdays'" class="surface mt-4 p-5 sm:p-6">
+      <h2 class="text-sm font-medium text-foreground">Work days between two dates</h2>
 
-    <!-- ═══════════ Tab 1: Work Days Counter ═══════════ -->
-    <div x-show="tab === 'workdays'" x-transition class="bg-white rounded-2xl shadow-sm p-6 md:p-8">
-      <h2 class="text-xl font-semibold text-gray-900 mb-5">Count Work Days Between Two Dates</h2>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-          <input type="date" x-model="wd_start" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+      <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="min-w-0">
+          <label for="wd-start" class="label">Start date</label>
+          <input type="date" id="wd-start" x-model="wd_start" class="input bg-card">
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-          <input type="date" x-model="wd_end" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+        <div class="min-w-0">
+          <label for="wd-end" class="label">End date</label>
+          <input type="date" id="wd-end" x-model="wd_end" class="input bg-card">
         </div>
       </div>
 
-      <label class="flex items-center gap-2 text-sm text-gray-700 mb-6 cursor-pointer">
-        <input type="checkbox" x-model="wd_excludeHolidays" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+      <label class="mt-4 flex cursor-pointer items-center gap-2 text-sm text-foreground">
+        <input type="checkbox" x-model="wd_excludeHolidays" class="checkbox">
         Exclude US federal holidays
       </label>
 
-      <!-- Results -->
-      <div class="grid grid-cols-3 gap-4">
-        <div class="bg-emerald-50 rounded-xl p-4 text-center">
-          <div class="text-3xl font-bold text-emerald-700" x-text="wd_result"></div>
-          <div class="text-sm text-emerald-600 mt-1">Work Days</div>
+      <div class="mt-6 grid grid-cols-3 gap-2 sm:gap-3" aria-live="polite">
+        <div class="stat min-w-0 bg-card p-3">
+          <div class="stat-value" x-text="wd_result"></div>
+          <div class="stat-label">Work days</div>
         </div>
-        <div class="bg-gray-50 rounded-xl p-4 text-center">
-          <div class="text-3xl font-bold text-gray-700" x-text="wd_calendar"></div>
-          <div class="text-sm text-gray-500 mt-1">Calendar Days</div>
+        <div class="stat min-w-0 bg-card p-3">
+          <div class="stat-value text-muted-foreground" x-text="wd_calendar"></div>
+          <div class="stat-label">Calendar days</div>
         </div>
-        <div class="bg-gray-50 rounded-xl p-4 text-center">
-          <div class="text-3xl font-bold text-gray-700" x-text="wd_weekends"></div>
-          <div class="text-sm text-gray-500 mt-1">Weekend Days</div>
+        <div class="stat min-w-0 bg-card p-3">
+          <div class="stat-value text-muted-foreground" x-text="wd_weekends"></div>
+          <div class="stat-label">Weekend days</div>
         </div>
       </div>
     </div>
 
-    <!-- ═══════════ Tab 2: PTO Accrual Calculator ═══════════ -->
-    <div x-show="tab === 'pto'" x-transition class="bg-white rounded-2xl shadow-sm p-6 md:p-8">
-      <h2 class="text-xl font-semibold text-gray-900 mb-5">PTO Accrual Calculator</h2>
+    <!-- Tab 2: PTO accrual -->
+    <div x-show="tab === 'pto'" class="surface mt-4 p-5 sm:p-6">
+      <h2 class="text-sm font-medium text-foreground">PTO accrual</h2>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Annual PTO Days</label>
-          <input type="number" x-model.number="pto_annual" min="0" max="365" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+      <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="min-w-0">
+          <label for="pto-annual" class="label">PTO days per year</label>
+          <input type="number" id="pto-annual" x-model.number="pto_annual" min="0" max="365" class="input bg-card tabular-nums">
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Accrual Start Date</label>
-          <input type="date" x-model="pto_startDate" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+        <div class="min-w-0">
+          <label for="pto-start" class="label">Accrual start date</label>
+          <input type="date" id="pto-start" x-model="pto_startDate" class="input bg-card">
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Days Used So Far</label>
-          <input type="number" x-model.number="pto_used" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+        <div class="min-w-0">
+          <label for="pto-used" class="label">Days used so far</label>
+          <input type="number" id="pto-used" x-model.number="pto_used" min="0" class="input bg-card tabular-nums">
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Pay Frequency</label>
-          <select x-model="pto_frequency" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+        <div class="min-w-0">
+          <label for="pto-frequency" class="label">Pay frequency</label>
+          <select id="pto-frequency" x-model="pto_frequency" class="select bg-card">
             <option value="biweekly">Biweekly (26 periods)</option>
             <option value="monthly">Monthly (12 periods)</option>
           </select>
         </div>
       </div>
 
-      <!-- Results -->
-      <div class="grid grid-cols-3 gap-4 mt-6">
-        <div class="bg-emerald-50 rounded-xl p-4 text-center">
-          <div class="text-3xl font-bold text-emerald-700" x-text="pto_accrued.toFixed(1)"></div>
-          <div class="text-sm text-emerald-600 mt-1">Days Accrued</div>
+      <div class="mt-6 grid grid-cols-3 gap-2 sm:gap-3" aria-live="polite">
+        <div class="stat min-w-0 bg-card p-3">
+          <div class="stat-value" x-text="pto_accrued.toFixed(1)"></div>
+          <div class="stat-label">Days accrued</div>
         </div>
-        <div class="bg-emerald-50 rounded-xl p-4 text-center">
-          <div class="text-3xl font-bold text-emerald-700" x-text="pto_remaining.toFixed(1)"></div>
-          <div class="text-sm text-emerald-600 mt-1">Days Remaining</div>
+        <div class="stat min-w-0 bg-card p-3">
+          <div class="stat-value" x-text="pto_remaining.toFixed(1)"></div>
+          <div class="stat-label">Days left</div>
         </div>
-        <div class="bg-gray-50 rounded-xl p-4 text-center">
-          <div class="text-3xl font-bold text-gray-700" x-text="pto_accrualRate.toFixed(2)"></div>
-          <div class="text-sm text-gray-500 mt-1">Days / Period</div>
+        <div class="stat min-w-0 bg-card p-3">
+          <div class="stat-value text-muted-foreground" x-text="pto_accrualRate.toFixed(2)"></div>
+          <div class="stat-label">Days per period</div>
         </div>
       </div>
 
-      <p class="text-xs text-gray-400 mt-4 text-center">Accrual is estimated based on elapsed pay periods since your start date.</p>
+      <p class="help mt-4">Estimated from the number of full pay periods since the start date, capped at your yearly allowance.</p>
     </div>
 
-    <!-- ═══════════ Tab 3: Days Until ═══════════ -->
-    <div x-show="tab === 'countdown'" x-transition class="bg-white rounded-2xl shadow-sm p-6 md:p-8">
-      <h2 class="text-xl font-semibold text-gray-900 mb-5">Days Until a Date</h2>
+    <!-- Tab 3: Days until -->
+    <div x-show="tab === 'countdown'" class="surface mt-4 p-5 sm:p-6">
+      <h2 class="text-sm font-medium text-foreground">Days until a date</h2>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Target Date</label>
-          <input type="date" x-model="du_target" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+      <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="min-w-0">
+          <label for="du-target" class="label">Target date</label>
+          <input type="date" id="du-target" x-model="du_target" class="input bg-card">
         </div>
         <div class="flex items-end">
-          <label class="flex items-center gap-2 text-sm text-gray-700 pb-2.5 cursor-pointer">
-            <input type="checkbox" x-model="du_excludeHolidays" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+          <label class="flex cursor-pointer items-center gap-2 pb-2.5 text-sm text-foreground">
+            <input type="checkbox" x-model="du_excludeHolidays" class="checkbox">
             Exclude US federal holidays
           </label>
         </div>
       </div>
 
-      <!-- Results -->
-      <div class="grid grid-cols-3 gap-4 mt-2">
-        <div class="bg-emerald-50 rounded-xl p-4 text-center">
-          <div class="text-3xl font-bold text-emerald-700" x-text="du_workDays"></div>
-          <div class="text-sm text-emerald-600 mt-1">Work Days</div>
+      <div class="mt-6 grid grid-cols-3 gap-2 sm:gap-3" aria-live="polite">
+        <div class="stat min-w-0 bg-card p-3">
+          <div class="stat-value" x-text="du_workDays"></div>
+          <div class="stat-label">Work days</div>
         </div>
-        <div class="bg-gray-50 rounded-xl p-4 text-center">
-          <div class="text-3xl font-bold text-gray-700" x-text="du_calendarDays"></div>
-          <div class="text-sm text-gray-500 mt-1">Calendar Days</div>
+        <div class="stat min-w-0 bg-card p-3">
+          <div class="stat-value text-muted-foreground" x-text="du_calendarDays"></div>
+          <div class="stat-label">Calendar days</div>
         </div>
-        <div class="bg-gray-50 rounded-xl p-4 text-center">
-          <div class="text-3xl font-bold text-gray-700" x-text="du_weeks"></div>
-          <div class="text-sm text-gray-500 mt-1">Weeks</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- FAQ Section -->
-    <div class="mt-10 bg-white rounded-2xl shadow-sm p-6 md:p-8">
-      <h2 class="text-xl font-semibold text-gray-900 mb-5">Frequently Asked Questions</h2>
-      <div class="space-y-5">
-        <div>
-          <h3 class="font-medium text-gray-900">How many work days are in a year?</h3>
-          <p class="text-gray-600 text-sm mt-1">A standard year has 260 work days (52 weeks × 5 weekdays). After removing 11 US federal holidays, you get 249 working days. Leap years may vary by one or two days depending on weekend alignment.</p>
-        </div>
-        <div>
-          <h3 class="font-medium text-gray-900">How is PTO accrual calculated?</h3>
-          <p class="text-gray-600 text-sm mt-1">Divide your annual PTO by the number of pay periods: 26 for biweekly or 12 for monthly. For example, 15 annual PTO days on a biweekly schedule accrues ~0.58 days per pay period.</p>
-        </div>
-        <div>
-          <h3 class="font-medium text-gray-900">Which US federal holidays are excluded?</h3>
-          <p class="text-gray-600 text-sm mt-1">New Year's Day, MLK Jr. Day, Presidents' Day, Memorial Day, Juneteenth, Independence Day, Labor Day, Columbus Day, Veterans Day, Thanksgiving, and Christmas Day — 11 holidays total.</p>
-        </div>
-        <div>
-          <h3 class="font-medium text-gray-900">Is my data stored anywhere?</h3>
-          <p class="text-gray-600 text-sm mt-1">No. All calculations run entirely in your browser. Nothing is sent to any server.</p>
+        <div class="stat min-w-0 bg-card p-3">
+          <div class="stat-value text-muted-foreground" x-text="du_weeks"></div>
+          <div class="stat-label">Weeks</div>
         </div>
       </div>
     </div>
-
   </div>
+
+  <!-- FAQ -->
+  <section class="mt-12 max-w-3xl">
+    <h2 class="section-title">Questions</h2>
+    <div class="surface mt-4 p-1.5">
+      <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span><h3 class="inline">How many work days are in a year?</h3></span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">A standard year has 260 weekdays (52 weeks × 5). Taking out the 11 US federal holidays leaves 249 working days. Some years have one or two more, depending on where weekends fall.</p>
+      </details>
+      <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span><h3 class="inline">How is PTO accrual calculated?</h3></span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">Divide your yearly PTO by the number of pay periods: 26 for biweekly or 12 for monthly. For example, 15 days a year on a biweekly schedule accrues about 0.58 days per pay period.</p>
+      </details>
+      <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span><h3 class="inline">Which US federal holidays are excluded?</h3></span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">New Year's Day, Martin Luther King Jr. Day, Presidents' Day, Memorial Day, Juneteenth, Independence Day, Labor Day, Columbus Day, Veterans Day, Thanksgiving and Christmas Day (11 in total). Observed dates for holidays that fall on a weekend are not shifted.</p>
+      </details>
+      <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span><h3 class="inline">Is my data stored anywhere?</h3></span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">No. The calculations run in your browser and nothing is sent to a server.</p>
+      </details>
+    </div>
+  </section>
+
 </div>
 {% endblock %}

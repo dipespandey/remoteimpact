@@ -1,0 +1,12 @@
+{% load form_tags %}{% with t=field.field.widget.input_type %}
+<div>
+    {% if t == "checkbox" %}
+    <label for="{{ field.id_for_label }}" class="flex items-start gap-2.5 text-sm text-foreground">{{ field|add_class:"checkbox mt-0.5" }}<span>{{ field.label }}</span></label>
+    {% else %}
+    <label for="{{ field.id_for_label }}" class="label">{{ field.label }}</label>
+    {% if t == "select" %}{{ field|add_class:"select" }}{% elif t %}{{ field|add_class:"input" }}{% else %}{{ field|add_class:"textarea" }}{% endif %}
+    {% endif %}
+    {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
+    {% if field.errors %}<p class="field-error">{{ field.errors.0 }}</p>{% endif %}
+</div>
+{% endwith %}

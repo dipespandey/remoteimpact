@@ -1,24 +1,34 @@
-🔔 Job Alert: {{ job_count }} new job{{ job_count|pluralize }}{% if alert_name %} for "{{ alert_name }}"{% endif %}
+{% load job_extras %}
+AI Job Scout: {{ job_count }} job match{{ job_count|pluralize:"es" }}{% if alert_name %} for "{{ alert_name }}"{% endif %}
 
 Hi{% if user.first_name %} {{ user.first_name }}{% endif %},
 
-We found {{ job_count }} new job{{ job_count|pluralize }} matching your alert{% if alert_name %} "{{ alert_name }}"{% endif %}{% if keywords %} for "{{ keywords }}"{% endif %}:
+{% if is_initial and not is_one_time %}Your Job Scout is active.
+
+{% endif %}{% if job_count %}We found {{ job_count }} strong job match{{ job_count|pluralize:"es" }}{% if alert_name %} for "{{ alert_name }}"{% endif %}:{% else %}We did not find a strong current match{% if alert_name %} for "{{ alert_name }}"{% endif %}.{% endif %}
 
 {% for job in jobs %}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {{ job.title }}
 {{ job.organization.name }}
-{{ job.location|default:"Remote" }} • {{ job.get_job_type_display }}{% if job.salary_min and job.salary_max %} • {{ job.salary_currency }}{{ job.salary_min|floatformat:0 }} - {{ job.salary_max|floatformat:0 }}{% endif %}
+{{ job.location|default:"Remote" }} • {{ job.get_job_type_display }}{% if job|compensation_display %} • {{ job|compensation_display }}{% endif %}
+{% if job.scout_reasons %}Why it matched: {{ job.scout_reasons|join:"; " }}{% endif %}
 
-View: {{ site_url }}{{ job.get_absolute_url }}
+View: {{ job.alert_email_url|safe }}
 {% endfor %}
+{% if jobs %}
+Were these useful matches? Rate them here:
+{{ review_url }}
+{% endif %}
 {% if more_jobs > 0 %}
 + {{ more_jobs }} more job{{ more_jobs|pluralize }}...
 {% endif %}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-View all jobs: {{ site_url }}/jobs/
+{% if is_one_time %}Keep this exact search watching for new jobs with Remote Impact Pro (7 days free, then $10/month):
+{{ upgrade_url }}{% else %}View all jobs: {{ site_url }}/jobs/{% endif %}
 Manage your alerts: {{ alerts_url }}
+Track your progress and share selected job picks: {{ site_url }}/shortlist/
 Unsubscribe: {{ unsubscribe_url }}
 
 — Remote Impact Jobs

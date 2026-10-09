@@ -10,7 +10,7 @@ from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from jobs.models import JobAlert
+from jobs.models import AssistantSubscription, JobAlert, JobAlertDelivery
 from jobs.services.email_service import email_service
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             "--frequency",
-            choices=["daily", "weekly"],
+            choices=["instant", "daily", "weekly"],
             default=None,
             help="Only send alerts with this frequency (default: auto based on day)",
         )
@@ -60,7 +60,8 @@ class Command(BaseCommand):
 
         # Optionally filter out recently sent
         if not force:
-            cutoff = timezone.now() - timedelta(hours=20)  # Don't send more than once per 20 hours
+            wait = timedelta(minutes=4) if frequencies == ["instant"] else timedelta(hours=20)
+            cutoff = timezone.now() - wait
             alerts = alerts.filter(
                 models.Q(last_sent_at__isnull=True) | models.Q(last_sent_at__lt=cutoff)
             )
@@ -73,8 +74,17 @@ class Command(BaseCommand):
         error_count = 0
 
         for alert in alerts:
+            subscription = AssistantSubscription.get_or_create_for_user(alert.user)
+            if not subscription.is_pro_active():
+                skipped_count += 1
+                if options["verbosity"] >= 2:
+                    self.stdout.write(
+                        f"  Skipped {alert.user.email}: recurring alerts require Pro"
+                    )
+                continue
+
             # Get matching jobs since last send
-            jobs = list(alert.get_matching_jobs()[:20])
+            jobs = list(alert.get_matching_jobs()[:10])
             
             if not jobs:
                 skipped_count += 1
@@ -95,7 +105,21 @@ class Command(BaseCommand):
                 success = email_service.send_job_alert(alert, jobs)
                 
                 if success:
-                    # Update last_sent_at
+                    JobAlertDelivery.objects.bulk_create(
+                        [
+                            JobAlertDelivery(
+                                alert=alert,
+                                job=job,
+                                match_score=getattr(job, "scout_score", 0),
+                                match_reasons=getattr(job, "scout_reasons", []),
+                            )
+                            for job in jobs
+                        ],
+                        ignore_conflicts=True,
+                    )
+                    from jobs.services import job_stats
+                    for delivered_job in jobs:
+                        job_stats.record(delivered_job.pk, "scout_deliveries", dedupe=False)
                     alert.last_sent_at = timezone.now()
                     alert.save(update_fields=["last_sent_at"])
                     sent_count += 1

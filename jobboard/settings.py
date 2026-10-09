@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -105,9 +106,11 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "jobs.middleware.SocialLoginNetworkErrorMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "jobs.middleware.SecurityHeadersMiddleware",
     "jobs.middleware.ReferralMiddleware",
+    "jobs.middleware.AcquisitionAttributionMiddleware",
     "jobs.middleware.CloudflareEdgeCacheMiddleware",  # Edge caching for global perf
 ]
 
@@ -272,15 +275,11 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 
-# LLM API Keys - Priority: DeepSeek (cheapest) > Groq (free) > Mistral
-# Get DeepSeek key at: https://platform.deepseek.com/api_keys (~$0.14/1M tokens)
+# LLM API Keys. DeepSeek is the single provider for production AI.
+# DeepSeek-V4-Flash is the current low-cost, non-thinking model. Override the
+# model with DEEPSEEK_MODEL only when a task needs a different DeepSeek model.
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
-# Get Groq key at: https://console.groq.com/keys (free tier: 14,400 req/day)
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-# Mistral (fallback, more expensive)
-MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "")
-
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash")
 
 STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
@@ -340,13 +339,28 @@ if REDIS_URL:
 else:
     CACHES = {
         "default": {
-            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            # Shared across Gunicorn workers when Redis is not provisioned.
+            # This keeps matching/search results from being recomputed once per
+            # worker while remaining self-contained for the VPS deployment.
+            "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+            "LOCATION": os.getenv("CACHE_DIR", "/tmp/remoteimpact-cache"),
+            "KEY_PREFIX": "ri",
             "TIMEOUT": 300,
         }
     }
+
+if len(sys.argv) > 1 and sys.argv[1] == "test":
+    # Tests must not share cached LLM/matching results across runs.
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "KEY_PREFIX": "ri-test"}}
 
 # Cache timeouts for different content types (in seconds)
 CACHE_TTL_SHORT = 60  # 1 minute - for frequently changing content
 CACHE_TTL_MEDIUM = 300  # 5 minutes - for job listings
 CACHE_TTL_LONG = 3600  # 1 hour - for static-ish pages like resources
 CACHE_TTL_DAY = 86400  # 24 hours - for rarely changing content
+
+# Scout semantic retrieval uses the existing local model only after warmup.
+SCOUT_SEMANTIC_ENABLED = os.getenv("SCOUT_SEMANTIC_ENABLED", "true").lower() == "true"
+# Explicit opt-in until provider latency/cost and relevance are validated.
+# Evaluated 2026-10-09 on 167 real briefs: irrelevant matches -60%, relevant +10%.
+SCOUT_RERANK_ENABLED = os.getenv("SCOUT_RERANK_ENABLED", "true").lower() == "true"

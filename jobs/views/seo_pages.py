@@ -15,15 +15,34 @@ from datetime import timedelta
 
 from ..models import Job, Category, Organization
 from ..seo_config import (
+    MIN_INDEXABLE_JOBS,
     get_role_page_config, get_all_role_slugs, ROLE_SEO_PAGES,
     get_keyword_page_config, get_all_keyword_slugs, KEYWORD_SEO_PAGES,
 )
 
 
+
+def comparable_salary_jobs(jobs_qs):
+    """Annual USD salaries in a plausible range, so stats never mix currencies.
+
+    Without this, a rupee or hourly figure counted as dollars ("Top salary
+    $4,575,615") and skewed every average on the page.
+    """
+    from django.db.models import Q
+    from jobs.services.job_service import JobService
+    return JobService._annual_salary_jobs(
+        jobs_qs.filter(salary_min__isnull=False)
+        .filter(Q(salary_currency__iexact="USD"))
+        .filter(salary_min__gte=15000, salary_min__lte=600000)
+        .filter(Q(salary_max__isnull=True) | Q(salary_max__lte=800000))
+    )
+
 def visible_jobs():
     now = timezone.now()
     cutoff = now - timedelta(days=180)
-    return Job.objects.filter(is_active=True).exclude(
+    return Job.objects.filter(is_active=True).filter(
+        Q(quality_score__gte=55) | Q(quality_score=0)
+    ).exclude(
         expires_at__lt=now,
     ).exclude(
         expires_at__isnull=True,
@@ -71,6 +90,7 @@ class RoleJobsView(ListView):
         # Page metadata
         context['config'] = self.config
         context['job_count'] = job_count
+        context['index_page'] = job_count >= MIN_INDEXABLE_JOBS and not self.request.GET
         context['h1'] = self.config['h1']
         context['page_title'] = self.config['title'].format(count=job_count)
         context['meta_description'] = self.config['meta_desc'].format(count=job_count)
@@ -94,7 +114,7 @@ class RoleJobsView(ListView):
         ]
         
         # Salary stats
-        jobs_with_salary = jobs_qs.exclude(salary_min__isnull=True)
+        jobs_with_salary = comparable_salary_jobs(jobs_qs)
         if jobs_with_salary.exists():
             from django.db.models import Avg, Min, Max
             salary_stats = jobs_with_salary.aggregate(
@@ -112,9 +132,7 @@ class RoleJobsView(ListView):
             }
         
         # Featured jobs (with salary, recent)
-        context['featured_jobs'] = jobs_qs.exclude(
-            salary_min__isnull=True
-        ).order_by('-salary_max', '-posted_at')[:6]
+        context['featured_jobs'] = comparable_salary_jobs(jobs_qs).order_by('-salary_max', '-posted_at')[:6]
         
         # Related role pages
         context['related_roles'] = [
@@ -247,6 +265,7 @@ class KeywordJobsView(ListView):
         # Page metadata
         context['config'] = self.config
         context['job_count'] = job_count
+        context['index_page'] = job_count >= MIN_INDEXABLE_JOBS and not self.request.GET
         context['h1'] = self.config['h1']
         context['page_title'] = self.config['title'].format(count=job_count)
         context['meta_description'] = self.config['meta_desc'].format(count=job_count)
@@ -271,7 +290,7 @@ class KeywordJobsView(ListView):
         ]
         
         # Salary stats
-        jobs_with_salary = jobs_qs.exclude(salary_min__isnull=True)
+        jobs_with_salary = comparable_salary_jobs(jobs_qs)
         if jobs_with_salary.exists():
             from django.db.models import Avg, Min, Max
             salary_stats = jobs_with_salary.aggregate(
@@ -289,9 +308,7 @@ class KeywordJobsView(ListView):
             }
         
         # Featured jobs (with salary, recent)
-        context['featured_jobs'] = jobs_qs.exclude(
-            salary_min__isnull=True
-        ).order_by('-salary_max', '-posted_at')[:6]
+        context['featured_jobs'] = comparable_salary_jobs(jobs_qs).order_by('-salary_max', '-posted_at')[:6]
         
         # Related keyword pages
         context['related_keywords'] = [
@@ -316,11 +333,11 @@ class KeywordJobsView(ListView):
         return [
             {
                 'question': f'How many {keyword} are available?',
-                'answer': f'There are currently {job_count} {keyword} listed on Remote Impact. New positions are added daily from impact organizations worldwide.',
+                'answer': f'There are currently {job_count} {keyword} listed on Remote Impact. New listings are imported from job boards and employer career pages several times a day.',
             },
             {
                 'question': f'Are all {keyword} fully remote?',
-                'answer': 'Yes, all jobs on Remote Impact are remote-friendly. Some may have geographic restrictions (e.g., US-only) or timezone preferences, which are clearly noted in job descriptions.',
+                'answer': 'Every listing is remote, but many are limited to certain countries or time zones. Check the location line and the original posting before you apply.',
             },
             {
                 'question': f'What qualifications do I need for {keyword}?',

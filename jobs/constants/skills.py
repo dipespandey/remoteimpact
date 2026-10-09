@@ -36,11 +36,13 @@ SKILL_CATEGORIES = [
 SKILLS: List[Skill] = [
     # === Technical & Engineering ===
     Skill("python", "Python", "technical"),
+    Skill("java", "Java", "technical"),
     Skill("javascript", "JavaScript", "technical"),
     Skill("typescript", "TypeScript", "technical"),
     Skill("react", "React", "technical"),
     Skill("nodejs", "Node.js", "technical"),
     Skill("django", "Django", "technical"),
+    Skill("spring-boot", "Spring Boot", "technical"),
     Skill("sql", "SQL", "technical"),
     Skill("aws", "AWS", "technical"),
     Skill("gcp", "Google Cloud", "technical"),
@@ -57,6 +59,29 @@ SKILLS: List[Skill] = [
     Skill("backend", "Backend Development", "technical"),
     Skill("frontend", "Frontend Development", "technical"),
     Skill("fullstack", "Full Stack Development", "technical"),
+    Skill("software-engineering", "Software Engineering", "technical"),
+    Skill("linux", "Linux", "technical"),
+    Skill("networking", "Networking", "technical"),
+    Skill("csharp", "C#", "technical"),
+    Skill("dotnet", ".NET", "technical"),
+    Skill("angular", "Angular", "technical"),
+    Skill("postgresql", "PostgreSQL", "technical"),
+    Skill("fiber-optics", "Fiber Optics", "technical"),
+    Skill("civil-engineering", "Civil Engineering", "technical"),
+    Skill("structural-engineering", "Structural Engineering", "technical"),
+    Skill("electrical-engineering", "Electrical Engineering", "technical"),
+    Skill("mechanical-engineering", "Mechanical Engineering", "technical"),
+    Skill("power-systems", "Power Systems", "technical"),
+    Skill("gis", "GIS", "data"),
+    Skill("lean", "Lean", "technical"),
+    Skill("formal-methods", "Formal Methods", "research"),
+    Skill("sap", "SAP", "technical"),
+    Skill("abap", "ABAP", "technical"),
+    Skill("fiori", "SAP Fiori", "technical"),
+    Skill("prompt-engineering", "Prompt Engineering", "technical"),
+    Skill("electrical-installation", "Electrical Installation", "technical"),
+    Skill("hvac", "HVAC", "technical"),
+    Skill("plumbing", "Plumbing", "technical"),
 
     # === Data & Analytics ===
     Skill("data-analysis", "Data Analysis", "data"),
@@ -77,6 +102,7 @@ SKILLS: List[Skill] = [
     Skill("ab-testing", "A/B Testing", "data"),
     Skill("impact-measurement", "Impact Measurement", "data"),
     Skill("me-evaluation", "M&E / Evaluation", "data"),
+    Skill("analytical-chemistry", "Analytical Chemistry", "research"),
 
     # === Product & Design ===
     Skill("product-management", "Product Management", "product"),
@@ -103,6 +129,8 @@ SKILLS: List[Skill] = [
     Skill("administrative", "Administrative Support", "operations"),
     Skill("crm", "CRM Systems", "operations"),
     Skill("salesforce", "Salesforce", "operations"),
+    Skill("contract-management", "Contract Management", "operations"),
+    Skill("compliance", "Compliance", "operations"),
 
     # === Finance & Accounting ===
     Skill("financial-modeling", "Financial Modeling", "finance"),
@@ -129,6 +157,11 @@ SKILLS: List[Skill] = [
     Skill("video-production", "Video Production", "communications"),
     Skill("graphic-design", "Graphic Design", "communications"),
     Skill("presentation", "Presentation Skills", "communications"),
+    Skill("communication", "Communication", "communications"),
+    Skill("sales", "Sales", "communications"),
+    Skill("customer-service", "Customer Service", "communications"),
+    Skill("marketing", "Marketing", "communications"),
+    Skill("negotiation", "Negotiation", "communications"),
 
     # === Research & Analysis ===
     Skill("research", "Research", "research"),
@@ -142,6 +175,7 @@ SKILLS: List[Skill] = [
     Skill("competitive-analysis", "Competitive Analysis", "research"),
     Skill("cost-benefit-analysis", "Cost-Benefit Analysis", "research"),
     Skill("systems-thinking", "Systems Thinking", "research"),
+    Skill("biology", "Biology", "domain"),
 
     # === Policy & Advocacy ===
     Skill("policy-analysis", "Policy Analysis", "policy"),
@@ -224,6 +258,113 @@ SKILLS: List[Skill] = [
 
 # Create lookup dictionaries for quick access
 SKILLS_BY_SLUG = {skill.slug: skill for skill in SKILLS}
+
+# These are deliberately narrow, role-relevant variants rather than broad
+# semantic guesses. They make recurring import enrichment useful for common
+# wording that does not exactly match a display label.
+SKILL_ALIASES = {
+    "networking": ("network infrastructure", "network devices"),
+    "fiber-optics": ("fiber optic", "fibre optic"),
+    "civil-engineering": ("civil engineer",),
+    "structural-engineering": ("structural engineer",),
+    "electrical-engineering": ("electrical engineer",),
+    "mechanical-engineering": ("mechanical engineer",),
+    "formal-methods": ("formal method", "formal verification"),
+    "sales": (
+        "account manager",
+        "revenue officer",
+        "sales representative",
+        "sales experience",
+        "field sales",
+        "business development",
+        "account executive",
+    ),
+    "power-systems": (
+        "power system",
+        "power engineer",
+        "interconnection studies",
+        "interconnection planning",
+    ),
+    "software-engineering": ("software engineer", "software product"),
+    "machine-learning": ("ml models", "machine learning models"),
+    "customer-service": (
+        "customer service",
+        "customer-centric",
+        "customer centric",
+        "customer support",
+        "customer success",
+    ),
+    "sap": ("sap interface",),
+    "abap": ("abap development",),
+    "fiori": ("sap fiori",),
+    "prompt-engineering": (
+        "prompt engineering",
+        "generative ai prompts",
+        "genai prompts",
+        "prompts for generative ai",
+    ),
+    "electrical-installation": ("electrical fixtures", "led fixtures"),
+    "hvac": ("energy-efficient thermostats",),
+    "plumbing": (
+        "water-saving toilets",
+        "shower heads",
+        "sink faucets",
+        "sink aerators",
+    ),
+    "analytical-chemistry": (
+        "analytical chemistry",
+        "food chemistry",
+        "hplc",
+        "aas",
+        "uv spectrophotometer",
+        "ftir",
+    ),
+    "biology": ("biology expert", "biology-related"),
+}
+
+# Historical model output used several common aliases that are safe to fold
+# into the curated taxonomy. Everything else remains auditable but is not used
+# for matching until it has a canonical representation.
+LEGACY_SKILL_NORMALIZATIONS = {
+    "c#": "csharp",
+    "operations": "operations-management",
+    "business-development": "partnership-development",
+    "legal-research": "research",
+    "volunteer-management": "people-management",
+    "customer-success": "customer-service",
+    "customer-support": "customer-service",
+    "customer-relationship-management": "crm",
+    "client-relationship-management": "crm",
+    "communication": "communication",
+    "communications": "communication",
+    "communications-outreach": "communication",
+    "training": "capacity-building",
+    "facilitation": "capacity-building",
+    "management": "people-management",
+    "technical-writing": "writing",
+    "legal-writing": "writing",
+    "policy": "policy-analysis",
+    "analytics": "data-analysis",
+    "data": "data-analysis",
+    "finance": "financial-analysis",
+    "quality-assurance": "testing",
+    "customer-success-management": "customer-service",
+    "ci-cd": "cicd",
+    "devops": "cicd",
+}
+
+
+def normalize_skill_slugs(values) -> list[str]:
+    """Return only curated skill slugs, folding high-confidence legacy aliases."""
+    normalized = []
+    for value in values or ():
+        if not isinstance(value, str):
+            continue
+        slug = value.strip().lower().replace("_", "-").replace(" ", "-")
+        slug = LEGACY_SKILL_NORMALIZATIONS.get(slug, slug)
+        if slug in SKILLS_BY_SLUG and slug not in normalized:
+            normalized.append(slug)
+    return normalized
 SKILLS_BY_CATEGORY = {}
 for skill in SKILLS:
     if skill.category not in SKILLS_BY_CATEGORY:

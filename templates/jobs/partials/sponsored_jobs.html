@@ -1,0 +1,4 @@
+{# Featured (paid) roles pinned to the top of a results list. Emits <li> items: include it inside the results <ul class="list-surface">. #}
+{% for job in sponsored_jobs %}
+<li>{% include "jobs/partials/job_row.html" with featured_slot=True %}</li>
+{% endfor %}

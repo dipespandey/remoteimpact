@@ -6,8 +6,7 @@ app_name = "gigs"
 
 urlpatterns = [
     path("", views.GigListView.as_view(), name="gig_list"),
-    path("<slug:slug>/apply/", views.GigApplyView.as_view(), name="gig_apply"),
-    path("<slug:slug>/", views.GigDetailView.as_view(), name="gig_detail"),
+    path("ai-evaluation/", views.AIEvaluationView.as_view(), name="ai_evaluation"),
     # Portfolio
     path("portfolio/", views.PortfolioListView.as_view(), name="portfolio_list"),
     path(
@@ -48,4 +47,6 @@ urlpatterns = [
     ),
     # Staff
     path("staff/queue/", views.StaffQueueView.as_view(), name="staff_queue"),
+    path("<slug:slug>/apply/", views.GigApplyView.as_view(), name="gig_apply"),
+    path("<slug:slug>/", views.GigDetailView.as_view(), name="gig_detail"),
 ]

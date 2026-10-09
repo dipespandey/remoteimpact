@@ -2,7 +2,7 @@
 
 {% block title %}Free AI Cover Letter Generator for Remote & Impact Jobs | Remote Impact{% endblock %}
 
-{% block meta_description %}Generate tailored cover letters for remote and impact-driven jobs in seconds. Free AI-powered cover letter generator with interview prep — no credit card required.{% endblock %}
+{% block meta_description %}Free AI cover letter generator for remote and impact jobs. Paste a job post or link, add your highlights, and get a tailored first draft or interview prep questions. No credit card required.{% endblock %}
 
 {% block extra_head %}
   <script type="application/ld+json">
@@ -23,7 +23,7 @@
         "name": "Is the cover letter generator free?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes! You get 3 free cover letter or interview prep generations when you sign up. No credit card required. For unlimited access, you can upgrade to Pro for $5/month."
+          "text": "Yes. You get 3 free cover letter or interview prep generations when you sign up. No credit card required. Remote Impact Pro is $10/month and also includes AI Job Scouts that check fresh jobs throughout the day."
         }
       },
       {
@@ -64,832 +64,519 @@
 {% endblock %}
 
 {% block content %}
-  <style>
-    .panel {
-      border: 1px solid rgba(15, 23, 42, 0.1);
-      background: linear-gradient(135deg, #ffffff, #faf7f2);
-      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
-      border-radius: 1rem;
-    }
-    .input-base {
-      background: #ffffff;
-      border: 1px solid rgba(15, 23, 42, 0.15);
-    }
-    .input-base:focus {
-      outline: none;
-      border-color: #6EAA1C;
-      box-shadow: 0 0 0 3px rgba(110, 170, 28, 0.2);
-    }
-    .spinner {
-      border: 3px solid rgba(110, 170, 28, 0.2);
-      border-top-color: #6EAA1C;
-      border-radius: 9999px;
-      width: 28px;
-      height: 28px;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-    .modal-overlay {
-      background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(6px);
-    }
-    .mode-btn {
-      transition: all 0.15s ease;
-    }
-    .mode-btn:hover {
-      transform: translateY(-1px);
-    }
-    .feature-card {
-      background: linear-gradient(135deg, #ffffff, #faf7f2);
-      border: 1px solid rgba(15, 23, 42, 0.1);
-      box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
-    }
-    .pricing-card {
-      background: linear-gradient(135deg, #ffffff, #faf7f2);
-      border: 2px solid rgba(110, 170, 28, 0.3);
-      box-shadow: 0 4px 24px rgba(110, 170, 28, 0.12);
-    }
-  </style>
-
-  {% if not user.is_authenticated %}
-  <!-- Landing Page for Non-Logged-In Users -->
-  <section class="relative py-16 bg-[#F3F2EE]">
-    <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- Hero -->
-      <div class="text-center space-y-6 mb-16">
-        <p class="uppercase text-xs tracking-[0.3em] text-gray-500">Applicant Assistant</p>
-        <h1 class="text-4xl md:text-5xl font-semibold text-gray-900 leading-tight">
-          AI Cover Letter Generator
-        </h1>
-        <p class="text-xl text-gray-700 max-w-2xl mx-auto">
-          Land your dream impact job with AI-powered applications
-        </p>
-        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-          Generate tailored cover letters and interview prep questions in seconds.
-          Stand out from the crowd with personalized, high-quality applications.
-        </p>
-        <div class="pt-4">
-          <a href="{% url 'account_login' %}?next={{ request.path }}"
-             class="inline-flex items-center px-8 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition text-lg">
-            Get Started Free
-            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-            </svg>
-          </a>
-        </div>
-        <p class="text-sm text-gray-500">First 3 generations free. No credit card required.</p>
+  <div class="container py-8 sm:py-10">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div class="max-w-2xl">
+        <h1 class="page-title">Cover letter and interview prep for a specific job</h1>
+        <p class="page-lede">Paste a job post or link. Add a few lines about you. Get a first draft you can edit.</p>
       </div>
 
-      <!-- Features -->
-      <div class="grid md:grid-cols-3 gap-6 mb-16">
-        <div class="feature-card rounded-2xl p-6 space-y-4">
-          <div class="w-12 h-12 rounded-xl bg-brand-100 flex items-center justify-center">
-            <svg class="w-6 h-6 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-          </div>
-          <h3 class="text-lg font-semibold text-gray-900">Cover Letters</h3>
-          <p class="text-gray-600 text-sm">
-            Generate tailored cover letters that highlight your relevant experience and align with the job requirements.
-          </p>
-        </div>
-
-        <div class="feature-card rounded-2xl p-6 space-y-4">
-          <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-          </div>
-          <h3 class="text-lg font-semibold text-gray-900">Interview Prep</h3>
-          <p class="text-gray-600 text-sm">
-            Get role-specific interview questions with hints on what interviewers are looking for.
-          </p>
-        </div>
-
-        <div class="feature-card rounded-2xl p-6 space-y-4">
-          <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
-            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-            </svg>
-          </div>
-          <h3 class="text-lg font-semibold text-gray-900">Instant Results</h3>
-          <p class="text-gray-600 text-sm">
-            Just paste a job URL or description. Our AI analyzes the role and generates content in seconds.
-          </p>
-        </div>
-      </div>
-
-      <!-- How It Works -->
-      <div class="panel p-8 mb-16">
-        <h2 class="text-2xl font-semibold text-gray-900 text-center mb-8">How It Works</h2>
-        <div class="grid md:grid-cols-3 gap-8">
-          <div class="text-center space-y-3">
-            <div class="w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center mx-auto">1</div>
-            <h3 class="font-semibold text-gray-900">Paste the Job</h3>
-            <p class="text-sm text-gray-600">Drop a job URL or paste the description directly</p>
-          </div>
-          <div class="text-center space-y-3">
-            <div class="w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center mx-auto">2</div>
-            <h3 class="font-semibold text-gray-900">Add Your Highlights</h3>
-            <p class="text-sm text-gray-600">Optionally add your key achievements and skills</p>
-          </div>
-          <div class="text-center space-y-3">
-            <div class="w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center mx-auto">3</div>
-            <h3 class="font-semibold text-gray-900">Generate & Apply</h3>
-            <p class="text-sm text-gray-600">Get a tailored cover letter or interview questions</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Pricing -->
-      <div class="text-center mb-8">
-        <h2 class="text-2xl font-semibold text-gray-900 mb-2">Simple Pricing</h2>
-        <p class="text-gray-600">Start free, upgrade when you need more</p>
-      </div>
-
-      <div class="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-        <div class="feature-card rounded-2xl p-6 space-y-4">
-          <div class="space-y-1">
-            <h3 class="text-lg font-semibold text-gray-900">Free</h3>
-            <p class="text-3xl font-bold text-gray-900">$0</p>
-          </div>
-          <ul class="space-y-3 text-sm text-gray-600">
-            <li class="flex items-center">
-              <svg class="w-5 h-5 text-brand-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
-              3 generations included
-            </li>
-            <li class="flex items-center">
-              <svg class="w-5 h-5 text-brand-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
-              Cover letters & interview prep
-            </li>
-            <li class="flex items-center">
-              <svg class="w-5 h-5 text-brand-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
-              Job URL auto-fetch
-            </li>
-          </ul>
-          <a href="{% url 'account_login' %}?next={{ request.path }}"
-             class="block w-full text-center px-6 py-3 rounded-xl bg-gray-100 text-gray-900 font-semibold hover:bg-gray-200 transition">
-            Sign Up Free
-          </a>
-        </div>
-
-        <div class="pricing-card rounded-2xl p-6 space-y-4">
-          <div class="space-y-1">
-            <div class="flex items-center space-x-2">
-              <h3 class="text-lg font-semibold text-gray-900">Pro</h3>
-              <span class="px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-xs font-medium">Popular</span>
-            </div>
-            <p class="text-3xl font-bold text-gray-900">$5<span class="text-lg font-normal text-gray-500">/month</span></p>
-          </div>
-          <ul class="space-y-3 text-sm text-gray-600">
-            <li class="flex items-center">
-              <svg class="w-5 h-5 text-brand-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
-              <strong>Unlimited</strong> generations
-            </li>
-            <li class="flex items-center">
-              <svg class="w-5 h-5 text-brand-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
-              Cover letters & interview prep
-            </li>
-            <li class="flex items-center">
-              <svg class="w-5 h-5 text-brand-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
-              Job URL auto-fetch
-            </li>
-            <li class="flex items-center">
-              <svg class="w-5 h-5 text-brand-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
-              Priority support
-            </li>
-          </ul>
-          <a href="{% url 'account_login' %}?next={{ request.path }}"
-             class="block w-full text-center px-6 py-3 rounded-xl bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition">
-            Get Started
-          </a>
-        </div>
-      </div>
-
-      <!-- CTA -->
-      <div class="text-center mt-16">
-        <p class="text-gray-600 mb-4">Already have an account?</p>
-        <a href="{% url 'account_login' %}?next={{ request.path }}"
-           class="text-brand-600 font-semibold hover:text-brand-700 transition">
-          Log in to continue →
-        </a>
-      </div>
-    </div>
-  </section>
-
-  {% else %}
-  <!-- Logged-In User View -->
-  <section class="relative py-16 bg-[#F3F2EE]">
-    <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div class="space-y-3">
-          <p class="uppercase text-xs tracking-[0.3em] text-gray-500">Applicant Assistant</p>
-          <h1 class="text-3xl md:text-4xl font-semibold text-gray-900 leading-tight">AI Cover Letter Generator</h1>
-          <p class="text-gray-600 max-w-2xl">Drop a job URL or paste the description. Get a tailored cover letter or interview prep questions.</p>
-        </div>
-
-        <!-- Usage Status -->
-        <div class="shrink-0">
-          {% if subscription %}
-            {% if subscription.is_subscribed %}
-              <div id="usage-badge" class="inline-flex items-center px-4 py-2 rounded-full bg-brand-100 text-brand-700 text-sm font-medium">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                Pro - Unlimited
-              </div>
-            {% else %}
-              <div class="text-right space-y-1">
-                <div id="usage-badge" class="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-medium">
-                  <span id="uses-remaining">{{ subscription.free_uses_remaining }}</span> free generation<span id="uses-plural">{{ subscription.free_uses_remaining|pluralize }}</span> left
-                </div>
-                <p id="upgrade-hint" class="text-xs text-gray-500 {% if subscription.free_uses_remaining >= 3 %}hidden{% endif %}">
-                  <a href="#" onclick="showUpgradeModal(); return false;" class="text-brand-600 hover:text-brand-700 font-medium">Upgrade to Pro</a> for unlimited
-                </p>
-              </div>
-            {% endif %}
+      <div class="shrink-0 text-[13px] sm:text-right">
+        {% if subscription %}
+          {% if subscription.is_subscribed and can_use %}
+            <p id="usage-badge" class="text-muted-foreground">Pro: unlimited drafts</p>
+          {% else %}
+            <p id="usage-badge" class="tabular-nums text-muted-foreground">
+              <span id="uses-remaining">{{ subscription.free_uses_remaining }}</span> free draft<span id="uses-plural">{{ subscription.free_uses_remaining|pluralize }}</span> left
+            </p>
+            <p id="upgrade-hint" class="mt-1 {% if subscription.free_uses_remaining >= 3 %}hidden{% endif %}">
+              <a href="{% url 'jobs:job_scout_subscribe' %}?source=cover_letter_tool" class="btn-link text-[13px]">Pro includes unlimited drafts</a>
+            </p>
           {% endif %}
-        </div>
-      </div>
-
-      <div class="hidden">
-        {% csrf_token %}
-      </div>
-
-      {% if prefill_job_title %}
-      <div class="rounded-2xl border border-brand-100 bg-brand-50 p-4 flex items-center gap-3">
-          <svg class="w-5 h-5 text-brand-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          <p class="text-sm text-gray-700">
-              Generating for <strong>{{ prefill_job_title }}</strong>{% if prefill_org %} at <strong>{{ prefill_org }}</strong>{% endif %}. The job URL is pre-filled below.
-          </p>
-      </div>
-      {% endif %}
-
-      {% if can_use %}
-      <!-- Main Tool -->
-      <div class="panel p-6 space-y-6">
-        <div class="grid lg:grid-cols-3 gap-6 items-start">
-          <div class="lg:col-span-2 space-y-4">
-            <div class="grid md:grid-cols-3 gap-4">
-              <div class="md:col-span-2">
-                <label class="block text-sm font-semibold text-gray-700 mb-2" for="aa-joburl">Job URL (optional)</label>
-                <input id="aa-joburl" type="url" class="w-full px-4 py-3 rounded-xl input-base text-gray-900 placeholder-gray-400" placeholder="https://..." value="{{ prefill_job_url }}" />
-                <p class="text-xs text-gray-500 mt-1">We'll fetch and parse the JD if provided.</p>
-              </div>
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2" for="aa-mode">Generate</label>
-                <div class="grid grid-cols-1 gap-2">
-                  <button type="button" class="mode-btn px-4 py-3 rounded-xl bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition" onclick="requestGeneration('cover_letter')" data-track="generate_cover_letter" data-track-category="ai_tools">Cover letter</button>
-                  <button type="button" class="mode-btn px-4 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition" onclick="requestGeneration('interview_prep')" data-track="generate_interview_prep" data-track-category="ai_tools">Interview prep</button>
-                </div>
-              </div>
-            </div>
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2" for="aa-jobdesc">Job description (paste or leave blank to fetch)</label>
-              <textarea id="aa-jobdesc" rows="10" class="w-full px-4 py-3 rounded-xl input-base text-gray-900 placeholder-gray-400" placeholder="Paste the JD here or provide a URL above."></textarea>
-            </div>
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2" for="aa-resume">Your highlights (optional)</label>
-              <textarea id="aa-resume" rows="6" class="w-full px-4 py-3 rounded-xl input-base text-gray-900 placeholder-gray-400" placeholder="- Shipped X...&#10;- Improved Y..."></textarea>
-            </div>
-          </div>
-          <div class="lg:sticky lg:top-24">
-            <div class="rounded-2xl bg-gray-50 border border-gray-200 p-4 space-y-3 h-full">
-              <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">Output</h3>
-                <div class="flex items-center space-x-2">
-                  <button type="button" class="px-3 py-2 rounded-full border border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-900 transition text-sm" onclick="copyOutput(this)">Copy</button>
-                  <button type="button" class="px-3 py-2 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition text-sm" onclick="openModal()">Expand</button>
-                </div>
-              </div>
-              <div class="relative">
-                <textarea id="aa-output" rows="16" class="w-full px-3 py-3 rounded-xl bg-white border border-gray-200 text-gray-900 text-sm" readonly placeholder="Choose a mode to generate."></textarea>
-                <div id="aa-spinner" class="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl hidden">
-                  <div class="spinner"></div>
-                </div>
-              </div>
-              <p id="aa-status" class="text-sm text-gray-500">Generated text appears here.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {% else %}
-      <!-- Not Logged In or Out of Free Uses -->
-      <div class="panel p-8 text-center space-y-6">
-        {% if not user.is_authenticated %}
-        <!-- Sign Up CTA for non-authenticated users -->
-        <div class="w-16 h-16 rounded-full bg-brand-100 flex items-center justify-center mx-auto">
-          <svg class="w-8 h-8 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-          </svg>
-        </div>
-        <div class="space-y-2">
-          <h2 class="text-2xl font-semibold text-gray-900">Create a free account to use this tool</h2>
-          <p class="text-gray-600 max-w-md mx-auto">
-            Sign up in 30 seconds and get <strong>3 free generations</strong> — no credit card required.
-          </p>
-        </div>
-        <div class="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-          <a href="{% url 'account_signup' %}?next={{ request.path }}"
-             class="inline-flex items-center justify-center px-8 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition text-lg">
-            Sign Up Free
-            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-            </svg>
-          </a>
-          <a href="{% url 'account_login' %}?next={{ request.path }}"
-             class="inline-flex items-center justify-center px-8 py-4 rounded-full border-2 border-gray-200 text-gray-700 font-semibold hover:border-gray-300 transition text-lg">
-            Log In
-          </a>
-        </div>
-        <p class="text-sm text-gray-500">Already have an account? Log in to continue.</p>
         {% else %}
-        <!-- Out of Free Uses - Upgrade CTA -->
-        <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto">
-          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-          </svg>
-        </div>
-        <div class="space-y-2">
-          <h2 class="text-2xl font-semibold text-gray-900">You've used all your free generations</h2>
-          <p class="text-gray-600 max-w-md mx-auto">
-            Upgrade to Pro for unlimited cover letters and interview prep questions.
-          </p>
-        </div>
-        <div class="pt-2">
-          <a href="{% url 'jobs:assistant_subscribe' %}"
-             class="inline-flex items-center px-8 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition text-lg">
-            Upgrade to Pro - $5/month
-          </a>
-        </div>
-        <p class="text-sm text-gray-500">Cancel anytime. No long-term commitment.</p>
+          <p class="text-muted-foreground">3 free drafts with a free account. No card needed.</p>
         {% endif %}
       </div>
-      {% endif %}
-
-      <!-- Past Generations -->
-      {% if past_generations %}
-      <div class="panel p-6 space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-gray-900">Recent Generations</h2>
-          <span class="text-sm text-gray-500">Last 10</span>
-        </div>
-        <div class="space-y-3">
-          {% for gen in past_generations %}
-          <div class="bg-white rounded-xl border border-gray-200 p-4 hover:border-gray-300 transition cursor-pointer" onclick="showGenerationModal({{ gen.id }})">
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center space-x-2 mb-1">
-                  {% if gen.generation_type == 'cover_letter' %}
-                  <span class="px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 text-xs font-medium">Cover Letter</span>
-                  {% else %}
-                  <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">Interview Prep</span>
-                  {% endif %}
-                  <span class="text-xs text-gray-400">{{ gen.created_at|timesince }} ago</span>
-                </div>
-                {% if gen.job_url %}
-                <p class="text-sm text-gray-600 truncate">{{ gen.job_url }}</p>
-                {% elif gen.job_description %}
-                <p class="text-sm text-gray-600 truncate">{{ gen.job_description|truncatechars:80 }}</p>
-                {% endif %}
-              </div>
-              <button type="button" class="shrink-0 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition">
-                View
-              </button>
-            </div>
-          </div>
-          <!-- Hidden content for modal -->
-          <div id="gen-content-{{ gen.id }}" class="hidden">{{ gen.generated_content }}</div>
-          <div id="gen-type-{{ gen.id }}" class="hidden">{{ gen.generation_type }}</div>
-          {% endfor %}
-        </div>
-      </div>
-      {% endif %}
     </div>
-  </section>
 
-  <!-- Generation History Modal -->
-  <div id="history-modal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 modal-overlay" onclick="closeHistoryModal()"></div>
-    <div class="relative max-w-3xl mx-auto mt-16 px-4 sm:px-6">
-      <div class="bg-white rounded-2xl border border-gray-200 p-5 space-y-4 shadow-xl">
-        <div class="flex items-center justify-between">
-          <div class="space-y-1">
-            <p class="text-xs uppercase tracking-[0.2em] text-gray-500">Past Generation</p>
-            <span id="history-modal-type" class="px-3 py-1 rounded-full bg-gray-100 text-xs uppercase tracking-wide text-gray-600"></span>
-          </div>
-          <div class="flex items-center space-x-2">
-            <button type="button" class="px-3 py-2 rounded-full border border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-900 transition text-sm" onclick="copyHistoryOutput()">Copy</button>
-            <button type="button" class="px-3 py-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition text-sm" onclick="closeHistoryModal()">Close</button>
+    {% if prefill_job_title %}
+      <div class="alert alert-info mt-6">
+        <p>Drafting for <strong class="font-medium">{{ prefill_job_title }}</strong>{% if prefill_org %} at <strong class="font-medium">{{ prefill_org }}</strong>{% endif %}. The job link is filled in below.</p>
+      </div>
+    {% endif %}
+
+    <div class="mt-6 grid gap-6 lg:grid-cols-2 lg:items-start">
+      <!-- Inputs: composer -->
+      <form id="aa-form" class="min-w-0 space-y-5 rounded-[1.25rem] bg-card p-4 shadow-lift sm:p-6" novalidate>
+        {% csrf_token %}
+
+        <div>
+          <span class="sr-only" id="aa-mode-label">What do you need?</span>
+          <div class="tabs flex w-full sm:inline-flex sm:w-auto" role="group" aria-labelledby="aa-mode-label">
+            <button type="button" class="tab tab-active flex-1 whitespace-nowrap px-2 sm:flex-none sm:px-3" data-mode="cover_letter" aria-pressed="true">Cover letter</button>
+            <button type="button" class="tab flex-1 whitespace-nowrap px-2 sm:flex-none sm:px-3" data-mode="interview_prep" aria-pressed="false">Interview questions</button>
           </div>
         </div>
-        <textarea id="history-modal-content" rows="18" class="w-full px-3 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 text-sm" readonly></textarea>
-      </div>
+
+        <div>
+          <label class="label" for="aa-joburl">Job link</label>
+          <input id="aa-joburl" name="job_url" type="url" inputmode="url" autocomplete="off" class="input" placeholder="https://..." value="{{ prefill_job_url }}" />
+          <p class="help">We read the job post from the link. If the page can't be read, paste the description below.</p>
+        </div>
+
+        <div>
+          <label class="label" for="aa-jobdesc">Job description</label>
+          <textarea id="aa-jobdesc" name="job_description" rows="8" class="textarea resize-y" placeholder="Paste the job post here, or leave blank if you added a link."></textarea>
+        </div>
+
+        <div>
+          <label class="label" for="aa-resume">Your highlights</label>
+          <textarea id="aa-resume" name="resume" rows="5" class="textarea resize-y" placeholder="- Ran a 12-person volunteer program across 4 time zones&#10;- Raised $180k from 3 new foundation grants&#10;- Based in Lisbon (UTC+0), can overlap until 18:00 ET"></textarea>
+          <p class="help">A few lines with results and numbers. Optional, but drafts are much better with it.</p>
+        </div>
+
+        <div class="flex flex-col-reverse gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
+          {% if not user.is_authenticated %}
+            <p class="help mt-0">You'll create a free account before the first draft. What you typed is kept.</p>
+          {% else %}
+            <span class="hidden sm:block"></span>
+          {% endif %}
+          <button type="submit" id="aa-generate" class="btn btn-primary shrink-0" data-track="generate_cover_letter" data-track-category="ai_tools">
+            <svg id="aa-generate-spinner" class="hidden h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.25" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+            <span id="aa-generate-label">Write cover letter</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Output -->
+      <section id="aa-output-panel" class="card min-w-0 p-5 transition-shadow focus-within:ring-2 focus-within:ring-ring/25 sm:p-6 lg:sticky lg:top-24" aria-labelledby="aa-output-title">
+        <div class="flex items-center justify-between gap-3">
+          <h2 id="aa-output-title" class="text-sm font-medium text-muted-foreground"><span id="aa-output-label">Cover letter</span> draft</h2>
+          <div class="-mr-2 flex items-center gap-1">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="copyOutput(this)">Copy</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="openModal()">Expand</button>
+          </div>
+        </div>
+        <div class="relative mt-3">
+          <label for="aa-output" class="sr-only">Generated draft</label>
+          <textarea id="aa-output" rows="16" class="block min-h-[320px] w-full resize-y border-0 bg-transparent p-0 text-[15px] leading-7 text-foreground placeholder:text-muted-foreground/80 focus:outline-none focus:ring-0 focus-visible:outline-none lg:min-h-[440px]" placeholder="Your draft appears here. You can edit it before copying."></textarea>
+          <div id="aa-spinner" class="absolute inset-0 flex hidden flex-col items-center justify-center gap-3 rounded-xl bg-card/90 px-6 text-center text-sm text-muted-foreground">
+            <svg class="h-5 w-5 animate-spin text-foreground" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.2" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+            <span>Reading the job post and writing a draft. This can take 20 to 40 seconds.</span>
+          </div>
+        </div>
+        <p id="aa-status" class="help mt-4" role="status" aria-live="polite">Check names, numbers and dates before you send anything.</p>
+
+        <div id="aa-upgrade" class="surface mt-4 p-4 text-sm {% if not user.is_authenticated or can_use %}hidden{% endif %}">
+          {% if subscription.is_subscribed %}
+            <p class="font-medium text-foreground">Your Pro plan has ended.</p>
+          {% else %}
+            <p class="font-medium text-foreground">You've used your 3 free drafts.</p>
+          {% endif %}
+          <p class="mt-1 text-muted-foreground">Pro: 7 days free, then $10/month, or $24 for 3 months.</p>
+          <a href="{% url 'jobs:job_scout_subscribe' %}?source=cover_letter_tool" class="btn btn-primary btn-sm mt-3" data-track="cover_letter_upgrade" data-track-category="ai_tools">See Pro</a>
+        </div>
+      </section>
+    </div>
+
+    {% if past_generations %}
+      <section class="mt-10" aria-labelledby="history-title">
+        <div class="flex items-baseline justify-between gap-3 px-1">
+          <h2 id="history-title" class="section-title">Your recent drafts</h2>
+          <span class="text-[13px] text-muted-foreground">Last 10</span>
+        </div>
+        <ul class="list-surface mt-3">
+          {% for gen in past_generations %}
+            <li>
+              <button type="button" class="flex w-full items-start gap-3 rounded-xl px-3.5 py-3 text-left transition-colors hover:bg-muted" onclick="showGenerationModal({{ gen.id }})">
+                {% if gen.generation_type == 'cover_letter' %}
+                  <span class="badge badge-primary mt-0.5 shrink-0">Cover letter</span>
+                {% else %}
+                  <span class="badge badge-outline mt-0.5 shrink-0">Interview questions</span>
+                {% endif %}
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate text-sm text-foreground">{% if gen.job_url %}{{ gen.job_url }}{% elif gen.job_description %}{{ gen.job_description|truncatechars:80 }}{% else %}No job details saved{% endif %}</span>
+                  <span class="block text-[13px] text-muted-foreground">{{ gen.created_at|timesince }} ago</span>
+                </span>
+                <span class="shrink-0 text-[13px] text-muted-foreground">View</span>
+              </button>
+              <div id="gen-content-{{ gen.id }}" class="hidden">{{ gen.generated_content }}</div>
+              <div id="gen-type-{{ gen.id }}" class="hidden">{{ gen.generation_type }}</div>
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+  </div>
+
+  <!-- Guidance and related pages -->
+  <div class="container pb-12 pt-4">
+    <div class="grid gap-10 lg:grid-cols-12">
+      <section class="lg:col-span-7" aria-labelledby="tips-title">
+        <h2 id="tips-title" class="section-title">What makes a good impact cover letter</h2>
+        <ul class="mt-4 max-w-prose space-y-4 text-[15px] leading-7 text-muted-foreground">
+          <li><strong class="font-medium text-foreground">Open with a reason, not a formula.</strong> Skip "I'm writing to express my interest." Start with a piece of their work you know, or a result of yours that matches the role.</li>
+          <li><strong class="font-medium text-foreground">Use numbers you can defend.</strong> "Cut donor churn by 23%" or "managed a $1.2M grant portfolio serving 4,000 people" says more than "improved outcomes".</li>
+          <li><strong class="font-medium text-foreground">Use the posting's own words.</strong> If they say "program design", don't write "curriculum development". It shows you read the post and helps with screening software.</li>
+          <li><strong class="font-medium text-foreground">Show mission fit with something you did.</strong> A project, a volunteer role or a career decision says more than "I'm passionate about climate".</li>
+          <li><strong class="font-medium text-foreground">Keep it under 250 words.</strong> Two or three proof points are enough. For remote roles, add your time zone and the hours you can overlap with the team.</li>
+        </ul>
+        <p class="mt-5 max-w-prose text-sm leading-6 text-muted-foreground">Drafts from this tool follow the same rules: a short opening, three proof points from your highlights, and under 220 words. It can get details wrong, so read every line before you send it.</p>
+      </section>
+
+      <section class="lg:col-span-5" aria-labelledby="roles-title">
+        <h2 id="roles-title" class="section-title">Notes by type of role</h2>
+        <ul class="mt-4 space-y-4 text-sm leading-6">
+          <li>
+            <a href="{% url 'jobs:keyword_jobs' 'remote-nonprofit-jobs' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Nonprofit and NGO jobs</a>
+            <p class="text-muted-foreground">Name the grants, programs or community outcomes you worked on.</p>
+          </li>
+          <li>
+            <a href="{% url 'jobs:keyword_jobs' 'remote-climate-jobs' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Climate jobs</a>
+            <p class="text-muted-foreground">Pair your technical skills with an emissions, energy or land result you can measure.</p>
+          </li>
+          <li>
+            <a href="{% url 'jobs:keyword_jobs' 'remote-social-enterprise-jobs' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Social enterprise jobs</a>
+            <p class="text-muted-foreground">Show you can grow revenue and the social result at the same time.</p>
+          </li>
+          <li>
+            <a href="{% url 'jobs:keyword_jobs' 'remote-humanitarian-jobs' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Humanitarian jobs</a>
+            <p class="text-muted-foreground">Mention field context, languages and how you worked with partners on the ground.</p>
+          </li>
+          <li>
+            <a href="{% url 'jobs:role_jobs' 'remote-fundraising-jobs' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Fundraising jobs</a>
+            <p class="text-muted-foreground">Give amounts raised, donor types and your renewal rate.</p>
+          </li>
+          <li>
+            <a href="{% url 'jobs:keyword_jobs' 'impact-jobs-remote' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Changing careers into impact work</a>
+            <p class="text-muted-foreground">Translate past results into the role's terms and say plainly why you are switching.</p>
+          </li>
+        </ul>
+
+        <h2 class="section-title mt-8">Other application tools</h2>
+        <ul class="mt-3 space-y-2 text-sm">
+          <li><a href="{% url 'jobs:interview_prep' %}" class="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Interview questions by job title</a></li>
+          <li><a href="{% url 'jobs:thank_you_email' %}" class="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Thank-you email after an interview</a></li>
+          <li><a href="{% url 'jobs:salary_negotiation' %}" class="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Salary negotiation script</a></li>
+          <li><a href="{% url 'jobs:tools_index' %}" class="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">All tools</a></li>
+        </ul>
+      </section>
     </div>
   </div>
 
-  <!-- Modal viewer -->
-  <div id="aa-modal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 modal-overlay" onclick="closeModal()"></div>
-    <div class="relative max-w-3xl mx-auto mt-16 px-4 sm:px-6">
-      <div class="bg-white rounded-2xl border border-gray-200 p-5 space-y-4 shadow-xl">
-        <div class="flex items-center justify-between">
-          <div class="space-y-1">
-            <p class="text-xs uppercase tracking-[0.2em] text-gray-500">Output</p>
-            <div class="flex items-center space-x-3">
-              <span id="aa-modal-mode" class="px-3 py-1 rounded-full bg-gray-100 text-xs uppercase tracking-wide text-gray-600">Generated</span>
-              <p id="aa-modal-status" class="text-xs text-gray-500"></p>
-            </div>
+  <!-- Expanded output -->
+  <div id="aa-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="aa-modal-title">
+    <div class="absolute inset-0 bg-foreground/25 backdrop-blur-sm" onclick="closeModal()"></div>
+    <div class="relative mx-auto mt-6 max-w-3xl px-4 sm:mt-16 sm:px-6">
+      <div class="card space-y-4 p-5 shadow-lift sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="min-w-0">
+            <h2 id="aa-modal-title" class="text-sm font-medium text-foreground"><span id="aa-modal-mode">Cover letter</span> draft</h2>
+            <p id="aa-modal-status" class="text-[13px] text-muted-foreground"></p>
           </div>
-          <div class="flex items-center space-x-2">
-            <button type="button" class="px-3 py-2 rounded-full border border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-900 transition text-sm" onclick="copyOutput(this)">Copy</button>
-            <button type="button" class="px-3 py-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition text-sm" onclick="closeModal()">Close</button>
+          <div class="-mr-2 flex items-center gap-1">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="copyOutput(this)">Copy</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal()">Close</button>
           </div>
         </div>
         <div class="relative">
-          <textarea id="aa-modal-output" rows="18" class="w-full px-3 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 text-sm" readonly placeholder="Generated text will appear here."></textarea>
-          <div id="aa-modal-spinner" class="absolute inset-0 flex items-center justify-center bg-gray-50/80 rounded-xl hidden">
-            <div class="spinner"></div>
-          </div>
+          <label for="aa-modal-output" class="sr-only">Generated draft, expanded</label>
+          <textarea id="aa-modal-output" class="block h-[65vh] w-full resize-none border-0 bg-transparent p-0 text-[15px] leading-7 text-foreground placeholder:text-muted-foreground/80 focus:outline-none focus:ring-0 focus-visible:outline-none" placeholder="Your draft appears here."></textarea>
+          <div id="aa-modal-spinner" class="absolute inset-0 flex hidden items-center justify-center rounded-xl bg-card/90 text-sm text-muted-foreground">Writing your draft...</div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Upgrade Modal -->
-  <div id="upgrade-modal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 modal-overlay" onclick="closeUpgradeModal()"></div>
-    <div class="relative max-w-md mx-auto mt-24 px-4 sm:px-6">
-      <div class="bg-white rounded-2xl border border-gray-200 p-6 space-y-6 shadow-xl">
-        <div class="text-center space-y-2">
-          <h3 class="text-xl font-semibold text-gray-900">Upgrade to Pro</h3>
-          <p class="text-gray-600">Get unlimited access to the Applicant Assistant</p>
-        </div>
-        <div class="space-y-4">
-          <div class="flex items-center space-x-3">
-            <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
-            <span class="text-gray-700">Unlimited cover letters</span>
+  {% if user.is_authenticated %}
+  <!-- Past draft viewer -->
+  <div id="history-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
+    <div class="absolute inset-0 bg-foreground/25 backdrop-blur-sm" onclick="closeHistoryModal()"></div>
+    <div class="relative mx-auto mt-6 max-w-3xl px-4 sm:mt-16 sm:px-6">
+      <div class="card space-y-4 p-5 shadow-lift sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="min-w-0">
+            <h2 id="history-modal-title" class="text-sm font-medium text-foreground">Past draft</h2>
+            <span id="history-modal-type" class="text-[13px] text-muted-foreground"></span>
           </div>
-          <div class="flex items-center space-x-3">
-            <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
-            <span class="text-gray-700">Unlimited interview prep</span>
-          </div>
-          <div class="flex items-center space-x-3">
-            <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
-            <span class="text-gray-700">Cancel anytime</span>
+          <div class="-mr-2 flex items-center gap-1">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="copyHistoryOutput(this)">Copy</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="closeHistoryModal()">Close</button>
           </div>
         </div>
-        <div class="text-center">
-          <p class="text-3xl font-bold text-gray-900 mb-4">$5<span class="text-lg font-normal text-gray-500">/month</span></p>
-          <a href="{% url 'jobs:assistant_subscribe' %}"
-             class="block w-full text-center px-6 py-3 rounded-xl bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition">
-            Subscribe Now
-          </a>
-        </div>
-        <button type="button" onclick="closeUpgradeModal()" class="block w-full text-center text-sm text-gray-500 hover:text-gray-700">
-          Maybe later
-        </button>
+        <label for="history-modal-content" class="sr-only">Past draft text</label>
+        <textarea id="history-modal-content" class="block h-[65vh] w-full resize-none border-0 bg-transparent p-0 text-[15px] leading-7 text-foreground focus:outline-none focus:ring-0 focus-visible:outline-none" readonly></textarea>
       </div>
     </div>
   </div>
   {% endif %}
-
-  <!-- Popular Cover Letter Templates -->
-  <section class="py-16 bg-[#F3F2EE]">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h2 class="text-2xl font-semibold text-gray-900 text-center mb-3">Popular Cover Letter Templates</h2>
-      <p class="text-gray-600 text-center mb-10 max-w-2xl mx-auto">Get inspired by these common cover letter types our users generate for impact-driven roles.</p>
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="feature-card rounded-2xl p-6 space-y-3">
-          <div class="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center">
-            <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"/></svg>
-          </div>
-          <h3 class="font-semibold text-gray-900">Remote Position</h3>
-          <p class="text-sm text-gray-600">Highlight async communication skills, self-management, and timezone flexibility for distributed teams.</p>
-        </div>
-        <div class="feature-card rounded-2xl p-6 space-y-3">
-          <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-          </div>
-          <h3 class="font-semibold text-gray-900">Nonprofit & NGO</h3>
-          <p class="text-sm text-gray-600">Demonstrate mission alignment, grant experience, and measurable community outcomes.</p>
-        </div>
-        <div class="feature-card rounded-2xl p-6 space-y-3">
-          <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-          </div>
-          <h3 class="font-semibold text-gray-900">Climate Tech</h3>
-          <p class="text-sm text-gray-600">Combine technical expertise with passion for sustainability and environmental impact metrics.</p>
-        </div>
-        <div class="feature-card rounded-2xl p-6 space-y-3">
-          <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-          </div>
-          <h3 class="font-semibold text-gray-900">Career Change</h3>
-          <p class="text-sm text-gray-600">Frame transferable skills and explain your motivation for pivoting into impact-driven work.</p>
-        </div>
-        <div class="feature-card rounded-2xl p-6 space-y-3">
-          <div class="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
-            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-          </div>
-          <h3 class="font-semibold text-gray-900">Social Enterprise</h3>
-          <p class="text-sm text-gray-600">Balance business acumen with social impact — show you can drive revenue and purpose together.</p>
-        </div>
-        <div class="feature-card rounded-2xl p-6 space-y-3">
-          <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-          </div>
-          <h3 class="font-semibold text-gray-900">DEI & Equity Roles</h3>
-          <p class="text-sm text-gray-600">Showcase your commitment to diversity, equity, and inclusion with concrete initiatives and outcomes.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Tips for Writing Cover Letters -->
-  <section class="py-16 bg-white">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h2 class="text-2xl font-semibold text-gray-900 text-center mb-3">Tips for Writing Great Cover Letters</h2>
-      <p class="text-gray-600 text-center mb-10 max-w-2xl mx-auto">Whether you use our AI generator or write from scratch, these tips will help your application stand out.</p>
-      <div class="space-y-8">
-        <div class="flex gap-4">
-          <div class="shrink-0 w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center">1</div>
-          <div>
-            <h3 class="font-semibold text-gray-900 mb-1">Open with a specific hook, not a generic intro</h3>
-            <p class="text-gray-600 text-sm">Skip "I'm writing to express my interest." Instead, lead with a metric, a shared value, or a specific reason you're drawn to this organization's mission.</p>
-          </div>
-        </div>
-        <div class="flex gap-4">
-          <div class="shrink-0 w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center">2</div>
-          <div>
-            <h3 class="font-semibold text-gray-900 mb-1">Quantify your impact with real numbers</h3>
-            <p class="text-gray-600 text-sm">Replace vague claims like "improved outcomes" with concrete metrics: "Reduced donor churn by 23%" or "Managed a $1.2M grant portfolio serving 4,000 beneficiaries."</p>
-          </div>
-        </div>
-        <div class="flex gap-4">
-          <div class="shrink-0 w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center">3</div>
-          <div>
-            <h3 class="font-semibold text-gray-900 mb-1">Mirror the job description's language</h3>
-            <p class="text-gray-600 text-sm">Use keywords from the JD naturally. If they say "program design," don't say "curriculum development." This helps with ATS systems and shows you've read the posting carefully.</p>
-          </div>
-        </div>
-        <div class="flex gap-4">
-          <div class="shrink-0 w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center">4</div>
-          <div>
-            <h3 class="font-semibold text-gray-900 mb-1">Show mission alignment, don't just state it</h3>
-            <p class="text-gray-600 text-sm">Don't just say "I'm passionate about climate." Describe a specific project, volunteer experience, or decision that demonstrates your commitment to the cause.</p>
-          </div>
-        </div>
-        <div class="flex gap-4">
-          <div class="shrink-0 w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center">5</div>
-          <div>
-            <h3 class="font-semibold text-gray-900 mb-1">Keep it under 250 words</h3>
-            <p class="text-gray-600 text-sm">Hiring managers skim. A concise, high-signal cover letter with 2-3 proof points beats a full-page essay. Respect their time and they'll respect your application.</p>
-          </div>
-        </div>
-        <div class="flex gap-4">
-          <div class="shrink-0 w-10 h-10 rounded-full bg-brand-300 text-gray-900 font-bold flex items-center justify-center">6</div>
-          <div>
-            <h3 class="font-semibold text-gray-900 mb-1">For remote roles, address logistics proactively</h3>
-            <p class="text-gray-600 text-sm">Mention your timezone, overlap hours with the team, and experience with remote collaboration tools. This removes friction and shows you understand distributed work.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
 {% endblock %}
 
 {% block extra_js %}
-  {% if user.is_authenticated %}
-  <!-- History modal functions (available even if can_use is false) -->
   <script>
-    function showGenerationModal(id) {
-      const content = document.getElementById('gen-content-' + id)
-      const type = document.getElementById('gen-type-' + id)
-      const modal = document.getElementById('history-modal')
-      const modalContent = document.getElementById('history-modal-content')
-      const modalType = document.getElementById('history-modal-type')
-
-      if (content && modalContent) {
-        modalContent.value = content.textContent
+    (function () {
+      var ENDPOINT = "{% url 'jobs:applicant_assistant_generate' %}"
+      var DRAFT_KEY = 'ri_tool_draft'
+      var TOOL = 'cover_letter'
+      var IS_AUTHENTICATED = {% if user.is_authenticated %}true{% else %}false{% endif %}
+      var CAN_GENERATE = {% if can_use %}true{% else %}false{% endif %}
+      var SIGNUP_URL = "{% url 'account_signup' %}?next={{ request.path|urlencode }}%3Fresume%3D1"
+      var MODES = {
+        cover_letter: { label: 'Cover letter', button: 'Write cover letter', track: 'generate_cover_letter' },
+        interview_prep: { label: 'Interview questions', button: 'Write interview questions', track: 'generate_interview_prep' }
       }
-      if (type && modalType) {
-        modalType.textContent = type.textContent.replace('_', ' ')
-      }
-      modal.classList.remove('hidden')
-      document.body.classList.add('overflow-hidden')
-    }
+      var mode = 'cover_letter'
+      var busy = false
 
-    function closeHistoryModal() {
-      const modal = document.getElementById('history-modal')
-      if (modal) {
+      var form = document.getElementById('aa-form')
+      var fields = {
+        job_url: document.getElementById('aa-joburl'),
+        job_description: document.getElementById('aa-jobdesc'),
+        resume: document.getElementById('aa-resume')
+      }
+      var output = document.getElementById('aa-output')
+      var modalOutput = document.getElementById('aa-modal-output')
+      var status = document.getElementById('aa-status')
+      var modalStatus = document.getElementById('aa-modal-status')
+      var generateBtn = document.getElementById('aa-generate')
+      var upgradePanel = document.getElementById('aa-upgrade')
+
+      function setStatus(text) {
+        status.textContent = text
+        modalStatus.textContent = text
+      }
+
+      function setMode(next) {
+        if (!MODES[next]) next = 'cover_letter'
+        mode = next
+        document.querySelectorAll('#aa-form [data-mode]').forEach(function (btn) {
+          var active = btn.dataset.mode === mode
+          btn.classList.toggle('tab-active', active)
+          btn.setAttribute('aria-pressed', active ? 'true' : 'false')
+        })
+        document.getElementById('aa-generate-label').textContent = MODES[mode].button
+        document.getElementById('aa-output-label').textContent = MODES[mode].label
+        document.getElementById('aa-modal-mode').textContent = MODES[mode].label
+        generateBtn.dataset.track = MODES[mode].track
+      }
+
+      function setBusy(on) {
+        busy = on
+        generateBtn.disabled = on
+        document.getElementById('aa-generate-spinner').classList.toggle('hidden', !on)
+        document.getElementById('aa-spinner').classList.toggle('hidden', !on)
+        document.getElementById('aa-modal-spinner').classList.toggle('hidden', !on)
+      }
+
+      function readDraft() {
+        try {
+          var draft = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || 'null')
+          return draft && draft.tool === TOOL ? draft : null
+        } catch (e) {
+          return null
+        }
+      }
+
+      function saveDraft() {
+        try {
+          sessionStorage.setItem(DRAFT_KEY, JSON.stringify({
+            tool: TOOL,
+            mode: mode,
+            job_url: fields.job_url.value,
+            job_description: fields.job_description.value,
+            resume: fields.resume.value,
+            saved_at: Date.now()
+          }))
+        } catch (e) { /* Storage unavailable: signup still works, fields just won't refill. */ }
+      }
+
+      function clearDraft() {
+        try { sessionStorage.removeItem(DRAFT_KEY) } catch (e) { /* ignore */ }
+      }
+
+      function showUpgrade(message) {
+        upgradePanel.classList.remove('hidden')
+        if (message) setStatus(message)
+      }
+
+      function updateUsage(data) {
+        if (data.uses_remaining === undefined || data.uses_remaining < 0) return
+        var usesEl = document.getElementById('uses-remaining')
+        var pluralEl = document.getElementById('uses-plural')
+        var hintEl = document.getElementById('upgrade-hint')
+        if (usesEl) usesEl.textContent = data.uses_remaining
+        if (pluralEl) pluralEl.textContent = data.uses_remaining === 1 ? '' : 's'
+        if (hintEl) hintEl.classList.remove('hidden')
+        if (data.uses_remaining === 0) {
+          CAN_GENERATE = false
+          upgradePanel.classList.remove('hidden')
+        }
+      }
+
+      window.requestGeneration = function (type) {
+        if (busy) return
+        if (type) setMode(type)
+        var payload = {
+          job_url: fields.job_url.value.trim(),
+          job_description: fields.job_description.value.trim(),
+          resume: fields.resume.value.trim(),
+          request_type: mode
+        }
+        if (!payload.job_url && !payload.job_description) {
+          setStatus('Add a job link or paste the job description first.')
+          fields.job_url.focus()
+          return
+        }
+
+        setBusy(true)
+        setStatus('Writing your draft...')
+        var csrf = form.querySelector('[name=csrfmiddlewaretoken]')
+
+        fetch(ENDPOINT, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrf ? csrf.value : ''
+          },
+          body: JSON.stringify(payload)
+        })
+          .then(function (resp) {
+            return resp.json()
+              .catch(function () { return {} })
+              .then(function (data) { return { httpStatus: resp.status, data: data } })
+          })
+          .then(function (res) {
+            var data = res.data || {}
+            if (res.httpStatus === 401 && data.requires_login) {
+              saveDraft()
+              setStatus('Create a free account to see your draft. What you typed is saved.')
+              window.location.href = SIGNUP_URL
+              return
+            }
+            if (res.httpStatus === 403 && data.requires_upgrade) {
+              showUpgrade("You've used your 3 free drafts.")
+              return
+            }
+            if (res.httpStatus >= 500) {
+              setStatus("We couldn't write a draft just now. Try again in a minute.")
+              return
+            }
+            if (res.httpStatus >= 400) {
+              setStatus(data.error || 'Something went wrong. Check the fields and try again.')
+              return
+            }
+            output.value = data.result || 'No text came back. Try again, or paste the job description instead of the link.'
+            modalOutput.value = output.value
+            setStatus('Draft ready. Check names, numbers and dates before you send it.')
+            clearDraft()
+            updateUsage(data)
+            if (window.matchMedia('(max-width: 1023px)').matches) {
+              document.getElementById('aa-output-panel').scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }
+          })
+          .catch(function () {
+            setStatus('Request failed. Check your connection and try again.')
+          })
+          .finally(function () {
+            setBusy(false)
+          })
+      }
+
+      window.copyOutput = function (btn) {
+        var text = output.value
+        if (!text) {
+          btn.textContent = 'Nothing to copy'
+          setTimeout(function () { btn.textContent = 'Copy' }, 1400)
+          return
+        }
+        navigator.clipboard.writeText(text)
+          .then(function () {
+            btn.textContent = 'Copied'
+            setTimeout(function () { btn.textContent = 'Copy' }, 1400)
+          })
+          .catch(function () {
+            btn.textContent = 'Copy failed'
+            setTimeout(function () { btn.textContent = 'Copy' }, 1400)
+          })
+      }
+
+      window.openModal = function () {
+        modalOutput.value = output.value
+        document.getElementById('aa-modal').classList.remove('hidden')
+        document.body.classList.add('overflow-hidden')
+        modalOutput.focus()
+      }
+
+      window.closeModal = function () {
+        document.getElementById('aa-modal').classList.add('hidden')
+        document.body.classList.remove('overflow-hidden')
+      }
+
+      // Edits in either box stay in sync, so Copy always copies the edited text.
+      output.addEventListener('input', function () { modalOutput.value = output.value })
+      modalOutput.addEventListener('input', function () { output.value = modalOutput.value })
+
+      window.showGenerationModal = function (id) {
+        var content = document.getElementById('gen-content-' + id)
+        var type = document.getElementById('gen-type-' + id)
+        var modal = document.getElementById('history-modal')
+        if (!modal) return
+        document.getElementById('history-modal-content').value = content ? content.textContent : ''
+        document.getElementById('history-modal-type').textContent =
+          type && type.textContent === 'interview_prep' ? 'Interview questions' : 'Cover letter'
+        modal.classList.remove('hidden')
+        document.body.classList.add('overflow-hidden')
+      }
+
+      window.closeHistoryModal = function () {
+        var modal = document.getElementById('history-modal')
+        if (!modal) return
         modal.classList.add('hidden')
         document.body.classList.remove('overflow-hidden')
       }
-    }
 
-    function copyHistoryOutput() {
-      const content = document.getElementById('history-modal-content')
-      if (!content || !content.value) return
-      navigator.clipboard.writeText(content.value)
-        .then(() => {
-          const btn = event.target
-          const original = btn.textContent
-          btn.textContent = 'Copied!'
-          setTimeout(() => (btn.textContent = original), 1400)
+      window.copyHistoryOutput = function (btn) {
+        var content = document.getElementById('history-modal-content')
+        if (!content || !content.value) return
+        navigator.clipboard.writeText(content.value).then(function () {
+          btn.textContent = 'Copied'
+          setTimeout(function () { btn.textContent = 'Copy' }, 1400)
         })
-    }
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        closeHistoryModal()
       }
-    })
-  </script>
-  {% endif %}
-  {% if user.is_authenticated and can_use %}
-  <script>
-    const endpoint = "{% url 'jobs:applicant_assistant_generate' %}"
 
-    function getCookie(name) {
-      let cookieValue = null
-      if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';')
-        for (let i = 0; i < cookies.length; i++) {
-          const cookie = cookies[i].trim()
-          if (cookie.substring(0, name.length + 1) === name + '=') {
-            cookieValue = decodeURIComponent(cookie.substring(name.length + 1))
-            break
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          window.closeModal()
+          window.closeHistoryModal()
+        }
+      })
+
+      document.querySelectorAll('#aa-form [data-mode]').forEach(function (btn) {
+        btn.addEventListener('click', function () { setMode(btn.dataset.mode) })
+      })
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault()
+        window.requestGeneration()
+      })
+
+      // Restore a draft saved before signup, and run it once after signup.
+      var draft = readDraft()
+      var params = new URLSearchParams(window.location.search)
+      var mode0 = params.get('mode')
+      if (draft) {
+        if (draft.job_url) fields.job_url.value = draft.job_url
+        if (draft.job_description) fields.job_description.value = draft.job_description
+        if (draft.resume) fields.resume.value = draft.resume
+        setMode(draft.mode)
+      } else if (mode0) {
+        setMode(mode0)
+      }
+      if (params.get('resume') === '1') {
+        params.delete('resume')
+        var cleanUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + window.location.hash
+        window.history.replaceState(null, '', cleanUrl)
+        if (draft && IS_AUTHENTICATED) {
+          if (CAN_GENERATE) {
+            clearDraft()
+            window.requestGeneration()
+          } else {
+            showUpgrade("You've used your 3 free drafts. Your text is still filled in.")
+            clearDraft()
           }
         }
       }
-      return cookieValue
-    }
-
-    function requestGeneration(type) {
-      const output = document.getElementById('aa-output')
-      const status = document.getElementById('aa-status')
-      const spinner = document.getElementById('aa-spinner')
-      const modalOutput = document.getElementById('aa-modal-output')
-      const modalStatus = document.getElementById('aa-modal-status')
-      const modalSpinner = document.getElementById('aa-modal-spinner')
-      const modalMode = document.getElementById('aa-modal-mode')
-
-      modalMode.textContent = type.replace('_', ' ')
-      status.textContent = 'Generating...'
-      output.value = ''
-      modalOutput.value = ''
-      modalStatus.textContent = 'Generating...'
-      spinner.classList.remove('hidden')
-      modalSpinner.classList.remove('hidden')
-
-      const payload = {
-        job_url: document.getElementById('aa-joburl').value,
-        job_description: document.getElementById('aa-jobdesc').value,
-        resume: document.getElementById('aa-resume').value,
-        request_type: type
-      }
-
-      fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: JSON.stringify(payload)
-      })
-        .then((resp) => resp.json().then((data) => ({ status: resp.status, data })))
-        .then(({ status: httpStatus, data }) => {
-          if (httpStatus === 401 && data.requires_login) {
-            window.location.href = "{% url 'account_login' %}?next={{ request.path }}"
-            return
-          }
-          if (httpStatus === 403 && data.requires_upgrade) {
-            showUpgradeModal()
-            status.textContent = data.error
-            modalStatus.textContent = data.error
-            return
-          }
-          if (httpStatus >= 400) {
-            output.value = ''
-            status.textContent = data.error || 'Something went wrong.'
-            modalOutput.value = ''
-            modalStatus.textContent = data.error || 'Something went wrong.'
-            return
-          }
-          output.value = data.result || 'No content returned.'
-          status.textContent = 'Generated. Review and personalize before sending.'
-          modalOutput.value = data.result || 'No content returned.'
-          modalStatus.textContent = 'Generated. Review and personalize before sending.'
-          openModal()
-
-          // Update usage count in UI
-          if (data.uses_remaining !== undefined && data.uses_remaining >= 0) {
-            const usesEl = document.getElementById('uses-remaining')
-            const pluralEl = document.getElementById('uses-plural')
-            const hintEl = document.getElementById('upgrade-hint')
-            if (usesEl) usesEl.textContent = data.uses_remaining
-            if (pluralEl) pluralEl.textContent = data.uses_remaining === 1 ? '' : 's'
-            if (hintEl) hintEl.classList.remove('hidden')
-
-            // If no uses left, show upgrade prompt after closing modal
-            if (data.uses_remaining === 0) {
-              setTimeout(() => {
-                showUpgradeModal()
-              }, 2000)
-            }
-          }
-        })
-        .catch(() => {
-          status.textContent = 'Request failed. Check your network or server logs.'
-          modalStatus.textContent = 'Request failed. Check your network or server logs.'
-        })
-        .finally(() => {
-          spinner.classList.add('hidden')
-          modalSpinner.classList.add('hidden')
-        })
-    }
-
-    function copyOutput(btn) {
-      const output = document.getElementById('aa-output')
-      const modalOutput = document.getElementById('aa-modal-output')
-      const source = modalOutput && !modalOutput.closest('.hidden') ? modalOutput : output
-      if (!output.value) {
-        btn.textContent = 'Nothing to copy'
-        setTimeout(() => (btn.textContent = 'Copy'), 1400)
-        return
-      }
-      navigator.clipboard
-        .writeText(source.value || output.value)
-        .then(() => {
-          const original = btn.textContent
-          btn.textContent = 'Copied!'
-          setTimeout(() => (btn.textContent = original), 1400)
-        })
-        .catch(() => {
-          btn.textContent = 'Copy failed'
-          setTimeout(() => (btn.textContent = 'Copy'), 1400)
-        })
-    }
-
-    function openModal() {
-      const modal = document.getElementById('aa-modal')
-      modal.classList.remove('hidden')
-      document.body.classList.add('overflow-hidden')
-    }
-
-    function closeModal() {
-      const modal = document.getElementById('aa-modal')
-      modal.classList.add('hidden')
-      document.body.classList.remove('overflow-hidden')
-    }
-
-    function showUpgradeModal() {
-      const modal = document.getElementById('upgrade-modal')
-      modal.classList.remove('hidden')
-      document.body.classList.add('overflow-hidden')
-    }
-
-    function closeUpgradeModal() {
-      const modal = document.getElementById('upgrade-modal')
-      modal.classList.add('hidden')
-      document.body.classList.remove('overflow-hidden')
-    }
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        closeModal()
-        closeUpgradeModal()
-        closeHistoryModal()
-      }
-    })
+    })()
   </script>
-  {% endif %}
 {% endblock %}

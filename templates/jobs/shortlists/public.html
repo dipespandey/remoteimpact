@@ -1,0 +1,26 @@
+{% extends "jobs/shortlists/base.html" %}
+{% block title %}{{ collection_title }} | Remote Impact{% endblock %}
+{% block robots %}{% if private_collection %}noindex, nofollow{% else %}index, follow{% endif %}{% endblock %}
+{% block meta_description %}Recent remote software and data roles in impact-focused organizations. Browse the roles, build a shortlist and find matches for your own search.{% endblock %}
+{% block og_title %}{{ collection_title }} | Remote Impact{% endblock %}
+{% block og_description %}Find a role worth sharing. Browse remote impact jobs and create a shortlist for your own search.{% endblock %}
+{% block content %}
+<div class="page">
+  <header class="page-header">
+    <h1 class="page-title">{{ collection_title }}</h1>
+    <p class="page-lede">{% if private_collection %}A shared selection of public job listings. Only roles still listed as open are shown.{% else %}Recent software and data roles at impact organizations, newest first, published within the last 30 days.{% endif %}</p>
+    <div class="mt-5 flex max-w-2xl flex-col gap-2 sm:flex-row sm:items-center"><input id="collection-link" class="input" value="{{ share_url }}" readonly aria-label="Collection sharing link"><button class="btn btn-outline shrink-0" type="button" id="copy-collection">Copy link</button></div>
+    <p id="copy-status" class="help" role="status"></p>
+  </header>
+  <section class="surface flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"><div class="max-w-2xl"><h2 class="section-title">Find your own fit</h2><p class="mt-1 text-sm text-muted-foreground">Describe the work you want. Your first Scout search and match email are free. Ongoing alerts are $10/month.</p></div><a class="btn btn-primary shrink-0" href="{{ scout_url }}" data-track="collection_scout_start">Find my matches</a></section>
+  <ul class="list-surface mt-6">
+  {% for job in jobs %}<li class="flex min-w-0 items-start gap-4 rounded-xl px-4 py-3.5 transition-colors hover:bg-muted sm:px-5">{% if job.organization.logo %}<img class="hidden h-10 w-10 shrink-0 rounded-xl bg-card object-contain shadow-soft sm:block" src="{{ job.organization.logo.url }}" alt="" loading="lazy">{% endif %}{% include "jobs/shortlists/job.html" %}</li>{% empty %}<li class="px-4 py-10 text-center"><h2 class="section-title">No current roles in this collection</h2><p class="mt-1.5 text-sm text-muted-foreground">Listings close or expire. Browse the current jobs for similar roles.</p><a class="btn btn-outline mt-5" href="{% url 'jobs:job_list' %}">Browse current jobs</a></li>{% endfor %}
+  </ul>
+  <p class="mt-4 px-1 text-[13px] text-muted-foreground">Listings include aggregated and employer-posted roles. Check the original application page for current availability, salary details and location restrictions.</p>
+  {% if is_owner %}<section class="mt-8"><form method="post" action="{% url 'jobs:revoke_shortlist' collection.token %}">{% csrf_token %}<button class="btn btn-outline" type="submit">Revoke this sharing link</button></form></section>{% endif %}
+  <section class="surface mt-10 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"><div class="max-w-2xl"><h2 class="section-title">Hiring?</h2><p class="mt-1 text-sm text-muted-foreground">Publish your role and receive opt-in candidate introductions. $99 for a featured 30-day posting.</p></div><a class="btn btn-outline shrink-0" href="{% url 'jobs:employers' %}?source=job_collection" data-track="collection_employer_start">Employer posting</a></section>
+</div>
+{% endblock %}
+{% block extra_js %}<script>
+document.getElementById('copy-collection').addEventListener('click',async()=>{const input=document.getElementById('collection-link');const status=document.getElementById('copy-status');try{await navigator.clipboard.writeText(input.value);status.textContent='Link copied.';if(typeof gtag==='function')gtag('event','collection_link_copied');}catch(e){input.focus();input.select();status.textContent='Select and copy the link above.';}});
+</script>{% endblock %}

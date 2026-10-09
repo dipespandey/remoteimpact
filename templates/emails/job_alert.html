@@ -1,9 +1,10 @@
+{% load job_extras %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔔 New Jobs Matching Your Alert</title>
+    <title>New jobs matching your Scout</title>
     <style>
         body, table, td, p, a, li { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
         table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
@@ -25,7 +26,7 @@
                     <tr>
                         <td style="background-color: #0f172a; padding: 32px; text-align: center;">
                             <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 24px; font-weight: 700; color: #8AD425;">
-                                🔔 Job Alert
+                                AI Job Scout
                             </h1>
                             <p style="margin: 8px 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #94a3b8;">
                                 {% if alert_name %}{{ alert_name }}{% else %}New jobs matching your criteria{% endif %}
@@ -40,7 +41,7 @@
                                 Hi{% if user.first_name %} {{ user.first_name }}{% endif %},
                             </p>
                             <p style="margin: 12px 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #64748b; line-height: 1.5;">
-                                We found <strong style="color: #1e293b;">{{ job_count }} new job{{ job_count|pluralize }}</strong> matching your alert{% if alert_name %} "{{ alert_name }}"{% endif %}{% if keywords %} for <em>{{ keywords }}</em>{% endif %}.
+                                {% if is_initial and not is_one_time %}Your Job Scout is active. {% endif %}{% if job_count %}We found <strong style="color: #1e293b;">{{ job_count }} strong job match{{ job_count|pluralize:"es" }}</strong>{% if alert_name %} for "{{ alert_name }}"{% endif %}.{% else %}We did not find a strong current match{% if alert_name %} for "{{ alert_name }}"{% endif %}.{% endif %}
                             </p>
                         </td>
                     </tr>
@@ -53,7 +54,7 @@
                                 <tr>
                                     <td class="job-card" style="background-color: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0;">
                                         <!-- Job Title -->
-                                        <a href="{{ site_url }}{{ job.get_absolute_url }}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 600; color: #1e293b; text-decoration: none;">
+                                        <a href="{{ job.alert_email_url }}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 600; color: #1e293b; text-decoration: none;">
                                             {{ job.title }}
                                         </a>
 
@@ -65,8 +66,8 @@
                                         <!-- Meta -->
                                         <p style="margin: 8px 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #94a3b8;">
                                             {{ job.location|default:"Remote" }} &bull; {{ job.get_job_type_display }}
-                                            {% if job.salary_min and job.salary_max %}
-                                            &bull; {{ job.salary_currency }}{{ job.salary_min|floatformat:0 }} - {{ job.salary_max|floatformat:0 }}
+                                            {% if job|compensation_display %}
+                                            &bull; {{ job|compensation_display }}
                                             {% endif %}
                                         </p>
 
@@ -75,9 +76,15 @@
                                             Posted {{ job.posted_at|timesince }} ago
                                         </p>
 
+                                        {% if job.scout_reasons %}
+                                        <p style="margin: 10px 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; line-height: 1.45; color: #477513;">
+                                            <strong>Why it matched:</strong> {{ job.scout_reasons|join:"; " }}
+                                        </p>
+                                        {% endif %}
+
                                         <!-- CTA -->
                                         <p style="margin: 16px 0 0;">
-                                            <a href="{{ site_url }}{{ job.get_absolute_url }}" style="display: inline-block; padding: 10px 20px; background-color: #8AD425; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px;">
+                                            <a href="{{ job.alert_email_url }}" style="display: inline-block; padding: 10px 20px; background-color: #8AD425; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px;">
                                                 View Job
                                             </a>
                                         </p>
@@ -91,6 +98,11 @@
                                 + {{ more_jobs }} more job{{ more_jobs|pluralize }}
                             </p>
                             {% endif %}
+                            {% if jobs %}
+                            <p style="margin: 20px 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #64748b; text-align: center;">
+                                <a href="{{ review_url }}" style="color: #477513; font-weight: 600; text-decoration: underline;">Rate these matches</a> to help us improve Job Scout.
+                            </p>
+                            {% endif %}
                         </td>
                     </tr>
 
@@ -101,11 +113,12 @@
                                 <tr>
                                     <td style="background-color: #0f172a; border-radius: 12px; padding: 24px; text-align: center;">
                                         <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #f1f5f9;">
-                                            Browse all matching jobs on Remote Impact
+                                            {% if is_one_time %}Keep this exact search watching for new jobs{% else %}Browse all matching jobs on Remote Impact{% endif %}
                                         </p>
+                                        {% if is_one_time %}<p style="margin: 8px 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; line-height: 1.5; color: #bdc8be;">Pro checks fresh jobs throughout the day. Try it free for 7 days, then $10/month. Cancel anytime.</p>{% endif %}
                                         <p style="margin: 16px 0 0;">
-                                            <a href="{{ site_url }}/jobs/" style="display: inline-block; padding: 12px 24px; background-color: #8AD425; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px;">
-                                                View All Jobs
+                                            <a href="{% if is_one_time %}{{ upgrade_url }}{% else %}{{ site_url }}/jobs/{% endif %}" style="display: inline-block; padding: 12px 24px; background-color: #8AD425; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px;">
+                                                {% if is_one_time %}Keep My Scout Running{% else %}View All Jobs{% endif %}
                                             </a>
                                         </p>
                                     </td>
@@ -118,9 +131,10 @@
                     <tr>
                         <td style="background-color: #f8fafc; padding: 24px 32px; border-top: 1px solid #e2e8f0;">
                             <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #94a3b8; text-align: center;">
-                                You're receiving this because you set up a {{ frequency }} job alert on Remote Impact.
+                                You're receiving this because you set up a {{ frequency }} AI Job Scout on Remote Impact.
                             </p>
                             <p style="margin: 8px 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #94a3b8; text-align: center;">
+                                <a href="{{ site_url }}/shortlist/" style="color: #426f24; text-decoration: underline;">My Shortlist &amp; Application Progress</a><br><br>
                                 <a href="{{ alerts_url }}" style="color: #64748b; text-decoration: underline;">Manage Alerts</a>
                                 &bull;
                                 <a href="{{ unsubscribe_url }}" style="color: #64748b; text-decoration: underline;">Unsubscribe</a>

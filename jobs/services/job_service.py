@@ -1,6 +1,11 @@
-from django.db.models import Q, F, Value, Case, When, FloatField
+import re
+
+from django.db import connection
+import math
+from datetime import timedelta
+
+from django.db.models import Q, F, Value, Case, When, FloatField, IntegerField
 from django.db.models.functions import Greatest, Coalesce
-from django.contrib.postgres.search import SearchQuery, SearchRank, TrigramSimilarity
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from pgvector.django import CosineDistance
@@ -9,6 +14,13 @@ from ..utils import unique_slug
 
 
 class JobService:
+    PUBLIC_STALE_DAYS = 90
+
+    @staticmethod
+    def get_available_jobs(stale_days=None):
+        """Return the shared publishable set; a source sighting is not verification."""
+        return Job.objects.filter(Job.availability_filter(stale_days=stale_days))
+
     @staticmethod
     def get_filtered_jobs(filters):
         """
@@ -18,19 +30,8 @@ class JobService:
         Args:
             filters: QueryDict or dict-like object with filter parameters
         """
-        from datetime import timedelta
         now = timezone.now()
-        cutoff = now - timedelta(days=180)
-        jobs = Job.objects.filter(
-            is_active=True,
-        ).exclude(
-            # Exclude jobs with a past expiration date
-            expires_at__lt=now,
-        ).exclude(
-            # Exclude old jobs that never had an expiry date set
-            expires_at__isnull=True,
-            posted_at__lt=cutoff,
-        ).select_related(
+        jobs = JobService.get_available_jobs().select_related(
             "organization", "category"
         )
 
@@ -76,9 +77,16 @@ class JobService:
             countries = [filters.get("country")] if filters.get("country") else []
         countries = [c for c in countries if c]
         if countries:
+            from .location_normalizer import country_filter_aliases
+
             country_q = Q()
             for country in countries:
-                country_q |= Q(country=country) | Q(location__icontains=country)
+                for alias in country_filter_aliases(country):
+                    country_q |= Q(country__iexact=alias)
+                    # Two-letter codes such as "in" and "at" are ordinary
+                    # words too; use those only against the structured field.
+                    if len(alias) > 2 or alias.lower() in {"us", "uk"}:
+                        country_q |= Q(location__iregex=rf"(^|[^a-z0-9_]){re.escape(alias)}([^a-z0-9_]|$)")
             jobs = jobs.filter(country_q)
 
         # "Has salary listed" filter - only show jobs with actual salary data
@@ -98,10 +106,11 @@ class JobService:
                 val = float(filter_salary_min)
                 # Job's upper bound must be >= user's lower bound (for overlap)
                 # Use salary_max if available, otherwise fall back to salary_min
-                jobs = jobs.filter(
-                    Q(salary_max__gte=val) |
-                    Q(salary_max__isnull=True, salary_min__gte=val)
-                )
+                if math.isfinite(val) and val > 0:
+                    jobs = JobService._annual_salary_jobs(jobs).filter(salary_currency="USD").filter(
+                        Q(salary_max__gte=val) |
+                        Q(salary_max__isnull=True, salary_min__gte=val)
+                    )
             except (TypeError, ValueError):
                 pass
 
@@ -110,10 +119,12 @@ class JobService:
                 val = float(filter_salary_max)
                 # Job's lower bound must be <= user's upper bound (for overlap)
                 # Use salary_min if available, otherwise fall back to salary_max
-                jobs = jobs.filter(
-                    Q(salary_min__lte=val) |
-                    Q(salary_min__isnull=True, salary_max__lte=val)
-                )
+                # The slider's upper endpoint is labelled "$1M+", not a cap.
+                if math.isfinite(val) and 0 < val < 1000000:
+                    jobs = JobService._annual_salary_jobs(jobs).filter(salary_currency="USD").filter(
+                        Q(salary_min__lte=val) |
+                        Q(salary_min__isnull=True, salary_max__lte=val)
+                    )
             except (TypeError, ValueError):
                 pass
 
@@ -206,70 +217,171 @@ class JobService:
             # Return early - ordering is handled by search
             return jobs
 
-        # Keep each sort option truthful. Featured jobs get a visual treatment,
-        # but must not jump ahead of newer jobs when "Newest" is selected.
-        if sort == "salary-high":
-            return jobs.annotate(
-                effective_salary=Coalesce("salary_max", "salary_min")
-            ).order_by(F("effective_salary").desc(nulls_last=True), "-posted_at", "-pk")
-        if sort == "salary-low":
-            return jobs.annotate(
-                effective_salary=Coalesce("salary_min", "salary_max")
-            ).order_by(F("effective_salary").asc(nulls_last=True), "-posted_at", "-pk")
+        # The public feed is a chronological feed. Personalization belongs on
+        # My Matches, and featured status must not make stale roles look new.
+        return JobService._order_jobs(jobs, sort, interleave=True)
 
-        return jobs.order_by("-posted_at", "-pk")
+    @staticmethod
+    def _annual_salary_jobs(jobs):
+        from django.db.models.fields.json import KeyTextTransform
+        from django.db.models import Value, TextField
+        return jobs.annotate(
+            _source_pay_period=Coalesce(KeyTextTransform('salaryPeriod','raw_data'),Value('YEAR'),output_field=TextField()),
+            _stored_pay_period=Coalesce(KeyTextTransform('salary_period','raw_data'),Value('year'),output_field=TextField()),
+        ).exclude(_source_pay_period__in=['HOUR','DAY','WEEK','hour','day','week']).exclude(_stored_pay_period__in=['hour','day','week'])
+
+    @staticmethod
+    def _order_jobs(queryset, sort, interleave=False):
+        if sort == "salary-high":
+            return queryset.order_by(
+                Coalesce("salary_max", "salary_min").desc(nulls_last=True),
+                "-posted_at", "-id",
+            )
+        if sort == "salary-low":
+            return queryset.order_by(
+                Coalesce("salary_min", "salary_max").asc(nulls_last=True),
+                "-posted_at", "-id",
+            )
+        if not interleave:
+            return queryset.order_by("-posted_at", "-id")
+        # Browsing: newest first, but within a day interleave organizations (each org's newest role,
+        # then each org's second, ...) so one employer posting 40 roles at once doesn't
+        # bury everyone else. Days stay in order, so "Newest" still means newest.
+        from django.db.models import F, Window
+        from django.db.models.functions import RowNumber, TruncDate
+        return queryset.annotate(
+            _day=TruncDate("posted_at"),
+            _org_turn=Window(
+                expression=RowNumber(),
+                partition_by=[F("organization_id"), TruncDate("posted_at")],
+                order_by=[F("posted_at").desc(), F("id").desc()],
+            ),
+        ).order_by("-_day", "_org_turn", "-posted_at", "-id")
+
+    SEARCH_NOISE_WORDS = {
+        "remote", "job", "jobs", "role", "roles", "position", "positions", "opportunity",
+        "opportunities", "career", "careers", "hiring", "vacancy", "vacancies", "work", "openings",
+    }
+    SEARCH_SYNONYMS = {
+        "ai": ["ai", "artificial intelligence"],
+        "ml": ["ml", "machine learning"],
+        "intern": ["intern", "internship"],
+        "comms": ["comms", "communications"],
+        "ops": ["ops", "operations"],
+        "m&e": ["m&e", "monitoring and evaluation", "mel", "meal"],
+        "mel": ["mel", "monitoring, evaluation", "monitoring and evaluation"],
+        "dev": ["dev", "developer", "development"],
+        "pm": ["pm", "project manager", "product manager", "program manager", "programme manager"],
+        "program": ["program", "programme"],
+        "programme": ["programme", "program"],
+        "hr": ["hr", "human resources", "people"],
+        "esg": ["esg", "environmental, social"],
+    }
+
+    @staticmethod
+    def _word_q(field, text):
+        """Whole-word, case-insensitive match (plural allowed), with a few synonyms.
+
+        Plain substring matching made "AI" match "Maintenance" and "intern"
+        match "International".
+        """
+        variants = JobService.SEARCH_SYNONYMS.get(text.lower(), [text])
+        condition = Q()
+        for variant in variants:
+            words = [re.escape(part) for part in variant.split()]
+            body = r"[^A-Za-z0-9]+".join(words)
+            pattern = rf"(^|[^A-Za-z0-9]){body}(s|es)?([^A-Za-z0-9]|$)"
+            condition |= Q(**{f"{field}__iregex": pattern})
+        return condition
 
     @staticmethod
     def _apply_smart_search(queryset, query, sort=""):
         """
-        Simple, precise search using PostgreSQL full-text search.
+        Precise search using PostgreSQL full-text search plus title intent.
         Uses raw SQL for ts_rank because Django's SearchRank has a bug
         with SearchVectorField (converts tsvector to text, losing weights).
         
         Args:
             queryset: Base queryset to search
             query: Search query string
-            sort: Sort order - "date" for newest first, "" or "relevance" for FTS rank
+            sort: Sort order - "relevance" for FTS rank, otherwise newest first
         """
         from django.db.models.expressions import RawSQL
-        
-        # Annotate with proper FTS rank using raw SQL
+
+        all_words = [
+            word
+            for word in re.findall(r"(?i)\bm&e\b|[A-Za-z0-9][A-Za-z0-9+#.:-]*", query)
+            if len(word) > 1
+        ]
+        # Every listing is remote; words like "remote" or "jobs" carry no intent.
+        query_words = [w for w in all_words if w.lower() not in JobService.SEARCH_NOISE_WORDS] or all_words
+        phrase = " ".join(query_words) or query
+        title_phrase_q = JobService._word_q("title", phrase)
+        title_all_words_q = title_phrase_q
+        if query_words:
+            title_all_words_q = Q()
+            for word in query_words:
+                title_all_words_q &= JobService._word_q("title", word)
+        organization_q = (
+            JobService._word_q("organization__name", query.strip()) if len(query.strip()) >= 3 else Q(pk__in=[])
+        )
+
+        # Annotate with proper FTS rank using raw SQL and title buckets.
         queryset = queryset.annotate(
             fts_rank=RawSQL(
                 "ts_rank(search_vector, websearch_to_tsquery('english', %s))",
                 [query]
             ),
+            title_phrase_match=Case(
+                When(title_phrase_q, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            ),
+            title_all_words_match=Case(
+                When(title_all_words_q, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            ),
         )
         
-        # For short queries (1-3 words), also check title contains
-        query_words = query.split()
         is_short_query = len(query_words) <= 3
+        is_multi_word_role_query = 1 < len(query_words) <= 3
         
-        if is_short_query:
-            # Short query: FTS match OR title contains the query
-            queryset = queryset.filter(
-                Q(fts_rank__gt=0.01) |  # Has meaningful FTS match
-                Q(title__icontains=query)  # Title contains query
+        if is_multi_word_role_query or not is_short_query:
+            # Role searches like "software engineer" must describe the title.
+            # Body-only FTS matches otherwise let adjacent roles such as sales
+            # engineers outrank the role the user explicitly requested.
+            strict = queryset.filter(title_phrase_q | title_all_words_q | organization_q)
+            if connection.vendor == "postgresql" and not strict.exists():
+                # Topic searches ("climate policy") rarely appear verbatim in
+                # titles; rather than show nothing, require every word in the
+                # listing text.
+                from django.contrib.postgres.search import SearchQuery
+                strict = queryset.filter(
+                    Q(search_vector=SearchQuery(phrase, search_type="plain", config="english")) | organization_q
+                )
+            queryset = strict
+        else:
+            # Single-word searches can reasonably match title or body text.
+            body_q = (
+                Q(fts_rank__gt=0.01) if connection.vendor == "postgresql"
+                else JobService._word_q("description", phrase)  # local SQLite has no FTS
             )
-        else:
-            # Long/specific query: require FTS match (more precise)
-            queryset = queryset.filter(fts_rank__gt=0.01)
+            queryset = queryset.filter(body_q | title_phrase_q | organization_q)
         
-        # Order by user preference: date (default) or relevance
         if sort == "relevance":
-            # Sort by FTS relevance, date as tiebreaker
-            return queryset.order_by('-fts_rank', '-posted_at', '-pk')
-        if sort == "salary-high":
-            return queryset.annotate(
-                effective_salary=Coalesce("salary_max", "salary_min")
-            ).order_by(F("effective_salary").desc(nulls_last=True), "-posted_at", "-pk")
-        if sort == "salary-low":
-            return queryset.annotate(
-                effective_salary=Coalesce("salary_min", "salary_max")
-            ).order_by(F("effective_salary").asc(nulls_last=True), "-posted_at", "-pk")
-        else:
-            # Default (including "date" or empty): sort by date posted (newest first)
-            return queryset.order_by('-posted_at', '-fts_rank', '-pk')
+            return queryset.order_by(
+                "-title_phrase_match",
+                "-title_all_words_match",
+                "-fts_rank",
+                "-posted_at",
+                "-id",
+            )
+
+        # "Newest" is the default visible selection, so it must be strictly
+        # chronological across every matching result, not just within hidden
+        # relevance buckets.
+        return JobService._order_jobs(queryset, sort)
 
     @staticmethod
     def create_job(data: dict, user=None, organization=None) -> Job:
@@ -278,16 +390,7 @@ class JobService:
         """
         if organization is None:
             org_name = (data.get("organization_name") or "").strip()
-            # Tolerate legacy duplicate Organization rows (no unique constraint
-            # on name): take the first match, otherwise create a fresh row.
-            organization = (
-                Organization.objects.filter(name=org_name).order_by("id").first()
-                or Organization.objects.create(
-                    name=org_name,
-                    website=data.get("organization_website") or "",
-                    description=data.get("organization_description") or "",
-                )
-            )
+            organization = JobService._organization_for_poster(org_name, data, user)
 
         job = Job(
             title=data.get("title"),
@@ -296,7 +399,7 @@ class JobService:
             description=data.get("description"),
             requirements=data.get("requirements"),
             location=data.get("location"),
-            job_type="full_time",  # Defaulting as per previous view logic, or could be passed
+            job_type=data.get("job_type") or "full-time",
             salary_min=data.get("salary_min"),
             salary_max=data.get("salary_max"),
             salary_currency=data.get("salary_currency") or ("USD" if (data.get("salary_min") or data.get("salary_max")) else ""),
@@ -330,24 +433,44 @@ class JobService:
         return job
 
     @staticmethod
+    def _organization_for_poster(org_name, data, user):
+        """Reuse an organization only when it has no owners or the poster is one.
+
+        Otherwise anyone could post under, and edit, another organization's
+        profile. A new organization made by a poster lists them as a member.
+        """
+        is_user = bool(user and getattr(user, "is_authenticated", False))
+        for org in Organization.objects.filter(name=org_name).order_by("id"):
+            members = org.members.all()
+            if not members.exists() or (is_user and members.filter(pk=user.pk).exists()):
+                return org
+        organization = Organization.objects.create(
+            name=org_name,
+            slug=unique_slug(Organization, org_name),
+            website=data.get("organization_website") or "",
+            description=data.get("organization_description") or "",
+        )
+        if is_user:
+            organization.members.add(user)
+        return organization
+
+    @staticmethod
     def update_job(job: Job, data: dict) -> Job:
         """Apply form data to an existing draft Job. Caller is responsible for ownership checks."""
         org_name = (data.get("organization_name") or "").strip()
         if org_name and org_name != job.organization.name:
-            organization = (
-                Organization.objects.filter(name=org_name).order_by("id").first()
-                or Organization.objects.create(
-                    name=org_name,
-                    website=data.get("organization_website") or "",
-                    description=data.get("organization_description") or "",
-                )
-            )
-            job.organization = organization
+            job.organization = JobService._organization_for_poster(org_name, data, job.poster)
         else:
+            # Fill gaps only. A poster must never rewrite an organization
+            # profile that other listings (often imported) rely on.
             org = job.organization
-            org.website = data.get("organization_website") or org.website
-            org.description = data.get("organization_description") or org.description
-            org.save()
+            changed = False
+            if not org.website and data.get("organization_website"):
+                org.website = data["organization_website"]; changed = True
+            if not org.description and data.get("organization_description"):
+                org.description = data["organization_description"]; changed = True
+            if changed:
+                org.save(update_fields=["website", "description"])
 
         job.title = data.get("title") or job.title
         job.category = data.get("category") or job.category

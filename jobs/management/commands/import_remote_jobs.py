@@ -3,9 +3,13 @@ from __future__ import annotations
 import asyncio
 
 from asgiref.sync import sync_to_async
+from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 
+from django.utils import timezone
+
 from jobs.services import importers, crawlers
+from jobs.services.importers.common import FEED_SOURCES, retire_unseen_listings
 
 
 class Command(BaseCommand):
@@ -14,9 +18,9 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             "--source",
-            choices=["all", "80000hours", "idealist", "reliefweb", "climatebase", "probablygood", "jobboards"],
+            choices=["all", "feeds", "80000hours", "idealist", "reliefweb", "climatebase", "probablygood", "jobboards"],
             default="all",
-            help="Limit imports to a single upstream source. 'jobboards' = Greenhouse/Lever/Ashby via Google.",
+            help="Limit imports to one source. 'feeds' excludes Google-discovered job boards.",
         )
         parser.add_argument(
             "--limit",
@@ -32,7 +36,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--use-ai",
             action="store_true",
-            help="Use Mistral AI to parse and improve job descriptions (costs money).",
+            help="Use DeepSeek to parse and improve job descriptions (costs money).",
         )
         parser.add_argument(
             "--batch-size",
@@ -42,9 +46,9 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--provider",
-            choices=["deepseek", "groq", "mistral"],
+            choices=["deepseek"],
             default=None,
-            help="LLM provider to use for AI parsing (default: auto-detect based on available API keys).",
+            help="LLM provider to use for AI parsing (DeepSeek is the production default).",
         )
         parser.add_argument(
             "--new-only",
@@ -57,6 +61,11 @@ class Command(BaseCommand):
             default=None,
             help="Maximum pages to scrape for paginated sources like Probably Good (default: source-specific).",
         )
+        parser.add_argument(
+            "--skip-maintenance",
+            action="store_true",
+            help="Do not run the deterministic public-inventory cleanup after a successful import.",
+        )
 
     def handle(self, *args, **options):
         dry_run = options["dry_run"]
@@ -67,7 +76,9 @@ class Command(BaseCommand):
         provider = options["provider"]
         new_only = options["new_only"]
         max_pages = options["max_pages"]
+        skip_maintenance = options["skip_maintenance"]
 
+        run_started = timezone.now()
         # Run the async import
         summaries = asyncio.run(
             self._run_imports(source, limit, dry_run, use_ai, batch_size, provider, new_only, max_pages)
@@ -82,8 +93,41 @@ class Command(BaseCommand):
             skipped_str = f", skipped {skipped}" if skipped else ""
             self.stdout.write(
                 f"{status}{key}: fetched {summary['fetched']} jobs "
-                f"(created {summary['created']}, updated {summary['updated']}{skipped_str})"
+                f"(created {summary['created']}, updated {summary['updated']}"
+                f"{skipped_str}, failed {summary.get('failed', 0)})"
             )
+
+        # A complete, successful feed fetch is the aggregator's current list: anything it
+        # no longer shows has been taken down upstream (usually closed by the employer).
+        if not dry_run and limit is None and max_pages is None:
+            for key, summary in summaries.items():
+                if summary.get("error") or key not in FEED_SOURCES:
+                    continue
+                result = retire_unseen_listings(key, run_started, summary.get("fetched", 0))
+                note = f" (skipped: {result['skipped']})" if result["skipped"] else ""
+                self.stdout.write(f"{key}: retired {result['retired']} listings no longer in the feed{note}")
+
+        failures = [
+            f"{key}: {summary.get('error') or summary.get('failed', 0)}"
+            for key, summary in summaries.items()
+            if summary.get("error") or summary.get("failed", 0)
+        ]
+
+        # Feed imports run throughout the day. Keep jobs discovered by a later
+        # import from remaining public as duplicates, expired roles, or generic
+        # talent pools until the next morning's full quality pass.
+        successful_import = any(not summary.get("error") for summary in summaries.values())
+        if not dry_run and successful_import and not skip_maintenance:
+            self.stdout.write("Running post-import public inventory maintenance...")
+            for command_name in (
+                "deactivate_expired_jobs",
+                "deactivate_duplicate_jobs",
+                "deactivate_non_opening_jobs",
+            ):
+                call_command(command_name, stdout=self.stdout)
+
+        if failures and not dry_run:
+            raise CommandError("Import completed with failures: " + "; ".join(failures))
 
     async def _run_imports(
         self,
@@ -111,7 +155,7 @@ class Command(BaseCommand):
 
             return callback
 
-        if source in ("all", "80000hours"):
+        if source in ("all", "feeds", "80000hours"):
             self.stdout.write("Starting import from 80,000 Hours...")
             try:
                 summaries["80000hours"] = await importers.import_80000_hours(
@@ -127,7 +171,7 @@ class Command(BaseCommand):
                 self.stderr.write(f"80000hours import failed: {e}")
                 summaries["80000hours"] = {"fetched": 0, "created": 0, "updated": 0, "error": str(e)}
 
-        if source in ("all", "idealist"):
+        if source in ("all", "feeds", "idealist"):
             self.stdout.write("Starting import from Idealist...")
             try:
                 summaries["idealist"] = await importers.import_idealist(
@@ -143,7 +187,7 @@ class Command(BaseCommand):
                 self.stderr.write(f"idealist import failed: {e}")
                 summaries["idealist"] = {"fetched": 0, "created": 0, "updated": 0, "error": str(e)}
 
-        if source in ("all", "reliefweb"):
+        if source in ("all", "feeds", "reliefweb"):
             self.stdout.write("Starting import from ReliefWeb...")
             try:
                 summaries["reliefweb"] = await importers.import_reliefweb(
@@ -159,7 +203,7 @@ class Command(BaseCommand):
                 self.stderr.write(f"reliefweb import failed: {e}")
                 summaries["reliefweb"] = {"fetched": 0, "created": 0, "updated": 0, "error": str(e)}
 
-        if source in ("all", "climatebase"):
+        if source in ("all", "feeds", "climatebase"):
             self.stdout.write("Starting import from Climatebase...")
             try:
                 summaries["climatebase"] = await importers.import_climatebase(
@@ -175,7 +219,7 @@ class Command(BaseCommand):
                 self.stderr.write(f"climatebase import failed: {e}")
                 summaries["climatebase"] = {"fetched": 0, "created": 0, "updated": 0, "error": str(e)}
 
-        if source in ("all", "probablygood"):
+        if source in ("all", "feeds", "probablygood"):
             self.stdout.write("Starting import from Probably Good...")
             try:
                 summaries["probablygood"] = await importers.import_probablygood(
@@ -188,20 +232,6 @@ class Command(BaseCommand):
                     provider=provider,
                     skip_existing=new_only,
                 )
-                
-                # Crawl newly imported jobs that have API-accessible URLs
-                if not dry_run and summaries["probablygood"]["created"] > 0:
-                    self.stdout.write("Crawling Probably Good jobs from APIs (Greenhouse/Lever/Ashby)...")
-                    crawl_stats = crawlers.crawl_jobs_needing_update(
-                        source="probablygood",
-                        limit=summaries["probablygood"]["created"] + 50,  # Some buffer
-                        dry_run=dry_run,
-                        delay=0.3,
-                    )
-                    self.stdout.write(
-                        f"  Crawled: {crawl_stats['success']} updated, "
-                        f"{crawl_stats['failed']} failed, {crawl_stats['skipped']} skipped"
-                    )
             except Exception as e:
                 self.stderr.write(f"probablygood import failed: {e}")
                 summaries["probablygood"] = {"fetched": 0, "created": 0, "updated": 0, "error": str(e)}
@@ -235,8 +265,10 @@ class Command(BaseCommand):
                     ai_str = " with AI" if use_ai else ""
                     self.stdout.write(
                         f"  Crawled{ai_str}: {crawl_stats['success']} updated, "
+                        f"{crawl_stats.get('closed', 0)} closed, "
                         f"{crawl_stats['failed']} failed, {crawl_stats['skipped']} skipped"
                     )
+                    summaries["jobboards"]["crawl_failed"] = crawl_stats["failed"]
             except Exception as e:
                 self.stderr.write(f"jobboards import failed: {e}")
                 summaries["jobboards"] = {"fetched": 0, "created": 0, "updated": 0, "error": str(e)}

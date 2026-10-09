@@ -17,7 +17,39 @@ from .models import (
     Referral,
     ReferralSignup,
     JobAlert,
+    JobAlertDelivery,
+    ConsumerFunnelEvent,
+    EmployerFunnelEvent,
 )
+
+
+@admin.register(EmployerFunnelEvent)
+class EmployerFunnelEventAdmin(admin.ModelAdmin):
+    list_display = ["event", "user", "job", "created_at"]
+    list_filter = ["event", "created_at"]
+    search_fields = ["user__email", "job__title"]
+    readonly_fields = ["event", "user", "job", "metadata", "created_at"]
+    date_hierarchy = "created_at"
+
+
+@admin.register(ConsumerFunnelEvent)
+class ConsumerFunnelEventAdmin(admin.ModelAdmin):
+    list_display = ["event", "user", "alert", "source", "created_at"]
+    list_filter = ["event", "created_at"]
+    search_fields = ["user__email", "alert__name", "dedupe_key"]
+    readonly_fields = [
+        "event",
+        "user",
+        "alert",
+        "metadata",
+        "dedupe_key",
+        "created_at",
+    ]
+    date_hierarchy = "created_at"
+
+    @admin.display(description="Source")
+    def source(self, obj):
+        return (obj.metadata or {}).get("source", "-")
 
 
 @admin.register(Organization)
@@ -564,6 +596,14 @@ class JobAlertAdmin(admin.ModelAdmin):
     list_filter = ["frequency", "is_active"]
     search_fields = ["user__email", "name", "keywords"]
     readonly_fields = ["created_at", "updated_at", "last_sent_at"]
+
+
+@admin.register(JobAlertDelivery)
+class JobAlertDeliveryAdmin(admin.ModelAdmin):
+    list_display = ["alert", "job", "match_score", "sent_at"]
+    search_fields = ["alert__user__email", "alert__name", "job__title"]
+    readonly_fields = ["alert", "job", "match_score", "match_reasons", "sent_at"]
+    raw_id_fields = ["alert", "job"]
 
 
 from .models import ProfileView

@@ -3,46 +3,44 @@
 {% block title %}Contribute{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 py-8">
+<div class="container py-8 sm:py-10">
+    <header class="page-header max-w-3xl">
+        <h1 class="page-title">Contribute</h1>
+        <p class="page-lede">Short tasks for impact organisations. Each one says how long it takes and what it is for.</p>
+    </header>
 
-    <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold mb-2 text-gray-900">Build Your Impact Proof</h1>
-        <p class="text-gray-600">Complete micro-tasks, earn verified impact cards</p>
-    </div>
-
-    <div class="flex flex-wrap gap-2 mb-8 justify-center">
+    <nav class="flex flex-wrap gap-2" aria-label="Filter tasks by category">
         <a href="{% url 'jobs:sprints_list' %}"
-            class="px-4 py-2 rounded-full text-sm font-medium transition {% if not current_category %}bg-brand-300 text-gray-900 hover:bg-brand-400{% else %}bg-white border border-gray-200 text-gray-700 hover:bg-gray-50{% endif %}">
+            class="rounded-full px-3 py-1.5 text-[13px] transition-colors {% if not current_category %}bg-foreground text-background{% else %}bg-muted text-foreground hover:bg-accent{% endif %}"
+            {% if not current_category %}aria-current="page"{% endif %}>
             All
         </a>
         {% for cat in categories %}
         <a href="{% url 'jobs:sprints_list' %}?category={{ cat.slug }}"
-            class="px-4 py-2 rounded-full text-sm font-medium transition {% if current_category == cat.slug %}bg-brand-300 text-gray-900 hover:bg-brand-400{% else %}bg-white border border-gray-200 text-gray-700 hover:bg-gray-50{% endif %}">
-            {{ cat.icon }} {{ cat.name }}
+            class="rounded-full px-3 py-1.5 text-[13px] transition-colors {% if current_category == cat.slug %}bg-foreground text-background{% else %}bg-muted text-foreground hover:bg-accent{% endif %}"
+            {% if current_category == cat.slug %}aria-current="page"{% endif %}>
+            {{ cat.name }}
         </a>
         {% endfor %}
-    </div>
+    </nav>
 
-    <div class="grid md:grid-cols-2 gap-4">
+    <div class="mt-5 grid gap-3 md:grid-cols-2">
         {% for sprint in sprints %}
-        <a href="{% url 'jobs:sprint_detail' sprint.id %}"
-            class="block p-6 bg-white border border-gray-200 rounded-2xl hover:border-brand-500 transition shadow-sm">
-            <div class="flex items-start justify-between mb-3">
-                <h3 class="text-lg font-semibold text-gray-900">{{ sprint.title }}</h3>
-                <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">{{ sprint.difficulty }}</span>
-            </div>
-            <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ sprint.description }}</p>
-            <div class="flex items-center gap-4 text-sm text-gray-500">
-                <span>⏱️ {{ sprint.time_estimate_minutes }} min</span>
+        <a href="{% url 'jobs:sprint_detail' sprint.id %}" class="card card-interactive block p-5">
+            <span class="block text-[15px] font-semibold leading-snug text-foreground">{{ sprint.title }}</span>
+            <span class="mt-1 line-clamp-2 block text-sm leading-6 text-muted-foreground">{{ sprint.description }}</span>
+            <span class="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
                 <span>{{ sprint.organization.name }}</span>
-            </div>
+                <span aria-hidden="true">&middot;</span><span class="tabular-nums">{{ sprint.time_estimate_minutes }} min</span>
+                {% if sprint.difficulty %}<span aria-hidden="true">&middot;</span><span>{{ sprint.difficulty }}</span>{% endif %}
+            </span>
         </a>
         {% empty %}
-        <div class="col-span-2 text-center py-12 text-gray-500">
-            <p>No sprints available yet</p>
+        <div class="surface col-span-full p-6 text-sm">
+            <p class="font-medium text-foreground">No tasks available yet.</p>
+            <p class="mt-1 text-muted-foreground">In the meantime, <a href="{% url 'jobs:job_list' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">browse open roles</a>.</p>
         </div>
         {% endfor %}
     </div>
-
 </div>
 {% endblock %}

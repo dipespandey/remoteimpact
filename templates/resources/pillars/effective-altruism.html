@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'resources/pillars/_guide_base.html' %}
 
 {# ──────────────────────────────────────────────────────────
    PILLAR PAGE: Effective Altruism Careers
@@ -88,103 +88,69 @@
 </script>
 {% endblock %}
 
-{% block content %}
-<section class="bg-gray-50 pt-16 pb-12">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
-            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
-            <span>&rsaquo;</span>
-            <a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Resources</a>
-            <span>&rsaquo;</span>
-            <span class="text-gray-900">Effective Altruism Careers</span>
-        </nav>
+{% block guide_breadcrumb %}
+<li aria-hidden="true">/</li>
+<li aria-current="page" class="text-foreground">Effective Altruism Careers</li>
+{% endblock %}
 
-        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm prose prose-gray max-w-none">
-            <p class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold mb-2">Pillar Guide</p>
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
-                Effective Altruism Jobs: The Complete Remote Career Guide
-            </h1>
+{% block guide_title %}Effective altruism jobs: a remote career guide{% endblock %}
 
-            <p class="text-xl text-gray-600 leading-relaxed mb-8">
-                Effective altruism (EA) isn't just a philosophy — it's a growing professional ecosystem. From grantmaking to alignment research, EA-aligned organisations offer some of the most impactful career paths available, and many are remote-first.
-            </p>
+{% block guide_lede %}Effective altruism (EA) organisations hire for grantmaking, research, operations, communications and engineering, and many of them hire remotely. This guide covers what the field is, the skills these employers ask for, and how people get a first role.{% endblock %}
 
-            <h2>What is effective altruism?</h2>
-            <p>
-                Effective altruism is a research field and community that uses evidence and careful reasoning to determine the most effective ways to benefit others. EA-aligned organisations concentrate on cause areas where marginal resources can do the most good: global health and development (via organisations like GiveWell and the Against Malaria Foundation), animal welfare (Animal Charity Evaluators), existential risk reduction (AI safety, biosecurity), and improving institutional decision-making.
-            </p>
-            <p>
-                Careers in EA span far beyond philosophy. The community needs software engineers, operations managers, grantmakers, researchers, communicators, and executive leaders. 80,000 Hours, the leading EA career advisory, consistently highlights that "talent gaps" in operations and management are among the most pressing bottlenecks in the ecosystem.
-            </p>
+{% block guide_body %}
+<h2>What is effective altruism?</h2>
+<p>
+    Effective altruism is a research field and community that uses evidence and careful reasoning to determine the most effective ways to benefit others. EA-aligned organisations concentrate on cause areas where marginal resources can do the most good: global health and development (via organisations like GiveWell and the Against Malaria Foundation), animal welfare (Animal Charity Evaluators), existential risk reduction (AI safety, biosecurity), and improving institutional decision-making.
+</p>
+<p>
+    Careers in EA span far beyond philosophy. The community needs software engineers, operations managers, grantmakers, researchers, communicators, and executive leaders. 80,000 Hours, the leading EA career advisory, has repeatedly listed operations and management among the hardest roles for these organisations to fill.
+</p>
 
-            <h2>Key skills employers look for</h2>
-            <ul>
-                <li><strong>Research &amp; analysis</strong> — Cost-effectiveness analysis, literature reviews, Bayesian reasoning, forecasting.</li>
-                <li><strong>Grantmaking &amp; evaluation</strong> — Due diligence, impact assessment, portfolio management.</li>
-                <li><strong>Operations &amp; people management</strong> — Scaling small orgs, hiring, finance, compliance.</li>
-                <li><strong>Communications &amp; field-building</strong> — Community management, content creation, event organising.</li>
-                <li><strong>Software engineering</strong> — Many EA orgs build internal tools, platforms, and research infrastructure.</li>
-                <li><strong>Quantitative reasoning</strong> — Comfort with expected-value calculations, uncertainty, and thinking in terms of counterfactual impact.</li>
-            </ul>
+<h2>Key skills employers look for</h2>
+<ul>
+    <li><strong>Research &amp; analysis</strong> — Cost-effectiveness analysis, literature reviews, Bayesian reasoning, forecasting.</li>
+    <li><strong>Grantmaking &amp; evaluation</strong> — Due diligence, impact assessment, portfolio management.</li>
+    <li><strong>Operations &amp; people management</strong> — Scaling small orgs, hiring, finance, compliance.</li>
+    <li><strong>Communications &amp; field-building</strong> — Community management, content creation, event organising.</li>
+    <li><strong>Software engineering</strong> — Many EA orgs build internal tools, platforms, and research infrastructure.</li>
+    <li><strong>Quantitative reasoning</strong> — Comfort with expected-value calculations, uncertainty, and thinking in terms of counterfactual impact.</li>
+</ul>
 
-            <h2>How to get started</h2>
-            <p>
-                Start with 80,000 Hours' free career planning resources — their problem profiles and career reviews are the gold standard. Attend an EAGx conference (they have events worldwide and offer travel grants). Engage on the EA Forum by writing about your area of expertise. Apply for structured programmes like the EA Cambridge fellowship or local EA group facilitator roles. If you're mid-career, your existing skills are likely in high demand — EA orgs are chronically short on experienced operations, finance, and management professionals.
-            </p>
+<h2>How to get started</h2>
+<p>
+    Start with 80,000 Hours' free career planning resources — their problem profiles and career reviews are the usual starting point. Attend an EAGx conference (they have events worldwide and offer travel grants). Engage on the EA Forum by writing about your area of expertise. Join an introductory EA fellowship run by a local or online group. If you're mid-career, look first at operations, finance and management roles, where experienced hires are hardest for EA organisations to find.
+</p>
 
-            <h2>Frequently asked questions</h2>
+<h2>Frequently asked questions</h2>
 
-            <h3>What is effective altruism?</h3>
-            <p>
-                Effective altruism is a philosophy and community that uses evidence and careful reasoning to determine the most effective ways to benefit others. It focuses on cause areas where resources can do the most good: global health, animal welfare, AI safety, biosecurity, and institutional decision-making.
-            </p>
+<h3>What is effective altruism?</h3>
+<p>
+    Effective altruism is a philosophy and community that uses evidence and careful reasoning to determine the most effective ways to benefit others. It focuses on cause areas where resources can do the most good: global health, animal welfare, AI safety, biosecurity, and institutional decision-making.
+</p>
 
-            <h3>Do I have to agree with EA philosophy to work at an EA org?</h3>
-            <p>
-                No. Mission alignment helps, but EA organisations hire from diverse backgrounds. What matters is a commitment to evidence-based impact and strong professional skills.
-            </p>
+<h3>Do I have to agree with EA philosophy to work at an EA org?</h3>
+<p>
+    No. Mission alignment helps, but EA organisations hire from diverse backgrounds. What matters is a commitment to evidence-based impact and strong professional skills.
+</p>
 
-            <h3>What EA organisations are hiring remotely?</h3>
-            <p>
-                GiveWell, Open Philanthropy, 80,000 Hours, CEA, Rethink Priorities, Animal Charity Evaluators, and many smaller orgs. Check our <a href="/jobs/?category=effective-altruism">effective altruism category</a> for current listings.
-            </p>
+<h3>What EA organisations are hiring remotely?</h3>
+<p>
+    GiveWell, Open Philanthropy, 80,000 Hours, CEA, Rethink Priorities, Animal Charity Evaluators, and many smaller orgs. Check our <a href="/jobs/?category=effective-altruism">effective altruism category</a> for current listings.
+</p>
 
-            <h3>How do I find EA job openings?</h3>
-            <p>
-                The 80,000 Hours job board, EA Opportunity Board, EA Forum job listings, and Remote Impact. Networking at EAGx conferences and the EA Forum also surfaces unlisted opportunities.
-            </p>
+<h3>How do I find EA job openings?</h3>
+<p>
+    The 80,000 Hours job board, EA Opportunity Board, EA Forum job listings, and Remote Impact. Networking at EAGx conferences and the EA Forum also surfaces unlisted opportunities.
+</p>
+{% endblock %}
 
-            <div class="bg-brand-50 border border-brand-200 rounded-2xl p-6 mt-8 not-prose">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Related reads</h3>
-                <ul class="space-y-2 text-sm">
-                    <li><a href="{% url 'jobs:cluster_detail' pillar_slug='effective-altruism-careers' cluster_slug='ea-operations-roles-guide' %}" class="text-brand-600 hover:text-brand-700 font-medium">Why EA Operations Roles Are the Most Underrated Career Path &rarr;</a></li>
-                    <li><a href="{% url 'jobs:cluster_detail' pillar_slug='effective-altruism-careers' cluster_slug='mid-career-switch-to-ea' %}" class="text-brand-600 hover:text-brand-700 font-medium">Switching to EA Mid-Career: What You Need to Know &rarr;</a></li>
-                    <li><a href="{% url 'jobs:cluster_detail' pillar_slug='effective-altruism-careers' cluster_slug='ea-grantmaking-career-path' %}" class="text-brand-600 hover:text-brand-700 font-medium">How to Build a Career in EA Grantmaking &rarr;</a></li>
-                </ul>
-            </div>
-
-            <div class="bg-gray-50 border border-gray-200 rounded-2xl p-6 mt-8 not-prose">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Explore other impact career paths</h3>
-                <div class="grid sm:grid-cols-2 gap-3">
-                    <a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
-                        <span class="text-xl">🌍</span>
-                        <span class="text-brand-600 font-medium text-sm">Climate & Environment Careers</span>
-                    </a>
-                    <a href="{% url 'jobs:pillar_detail' pillar_slug='ai-safety-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
-                        <span class="text-xl">🤖</span>
-                        <span class="text-brand-600 font-medium text-sm">AI Safety & Governance Careers</span>
-                    </a>
-                    <a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
-                        <span class="text-xl">🏥</span>
-                        <span class="text-brand-600 font-medium text-sm">Global Health Careers</span>
-                    </a>
-                    <a href="{% url 'jobs:pillar_detail' pillar_slug='humanitarian-ingo-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
-                        <span class="text-xl">🕊️</span>
-                        <span class="text-brand-600 font-medium text-sm">Humanitarian & INGO Careers</span>
-                    </a>
-                </div>
-            </div>
-        </article>
-    </div>
+{% block guide_related %}
+<section class="mt-12" aria-labelledby="related-guides-heading">
+    <h2 id="related-guides-heading" class="section-title">Related guides</h2>
+    <ul class="mt-3 space-y-1.5 text-sm">
+        <li><a href="{% url 'jobs:cluster_detail' pillar_slug='effective-altruism-careers' cluster_slug='ea-operations-roles-guide' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Why EA operations roles are underrated</a></li>
+        <li><a href="{% url 'jobs:cluster_detail' pillar_slug='effective-altruism-careers' cluster_slug='mid-career-switch-to-ea' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Switching to EA mid-career</a></li>
+        <li><a href="{% url 'jobs:cluster_detail' pillar_slug='effective-altruism-careers' cluster_slug='ea-grantmaking-career-path' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">How to build a career in EA grantmaking</a></li>
+    </ul>
 </section>
 {% endblock %}

@@ -9,6 +9,22 @@ from __future__ import annotations
 import re
 
 
+def country_filter_aliases(value: str) -> set[str]:
+    """Match existing country spellings without rewriting source records."""
+    from jobs.services.raw_data_extractor import RawDataExtractor
+
+    value = str(value).strip()
+    if value.lower() in {"global", "worldwide", "anywhere"}:
+        return {"Global", "Worldwide", "Anywhere"}
+    canonical = RawDataExtractor._normalize_country(value)
+    aliases = {value, canonical} - {None, ""}
+    aliases.update(
+        alias for alias, normalized in RawDataExtractor.COUNTRY_MAPPINGS.items()
+        if normalized == canonical
+    )
+    return aliases
+
+
 # Standard location values - these are what we normalize TO
 STANDARD_LOCATIONS = {
     # Remote options
@@ -135,6 +151,25 @@ REGION_PATTERNS = {
     "Remote (LATAM)": [r"\bLATAM\b", r"\bLatin America\b"],
 }
 
+# Common "City, Region, CountryCode" patterns. These must run before the US
+# state-abbreviation check so locations like "Vancouver, BC, CA" are treated as
+# Canada, not California.
+COUNTRY_CODE_PATTERNS = {
+    "Canada": [
+        r"\b(AB|BC|MB|NB|NL|NS|NT|NU|ON|PE|QC|SK|YT)\s*,\s*CA\)?$",
+    ],
+    "India": [
+        r"\b(AP|AR|AS|BR|CG|CH|DL|GA|GJ|HR|HP|JH|JK|KA|KL|LA|MH|ML|MN|MP|MZ|NL|OD|PB|PY|RJ|SK|TN|TS|TR|UK|UP|WB)\s*,\s*IN\)?$",
+    ],
+    "Australia": [
+        r"\b(ACT|NSW|NT|QLD|SA|TAS|VIC|WA)\s*,\s*AU\)?$",
+    ],
+    "UK": [
+        r"\b(England|Scotland|Wales|Northern Ireland)\s*,\s*GB\)?$",
+        r"\bGB\)?$",
+    ],
+}
+
 
 def normalize_location(location: str) -> str:
     """
@@ -192,6 +227,18 @@ def normalize_location(location: str) -> str:
     for pattern, result in remote_region_patterns:
         if re.search(pattern, loc_lower):
             return result
+
+    # Check country-code patterns before US state abbreviations. Some country
+    # codes overlap with US states (CA) or common words (IN).
+    for country, patterns in COUNTRY_CODE_PATTERNS.items():
+        for pattern in patterns:
+            if re.search(pattern, location, re.IGNORECASE):
+                if "remote" in loc_lower:
+                    remote_key = f"Remote ({country})"
+                    if remote_key in STANDARD_LOCATIONS:
+                        return remote_key
+                    return "Remote"
+                return country
 
     # Check for US patterns
     for pattern in US_PATTERNS:

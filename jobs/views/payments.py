@@ -91,12 +91,32 @@ class JobCheckoutView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         JobService.update_job(self.job, form.cleaned_data)
+        from ..models import EmployerFunnelEvent
+        from ..services.funnel import record_employer_event
+        record_employer_event(
+            EmployerFunnelEvent.Event.JOB_DRAFT_CREATED,
+            user=self.request.user,
+            job=self.job,
+            metadata={"resumed": True},
+        )
         try:
             domain_url = self.request.build_absolute_uri("/")[:-1]
             checkout_url = PaymentService.create_checkout_session(self.job, domain_url)
+            record_employer_event(
+                EmployerFunnelEvent.Event.CHECKOUT_STARTED,
+                user=self.request.user,
+                job=self.job,
+                metadata={"resumed": True},
+            )
         except Exception as exc:
+            record_employer_event(
+                EmployerFunnelEvent.Event.CHECKOUT_FAILED,
+                user=self.request.user,
+                job=self.job,
+                metadata={"error_type": type(exc).__name__, "resumed": True},
+            )
             logger.exception("Resume-checkout failed for job %s", self.job.id)
-            messages.error(self.request, f"Could not start payment: {exc}")
+            messages.error(self.request, "Could not start payment. Your draft is saved; please try again.")
             return redirect("jobs:account")
         return redirect(checkout_url)
 
@@ -105,6 +125,10 @@ class PaymentCancelView(RedirectView):
     pattern_name = "jobs:home"
 
     def get(self, request, *args, **kwargs):
+        from ..models import EmployerFunnelEvent
+        from ..services.funnel import record_employer_event
+        job = Job.objects.filter(pk=request.GET.get("job_id"), poster=request.user).first() if request.user.is_authenticated else None
+        record_employer_event(EmployerFunnelEvent.Event.PAYMENT_CANCELLED, user=request.user, job=job)
         messages.warning(
             request, "Payment cancelled. Your job has been saved as a draft."
         )
@@ -116,9 +140,8 @@ class PaymentCancelView(RedirectView):
 class StripeWebhookView(View):
     """Receives Stripe events at /webhook/stripe/.
 
-    Verifies the Stripe signature using STRIPE_WEBHOOK_SECRET, then dispatches
-    to PaymentService. Returns 200 quickly so Stripe doesn't retry on transient
-    handler errors that we've already logged.
+    Verifies the signature before dispatch. Transient handler failures return
+    503 so Stripe can retry its idempotent event processing.
     """
 
     def post(self, request, *args, **kwargs):
@@ -147,5 +170,23 @@ class StripeWebhookView(View):
             logger.exception(
                 "Stripe webhook handler errored for event %s", event.get("id")
             )
+            # Acknowledge only after successful handling. A transient failure
+            # must remain retryable so a paid job is not silently left inactive.
+            return HttpResponse(status=503)
 
         return HttpResponse(status=200)
+
+
+class ProBillingPortalView(LoginRequiredMixin, View):
+    """Redirect a Pro customer to Stripe's hosted billing portal."""
+
+    def get(self, request, *args, **kwargs):
+        domain_url = request.build_absolute_uri("/").rstrip("/")
+        try:
+            return redirect(
+                PaymentService.create_billing_portal_session(request.user, domain_url)
+            )
+        except Exception:
+            logger.exception("Could not create Stripe billing portal session")
+            messages.error(request, "We could not open billing settings. Please try again.")
+            return redirect("jobs:account")

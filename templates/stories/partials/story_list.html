@@ -1,7 +1,8 @@
 {% for story in stories %}
     {% include 'stories/partials/story_card.html' with story=story resonated_ids=resonated_ids %}
 {% empty %}
-    <div class="text-center py-12 text-gray-400">
-        <p>No stories yet. Check back soon!</p>
+    <div class="surface p-6 text-sm">
+        <p class="font-medium text-foreground">No stories yet.</p>
+        <p class="mt-1 text-muted-foreground">In the meantime, <a href="{% url 'jobs:job_list' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">browse open roles</a> at impact organisations.</p>
     </div>
 {% endfor %}

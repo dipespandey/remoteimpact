@@ -1,0 +1,269 @@
+{% load humanize %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Analytics · Remote Impact admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --background: oklch(0.992 0.002 90); --foreground: oklch(0.2 0.006 270);
+    --card: oklch(1 0 0); --muted: oklch(0.962 0.003 90); --muted-foreground: oklch(0.5 0.01 270);
+    --accent: oklch(0.955 0.004 90); --border: oklch(0.91 0.004 90); --grid: oklch(0.93 0.003 90);
+    --primary: oklch(0.24 0.012 270); --primary-foreground: oklch(0.985 0 0); --ring: oklch(0.55 0.15 262);
+    --rec-1: #2a78d6; --rec-2: #eb6834; --rec-3: #1baf7a; --rec-4: #eda100; --rec-7: #4a3aa7; --rec-other: #a3a29c;
+    --good: #0ca30c; --warning: #fab219; --critical: #d03b3b; --radius: 0.5rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: oklch(0.16 0.004 270); --foreground: oklch(0.96 0.002 90);
+      --card: oklch(0.195 0.005 270); --muted: oklch(0.24 0.005 270); --muted-foreground: oklch(0.7 0.008 270);
+      --accent: oklch(0.26 0.006 270); --border: oklch(0.28 0.006 270); --grid: oklch(0.25 0.005 270);
+      --primary: oklch(0.94 0.003 90); --primary-foreground: oklch(0.2 0.006 270);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--background); color: var(--foreground); font: 14px/1.5 Geist, ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+  .num, .mono { font-family: "Geist Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  header.top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 24px; border-bottom: 1px solid var(--border); background: color-mix(in oklch, var(--background) 88%, transparent); backdrop-filter: blur(8px); }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; white-space: nowrap; }
+  .brand .mark { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; background: #6b9a1f; color: #fff; font-size: 11px; }
+  .brand .crumb { color: var(--muted-foreground); font-weight: 400; }
+  .controls { display: flex; align-items: center; gap: 8px; }
+  .seg { display: inline-flex; padding: 2px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); }
+  .seg a { padding: 4px 10px; border-radius: calc(var(--radius) * 0.8); text-decoration: none; color: var(--muted-foreground); font-size: 13px; }
+  .seg a.on { background: var(--primary); color: var(--primary-foreground); }
+  .btn { display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); text-decoration: none; font-size: 13px; }
+  .btn:hover, .seg a:not(.on):hover { background: var(--accent); color: var(--foreground); }
+  main { max-width: 1280px; margin: 0 auto; padding: 24px; }
+  .title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .sub { color: var(--muted-foreground); font-size: 13px; }
+  .kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
+  .kpi { padding: 14px 16px; min-width: 0; }
+  .kpi .label { color: var(--muted-foreground); font-size: 12px; }
+  .kpi .value { margin-top: 6px; font-size: 24px; font-weight: 500; letter-spacing: -0.02em; }
+  .kpi .meta { margin-top: 4px; display: flex; gap: 6px; align-items: center; color: var(--muted-foreground); font-size: 12px; min-height: 18px; }
+  .delta { font-size: 11px; padding: 1px 6px; border-radius: 999px; background: var(--muted); }
+  .delta.up { color: var(--good); } .delta.down { color: var(--critical); }
+  .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+  .span-4 { grid-column: span 4; } .span-5 { grid-column: span 5; } .span-6 { grid-column: span 6; } .span-7 { grid-column: span 7; } .span-8 { grid-column: span 8; } .span-12 { grid-column: span 12; }
+  .panel { padding: 16px; min-width: 0; }
+  .panel h2 { margin: 0; font-size: 14px; font-weight: 600; }
+  .panel .hint { margin: 2px 0 14px; color: var(--muted-foreground); font-size: 12px; }
+  .funnel .row { display: grid; grid-template-columns: 170px 1fr 64px 52px; align-items: center; gap: 10px; padding: 5px 0; font-size: 13px; }
+  .track { height: 8px; border-radius: 999px; background: var(--muted); overflow: hidden; }
+  .fill { height: 100%; border-radius: 999px; }
+  .right { text-align: right; } .muted { color: var(--muted-foreground); }
+  .charts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  .chart .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .chart .head .num { font-size: 18px; }
+  .bars { display: flex; align-items: flex-end; gap: 2px; height: 84px; margin-top: 10px; padding-bottom: 1px; border-bottom: 1px solid var(--grid); }
+  .bars span { flex: 1; min-width: 1px; border-radius: 2px 2px 0 0; opacity: .9; }
+  .bars span:hover { opacity: 1; outline: 1px solid var(--foreground); }
+  .axis { display: flex; justify-content: space-between; margin-top: 4px; color: var(--muted-foreground); font-size: 11px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-weight: 500; color: var(--muted-foreground); font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  td { padding: 7px 8px; border-bottom: 1px solid var(--grid); vertical-align: middle; }
+  tr:last-child td { border-bottom: 0; }
+  td.trunc { max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 60%; }
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 999px; margin-right: 6px; vertical-align: 1px; }
+  .dot.good { background: var(--good); } .dot.warning { background: var(--warning); } .dot.critical { background: var(--critical); }
+  .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .stats-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } .stats-6 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .stat { padding: 10px 12px; border-radius: var(--radius); background: var(--muted); }
+  .stat .k { color: var(--muted-foreground); font-size: 12px; } .stat .v { font-size: 18px; margin-top: 2px; }
+  .cat { display: grid; grid-template-columns: 1fr 46px; gap: 4px 10px; align-items: center; font-size: 13px; margin-bottom: 8px; }
+  .cat .track { grid-column: 1 / -1; height: 6px; }
+  .split { display: flex; height: 10px; border-radius: 999px; overflow: hidden; background: var(--muted); margin: 8px 0 6px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted-foreground); }
+  footer { margin-top: 20px; color: var(--muted-foreground); font-size: 12px; }
+  @media (max-width: 1100px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } .charts { grid-template-columns: repeat(2, minmax(0, 1fr)); } .span-4, .span-5, .span-7, .span-8 { grid-column: span 12; } .span-6 { grid-column: span 12; } .stats-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 640px) { main { padding: 16px; } header.top { padding: 10px 16px; } .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .charts { grid-template-columns: 1fr; } .funnel .row { grid-template-columns: 120px 1fr 52px; } .funnel .row .rate { display: none; } .brand .crumb, .brand .name { display: none; } .controls { gap: 6px; } .btn { padding: 0 9px; } .stats-4, .stats-6 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="mark">RI</span><span class="name">Remote Impact</span> <span class="crumb">/ Analytics</span></div>
+  <div class="controls">
+    <nav class="seg" aria-label="Date range">{% for r in m.ranges %}<a href="?days={{ r }}" class="{% if r == m.days %}on{% endif %}">{{ r }}d</a>{% endfor %}</nav>
+    <a class="btn" href="?days={{ m.days }}&refresh=1">Refresh</a>
+    <a class="btn" href="{% url 'admin:index' %}">Admin</a>
+  </div>
+</header>
+
+<main>
+  <div class="title">
+    <div>
+      <h1>Last {{ m.days }} days</h1>
+      <div class="sub">Compared with the {{ m.days }} days before. Updated {{ m.generated_at|date:"M j, H:i" }} UTC, cached 5 minutes.</div>
+    </div>
+  </div>
+
+  <section class="kpis" aria-label="Key numbers">
+    {% for k in m.kpis %}
+    <div class="card kpi">
+      <div class="label">{{ k.label }}</div>
+      <div class="value num">{% if k.fmt == "money" %}${{ k.value|floatformat:0|intcomma }}{% else %}{{ k.value|intcomma }}{% endif %}</div>
+      <div class="meta">
+        {% if k.delta is not None %}<span class="delta {% if k.delta > 0 %}up{% elif k.delta < 0 %}down{% endif %}">{% if k.delta > 0 %}+{% endif %}{{ k.delta }}%</span>{% endif %}
+        <span>{{ k.note }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+
+  <section class="card panel" style="margin-bottom:16px" aria-labelledby="trend-h">
+    <h2 id="trend-h">Daily activity</h2>
+    <p class="hint">One bar per day. Hover a bar for the date and value.{% if m.tracking_since %} Job views and apply clicks are tracked since {{ m.tracking_since|date:"M j" }}.{% endif %}</p>
+    <div class="charts">
+      {% for s in m.series %}
+      <div class="chart">
+        <div class="head"><span class="muted">{{ s.label }}</span><span class="num">{{ s.total|intcomma }}</span></div>
+        <div class="bars">{% for b in s.bars %}<span style="height:{% if b.value %}{{ b.pct }}{% else %}0{% endif %}%;{% if b.value %}min-height:2px;{% endif %}background:{{ s.color }}" title="{{ b.day|date:'D M j' }}: {{ b.value|intcomma }}"></span>{% endfor %}</div>
+        <div class="axis"><span>{{ s.bars.0.day|date:"M j" }}</span><span>peak {{ s.peak|intcomma }}</span><span>today</span></div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="card panel span-7" aria-labelledby="seeker-h">
+      <h2 id="seeker-h">Seeker funnel</h2>
+      <p class="hint">From first Scout preview to payment. Step rate compares with the step above.</p>
+      <div class="funnel">
+        {% for s in m.seeker_funnel %}
+        <div class="row">
+          <span>{{ s.label }}</span>
+          <div class="track"><div class="fill" style="width:{{ s.pct }}%;background:var(--rec-1)"></div></div>
+          <span class="num right">{{ s.count|intcomma }}</span>
+          <span class="num right muted rate">{% if s.step_rate is not None %}{{ s.step_rate }}%{% endif %}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="card panel span-5" aria-labelledby="rev-h">
+      <h2 id="rev-h">Revenue mix</h2>
+      <p class="hint">From payment records in this database. Stripe is the source of truth.</p>
+      {% with r=m.revenue %}
+      <div class="num" style="font-size:24px">${{ r.total|floatformat:0|intcomma }}</div>
+      <div class="split" role="img" aria-label="Revenue split">
+        {% if r.total %}
+        <span style="width:{% widthratio r.postings r.total 100 %}%;background:var(--rec-1)"></span>
+        <span style="width:{% widthratio r.features r.total 100 %}%;background:var(--rec-4)"></span>
+        <span style="width:{% widthratio r.pro r.total 100 %}%;background:var(--rec-3)"></span>
+        {% endif %}
+      </div>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--rec-1)"></i>Job postings ${{ r.postings|floatformat:0|intcomma }} ({{ r.postings_count }})</span>
+        <span><i class="dot" style="background:var(--rec-4)"></i>Featured ${{ r.features|floatformat:0|intcomma }}</span>
+        <span><i class="dot" style="background:var(--rec-3)"></i>Pro ${{ r.pro|floatformat:0|intcomma }}</span>
+      </div>
+      {% endwith %}
+      <h2 style="margin-top:22px">Employer funnel</h2>
+      <p class="hint">Posting and featuring combined.</p>
+      <div class="funnel">
+        {% for s in m.employer_funnel %}
+        <div class="row" style="grid-template-columns:150px 1fr 48px 44px">
+          <span>{{ s.label }}</span>
+          <div class="track"><div class="fill" style="width:{{ s.pct }}%;background:var(--rec-2)"></div></div>
+          <span class="num right">{{ s.count|intcomma }}</span>
+          <span class="num right muted rate">{% if s.step_rate is not None %}{{ s.step_rate }}%{% endif %}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="card panel span-4" aria-labelledby="scout-h">
+      <h2 id="scout-h">Job Scout quality</h2>
+      <p class="hint">Whether Scouts find people something worth paying for.</p>
+      {% with s=m.scout %}
+      <div class="stats">
+        <div class="stat"><div class="k">Scouts created</div><div class="v num">{{ s.created|intcomma }}</div></div>
+        <div class="stat"><div class="k">First run empty</div><div class="v num">{% if s.empty_rate is not None %}{{ s.empty_rate }}%{% else %}–{% endif %}</div></div>
+        <div class="stat"><div class="k">Match emails sent</div><div class="v num">{{ s.deliveries|intcomma }}</div></div>
+        <div class="stat"><div class="k">Rated relevant</div><div class="v num">{% if s.relevance is not None %}{{ s.relevance }}%{% else %}–{% endif %}</div></div>
+        <div class="stat"><div class="k">Recurring Scouts</div><div class="v num">{{ s.active|intcomma }}</div></div>
+        <div class="stat"><div class="k">View → apply rate</div><div class="v num">{% if s.ctr is not None %}{{ s.ctr }}%{% else %}–{% endif %}</div></div>
+      </div>
+      <p class="hint" style="margin:10px 0 0">{{ s.relevant }} relevant / {{ s.not_relevant }} not relevant ratings.</p>
+      {% endwith %}
+    </section>
+
+    <section class="card panel span-8" aria-labelledby="inv-h">
+      <h2 id="inv-h">Job inventory</h2>
+      <p class="hint">Live listings by source, and when each source last refreshed. Red means no sighting for 48 hours.</p>
+      {% with t=m.inventory.trust %}
+      <div class="stats stats-4" style="margin-bottom:14px">
+        <div class="stat"><div class="k">Live</div><div class="v num">{{ t.live|intcomma }}</div></div>
+        <div class="stat"><div class="k">Confirmed open</div><div class="v num">{{ t.confirmed_share }}%</div></div>
+        <div class="stat"><div class="k">Taken down, 7d</div><div class="v num">{{ t.removed_7d|intcomma }}</div></div>
+        <div class="stat"><div class="k">With salary</div><div class="v num">{{ t.salary_share }}%</div></div>
+      </div>
+      {% endwith %}
+      <table>
+        <thead><tr><th>Source</th><th class="right">Live</th><th>Last refreshed</th></tr></thead>
+        <tbody>
+          {% for f in m.inventory.freshness %}
+          <tr>
+            <td><span class="dot {{ f.status }}"></span>{{ f.source }}</td>
+            <td class="num right">{{ f.live|intcomma }}</td>
+            <td class="muted">{% if f.last %}{{ f.last|naturaltime }}{% else %}never{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="hint" style="margin:10px 0 0">{{ m.inventory.new_jobs|intcomma }} live roles posted in the period · {{ m.inventory.paid_live }} paid postings live · {{ m.inventory.featured_live }} featured now.</p>
+    </section>
+
+    <section class="card panel span-6" aria-labelledby="top-h">
+      <h2 id="top-h">Top jobs by apply clicks</h2>
+      <p class="hint">Bot-filtered views and clicks recorded on our pages.</p>
+      <table>
+        <thead><tr><th>Role</th><th class="right">Views</th><th class="right">Clicks</th></tr></thead>
+        <tbody>
+          {% for j in m.top_jobs %}
+          <tr>
+            <td class="trunc"><a href="/jobs/{{ j.job__slug }}/" target="_blank" rel="noopener">{{ j.job__title }}</a> <span class="muted">· {{ j.job__organization__name }}</span></td>
+            <td class="num right">{{ j.views|intcomma }}</td>
+            <td class="num right">{{ j.clicks|intcomma }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" class="muted">No tracked activity in this period yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card panel span-6" aria-labelledby="cat-h">
+      <h2 id="cat-h">Live jobs by area</h2>
+      <p class="hint">Top impact areas in the current inventory.</p>
+      {% for c in m.inventory.categories %}
+      <div class="cat">
+        <span>{{ c.category__name|default:"Uncategorized" }}</span><span class="num right">{{ c.n|intcomma }}</span>
+        <div class="track"><div class="fill" style="width:{{ c.pct }}%;background:var(--rec-7)"></div></div>
+      </div>
+      {% endfor %}
+    </section>
+
+    <section class="card panel span-12" aria-labelledby="aud-h">
+      <h2 id="aud-h">Audience and talent</h2>
+      <p class="hint">Who we can reach, and what employers can hire from.</p>
+      <div class="stats stats-6">
+        {% for label, value in m.audience.items %}
+        <div class="stat"><div class="k">{{ label }}</div><div class="v num">{{ value|intcomma }}</div></div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <footer>Revenue counts one-off payments when they complete; Pro renewals after the first payment are not recorded here. Trials are excluded.</footer>
+</main>
+</body>
+</html>

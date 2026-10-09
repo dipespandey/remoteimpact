@@ -5,6 +5,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from ..models import Job, Category
+from ..seo_config import MIN_INDEXABLE_JOBS
 
 
 REGIONS = {
@@ -22,7 +23,7 @@ REGIONS = {
         "h1": "Remote Jobs in the United States",
         "description": (
             "Find remote roles based in or open to candidates in the United States. "
-            "Top nonprofits and social enterprises hiring American talent."
+            "Nonprofits and social enterprises hiring people based in the US."
         ),
         "filter": [
             "United States", "USA", "US", "U.S.", "U.S.A.",
@@ -34,7 +35,7 @@ REGIONS = {
         "name": "Europe",
         "h1": "Remote Jobs in Europe",
         "description": (
-            "Discover remote opportunities across Europe. Purpose-driven organizations "
+            "Discover remote opportunities across Europe. Nonprofits and impact-focused companies "
             "hiring talent in the UK, Germany, France, Netherlands, and beyond."
         ),
         "filter": [
@@ -140,6 +141,7 @@ class RegionJobsView(ListView):
         context["categories"] = Category.objects.all().order_by("name")
         context["current_category"] = self.request.GET.get("category", "")
         job_count = context["page_obj"].paginator.count
+        context["index_page"] = job_count >= MIN_INDEXABLE_JOBS and not self.request.GET
         context["meta_title"] = f"{self.region['h1']} — Remote Impact Jobs"
         context["meta_description"] = (
             f"Browse {job_count}+ remote jobs in {self.region['name']}. "

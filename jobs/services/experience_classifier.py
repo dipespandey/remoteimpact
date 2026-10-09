@@ -47,7 +47,6 @@ class ExperienceClassifier:
         r'\bmid[\s\-]?level\b',
         r'\b[3-6][\s\-]?(?:\+|\-)[\s\-]?(?:years?|yrs?)\s+(?:of\s+)?(?:experience|exp)\b',
         r'\bintermediate\b',
-        r'\bexperienced\b(?!\s+(?:director|executive|leader))',
     ]
 
     # Patterns that indicate senior level
@@ -73,6 +72,13 @@ class ExperienceClassifier:
         r'\bhead\s+of\b',
         r'\b15\+?\s+(?:years?|yrs?)\b',
     ]
+
+    YEARS_REQUIRED_PATTERN = re.compile(
+        r"(?:minimum(?:\s+of)?|at\s+least|required|requires?|have)?\s*"
+        r"(?P<years>\d{1,2})\s*(?:\+|or\s+more|plus)?\s*"
+        r"(?:years?|yrs?)\s+(?:of\s+)?(?:relevant\s+|professional\s+|related\s+)?experience\b",
+        re.IGNORECASE,
+    )
 
     @classmethod
     def _has_senior_indicator(cls, text: str) -> bool:
@@ -147,6 +153,20 @@ class ExperienceClassifier:
             for pattern in cls.ENTRY_PATTERNS:
                 if re.search(pattern, desc_lower, re.IGNORECASE):
                     return ('entry', f"Description contains entry-level keyword: {pattern}")
+
+        # Explicit years of required experience are stronger than generic prose.
+        years = [
+            int(match.group("years"))
+            for match in cls.YEARS_REQUIRED_PATTERN.finditer(desc_lower)
+            if int(match.group("years")) <= 40
+        ]
+        if years:
+            minimum = min(years)
+            if minimum <= 2:
+                return ('entry', f"Description requires {minimum} years of experience")
+            if minimum <= 6:
+                return ('mid', f"Description requires {minimum} years of experience")
+            return ('senior', f"Description requires {minimum} years of experience")
 
         # Check for mid-level indicators
         for pattern in cls.MID_PATTERNS:

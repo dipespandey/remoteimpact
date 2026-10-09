@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'resources/pillars/_guide_base.html' %}
 
 {# ──────────────────────────────────────────────────────────
    PILLAR PAGE: Global Health Careers
@@ -88,103 +88,69 @@
 </script>
 {% endblock %}
 
-{% block content %}
-<section class="bg-gray-50 pt-16 pb-12">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav class="text-sm text-gray-500 flex items-center space-x-3 mb-8">
-            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
-            <span>&rsaquo;</span>
-            <a href="{% url 'jobs:resources' %}" class="hover:text-brand-600 transition">Resources</a>
-            <span>&rsaquo;</span>
-            <span class="text-gray-900">Global Health Careers</span>
-        </nav>
+{% block guide_breadcrumb %}
+<li aria-hidden="true">/</li>
+<li aria-current="page" class="text-foreground">Global Health Careers</li>
+{% endblock %}
 
-        <article class="bg-white rounded-3xl border border-gray-100 p-8 md:p-12 shadow-sm prose prose-gray max-w-none">
-            <p class="text-sm uppercase tracking-[0.3em] text-brand-600 font-semibold mb-2">Pillar Guide</p>
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
-                Remote Global Health Jobs: Your Complete Career Guide
-            </h1>
+{% block guide_title %}Remote global health jobs: a career guide{% endblock %}
 
-            <p class="text-xl text-gray-600 leading-relaxed mb-8">
-                Global health is one of the largest and most established impact sectors. Whether you want to fight malaria, strengthen health systems, or build digital tools that reach the last mile, there is a remote role for you.
-            </p>
+{% block guide_lede %}Global health employers hire remotely for data, research coordination, programme management, policy and health-tech roles. This guide covers the skills they ask for, how people get in, and typical pay.{% endblock %}
 
-            <h2>What are global health careers?</h2>
-            <p>
-                Global health careers focus on improving health outcomes and reducing health inequities worldwide. The field spans epidemiology, programme management, health policy, biostatistics, clinical research, supply-chain logistics, and increasingly, health technology. Employers range from the World Health Organization and UNICEF to nimble non-profits like Partners in Health and health-tech startups like Dimagi.
-            </p>
-            <p>
-                Remote work in global health has surged. Data teams, research coordinators, monitoring-and-evaluation specialists, grant writers, and software developers frequently work from home while supporting field operations across continents. The pandemic demonstrated that many functions previously thought to require co-location work just as well — or better — with distributed teams.
-            </p>
+{% block guide_body %}
+<h2>What are global health careers?</h2>
+<p>
+    Global health careers focus on improving health outcomes and reducing health inequities worldwide. The field spans epidemiology, programme management, health policy, biostatistics, clinical research, supply-chain logistics, and increasingly, health technology. Employers range from the World Health Organization and UNICEF to nimble non-profits like Partners in Health and health-tech startups like Dimagi.
+</p>
+<p>
+    Data teams, research coordinators, monitoring-and-evaluation specialists, grant writers, and software developers frequently work from home while supporting field operations across continents. The pandemic demonstrated that many functions previously thought to require co-location work just as well — or better — with distributed teams.
+</p>
 
-            <h2>Key skills employers look for</h2>
-            <ul>
-                <li><strong>Epidemiology &amp; biostatistics</strong> — Study design, Stata/R, causal inference, surveillance systems.</li>
-                <li><strong>Monitoring, evaluation &amp; learning (MEL)</strong> — Logical frameworks, Theory of Change, DHIS2, KoboToolbox.</li>
-                <li><strong>Health informatics</strong> — Electronic health records, interoperability standards (HL7/FHIR), data pipelines.</li>
-                <li><strong>Grant writing &amp; donor relations</strong> — USAID, Global Fund, GAVI proposal formats.</li>
-                <li><strong>Programme management</strong> — Multi-country project coordination, budget oversight, stakeholder reporting.</li>
-                <li><strong>Digital health tools</strong> — mHealth apps, telemedicine platforms, AI-assisted diagnostics.</li>
-            </ul>
+<h2>Key skills employers look for</h2>
+<ul>
+    <li><strong>Epidemiology &amp; biostatistics</strong> — Study design, Stata/R, causal inference, surveillance systems.</li>
+    <li><strong>Monitoring, evaluation &amp; learning (MEL)</strong> — Logical frameworks, Theory of Change, DHIS2, KoboToolbox.</li>
+    <li><strong>Health informatics</strong> — Electronic health records, interoperability standards (HL7/FHIR), data pipelines.</li>
+    <li><strong>Grant writing &amp; donor relations</strong> — USAID, Global Fund, GAVI proposal formats.</li>
+    <li><strong>Programme management</strong> — Multi-country project coordination, budget oversight, stakeholder reporting.</li>
+    <li><strong>Digital health tools</strong> — mHealth apps, telemedicine platforms, AI-assisted diagnostics.</li>
+</ul>
 
-            <h2>How to get started</h2>
-            <p>
-                Entry paths vary by role. For research and technical positions, an MPH or equivalent graduate degree is the standard on-ramp. For operations, communications, and tech roles, relevant work experience often matters more than credentials. Volunteering with organisations like the Red Cross, doing short consultancies via platforms like ReliefWeb, or contributing to open-source health tools (OpenMRS, DHIS2) can build your profile fast.
-            </p>
+<h2>How to get started</h2>
+<p>
+    Entry paths vary by role. For research and technical positions, an MPH or equivalent graduate degree is the standard on-ramp. For operations, communications, and tech roles, relevant work experience often matters more than credentials. Volunteering with organisations like the Red Cross, doing short consultancies via platforms like ReliefWeb, or contributing to open-source health tools (OpenMRS, DHIS2) can help build your profile.
+</p>
 
-            <h2>Frequently asked questions</h2>
+<h2>Frequently asked questions</h2>
 
-            <h3>Can I work in global health remotely?</h3>
-            <p>
-                Yes. While some global health roles require field presence, a growing number of positions are fully remote — particularly in data analysis, programme management, research coordination, health-tech product development, and policy work. The COVID-19 pandemic permanently shifted how global health organisations operate.
-            </p>
+<h3>Can I work in global health remotely?</h3>
+<p>
+    Yes. While some global health roles require field presence, a growing number of positions are fully remote — particularly in data analysis, programme management, research coordination, health-tech product development, and policy work. The COVID-19 pandemic permanently shifted how global health organisations operate.
+</p>
 
-            <h3>What degree do I need for global health work?</h3>
-            <p>
-                An MPH (Master of Public Health) is the most common credential, but it is not always required. Roles in data science, software engineering, communications, and operations often accept candidates with relevant experience and a bachelor's degree.
-            </p>
+<h3>What degree do I need for global health work?</h3>
+<p>
+    An MPH (Master of Public Health) is the most common credential, but it is not always required. Roles in data science, software engineering, communications, and operations often accept candidates with relevant experience and a bachelor's degree.
+</p>
 
-            <h3>What are the top global health employers hiring remotely?</h3>
-            <p>
-                Major employers include WHO, Gavi, the Global Fund, Partners in Health, PATH, Clinton Health Access Initiative (CHAI), GiveWell-recommended charities like Malaria Consortium, and health-tech companies like Dimagi and Zipline.
-            </p>
+<h3>What are the top global health employers hiring remotely?</h3>
+<p>
+    Major employers include WHO, Gavi, the Global Fund, Partners in Health, PATH, Clinton Health Access Initiative (CHAI), GiveWell-recommended charities like Malaria Consortium, and health-tech companies like Dimagi and Zipline.
+</p>
 
-            <h3>How much do remote global health jobs pay?</h3>
-            <p>
-                UN agencies offer tax-free salaries starting around $60,000 (P-2) and exceeding $120,000 (P-4/P-5). NGOs pay $50,000 to $100,000 for mid-career roles. Health-tech startups and consulting firms can offer $90,000 to $180,000+. Browse current openings in our <a href="/jobs/?category=global-health">global health category</a>.
-            </p>
+<h3>How much do remote global health jobs pay?</h3>
+<p>
+    UN agencies offer tax-free salaries starting around $60,000 (P-2) and exceeding $120,000 (P-4/P-5). NGOs pay $50,000 to $100,000 for mid-career roles. Health-tech startups and consulting firms can offer $90,000 to $180,000+. Browse current openings in our <a href="/jobs/?category=global-health">global health category</a>.
+</p>
+{% endblock %}
 
-            <div class="bg-brand-50 border border-brand-200 rounded-2xl p-6 mt-8 not-prose">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Related reads</h3>
-                <ul class="space-y-2 text-sm">
-                    <li><a href="{% url 'jobs:cluster_detail' pillar_slug='global-health-careers' cluster_slug='remote-global-health-without-mph' %}" class="text-brand-600 hover:text-brand-700 font-medium">How to Get a Remote Global Health Job Without an MPH &rarr;</a></li>
-                    <li><a href="{% url 'jobs:cluster_detail' pillar_slug='global-health-careers' cluster_slug='un-agency-remote-jobs-guide' %}" class="text-brand-600 hover:text-brand-700 font-medium">Navigating UN Agency Job Applications: A Remote Worker's Guide &rarr;</a></li>
-                    <li><a href="{% url 'jobs:cluster_detail' pillar_slug='global-health-careers' cluster_slug='health-tech-impact-careers' %}" class="text-brand-600 hover:text-brand-700 font-medium">Health-Tech Startups Making the Biggest Impact in 2026 &rarr;</a></li>
-                </ul>
-            </div>
-
-            <div class="bg-gray-50 border border-gray-200 rounded-2xl p-6 mt-8 not-prose">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Explore other impact career paths</h3>
-                <div class="grid sm:grid-cols-2 gap-3">
-                    <a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
-                        <span class="text-xl">🌍</span>
-                        <span class="text-brand-600 font-medium text-sm">Climate & Environment Careers</span>
-                    </a>
-                    <a href="{% url 'jobs:pillar_detail' pillar_slug='ai-safety-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
-                        <span class="text-xl">🤖</span>
-                        <span class="text-brand-600 font-medium text-sm">AI Safety & Governance Careers</span>
-                    </a>
-                    <a href="{% url 'jobs:pillar_detail' pillar_slug='humanitarian-ingo-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
-                        <span class="text-xl">🕊️</span>
-                        <span class="text-brand-600 font-medium text-sm">Humanitarian & INGO Careers</span>
-                    </a>
-                    <a href="{% url 'jobs:pillar_detail' pillar_slug='effective-altruism-careers' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white transition">
-                        <span class="text-xl">🎯</span>
-                        <span class="text-brand-600 font-medium text-sm">Effective Altruism Careers</span>
-                    </a>
-                </div>
-            </div>
-        </article>
-    </div>
+{% block guide_related %}
+<section class="mt-12" aria-labelledby="related-guides-heading">
+    <h2 id="related-guides-heading" class="section-title">Related guides</h2>
+    <ul class="mt-3 space-y-1.5 text-sm">
+        <li><a href="{% url 'jobs:cluster_detail' pillar_slug='global-health-careers' cluster_slug='remote-global-health-without-mph' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Getting a remote global health job without an MPH</a></li>
+        <li><a href="{% url 'jobs:cluster_detail' pillar_slug='global-health-careers' cluster_slug='un-agency-remote-jobs-guide' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">UN agency applications: a guide for health workers</a></li>
+        <li><a href="{% url 'jobs:cluster_detail' pillar_slug='global-health-careers' cluster_slug='health-tech-impact-careers' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Health-tech startups working in global health</a></li>
+    </ul>
 </section>
 {% endblock %}

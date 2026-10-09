@@ -53,7 +53,7 @@ def fetch_page_html(url: str, max_chars: int = 20000) -> str:
         return ""
 
 
-def extract_with_llm(page_html: str, job_title: str, provider: str = "groq") -> dict:
+def extract_with_llm(page_html: str, job_title: str, provider: str = "deepseek") -> dict:
     """Use LLM to extract job details from page HTML."""
     
     prompt = f"""Extract job posting details from this HTML. The job title is: "{job_title}"
@@ -74,34 +74,7 @@ HTML:
 Return ONLY valid JSON, no markdown, no explanation."""
 
     try:
-        if provider == "groq":
-            api_key = getattr(settings, 'GROQ_API_KEY', None)
-            if not api_key:
-                return {}
-            
-            response = requests.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": "llama-3.1-8b-instant",
-                    "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.1,
-                    "max_tokens": 4000,
-                },
-                timeout=60,
-            )
-            
-            if response.status_code == 200:
-                content = response.json()["choices"][0]["message"]["content"]
-                # Extract JSON from response
-                json_match = re.search(r'\{[\s\S]*\}', content)
-                if json_match:
-                    return json.loads(json_match.group())
-        
-        elif provider == "deepseek":
+        if provider == "deepseek":
             api_key = getattr(settings, 'DEEPSEEK_API_KEY', None)
             if not api_key:
                 return {}
@@ -113,10 +86,11 @@ Return ONLY valid JSON, no markdown, no explanation."""
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": "deepseek-chat",
+                    "model": getattr(settings, "DEEPSEEK_MODEL", "deepseek-v4-flash"),
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.1,
                     "max_tokens": 4000,
+                    "thinking": {"type": "disabled"},
                 },
                 timeout=60,
             )
@@ -153,7 +127,7 @@ class Command(BaseCommand):
             "--provider",
             type=str,
             default="deepseek",
-            choices=["deepseek", "groq"],
+            choices=["deepseek"],
             help="LLM provider (default: deepseek)",
         )
         parser.add_argument(

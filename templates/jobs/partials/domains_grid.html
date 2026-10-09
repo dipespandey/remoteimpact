@@ -1,29 +1,16 @@
 {% for category in categories %}
-<div
-    class="bg-white rounded-3xl p-8 shadow-sm hover:shadow-md transition border border-gray-100 flex flex-col h-full animate-in fade-in duration-300">
-    <div class="flex justify-between items-start mb-6">
-        <span class="text-4xl">{{ category.icon|default:"🌍" }}</span>
-        <!-- Optional: <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Remote</span> -->
-    </div>
-
-    <h3 class="text-xl font-bold text-gray-900 mb-3">{{ category.name }}</h3>
-
-    <p class="text-gray-500 text-sm leading-relaxed mb-6 flex-grow">
-        {% if category.description %}
-        {{ category.description }}
-        {% else %}
-        Roles curated weekly from orgs delivering measurable change in {{ category.name }}.
-        {% endif %}
-    </p>
-
-    <a href="{% url 'jobs:category_landing' slug=category.slug %}"
-        class="inline-flex items-center text-sm font-medium text-brand-600 hover:text-brand-700 transition mt-auto group">
-        View opportunities
-        <span class="ml-1 group-hover:translate-x-1 transition-transform">→</span>
+<li x-show="!q || '{{ category.name|lower|escapejs }}'.includes(q.toLowerCase())">
+    <a href="{% url 'jobs:category_landing' slug=category.slug %}" class="flex items-start justify-between gap-4 rounded-xl px-3.5 py-3 transition-colors hover:bg-muted sm:px-4">
+        <span class="min-w-0">
+            <span class="block text-[15px] font-semibold text-foreground">{{ category.name }}</span>
+            {% if category.description %}<span class="mt-0.5 line-clamp-2 block max-w-prose text-[13px] text-muted-foreground">{{ category.description }}</span>{% endif %}
+        </span>
+        {% if category.job_count is not None %}<span class="shrink-0 text-[13px] tabular-nums text-muted-foreground">{{ category.job_count }} role{{ category.job_count|pluralize }}</span>{% endif %}
     </a>
-</div>
+</li>
 {% empty %}
-<div class="col-span-full text-center py-12">
-    <p class="text-gray-500 text-lg">No domains found matching "{{ search_query }}"</p>
-</div>
+<li class="px-4 py-10 text-center">
+    <p class="text-sm text-muted-foreground">No impact areas found.</p>
+    <a href="{% url 'jobs:job_list' %}" class="btn btn-outline btn-sm mt-4">Browse all jobs</a>
+</li>
 {% endfor %}

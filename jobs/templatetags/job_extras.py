@@ -5,6 +5,7 @@ from django import template
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.template.defaultfilters import linebreaks_filter
+from jobs.services.html_sanitizer import sanitize_html
 
 try:
     import markdown
@@ -13,6 +14,11 @@ except ImportError:
     HAS_MARKDOWN = False
 
 register = template.Library()
+
+
+@register.filter
+def scout_needs_confirmation(jobs):
+    return any(getattr(job, 'scout_needs_confirmation', False) for job in (jobs or ()))
 
 
 @register.filter(name="add_days")
@@ -28,10 +34,8 @@ def add_days(value, days):
 
 @register.filter(name="default_expiry")
 def default_expiry(job):
-    """Return expires_at or posted_at + 90 days for structured data."""
-    if job.expires_at:
-        return job.expires_at
-    return job.posted_at + timedelta(days=90)
+    """Return only an explicitly known expiry for structured data."""
+    return job.expires_at
 
 
 @register.filter(name="employment_type_schema")
@@ -77,7 +81,7 @@ def get_item(dictionary, key):
 def render_html(value):
     """
     Renders value as safe HTML.
-    - If it looks like HTML, return as-is
+    - Sanitize imported HTML and generated markdown with a strict allowlist
     - If it looks like markdown, convert to HTML
     - Otherwise, apply linebreaks
     """
@@ -111,8 +115,12 @@ def render_html(value):
         "<ol>",
         "<li>",
     ]
-    if any(tag in value_str.lower() for tag in html_indicators):
-        return mark_safe(value_str)
+    if any(tag in value_str.lower() for tag in html_indicators) or re.search(r"<[/!?a-zA-Z]", value_str):
+        # A scraped description can contain its own H1 headings. The job page
+        # already has one document-level H1, so keep imported content below it.
+        value_str = re.sub(r"<h1(\s[^>]*)?>", r"<h2\1>", value_str, flags=re.IGNORECASE)
+        value_str = re.sub(r"</h1\s*>", "</h2>", value_str, flags=re.IGNORECASE)
+        return mark_safe(sanitize_html(value_str))
 
     # Check for markdown indicators
     markdown_indicators = [
@@ -144,7 +152,97 @@ def render_html(value):
             extensions=['nl2br', 'sane_lists'],
             output_format='html5'
         )
-        return mark_safe(html)
+        return mark_safe(sanitize_html(html))
     
     # Fallback: just convert line breaks
     return linebreaks_filter(value)
+
+
+@register.filter(name="compensation_display")
+def compensation_display_filter(job):
+    from jobs.services.scout_evidence import compensation_display
+    return compensation_display(job)
+
+
+_TITLE_ACRONYMS = {
+    "US", "USA", "UK", "EU", "UN", "AI", "ML", "HR", "IT", "NGO", "INGO", "CEO", "CFO", "COO", "CTO",
+    "CIO", "VP", "SVP", "EVP", "M&E", "MEL", "MEAL", "ESG", "QA", "UX", "UI", "R&D", "WASH", "HIV",
+    "GIS", "SQL", "API", "PR", "SEO", "CRM", "ERP", "EHS", "HSE", "IP", "ICT", "LLM", "PHD", "MPH",
+    "MBA", "GHG", "CSR", "DEI", "LGBTQ", "LGBTQ+", "NYC", "DC", "APAC", "EMEA", "LATAM", "MENA", "II", "III", "IV",
+}
+_TITLE_SMALL = {"a", "an", "and", "as", "at", "but", "by", "for", "in", "of", "on", "or", "the", "to", "with", "via", "per"}
+
+
+@register.filter(name="display_title")
+def display_title(value):
+    """Readable job titles: source feeds sometimes publish them in ALL CAPS."""
+    text = str(value or "")
+    letters = [c for c in text if c.isalpha()]
+    if len(letters) < 8 or sum(c.isupper() for c in letters) / len(letters) < 0.8:
+        return text
+
+    def fix(word, first):
+        core = word.strip("()[]/,.:-")
+        if core.upper() in _TITLE_ACRONYMS:
+            return word.upper()
+        lowered = word.lower()
+        if not first and core.lower() in _TITLE_SMALL:
+            return lowered
+        return re.sub(r"[a-z]", lambda m: m.group().upper(), lowered, count=1)
+
+    words = text.split(" ")
+    return " ".join(fix(word, index == 0) for index, word in enumerate(words))
+
+
+SKILL_ACRONYMS = {"sql", "crm", "ui", "ux", "seo", "api", "ai", "ml", "hr", "it", "gis", "esg", "m&e", "mel", "r"}
+
+
+@register.filter(name="skill_label")
+def skill_label(slug):
+    """'system-design' -> 'System design', 'sql' -> 'SQL'."""
+    words = str(slug or "").replace("_", "-").split("-")
+    words = [w.upper() if w in SKILL_ACRONYMS else w for w in words if w]
+    if not words:
+        return ""
+    first = words[0] if words[0].isupper() else words[0].capitalize()
+    return " ".join([first] + words[1:])
+
+
+AREA_TONES = {
+    "green": {"climate-environment", "coastal-ocean-sinks", "food-agriculture-land-use", "buildings",
+              "transportation", "materials-manufacturing"},
+    "amber": {"energy", "capital"},
+    "indigo": {"ai-safety", "nuclear-security", "biosecurity", "technology"},
+    "rose": {"global-health", "mental-health", "disability"},
+    "orange": {"animal-welfare"},
+    "sky": {"education", "children-youth", "communications"},
+    "violet": {"policy-advocacy", "advocacy-or-policy", "human-rights", "civic-engagement",
+               "gender-equality-social-inclusion"},
+    "red": {"humanitarian"},
+    "teal": {"community-development", "poverty-development", "nonprofit-charity", "effective-altruism"},
+}
+_SLUG_TONE = {slug: tone for tone, slugs in AREA_TONES.items() for slug in slugs}
+_ORG_TONES = ["green", "indigo", "rose", "sky", "violet", "amber", "teal", "orange"]
+
+
+@register.filter(name="area_tone")
+def area_tone(category):
+    """CSS tone class for an impact area (Category or slug)."""
+    slug = getattr(category, "slug", category) or ""
+    return f"tone-{_SLUG_TONE.get(str(slug), 'stone')}"
+
+
+@register.filter(name="org_tone")
+def org_tone(name):
+    """Stable tone for an organization avatar, so the same org always gets the same colour."""
+    import zlib
+    return f"tone-{_ORG_TONES[zlib.crc32(str(name or '').encode()) % len(_ORG_TONES)]}"
+
+
+@register.filter(name="initials")
+def initials(name):
+    words = [w for w in re.split(r"[\s\-_/&,.()]+", str(name or "")) if w and w[0].isalnum()]
+    if not words:
+        return "?"
+    letters = (words[0][0] + (words[1][0] if len(words) > 1 else "")).upper()
+    return letters

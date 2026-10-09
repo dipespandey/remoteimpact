@@ -1,5 +1,5 @@
-from .jobs import JobListView, JobDetailView, ApplicationGuideView, PostJobView, SaveJobView, MyMatchesView, OrganizationSearchView, AppliedJobDetailView, CategoryLandingView
-from .dashboard import DashboardView
+from .jobs import JobListView, JobDetailView, ApplicationGuideView, PostJobView, EmployerPricingView, SaveJobView, MyMatchesView, OrganizationSearchView, AppliedJobDetailView, CategoryLandingView
+from .dashboard import DashboardView, AccountDeleteView
 from .onboarding import (
     StartOnboardingView,
     OnboardingSelectTypeView,
@@ -8,11 +8,14 @@ from .onboarding import (
     OnboardingSeekerView,
     EditCompanyProfileView,
 )
-from .payments import PaymentSuccessView, PaymentCancelView, StripeWebhookView, JobCheckoutView
+from .payments import PaymentSuccessView, PaymentCancelView, StripeWebhookView, JobCheckoutView, ProBillingPortalView
 from .resources import (
     HomeView,
     AllDomainsView,
     ResourcesView,
+    PartnerResourcesView,
+    ImpactJobsSnapshotView,
+    HowWeCheckView,
     ToolsIndexView,
     SalaryToHourlyView,
     SalaryBenchmarksView,
@@ -44,6 +47,7 @@ from .resources import (
     ClusterDetailView,
     PrivacyPolicyView,
     TermsOfServiceView,
+    PublicPricingView,
 )
 from .stories import (
     StoryFeedView,
@@ -66,7 +70,19 @@ from .newsletter import (
     NewsletterSubscribeView,
 )
 from .referral import ReferralDashboardView, ReferralLandingView
-from .job_alerts import JobAlertListView, JobAlertCreateView, JobAlertDeleteView, JobAlertToggleView
+from .job_alerts import (
+    JobAlertListView,
+    JobScoutPreviewView,
+    JobScoutSignupStartView,
+    JobAlertCreateView,
+    JobAlertUpdateView,
+    JobAlertDeleteView,
+    JobAlertToggleView,
+    JobAlertFeedbackView,
+    JobAlertUnsubscribeView,
+    JobScoutSubscribeView,
+    JobScoutSubscribeSuccessView,
+)
 from .talent import TalentDirectoryView, TalentProfileView, TalentInviteView
 
 from .invitations import InvitationInboxView, InvitationDeclineView

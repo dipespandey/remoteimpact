@@ -2,7 +2,7 @@
 
 {% block title %}Cost of Living Comparison Calculator | Remote Workers{% endblock %}
 
-{% block meta_description %}Free cost of living comparison calculator for remote workers. Compare expenses between 50+ cities worldwide — rent, groceries, transport, utilities — and calculate salary equivalents instantly.{% endblock %}
+{% block meta_description %}Free cost of living comparison calculator for remote workers. Compare expenses between 50+ cities worldwide — rent, groceries, transport, utilities — and calculate the equivalent salary.{% endblock %}
 
 {% block extra_head %}
 <meta name="keywords" content="cost of living comparison, remote work salary, purchasing power calculator, digital nomad, city comparison tool">
@@ -59,159 +59,127 @@
 
 {% block content %}
 <style>
-  .panel{border:1px solid rgba(15,23,42,.1);background:linear-gradient(135deg,#fff,#faf7f2);box-shadow:0 4px 20px rgba(15,23,42,.08);border-radius:1rem}
-  .input-base{background:#fff;border:1px solid rgba(15,23,42,.15);border-radius:.5rem;padding:.625rem .875rem;width:100%;font-size:.95rem}
-  .input-base:focus{outline:none;border-color:#6EAA1C;box-shadow:0 0 0 3px rgba(110,170,28,.2)}
-  .bar-chart-bar{height:28px;border-radius:6px;transition:width .5s ease}
   .city-select-wrapper{position:relative}
-  .city-dropdown{position:absolute;top:100%;left:0;right:0;max-height:240px;overflow-y:auto;background:#fff;border:1px solid rgba(15,23,42,.15);border-radius:.5rem;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:50;display:none}
+  .city-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:240px;overflow-y:auto;background:hsl(var(--popover));color:hsl(var(--popover-foreground));padding:.375rem;border-radius:calc(var(--radius) + 2px);box-shadow:0 0 0 1px rgb(20 20 25 / .05),0 8px 24px -8px rgb(20 20 25 / .12);z-index:50;display:none}
   .city-dropdown.open{display:block}
-  .city-option{padding:.5rem .875rem;cursor:pointer;font-size:.9rem}
-  .city-option:hover,.city-option.highlighted{background:rgba(110,170,28,.1)}
-  .category-label{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#64748b}
-  .stat-value{font-size:1.5rem;font-weight:700;color:#1e293b}
-  .faq-toggle{cursor:pointer;user-select:none}
-  .faq-answer{max-height:0;overflow:hidden;transition:max-height .3s ease}
-  .faq-answer.open{max-height:400px}
+  .city-option{padding:.5rem .75rem;cursor:pointer;font-size:.875rem;border-radius:.625rem}
+  .city-option:hover,.city-option.highlighted{background:hsl(var(--muted))}
+  .bar-chart-bar{height:.625rem;border-radius:9999px;transition:width .4s ease}
 </style>
 
-<section class="py-12 bg-[#F3F2EE] min-h-screen">
-  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="container py-8 sm:py-10">
 
-    <!-- Hero -->
-    <div class="text-center mb-10">
-      <p class="uppercase text-xs tracking-[0.3em] text-gray-500 mb-3">Free Tool</p>
-      <h1 class="text-3xl md:text-4xl font-semibold text-gray-900 leading-tight">Cost of Living Comparison Calculator</h1>
-      <p class="mt-3 text-lg text-gray-600 max-w-2xl mx-auto">Compare expenses between 50+ cities worldwide and find out what your salary is really worth. Built for remote workers exploring geo-arbitrage.</p>
-    </div>
+  <header class="max-w-3xl">
+    <h1 class="page-title">Cost of living comparison</h1>
+    <p class="page-lede">Compare two of 64 cities on rent, groceries, restaurants, transport and utilities, and see the salary you would need to keep the same standard of living.</p>
+  </header>
 
-    <!-- Tool Panel -->
-    <div class="panel p-6 md:p-8 mb-8">
-      <h2 class="text-xl font-semibold text-gray-900 mb-6">Select Two Cities to Compare</h2>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <!-- City A -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">City A (Your Current City)</label>
-          <div class="city-select-wrapper">
-            <input type="text" id="cityA-input" class="input-base" placeholder="Search city..." autocomplete="off">
-            <div id="cityA-dropdown" class="city-dropdown"></div>
-          </div>
-        </div>
-        <!-- City B -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">City B (Target City)</label>
-          <div class="city-select-wrapper">
-            <input type="text" id="cityB-input" class="input-base" placeholder="Search city..." autocomplete="off">
-            <div id="cityB-dropdown" class="city-dropdown"></div>
-          </div>
+  <!-- Tool -->
+  <div class="surface mt-8 max-w-4xl p-5 sm:p-6">
+    <h2 class="sr-only">Choose two cities</h2>
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div class="min-w-0">
+        <label for="cityA-input" class="label">Current city</label>
+        <div class="city-select-wrapper">
+          <input type="text" id="cityA-input" class="input bg-card" placeholder="Search city" autocomplete="off">
+          <div id="cityA-dropdown" class="city-dropdown"></div>
         </div>
       </div>
-
-      <!-- Salary input -->
-      <div class="mb-6">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Your Annual Salary (USD)</label>
-        <input type="number" id="salary-input" class="input-base max-w-xs" placeholder="80000" value="80000" min="0">
-      </div>
-
-      <button id="compare-btn" class="inline-flex items-center px-6 py-3 rounded-full bg-[#6EAA1C] text-white font-semibold hover:bg-[#5d9416] transition">
-        Compare Cities
-        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-      </button>
-    </div>
-
-    <!-- Results -->
-    <div id="results" class="hidden">
-      <!-- Summary -->
-      <div class="panel p-6 md:p-8 mb-8">
-        <h2 class="text-xl font-semibold text-gray-900 mb-6">Comparison Results</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-          <div class="text-center">
-            <p class="category-label mb-1">Overall Cost Index</p>
-            <p id="summary-cityA" class="stat-value">—</p>
-            <p id="summary-cityA-name" class="text-sm text-gray-500"></p>
-          </div>
-          <div class="text-center">
-            <p class="category-label mb-1">vs</p>
-            <p id="summary-diff" class="stat-value text-[#6EAA1C]">—</p>
-            <p class="text-sm text-gray-500">difference</p>
-          </div>
-          <div class="text-center">
-            <p class="category-label mb-1">Overall Cost Index</p>
-            <p id="summary-cityB" class="stat-value">—</p>
-            <p id="summary-cityB-name" class="text-sm text-gray-500"></p>
-          </div>
-        </div>
-
-        <!-- Salary Equivalent -->
-        <div class="bg-[#f0f7e4] border border-[#6EAA1C]/20 rounded-lg p-5 text-center">
-          <p class="text-sm text-gray-600 mb-1">Salary Equivalent</p>
-          <p id="salary-equiv" class="text-2xl font-bold text-gray-900">—</p>
-          <p id="salary-equiv-detail" class="text-sm text-gray-500 mt-1"></p>
+      <div class="min-w-0">
+        <label for="cityB-input" class="label">City to compare</label>
+        <div class="city-select-wrapper">
+          <input type="text" id="cityB-input" class="input bg-card" placeholder="Search city" autocomplete="off">
+          <div id="cityB-dropdown" class="city-dropdown"></div>
         </div>
       </div>
-
-      <!-- Category Breakdown -->
-      <div class="panel p-6 md:p-8 mb-8">
-        <h2 class="text-xl font-semibold text-gray-900 mb-6">Category Breakdown</h2>
-        <div id="category-bars" class="space-y-5"></div>
+      <div class="min-w-0">
+        <label for="salary-input" class="label">Your annual salary (USD)</label>
+        <input type="number" id="salary-input" class="input bg-card tabular-nums" placeholder="80000" value="80000" min="0" inputmode="numeric">
       </div>
     </div>
 
-    <!-- SEO Content -->
-    <div class="panel p-6 md:p-8 mb-8">
-      <h2 class="text-xl font-semibold text-gray-900 mb-4">How to Use This Cost of Living Calculator</h2>
-      <div class="prose prose-gray max-w-none text-gray-600 space-y-3">
-        <p>This free cost of living comparison tool helps remote workers, digital nomads, and anyone considering relocation understand how far their money will go in a new city. All data is processed client-side — no account required.</p>
-        <p><strong>How it works:</strong> Select your current city and a target city, enter your annual salary, and instantly see a side-by-side comparison across five key spending categories: rent, groceries, restaurants, transport, and utilities. The tool calculates what salary you'd need in the target city to maintain the same standard of living.</p>
-        <p><strong>For remote workers:</strong> If you earn a salary benchmarked to New York or San Francisco but live in Lisbon or Medellín, you can quantify your geo-arbitrage advantage — the difference between what you earn and what you spend.</p>
-      </div>
-    </div>
-
-    <!-- FAQ -->
-    <div class="panel p-6 md:p-8 mb-8">
-      <h2 class="text-xl font-semibold text-gray-900 mb-6">Frequently Asked Questions</h2>
-      <div class="space-y-3" id="faq-list">
-        <div class="border-b border-gray-200 pb-3">
-          <div class="faq-toggle flex justify-between items-center" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('svg').classList.toggle('rotate-180')">
-            <h3 class="font-medium text-gray-900">How is the cost of living index calculated?</h3>
-            <svg class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-          </div>
-          <div class="faq-answer"><p class="pt-2 text-sm text-gray-600">Our indices are based on aggregated data from multiple public sources including Numbeo, Expatistan, and government statistics. New York City is used as the baseline (index = 100). A city with an index of 70 means it is approximately 30% cheaper than NYC for that category.</p></div>
-        </div>
-        <div class="border-b border-gray-200 pb-3">
-          <div class="faq-toggle flex justify-between items-center" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('svg').classList.toggle('rotate-180')">
-            <h3 class="font-medium text-gray-900">How do I calculate my salary equivalent in another city?</h3>
-            <svg class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-          </div>
-          <div class="faq-answer"><p class="pt-2 text-sm text-gray-600">Enter your current salary and select your current city and target city. The tool uses the overall cost of living index ratio to calculate what salary in the target city would give you equivalent purchasing power.</p></div>
-        </div>
-        <div class="border-b border-gray-200 pb-3">
-          <div class="faq-toggle flex justify-between items-center" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('svg').classList.toggle('rotate-180')">
-            <h3 class="font-medium text-gray-900">Is this tool useful for remote workers?</h3>
-            <svg class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-          </div>
-          <div class="faq-answer"><p class="pt-2 text-sm text-gray-600">Absolutely. Remote workers can use this tool to evaluate geo-arbitrage opportunities — earning a salary benchmarked to a high-cost city while living in a lower-cost location, effectively increasing their purchasing power.</p></div>
-        </div>
-        <div class="border-b border-gray-200 pb-3">
-          <div class="faq-toggle flex justify-between items-center" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('svg').classList.toggle('rotate-180')">
-            <h3 class="font-medium text-gray-900">How often is the data updated?</h3>
-            <svg class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-          </div>
-          <div class="faq-answer"><p class="pt-2 text-sm text-gray-600">Our cost of living indices are reviewed and updated periodically based on the latest available data from public sources. The indices represent relative costs and are best used for general comparison rather than exact budgeting.</p></div>
-        </div>
-        <div class="pb-3">
-          <div class="faq-toggle flex justify-between items-center" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('svg').classList.toggle('rotate-180')">
-            <h3 class="font-medium text-gray-900">What categories are compared?</h3>
-            <svg class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-          </div>
-          <div class="faq-answer"><p class="pt-2 text-sm text-gray-600">We compare five major expense categories: Rent (apartment costs), Groceries (food and household items), Restaurants (dining out), Transport (public transit and fuel), and Utilities (electricity, water, internet). Each category is indexed relative to New York City.</p></div>
-        </div>
-      </div>
-    </div>
-
+    <button type="button" id="compare-btn" class="btn btn-primary mt-6 w-full sm:w-auto">Compare cities</button>
   </div>
-</section>
+
+  <!-- Results -->
+  <div id="results" class="hidden max-w-4xl scroll-mt-24" aria-live="polite">
+    <section class="card mt-6 p-5 sm:p-6">
+      <h2 class="text-sm font-medium text-muted-foreground">Equivalent salary</h2>
+
+      <div class="mt-1">
+        <p id="salary-equiv" class="break-words text-2xl font-semibold tabular-nums tracking-tight text-foreground sm:text-[1.75rem] sm:leading-tight">—</p>
+        <p id="salary-equiv-detail" class="mt-1 text-sm text-muted-foreground"></p>
+      </div>
+
+      <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div class="stat min-w-0">
+          <p id="summary-cityA" class="stat-value">—</p>
+          <p class="stat-label">Overall index</p>
+          <p id="summary-cityA-name" class="mt-1 truncate text-sm text-muted-foreground"></p>
+        </div>
+        <div class="stat min-w-0">
+          <p id="summary-diff" class="stat-value">—</p>
+          <p class="stat-label">Difference</p>
+          <p class="mt-1 text-sm text-muted-foreground">Second city vs. current</p>
+        </div>
+        <div class="stat min-w-0">
+          <p id="summary-cityB" class="stat-value">—</p>
+          <p class="stat-label">Overall index</p>
+          <p id="summary-cityB-name" class="mt-1 truncate text-sm text-muted-foreground"></p>
+        </div>
+      </div>
+      <p class="help mt-3">Index: New York City = 100. Lower is cheaper.</p>
+    </section>
+
+    <section class="card mt-6 p-5 sm:p-6">
+      <h2 class="text-sm font-medium text-muted-foreground">By category</h2>
+      <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground" aria-hidden="true">
+        <span class="inline-flex items-center gap-1.5"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background:hsl(var(--muted-foreground) / .35)"></span>Current city</span>
+        <span class="inline-flex items-center gap-1.5"><span class="inline-block h-2.5 w-2.5 rounded-full bg-primary"></span>City to compare</span>
+      </div>
+      <div id="category-bars" class="mt-5 space-y-5"></div>
+    </section>
+  </div>
+
+  <!-- Explainer -->
+  <section class="mt-12 max-w-3xl">
+    <h2 class="section-title text-balance">How to use this calculator</h2>
+    <ul class="mt-4 space-y-3 leading-7 text-foreground">
+      <li><strong class="font-medium">Pick two cities.</strong> Start typing a city name and choose it from the list. The comparison runs in your browser and needs no account.</li>
+      <li><strong class="font-medium">Enter your salary.</strong> The tool scales it by the ratio of the two overall indices to estimate the salary that buys the same standard of living in the second city.</li>
+      <li><strong class="font-medium">Check the categories.</strong> Rent usually drives most of the difference, so look at the breakdown before deciding a move is worth it.</li>
+      <li><strong class="font-medium">Remote pay.</strong> If your salary is set for a high-cost city and you live somewhere cheaper, the gap between the two figures is roughly how much further your money goes (often called geo-arbitrage).</li>
+    </ul>
+  </section>
+
+  <!-- FAQ -->
+  <section class="mt-12 max-w-3xl">
+    <h2 class="section-title">Questions</h2>
+    <div id="faq-list" class="surface mt-4 p-1.5">
+      <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span><h3 class="inline">How is the cost of living index calculated?</h3></span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">The indices are approximate figures drawn from public sources such as Numbeo, Expatistan and government statistics. New York City is the baseline at 100, so a city at 70 is about 30% cheaper than New York for that category.</p>
+      </details>
+      <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span><h3 class="inline">How do I calculate my salary equivalent in another city?</h3></span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">Enter your salary and choose your current city and the city to compare. The tool multiplies your salary by the ratio of the two overall indices to give the salary with the same purchasing power.</p>
+      </details>
+      <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span><h3 class="inline">Is this tool useful for remote workers?</h3></span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">Yes. If you earn a salary benchmarked to a high-cost city while living somewhere cheaper, it shows roughly how much more your pay buys.</p>
+      </details>
+      <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span><h3 class="inline">How often is the data updated?</h3></span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">The indices are not live. They show relative costs between cities and are best used for rough comparison, not exact budgeting.</p>
+      </details>
+      <details class="group rounded-xl px-4 py-3.5 open:bg-card">
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span><h3 class="inline">What categories are compared?</h3></span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">Five: rent (apartment costs), groceries (food and household items), restaurants (eating out), transport (public transit and fuel) and utilities (electricity, water, internet). Each is indexed against New York City.</p>
+      </details>
+    </div>
+  </section>
+
+</div>
 
 <script>
 (function(){
@@ -286,7 +254,6 @@
 
   const CATEGORIES = ["overall","rent","groceries","restaurants","transport","utilities"];
   const CAT_LABELS = ["Overall","Rent","Groceries","Restaurants","Transport","Utilities"];
-  const CAT_COLORS = ["#6EAA1C","#3b82f6","#f59e0b","#ef4444","#8b5cf6","#06b6d4"];
 
   let selectedA = null, selectedB = null;
 
@@ -337,7 +304,7 @@
   document.getElementById("compare-btn").addEventListener("click", compare);
 
   function compare() {
-    if(!selectedA||!selectedB){alert("Please select both cities.");return}
+    if(!selectedA||!selectedB){alert("Choose both cities from the list first.");return}
     const results = document.getElementById("results");
     results.classList.remove("hidden");
 
@@ -353,7 +320,7 @@
     const diff = idxB - idxA;
     const pct = ((diff/idxA)*100).toFixed(0);
     document.getElementById("summary-diff").textContent = (diff>0?"+":"") + pct + "%";
-    document.getElementById("summary-diff").style.color = diff<=0?"#6EAA1C":"#ef4444";
+    
 
     // Salary equivalent
     const equivSalary = Math.round(salary * (idxB / idxA));
@@ -378,20 +345,20 @@
       const pctA=(vA/maxVal*100).toFixed(0), pctB=(vB/maxVal*100).toFixed(0);
       barsContainer.innerHTML += `
         <div>
-          <div class="flex justify-between items-center mb-1">
-            <span class="category-label">${CAT_LABELS[i]}</span>
-          </div>
-          <div class="flex items-center gap-3 mb-1">
-            <span class="text-xs font-medium text-gray-500 w-20 truncate">${selectedA[0].split(",")[0]}</span>
-            <div class="flex-1 bg-gray-100 rounded-md overflow-hidden">
-              <div class="bar-chart-bar" style="width:${pctA}%;background:${CAT_COLORS[i]}80">&nbsp;<span class="text-xs font-bold px-2">${vA}</span></div>
+          <p class="text-[13px] font-medium text-foreground">${CAT_LABELS[i]}</p>
+          <div class="mt-2 flex items-center gap-3">
+            <span class="w-24 shrink-0 truncate text-xs text-muted-foreground">${selectedA[0].split(",")[0]}</span>
+            <div class="min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+              <div class="bar-chart-bar" style="width:${pctA}%;background:hsl(var(--muted-foreground) / .35)"></div>
             </div>
+            <span class="w-8 shrink-0 text-right text-xs font-semibold tabular-nums text-foreground">${vA}</span>
           </div>
-          <div class="flex items-center gap-3">
-            <span class="text-xs font-medium text-gray-500 w-20 truncate">${selectedB[0].split(",")[0]}</span>
-            <div class="flex-1 bg-gray-100 rounded-md overflow-hidden">
-              <div class="bar-chart-bar" style="width:${pctB}%;background:${CAT_COLORS[i]}">&nbsp;<span class="text-xs font-bold px-2">${vB}</span></div>
+          <div class="mt-1.5 flex items-center gap-3">
+            <span class="w-24 shrink-0 truncate text-xs text-muted-foreground">${selectedB[0].split(",")[0]}</span>
+            <div class="min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+              <div class="bar-chart-bar bg-primary" style="width:${pctB}%"></div>
             </div>
+            <span class="w-8 shrink-0 text-right text-xs font-semibold tabular-nums text-foreground">${vB}</span>
           </div>
         </div>`;
     }

@@ -1,0 +1,11 @@
+Hi {{ user.first_name|default:"there" }},
+
+Your free Remote Impact Pro trial ends on {{ trial_end|date:"F j" }}. After that, Pro continues at $10 a month and your Scouts keep checking every new role for you.
+{% if match_count %}
+So far your Scouts have sent you {{ match_count }} match{{ match_count|pluralize:"es" }}.
+{% endif %}
+If Pro isn't useful to you, cancel before then and you won't be charged anything.
+
+Manage my subscription: {{ account_url }}
+
+Questions? Just reply to this email.

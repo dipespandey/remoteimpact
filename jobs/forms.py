@@ -4,7 +4,15 @@ from django import forms
 
 from django_countries.widgets import CountrySelectWidget
 
-from .models import Application, Category, Job, JobAlert, Organization, UserProfile
+from .models import (
+    Application,
+    AssistantSubscription,
+    Category,
+    Job,
+    JobAlert,
+    Organization,
+    UserProfile,
+)
 
 
 class OnboardingTypeForm(forms.Form):
@@ -29,7 +37,7 @@ class EmployerOnboardingForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        base_class = "w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition"
+        base_class = "input"
         for field in self.fields.values():
             field.widget.attrs.update({"class": base_class})
 
@@ -91,8 +99,8 @@ class OrgImpactProfileForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        base_class = "w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition"
-        checkbox_class = "h-5 w-5 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
+        base_class = "input"
+        checkbox_class = "checkbox"
 
         for name, field in self.fields.items():
             if isinstance(field.widget, forms.CheckboxInput):
@@ -118,12 +126,12 @@ class SeekerOnboardingForm(forms.ModelForm):
                     "placeholder": "I am a product manager passionate about...",
                 }
             ),
-            "country": CountrySelectWidget(attrs={"class": "form-control"}),
+            "country": CountrySelectWidget(attrs={"class": "input select"}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        base_class = "w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition"
+        base_class = "input"
         for field in self.fields.values():
             field.widget.attrs.update({"class": base_class})
 
@@ -238,10 +246,10 @@ class JobSubmissionForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields["category"].queryset = Category.objects.all()
         base_input = {
-            "class": "w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition"
+            "class": "input"
         }
         base_textarea = {
-            "class": "w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition"
+            "class": "input"
         }
 
         input_placeholders = {
@@ -316,28 +324,51 @@ class JobSubmissionForm(forms.Form):
 
 
 class JobAlertForm(forms.ModelForm):
+    intent_text = forms.CharField(
+        label="What kind of job do you want?",
+        min_length=20,
+        max_length=2000,
+        widget=forms.Textarea(
+            attrs={
+                "rows": 5,
+                "placeholder": (
+                    "Example: I'm looking for remote Python or data engineering roles "
+                    "at climate organizations. Mid-level, open to Europe, at least $70k. "
+                    "Exclude sales and internships."
+                ),
+            }
+        ),
+    )
+
     class Meta:
         model = JobAlert
-        fields = ["name", "categories", "keywords", "frequency"]
+        fields = ["name", "intent_text", "frequency"]
         labels = {
-            "name": "Alert Name (optional)",
-            "categories": "Impact Areas",
-            "keywords": "Keywords",
-            "frequency": "How often?",
-        }
-        widgets = {
-            "keywords": forms.TextInput(attrs={"placeholder": "e.g., climate, python, product manager"}),
-            "categories": forms.CheckboxSelectMultiple(),
+            "name": "Scout name (optional)",
+            "frequency": "Email me",
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        from .models import Category
-        self.fields["categories"].queryset = Category.objects.all()
-        base_class = "w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition"
-        for name, field in self.fields.items():
-            if name != "categories":
-                field.widget.attrs.update({"class": base_class})
+        self.user = user
+        is_pro = False
+        if user and user.is_authenticated:
+            subscription = AssistantSubscription.get_or_create_for_user(user)
+            is_pro = subscription.is_pro_active()
+        if is_pro:
+            choices = [
+                (JobAlert.Frequency.INSTANT, "As soon as possible"),
+                (JobAlert.Frequency.DAILY, "Once a day"),
+                (JobAlert.Frequency.WEEKLY, "Once a week"),
+            ]
+            self.initial.setdefault("frequency", JobAlert.Frequency.INSTANT)
+        else:
+            choices = [(JobAlert.Frequency.ONCE, "One-time matching email")]
+            self.initial["frequency"] = JobAlert.Frequency.ONCE
+        self.fields["frequency"].choices = choices
+        base_class = "input"
+        for field in self.fields.values():
+            field.widget.attrs.update({"class": base_class})
 
 
 # ---------------------------------------------------------------------------
@@ -412,14 +443,14 @@ class ApplicationForm(forms.ModelForm):
             self.fields[name].required = False
 
         # Tailwind styling
-        text_class = "w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:bg-white focus:ring-1 focus:ring-brand-500 transition"
+        text_class = "input"
         for name, field in self.fields.items():
             widget = field.widget
             existing = widget.attrs.get("class", "")
             if isinstance(widget, forms.CheckboxInput):
-                widget.attrs["class"] = (existing + " h-5 w-5 rounded border-gray-300 text-brand-600 focus:ring-brand-500").strip()
+                widget.attrs["class"] = (existing + " checkbox").strip()
             elif isinstance(widget, forms.ClearableFileInput):
-                widget.attrs["class"] = (existing + " block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100").strip()
+                widget.attrs["class"] = (existing + " block w-full text-sm text-muted-foreground file:mr-3 file:h-9 file:rounded-full file:border-0 file:bg-muted file:px-4 file:text-sm file:font-medium file:text-foreground hover:file:bg-accent").strip()
             else:
                 widget.attrs["class"] = (existing + " " + text_class).strip()
 

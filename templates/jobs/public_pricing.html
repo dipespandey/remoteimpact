@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Remote Impact Pricing | AI Job Scout and Career Tools{% endblock %}
+{% block meta_description %}Use Remote Impact's job search and one free AI Job Scout result at no cost. Upgrade to Pro for $10/month to keep watching for new matching remote impact jobs.{% endblock %}
+{% block og_title %}Remote Impact Pricing{% endblock %}
+{% block og_description %}Start free with remote impact job search and one AI Job Scout result. Pro is $10/month for ongoing job alerts and unlimited career assistant use.{% endblock %}
+{% block twitter_title %}Remote Impact Pricing{% endblock %}
+{% block twitter_description %}Start free, then upgrade to $10/month when you want ongoing remote impact job alerts.{% endblock %}
+{% block canonical %}{{ SITE_URL }}{% url 'jobs:public_pricing' %}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "Remote Impact Pro",
+  "description": "Ongoing Job Scout alerts for new matching roles, plus unlimited cover letter and interview question drafts.",
+  "url": "{{ SITE_URL }}{% url 'jobs:public_pricing' %}",
+  "brand": {"@type": "Brand", "name": "Remote Impact"},
+  "offers": {
+    "@type": "Offer",
+    "price": "10",
+    "priceCurrency": "USD",
+    "url": "{{ SITE_URL }}{% url 'jobs:public_pricing' %}",
+    "availability": "https://schema.org/InStock"
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container max-w-5xl py-8 sm:py-10">
+  <header class="page-header">
+    <h1 class="page-title">Pricing for job seekers</h1>
+    <p class="page-lede">Searching and filtering jobs is free. The free plan also includes one AI Job Scout: describe the work you want and we email you the strongest current matches once. Pro keeps your Scouts running on new listings and removes the limit on the career tools.</p>
+  </header>
+
+  <div class="grid gap-4 md:grid-cols-2">
+    <article class="surface flex flex-col p-5 sm:p-6">
+      <h2 class="text-base font-semibold text-foreground">Free</h2>
+      <p class="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-foreground">$0</p>
+      <ul class="check-list mt-5 flex-1 space-y-2 text-sm text-foreground">
+        <li>Browse and search current remote impact jobs</li>
+        <li>Filter by impact area, skills, location, salary and experience</li>
+        <li>One AI Job Scout with one match email</li>
+        <li>Three cover-letter or interview-prep generations</li>
+      </ul>
+      <a href="{% url 'jobs:job_scout_preview' %}?intent=Remote%20impact%20jobs%20that%20fit%20my%20skills&amp;source=pricing_free" data-track="pricing_free_scout" data-track-category="pricing" class="btn btn-outline btn-lg btn-block mt-6">Try the free Scout</a>
+    </article>
+
+    <article class="card flex flex-col p-5 sm:p-6">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h2 class="text-base font-semibold text-foreground">Remote Impact Pro</h2>
+        <span class="badge badge-primary">7-day free trial</span>
+      </div>
+      <p class="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-foreground">$10<span class="text-[15px] font-normal text-muted-foreground">/month</span></p>
+      <p class="mt-1 text-[13px] text-muted-foreground">Or <span class="tabular-nums">$24</span> once for a 3-month pass</p>
+      <ul class="check-list mt-5 flex-1 space-y-2 text-sm text-foreground">
+        <li>Up to 5 AI Job Scouts watching for new matches</li>
+        <li>Recurring alerts as relevant jobs are published</li>
+        <li>Unlimited cover-letter and interview-prep generations</li>
+        <li>Cancel anytime, or choose the pass and never be billed again</li>
+      </ul>
+      <div class="mt-6">
+        {% url 'jobs:job_scout_subscribe' as subscribe_url %}
+        {% if user.is_authenticated %}
+        <a href="{{ subscribe_url }}?source=public_pricing" data-track="pricing_pro_checkout" data-track-category="pricing" class="btn btn-primary btn-lg btn-block">Start free trial</a>
+        {% else %}
+        <a href="{% url 'account_signup' %}?next={{ subscribe_url|urlencode }}%3Fsource%3Dpublic_pricing" data-track="pricing_pro_signup" data-track-category="pricing" class="btn btn-primary btn-lg btn-block">Start free trial</a>
+        {% endif %}
+      </div>
+    </article>
+  </div>
+
+  <section class="mt-12" aria-labelledby="pricing-faq-heading">
+    <h2 id="pricing-faq-heading" class="section-title">Common questions</h2>
+    <dl class="mt-4 grid gap-x-10 gap-y-6 md:grid-cols-3">
+      <div>
+        <dt class="text-sm font-semibold text-foreground">What does the free Scout do?</dt>
+        <dd class="mt-1.5 text-sm leading-6 text-muted-foreground">You describe the role, skills, location, salary, causes and exclusions in your own words. We search the current listings and email you the strongest matches once.</dd>
+      </div>
+      <div>
+        <dt class="text-sm font-semibold text-foreground">What changes with Pro?</dt>
+        <dd class="mt-1.5 text-sm leading-6 text-muted-foreground">The same briefs keep running. When a new listing matches, you get an email, so you can apply while the role is fresh.</dd>
+      </div>
+      <div>
+        <dt class="text-sm font-semibold text-foreground">Can I pay once instead?</dt>
+        <dd class="mt-1.5 text-sm leading-6 text-muted-foreground">Yes. The 3-month pass is a single <span class="tabular-nums">$24</span> payment with no renewal.</dd>
+      </div>
+    </dl>
+  </section>
+
+  <p class="mt-12 text-[13px] text-muted-foreground">Hiring? See <a class="font-medium text-foreground underline decoration-border hover:decoration-foreground" href="{% url 'jobs:employers' %}">employer pricing</a>. Other questions: <a class="font-medium text-foreground underline decoration-border hover:decoration-foreground" href="mailto:hello@remoteimpact.org">hello@remoteimpact.org</a>.</p>
+</div>
+{% endblock %}

@@ -479,18 +479,25 @@ class RawDataExtractor:
         salary_str = raw_data.get("salary", "")
         salary_limit = raw_data.get("salary_limit")
 
-        if salary_limit is not None:
-            result["salary_max"] = cls._parse_decimal(salary_limit)
-            result["salary_currency"] = "USD"
-
-        # Parse the salary string for min value
+        # Prefer the complete original-currency range. salary_limit is an
+        # 80,000 Hours USD conversion and must never be mixed with it.
         if salary_str:
             parsed = cls._parse_salary_string(salary_str)
-            if parsed:
-                if "salary_min" in parsed and "salary_min" not in result:
-                    result["salary_min"] = parsed["salary_min"]
-                if "salary_currency" in parsed:
-                    result["salary_currency"] = parsed["salary_currency"]
+            if (
+                parsed
+                and "grant" not in salary_str.lower()
+                and parsed.get("salary_min", 0) >= 10_000
+                and parsed.get("salary_max", parsed.get("salary_min", 0)) >= 10_000
+            ):
+                result.update(parsed)
+        if (
+            not salary_str
+            and "salary_min" not in result
+            and salary_limit is not None
+            and (cls._parse_decimal(salary_limit) or Decimal("9000000")) < 9_000_000
+        ):
+            result["salary_max"] = cls._parse_decimal(salary_limit)
+            result["salary_currency"] = "USD"
 
         # Dates - 80000hours uses Unix timestamps
         posted_at = raw_data.get("posted_at")
@@ -699,12 +706,31 @@ class RawDataExtractor:
             result["salary_currency"] = "EUR"
         elif "$" in salary_str or "usd" in salary_str.lower():
             result["salary_currency"] = "USD"
+        else:
+            currency_match = re.search(
+                r"\b(CAD|AUD|CHF|INR|NZD|SGD|JPY|CNY|SEK|NOK|DKK|ZAR)\b",
+                salary_str,
+                re.IGNORECASE,
+            )
+            if currency_match:
+                result["salary_currency"] = currency_match.group(1).upper()
 
         # Extract numbers
         numbers = re.findall(r"[\d,]+\.?\d*", salary_str)
         if numbers:
             try:
                 cleaned_numbers = [Decimal(n.replace(",", "")) for n in numbers]
+                lowered = salary_str.lower()
+                multiplier = Decimal("1")
+                if re.search(r"(?:per\s+|/)\s*(?:hour|hr)\b|\bhourly\b", lowered):
+                    multiplier = Decimal("2080")
+                elif re.search(r"(?:per\s+|/)\s*month\b|\bmonthly\b", lowered):
+                    multiplier = Decimal("12")
+                elif re.search(r"(?:per\s+|/)\s*week\b|\bweekly\b", lowered):
+                    multiplier = Decimal("52")
+                elif re.search(r"(?:per\s+|/)\s*day\b|\bdaily\b", lowered):
+                    multiplier = Decimal("260")
+                cleaned_numbers = [value * multiplier for value in cleaned_numbers]
                 if len(cleaned_numbers) == 1:
                     result["salary_min"] = cleaned_numbers[0]
                 elif len(cleaned_numbers) >= 2:

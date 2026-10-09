@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load job_extras %}
+{% block title %}Your Job Scout Preview - Remote Impact{% endblock %}
+{% block robots %}noindex, follow{% endblock %}
+
+{% block content %}
+{% with provisional=preview_jobs|scout_needs_confirmation %}
+<div class="page">
+    <header class="page-header">
+        <a href="{% url 'jobs:job_alerts' %}" class="text-[13px] text-muted-foreground hover:text-foreground">AI Job Scout</a>
+        {% if preview_jobs %}<h1 class="page-title mt-1">Matches for your brief</h1>
+        <p class="page-lede">We found {{ preview_jobs|length }} current match{{ preview_jobs|length|pluralize:"es" }} for your brief. Create a free account and we will email the complete result, with up to five {% if provisional %}ranked matches to review{% else %}strong matches{% endif %}.</p>{% else %}<h1 class="page-title mt-1">No eligible matches in this preview</h1>
+        <p class="page-lede">We did not find a strong current match in the available catalogue. You can edit your brief or create an account to save a Scout; this does not guarantee additional matches.</p>{% endif %}
+    </header>
+
+    <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8">
+        <div class="min-w-0 space-y-6">
+            {% if preferences.unresolved_constraints %}<div class="alert alert-warning" role="status"><p>Please clarify your location or working hours in the brief. Use a full state or country name; time-zone overlap is not yet verified, so we have not treated it as eligible.</p></div>{% endif %}
+
+            <section class="surface p-5 sm:p-6" aria-labelledby="brief-heading">
+                <div class="flex items-baseline justify-between gap-4">
+                    <h2 id="brief-heading" class="text-sm font-medium text-muted-foreground">Your brief</h2>
+                    <a href="{% url 'jobs:home' %}" class="text-[13px] text-muted-foreground hover:text-foreground">Edit your brief</a>
+                </div>
+                <p class="mt-2 break-words text-[15px] leading-relaxed text-foreground">{{ intent }}</p>
+                <div class="mt-3 flex flex-wrap gap-1.5">
+                    {% for value in preferences.titles %}<span class="badge bg-card text-foreground">{{ value }}</span>{% endfor %}
+                    {% for value in preferences.skills %}<span class="badge bg-card text-foreground">{{ value }}</span>{% endfor %}
+                    {% for value in preferences.locations %}<span class="badge bg-card text-foreground">{{ value }}</span>{% endfor %}
+                    {% for value in preferences.experience_levels %}<span class="badge bg-card text-muted-foreground">{{ value|title }}</span>{% endfor %}
+                    {% for value in preferences.exclude_keywords %}<span class="badge bg-card text-muted-foreground">Exclude {{ value }}</span>{% endfor %}
+                    {% if preferences.salary_requirement %}<span class="badge bg-card text-muted-foreground">Pay target {{ preferences.salary_requirement.currency|default:"currency unspecified" }} {{ preferences.salary_requirement.amount }} per {{ preferences.salary_requirement.period }}</span>{% endif %}
+                </div>
+                <div class="mt-3 space-y-2 text-[13px] leading-5 text-muted-foreground empty:hidden">
+                    {% if preferences.unresolved_constraints %}<p>Please specify a currency, such as USD or EUR, for your minimum salary. We will not treat an unknown currency as a match.</p>{% endif %}
+                    {% if preferences.salary_requirement.period == "hour" or preferences.salary_requirement.period == "week" or preferences.salary_requirement.period == "day" %}<p>These listings use yearly salary amounts. We cannot verify your requested pay period without the source hours and pay details. Try a yearly minimum or browse the original listings.</p>{% endif %}
+                    {% if preferences.salary_requirement.mode == "floor" %}<p>Matches need published starting pay at or above your minimum. Hourly rates do not establish actual annual pay without confirmed hours.</p>{% elif preferences.salary_requirement %}<p>Salary matches include published ranges that reach your target. Starting pay may be lower; confirm the offer and working hours with the employer.</p>{% endif %}
+                </div>
+            </section>
+
+            {% if preview_jobs %}<section aria-labelledby="preview-heading">
+                <div class="flex items-baseline justify-between gap-4 px-1">
+                    <h2 id="preview-heading" class="section-title">{% if provisional %}Current matches to review{% else %}Strong current matches{% endif %}</h2>
+                    <span class="hidden text-[13px] text-muted-foreground sm:inline">Ranked by relevance and freshness</span>
+                </div>
+                <ul class="list-surface mt-3">
+                    {% for job in preview_jobs %}<li>
+                        <article class="flex items-start justify-between gap-4 rounded-xl px-4 py-3.5 transition-colors hover:bg-muted/60 sm:px-5">
+                            <div class="min-w-0">
+                                <h3 class="job-title break-words"><a href="{{ job.get_absolute_url }}" class="hover:underline">{{ job.title|display_title }}</a></h3>
+                                <p class="job-meta"><span class="font-medium text-foreground">{{ job.organization.name }}</span><span>{{ job.location|default:"Remote" }}</span><span>Posted {{ job.posted_at|timesince }} ago</span></p>
+                                {% if job.scout_reasons %}
+                                <ul class="mt-2 flex flex-col items-start gap-1" aria-label="Why this matched">
+                                    {% for reason in job.scout_reasons %}
+                                    {% if reason|slice:":6" == "Check:" %}<li><span class="badge badge-warning whitespace-normal">{{ reason }}</span></li>{% else %}<li class="text-[13px] leading-5 text-muted-foreground">{{ reason }}</li>{% endif %}
+                                    {% endfor %}
+                                </ul>
+                                {% endif %}
+                            </div>
+                            <div class="shrink-0 text-right">
+                                <p class="text-base font-semibold tabular-nums text-foreground">{{ job.scout_score }}</p>
+                                <p class="text-[12px] text-muted-foreground">{% if job.scout_needs_confirmation %}provisional fit{% else %}fit score{% endif %}</p>
+                            </div>
+                        </article>
+                    </li>{% endfor %}
+                </ul>
+            </section>{% else %}<section class="card p-5 sm:p-6">
+                <h2 class="section-title">No strong recent match yet</h2>
+                <p class="mt-1.5 text-sm leading-6 text-muted-foreground">We have no verified match for these constraints among recent listings. Loosen a constraint in your brief, such as location or salary, or browse all jobs.</p>
+                <a href="{% url 'jobs:job_list' %}" class="btn btn-outline btn-sm mt-4">Browse all jobs</a>
+            </section>{% endif %}
+        </div>
+
+        <aside class="card order-first p-5 sm:p-6 lg:sticky lg:top-24 lg:order-none" aria-label="Receive complete Job Scout results">
+            <h2 class="text-lg font-semibold leading-snug tracking-tight text-foreground">Send these matches to your inbox</h2>
+            <p class="mt-1.5 text-sm leading-6 text-muted-foreground">Sign in or create a free account. We run the full brief and email you up to five {% if provisional %}ranked matches to review{% else %}strong matches{% endif %}.</p>
+            <div class="mt-5">
+            {% if user.is_authenticated %}<a href="{{ next_path }}" class="btn btn-primary btn-lg btn-block" data-track="scout_preview_continue" data-track-category="job_scout_conversion" data-track-label="authenticated">Run my full Scout</a>{% else %}<a href="{% url 'jobs:job_scout_signup_start' %}?next={{ next_path|urlencode }}&source={{ request.GET.source|urlencode }}" class="btn btn-primary btn-lg btn-block" data-track="scout_preview_signup" data-track-category="job_scout_conversion" data-track-label="anonymous">{% if preview_jobs %}Send my {{ preview_jobs|length }} match{{ preview_jobs|length|pluralize:"es" }}{% else %}Run my full search{% endif %}</a>{% endif %}
+            </div>
+            <p class="help text-center">Free, no card needed. One email, no recurring alerts.</p>
+            <p class="help mt-4">Your brief may be sent to DeepSeek to interpret preferences. If AI matching is enabled, your brief, preferences and public job evidence may also be processed for matching. Avoid sensitive personal information. <a href="{% url 'jobs:privacy' %}" class="underline underline-offset-2 hover:text-foreground">Privacy details</a>.</p>
+            <p class="mt-3 text-[13px] leading-5 text-muted-foreground"><span class="font-medium text-foreground">Remote Impact Pro</span> (7 days free, then $10/month) keeps up to five searches watching for newly published jobs.</p>
+        </aside>
+    </div>
+</div>
+{% endwith %}
+{% endblock %}
+
+{% block extra_js %}<script>
+if (typeof gtag === 'function') { gtag('event', 'job_scout_preview_view', { event_category: 'job_scout_conversion', match_count: {{ preview_jobs|length }}, user_state: '{% if user.is_authenticated %}authenticated{% else %}anonymous{% endif %}' }); }
+</script>{% endblock %}

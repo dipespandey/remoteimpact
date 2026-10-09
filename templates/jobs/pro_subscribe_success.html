@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Remote Impact Pro is active{% endblock %}
+
+{% block content %}
+<div class="page-narrow">
+    <div class="card mx-auto max-w-lg p-6 sm:p-8">
+        <svg class="h-5 w-5 text-emerald-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <h1 class="mt-3 text-xl font-semibold tracking-tight text-foreground">Remote Impact Pro is active</h1>
+        <p class="mt-2 text-sm leading-6 text-muted-foreground">You can now run up to five AI Job Scouts that check new jobs throughout the day, and use the cover letter and interview prep tools without a limit.</p>
+        <div class="mt-5 flex flex-wrap gap-2">
+            <a href="{% url 'jobs:job_alerts' %}" class="btn btn-primary">Create a Job Scout</a>
+            <a href="{% url 'jobs:account' %}" class="btn btn-ghost">Go to your account</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    if (typeof gtag !== 'function') return;
+    const sessionId = '{{ request.GET.session_id|default:""|escapejs }}';
+    const key = 'ri_pro_tracked_' + sessionId;
+    if (sessionId && !sessionStorage.getItem(key)) {
+        gtag('event', 'job_scout_pro_activated', {
+            event_category: 'job_scout_conversion',
+            currency: 'USD',
+            value: 10
+        });
+        sessionStorage.setItem(key, '1');
+    }
+})();
+</script>
+{% endblock %}

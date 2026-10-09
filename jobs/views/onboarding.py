@@ -1,4 +1,4 @@
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 from django.contrib import messages
 from django.views.generic import FormView, RedirectView, UpdateView
@@ -7,6 +7,7 @@ from django.http import Http404
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from ..forms import OnboardingTypeForm, EmployerOnboardingForm, SeekerOnboardingForm, OrgImpactProfileForm
 from ..models import UserProfile, Organization
@@ -14,16 +15,40 @@ from ..services.onboarding_service import OnboardingService
 from ..services.org_signals_service import OrgSignalsService
 
 
+def _safe_next_url(request):
+    next_url = request.GET.get("next", "").strip()
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return next_url
+    return ""
+
+
+def _append_next(url, next_url):
+    if not next_url:
+        return url
+    return f"{url}?{urlencode({'next': next_url})}"
+
+
 class StartOnboardingView(LoginRequiredMixin, RedirectView):
     def get_redirect_url(self, *args, **kwargs):
         target = OnboardingService.get_redirect_for_state(self.request.user)
-        next_url = self.request.GET.get("next", "")
+        next_url = _safe_next_url(self.request)
+
+        # Job-seeking signups have already expressed their intent by arriving
+        # here from the Scout flow, or have no destination yet. Do not make
+        # them choose an account type before receiving their first result.
+        # Employer and job-specific flows retain the account-type step.
+        if target == "jobs:onboarding_select_type" and self.request.GET.get("intent") != "employer":
+            next_path = urlparse(next_url).path if next_url else ""
+            if not next_url or next_path == reverse("jobs:job_alerts"):
+                return next_url or f"{reverse('jobs:job_alerts')}?source=signup"
 
         if target:
             url = reverse(target)
-            if next_url:
-                url = f"{url}?next={next_url}"
-            return url
+            return _append_next(url, next_url)
 
         # Onboarding complete - redirect to next URL or account
         if next_url:
@@ -42,21 +67,20 @@ class OnboardingSelectTypeView(LoginRequiredMixin, FormView):
             OnboardingService.set_account_type(
                 request.user, UserProfile.AccountType.EMPLOYER
             )
-            return redirect(reverse("jobs:start_onboarding"))
+            next_url = _safe_next_url(request)
+            return redirect(_append_next(reverse("jobs:start_onboarding"), next_url))
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["next_url"] = self.request.GET.get("next", "")
+        context["next_url"] = _safe_next_url(self.request)
         context["came_from_job"] = "/jobs/" in context["next_url"]
         return context
 
     def get_success_url(self):
-        next_url = self.request.GET.get("next", "")
+        next_url = _safe_next_url(self.request)
         base_url = reverse("jobs:start_onboarding")
-        if next_url:
-            return f"{base_url}?next={next_url}"
-        return base_url
+        return _append_next(base_url, next_url)
 
     def form_valid(self, form):
         OnboardingService.set_account_type(
@@ -70,6 +94,8 @@ class OnboardingEmployerView(LoginRequiredMixin, FormView):
     form_class = EmployerOnboardingForm
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
         profile = OnboardingService.get_user_profile(request.user)
         if not profile or profile.account_type != UserProfile.AccountType.EMPLOYER:
             return redirect("jobs:start_onboarding")
@@ -77,11 +103,9 @@ class OnboardingEmployerView(LoginRequiredMixin, FormView):
 
     def get_success_url(self):
         # After creating org, go to impact profile step
-        next_url = self.request.GET.get("next", "")
+        next_url = _safe_next_url(self.request)
         base_url = reverse("jobs:onboarding_impact_profile")
-        if next_url:
-            return f"{base_url}?next={next_url}"
-        return base_url
+        return _append_next(base_url, next_url)
 
     def form_valid(self, form):
         org = OnboardingService.create_organization(self.request.user, form)
@@ -116,6 +140,8 @@ class OnboardingImpactProfileView(LoginRequiredMixin, FormView):
     form_class = OrgImpactProfileForm
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
         profile = OnboardingService.get_user_profile(request.user)
         if not profile or profile.account_type != UserProfile.AccountType.EMPLOYER:
             return redirect("jobs:start_onboarding")
@@ -135,13 +161,13 @@ class OnboardingImpactProfileView(LoginRequiredMixin, FormView):
         context = super().get_context_data(**kwargs)
         org = self.get_organization()
         context["organization"] = org
-        context["next_url"] = self.request.GET.get("next", "")
+        context["next_url"] = _safe_next_url(self.request)
         # Get auto-detected signals for display
         context["signals_summary"] = OrgSignalsService.get_signals_summary(org)
         return context
 
     def get_success_url(self):
-        next_url = self.request.GET.get("next", "")
+        next_url = _safe_next_url(self.request)
         if next_url:
             return next_url
         return reverse_lazy("jobs:account")
@@ -164,6 +190,8 @@ class OnboardingSeekerView(LoginRequiredMixin, FormView):
         return kwargs
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
         profile = OnboardingService.get_user_profile(request.user)
         if not profile or profile.account_type != UserProfile.AccountType.SEEKER:
             return redirect("jobs:start_onboarding")
@@ -171,16 +199,14 @@ class OnboardingSeekerView(LoginRequiredMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["next_url"] = self.request.GET.get("next", "")
+        context["next_url"] = _safe_next_url(self.request)
         return context
 
     def get_success_url(self):
         # After seeker form, route to Impact Profile wizard
-        next_url = self.request.GET.get("next", "")
+        next_url = _safe_next_url(self.request)
         base_url = reverse("jobs:impact_wizard")
-        if next_url:
-            return f"{base_url}?next={next_url}"
-        return base_url
+        return _append_next(base_url, next_url)
 
     def form_valid(self, form):
         form.save()

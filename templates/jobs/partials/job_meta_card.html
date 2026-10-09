@@ -1,36 +1,18 @@
-<div class="rounded-3xl border border-white/10 bg-card-gradient backdrop-blur p-8 space-y-6">
-    <div>
-        <h1 class="text-4xl md:text-5xl font-semibold leading-tight mb-2 text-white">{{ job.title }}</h1>
-        <p class="text-2xl text-white/80">{{ job.organization.name }}</p>
+{% load job_extras %}{# Unused summary card for a job; kept for includes that may reference it. #}
+<div class="card p-5 sm:p-6">
+    <h1 class="page-title">{{ job.title|display_title }}</h1>
+    <p class="mt-1 text-[15px] font-medium text-foreground">{{ job.organization.name }}</p>
+    <div class="mt-3 flex flex-wrap items-center gap-1.5">
+        {% if job.is_featured %}<span class="badge badge-featured">Featured</span>{% endif %}
+        {% if job.category %}<span class="badge badge-outline">{{ job.category.name }}</span>{% endif %}
+        {% if job.is_entry_level_friendly %}<span class="badge badge-success" title="Open to people early in their career or switching fields">Entry-level</span>{% endif %}
     </div>
-    <div class="grid gap-6 text-white/80 text-sm">
-        <div class="flex flex-wrap items-center gap-3">
-            {% if job.category %}
-            <span class="px-4 py-1 rounded-full text-xs font-semibold bg-white/10 border border-white/20">{{ job.category.name }}</span>
-            {% endif %}
-            <span class="text-xs uppercase tracking-[0.4em] text-white/60">{{ job.get_job_type_display }}</span>
-            {% if job.is_featured %}
-            <span class="px-4 py-1 rounded-full text-xs font-semibold bg-brand-500/20 text-neon border border-brand-500/40">Featured</span>
-            {% endif %}
-            {% if job.is_entry_level_friendly %}
-            <span class="px-4 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" title="Great for career starters & switchers">🌱 Entry-Level Friendly</span>
-            {% endif %}
-        </div>
-        <div class="grid sm:grid-cols-2 gap-6 text-white">
-            <div>
-                <p class="text-xs uppercase tracking-[0.3em] text-white/60 mb-1">Location</p>
-                <p class="text-lg">{{ job.location|default:"Remote" }}</p>
-            </div>
-            <div>
-                <p class="text-xs uppercase tracking-[0.3em] text-white/60 mb-1">Posted</p>
-                <p class="text-lg">{{ job.posted_at|date:"M d, Y" }}</p>
-            </div>
-            {% if job.salary_min and job.salary_max %}
-            <div>
-                <p class="text-xs uppercase tracking-[0.3em] text-white/60 mb-1">Compensation</p>
-                <p class="text-lg">{{ job.salary_currency }} {{ job.salary_min|floatformat:0 }} – {{ job.salary_max|floatformat:0 }}</p>
-            </div>
-            {% endif %}
-        </div>
-    </div>
+    <dl class="mt-5 grid gap-4 text-sm sm:grid-cols-3">
+        <div><dt class="text-[13px] text-muted-foreground">Location</dt><dd class="mt-0.5 text-foreground">{{ job.location|default:"Remote" }}</dd></div>
+        <div><dt class="text-[13px] text-muted-foreground">Type</dt><dd class="mt-0.5 text-foreground">{{ job.get_job_type_display }}</dd></div>
+        <div><dt class="text-[13px] text-muted-foreground">Posted</dt><dd class="mt-0.5 tabular-nums text-foreground">{{ job.posted_at|date:"M d, Y" }}</dd></div>
+        {% if job|compensation_display %}
+        <div><dt class="text-[13px] text-muted-foreground">Compensation</dt><dd class="mt-0.5 tabular-nums text-foreground">{{ job|compensation_display }}</dd></div>
+        {% endif %}
+    </dl>
 </div>

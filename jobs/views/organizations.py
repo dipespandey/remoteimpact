@@ -92,6 +92,7 @@ class OrganizationProfileView(ListView):
         )
         job_count = context["page_obj"].paginator.count
         context["job_count"] = job_count
+        context["index_page"] = job_count > 0 and not self.request.GET
         
         # Check for SEO-optimized organizations (striking distance keywords)
         seo_data = SEO_OPTIMIZED_ORGS.get(org.slug)
@@ -153,7 +154,7 @@ class OrganizationDirectoryView(ListView):
         context["search_query"] = self.request.GET.get("q", "")
         context["meta_title"] = "Impact Organizations Hiring Remotely — Remote Impact Jobs"
         context["meta_description"] = (
-            "Browse purpose-driven organizations hiring for remote roles. "
+            "Browse nonprofits and impact-focused companies hiring for remote roles. "
             "Find nonprofits, social enterprises, and B Corps with open positions."
         )
         return context

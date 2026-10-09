@@ -1,0 +1,11 @@
+{% extends "jobs/shortlists/base.html" %}
+
+{% block title %}Employer Job Posting - Remote Impact{% endblock %}
+{% block robots %}index, follow{% endblock %}
+
+{% block content %}
+<main class="sl">
+<header class="sl-header"><div><p class="sl-kicker">For employers</p><h1>Hire people who want your mission</h1><p class="sl-lead">Publish a meaningful remote role. Reach people looking for that work, then hear from candidates who choose to connect.</p></div></header>
+<div class="sl-split"><section><h2>A role page. Relevant discovery. Opt-in introductions.</h2><div class="sl-rule"><h3>Give candidates the full picture</h3><p class="sl-muted">State the salary, eligible locations, responsibilities and application process. A specific brief helps the right people decide.</p></div><div class="sl-rule"><h3>Be found by people looking for your work</h3><p class="sl-muted">Your published role is included in search and eligible for relevant AI Job Scout matches. Placement depends on fit, not payment.</p></div><div class="sl-rule"><h3>See who actually wants to talk</h3><p class="sl-muted">Your private shortlist contains people who explicitly share their experience, work eligibility, availability and contact details for this role. Review and contact them from your account.</p></div></section><aside class="sl-aside"><p class="sl-kicker">Standard posting &middot; 30 days</p><h2 style="font-size:32px">$100</h2><p class="sl-muted">One role. A structured job page, search and matching distribution, and an opt-in candidate shortlist.</p><a class="sl-btn sl-primary" href="{% url 'jobs:post_job' %}?source=employer_pricing" data-track="employer_post_start">Start a posting</a><p class="sl-muted">No recurring employer subscription. Candidate details are self-reported. We do not guarantee applicants, interviews or a hire.</p><p class="sl-muted">Candidates never pay to express interest or hear from you.</p></aside></div>
+</main>
+{% endblock %}

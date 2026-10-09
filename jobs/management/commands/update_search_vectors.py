@@ -1,7 +1,8 @@
-from django.contrib.postgres.search import SearchVector
 from django.core.management.base import BaseCommand
+from django.db import connection
 
 from jobs.models import Job
+from jobs.search import weighted_job_search_vector
 
 
 class Command(BaseCommand):
@@ -12,6 +13,10 @@ class Command(BaseCommand):
                             help='Update all jobs, not just those without search_vector')
 
     def handle(self, *args, **options):
+        if connection.vendor != "postgresql":
+            self.stdout.write(self.style.WARNING("Search vectors are only supported on PostgreSQL."))
+            return
+
         qs = Job.objects.filter(is_active=True)
         if not options['force']:
             qs = qs.filter(search_vector__isnull=True)
@@ -25,12 +30,7 @@ class Command(BaseCommand):
 
         # Batch update using Django's SearchVector
         Job.objects.filter(id__in=qs.values_list('id', flat=True)).update(
-            search_vector=(
-                SearchVector('title', weight='A') +
-                SearchVector('description', weight='B') +
-                SearchVector('requirements', weight='C') +
-                SearchVector('impact', weight='B')
-            )
+            search_vector=weighted_job_search_vector()
         )
 
         self.stdout.write(self.style.SUCCESS(f'Updated {total} jobs'))

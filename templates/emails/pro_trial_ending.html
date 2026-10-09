@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Remote Impact Pro trial ends soon</title>
+</head>
+<body style="background-color: #f3f2ee; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f2ee;">
+<tr><td align="center" style="padding: 40px 16px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+    <tr><td style="padding: 32px;">
+        <p style="font-size: 16px; color: #333; line-height: 1.6;">Hi {{ user.first_name|default:"there" }},</p>
+        <p style="font-size: 16px; color: #333; line-height: 1.6;">Your free Remote Impact Pro trial ends on <strong>{{ trial_end|date:"F j" }}</strong>. After that, Pro continues at $10 a month and your Scouts keep checking every new role for you.</p>
+        {% if match_count %}<p style="font-size: 16px; color: #333; line-height: 1.6;">So far your Scouts have sent you {{ match_count }} match{{ match_count|pluralize:"es" }}.</p>{% endif %}
+        <p style="font-size: 16px; color: #333; line-height: 1.6;">If Pro isn't useful to you, cancel before then and you won't be charged anything.</p>
+        <p style="text-align: center; padding: 16px 0 8px;">
+            <a href="{{ account_url }}" style="display: inline-block; background-color: #16803c; color: #ffffff; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: 600;">Manage my subscription</a>
+        </p>
+        <p style="font-size: 14px; color: #666; line-height: 1.6;">Questions? Just reply to this email.</p>
+    </td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>

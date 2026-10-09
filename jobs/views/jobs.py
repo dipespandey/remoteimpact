@@ -1,19 +1,27 @@
-from django.views.generic import ListView, DetailView, FormView, View
+import logging
+from django.views.generic import ListView, DetailView, FormView, View, TemplateView
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
 from django.http import JsonResponse, Http404
+from django.core.cache import cache
 from django.contrib import messages
 from django.utils.decorators import method_decorator
+from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_POST
 from django.db.models import Q, Count
 
-from ..models import Job, Category, SeekerProfile, Application
+from ..models import AssistantSubscription, ConsumerFunnelEvent, Job, Category, SeekerProfile, Application
 from ..forms import JobSubmissionForm
 from ..services.job_service import JobService
 from ..services.payment_service import PaymentService
+from ..services.funnel import record_consumer_event
 from ..services.unified_matching_service import UnifiedMatchingService
 from ..seo_config import KEYWORD_SEO_PAGES, ROLE_SEO_PAGES
+from .impact_wizard import profile_scout_url
+
+logger = logging.getLogger(__name__)
 
 
 class JobListView(ListView):
@@ -21,9 +29,90 @@ class JobListView(ListView):
     template_name = "jobs/job_list.html"
     context_object_name = "jobs"
     paginate_by = 20
+    FILTER_OPTIONS_CACHE_KEY = "job-list:filter-options:v4"
+
+    @classmethod
+    def _get_filter_options(cls):
+        """Cache expensive aggregate data used to render the filter controls."""
+        cached = cache.get(cls.FILTER_OPTIONS_CACHE_KEY)
+        if cached is not None:
+            return cached
+
+        from collections import Counter
+        from django.db.models import Max
+        from ..services.raw_data_extractor import RawDataExtractor
+
+        max_salary_val = Job.objects.filter(Job.availability_filter()).aggregate(
+            max_val=Max("salary_max")
+        )["max_val"]
+
+        countries_raw = (
+            Job.objects.filter(Job.availability_filter())
+            .exclude(country__isnull=True).exclude(country="")
+            .values_list("country", flat=True).distinct().order_by("country")
+        )
+        valid_short_codes = {"UK", "USA"}
+        countries = sorted(set(
+            "Global" if country.lower() in {"global", "worldwide", "anywhere"}
+            else RawDataExtractor._normalize_country(country) for country in countries_raw
+            if len(country) > 3 or country.upper() in valid_short_codes
+        ))[:100]
+
+        all_skills = []
+        for skills_list in (
+            Job.objects.filter(Job.availability_filter())
+            .exclude(skills=[])
+            .values_list("skills", flat=True)
+        ):
+            if skills_list:
+                all_skills.extend(skills_list)
+        skill_counts = Counter(all_skills)
+        skills = [
+            {"slug": skill, "display": skill.replace("-", " ").title(), "count": count}
+            for skill, count in skill_counts.most_common(50)
+        ]
+
+        options = {
+            "max_salary": int(max_salary_val) if max_salary_val else 300000,
+            "countries": countries,
+            "skills": skills,
+        }
+        cache.set(
+            cls.FILTER_OPTIONS_CACHE_KEY,
+            options,
+            getattr(settings, "CACHE_TTL_MEDIUM", 300),
+        )
+        return options
 
     def get_queryset(self):
-        return JobService.get_filtered_jobs(self.request.GET)
+        jobs = JobService.get_filtered_jobs(self.request.GET)
+        # Keep the public feed chronological by default. The completed-profile
+        # handoff uses an explicit mode so new seekers see useful matches
+        # without changing the meaning of normal search or the Newest option.
+        requested_sort = self.request.GET.get("sort", "").strip()
+        # The personalized feed keeps only a seeker's top matches, so applying
+        # it under explicit filters would silently hide most results.
+        has_filters = any(
+            value.strip()
+            for key, values in self.request.GET.lists()
+            if key not in {"page", "source", "sort"} and not key.startswith("utm_")
+            for value in values
+        )
+        use_personalized_default = (
+            not requested_sort
+            and not has_filters
+            and self.request.user.is_authenticated
+        )
+        if (requested_sort == "best-match" or use_personalized_default) and self.request.user.is_authenticated:
+            seeker = (
+                SeekerProfile.objects.filter(
+                    user=self.request.user, wizard_completed=True
+                )
+                .first()
+            )
+            if seeker:
+                return UnifiedMatchingService.order_jobs_for_seeker(jobs, seeker)
+        return jobs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -35,6 +124,9 @@ class JobListView(ListView):
         context["current_types"] = self.request.GET.getlist("type")
         context["search_query"] = self.request.GET.get("q", "")
         context["sort"] = self.request.GET.get("sort", "")
+        pagination_params = self.request.GET.copy()
+        pagination_params.pop("page", None)
+        context["pagination_query"] = pagination_params.urlencode()
 
         # For backward compatibility with single category display
         current_category = self.request.GET.get("category")
@@ -60,61 +152,11 @@ class JobListView(ListView):
             "education": self.request.GET.get("education", ""),
         }
 
-        # Max salary across all active jobs for the salary slider ceiling
-        from django.db.models import Max
-        max_salary_val = Job.objects.filter(is_active=True).aggregate(
-            max_val=Max("salary_max")
-        )["max_val"]
-        context["max_salary"] = int(max_salary_val) if max_salary_val else 300000
+        filter_options = self._get_filter_options()
+        context["max_salary"] = filter_options["max_salary"]
+        context["countries"] = filter_options["countries"]
 
-        # Get distinct countries from the new country field (normalized)
-        # Filter out 2-letter codes except UK/USA, and ensure proper country names
-        from ..models import Organization
-
-        # Valid short codes we want to keep
-        valid_short_codes = {"UK", "USA"}
-
-        from django.utils import timezone
-        from datetime import timedelta
-        now = timezone.now()
-        cutoff = now - timedelta(days=180)
-        countries_raw = (
-            Job.objects.filter(is_active=True)
-            .exclude(expires_at__lt=now)
-            .exclude(expires_at__isnull=True, posted_at__lt=cutoff)
-            .exclude(country__isnull=True)
-            .exclude(country="")
-            .values_list("country", flat=True)
-            .distinct()
-            .order_by("country")
-        )
-
-        # Filter: keep if length > 3, or if it's a valid short code (UK, USA)
-        countries_from_field = sorted(set(
-            c for c in countries_raw
-            if len(c) > 3 or c.upper() in valid_short_codes
-        ))[:100]
-
-        context["countries"] = countries_from_field
-        # Top 500 orgs sorted by job count
-        context["organizations"] = Organization.objects.filter(
-            jobs__is_active=True
-        ).annotate(
-            job_count=Count('jobs', filter=Q(jobs__is_active=True))
-        ).order_by('-job_count', 'name')[:500]
-
-        # Get top skills with counts
-        from collections import Counter
-        all_skills = []
-        for skills_list in Job.objects.filter(is_active=True).exclude(skills=[]).values_list("skills", flat=True):
-            if skills_list:
-                all_skills.extend(skills_list)
-        skill_counts = Counter(all_skills)
-        top_skills = [
-            {"slug": skill, "display": skill.replace("-", " ").title(), "count": count}
-            for skill, count in skill_counts.most_common(50)
-        ]
-        context["skills_list"] = top_skills
+        context["skills_list"] = filter_options["skills"]
 
         # Knowledge-based filters with field value mappings
         context["knowledge_filters"] = {
@@ -148,13 +190,59 @@ class JobListView(ListView):
 
         # Check if user has seeker profile for showing "My Matches" link
         context["seeker_profile"] = None
+        context["show_job_scout_nudge"] = not self.request.user.is_authenticated
+        context["job_scout_nudge_url"] = (
+            f"{reverse('jobs:home')}?scout=1&source=job_list_organic"
+        )
+        context["job_scout_nudge_label"] = "Describe your ideal job"
+        context["job_scout_nudge_tracking_label"] = "anonymous_job_list_visitor"
+        context["job_scout_nudge_kind"] = "free"
         if self.request.user.is_authenticated:
+            subscription = AssistantSubscription.get_or_create_for_user(self.request.user)
+            context["show_job_scout_nudge"] = not subscription.is_pro_active()
+            context["job_scout_nudge_url"] = (
+                f"{reverse('jobs:job_alerts')}?source=job_list_nudge"
+            )
+            context["job_scout_nudge_label"] = "Try AI Job Scout"
+            context["job_scout_nudge_tracking_label"] = "signed_in_free_user"
+            if subscription.free_job_scout_used_at is not None:
+                context["job_scout_nudge_url"] = (
+                    f"{reverse('jobs:job_scout_subscribe')}?source=job_list_pro_nudge"
+                )
+                context["job_scout_nudge_label"] = "Keep getting matches"
+                context["job_scout_nudge_tracking_label"] = "free_scout_used"
+                context["job_scout_nudge_kind"] = "pro"
             try:
                 seeker = SeekerProfile.objects.get(user=self.request.user)
                 if seeker.wizard_completed:
                     context["seeker_profile"] = seeker
+                    # A completed profile can prefill the one-time Scout only
+                    # while that free allowance is unused. Preserve the Pro
+                    # upgrade CTA after the allowance has been consumed.
+                    if subscription.free_job_scout_used_at is None:
+                        context["job_scout_nudge_url"] = profile_scout_url(seeker)
+                        context["job_scout_nudge_label"] = "Email my matches"
+                        context["job_scout_nudge_tracking_label"] = "completed_profile_no_alert"
             except SeekerProfile.DoesNotExist:
                 pass
+
+        # Handle sort options
+        sort = self.request.GET.get("sort")
+        if not sort and context.get("seeker_profile") and not context.get("search_query"):
+            context["sort"] = "best-match"
+        # Paid placement: up to three featured roles matching the current
+        # filters, pinned above page one and clearly labelled.
+        context["sponsored_jobs"] = []
+        if context.get("page_obj") is None or context["page_obj"].number == 1:
+            try:
+                context["sponsored_jobs"] = list(
+                    JobService.get_filtered_jobs(self.request.GET)
+                    .filter(Job.sponsored_filter())
+                    .select_related("organization", "category")
+                    .order_by("featured_until")[:3]
+                )
+            except Exception:  # noqa: BLE001 - placement must never break search
+                logger.exception("Could not load featured jobs")
 
         # If no results, get recommended organizations
         if not context.get("object_list") or context["page_obj"].paginator.count == 0:
@@ -177,9 +265,9 @@ class JobListView(ListView):
         
         # Start with orgs that have active jobs
         orgs = Organization.objects.filter(
-            jobs__is_active=True
+            jobs__in=Job.objects.filter(Job.availability_filter())
         ).annotate(
-            job_count=Count('jobs', filter=Q(jobs__is_active=True))
+            job_count=Count('jobs', filter=Q(jobs__in=Job.objects.filter(Job.availability_filter())))
         ).distinct()
 
         recommendations = []
@@ -239,6 +327,10 @@ class JobDetailView(DetailView):
         except Http404:
             # Fallback: check if this is an old slug and redirect to new one
             old_slug = self.kwargs.get("slug", "")
+            from ..models import JobSlugRedirect
+            moved = JobSlugRedirect.objects.filter(old_slug=old_slug).select_related("job").first()
+            if moved and moved.job.slug != old_slug:
+                return redirect(moved.job.get_absolute_url(), permanent=True)
             try:
                 import json
                 import os
@@ -257,24 +349,67 @@ class JobDetailView(DetailView):
             raise
 
     def get_queryset(self):
-        from django.utils import timezone
-        from datetime import timedelta
-        now = timezone.now()
-        cutoff = now - timedelta(days=180)
-        return Job.objects.filter(is_active=True).exclude(
-            expires_at__lt=now,
-        ).exclude(
-            expires_at__isnull=True,
-            posted_at__lt=cutoff,
-        ).select_related("organization", "category")
+        return Job.objects.select_related("organization", "category")
+
+    @staticmethod
+    def _available_queryset():
+        return Job.objects.filter(Job.availability_filter()).select_related("organization", "category")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["job_available"] = self._available_queryset().filter(
+            pk=self.object.pk
+        ).exists()
+
+        from ..services.job_quality import job_posting_schema_json, safe_application_destination
+        context["job_posting_schema_json"] = (
+            job_posting_schema_json(self.object, getattr(settings, "SITE_URL", "https://remoteimpact.org"))
+            if context["job_available"] else ""
+        )
+        # Imported fields can repeat an entire source description. Display a
+        # complete source section once, without rewriting the stored evidence.
+        from ..services.scout_constraints import plain_job_field
+        rendered_sections = [plain_job_field(self.object, "description").casefold()]
+        for field in ("impact", "requirements", "benefits"):
+            text = plain_job_field(self.object, field).casefold()
+            duplicate = bool(text) and any(
+                text == previous or (len(text) >= 120 and text in previous)
+                for previous in rendered_sections
+            )
+            context["show_" + field] = bool(text) and not duplicate
+            if text and not duplicate:
+                rendered_sections.append(text)
+        context["safe_application_url"] = safe_application_destination(self.object.application_url)
+        if context["safe_application_url"]:
+            # Route through the counting redirect so employers can see clicks.
+            context["apply_redirect_url"] = reverse("jobs:job_apply_redirect", kwargs={"slug": self.object.slug})
+        context["safe_organization_website"] = safe_application_destination(self.object.organization.website)
+        verification = (self.object.raw_data or {}).get("source_verification") or {}
+        verification = dict(verification) if isinstance(verification, dict) else {}
+        checked = parse_datetime(str(verification.get("checked_at") or ""))
+        verification["checked_on"] = checked
+        context["source_verification"] = verification
+
+        if self.request.GET.get("source") == "scout_email":
+            alert = None
+            alert_id = self.request.GET.get("alert_id", "")
+            if self.request.user.is_authenticated and alert_id.isdigit():
+                alert = self.request.user.job_alerts.filter(pk=int(alert_id)).first()
+            record_consumer_event(
+                ConsumerFunnelEvent.Event.SCOUT_JOB_VIEWED,
+                user=self.request.user,
+                alert=alert,
+                metadata={
+                    "source": "scout_email",
+                    "alert_id": alert.pk if alert else None,
+                    "job_id": self.object.pk,
+                },
+            )
 
         # Match score for authenticated users with seeker profiles
         context["match_data"] = None
         context["seeker_profile"] = None
-        if self.request.user.is_authenticated:
+        if context["job_available"] and self.request.user.is_authenticated:
             try:
                 seeker = SeekerProfile.objects.get(user=self.request.user)
                 if seeker.wizard_completed:
@@ -309,7 +444,7 @@ class JobDetailView(DetailView):
 
     def _get_related_jobs(self):
         job = self.object
-        qs = self.get_queryset().exclude(pk=job.pk)
+        qs = self._available_queryset().exclude(pk=job.pk)
         if job.category_id:
             qs = qs.filter(category_id=job.category_id)
         else:
@@ -372,16 +507,22 @@ class ApplicationGuideView(DetailView):
     context_object_name = "job"
 
     def get_queryset(self):
-        from django.utils import timezone
-        from datetime import timedelta
-        now = timezone.now()
-        cutoff = now - timedelta(days=180)
-        return Job.objects.filter(is_active=True).exclude(
-            expires_at__lt=now,
-        ).exclude(
-            expires_at__isnull=True,
-            posted_at__lt=cutoff,
-        ).select_related("organization", "category")
+        return Job.objects.filter(Job.availability_filter()).select_related("organization", "category")
+
+    def get(self, request, *args, **kwargs):
+        try:
+            return super().get(request, *args, **kwargs)
+        except Http404:
+            # Preserve useful historical links when a role has closed. The
+            # detail page can explain that the role is unavailable, while a
+            # missing guide should not strand visitors on a bare 404.
+            slug = self.kwargs.get("slug", "")
+            if Job.objects.filter(slug=slug).exists():
+                return redirect(
+                    reverse("jobs:job_detail", kwargs={"slug": slug}),
+                    permanent=True,
+                )
+            raise
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -389,6 +530,11 @@ class ApplicationGuideView(DetailView):
         # Generate personalized guide content
         from ..services.guide_generator import generate_application_guide
         context["guide"] = generate_application_guide(self.object)
+        from ..services.job_quality import safe_application_destination
+        context["safe_application_url"] = safe_application_destination(self.object.application_url)
+        context["safe_organization_website"] = safe_application_destination(self.object.organization.website)
+        if context["safe_application_url"]:
+            context["apply_redirect_url"] = reverse("jobs:job_apply_redirect", kwargs={"slug": self.object.slug})
         
         return context
 
@@ -397,16 +543,37 @@ class PostJobView(LoginRequiredMixin, FormView):
     template_name = "jobs/post_job.html"
     form_class = JobSubmissionForm
 
+    def get(self, request, *args, **kwargs):
+        from ..models import EmployerFunnelEvent
+        from ..services.funnel import record_employer_event
+        record_employer_event(EmployerFunnelEvent.Event.POST_JOB_VIEWED, user=request.user)
+        return super().get(request, *args, **kwargs)
+
     def form_valid(self, form):
         job = JobService.create_job(form.cleaned_data, user=self.request.user)
+        from ..models import EmployerFunnelEvent
+        from ..services.funnel import record_employer_event
+        record_employer_event(EmployerFunnelEvent.Event.JOB_DRAFT_CREATED, user=self.request.user, job=job)
 
         try:
             domain_url = self.request.build_absolute_uri("/")[:-1]
             checkout_url = PaymentService.create_checkout_session(job, domain_url)
+            record_employer_event(EmployerFunnelEvent.Event.CHECKOUT_STARTED, user=self.request.user, job=job)
             return redirect(checkout_url)
         except Exception as e:
-            messages.error(self.request, f"Error creating payment session: {str(e)}")
-            return redirect("jobs:home")
+            record_employer_event(
+                EmployerFunnelEvent.Event.CHECKOUT_FAILED,
+                user=self.request.user,
+                job=job,
+                metadata={"error_type": type(e).__name__},
+            )
+            logger.exception("Could not create job posting checkout for job %s", job.pk)
+            messages.error(self.request, "We couldn't start checkout. Your draft is saved; please try again in a minute.")
+            return redirect("jobs:job_checkout", slug=job.slug)
+
+
+class EmployerPricingView(TemplateView):
+    template_name = "jobs/employer_pricing.html"
 
 
 class SaveJobView(LoginRequiredMixin, View):
@@ -434,6 +601,10 @@ class MyMatchesView(LoginRequiredMixin, ListView):
                 return context
 
             context["seeker_profile"] = seeker
+            subscription = AssistantSubscription.get_or_create_for_user(self.request.user)
+            context["is_pro"] = subscription.is_pro_active()
+            context["has_job_scout"] = self.request.user.job_alerts.exists()
+            context["profile_scout_url"] = profile_scout_url(seeker)
 
             # Unified matching with 4-component scoring
             results = UnifiedMatchingService.get_matches(seeker, limit=25)
@@ -471,10 +642,10 @@ class OrganizationSearchView(View):
         from ..models import Organization
 
         orgs = Organization.objects.filter(
-            jobs__is_active=True,
+            jobs__in=Job.objects.filter(Job.availability_filter()),
             name__icontains=query
         ).annotate(
-            job_count=Count('jobs', filter=Q(jobs__is_active=True))
+            job_count=Count('jobs', filter=Q(jobs__in=Job.objects.filter(Job.availability_filter())))
         ).order_by('-job_count', 'name').distinct()[:20]
 
         results = [{"name": org.name, "job_count": org.job_count} for org in orgs]
@@ -491,16 +662,9 @@ class CategoryLandingView(ListView):
 
     def get_queryset(self):
         self.category = get_object_or_404(Category, slug=self.kwargs["slug"])
-        from django.utils import timezone
-        from datetime import timedelta
-        now = timezone.now()
-        cutoff = now - timedelta(days=180)
         return (
-            Job.objects.filter(is_active=True, category=self.category)
-            .exclude(expires_at__lt=now)
-            .exclude(expires_at__isnull=True, posted_at__lt=cutoff)
-            .select_related("organization", "category")
-            .order_by("-posted_at")
+            Job.objects.filter(Job.availability_filter(), category=self.category)
+            .select_related("organization", "category").order_by("-posted_at")
         )
 
     # SEO-optimized titles for each category
@@ -541,6 +705,8 @@ class CategoryLandingView(ListView):
         cat = self.category
         context["category"] = cat
         context["categories"] = Category.objects.all().order_by("name")
+        from ..seo_config import MIN_INDEXABLE_JOBS
+        context["index_page"] = context["page_obj"].paginator.count >= MIN_INDEXABLE_JOBS and not self.request.GET
         
         # Use custom SEO title if available, otherwise generate one
         seo_title = self.SEO_TITLES.get(cat.slug, f"Remote {cat.name} Jobs")
@@ -550,6 +716,11 @@ class CategoryLandingView(ListView):
             f"Find purpose-driven roles in {cat.name.lower()} from top impact organizations."
         )
         
+        context["sponsored_jobs"] = (
+            list(self.get_queryset().filter(Job.sponsored_filter()).order_by("featured_until")[:3])
+            if context["page_obj"].number == 1 else []
+        )
+
         # If no jobs in this category, get recommended organizations
         if context["page_obj"].paginator.count == 0:
             context["recommended_orgs"] = self._get_recommended_orgs_for_category(cat)
@@ -563,9 +734,9 @@ class CategoryLandingView(ListView):
         # Get orgs that have active jobs (any category) but prioritize those 
         # that have had jobs in this category before
         orgs = Organization.objects.filter(
-            jobs__is_active=True
+            jobs__in=Job.objects.filter(Job.availability_filter())
         ).annotate(
-            job_count=Count('jobs', filter=Q(jobs__is_active=True))
+            job_count=Count('jobs', filter=Q(jobs__in=Job.objects.filter(Job.availability_filter())))
         ).distinct().order_by('-job_count')[:6]
         
         return list(orgs)

@@ -1,18 +1,19 @@
 {% extends 'base.html' %}
 {% load job_extras %}
 
-{% block title %}{{ job.title }} at {{ job.organization.name }} - Remote Impact Jobs{% endblock %}
+{% block title %}{% if not job_available %}Unavailable: {% endif %}{{ job.title }} at {{ job.organization.name }} - Remote Impact Jobs{% endblock %}
 
-{% block meta_description %}{{ job.title }} at {{ job.organization.name }}. {{ job.location|default:"Remote" }} {{ job.get_job_type_display }} position. Apply now on Remote Impact.{% endblock %}
+{% block meta_description %}{{ job.title }} at {{ job.organization.name }}. {% if job_available %}{{ job.location|default:"Remote" }} {{ job.get_job_type_display }} position. Apply now on Remote Impact.{% else %}This listing is no longer available on Remote Impact. Browse current related remote impact jobs.{% endif %}{% endblock %}
+{% block robots %}{% if job_available %}index, follow{% else %}noindex, follow{% endif %}{% endblock %}
 
 {% block canonical %}{{ SITE_URL }}{% url 'jobs:job_detail' job.slug %}{% endblock %}
 
 {% block og_type %}article{% endblock %}
 {% block og_title %}{{ job.title }} at {{ job.organization.name }}{% endblock %}
-{% block og_description %}{{ job.location|default:"Remote" }} {{ job.get_job_type_display }} position at {{ job.organization.name }}. Apply now!{% endblock %}
+{% block og_description %}{% if job_available %}{{ job.location|default:"Remote" }} {{ job.get_job_type_display }} position at {{ job.organization.name }}. Apply now!{% else %}This listing is no longer available on Remote Impact. Browse current related remote impact jobs.{% endif %}{% endblock %}
 {% block og_image %}{{ SITE_URL }}{% url "jobs:job_og_image" job.slug %}{% endblock %}
 {% block twitter_title %}{{ job.title }} at {{ job.organization.name }}{% endblock %}
-{% block twitter_description %}{{ job.location|default:"Remote" }} {{ job.get_job_type_display }} position at {{ job.organization.name }}. Apply now!{% endblock %}
+{% block twitter_description %}{% if job_available %}{{ job.location|default:"Remote" }} {{ job.get_job_type_display }} position at {{ job.organization.name }}. Apply now!{% else %}This listing is no longer available on Remote Impact. Browse current related remote impact jobs.{% endif %}{% endblock %}
 {% block twitter_image %}{{ SITE_URL }}{% url "jobs:job_og_image" job.slug %}{% endblock %}
 
 {% block structured_data %}
@@ -29,248 +30,149 @@
     ]
 }
 </script>
-<script type="application/ld+json">
-{
-    "@context": "https://schema.org",
-    "@type": "JobPosting",
-    "title": "{{ job.title|escapejs }}",
-    "description": "{{ job|job_description_for_schema|striptags|truncatechars:5000|escapejs }}",
-    "identifier": {
-        "@type": "PropertyValue",
-        "name": "Remote Impact",
-        "value": "{{ job.pk }}"
-    },
-    "url": "{{ SITE_URL }}{{ job.get_absolute_url }}",
-    "datePosted": "{{ job.posted_at|date:'c' }}",
-    "dateModified": "{{ job.updated_at|date:'c' }}",
-    "validThrough": "{{ job|default_expiry|date:'c' }}",
-    "employmentType": "{{ job.job_type|employment_type_schema }}",
-    "hiringOrganization": {
-        "@type": "Organization",
-        "name": "{{ job.organization.name|escapejs }}",
-        "sameAs": "{{ job.organization.website|default:SITE_URL }}"{% if job.organization.logo %},
-        "logo": "{{ SITE_URL }}{{ job.organization.logo.url }}"{% endif %}
-    },
-    {% if job.category %}"industry": "{{ job.category.name|escapejs }}",
-    "occupationalCategory": "{{ job.category.name|escapejs }}",{% endif %}
-    "jobLocation": {
-        "@type": "Place",
-        "address": {
-            "@type": "PostalAddress",
-            "addressLocality": "{{ job.location|default:'Remote'|escapejs }}"{% if job.country %},
-            "addressCountry": "{{ job.country|escapejs }}"{% endif %}
-        }
-    },
-    "jobLocationType": "TELECOMMUTE"{% if job.country %},
-    "applicantLocationRequirements": {
-        "@type": "Country",
-        "name": "{{ job.country|escapejs }}"
-    }{% endif %}{% if job.salary_min or job.salary_max %},
-    "baseSalary": {
-        "@type": "MonetaryAmount",
-        "currency": "{{ job.salary_currency|default:'USD' }}",
-        "value": {
-            "@type": "QuantitativeValue",
-            {% if job.salary_min and job.salary_max %}"minValue": {{ job.salary_min }},
-            "maxValue": {{ job.salary_max }},{% elif job.salary_min %}"value": {{ job.salary_min }},{% else %}"value": {{ job.salary_max }},{% endif %}
-            "unitText": "YEAR"
-        }
-    }{% endif %},
-    "directApply": {% if job.source == 'manual' %}true{% else %}false{% endif %}
-}
-</script>
+{% if job_posting_schema_json %}<script type="application/ld+json">{{ job_posting_schema_json|safe }}</script>{% endif %}
 {% endblock %}
 
+
 {% block content %}
-<!-- Align with nav -->
-<!-- Align with nav -->
-<section class="bg-gray-50 pt-16 pb-12">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <nav class="text-sm text-gray-500 flex items-center space-x-3" aria-label="Breadcrumb">
-            <a href="{% url 'jobs:home' %}" class="hover:text-brand-600 transition">Home</a>
-            <span>•</span>
-            <a href="{% url 'jobs:job_list' %}" class="hover:text-brand-600 transition">Jobs</a>
+<div class="container py-6 pb-28 sm:py-8 sm:pb-28 lg:pb-12">
+    <nav aria-label="Breadcrumb" class="!border-b-0">
+        <ol class="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] text-muted-foreground">
+            <li><a href="{% url 'jobs:home' %}" class="hover:text-foreground">Home</a></li>
+            <li aria-hidden="true">/</li>
+            <li><a href="{% url 'jobs:job_list' %}" class="hover:text-foreground">Jobs</a></li>
             {% if job.category %}
-            <span>•</span>
-            <a href="{% url 'jobs:category_landing' slug=job.category.slug %}" class="hover:text-brand-600 transition">{{ job.category.name }}</a>
+            <li aria-hidden="true">/</li>
+            <li><a href="{% url 'jobs:category_landing' slug=job.category.slug %}" class="hover:text-foreground">{{ job.category.name }}</a></li>
             {% endif %}
-            <span>•</span>
-            <span class="text-gray-900 line-clamp-1">{{ job.title }}</span>
-        </nav>
+            <li aria-hidden="true">/</li>
+            <li class="min-w-0 max-w-full truncate text-foreground" aria-current="page">{{ job.title|display_title }}</li>
+        </ol>
+    </nav>
+
+    {% if not job_available %}
+    <div class="alert alert-warning mt-5" role="status">
+        <div>
+            <h2 class="font-semibold">This listing is no longer available on Remote Impact</h2>
+            <p class="mt-1 leading-6">The original description remains here for reference. See the current related opportunities below or browse the newest remote impact jobs.</p>
+        </div>
     </div>
-</section>
+    {% endif %}
 
-<section class="bg-gray-50 pb-20">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[2fr,1fr] gap-10">
-        <article class="space-y-10">
-            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-                <div
-                    class="flex flex-wrap items-center gap-3 mb-6 text-xs uppercase tracking-[0.05em] text-gray-500 font-semibold">
-                    {% if job.category %}
-                    <span
-                        class="tracking-normal px-3 py-1 rounded-full bg-brand-50 text-brand-700 border border-brand-100 normal-case">{{job.category.name}}</span>
-                    {% endif %}
-                    <span>{{ job.get_job_type_display }}</span>
-                </div>
-                <div class="space-y-4 mb-8">
-                    <h1 class="text-4xl md:text-5xl font-bold leading-tight text-gray-900">{{ job.title }}</h1>
-                    <p class="text-2xl text-gray-600">{{ job.organization.name }}</p>
-                </div>
-                <!-- Job metadata in 2-column grid -->
-                <div class="grid sm:grid-cols-2 gap-x-8 gap-y-4 text-sm text-gray-600">
-                    <!-- Column 1: Posted, Type -->
-                    <div>
-                        <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-1">Posted</p>
-                        <p class="text-lg text-gray-900 font-medium">{{ job.posted_at|date:"M d, Y" }}</p>
-                    </div>
-                    <!-- Column 2: Location -->
-                    <div>
-                        <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-1">Location</p>
-                        <p class="text-lg text-gray-900 font-medium">{{ job.location|default:"Remote" }}</p>
-                    </div>
-                    <!-- Column 1: Type -->
-                    <div>
-                        <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-1">Type</p>
-                        <p class="text-lg text-gray-900 font-medium">{{ job.get_job_type_display }}</p>
-                    </div>
-                    <!-- Column 2: Compensation -->
-                    {% if job.salary_min or job.salary_max %}
-                    <div>
-                        <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-1">Compensation</p>
-                        <p class="text-lg text-gray-900 font-medium">
-                            {% with currency_symbol=job.salary_currency|default:"USD" %}
-                            {% if job.salary_min and job.salary_max %}
-                                {% if currency_symbol == "GBP" %}£{{ job.salary_min|floatformat:0 }} - £{{ job.salary_max|floatformat:0 }}{% elif currency_symbol == "EUR" %}€{{ job.salary_min|floatformat:0 }} - €{{ job.salary_max|floatformat:0 }}{% else %}${{ job.salary_min|floatformat:0 }} - ${{ job.salary_max|floatformat:0 }}{% endif %}
-                            {% elif job.salary_min %}
-                                {% if currency_symbol == "GBP" %}£{{ job.salary_min|floatformat:0 }}+{% elif currency_symbol == "EUR" %}€{{ job.salary_min|floatformat:0 }}+{% else %}${{ job.salary_min|floatformat:0 }}+{% endif %}
-                            {% else %}
-                                {% if currency_symbol == "GBP" %}Up to £{{ job.salary_max|floatformat:0 }}{% elif currency_symbol == "EUR" %}Up to €{{ job.salary_max|floatformat:0 }}{% else %}Up to ${{ job.salary_max|floatformat:0 }}{% endif %}
-                            {% endif %}
-                            {% endwith %}
-                        </p>
-                    </div>
-                    {% endif %}
-                    {% if job.expires_at %}
-                    <!-- Deadline (if exists) -->
-                    <div>
-                        <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-1">Deadline</p>
-                        <p class="text-lg text-gray-900 font-medium">⏰ {{ job.expires_at|date:"M d, Y" }}</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
+    <div class="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:grid-rows-[auto_1fr] lg:gap-x-12">
+        <!-- Header -->
+        <header class="min-w-0 lg:col-start-1 lg:row-start-1">
+            {% if job.is_sponsored %}<span class="badge badge-featured mb-3">★ Featured</span>{% endif %}
+            <h1 class="page-title break-words">{{ job.title|display_title }}</h1>
+            <p class="mt-1.5 text-[15px] text-muted-foreground">{{ job.organization.name }}</p>
 
-            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-                <h2 class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">Mission</h2>
-                <p class="text-2xl font-bold text-gray-900 mb-6">What you will drive</p>
-                <div class="text-gray-600 leading-relaxed prose prose-gray max-w-none">
-                    {{ job.description|render_html }}
+            <dl class="mt-6 grid max-w-2xl grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
+                <div class="min-w-0">
+                    <dt class="text-[13px] text-muted-foreground">Location</dt>
+                    <dd class="break-words font-medium text-foreground">{{ job.location|default:"Remote" }}</dd>
                 </div>
-            </div>
+                <div class="min-w-0">
+                    <dt class="text-[13px] text-muted-foreground">Type</dt>
+                    <dd class="font-medium text-foreground">{{ job.get_job_type_display }}</dd>
+                </div>
+                {% if job|compensation_display %}
+                <div class="min-w-0">
+                    <dt class="text-[13px] text-muted-foreground">Compensation</dt>
+                    <dd class="break-words font-medium tabular-nums text-foreground">{{ job|compensation_display }}</dd>
+                </div>
+                {% endif %}
+                {% if job.category %}
+                <div class="min-w-0">
+                    <dt class="text-[13px] text-muted-foreground">Area</dt>
+                    <dd class="break-words font-medium text-foreground"><a href="{% url 'jobs:category_landing' slug=job.category.slug %}" class="hover:underline">{{ job.category.name }}</a></dd>
+                </div>
+                {% endif %}
+                <div class="min-w-0">
+                    <dt class="text-[13px] text-muted-foreground">Posted</dt>
+                    <dd class="font-medium tabular-nums text-foreground">{{ job.posted_at|date:"M d, Y" }}</dd>
+                </div>
+                {% if job.expires_at %}
+                <div class="min-w-0">
+                    <dt class="text-[13px] text-muted-foreground">Deadline</dt>
+                    <dd class="font-medium tabular-nums text-foreground">{{ job.expires_at|date:"M d, Y" }}</dd>
+                </div>
+                {% endif %}
+            </dl>
 
-            {% if job.impact %}
-            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-                <h2 class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">Impact</h2>
-                <p class="text-2xl font-bold text-gray-900 mb-6">The difference you'll make</p>
-                <div class="text-gray-600 leading-relaxed prose prose-gray max-w-none">
-                    {{ job.impact|render_html }}
-                </div>
-            </div>
-            {% endif %}
-
-            {% if job.requirements %}
-            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-                <h2 class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">Profile</h2>
-                <p class="text-2xl font-bold text-gray-900 mb-6">What makes you a great fit</p>
-                <div class="text-gray-600 leading-relaxed prose prose-gray max-w-none">
-                    {{ job.requirements|render_html }}
-                </div>
-            </div>
-            {% endif %}
-
-            {% if job.benefits %}
-            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-                <h2 class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">Benefits</h2>
-                <p class="text-2xl font-bold text-gray-900 mb-6">What's in it for you</p>
-                <div class="text-gray-600 leading-relaxed prose prose-gray max-w-none">
-                    {{ job.benefits|render_html }}
-                </div>
-            </div>
-            {% endif %}
-
-            {% if job.company_description or job.organization.description %}
-            <div class="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <h2 class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">About</h2>
-                        <p class="text-2xl font-bold text-gray-900">Inside {{ job.organization.name }}</p>
-                    </div>
-                    {% if job.organization.website %}
-                    <a href="{{ job.organization.website }}" target="_blank" rel="noopener noreferrer"
-                        class="px-4 py-2 rounded-full border border-gray-200 text-sm font-semibold text-gray-600 hover:border-gray-300 hover:text-gray-900 transition bg-white">
-                        Visit site →
-                    </a>
-                    {% endif %}
-                </div>
-                <div class="text-gray-600 leading-relaxed prose prose-gray max-w-none">
-                    {% if job.company_description %}
-                        {{ job.company_description|render_html }}
+            {% if job_available and job.source != 'manual' %}
+            <div class="mt-6 flex max-w-2xl gap-2.5 rounded-xl bg-muted px-4 py-3 text-[13px] leading-relaxed text-muted-foreground">
+                <svg class="mt-0.5 h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <div class="space-y-1">
+                    {% if source_verification.method == 'ats_api' and source_verification.status == 'open' %}
+                    <p>Confirmed open on {{ job.organization.name }}'s own job board on {{ source_verification.checked_on|date:"M j, Y" }}. We re-check every day.</p>
                     {% else %}
-                        {{ job.organization.description|render_html }}
+                    {% if job.last_seen_at %}<p>Last seen in the source feed: {{ job.last_seen_at|date:"M d, Y" }}.</p>{% endif %}
+                    {% if source_verification.checked_on %}<p>Application link last checked: {{ source_verification.checked_on|date:"M j, Y" }}. {% if source_verification.status == 'title_confirmed' %}The page matched this title; opening status remains unconfirmed.{% else %}The check could not confirm opening status.{% endif %}</p>{% endif %}
+                    <p>Source listings can change. Check the employer's page for current availability and application requirements.</p>
                     {% endif %}
                 </div>
             </div>
             {% endif %}
+        </header>
 
-        </article>
-
-        <aside class="space-y-6">
+        <!-- Actions: after the header on mobile, sticky right column on desktop -->
+        <aside class="flex min-w-0 flex-col gap-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+            {% if not job_available %}
+            <div class="card p-5 sm:p-6 lg:sticky lg:top-24">
+                <h2 class="card-title">Find a current opportunity</h2>
+                {% if source_verification.status == 'closed' %}
+                <p class="mt-2 text-sm leading-6 text-muted-foreground">{{ job.organization.name }} has closed this role{% if source_verification.checked_on %} (checked on their job board on {{ source_verification.checked_on|date:"M j, Y" }}){% endif %}. The page stays up so old links still work.</p>
+                {% elif source_verification.status == 'not_remote' %}
+                <p class="mt-2 text-sm leading-6 text-muted-foreground">{{ job.organization.name }}'s job board lists this role as {% if source_verification.workplace == 'hybrid' %}hybrid{% else %}on-site{% endif %}, so it is no longer listed here as a remote job.</p>
+                {% else %}
+                <p class="mt-2 text-sm leading-6 text-muted-foreground">This historical listing is retained so old links still work. Its deadline, freshness or availability no longer meets our listing policy; this does not independently confirm the employer has closed the role.</p>
+                {% endif %}
+                <a href="{% url 'jobs:job_list' %}" class="btn btn-primary btn-lg btn-block mt-5">Browse newest jobs</a>
+            </div>
+            {% else %}
             {% if match_data %}
             <!-- Match Score Section -->
-            <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm space-y-4">
-                <div class="flex items-center justify-between">
-                    <p class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold">Your Match</p>
-                    <span class="text-3xl font-bold {% if match_data.total >= 80 %}text-green-600{% elif match_data.total >= 60 %}text-yellow-600{% else %}text-gray-500{% endif %}">
+            <div class="surface order-2 p-5 lg:order-1">
+                <div class="flex items-baseline justify-between gap-3">
+                    <h2 class="text-sm font-semibold text-foreground">Your match</h2>
+                    <span class="text-2xl font-semibold tabular-nums tracking-tight {% if match_data.total >= 80 %}text-success{% elif match_data.total >= 60 %}text-amber-700{% else %}text-muted-foreground{% endif %}">
                         {{ match_data.total }}%
                     </span>
                 </div>
 
                 <!-- Score breakdown -->
-                <div class="space-y-2">
+                <div class="mt-4 space-y-2">
                     {% for key, value in match_data.breakdown.items %}
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-gray-600 capitalize">{{ key }}</span>
+                    <div class="flex items-center justify-between gap-3 text-[13px]">
+                        <span class="capitalize text-muted-foreground">{{ key }}</span>
                         <div class="flex items-center gap-2">
-                            <div class="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
-                                <div class="h-full rounded-full {% if value >= 80 %}bg-green-500{% elif value >= 60 %}bg-yellow-500{% else %}bg-gray-400{% endif %}"
+                            <div class="h-1.5 w-20 overflow-hidden rounded-full bg-card">
+                                <div class="h-full rounded-full {% if value >= 80 %}bg-success{% elif value >= 60 %}bg-warning{% else %}bg-muted-foreground/40{% endif %}"
                                      style="width: {{ value }}%"></div>
                             </div>
-                            <span class="text-gray-500 w-8 text-right">{{ value }}</span>
+                            <span class="w-8 text-right tabular-nums text-muted-foreground">{{ value }}</span>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
 
                 {% if match_data.reasons %}
-                <div class="pt-3 border-t border-gray-100">
-                    <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-2">Why you match</p>
-                    <ul class="space-y-1">
+                <div class="mt-5">
+                    <p class="mb-1.5 text-[13px] font-medium text-muted-foreground">Why you match</p>
+                    <ul class="check-list space-y-1 text-sm text-foreground">
                         {% for reason in match_data.reasons %}
-                        <li class="text-sm text-gray-600 flex items-start gap-2">
-                            <span class="text-green-500 mt-0.5">✓</span>
-                            {{ reason }}
-                        </li>
+                        <li>{{ reason }}</li>
                         {% endfor %}
                     </ul>
                 </div>
                 {% endif %}
 
                 {% if match_data.gaps %}
-                <div class="pt-3 border-t border-gray-100">
-                    <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-2">Skills to develop</p>
+                <div class="mt-5">
+                    <p class="mb-1.5 text-[13px] font-medium text-muted-foreground">Skills to develop</p>
                     <div class="flex flex-wrap gap-1">
                         {% for gap in match_data.gaps %}
-                        <span class="px-2 py-1 bg-orange-50 text-orange-700 text-xs rounded-full border border-orange-100">{{ gap }}</span>
+                        <span class="badge bg-card text-foreground">{{ gap }}</span>
                         {% endfor %}
                     </div>
                 </div>
@@ -278,210 +180,290 @@
             </div>
             {% elif not seeker_profile and user.is_authenticated %}
             <!-- Prompt to complete profile -->
-            <div class="bg-gradient-to-br from-brand-50 to-brand-100 rounded-3xl border border-brand-200 p-6 shadow-sm space-y-3">
-                <p class="text-sm uppercase tracking-[0.05em] text-brand-600 font-semibold">See your match</p>
-                <p class="text-gray-700 text-sm">Complete your Impact Profile to see how well you match this role.</p>
-                <a href="{% url 'jobs:impact_wizard' %}"
-                   class="inline-block px-4 py-2 bg-brand-300 text-gray-900 text-sm font-semibold rounded-full hover:bg-brand-400 transition">
-                    Build Profile
-                </a>
+            <div class="surface order-2 p-5 lg:order-1">
+                <h2 class="text-sm font-semibold text-foreground">See how you match</h2>
+                <p class="mt-1 text-[13px] leading-relaxed text-muted-foreground">Complete your impact profile to see how your skills and preferences compare with this role.</p>
+                <a href="{% url 'jobs:impact_wizard' %}" class="btn btn-outline btn-sm mt-3">Complete your profile</a>
             </div>
             {% endif %}
 
-            <div class="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm sticky top-28 space-y-6">
-                <div class="space-y-3">
-                    <p class="text-sm uppercase tracking-[0.05em] text-gray-400 font-semibold">Apply</p>
-                    <h3 class="text-xl font-bold text-gray-900">Ready to move?</h3>
-                </div>
-                <div class="flex items-center gap-3">
-                    {% if user.is_authenticated %}
-                    <button id="save-job-btn" data-url="{% url 'jobs:save_job' slug=job.slug %}"
-                        data-saved="{{ saved|yesno:'true,false' }}"
-                        class="flex-1 px-4 py-3 rounded-full border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition text-sm font-semibold">
-                        {% if saved %}Saved ✓{% else %}Save job{% endif %}
-                    </button>
-                    {% else %}
-                    <a href="{% url 'account_login' %}?next={{ request.path }}"
-                        class="flex-1 px-4 py-3 rounded-full border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition text-sm font-semibold text-center">
-                        Sign in to save
-                    </a>
-                    {% endif %}
-                </div>
-                <!-- Application Guide button -->
-                <a href="{% url 'jobs:application_guide' slug=job.slug %}"
-                    class="block w-full text-center px-6 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition shadow-lg shadow-brand-300/30"
-                    data-track="application_guide" data-track-category="job_action" data-track-label="{{ job.slug }}">
-                    📝 Application Guide
-                </a>
+            <div id="apply-panel" class="card order-1 p-5 sm:p-6 lg:sticky lg:top-24 lg:order-2">
+                <h2 class="card-title">Apply for this role</h2>
+                {% if job.expires_at %}<p class="mt-0.5 text-[13px] text-muted-foreground">Deadline {{ job.expires_at|date:"M d, Y" }}</p>{% endif %}
 
-                {% if job.source == 'manual' %}
+                <div class="mt-4">
+                {% if job.source == 'manual' and not apply_redirect_url %}
                 <a href="{% url 'jobs:apply_job' slug=job.slug %}"
-                    class="block w-full text-center px-6 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition shadow-lg shadow-brand-300/30"
+                    class="btn btn-primary btn-lg btn-block"
                     data-track="apply_inplatform" data-track-category="job_action" data-track-label="{{ job.slug }}">
-                    Apply on Remote Impact →
+                    Apply on Remote Impact
                 </a>
-                {% elif job.application_url %}
-                <a href="{{ job.application_url }}" target="_blank" rel="noopener noreferrer"
-                    class="block w-full text-center px-6 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition shadow-lg shadow-brand-300/30"
+                {% elif safe_application_url %}
+                <a href="{{ apply_redirect_url|default:safe_application_url }}" target="_blank" rel="noopener nofollow"
+                    class="btn btn-primary btn-lg btn-block"
                     data-track="apply_click" data-track-category="job_action" data-track-label="{{ job.slug }}">
-                    Apply on company site →
+                    Apply on company site
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
                 </a>
                 {% elif job.application_email %}
                 <a href="mailto:{{ job.application_email }}?subject=Application for {{ job.title }}"
-                    class="block w-full text-center px-6 py-4 rounded-full bg-brand-300 text-gray-900 font-semibold hover:bg-brand-400 transition shadow-lg shadow-brand-300/30"
+                    class="btn btn-primary btn-lg btn-block"
                     data-track="apply_email" data-track-category="job_action" data-track-label="{{ job.slug }}">
                     Apply via email
                 </a>
                 {% endif %}
-
-                <!-- Share buttons -->
-                <div class="pt-4 border-t border-gray-100">
-                    <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">Share this job</p>
-                    <div class="flex items-center gap-2">
-                        <a href="https://twitter.com/intent/tweet?text={{ job.title|urlencode }}%20at%20{{ job.organization.name|urlencode }}&url={{ SITE_URL }}{{ job.get_absolute_url|urlencode }}&hashtags=remotejobs,impactjobs"
-                           target="_blank" rel="noopener noreferrer"
-                           class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition text-sm"
-                           data-track="share_twitter" data-track-category="share" data-track-label="{{ job.slug }}">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                            <span>Tweet</span>
-                        </a>
-                        <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ SITE_URL }}{{ job.get_absolute_url|urlencode }}"
-                           target="_blank" rel="noopener noreferrer"
-                           class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition text-sm"
-                           data-track="share_linkedin" data-track-category="share" data-track-label="{{ job.slug }}">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                            <span>Share</span>
-                        </a>
-                        <button onclick="copyJobLink()"
-                                class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition text-sm"
-                                data-track="share_copy" data-track-category="share" data-track-label="{{ job.slug }}">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
-                            <span id="copy-btn-text">Copy</span>
-                        </button>
-                    </div>
-                    <div class="flex items-center gap-2 mt-2">
-                        <a href="https://wa.me/?text={{ job.title|urlencode }}%20at%20{{ job.organization.name|urlencode }}%20-%20{{ SITE_URL }}{{ job.get_absolute_url|urlencode }}"
-                           target="_blank" rel="noopener noreferrer"
-                           class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-gray-600 hover:border-green-300 hover:bg-green-50 hover:text-green-700 transition text-sm"
-                           data-track="share_whatsapp" data-track-category="share" data-track-label="{{ job.slug }}">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                            <span>WhatsApp</span>
-                        </a>
-                        <a href="mailto:?subject={{ job.title|urlencode }}%20at%20{{ job.organization.name|urlencode }}&body=Check%20out%20this%20role%3A%20{{ SITE_URL }}{{ job.get_absolute_url|urlencode }}"
-                           class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition text-sm"
-                           data-track="share_email" data-track-category="share" data-track-label="{{ job.slug }}">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                            <span>Email</span>
-                        </a>
-                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ SITE_URL }}{{ job.get_absolute_url|urlencode }}"
-                           target="_blank" rel="noopener noreferrer"
-                           class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-gray-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 transition text-sm"
-                           data-track="share_facebook" data-track-category="share" data-track-label="{{ job.slug }}">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                            <span>Facebook</span>
-                        </a>
-                    </div>
-                </div>
-                <!-- AI Assistant CTA -->
-                <div class="rounded-2xl border border-brand-100 bg-gradient-to-br from-brand-50 to-white p-4 text-sm">
-                    <div class="flex items-start gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-900 mb-1">AI Application Tools</p>
-                            <p class="text-gray-600 mb-3">Generate a tailored cover letter or prep for interviews with AI.</p>
-                            <a href="{% url 'jobs:applicant_assistant' %}?job_url={{ request.build_absolute_uri|urlencode }}&job_title={{ job.title|urlencode }}&org={{ job.organization.name|urlencode }}"
-                               class="inline-flex items-center px-4 py-2 rounded-full bg-brand-300 text-gray-900 font-semibold text-sm hover:bg-brand-400 transition"
-                               data-track="ai_assistant_cta" data-track-category="job_action" data-track-label="{{ job.slug }}">
-                                Get AI help applying
-                                <svg class="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                                </svg>
-                            </a>
-                        </div>
-                    </div>
                 </div>
 
-                <!-- Email capture: Get jobs like this -->
-                <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
-                    <p class="font-semibold text-gray-900 mb-1 text-sm">🔔 Get jobs like this</p>
-                    <p class="text-gray-600 text-xs mb-3">Get notified when similar {{ job.category.name|default:"impact" }} roles are posted.</p>
-                    <form id="job-alert-form" class="space-y-2">
-                        {% csrf_token %}
-                        <input type="hidden" name="category" value="{{ job.category.slug|default:'' }}">
-                        <input type="email" name="email" id="job-alert-email" 
-                               placeholder="you@email.com" required
-                               class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-transparent">
-                        <button type="submit" id="job-alert-btn"
-                                class="w-full px-4 py-2 rounded-lg bg-gray-900 text-white font-semibold text-sm hover:bg-gray-800 transition">
-                            Subscribe
-                        </button>
-                    </form>
-                    <p id="job-alert-message" class="text-xs mt-2 hidden"></p>
+                <div class="mt-3 space-y-0.5">
+                    <!-- Application Guide button -->
+                    <a href="{% url 'jobs:application_guide' slug=job.slug %}"
+                        class="btn btn-ghost btn-block"
+                        data-track="application_guide" data-track-category="job_action" data-track-label="{{ job.slug }}">
+                        Application guide
+                    </a>
+                    {% if job_available %}<a href="{% url 'jobs:job_interest' job.slug %}" class="btn btn-ghost btn-block">Track this role</a>{% endif %}
+                    {% if user.is_authenticated %}
+                    <button type="button" id="save-job-btn" data-url="{% url 'jobs:save_job' slug=job.slug %}"
+                        data-saved="{{ saved|yesno:'true,false' }}"
+                        class="btn btn-ghost btn-block">{% if saved %}Saved{% else %}Save job{% endif %}</button>
+                    {% else %}
+                    <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn btn-ghost btn-block">
+                        Sign in to save
+                    </a>
+                    {% endif %}
                 </div>
 
-                {% if related_seo_links %}
-                <div class="rounded-2xl border border-gray-200 bg-white p-4">
-                    <p class="text-xs uppercase tracking-[0.05em] text-gray-400 font-semibold mb-3">Related searches</p>
-                    <div class="flex flex-wrap gap-2">
-                        {% for link in related_seo_links %}
-                        <a href="{{ link.url }}"
-                           class="inline-flex rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700 transition">
-                            {{ link.label }}
-                        </a>
-                        {% endfor %}
-                    </div>
-                </div>
+                {% if job_available and not job.is_sponsored %}
+                <p class="mt-4 text-center text-[13px] text-muted-foreground">Hiring for this role? <a href="{% url 'jobs:feature_job' job.slug %}?source=job_detail" rel="nofollow" class="font-medium text-foreground underline decoration-border hover:decoration-foreground" data-track="feature_from_job" data-track-category="employer">Feature it</a> to reach more candidates.</p>
+                {% elif job.is_sponsored %}
+                <p class="mt-4 text-center text-[13px] text-muted-foreground"><span class="badge badge-featured">★ Featured</span> by the employer</p>
                 {% endif %}
             </div>
+            {% endif %}
         </aside>
-    </div>
-</section>
 
-{% if related_jobs %}
-<section class="py-16 job-related-section">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between mb-10">
-            <div>
-                <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-2">More like this</p>
-                <h2 class="text-3xl font-semibold text-white">Similar opportunities</h2>
+        <!-- Body -->
+        <div class="min-w-0 lg:col-start-1 lg:row-start-2">
+            <div class="max-w-[68ch] space-y-10">
+                <section>
+                    <h2 class="section-title">Job description</h2>
+                    <div class="prose prose-zinc max-w-none break-words text-[15px] leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto mt-3">
+                        {{ job.description|render_html }}
+                    </div>
+                </section>
+
+                {% if show_impact %}
+                <section>
+                    <h2 class="section-title">The difference you'll make</h2>
+                    <div class="prose prose-zinc max-w-none break-words text-[15px] leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto mt-3">
+                        {{ job.impact|render_html }}
+                    </div>
+                </section>
+                {% endif %}
+
+                {% if show_requirements %}
+                <section>
+                    <h2 class="section-title">What makes you a great fit</h2>
+                    <div class="prose prose-zinc max-w-none break-words text-[15px] leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto mt-3">
+                        {{ job.requirements|render_html }}
+                    </div>
+                </section>
+                {% endif %}
+
+                {% if show_benefits %}
+                <section>
+                    <h2 class="section-title">Benefits</h2>
+                    <div class="prose prose-zinc max-w-none break-words text-[15px] leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto mt-3">
+                        {{ job.benefits|render_html }}
+                    </div>
+                </section>
+                {% endif %}
+
+                {% if job.company_description or job.organization.description %}
+                <section>
+                    <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                        <h2 class="section-title">About {{ job.organization.name }}</h2>
+                        {% if safe_organization_website %}
+                        <a href="{{ safe_organization_website }}" target="_blank" rel="noopener noreferrer"
+                            class="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground">
+                            Website
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="prose prose-zinc max-w-none break-words text-[15px] leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto mt-3">
+                        {% if job.company_description %}
+                            {{ job.company_description|render_html }}
+                        {% else %}
+                            {{ job.organization.description|render_html }}
+                        {% endif %}
+                    </div>
+                </section>
+                {% endif %}
             </div>
-            <a href="{% url 'jobs:job_list' %}"
-                class="px-5 py-2 rounded-full border border-white/20 text-white/80 hover:border-white hover:text-white transition text-sm font-semibold">
-                View all roles
-            </a>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {% for related_job in related_jobs %}
-            <div
-                class="rounded-3xl border border-white/10 bg-card-gradient p-6 backdrop-blur hover:border-neon/60 transition">
-                <p class="text-xs uppercase tracking-[0.4em] text-white/50">{{ related_job.get_job_type_display }}</p>
-                <h3 class="text-xl font-semibold text-white mt-3 mb-2">
-                    <a href="{{ related_job.get_absolute_url }}" class="hover:text-neon transition">
-                        {{ related_job.title }}
+
+            {% if job_available %}
+            <!-- Share buttons -->
+            <section class="mt-10 flex flex-wrap items-center gap-x-1 gap-y-1">
+                <h2 class="mr-2 text-[13px] font-medium text-muted-foreground">Share</h2>
+                    <a href="https://twitter.com/intent/tweet?text={{ job.title|urlencode }}%20at%20{{ job.organization.name|urlencode }}&url={{ SITE_URL }}{{ job.get_absolute_url|urlencode }}&hashtags=remotejobs,impactjobs"
+                       target="_blank" rel="noopener noreferrer"
+                       class="btn btn-ghost btn-sm text-muted-foreground hover:text-foreground"
+                       data-track="share_twitter" data-track-category="share" data-track-label="{{ job.slug }}">
+                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        <span>Tweet</span>
                     </a>
-                </h3>
-                <p class="text-white/70 text-sm mb-4">{{ related_job.organization.name }}</p>
-                <div class="flex items-center justify-between text-sm text-white/60">
-                    <span>{{ related_job.location|default:"Remote" }}</span>
-                    <a href="{{ related_job.get_absolute_url }}" class="text-neon font-semibold">View →</a>
-                </div>
+                    <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ SITE_URL }}{{ job.get_absolute_url|urlencode }}"
+                       target="_blank" rel="noopener noreferrer"
+                       class="btn btn-ghost btn-sm text-muted-foreground hover:text-foreground"
+                       data-track="share_linkedin" data-track-category="share" data-track-label="{{ job.slug }}">
+                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                        <span>Share</span>
+                    </a>
+                    <button type="button" onclick="copyJobLink()"
+                            class="btn btn-ghost btn-sm text-muted-foreground hover:text-foreground"
+                            data-track="share_copy" data-track-category="share" data-track-label="{{ job.slug }}">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                        <span id="copy-btn-text">Copy</span>
+                    </button>
+                    <a href="https://wa.me/?text={{ job.title|urlencode }}%20at%20{{ job.organization.name|urlencode }}%20-%20{{ SITE_URL }}{{ job.get_absolute_url|urlencode }}"
+                       target="_blank" rel="noopener noreferrer"
+                       class="btn btn-ghost btn-sm text-muted-foreground hover:text-foreground"
+                       data-track="share_whatsapp" data-track-category="share" data-track-label="{{ job.slug }}">
+                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        <span>WhatsApp</span>
+                    </a>
+                    <a href="mailto:?subject={{ job.title|urlencode }}%20at%20{{ job.organization.name|urlencode }}&body=Check%20out%20this%20role%3A%20{{ SITE_URL }}{{ job.get_absolute_url|urlencode }}"
+                       class="btn btn-ghost btn-sm text-muted-foreground hover:text-foreground"
+                       data-track="share_email" data-track-category="share" data-track-label="{{ job.slug }}">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        <span>Email</span>
+                    </a>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ SITE_URL }}{{ job.get_absolute_url|urlencode }}"
+                       target="_blank" rel="noopener noreferrer"
+                       class="btn btn-ghost btn-sm text-muted-foreground hover:text-foreground"
+                       data-track="share_facebook" data-track-category="share" data-track-label="{{ job.slug }}">
+                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                        <span>Facebook</span>
+                    </a>
+            </section>
+
+            <div class="surface mt-8 grid gap-6 p-5 sm:grid-cols-2 sm:p-6">
+                <!-- AI Assistant CTA -->
+                <section class="flex flex-col">
+                    <h2 class="text-sm font-semibold text-foreground">Cover letter and interview prep</h2>
+                    <p class="mt-1 flex-1 text-[13px] leading-relaxed text-muted-foreground">Draft a cover letter for this role or practise the questions you are likely to be asked.</p>
+                    <a href="{% url 'jobs:applicant_assistant' %}?job_url={{ request.build_absolute_uri|urlencode }}&job_title={{ job.title|urlencode }}&org={{ job.organization.name|urlencode }}"
+                       class="btn btn-outline btn-sm mt-3 self-start"
+                       data-track="ai_assistant_cta" data-track-category="job_action" data-track-label="{{ job.slug }}">
+                        Open application tools
+                    </a>
+                </section>
+
+                <!-- AI Job Scout: continue this search -->
+                <section class="flex flex-col">
+                    <h2 class="text-sm font-semibold text-foreground">Want more roles like this?</h2>
+                    <p class="mt-1 flex-1 text-[13px] leading-relaxed text-muted-foreground">Describe what you want and get your strongest matching jobs by email.</p>
+                    <a href="{% url 'jobs:job_alerts' %}?intent=Remote%20{{ job.title|urlencode }}%20roles%20similar%20to%20this%20one&source=job_detail"
+                       class="btn btn-outline btn-sm mt-3 self-start"
+                       data-track="job_scout_job_detail" data-track-category="job_scout" data-track-label="{{ job.slug }}">
+                        Find matching jobs
+                    </a>
+                </section>
             </div>
-            {% endfor %}
+
+            {% if related_seo_links %}
+            <section class="mt-8">
+                <h2 class="px-1 text-sm font-medium text-muted-foreground">Related searches</h2>
+                <div class="mt-3 flex flex-wrap gap-2 text-[13px]">
+                    {% for link in related_seo_links %}
+                    <a href="{{ link.url }}"
+                       class="inline-block rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent">
+                        {{ link.label }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+            {% endif %}
         </div>
     </div>
-</section>
-{% endif %}
 
+    {% if related_jobs %}
+    <section class="job-related-section mt-12 sm:mt-16" aria-labelledby="similar-roles-heading">
+        <div class="flex items-baseline justify-between px-1">
+            <h2 id="similar-roles-heading" class="section-title">Similar roles</h2>
+            <a href="{% url 'jobs:job_list' %}" class="text-[13px] text-muted-foreground hover:text-foreground">View all roles</a>
+        </div>
+        <ul class="list-surface mt-3 grid gap-0.5 md:grid-cols-2">
+            {% for related_job in related_jobs %}
+            <li>
+                <a href="{{ related_job.get_absolute_url }}" class="job-row">
+                    <h3 class="job-title">{{ related_job.title|display_title }}</h3>
+                    <p class="job-meta"><span class="font-medium text-foreground">{{ related_job.organization.name }}</span><span>{{ related_job.location|default:"Remote" }}</span><span>{{ related_job.get_job_type_display }}</span></p>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+</div>
+
+
+{% if job_available %}{% if job.source == 'manual' and not apply_redirect_url or safe_application_url or job.application_email %}
+<!-- Mobile apply bar: keeps the primary action in reach while reading -->
+<div id="mobile-apply-bar" class="fixed inset-x-0 bottom-0 z-40 bg-card/95 px-4 pt-3 shadow-[0_-1px_0_rgb(20_20_25/0.05),0_-8px_24px_-12px_rgb(20_20_25/0.12)] backdrop-blur transition-transform duration-200 lg:hidden" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
+    <div class="flex items-center gap-3">
+        <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-medium text-foreground">{{ job.title|display_title }}</p>
+            <p class="truncate text-[13px] text-muted-foreground">{{ job.organization.name }}</p>
+        </div>
+        {% if job.source == 'manual' and not apply_redirect_url %}
+        <a href="{% url 'jobs:apply_job' slug=job.slug %}"
+            class="btn btn-primary flex-shrink-0"
+            data-track="apply_inplatform" data-track-category="job_action" data-track-label="{{ job.slug }}">
+            Apply on Remote Impact
+        </a>
+        {% elif safe_application_url %}
+        <a href="{{ apply_redirect_url|default:safe_application_url }}" target="_blank" rel="noopener nofollow"
+            class="btn btn-primary flex-shrink-0"
+            data-track="apply_click" data-track-category="job_action" data-track-label="{{ job.slug }}">
+            Apply on company site
+        </a>
+        {% elif job.application_email %}
+        <a href="mailto:{{ job.application_email }}?subject=Application for {{ job.title }}"
+            class="btn btn-primary flex-shrink-0"
+            data-track="apply_email" data-track-category="job_action" data-track-label="{{ job.slug }}">
+            Apply via email
+        </a>
+        {% endif %}
+    </div>
+</div>
+<script>
+    // Hide the mobile apply bar while the in-page apply panel or the footer is on screen.
+    (function () {
+        var bar = document.getElementById('mobile-apply-bar');
+        if (!bar || !('IntersectionObserver' in window)) return;
+        var targets = [document.getElementById('apply-panel'), document.querySelector('footer')].filter(Boolean);
+        var onScreen = new Set();
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) { onScreen.add(entry.target); } else { onScreen.delete(entry.target); }
+            });
+            var hide = onScreen.size > 0;
+            bar.classList.toggle('translate-y-full', hide);
+            bar.classList.toggle('invisible', hide);
+        });
+        targets.forEach(function (target) { observer.observe(target); });
+    })();
+</script>
+{% endif %}{% endif %}
 <script>
     function copyJobLink() {
         const url = window.location.href;
         navigator.clipboard.writeText(url).then(() => {
             const btn = document.getElementById('copy-btn-text');
-            btn.textContent = 'Copied!';
+            btn.textContent = 'Copied';
             setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
         });
     }
@@ -515,7 +497,7 @@
                 if (!res.ok) return;
                 const data = await res.json();
                 btn.dataset.saved = data.saved ? 'true' : 'false';
-                btn.textContent = data.saved ? 'Saved ✓' : 'Save job';
+                btn.textContent = data.saved ? 'Saved' : 'Save job';
             } catch (e) {
                 console.error('Could not save job', e);
             }
@@ -524,68 +506,21 @@
 </script>
 {% endif %}
 
-<!-- Job alert inline form -->
+{% if job_available %}
 <script>
-(function() {
-    const form = document.getElementById('job-alert-form');
-    if (!form) return;
-    
-    const message = document.getElementById('job-alert-message');
-    const btn = document.getElementById('job-alert-btn');
-    const emailInput = document.getElementById('job-alert-email');
-    const csrfToken = form.querySelector('input[name=csrfmiddlewaretoken]')?.value ||
-        document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
-    
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = emailInput.value.trim();
-        const category = form.querySelector('input[name=category]')?.value || '';
-        
-        if (!email) return;
-        
-        btn.disabled = true;
-        btn.textContent = 'Subscribing...';
-        
-        try {
-            const res = await fetch('{% url "jobs:newsletter_subscribe" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken || '',
-                },
-                body: JSON.stringify({ email: email, source: 'job_detail', category: category })
-            });
-            
-            const data = await res.json();
-            
-            message.classList.remove('hidden', 'text-red-600', 'text-green-600');
-            if (res.ok) {
-                message.classList.add('text-green-600');
-                message.textContent = '✓ Subscribed! Check your inbox.';
-                emailInput.value = '';
-                btn.textContent = 'Subscribed ✓';
-                // Track
-                if (typeof gtag === 'function') {
-                    gtag('event', 'job_alert_subscribe', {
-                        'event_category': 'conversion',
-                        'event_label': '{{ job.category.slug|default:"general" }}'
-                    });
-                }
-            } else {
-                message.classList.add('text-red-600');
-                message.textContent = data.error || 'Something went wrong';
-                btn.disabled = false;
-                btn.textContent = 'Subscribe';
-            }
-        } catch (err) {
-            message.classList.remove('hidden');
-            message.classList.add('text-red-600');
-            message.textContent = 'Network error. Please try again.';
-            btn.disabled = false;
-            btn.textContent = 'Subscribe';
-        }
-    });
-})();
+  // Counts a real view for the employer's stats. Bots rarely run this.
+  (function () {
+    var sent = false;
+    function send() {
+      if (sent || document.visibilityState !== 'visible') return;
+      sent = true;
+      var url = "{% url 'jobs:job_view_beacon' job.slug %}";
+      if (navigator.sendBeacon) { navigator.sendBeacon(url); }
+      else { fetch(url, { method: 'POST', keepalive: true, credentials: 'same-origin' }); }
+    }
+    setTimeout(send, 1500);
+    document.addEventListener('visibilitychange', function () { setTimeout(send, 1500); });
+  })();
 </script>
-
+{% endif %}
 {% endblock %}

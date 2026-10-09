@@ -1,15 +1,48 @@
 import logging
+import hashlib
 import threading
 
 import requests
 from django.conf import settings
-from django.contrib.postgres.search import SearchVector
+from django.db import connection
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from jobs.models import Job, SeekerProfile
+from jobs.search import weighted_job_search_vector
 
 logger = logging.getLogger(__name__)
+
+
+def _embedding_hash(parts):
+    value = "\x1f".join(str(part or "").strip().lower() for part in parts)
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _job_embedding_hash(job):
+    return _embedding_hash([
+        job.title,
+        job.organization.name if job.organization_id and job.organization else "",
+        job.category.name if job.category_id and job.category else "",
+        job.description,
+        job.requirements,
+        job.impact,
+        job.skills,
+        job.job_type,
+        job.experience_level,
+        job.education_level,
+    ])
+
+
+def _seeker_embedding_hash(profile):
+    return _embedding_hash([
+        profile.headline,
+        profile.bio,
+        profile.skills,
+        profile.impact_areas,
+        profile.work_styles,
+        profile.experience_level,
+    ])
 
 # IndexNow configuration
 INDEXNOW_KEY = "db25ddbb333d413289a18c8820c32ca4"
@@ -18,23 +51,25 @@ INDEXNOW_ENDPOINT = "https://www.bing.com/indexnow"
 
 @receiver(post_save, sender=Job)
 def embed_job_on_save(sender, instance, created, **kwargs):
-    if instance.is_active and instance.embedding is None:
+    current_hash = _job_embedding_hash(instance)
+    if instance.is_active and (instance.embedding is None or instance.embedding_content_hash != current_hash):
         from jobs.services.embedding_service import embed_job
-        Job.objects.filter(pk=instance.pk).update(embedding=embed_job(instance))
+        Job.objects.filter(pk=instance.pk).update(
+            embedding=embed_job(instance), embedding_content_hash=current_hash
+        )
 
 
 @receiver(post_save, sender=Job)
 def update_job_search_vector(sender, instance, created, **kwargs):
     """Populate full-text search vector for lexical matching."""
-    if instance.is_active and instance.search_vector is None:
-        Job.objects.filter(pk=instance.pk).update(
-            search_vector=(
-                SearchVector('title', weight='A') +
-                SearchVector('description', weight='B') +
-                SearchVector('requirements', weight='C') +
-                SearchVector('impact', weight='B')
-            )
-        )
+    if connection.vendor != "postgresql":
+        return
+
+    qs = Job.objects.filter(pk=instance.pk)
+    if instance.is_active:
+        qs.update(search_vector=weighted_job_search_vector())
+    else:
+        qs.update(search_vector=None)
 
 
 def _ping_indexnow(url: str):
@@ -61,8 +96,8 @@ def _ping_indexnow(url: str):
 
 @receiver(post_save, sender=Job)
 def ping_indexnow_on_job_save(sender, instance, created, **kwargs):
-    """Notify Bing via IndexNow when a job is created or updated."""
-    if not instance.is_active:
+    """Notify Bing when a new public job URL is created."""
+    if not created or not instance.is_active:
         return
     try:
         site_url = getattr(settings, 'SITE_URL', 'https://remoteimpact.org')
@@ -77,9 +112,12 @@ def ping_indexnow_on_job_save(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=SeekerProfile)
 def embed_seeker_on_save(sender, instance, created, **kwargs):
-    if instance.wizard_completed and instance.embedding is None:
+    current_hash = _seeker_embedding_hash(instance)
+    if instance.wizard_completed and (instance.embedding is None or instance.embedding_content_hash != current_hash):
         from jobs.services.embedding_service import embed_seeker
-        SeekerProfile.objects.filter(pk=instance.pk).update(embedding=embed_seeker(instance))
+        SeekerProfile.objects.filter(pk=instance.pk).update(
+            embedding=embed_seeker(instance), embedding_content_hash=current_hash
+        )
 
 
 @receiver(post_save, sender='auth.User')
@@ -88,10 +126,18 @@ def send_welcome_email(sender, instance, created, **kwargs):
     if not created:
         return
     try:
+        from jobs.models import ConsumerFunnelEvent
+        from jobs.services.funnel import record_consumer_event
         from jobs.services.email_service import email_service
         from django.conf import settings as django_settings
         from django.template.loader import render_to_string
 
+        record_consumer_event(
+            ConsumerFunnelEvent.Event.ACCOUNT_CREATED,
+            user=instance,
+            metadata={"has_email": bool(instance.email)},
+            dedupe_key=f"account-created:{instance.pk}",
+        )
         site_url = getattr(django_settings, 'SITE_URL', 'https://remoteimpact.org')
         context = {'user': instance, 'site_url': site_url}
         html = render_to_string('emails/welcome.html', context)
@@ -132,7 +178,31 @@ try:
 
     @receiver(user_signed_up)
     def track_referral_on_signup(request, user, **kwargs):
-        """When a user signs up, check if they came via a referral link."""
+        """Record referral and campaign context without storing personal referrers."""
+        attribution = request.session.get("acquisition_attribution", {})
+        if attribution:
+            try:
+                from jobs.models import ConsumerFunnelEvent
+
+                event, _ = ConsumerFunnelEvent.objects.get_or_create(
+                    dedupe_key=f"account-created:{user.pk}",
+                    defaults={
+                        "event": ConsumerFunnelEvent.Event.ACCOUNT_CREATED,
+                        "user": user,
+                        "metadata": {"has_email": bool(user.email)},
+                    },
+                )
+                metadata = dict(event.metadata or {})
+                metadata.update({
+                    key: value
+                    for key, value in attribution.items()
+                    if key in ("utm_source", "utm_medium", "utm_campaign", "utm_content", "source")
+                })
+                event.metadata = metadata
+                event.save(update_fields=["metadata"])
+            except Exception as e:
+                logger.warning("Error recording signup attribution: %s", e)
+
         referral_code = request.session.pop("referral_code", None)
         if not referral_code:
             return

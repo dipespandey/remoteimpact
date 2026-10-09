@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% comment %}
+Shared reading layout for career guides (pillars and clusters).
+Child templates keep their own title/meta/canonical/og/structured_data blocks
+and fill: guide_breadcrumb, guide_kicker, guide_title, guide_lede,
+guide_summary (optional), guide_body, guide_cta (optional), guide_related.
+A table of contents is built from the article's H2s on wide screens.
+{% endcomment %}
+
+{% block content %}
+<div class="container py-8 sm:py-10">
+    <nav aria-label="Breadcrumb" class="text-[13px] text-muted-foreground">
+        <ol class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+            <li><a href="{% url 'jobs:home' %}" class="hover:text-foreground">Home</a></li>
+            <li aria-hidden="true">/</li>
+            <li><a href="{% url 'jobs:resources' %}" class="hover:text-foreground">Resources</a></li>
+            {% block guide_breadcrumb %}{% endblock %}
+        </ol>
+    </nav>
+
+    <div class="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_14rem] lg:gap-16">
+        <article id="guide-article" class="min-w-0">
+            <header class="max-w-[68ch]">
+                <p class="sr-only">{% block guide_kicker %}Career guide{% endblock %}</p>
+                <h1 class="page-title">{% block guide_title %}{% endblock %}</h1>
+                <p class="page-lede">{% block guide_lede %}{% endblock %}</p>
+            </header>
+
+            {% block guide_summary %}{% endblock %}
+
+            <div class="guide-prose prose prose-neutral mt-8 max-w-[68ch] text-[15px] leading-7 sm:text-base prose-headings:scroll-mt-24 prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-foreground prose-h2:mt-10 prose-h2:text-balance prose-h2:text-lg sm:prose-h2:text-xl prose-h3:text-base prose-p:text-foreground/85 prose-li:text-foreground/85 prose-li:marker:text-muted-foreground prose-a:font-medium prose-a:text-foreground prose-a:decoration-border prose-a:underline-offset-4 hover:prose-a:decoration-foreground prose-strong:font-semibold prose-strong:text-foreground prose-em:text-muted-foreground prose-table:text-sm">
+                {% block guide_body %}{% endblock %}
+            </div>
+
+            {% block guide_cta %}{% endblock %}
+
+            <div class="max-w-[68ch]">
+                {% block guide_related %}{% endblock %}
+
+                <section class="mt-12" aria-labelledby="other-guides-heading">
+                    <h2 id="other-guides-heading" class="section-title">Other career guides</h2>
+                    <ul class="mt-3 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
+                        {% if pillar_slug != 'climate-environment-careers' %}<li><a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}" class="block py-1 text-muted-foreground transition-colors hover:text-foreground">Climate and environment</a></li>{% endif %}
+                        {% if pillar_slug != 'ai-safety-careers' %}<li><a href="{% url 'jobs:pillar_detail' pillar_slug='ai-safety-careers' %}" class="block py-1 text-muted-foreground transition-colors hover:text-foreground">AI safety and governance</a></li>{% endif %}
+                        {% if pillar_slug != 'global-health-careers' %}<li><a href="{% url 'jobs:pillar_detail' pillar_slug='global-health-careers' %}" class="block py-1 text-muted-foreground transition-colors hover:text-foreground">Global health</a></li>{% endif %}
+                        {% if pillar_slug != 'humanitarian-ingo-careers' %}<li><a href="{% url 'jobs:pillar_detail' pillar_slug='humanitarian-ingo-careers' %}" class="block py-1 text-muted-foreground transition-colors hover:text-foreground">Humanitarian and INGO</a></li>{% endif %}
+                        {% if pillar_slug != 'effective-altruism-careers' %}<li><a href="{% url 'jobs:pillar_detail' pillar_slug='effective-altruism-careers' %}" class="block py-1 text-muted-foreground transition-colors hover:text-foreground">Effective altruism</a></li>{% endif %}
+                        {% if pillar_slug != 'mental-health-careers' %}<li><a href="{% url 'jobs:pillar_detail' pillar_slug='mental-health-careers' %}" class="block py-1 text-muted-foreground transition-colors hover:text-foreground">Mental health</a></li>{% endif %}
+                        {% if pillar_slug != 'education-edtech-careers' %}<li><a href="{% url 'jobs:pillar_detail' pillar_slug='education-edtech-careers' %}" class="block py-1 text-muted-foreground transition-colors hover:text-foreground">Education and edtech</a></li>{% endif %}
+                        {% if pillar_slug != 'economic-development-careers' %}<li><a href="{% url 'jobs:pillar_detail' pillar_slug='economic-development-careers' %}" class="block py-1 text-muted-foreground transition-colors hover:text-foreground">Economic development</a></li>{% endif %}
+                        {% if pillar_slug != 'social-justice-careers' %}<li><a href="{% url 'jobs:pillar_detail' pillar_slug='social-justice-careers' %}" class="block py-1 text-muted-foreground transition-colors hover:text-foreground">Social justice</a></li>{% endif %}
+                        {% if pillar_slug != 'tech-for-good-careers' %}<li><a href="{% url 'jobs:pillar_detail' pillar_slug='tech-for-good-careers' %}" class="block py-1 text-muted-foreground transition-colors hover:text-foreground">Tech for good</a></li>{% endif %}
+                    </ul>
+                    <p class="mt-5 text-sm text-muted-foreground">
+                        <a href="{% url 'jobs:resources' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">All resources</a>
+                        <span aria-hidden="true" class="mx-2">&middot;</span>
+                        <a href="{% url 'jobs:job_list' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Browse all remote jobs</a>
+                    </p>
+                </section>
+            </div>
+        </article>
+
+        <aside class="hidden lg:block" aria-label="On this page">
+            <nav id="guide-toc" class="sticky top-24 hidden">
+                <p class="text-[13px] font-medium text-foreground">On this page</p>
+                <ol id="guide-toc-list" class="mt-3 space-y-1.5 text-[13px]"></ol>
+            </nav>
+        </aside>
+    </div>
+</div>
+
+<script>
+(function () {
+    var body = document.querySelector('#guide-article .guide-prose');
+    var toc = document.getElementById('guide-toc');
+    var list = document.getElementById('guide-toc-list');
+    if (!body || !toc || !list) return;
+    var headings = body.querySelectorAll('h2');
+    if (headings.length < 4) return;
+    headings.forEach(function (h, i) {
+        if (!h.id) {
+            h.id = (h.textContent || '').trim().toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || ('section-' + (i + 1));
+        }
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        a.href = '#' + h.id;
+        a.textContent = h.textContent.trim();
+        a.className = 'block leading-snug text-muted-foreground transition-colors hover:text-foreground';
+        li.appendChild(a);
+        list.appendChild(li);
+    });
+    toc.classList.remove('hidden');
+})();
+</script>
+{% endblock %}

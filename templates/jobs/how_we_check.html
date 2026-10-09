@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}How we check every job on Remote Impact{% endblock %}
+{% block meta_description %}Every listing on Remote Impact is checked against the employer's own job board or source every day. Closed, office-based and reseller listings are taken down. Here is exactly how.{% endblock %}
+{% block og_title %}How we check every job on Remote Impact{% endblock %}
+{% block og_description %}Daily checks against employers' own job boards, no resellers, and remote means remote.{% endblock %}
+{% block canonical %}{{ SITE_URL }}{% url 'jobs:how_we_check' %}{% endblock %}
+
+{% block content %}
+<div class="page-narrow">
+    <header class="page-header">
+        <h1 class="page-title">How we check every job</h1>
+        <p class="page-lede">Job boards fill up with roles that closed weeks ago, "remote" jobs that need an office, and reposts from agencies. We take those down every day. This page explains how, with today's numbers.</p>
+    </header>
+
+    <dl class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div class="stat"><dt class="stat-label">Open roles</dt><dd class="stat-value">{{ stats.live|intcomma }}</dd></div>
+        <div class="stat"><dt class="stat-label">Confirmed on the employer's board</dt><dd class="stat-value">{{ stats.confirmed_share }}%</dd></div>
+        <div class="stat"><dt class="stat-label">Taken down this week</dt><dd class="stat-value">{{ stats.removed_7d|intcomma }}</dd></div>
+        <div class="stat"><dt class="stat-label">Show a salary</dt><dd class="stat-value">{{ stats.salary_share }}%</dd></div>
+    </dl>
+    <p class="mt-2 text-[13px] text-muted-foreground">Updated {{ stats.computed_at|date:"M j, Y, H:i" }} UTC.</p>
+
+    <div class="prose prose-neutral mt-10 max-w-none text-[15px] leading-relaxed prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-a:text-foreground">
+        <h2>1. We ask the employer, not another job board</h2>
+        <p>Most listings link to the employer's own hiring system: Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Workable, BambooHR, Personio, Recruitee or Breezy. Every morning we ask that system directly whether each role is still open. If the employer has closed it, we take it down the same day. {{ stats.confirmed_open|intcomma }} of today's {{ stats.live|intcomma }} roles were confirmed this way, and those pages say so with the date of the check.</p>
+
+        <h2>2. Remote means remote</h2>
+        <p>When the employer's own system marks a role as on-site or hybrid, we take it down, even if another job board called it remote. Hybrid roles stay only when the employer also lists a remote location. {% if stats.removed_not_remote_7d %}This week that removed {{ stats.removed_not_remote_7d|intcomma }} listings.{% endif %}</p>
+
+        <h2>3. When a source drops a listing, so do we</h2>
+        <p>Some roles come from curated impact job boards such as 80,000 Hours, Probably Good, Climatebase, Idealist and ReliefWeb. We read their full lists several times a day. When a listing disappears from its source for two days, we take it down; if it comes back, so does the listing. Nothing stays up for more than 30 days without being seen again.</p>
+
+        <h2>4. Employers, not agencies</h2>
+        <p>We list roles at organizations working on climate, global health, AI safety, animal welfare and other public-interest problems. We remove staffing agencies, job resellers and companies without a clear mission, and we only pull roles directly from employer boards when a curated impact source has listed that employer first.</p>
+
+        <h2>5. What we can't promise</h2>
+        <p>A role can close between our morning check and your application, and some smaller employers use systems we can't query yet; those pages say "Last seen in the source feed" instead of "Confirmed open". Always read the employer's own page before you apply.</p>
+
+        <h2>Spotted a problem?</h2>
+        <p>If a listing is closed, not remote, or not what it says, email <a href="mailto:hello@remoteimpact.org?subject=Listing%20report">hello@remoteimpact.org</a> with the link. We read every report.</p>
+    </div>
+
+    <div class="mt-10 flex flex-wrap gap-2">
+        <a href="{% url 'jobs:job_list' %}" class="btn btn-primary">Browse open roles</a>
+        <a href="{% url 'jobs:impact_jobs_snapshot' %}" class="btn btn-outline">See the jobs snapshot</a>
+    </div>
+</div>
+{% endblock %}

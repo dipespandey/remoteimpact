@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
-{% load humanize %}
+{% load humanize job_extras %}
 
 {% block title %}Remote Impact Job Salaries 2026 | Salary Benchmarks by Domain{% endblock %}
 
-{% block meta_description %}Explore salary data for {{ total_with_salary|default:"3,000" }}+ remote impact jobs. See average salaries by domain: Climate (${{ overall.avg_min|floatformat:0|default:"100,000" }}+), AI Safety, Global Health, Nonprofits. Updated daily.{% endblock %}
+{% block meta_description %}Salary data for remote impact jobs: average pay ranges by domain and experience level{% if total_with_salary %} from {{ total_with_salary|intcomma }} active listings that publish a salary{% endif %}. Covers climate, AI safety, global health and nonprofits.{% endblock %}
 
 {% block extra_head %}
 <script type="application/ld+json">
@@ -68,136 +68,144 @@
 {% endblock %}
 
 {% block content %}
-<section class="bg-twilight-900 py-12 md:py-20">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="text-center mb-12">
-            <p class="text-sm uppercase tracking-[0.4em] text-white/60 mb-3">Salary Data</p>
-            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">
-                Remote Impact Job Salaries
-            </h1>
-            <p class="text-xl text-white/70 max-w-2xl mx-auto">
-                Real salary data from {{ total_with_salary|default:"3,000" }}+ remote jobs at impact-focused organizations. Updated daily.
-            </p>
-        </div>
+<div class="container py-8 sm:py-10">
+    <nav aria-label="Breadcrumb" class="!border-b-0">
+        <ol class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+            <li><a href="{% url 'jobs:resources' %}" class="hover:text-foreground hover:underline">Resources</a></li>
+            <li aria-hidden="true">/</li>
+            <li class="text-foreground" aria-current="page">Salaries</li>
+        </ol>
+    </nav>
 
-        <!-- Overall Stats -->
-        <div class="grid md:grid-cols-4 gap-6 mb-16">
-            <div class="bg-card-gradient rounded-2xl border border-white/10 p-6 text-center">
-                <p class="text-4xl font-bold text-neon mb-2">${{ overall.avg_min|floatformat:0|intcomma }}</p>
-                <p class="text-white/60 text-sm">Average Min Salary</p>
-            </div>
-            <div class="bg-card-gradient rounded-2xl border border-white/10 p-6 text-center">
-                <p class="text-4xl font-bold text-neon mb-2">${{ overall.avg_max|floatformat:0|intcomma }}</p>
-                <p class="text-white/60 text-sm">Average Max Salary</p>
-            </div>
-            <div class="bg-card-gradient rounded-2xl border border-white/10 p-6 text-center">
-                <p class="text-4xl font-bold text-white mb-2">${{ overall.max_salary|floatformat:0|intcomma }}</p>
-                <p class="text-white/60 text-sm">Highest Listed</p>
-            </div>
-            <div class="bg-card-gradient rounded-2xl border border-white/10 p-6 text-center">
-                <p class="text-4xl font-bold text-white mb-2">{{ total_with_salary|intcomma }}</p>
-                <p class="text-white/60 text-sm">Jobs with Salary Data</p>
-            </div>
-        </div>
+    <header class="mt-4 max-w-3xl">
+        <h1 class="page-title">Salaries in remote impact jobs</h1>
+        <p class="page-lede">Average pay ranges from the {{ total_with_salary|intcomma }} active listings on Remote Impact that publish a salary, by domain and experience level.</p>
+    </header>
 
-        <!-- By Domain -->
-        <div class="mb-16">
-            <h2 class="text-2xl font-semibold text-white mb-6">Salaries by Impact Domain</h2>
-            <div class="bg-card-gradient rounded-2xl border border-white/10 overflow-hidden">
-                <table class="w-full">
-                    <thead class="border-b border-white/10">
-                        <tr class="text-left text-white/60 text-sm">
-                            <th class="px-6 py-4">Domain</th>
-                            <th class="px-6 py-4 text-right">Jobs</th>
-                            <th class="px-6 py-4 text-right">Avg Min</th>
-                            <th class="px-6 py-4 text-right">Avg Max</th>
-                            <th class="px-6 py-4 text-right hidden md:table-cell">Range</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-white/5">
-                        {% for domain in by_domain %}
-                        <tr class="text-white hover:bg-white/5 transition">
-                            <td class="px-6 py-4">
-                                <a href="{% url 'jobs:category_landing' slug=domain.category__slug %}" class="flex items-center gap-3 hover:text-neon transition">
-                                    <span class="text-xl">{{ domain.category__icon|default:"🌍" }}</span>
-                                    <span class="font-medium">{{ domain.category__name }}</span>
-                                </a>
-                            </td>
-                            <td class="px-6 py-4 text-right text-white/70">{{ domain.job_count|intcomma }}</td>
-                            <td class="px-6 py-4 text-right font-medium">${{ domain.avg_min|floatformat:0|intcomma }}</td>
-                            <td class="px-6 py-4 text-right font-medium">${{ domain.avg_max|floatformat:0|intcomma }}</td>
-                            <td class="px-6 py-4 text-right text-white/60 hidden md:table-cell">
-                                ${{ domain.min_salary|floatformat:0|intcomma }} - ${{ domain.max_salary|floatformat:0|intcomma }}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+    {% if total_with_salary %}
+    <!-- Overall -->
+    <div class="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div class="stat min-w-0">
+            <p class="stat-value break-words">${{ overall.avg_min|floatformat:0|intcomma }}–${{ overall.avg_max|floatformat:0|intcomma }}</p>
+            <p class="stat-label">Average listed range</p>
         </div>
+        <div class="stat min-w-0">
+            <p class="stat-value break-words">${{ overall.max_salary|floatformat:0|intcomma }}</p>
+            <p class="stat-label">Highest listed maximum</p>
+        </div>
+        <div class="stat min-w-0">
+            <p class="stat-value break-words">{{ total_with_salary|intcomma }}</p>
+            <p class="stat-label">Listings with salary</p>
+        </div>
+    </div>
 
-        <!-- By Experience Level -->
-        {% if by_experience %}
-        <div class="mb-16">
-            <h2 class="text-2xl font-semibold text-white mb-6">Salaries by Experience Level</h2>
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {% for exp in by_experience %}
-                <div class="bg-card-gradient rounded-xl border border-white/10 p-5">
-                    <p class="text-white/60 text-sm mb-1 capitalize">{{ exp.experience_level|default:"Not Specified" }}</p>
-                    <p class="text-xl font-semibold text-white">
-                        ${{ exp.avg_min|floatformat:0|intcomma }} - ${{ exp.avg_max|floatformat:0|intcomma }}
-                    </p>
-                    <p class="text-white/50 text-xs mt-1">{{ exp.job_count }} jobs</p>
-                </div>
-                {% endfor %}
-            </div>
+    <!-- By domain -->
+    <section class="mt-12">
+        <h2 class="section-title px-1">By domain</h2>
+        <p class="mt-1 px-1 text-sm text-muted-foreground">Domains with at least 10 listings that publish a salary.</p>
+        {% if by_domain %}
+        <div class="table-wrap mt-4">
+            <table class="table tabular-nums">
+                <thead>
+                    <tr>
+                        <th>Domain</th>
+                        <th class="!text-right">Jobs</th>
+                        <th class="!text-right">Avg min</th>
+                        <th class="!text-right">Avg max</th>
+                        <th class="hidden !text-right md:table-cell">Lowest – highest</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for domain in by_domain %}
+                    <tr>
+                        <td class="min-w-[9rem]">
+                            <a href="{% url 'jobs:category_landing' slug=domain.category__slug %}" class="font-medium text-foreground underline-offset-4 hover:underline">{{ domain.category__name }}</a>
+                        </td>
+                        <td class="text-right text-muted-foreground">{{ domain.job_count|intcomma }}</td>
+                        <td class="whitespace-nowrap text-right text-foreground">${{ domain.avg_min|floatformat:0|intcomma }}</td>
+                        <td class="whitespace-nowrap text-right text-foreground">${{ domain.avg_max|floatformat:0|intcomma }}</td>
+                        <td class="hidden whitespace-nowrap text-right text-muted-foreground md:table-cell">
+                            ${{ domain.min_salary|floatformat:0|intcomma }} – ${{ domain.max_salary|floatformat:0|intcomma }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
+        {% else %}
+        <p class="mt-4 text-sm text-muted-foreground">No domain has enough salary data yet.</p>
         {% endif %}
+    </section>
 
-        <!-- Top Paying Roles -->
-        <div class="mb-16">
-            <h2 class="text-2xl font-semibold text-white mb-6">Highest Paying Remote Impact Jobs</h2>
-            <div class="space-y-3">
-                {% for job in top_paying %}
-                <a href="{{ job.get_absolute_url }}" class="block bg-card-gradient rounded-xl border border-white/10 p-4 hover:border-white/30 transition">
-                    <div class="flex justify-between items-start gap-4">
-                        <div>
-                            <h3 class="font-semibold text-white hover:text-neon transition">{{ job.title }}</h3>
-                            <p class="text-white/60 text-sm">{{ job.organization.name }}</p>
+    <!-- By experience -->
+    {% if by_experience %}
+    <section class="mt-12">
+        <h2 class="section-title px-1">By experience level</h2>
+        <div class="table-wrap mt-4 max-w-3xl">
+            <table class="table tabular-nums">
+                <thead>
+                    <tr>
+                        <th>Level</th>
+                        <th class="!text-right">Jobs</th>
+                        <th class="!text-right">Average range</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exp in by_experience %}
+                    <tr>
+                        <td class="capitalize text-foreground">{{ exp.experience_level|default:"Not specified" }}</td>
+                        <td class="text-right text-muted-foreground">{{ exp.job_count|intcomma }}</td>
+                        <td class="whitespace-nowrap text-right text-foreground">${{ exp.avg_min|floatformat:0|intcomma }} – ${{ exp.avg_max|floatformat:0|intcomma }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Highest paying -->
+    {% if top_paying %}
+    <section class="mt-12 max-w-3xl">
+        <h2 class="section-title px-1">Highest listed salaries</h2>
+        <ul class="list-surface mt-4">
+            {% for job in top_paying %}
+            <li>
+                <a href="{{ job.get_absolute_url }}" class="job-row">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="min-w-0">
+                            <h3 class="job-title break-words">{{ job.title|display_title }}</h3>
+                            <p class="job-meta">{{ job.organization.name }}</p>
                         </div>
-                        <div class="text-right">
-                            <p class="text-neon font-bold">${{ job.salary_max|floatformat:0|intcomma }}</p>
-                            <p class="text-white/50 text-xs">Max salary</p>
+                        <div class="shrink-0 text-right">
+                            <p class="font-semibold tabular-nums text-foreground">{% if job.salary_currency and job.salary_currency != "USD" %}{{ job.salary_max|floatformat:0|intcomma }} {{ job.salary_currency }}{% else %}${{ job.salary_max|floatformat:0|intcomma }}{% endif %}</p>
+                            <p class="text-xs text-muted-foreground">Max salary</p>
                         </div>
                     </div>
                 </a>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Methodology Note -->
-        <div class="bg-white/5 rounded-2xl p-6 text-white/70 text-sm">
-            <h3 class="font-semibold text-white mb-2">📊 About This Data</h3>
-            <p class="mb-2">
-                This salary data is aggregated from {{ total_with_salary|intcomma }} job listings on Remote Impact that include salary information. 
-                Data is updated daily as new jobs are added. All figures are in USD unless otherwise specified.
-            </p>
-            <p>
-                Note: Not all employers disclose salary. The jobs shown represent roughly 30-40% of all listings. 
-                Actual salary ranges may vary based on experience, location, and organization.
-            </p>
-        </div>
-
-        <!-- CTA -->
-        <div class="mt-12 text-center">
-            <a href="{% url 'jobs:job_list' %}" class="inline-flex items-center px-8 py-4 rounded-full bg-brand-300 text-twilight-900 font-semibold hover:bg-neon transition shadow-glow">
-                Browse All {{ overall.total_jobs|intcomma }}+ Jobs
-                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                </svg>
-            </a>
-        </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+    {% else %}
+    <div class="alert alert-info mt-8 max-w-3xl">
+        <p>No active listings with salary information yet. Check back once more jobs are posted.</p>
     </div>
-</section>
+    {% endif %}
+
+    <!-- Methodology -->
+    <section class="mt-12 max-w-3xl">
+        <h2 class="section-title">About this data</h2>
+        <ul class="mt-4 space-y-3 text-[15px] leading-7 text-muted-foreground">
+            <li><strong class="font-medium text-foreground">Source.</strong> Active job listings on Remote Impact that state both a minimum and a maximum salary ({{ total_with_salary|intcomma }} right now). Listings with a maximum of 1,000,000 or more are left out as outliers.</li>
+            <li><strong class="font-medium text-foreground">Currency.</strong> Averages use the amounts as listed. Salaries in other currencies are not converted to USD, so treat the dollar figures as approximate.</li>
+            <li><strong class="font-medium text-foreground">Coverage.</strong> Many employers do not publish pay, so these figures cover only part of the listings. Actual offers vary with experience, location and organization.</li>
+        </ul>
+    </section>
+
+    <div class="mt-10">
+        <a href="{% url 'jobs:job_list' %}" class="btn btn-primary">Browse remote jobs</a>
+    </div>
+</div>
 {% endblock %}

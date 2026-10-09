@@ -1,83 +1,80 @@
 {% extends "base.html" %}
+{% load job_extras %}
 
-{% block title %}Invite {{ seeker.user.first_name }} to Apply — Remote Impact{% endblock %}
+{% block title %}Invite to apply — Remote Impact{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
 
 {% block content %}
-<section class="bg-[#F3F2EE] min-h-screen py-8 md:py-12">
-    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="page-narrow">
 
-        <nav class="mb-6">
-            <a href="{% url 'jobs:talent_profile' seeker.user_id %}" class="text-sm text-brand-600 hover:underline">← Back to Profile</a>
-        </nav>
+    <nav class="mb-4" aria-label="Breadcrumb">
+        {% if is_public %}<a href="{% url 'jobs:talent_profile' seeker.user_id %}" class="text-[13px] text-muted-foreground hover:text-foreground">← Back to profile</a>{% else %}<a href="{% url 'jobs:account' %}" class="text-[13px] text-muted-foreground hover:text-foreground">← Your job postings</a>{% endif %}
+    </nav>
 
-        {% if messages %}
-        <div class="mb-6 space-y-3">
-            {% for message in messages %}
-            <div class="p-4 rounded-xl text-sm font-medium
-                {% if message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200
-                {% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-700 border border-yellow-200
-                {% else %}bg-green-50 text-green-700 border border-green-200{% endif %}">
-                {{ message }}
-            </div>
-            {% endfor %}
+    {% if messages %}
+    <div class="mb-6 space-y-3">
+        {% for message in messages %}
+        <div class="alert {% if message.tags == 'error' %}alert-destructive{% elif message.tags == 'warning' %}alert-warning{% else %}alert-success{% endif %}" role="status">
+            {{ message }}
         </div>
-        {% endif %}
-
-        <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-            <div class="p-6 md:p-8 border-b border-gray-100">
-                <h1 class="text-2xl font-bold text-gray-900">Invite to Apply</h1>
-                <p class="text-gray-600 mt-2">
-                    Send a personal invitation to <strong>{{ seeker.user.first_name }}</strong>
-                    ({{ seeker.headline|default:"Impact Professional" }})
-                </p>
-            </div>
-
-            <form method="post" class="p-6 md:p-8 space-y-6">
-                {% csrf_token %}
-
-                <div>
-                    <label class="block text-sm font-bold text-gray-900 mb-2">Select a Job</label>
-                    {% if active_jobs %}
-                    <div class="space-y-3">
-                        {% for job in active_jobs %}
-                        <label class="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-brand-300 cursor-pointer transition {% if job.id in existing_invitations %}opacity-50{% endif %}">
-                            <input type="radio" name="job_id" value="{{ job.id }}"
-                                   {% if job.id in existing_invitations %}disabled{% endif %}
-                                   class="text-brand-500 focus:ring-brand-300">
-                            <div>
-                                <p class="font-medium text-gray-900">{{ job.title }}</p>
-                                <p class="text-sm text-gray-500">Posted {{ job.posted_at|date:"M d, Y" }}</p>
-                                {% if job.id in existing_invitations %}
-                                <p class="text-xs text-orange-600 font-medium mt-1">Already invited</p>
-                                {% endif %}
-                            </div>
-                        </label>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <div class="bg-gray-50 rounded-xl p-6 text-center">
-                        <p class="text-gray-500">You don't have any active job postings.</p>
-                        <a href="{% url 'jobs:post_job' %}" class="text-brand-600 font-medium text-sm hover:underline mt-2 inline-block">Post a Job First</a>
-                    </div>
-                    {% endif %}
-                </div>
-
-                <div>
-                    <label class="block text-sm font-bold text-gray-900 mb-2">Personal Message</label>
-                    <textarea name="message" rows="5" required
-                              placeholder="Tell them why you think they'd be a great fit..."
-                              class="w-full border border-gray-200 rounded-xl py-3 px-4 text-sm resize-none focus:ring-2 focus:ring-brand-300 focus:border-transparent"></textarea>
-                    <p class="text-xs text-gray-400 mt-1">This will be included in the invitation email.</p>
-                </div>
-
-                {% if active_jobs %}
-                <button type="submit"
-                        class="w-full px-6 py-3 rounded-full bg-brand-300 text-gray-900 font-bold text-sm hover:bg-brand-400 transition shadow-sm">
-                    Send Invitation
-                </button>
-                {% endif %}
-            </form>
-        </div>
+        {% endfor %}
     </div>
-</section>
+    {% endif %}
+
+    <header class="page-header">
+            <h1 class="page-title">Invite to apply</h1>
+            <p class="page-lede">
+                {% if is_public %}Send a personal invitation to <strong class="font-medium text-foreground">{{ seeker.user.first_name }}</strong>
+                ({{ seeker.headline|default:"Impact professional" }}).{% else %}This person shares their name and contact details only if they reply. We email them your message and a link to the role.{% endif %}
+            </p>
+    </header>
+
+    <div class="card">
+        <form method="post" class="space-y-6 p-5 sm:p-6">
+            {% csrf_token %}
+
+            <fieldset>
+                <legend class="label">Job</legend>
+                {% if active_jobs %}
+                <div class="space-y-1">
+                    {% for job in active_jobs %}
+                    <label class="flex items-start gap-3 rounded-xl bg-muted px-4 py-3 transition {% if job.id in existing_invitations %}cursor-not-allowed opacity-60{% else %}cursor-pointer hover:bg-accent has-[:checked]:bg-accent has-[:checked]:ring-1 has-[:checked]:ring-foreground/20{% endif %}">
+                        <input type="radio" name="job_id" value="{{ job.id }}"
+                               {% if job.id in existing_invitations %}disabled{% elif job.id == selected_job_id %}checked{% endif %}
+                               class="mt-1 h-4 w-4 border-input text-foreground focus:ring-ring">
+                        <span>
+                            <span class="block text-sm font-medium text-foreground">{{ job.title|display_title }}</span>
+                            <span class="block text-[13px] text-muted-foreground">Posted {{ job.posted_at|date:"M d, Y" }}</span>
+                            {% if job.id in existing_invitations %}
+                            <span class="badge badge-warning mt-1.5">Already invited</span>
+                            {% endif %}
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="rounded-2xl bg-muted p-5 text-center">
+                    <p class="text-sm text-muted-foreground">You don't have any active job posts. Post one, then come back to invite this candidate.</p>
+                    <a href="{% url 'jobs:post_job' %}" class="btn btn-primary btn-sm mt-3">Post a job</a>
+                </div>
+                {% endif %}
+            </fieldset>
+
+            <div>
+                <label for="invite-message" class="label">Personal message</label>
+                <textarea id="invite-message" name="message" rows="5" required
+                          aria-describedby="invite-message-help"
+                          placeholder="Say which role you have in mind and why their background fits it."
+                          class="textarea"></textarea>
+                <p class="help" id="invite-message-help">This is included in the invitation email.</p>
+            </div>
+
+            {% if active_jobs %}
+            <button type="submit" class="btn btn-primary">
+                Send invitation
+            </button>
+            {% endif %}
+        </form>
+    </div>
+</div>
 {% endblock %}
