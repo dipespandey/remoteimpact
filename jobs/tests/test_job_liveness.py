@@ -491,3 +491,48 @@ class PostedDateTests(TestCase):
             posted = Command._payload(entry, listing, "desc", timezone.now().isoformat())["posted_at"]
             self.assertFalse(timezone.is_naive(posted))
             self.assertEqual(posted.date().isoformat(), "2024-11-06")
+
+
+class UnsubscribeTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        from jobs.services.email_service import email_service
+        self.user = get_user_model().objects.create_user("reader", "Reader@Example.org", "pw-test-123")
+        self.url = email_service._get_unsubscribe_url(self.user.id).split("remoteimpact.org", 1)[-1]
+        site = Site.objects.get_current()
+        for provider, provider_id in (("google", ""), ("openid_connect", "linkedin")):
+            app = SocialApp.objects.create(provider=provider, provider_id=provider_id, name=provider_id or provider,
+                                           client_id="x", secret="x",
+                                           settings={"server_url": "https://www.linkedin.com/oauth"} if provider_id else {})
+            app.sites.add(site)
+
+    def test_user_without_profile_can_unsubscribe_and_drips_stop(self):
+        from jobs.models import NewsletterSubscriber, UserProfile
+        NewsletterSubscriber.objects.create(email="reader@example.org", confirmed=True)
+        self.assertFalse(UserProfile.objects.filter(user=self.user).exists())
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Unable to process")
+        self.assertIsNotNone(UserProfile.objects.get(user=self.user).email_newsletter_unsubscribed_at)
+        self.assertTrue(NewsletterSubscriber.objects.get(email="reader@example.org").unsubscribed)
+
+    def test_one_click_post_and_old_links_work(self):
+        from unittest import mock as m
+        from django.core.signing import TimestampSigner
+        from jobs.models import UserProfile
+        with m.patch("django.core.signing.time.time", return_value=__import__("time").time() - 400 * 86400):
+            old_token = TimestampSigner(salt="newsletter-unsubscribe").sign(str(self.user.id))
+        response = self.client.post(reverse("jobs:newsletter_unsubscribe", args=[old_token]))
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(UserProfile.objects.get(user=self.user).email_newsletter_unsubscribed_at)
+
+    def test_marketing_emails_carry_list_unsubscribe_headers(self):
+        from jobs.services.email_service import EmailService
+        service = EmailService()
+        with mock.patch("jobs.services.email_service.resend") as resend:
+            resend.api_key = "test"
+            resend.Emails.send.return_value = {"id": "x"}
+            service.send_email(to="a@example.org", subject="s", html="<p>h</p>", unsubscribe_url="https://x/u/1/")
+            params = resend.Emails.send.call_args.args[0]
+        self.assertEqual(params["headers"]["List-Unsubscribe"], "<https://x/u/1/>")
+        self.assertEqual(params["headers"]["List-Unsubscribe-Post"], "List-Unsubscribe=One-Click")

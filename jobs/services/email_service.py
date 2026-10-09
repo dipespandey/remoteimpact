@@ -47,6 +47,7 @@ class EmailService:
         subject: str,
         html: str,
         text: Optional[str] = None,
+        unsubscribe_url: Optional[str] = None,
     ) -> bool:
         """
         Send an email via Resend.
@@ -66,6 +67,12 @@ class EmailService:
             }
             if text:
                 params["text"] = text
+            if unsubscribe_url:
+                # One-click unsubscribe (RFC 8058), required by Gmail/Yahoo for bulk mail.
+                params["headers"] = {
+                    "List-Unsubscribe": f"<{unsubscribe_url}>",
+                    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+                }
 
             response = resend.Emails.send(params)
             logger.info(f"Email sent to {to}: {response.get('id', 'unknown')}")
@@ -147,6 +154,7 @@ class EmailService:
             subject=subject,
             html=html,
             text=text,
+            unsubscribe_url=unsubscribe_url,
         )
 
 
@@ -235,6 +243,7 @@ class EmailService:
             subject=subject,
             html=html,
             text=text,
+            unsubscribe_url=unsubscribe_url,
         )
 
     def send_seeker_weekly_digest(self, seeker_profile, profile_views: int, new_invitations: int) -> bool:
@@ -252,7 +261,7 @@ class EmailService:
         }
         html = render_to_string("emails/seeker_weekly_digest.html", context)
         subject = f"You had {profile_views} profile views this week and {new_invitations} new invitations"
-        return self.send_email(to=user.email, subject=subject, html=html)
+        return self.send_email(to=user.email, subject=subject, html=html, unsubscribe_url=unsubscribe_url)
 
 # Singleton instance
 email_service = EmailService()

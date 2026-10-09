@@ -166,6 +166,7 @@ class Command(BaseCommand):
                             subject=drip["subject"],
                             html=html,
                             text=text,
+                            unsubscribe_url=unsubscribe_url,
                         )
                         if ok:
                             DripEmailLog.objects.create(user=user, drip_type=drip_type)

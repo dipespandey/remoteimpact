@@ -8,9 +8,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.signing import BadSignature, TimestampSigner
 from django.db import transaction
 from django.db.models import Count
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView, ListView, TemplateView, UpdateView, View
 
 from ..forms import JobAlertForm
@@ -432,8 +435,18 @@ class JobAlertFeedbackView(LoginRequiredMixin, View):
         return redirect(f"{reverse('jobs:job_alerts')}?created={delivery.alert_id}")
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class JobAlertUnsubscribeView(TemplateView):
     template_name = "jobs/job_alert_unsubscribed.html"
+
+    def post(self, request, token, *args, **kwargs):
+        """RFC 8058 one-click unsubscribe from the mail client."""
+        try:
+            alert_id = TimestampSigner(salt="job-alert-unsubscribe").unsign(token)
+            JobAlert.objects.filter(pk=alert_id).update(is_active=False)
+        except (BadSignature, ValueError):
+            return HttpResponse(status=400)
+        return HttpResponse(status=200)
 
     def get(self, request, token, *args, **kwargs):
         context = {"success": False}

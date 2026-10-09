@@ -1,22 +1,46 @@
 """Views for newsletter subscription management."""
 
 import json
+import logging
 import re
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
-from django.http import JsonResponse
+from django.core.signing import BadSignature, TimestampSigner
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
 from jobs.models import NewsletterSubscriber
 
+logger = logging.getLogger(__name__)
 
+
+def unsubscribe_user(user):
+    """Stop all marketing email for a user (drips, digests, newsletter).
+
+    Some accounts never got a profile row; creating it here is what makes the opt-out
+    stick (the drip sender filters on the profile).
+    """
+    from jobs.models import NewsletterSubscriber, UserProfile
+
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    profile.email_newsletter = False
+    profile.email_newsletter_unsubscribed_at = timezone.now()
+    profile.save(update_fields=["email_newsletter", "email_newsletter_unsubscribed_at"])
+    if user.email:
+        NewsletterSubscriber.objects.filter(email__iexact=user.email, unsubscribed=False).update(
+            unsubscribed=True, unsubscribed_at=timezone.now()
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
 class NewsletterUnsubscribeView(TemplateView):
-    """One-click unsubscribe using signed token."""
+    """One-click unsubscribe using a signed token. Links never expire."""
 
     template_name = "jobs/newsletter/unsubscribe.html"
 
@@ -26,37 +50,34 @@ class NewsletterUnsubscribeView(TemplateView):
         context["error"] = None
         return context
 
+    def _user_for(self, token):
+        from django.contrib.auth import get_user_model
+
+        user_id = TimestampSigner(salt="newsletter-unsubscribe").unsign(token)
+        return get_user_model().objects.get(id=user_id)
+
     def get(self, request, token):
-        """Verify token and show confirmation page."""
         context = self.get_context_data()
-
         try:
-            signer = TimestampSigner(salt="newsletter-unsubscribe")
-            # Token valid for 30 days
-            user_id = signer.unsign(token, max_age=30 * 24 * 60 * 60)
-
-            from django.contrib.auth import get_user_model
-
-            User = get_user_model()
-            user = User.objects.get(id=user_id)
-
-            # Unsubscribe the user
-            profile = user.profile
-            profile.email_newsletter = False
-            profile.email_newsletter_unsubscribed_at = timezone.now()
-            profile.save()
-
+            user = self._user_for(token)
+            unsubscribe_user(user)
             context["success"] = True
             context["email"] = user.email
-
-        except SignatureExpired:
-            context["error"] = "This unsubscribe link has expired. Please contact support."
         except BadSignature:
-            context["error"] = "Invalid unsubscribe link."
-        except Exception:
-            context["error"] = "Unable to process unsubscribe request."
-
+            context["error"] = "This unsubscribe link isn't valid. Reply to any of our emails and we'll remove you."
+        except Exception:  # noqa: BLE001 - never leave someone unable to unsubscribe silently
+            logger.exception("Newsletter unsubscribe failed")
+            context["error"] = "Something went wrong. Reply to any of our emails and we'll remove you right away."
         return self.render_to_response(context)
+
+    def post(self, request, token):
+        """RFC 8058 one-click unsubscribe from the mail client."""
+        try:
+            unsubscribe_user(self._user_for(token))
+        except Exception:  # noqa: BLE001
+            logger.exception("One-click unsubscribe failed")
+            return HttpResponse(status=400)
+        return HttpResponse(status=200)
 
 
 class NewsletterPreferencesView(LoginRequiredMixin, View):
@@ -64,7 +85,9 @@ class NewsletterPreferencesView(LoginRequiredMixin, View):
 
     def post(self, request):
         """Toggle newsletter subscription."""
-        profile = request.user.profile
+        from jobs.models import UserProfile
+
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
         subscribe = request.POST.get("subscribe") == "true"
 
         profile.email_newsletter = subscribe
