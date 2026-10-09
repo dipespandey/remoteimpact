@@ -733,6 +733,8 @@ class PaymentService:
             metadata={
                 "stripe_subscription_id": str(session.subscription),
                 "checkout_session_id": session_id,
+                # A free trial collects no money; analytics must not count it as revenue.
+                **({"trial": True} if session.payment_status == "no_payment_required" else {}),
                 **(
                     {"source": (session.metadata or {}).get("source")}
                     if (session.metadata or {}).get("source")
