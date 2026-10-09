@@ -150,11 +150,20 @@ The neutral base stays. Colour is added only where it tells people something:
   animal welfare, `tone-sky` education, `tone-violet` policy/rights, `tone-red`
   humanitarian, `tone-teal` development/EA, `tone-stone` other). Pick it with the
   `area_tone` filter; never hard-code a colour for an area.
-- **Organization avatars.** `avatar` + `org_tone` + `initials` when there is no logo.
-  The same organization always gets the same colour.
+- **Quiet by default.** Area colour lives only in the small `tone-dot`; `tone-chip` labels
+  are neutral (Linear-style). Organization avatars (`avatar` + `initials`) are neutral grey.
+  Tinted `tone-tile` blocks are for rare, deliberate use, not lists.
 - Components: `tone-chip` (area tag), `tone-dot`, `tone-tile` (tinted link tile),
   `tone-text`, `avatar`/`avatar-sm`, `verified` (green check for roles confirmed on the
   employer's own board).
 - Still no gradients, glows, emoji icons or decorative icon tiles. Text on tones uses the
   700/800 shade for contrast. Tone classes are safelisted in `tailwind.config.js` because
   they are chosen in Python.
+
+### Homepage pattern
+
+One hero (headline, Scout composer, a single trust pill) beside one product card: a tabbed
+preview of real roles (Latest + the three biggest areas, four roles each, one per
+organization). Below it: a single line of hiring organizations, featured roles only when
+someone paid, two short cards (seekers, employers), one line of popular searches. Don't add
+more lists to the homepage; link to them instead.
