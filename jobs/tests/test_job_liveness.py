@@ -760,9 +760,11 @@ class ScoutCloseMatchTests(TestCase):
         evidence = {1: {"title": "Energy Policy Analyst", "description": "Analyse energy policy across the EU.", "requirements": ""},
                     2: {"title": "Office Manager", "description": "Run the office.", "requirements": ""}}
         output = json.dumps({"picks": [
-            {"id": 1, "difference": "Energy rather than climate policy", "evidence": {"field": "description", "quote": "Analyse energy policy"}},
-            {"id": 2, "difference": "Operations, not policy work", "evidence": {"field": "description", "quote": "made up quote here"}},
-            {"id": 99, "difference": "Not a candidate at all", "evidence": {"field": "title", "quote": "Energy Policy Analyst"}},
+            {"id": 1, "same_kind_of_work": True, "difference": "Energy rather than climate policy", "evidence": {"field": "description", "quote": "Analyse energy policy"}},
+            {"id": 2, "same_kind_of_work": True, "difference": "Operations, not policy work", "evidence": {"field": "description", "quote": "made up quote here"}},
+            {"id": 1, "same_kind_of_work": False, "difference": "Duplicate pick of the same job",
+             "evidence": {"field": "title", "quote": "Energy Policy Analyst"}},
+            {"id": 99, "same_kind_of_work": True, "difference": "Not a candidate at all", "evidence": {"field": "title", "quote": "Energy Policy Analyst"}},
         ]})
         self.assertEqual(validate(output, evidence, 5), [(1, "Energy rather than climate policy")])
 
@@ -796,3 +798,14 @@ class CountryActivityTests(TestCase):
         self.assertEqual(summary["countries"], 2)
         self.assertEqual([r["name"] for r in summary["top"]], ["Nepal", "Kenya"])
         self.assertEqual(summary["clicks"], 7)
+
+
+class ScoutRepostTests(TestCase):
+    def test_identical_reposts_collapse(self):
+        from types import SimpleNamespace
+        from jobs.services.job_scout_service import JobScoutService
+        a = SimpleNamespace(organization_id=1, title="Senior Data Analyst", description="Analyse data.")
+        b = SimpleNamespace(organization_id=1, title="Senior  data analyst", description="Analyse   data.")
+        c = SimpleNamespace(organization_id=1, title="Senior Data Analyst", description="Different team.")
+        self.assertEqual(JobScoutService._repost_key(a), JobScoutService._repost_key(b))
+        self.assertNotEqual(JobScoutService._repost_key(a), JobScoutService._repost_key(c))

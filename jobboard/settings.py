@@ -381,4 +381,4 @@ SCOUT_SEMANTIC_ENABLED = os.getenv("SCOUT_SEMANTIC_ENABLED", "true").lower() == 
 # Explicit opt-in until provider latency/cost and relevance are validated.
 # Evaluated 2026-10-09 on 167 real briefs: irrelevant matches -60%, relevant +10%.
 SCOUT_RERANK_ENABLED = os.getenv("SCOUT_RERANK_ENABLED", "true").lower() == "true"
-SCOUT_CLOSE_MATCHES = os.getenv("SCOUT_CLOSE_MATCHES", "false").lower() == "true"
+SCOUT_CLOSE_MATCHES = os.getenv("SCOUT_CLOSE_MATCHES", "true").lower() == "true"

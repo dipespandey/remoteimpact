@@ -890,8 +890,11 @@ skills is not a request for invented, exact job titles. JSON only."""
         for job in selected:
             req = source_value(job, 'scout_requisition', 'api_response', 'requisition_id')
             key = (job.organization_id, str(req)) if req else ('job', job.pk)
-            if key in seen:continue
-            seen.add(key); distinct.append(job)
+            # Identical reposts (same organization, title and text, no requisition
+            # to tell them apart) are one opening for the reader.
+            title_key = cls._repost_key(job) if not req else key
+            if key in seen or title_key in seen:continue
+            seen.add(key); seen.add(title_key); distinct.append(job)
         selected = distinct
         if len(selected) < limit and cls.RELAXED_FILL:
             # Fill empty slots with possible matches whose salary, location or
@@ -913,18 +916,25 @@ skills is not a request for invented, exact job titles. JSON only."""
                     continue
                 req = source_value(job, 'scout_requisition', 'api_response', 'requisition_id')
                 key = (job.organization_id, str(req)) if req else ('job', job.pk)
-                if key in seen:
+                title_key = cls._repost_key(job) if not req else key
+                if key in seen or title_key in seen:
                     continue
-                seen.add(key); selected.append(job); added += 1
+                seen.add(key); seen.add(title_key); selected.append(job); added += 1
             diagnostics["relaxed_fill"] = added
             diagnostics["relaxed_hard_rejections"] = relaxed_diagnostics.get("hard_rejections", {})
         if len(selected) < cls.CLOSE_MATCH_BELOW:
             from jobs.services.scout_close_matches import close_matches
             for job in close_matches(qs.exclude(pk__in=[job.pk for job in selected]), preferences, terms,
-                                     diagnostics, limit=min(limit - len(selected), 5)):
+                                     diagnostics, limit=min(limit - len(selected), 5),
+                                     exclude_titles=[job.title or "" for job in selected]):
                 selected.append(job)
         diagnostics["match_count"] = min(len(selected), limit)
         return selected[:limit]
+
+    @staticmethod
+    def _repost_key(job):
+        text = " ".join(((job.description or "")[:400]).lower().split())
+        return ("repost", job.organization_id, " ".join((job.title or "").lower().split()), text)
 
     @classmethod
     def _rank_candidates(cls, qs, preferences, terms, diagnostics, now, relaxed=False):
