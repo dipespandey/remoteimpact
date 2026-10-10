@@ -44,7 +44,13 @@
   <div class="alert alert-info mt-6"><p>No live roles right now. <a class="font-medium underline" href="{% url 'jobs:post_job' %}?source=employer_report">Post a role</a> to reach people looking for impact work.</p></div>
   {% endif %}
 
-  <section class="surface mt-8 p-5 sm:p-6">
+  {% if claim_url %}<section class="surface mt-8 p-5 sm:p-6">
+    <h2 class="text-base font-semibold text-foreground">Get this report by email</h2>
+    <p class="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">Work at {{ organization.name }}? Confirm your work email and we'll send you these numbers once a month, and you can ask us to fix or remove any listing.</p>
+    <div class="mt-4"><a class="btn btn-primary" href="{{ claim_url }}">Claim {{ organization.name }}</a></div>
+  </section>{% endif %}
+
+  <section class="surface mt-4 p-5 sm:p-6">
     <h2 class="text-base font-semibold text-foreground">Feature a role</h2>
     <p class="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">Featuring pins a role to the top of matching search and category pages for {{ feature_days }} days and shows it on the homepage, for ${{ feature_price }} per role.</p>
     <div class="mt-4 flex flex-wrap gap-2"><a class="btn btn-outline" href="{% url 'jobs:employers' %}?source=employer_report">See employer options</a><a class="btn btn-ghost hover:bg-card" href="mailto:hello@remoteimpact.org?subject={{ organization.name|urlencode }}%20on%20Remote%20Impact">Talk to us</a></div>

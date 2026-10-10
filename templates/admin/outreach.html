@@ -67,6 +67,7 @@
           {% if row.org.website %}<a href="{{ row.org.website }}" target="_blank" rel="noopener">Website</a>{% endif %}
           <a href="{{ row.linkedin }}" target="_blank" rel="noopener">Find a recruiter on LinkedIn</a>
           <a href="{{ row.report_link }}" target="_blank" rel="noopener">Their stats page</a>
+          {% if row.claimed_by %}<span class="pill won">Claimed by {{ row.claimed_by }}</span>{% endif %}
           {% for e in row.listing_emails %}<span class="muted">{{ e }}</span>{% endfor %}
         </div>
         <details class="draft">

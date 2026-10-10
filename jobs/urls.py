@@ -31,6 +31,8 @@ urlpatterns = [
     path("jobs/post/", views.PostJobView.as_view(), name="post_job"),
     path("employers/", employers.EmployerLandingView.as_view(), name="employers"),
     path("employers/pricing/", RedirectView.as_view(pattern_name="jobs:employers", permanent=True), name="employer_pricing"),
+    path("employers/claim/<slug:slug>/", employers.ClaimOrganizationView.as_view(), name="claim_organization"),
+    path("employers/claim/verify/<str:token>/", employers.ClaimVerifyView.as_view(), name="claim_verify"),
     path("employers/report/<str:token>/", employers.EmployerReportView.as_view(), name="employer_report"),
     path("jobs/<slug:slug>/feature/", employers.FeatureJobView.as_view(), name="feature_job"),
     path("jobs/<slug:slug>/feature/success/", employers.FeatureJobSuccessView.as_view(), name="feature_job_success"),

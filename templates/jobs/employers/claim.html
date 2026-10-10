@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Claim {{ organization.name }} on Remote Impact{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+<div class="page-narrow">
+  <header class="page-header">
+    <p class="kicker">For employers</p>
+    <h1 class="page-title mt-1">Claim {{ organization.name }}</h1>
+    <p class="page-lede">Confirm your work email and we'll send you a short summary each month: how many people viewed your remote roles and clicked through to apply. It's free, and you can stop it from any email.</p>
+  </header>
+
+  {% if sent %}
+  <div class="alert alert-info"><p>Check your inbox. We sent a confirmation link that works for 7 days.</p></div>
+  {% else %}
+  <form method="post" class="surface space-y-4 p-5 sm:p-6">{% csrf_token %}
+    <div>
+      <label class="label" for="claim-name">Your name</label>
+      <input class="input" id="claim-name" name="name" autocomplete="name" maxlength="120">
+    </div>
+    <div>
+      <label class="label" for="claim-email">Work email</label>
+      <input class="input" id="claim-email" name="email" type="email" autocomplete="email" required>
+      {% if organization.website %}<p class="help mt-1">An address at your organization's own domain gets confirmed fastest.</p>{% endif %}
+    </div>
+    <button class="btn btn-primary" type="submit">Send confirmation link</button>
+  </form>
+  {% endif %}
+
+  <p class="help mt-6">Listing wrong or closed? Email <a class="underline" href="mailto:hello@remoteimpact.org?subject={{ organization.name|urlencode }}%20listing">hello@remoteimpact.org</a> and we'll fix it the same day.</p>
+</div>
+{% endblock %}

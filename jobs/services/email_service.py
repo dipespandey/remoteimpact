@@ -150,6 +150,26 @@ class EmailService:
             text=render_to_string("emails/pro_trial_ending.txt", context),
         )
 
+    def send_claim_verification(self, claim, verify_url: str) -> bool:
+        """Confirm the email of someone following their organization's stats."""
+        context = {"claim": claim, "verify_url": verify_url}
+        return self.send_email(
+            to=claim.email,
+            subject=f"Confirm your email for {claim.organization.name} on Remote Impact",
+            html=render_to_string("emails/claim_verify.html", context),
+            text=render_to_string("emails/claim_verify.txt", context),
+        )
+
+    def send_employer_monthly_report(self, claim, stats: dict, report_link: str) -> bool:
+        """Monthly 'applicants we sent you' summary for a verified employer contact."""
+        context = {"claim": claim, "stats": stats, "report_link": report_link}
+        return self.send_email(
+            to=claim.email,
+            subject=f"{stats['clicks']} applicants from Remote Impact to {claim.organization.name} this month",
+            html=render_to_string("emails/employer_monthly.html", context),
+            text=render_to_string("emails/employer_monthly.txt", context),
+        )
+
     def send_checkout_recovery(self, user, *, trial: bool, resume_url: str, sender: str = "Dipesh") -> bool:
         """One follow-up to someone who opened Pro checkout and left without paying."""
         if not user.email:

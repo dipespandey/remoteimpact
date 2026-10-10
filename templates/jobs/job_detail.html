@@ -234,7 +234,7 @@
                 </div>
 
                 {% if job_available and not job.is_sponsored %}
-                <p class="mt-4 text-center text-[13px] text-muted-foreground">Hiring for this role? <a href="{% url 'jobs:feature_job' job.slug %}?source=job_detail" rel="nofollow" class="font-medium text-foreground underline decoration-border hover:decoration-foreground" data-track="feature_from_job" data-track-category="employer">Feature it</a> to reach more candidates.</p>
+                <p class="mt-4 text-center text-[13px] text-muted-foreground">Hiring for this role? <a href="{% url 'jobs:feature_job' job.slug %}?source=job_detail" rel="nofollow" class="font-medium text-foreground underline decoration-border hover:decoration-foreground" data-track="feature_from_job" data-track-category="employer">Feature it</a> to reach more candidates{% if job.organization.slug %}, or <a href="{% url 'jobs:claim_organization' job.organization.slug %}" rel="nofollow" class="font-medium text-foreground underline decoration-border hover:decoration-foreground">get monthly stats</a>{% endif %}.</p>
                 {% elif job.is_sponsored %}
                 <p class="mt-4 text-center text-[13px] text-muted-foreground"><span class="badge badge-featured">★ Featured</span> by the employer</p>
                 {% endif %}

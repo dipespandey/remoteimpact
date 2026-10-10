@@ -1,0 +1,9 @@
+Hi {{ claim.name|default:"there" }},
+
+Confirm this email to get a monthly summary of how people engage with {{ claim.organization.name }}'s roles on Remote Impact:
+
+{{ verify_url }}
+
+The link works for 7 days. If you didn't ask for this, ignore this email and nothing happens.
+
+Remote Impact

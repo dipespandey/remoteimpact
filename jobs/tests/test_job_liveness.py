@@ -700,3 +700,54 @@ class CloudflareEmailTests(TestCase):
                 mock.patch("jobs.services.email_service.resend") as resend:
             self.assertFalse(self.service().send_email(to="a@example.org", subject="s", html="h"))
         resend.Emails.send.assert_not_called()
+
+
+class OrganizationClaimTests(TestCase):
+    def setUp(self):
+        from jobs.models import Organization
+        self.org = Organization.objects.create(name="Claimable Org", slug="claimable-org", website="https://www.claimable.org")
+        from allauth.socialaccount.models import SocialApp
+        from django.contrib.sites.models import Site
+        site = Site.objects.get_current()
+        for provider, provider_id in (("google", ""), ("openid_connect", "linkedin")):
+            app = SocialApp.objects.create(
+                provider=provider, provider_id=provider_id, name=(provider_id or provider).title(),
+                client_id="x", secret="y",
+                settings={"server_url": "https://www.linkedin.com/oauth"} if provider_id else {},
+            )
+            app.sites.add(site)
+
+    def test_claim_sends_verification_and_verify_marks_claim(self):
+        from unittest import mock
+        from django.core import signing
+        from jobs.models import OrganizationClaim
+        from jobs.views.employers import CLAIM_SALT
+        url = reverse("jobs:claim_organization", kwargs={"slug": self.org.slug})
+        self.assertEqual(self.client.get(url).status_code, 200)
+        with mock.patch("jobs.services.email_service.email_service.send_claim_verification", return_value=True) as send:
+            response = self.client.post(url, {"email": "Ana@Claimable.org", "name": "Ana"})
+        self.assertRedirects(response, f"{url}?sent=1", fetch_redirect_response=False)
+        claim = OrganizationClaim.objects.get()
+        self.assertEqual(claim.email, "ana@claimable.org")
+        self.assertTrue(claim.domain_match)
+        send.assert_called_once()
+        token = signing.dumps(claim.pk, salt=CLAIM_SALT)
+        response = self.client.get(reverse("jobs:claim_verify", kwargs={"token": token}))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/employers/report/", response["Location"])
+        claim.refresh_from_db()
+        self.assertIsNotNone(claim.verified_at)
+
+    def test_non_matching_domain_and_bad_email(self):
+        from unittest import mock
+        from jobs.models import OrganizationClaim
+        url = reverse("jobs:claim_organization", kwargs={"slug": self.org.slug})
+        with mock.patch("jobs.services.email_service.email_service.send_claim_verification", return_value=True):
+            self.client.post(url, {"email": "someone@gmail.com"})
+            self.client.post(url, {"email": "not-an-email"})
+        self.assertEqual(OrganizationClaim.objects.count(), 1)
+        self.assertFalse(OrganizationClaim.objects.get().domain_match)
+
+    def test_bad_verify_token(self):
+        response = self.client.get(reverse("jobs:claim_verify", kwargs={"token": "nope"}))
+        self.assertEqual(response.status_code, 302)

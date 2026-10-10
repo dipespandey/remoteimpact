@@ -188,5 +188,71 @@ class EmployerReportView(TemplateView):
             feature_price=FEATURE_PRICE_USD_CENTS // 100,
             feature_days=FEATURE_DURATION_DAYS,
             audience=audience_stats(),
+            claim_url=(reverse("jobs:claim_organization", kwargs={"slug": self.organization.slug})
+                       if self.organization.slug else ""),
         )
         return context
+
+
+CLAIM_SALT = "org-claim"
+
+
+def _domain(value):
+    from urllib.parse import urlparse
+    host = urlparse(value if "//" in (value or "") else f"//{value or ''}").netloc.lower()
+    return host[4:] if host.startswith("www.") else host
+
+
+class ClaimOrganizationView(TemplateView):
+    """An employer verifies a work email to follow their organization's stats."""
+
+    template_name = "jobs/employers/claim.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.organization = get_object_or_404(Organization, slug=kwargs["slug"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(organization=self.organization, sent=self.request.GET.get("sent") == "1")
+        return context
+
+    def post(self, request, *args, **kwargs):
+        from django.core.validators import validate_email
+        from django.core.exceptions import ValidationError
+        from ..models import OrganizationClaim
+        from ..services.email_service import email_service
+
+        email = (request.POST.get("email") or "").strip().lower()
+        name = (request.POST.get("name") or "").strip()[:120]
+        try:
+            validate_email(email)
+        except ValidationError:
+            messages.error(request, "Enter a valid work email.")
+            return redirect(request.path)
+        site_domain = _domain(self.organization.website)
+        claim, _ = OrganizationClaim.objects.get_or_create(organization=self.organization, email=email)
+        claim.name = name or claim.name
+        claim.domain_match = bool(site_domain) and email.split("@", 1)[1] in (site_domain, f"mail.{site_domain}")
+        claim.save()
+        token = signing.dumps(claim.pk, salt=CLAIM_SALT)
+        base = getattr(settings, "SITE_URL", "https://remoteimpact.org")
+        verify_url = base + reverse("jobs:claim_verify", kwargs={"token": token})
+        email_service.send_claim_verification(claim, verify_url)
+        return redirect(f"{request.path}?sent=1")
+
+
+class ClaimVerifyView(TemplateView):
+    def get(self, request, token):
+        from ..models import OrganizationClaim
+        try:
+            claim_id = signing.loads(token, salt=CLAIM_SALT, max_age=60 * 60 * 24 * 7)
+        except signing.BadSignature:
+            messages.error(request, "This link is invalid or has expired. Request a new one.")
+            return redirect("jobs:employers")
+        claim = get_object_or_404(OrganizationClaim.objects.select_related("organization"), pk=claim_id)
+        if not claim.verified_at:
+            claim.verified_at = timezone.now()
+            claim.save(update_fields=["verified_at"])
+        messages.success(request, "Email confirmed. We'll send you a short monthly summary of the applicants we send you.")
+        return redirect("jobs:employer_report", token=report_token(claim.organization))

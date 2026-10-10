@@ -1776,3 +1776,22 @@ class EmployerOutreach(models.Model):
 
     def __str__(self):
         return f"{self.organization.name}: {self.get_status_display()}"
+
+
+class OrganizationClaim(models.Model):
+    """A person who verified an email to follow an organization's stats on Remote Impact."""
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="claims")
+    email = models.EmailField()
+    name = models.CharField(max_length=120, blank=True)
+    domain_match = models.BooleanField(default=False, help_text="Email domain matches the organization's website")
+    monthly_report = models.BooleanField(default=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    last_report_sent_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["organization", "email"], name="unique_org_claim_email")]
+
+    def __str__(self):
+        return f"{self.email} -> {self.organization.name}"

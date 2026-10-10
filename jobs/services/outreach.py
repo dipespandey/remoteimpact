@@ -11,7 +11,7 @@ from django.db.models import Count, Q, Sum
 from django.urls import reverse
 from django.utils import timezone
 
-from jobs.models import EmployerOutreach, Job, JobDailyStat, JobFeaturePurchase, Organization
+from jobs.models import EmployerOutreach, OrganizationClaim, Job, JobDailyStat, JobFeaturePurchase, Organization
 from jobs.services.job_service import JobService
 
 FEATURE_PRICE = 49
@@ -60,6 +60,9 @@ def outreach_targets(days=7, status="", limit=100, sender="Dipesh"):
         Job.objects.filter(is_paid=True).values_list("organization_id", flat=True)
     )
     records = {o.organization_id: o for o in EmployerOutreach.objects.all()}
+    claimed = {}
+    for claim in OrganizationClaim.objects.filter(verified_at__isnull=False).order_by("-domain_match", "created_at"):
+        claimed.setdefault(claim.organization_id, claim.email)
 
     candidates = sorted(
         role_counts,
@@ -94,11 +97,11 @@ def outreach_targets(days=7, status="", limit=100, sender="Dipesh"):
         feature_link = f"{_site()}{reverse('jobs:feature_job', kwargs={'slug': top.slug})}?source=outreach"
         subject, body = draft_email(org.name, top.title, views, clicks, days, report_link, feature_link, sender)
         emails = sorted({e for e in org_jobs.exclude(application_email="").values_list("application_email", flat=True)})
-        to = (record.contact if record and "@" in (record.contact or "") else "") or (emails[0] if emails else "")
+        to = claimed.get(oid) or (record.contact if record and "@" in (record.contact or "") else "") or (emails[0] if emails else "")
         rows.append({
             "org": org, "views": views, "clicks": clicks, "live_roles": role_counts[oid], "top": top,
             "status": row_status, "record": record, "report_link": report_link, "feature_link": feature_link,
-            "subject": subject, "body": body, "listing_emails": emails,
+            "subject": subject, "body": body, "listing_emails": emails, "claimed_by": claimed.get(oid, ""),
             "mailto": f"mailto:{quote(to)}?{urlencode({'subject': subject, 'body': body}, quote_via=quote)}",
             "linkedin": "https://www.linkedin.com/search/results/people/?" + urlencode(
                 {"keywords": f"{org.name} recruiter"}, quote_via=quote),
