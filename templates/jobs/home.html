@@ -89,6 +89,32 @@
     </div>
 </section>
 
+<section aria-labelledby="sides-heading" class="pb-12">
+    <div class="container">
+        <h2 id="sides-heading" class="sr-only">For job seekers and employers</h2>
+        <div class="grid gap-4 md:grid-cols-2">
+            <div class="surface p-6 sm:p-8">
+                <p class="text-[13px] font-medium text-muted-foreground">For job seekers</p>
+                <h3 class="mt-2 text-xl font-semibold tracking-tight text-foreground">Let a Scout watch for you</h3>
+                <p class="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">Describe the role once. Your first matches are free; Pro checks new roles every day for $10 a month after a 7-day trial, or $24 for three months.</p>
+                <div class="mt-5 flex flex-wrap gap-2">
+                    <a href="{% url 'jobs:public_pricing' %}" class="btn btn-primary btn-sm">See plans</a>
+                    <a href="{% url 'jobs:job_list' %}" class="btn btn-outline btn-sm">Browse roles</a>
+                </div>
+            </div>
+            <div class="surface p-6 sm:p-8">
+                <p class="text-[13px] font-medium text-muted-foreground">For employers</p>
+                <h3 class="mt-2 text-xl font-semibold tracking-tight text-foreground">Reach people who want this work</h3>
+                <p class="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">Post a role for $99 with suggested candidates from our talent pool, or feature one that's already listed for $49. See views and apply clicks for every role.</p>
+                <div class="mt-5 flex flex-wrap gap-2">
+                    <a href="{% url 'jobs:employers' %}?source=home" class="btn btn-primary btn-sm">For employers</a>
+                    <a href="{% url 'jobs:post_job' %}?source=home_employer" class="btn btn-outline btn-sm">Post a role</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 {% if featured_orgs %}
 <section aria-labelledby="orgs-heading" class="pb-14">
     <div class="container">
@@ -148,31 +174,7 @@
 </section>
 {% endif %}
 
-<section aria-labelledby="sides-heading" class="pb-12">
-    <div class="container">
-        <h2 id="sides-heading" class="sr-only">For job seekers and employers</h2>
-        <div class="grid gap-4 md:grid-cols-2">
-            <div class="surface p-6 sm:p-8">
-                <p class="text-[13px] font-medium text-muted-foreground">For job seekers</p>
-                <h3 class="mt-2 text-xl font-semibold tracking-tight text-foreground">Let a Scout watch for you</h3>
-                <p class="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">Describe the role once. Your first matches are free; Pro checks new roles every day for $10 a month after a 7-day trial, or $24 for three months.</p>
-                <div class="mt-5 flex flex-wrap gap-2">
-                    <a href="{% url 'jobs:public_pricing' %}" class="btn btn-primary btn-sm">See plans</a>
-                    <a href="{% url 'jobs:job_list' %}" class="btn btn-outline btn-sm">Browse roles</a>
-                </div>
-            </div>
-            <div class="surface p-6 sm:p-8">
-                <p class="text-[13px] font-medium text-muted-foreground">For employers</p>
-                <h3 class="mt-2 text-xl font-semibold tracking-tight text-foreground">Reach people who want this work</h3>
-                <p class="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">Post a role for $99 with suggested candidates from our talent pool, or feature one that's already listed for $49. See views and apply clicks for every role.</p>
-                <div class="mt-5 flex flex-wrap gap-2">
-                    <a href="{% url 'jobs:employers' %}?source=home" class="btn btn-primary btn-sm">For employers</a>
-                    <a href="{% url 'jobs:post_job' %}?source=home_employer" class="btn btn-outline btn-sm">Post a role</a>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+
 
 <section aria-labelledby="roles-heading" class="pb-8">
     <div class="container">
