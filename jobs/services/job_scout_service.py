@@ -24,6 +24,8 @@ class JobScoutService:
     MAX_MATCHES = 10
     # Offer clearly labelled "possible" matches when verified ones run out.
     RELAXED_FILL = True
+    # Below this many matches, add labelled close matches (settings.SCOUT_CLOSE_MATCHES).
+    CLOSE_MATCH_BELOW = 3
     STOP_WORDS = {
         "a", "about", "am", "an", "and", "any", "are", "as", "at", "be",
         "for", "from", "i", "in", "is", "job", "jobs", "looking", "me", "my",
@@ -916,6 +918,11 @@ skills is not a request for invented, exact job titles. JSON only."""
                 seen.add(key); selected.append(job); added += 1
             diagnostics["relaxed_fill"] = added
             diagnostics["relaxed_hard_rejections"] = relaxed_diagnostics.get("hard_rejections", {})
+        if len(selected) < cls.CLOSE_MATCH_BELOW:
+            from jobs.services.scout_close_matches import close_matches
+            for job in close_matches(qs.exclude(pk__in=[job.pk for job in selected]), preferences, terms,
+                                     diagnostics, limit=min(limit - len(selected), 5)):
+                selected.append(job)
         diagnostics["match_count"] = min(len(selected), limit)
         return selected[:limit]
 

@@ -751,3 +751,30 @@ class OrganizationClaimTests(TestCase):
     def test_bad_verify_token(self):
         response = self.client.get(reverse("jobs:claim_verify", kwargs={"token": "nope"}))
         self.assertEqual(response.status_code, 302)
+
+
+class ScoutCloseMatchTests(TestCase):
+    def test_validate_keeps_grounded_picks_only(self):
+        import json
+        from jobs.services.scout_close_matches import validate
+        evidence = {1: {"title": "Energy Policy Analyst", "description": "Analyse energy policy across the EU.", "requirements": ""},
+                    2: {"title": "Office Manager", "description": "Run the office.", "requirements": ""}}
+        output = json.dumps({"picks": [
+            {"id": 1, "difference": "Energy rather than climate policy", "evidence": {"field": "description", "quote": "Analyse energy policy"}},
+            {"id": 2, "difference": "Operations, not policy work", "evidence": {"field": "description", "quote": "made up quote here"}},
+            {"id": 99, "difference": "Not a candidate at all", "evidence": {"field": "title", "quote": "Energy Policy Analyst"}},
+        ]})
+        self.assertEqual(validate(output, evidence, 5), [(1, "Energy rather than climate policy")])
+
+    def test_disabled_by_default(self):
+        from jobs.models import Job
+        from jobs.services.scout_close_matches import close_matches
+        self.assertEqual(close_matches(Job.objects.all(), {"intent_text": "climate policy"}, ["climate"], {}), [])
+
+    def test_loose_preferences_keep_hard_limits(self):
+        from jobs.services.scout_close_matches import loose_preferences
+        loose = loose_preferences({"titles": ["Policy Researcher"], "required_domains": ["climate"],
+                                   "locations": ["Spain"], "exclude_keywords": ["sales"], "job_types": ["full_time"]})
+        self.assertEqual(loose["titles"], [])
+        self.assertNotIn("required_domains", loose)
+        self.assertEqual((loose["locations"], loose["exclude_keywords"], loose["job_types"]), (["Spain"], ["sales"], ["full_time"]))
