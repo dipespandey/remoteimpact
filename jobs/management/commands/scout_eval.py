@@ -65,8 +65,16 @@ class Command(BaseCommand):
         parser.add_argument("--judge", action="store_true", help="Ask the LLM to judge each match.")
         parser.add_argument("--out", default="")
         parser.add_argument("--semantic", action="store_true", help="Load the embedding model so semantic retrieval runs.")
+        parser.add_argument("--close", action="store_true", help="Turn on close matches and judge them separately.")
 
     def handle(self, *args, **options):
+        if options["close"]:
+            from django.test import override_settings
+            with override_settings(SCOUT_CLOSE_MATCHES=True):
+                return self._handle(*args, **options)
+        return self._handle(*args, **options)
+
+    def _handle(self, *args, **options):
         if options["semantic"]:
             from jobs.services import embedding_service
             embedding_service.get_model()
@@ -80,7 +88,7 @@ class Command(BaseCommand):
         if options["limit"]:
             alerts = alerts[: options["limit"]]
         since = timezone.now() - timedelta(days=options["days"])
-        rows, verdicts, reasons = [], Counter(), Counter()
+        rows, verdicts, reasons, close_verdicts = [], Counter(), Counter(), Counter()
         started = time.time()
         # One short, rolled-back transaction per brief: a long-lived transaction
         # would block schema changes (and then every query) on the live site.
@@ -109,15 +117,18 @@ class Command(BaseCommand):
                     for key, value in (diagnostics.get("hard_rejections") or {}).items():
                         reasons[key] += value
                 for job in matches:
-                    item = {"job": job.pk, "title": job.title, "org": job.organization.name, "score": getattr(job, "scout_score", None)}
+                    close = getattr(job, "scout_close_match", False)
+                    item = {"job": job.pk, "title": job.title, "org": job.organization.name, "score": getattr(job, "scout_score", None),
+                            "close": close, "reason": (getattr(job, "scout_reasons", None) or [""])[0]}
                     if client:
                         item["verdict"], item["why"] = judge(client, alert.intent_text, job)
-                        verdicts[item["verdict"]] += 1
+                        (close_verdicts if close else verdicts)[item["verdict"]] += 1
                     row["matches"].append(item)
                 rows.append(row)
                 transaction.set_rollback(True)
         evaluated = [r for r in rows if "error" not in r]
         empty = sum(1 for r in evaluated if r["count"] == 0)
+        exact_empty = sum(1 for r in evaluated if not any(not m["close"] for m in r["matches"]))
         judged = verdicts["relevant"] + verdicts["partial"] + verdicts["irrelevant"]
         summary = {
             "briefs": len(evaluated),
@@ -125,7 +136,9 @@ class Command(BaseCommand):
             "empty": empty,
             "empty_rate": round(empty / max(1, len(evaluated)), 3),
             "avg_matches": round(sum(r["count"] for r in evaluated) / max(1, len(evaluated)), 2),
+            "empty_without_close_matches": exact_empty,
             "verdicts": dict(verdicts),
+            "close_verdicts": dict(close_verdicts),
             "precision_relevant": round(verdicts["relevant"] / judged, 3) if judged else None,
             "precision_relevant_or_partial": round((verdicts["relevant"] + verdicts["partial"]) / judged, 3) if judged else None,
             "top_hard_rejections_in_empty": reasons.most_common(12),

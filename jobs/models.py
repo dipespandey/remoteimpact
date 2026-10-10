@@ -1795,3 +1795,18 @@ class OrganizationClaim(models.Model):
 
     def __str__(self):
         return f"{self.email} -> {self.organization.name}"
+
+
+class CountryDailyActivity(models.Model):
+    """Visitor activity per country per day, from Cloudflare's country header.
+
+    Country only, never anything finer; shown publicly only in aggregate.
+    """
+
+    date = models.DateField(db_index=True)
+    country = models.CharField(max_length=2)
+    views = models.PositiveIntegerField(default=0)
+    apply_clicks = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["date", "country"], name="unique_country_daily_activity")]

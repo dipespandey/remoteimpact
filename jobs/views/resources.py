@@ -105,6 +105,7 @@ class HomeView(TemplateView):
         ).filter(job_count__gt=0).order_by("-job_count", "name")
 
         from ..services.trust_stats import trust_stats
+        from ..services.country_activity import weekly_summary as country_activity_summary
 
         # Stats for hero section (rounded down to nearest 100)
         active_jobs_count = available_jobs.count()
@@ -157,6 +158,7 @@ class HomeView(TemplateView):
                 "featured_orgs": featured_orgs,
                 "has_impact_profile": has_impact_profile,
                 "trust": trust_stats(),
+                "activity": country_activity_summary(),
                 "preview_tabs": self._preview_tabs(available_jobs, latest_jobs, active_jobs_rounded),
             }
         )

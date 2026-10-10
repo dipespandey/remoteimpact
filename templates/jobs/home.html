@@ -102,6 +102,30 @@
 </section>
 {% endif %}
 
+{% if activity.countries >= 5 and activity.clicks >= 20 %}
+<section aria-labelledby="activity-heading" class="pb-14">
+    <div class="container">
+        <div class="mx-auto grid max-w-4xl gap-6 border-t border-border pt-10 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] sm:items-center">
+            <div>
+                <h2 id="activity-heading" class="text-[13px] text-muted-foreground">This week on Remote Impact</h2>
+                <p class="mt-2 font-display text-2xl font-semibold leading-snug tracking-tight text-foreground"><span class="tabular-nums">{{ activity.clicks|intcomma }}</span> people from <span class="tabular-nums">{{ activity.countries }}</span> countries clicked through to apply.</p>
+                <p class="mt-2 text-[13px] text-muted-foreground">Counted by country only, over the last {{ activity.days }} days.</p>
+            </div>
+            <ul class="space-y-2" aria-label="Most active countries">
+                {% for row in activity.top %}
+                <li class="grid grid-cols-[7.5rem_minmax(0,1fr)_2.5rem] items-center gap-3 text-[13px]">
+                    <span class="truncate text-foreground">{{ row.name }}</span>
+                    <span class="h-1.5 rounded-full bg-muted"><span class="block h-1.5 rounded-full bg-foreground/70" style="width: {{ row.share }}%"></span></span>
+                    <span class="text-right tabular-nums text-muted-foreground">{{ row.clicks|intcomma }}</span>
+                </li>
+                {% endfor %}
+                {% if activity.more %}<li class="pt-1 text-[12px] text-muted-foreground">and {{ activity.more }} more countr{{ activity.more|pluralize:"y,ies" }}</li>{% endif %}
+            </ul>
+        </div>
+    </div>
+</section>
+{% endif %}
+
 {% if featured_jobs %}
 <section aria-labelledby="featured-roles-heading" class="pb-14">
     <div class="container">

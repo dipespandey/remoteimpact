@@ -778,3 +778,21 @@ class ScoutCloseMatchTests(TestCase):
         self.assertEqual(loose["titles"], [])
         self.assertNotIn("required_domains", loose)
         self.assertEqual((loose["locations"], loose["exclude_keywords"], loose["job_types"]), (["Spain"], ["sales"], ["full_time"]))
+
+
+class CountryActivityTests(TestCase):
+    def test_records_country_and_hides_small_countries(self):
+        from django.core.cache import cache
+        from django.test import RequestFactory
+        from jobs.services import country_activity
+        cache.clear()
+        factory = RequestFactory()
+        for code, n in (("NP", 4), ("KE", 3), ("FR", 2), ("XX", 9)):
+            for _ in range(n):
+                request = factory.get("/", HTTP_CF_IPCOUNTRY=code)
+                country_activity.record(request, "views")
+                country_activity.record(request, "apply_clicks")
+        summary = country_activity.weekly_summary()
+        self.assertEqual(summary["countries"], 2)
+        self.assertEqual([r["name"] for r in summary["top"]], ["Nepal", "Kenya"])
+        self.assertEqual(summary["clicks"], 7)

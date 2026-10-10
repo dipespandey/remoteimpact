@@ -46,6 +46,9 @@ def record(job_id, field, *, amount=1, request=None, dedupe=True):
                 return False
         except Exception:  # noqa: BLE001 - counting must never break a page
             pass
+    if request is not None and field in ("views", "apply_clicks"):
+        from jobs.services import country_activity
+        country_activity.record(request, field)
     from jobs.models import JobDailyStat
 
     updated = JobDailyStat.objects.filter(job_id=job_id, date=today).update(**{field: F(field) + amount})
