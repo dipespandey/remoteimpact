@@ -29,7 +29,7 @@ class JobApplyRedirectView(View):
         destination = safe_application_destination(job.application_url)
         if not destination:
             raise Http404("This job has no external application link.")
-        if not job_stats.is_probably_bot(request):
+        if not job_stats.is_probably_bot(request) and job_stats.viewed_today(job.pk, request):
             job_stats.record(job.pk, "apply_clicks", request=request)
         response = HttpResponseRedirect(job_stats.with_referral(destination))
         response["X-Robots-Tag"] = "noindex, nofollow"

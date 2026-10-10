@@ -43,7 +43,18 @@ class TrackingTests(EmployerTestBase):
         self.client.post(url, HTTP_USER_AGENT="Googlebot/2.1")
         self.assertEqual(JobDailyStat.objects.get(job=self.job).views, 1)
 
+    def test_apply_redirect_without_a_page_view_is_not_counted(self):
+        from django.core.cache import cache
+        cache.clear()
+        url = reverse("jobs:job_apply_redirect", kwargs={"slug": self.job.slug})
+        response = self.client.get(url, HTTP_USER_AGENT=BROWSER)
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(JobDailyStat.objects.filter(job=self.job, apply_clicks__gt=0).exists())
+
     def test_apply_redirect_counts_and_sends_to_employer(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.client.post(reverse("jobs:job_view_beacon", kwargs={"slug": self.job.slug}), HTTP_USER_AGENT=BROWSER)
         url = reverse("jobs:job_apply_redirect", kwargs={"slug": self.job.slug})
         response = self.client.get(url, HTTP_USER_AGENT=BROWSER)
         self.assertEqual(response.status_code, 302)

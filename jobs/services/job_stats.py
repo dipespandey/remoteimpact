@@ -34,6 +34,19 @@ def visitor_key(request):
     return hashlib.sha256(raw.encode()).hexdigest()[:20]
 
 
+def viewed_today(job_id, request):
+    """True when this visitor's page-view beacon for the job was counted today.
+
+    The apply link only appears on job pages, which send the beacon first, so a
+    click without a view is a crawler following the link directly.
+    """
+    key = f"jobstat:views:{job_id}:{timezone.localdate().isoformat()}:{visitor_key(request)}"
+    try:
+        return cache.get(key) is not None
+    except Exception:  # noqa: BLE001 - if the cache is down, keep counting
+        return True
+
+
 def record(job_id, field, *, amount=1, request=None, dedupe=True):
     """Increment today's counter. With a request, one count per visitor per job per day."""
     if field not in FIELDS:
