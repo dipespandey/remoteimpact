@@ -90,7 +90,9 @@ class FeatureJobView(TemplateView):
             messages.error(request, "This listing is no longer open, so it can't be featured.")
             return redirect(self.job.get_absolute_url())
         # Crawlers follow the "Feature it" link on every job page; don't count them as employers.
-        if not job_stats.is_probably_bot(request):
+        if not job_stats.is_probably_bot(request) and (
+            request.GET.get("source") in ("outreach", "employer_report", "employers") or job_stats.viewed_today(self.job.pk, request)
+        ):
             record_employer_event(
                 EmployerFunnelEvent.Event.POST_JOB_VIEWED, user=request.user, job=self.job,
                 metadata={"page": "feature", "source": request.GET.get("source", "")[:80]},
