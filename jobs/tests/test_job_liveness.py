@@ -827,3 +827,12 @@ class ScoutTitleFamilyTests(TestCase):
         self.assertFalse(self.check("Senior People Operations Associate", ["Operations Director"]))
         self.assertFalse(self.check("Legal Operations Associate", ["Operations Manager"]))
         self.assertTrue(self.check("People Operations Manager", ["People Operations Manager"]))
+
+
+class ScoutJobTypeTests(TestCase):
+    def test_permanent_counts_as_full_time(self):
+        from jobs.services.job_scout_service import JobScoutService
+        types = JobScoutService._explicit_job_types("Open to permanent, freelance, and fractional roles.")
+        self.assertEqual(set(types), {"full-time", "freelance"})
+        self.assertEqual(JobScoutService._explicit_job_types("Permanent roles only"), ["full-time"])
+        self.assertEqual(JobScoutService._explicit_job_types("A permanent impact on climate"), [])

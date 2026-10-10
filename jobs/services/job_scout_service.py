@@ -558,7 +558,7 @@ skills is not a request for invented, exact job titles. JSON only."""
     def _explicit_job_types(text: str) -> list[str]:
         """Extract employment arrangements without confusing domain language."""
         patterns = [
-            (r"\bfull[ -]?time\b", "full-time"),
+            (r"\bfull[ -]?time\b|(?i:\bpermanent(?:\s*,|\s+(?:and|or|roles?|jobs?|positions?|employment|contracts?)\b))", "full-time"),
             (r"\bpart[ -]?time\b", "part-time"),
             (r"\bfreelanc(?:e|er|ing)\b", "freelance"),
             (
