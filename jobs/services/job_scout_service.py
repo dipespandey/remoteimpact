@@ -41,6 +41,7 @@ class JobScoutService:
         "intern", "internship", "junior", "lead", "manager", "officer",
         "principal", "senior", "specialist", "staff",
     }
+    SPECIALIST_OPERATIONS = {"people", "legal", "data", "develo", "solar", "clinic", "it", "sales", "market"}
     ROLE_TITLE_ROOTS = {
         "adviso", "analys", "archit", "consul", "coordi", "design", "develo",
         "direct", "engine", "manage", "office", "operat", "resear", "scient", "specia",
@@ -680,6 +681,12 @@ skills is not a request for invented, exact job titles. JSON only."""
                 phrase in desired.lower() and phrase in context_text.lower()
                 for phrase in ("venture capital", "private equity")
             )
+            if operations_family and "operat" in title_root_list:
+                # "People/Legal/Data Operations" are specialist roles; they only fit
+                # an operations request that names the same specialism.
+                before = title_root_list[max(0, title_root_list.index("operat") - 1)]
+                if before in cls.SPECIALIST_OPERATIONS and before not in desired_roots:
+                    continue
             role_family_match = role_family_match or research_family or operations_family or technical_family
             if (
                 requested_roles
@@ -708,6 +715,8 @@ skills is not a request for invented, exact job titles. JSON only."""
                 ("commun", "manage"),
                 ("softwa", "engine"),
                 ("data", "analys"),
+                ("execut", "assist"),
+                ("data", "entry"),
             ]
             order_failed = False
             for first, second in ordered_pairs:

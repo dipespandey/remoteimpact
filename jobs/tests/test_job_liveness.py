@@ -809,3 +809,21 @@ class ScoutRepostTests(TestCase):
         c = SimpleNamespace(organization_id=1, title="Senior Data Analyst", description="Different team.")
         self.assertEqual(JobScoutService._repost_key(a), JobScoutService._repost_key(b))
         self.assertNotEqual(JobScoutService._repost_key(a), JobScoutService._repost_key(c))
+
+
+class ScoutTitleFamilyTests(TestCase):
+    def check(self, title, wanted):
+        from jobs.services.job_scout_service import JobScoutService
+        return JobScoutService._title_matches_intent(title, wanted)
+
+    def test_compound_titles_must_stay_together(self):
+        self.assertTrue(self.check("Executive Assistant to the CEO", ["Executive Assistant"]))
+        self.assertFalse(self.check("Assistant General Counsel", ["Executive Assistant"]))
+        self.assertTrue(self.check("Data Entry Clerk", ["Data Entry"]))
+        self.assertFalse(self.check("Senior Data Analyst", ["Data Entry"]))
+
+    def test_specialist_operations_need_the_same_specialism(self):
+        self.assertTrue(self.check("Director of Operations", ["Operations Director"]))
+        self.assertFalse(self.check("Senior People Operations Associate", ["Operations Director"]))
+        self.assertFalse(self.check("Legal Operations Associate", ["Operations Manager"]))
+        self.assertTrue(self.check("People Operations Manager", ["People Operations Manager"]))
