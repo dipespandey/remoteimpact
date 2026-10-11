@@ -7,6 +7,9 @@ Handles dynamic SEO landing pages for role-based searches:
 - etc.
 """
 
+from django.conf import settings
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from django.views.generic import ListView
 from django.http import Http404
 from django.db.models import Count, Q
@@ -50,6 +53,7 @@ def visible_jobs():
     )
 
 
+@method_decorator(cache_page(getattr(settings, 'CACHE_TTL_MEDIUM', 300)), name='dispatch')
 class RoleJobsView(ListView):
     """
     Dynamic SEO landing page for role-based job searches.
@@ -189,6 +193,7 @@ class AllRolePagesView(ListView):
 # Target long-tail keywords from keyword research
 # =============================================================================
 
+@method_decorator(cache_page(getattr(settings, 'CACHE_TTL_MEDIUM', 300)), name='dispatch')
 class KeywordJobsView(ListView):
     """
     Dynamic SEO landing page for keyword-based job searches.
