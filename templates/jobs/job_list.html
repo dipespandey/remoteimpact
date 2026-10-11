@@ -546,13 +546,15 @@
             }
             </script>
 
-            <!-- Apply directly toggle chip -->
+            <!-- Apply directly toggle chip (only while some role takes applications here) -->
+            {% if has_direct_apply %}
             <label for="filter-direct-apply" class="col-span-2 inline-flex h-9 cursor-pointer items-center gap-2 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:col-span-1" title="Roles with applications handled on Remote Impact">
                 <input id="filter-direct-apply" type="checkbox" name="direct_apply" value="1"
                        {% if filters.direct_apply %}checked{% endif %}
                        class="checkbox h-3.5 w-3.5">
                 Apply directly
             </label>
+            {% endif %}
 
             {% if search_query or current_categories or current_types or filters.skills or filters.educations or filters.experiences or filters.countries or filters.posted or filters.salary_min or filters.salary_max or filters.direct_apply %}
             <a href="{% url 'jobs:job_list' %}" class="col-span-2 inline-flex h-9 items-center justify-center px-2 text-[13px] text-muted-foreground hover:text-foreground md:col-span-1">Clear all</a>

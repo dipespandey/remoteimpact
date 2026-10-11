@@ -29,7 +29,7 @@ class JobListView(ListView):
     template_name = "jobs/job_list.html"
     context_object_name = "jobs"
     paginate_by = 20
-    FILTER_OPTIONS_CACHE_KEY = "job-list:filter-options:v4"
+    FILTER_OPTIONS_CACHE_KEY = "job-list:filter-options:v5"
 
     @classmethod
     def _get_filter_options(cls):
@@ -72,10 +72,14 @@ class JobListView(ListView):
             for skill, count in skill_counts.most_common(50)
         ]
 
+        live = Job.objects.filter(Job.availability_filter())
         options = {
             "max_salary": int(max_salary_val) if max_salary_val else 300000,
             "countries": countries,
             "skills": skills,
+            # Only offer impact areas and "Apply directly" when some live role has them
+            "category_ids": sorted(set(live.exclude(category__isnull=True).values_list("category_id", flat=True))),
+            "has_direct_apply": live.filter(source=Job.Source.MANUAL).exists(),
         }
         cache.set(
             cls.FILTER_OPTIONS_CACHE_KEY,
@@ -154,6 +158,10 @@ class JobListView(ListView):
         }
 
         filter_options = self._get_filter_options()
+        live_ids = set(filter_options.get("category_ids", []))
+        selected_slugs = set(context["current_categories"])
+        context["categories"] = [c for c in context["categories"] if c.pk in live_ids or c.slug in selected_slugs]
+        context["has_direct_apply"] = filter_options.get("has_direct_apply", False) or bool(self.request.GET.get("direct_apply"))
         context["max_salary"] = filter_options["max_salary"]
         context["countries"] = filter_options["countries"]
 
@@ -261,60 +269,52 @@ class JobListView(ListView):
         Returns organizations that might be relevant even if no jobs match.
         """
         from ..models import Organization
-        from django.db.models import Count, Q
         from django.contrib.postgres.search import TrigramSimilarity
-        
-        # Start with orgs that have active jobs
-        orgs = Organization.objects.filter(
-            jobs__in=Job.objects.filter(Job.availability_filter())
-        ).annotate(
-            job_count=Count('jobs', filter=Q(jobs__in=Job.objects.filter(Job.availability_filter())))
-        ).distinct()
+        from django.db.models import Count, Q
 
-        recommendations = []
-        
-        # If there's a search query, find orgs with similar names or whose jobs match
+        # Work from live roles only: matching against every job ever imported
+        # (closed ones included) made an empty search take ~3 seconds.
+        live = Job.objects.filter(Job.availability_filter())
+        counts = dict(live.values_list("organization_id").annotate(n=Count("id")))
+        if not counts:
+            return []
+
+        def ranked(org_ids, exclude=()):
+            ids = [oid for oid in dict.fromkeys(org_ids) if oid in counts and oid not in exclude]
+            ids.sort(key=lambda oid: -counts[oid])
+            return ids
+
+        chosen = []
         if search_query and search_query.strip():
             query = search_query.strip()
-            # Organizations with similar names
-            name_matches = orgs.annotate(
-                similarity=TrigramSimilarity('name', query)
-            ).filter(similarity__gt=0.1).order_by('-similarity', '-job_count')[:6]
-            recommendations.extend(list(name_matches))
-            
-            # Organizations whose jobs contain the search term
-            if len(recommendations) < 6:
-                job_matches = orgs.filter(
-                    Q(jobs__title__icontains=query) |
-                    Q(jobs__description__icontains=query)
-                ).exclude(id__in=[o.id for o in recommendations]).order_by('-job_count')[:6 - len(recommendations)]
-                recommendations.extend(list(job_matches))
-
-        # If there are category filters, get top orgs in those categories
-        if category_slugs and len(recommendations) < 6:
-            category_orgs = orgs.filter(
-                jobs__category__slug__in=category_slugs
-            ).exclude(id__in=[o.id for o in recommendations]).order_by('-job_count')[:6 - len(recommendations)]
-            recommendations.extend(list(category_orgs))
-
-        # If there are skill filters, get orgs whose jobs have those skills
-        if skills and len(recommendations) < 6:
+            chosen += list(
+                Organization.objects.filter(pk__in=counts)
+                .annotate(similarity=TrigramSimilarity("name", query))
+                .filter(similarity__gt=0.1).order_by("-similarity").values_list("pk", flat=True)[:6]
+            )
+            if len(chosen) < 6:
+                matching = live.filter(Q(title__icontains=query) | Q(description__icontains=query)).values_list(
+                    "organization_id", flat=True)
+                chosen += ranked(matching, set(chosen))[: 6 - len(chosen)]
+        if category_slugs and len(chosen) < 6:
+            matching = live.filter(category__slug__in=category_slugs).values_list("organization_id", flat=True)
+            chosen += ranked(matching, set(chosen))[: 6 - len(chosen)]
+        if skills and len(chosen) < 6:
             skill_q = Q()
-            for skill in skills[:5]:  # Limit to first 5 skills
-                skill_q |= Q(jobs__skills__contains=[skill])
-            skill_orgs = orgs.filter(skill_q).exclude(
-                id__in=[o.id for o in recommendations]
-            ).order_by('-job_count')[:6 - len(recommendations)]
-            recommendations.extend(list(skill_orgs))
+            for skill in skills[:5]:
+                skill_q |= Q(skills__contains=[skill])
+            chosen += ranked(live.filter(skill_q).values_list("organization_id", flat=True), set(chosen))[: 6 - len(chosen)]
+        if len(chosen) < 6:
+            chosen += ranked(counts.keys(), set(chosen))[: 6 - len(chosen)]
 
-        # Fill remaining slots with top orgs by job count
-        if len(recommendations) < 6:
-            top_orgs = orgs.exclude(
-                id__in=[o.id for o in recommendations]
-            ).order_by('-job_count')[:6 - len(recommendations)]
-            recommendations.extend(list(top_orgs))
-
-        return recommendations[:6]
+        orgs = Organization.objects.in_bulk(chosen[:6])
+        result = []
+        for oid in chosen[:6]:
+            org = orgs.get(oid)
+            if org is not None:
+                org.job_count = counts.get(oid, 0)
+                result.append(org)
+        return result
 
 
 class JobDetailView(DetailView):
