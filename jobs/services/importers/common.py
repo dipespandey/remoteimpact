@@ -57,6 +57,7 @@ _NON_OPENING_LISTING_PATTERNS = (
     r"\binitiativbewerbung\b",
     r"\bcandidatur[ae] spontan",
     r"\btalent network\b",
+    r"^list of (?:internship|places|challenges|programs?|organi[sz]ations|courses|events|fellowships)\b",
     r"\bcan t find (?:the |a )?right role\b",
 )
 

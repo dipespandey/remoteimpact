@@ -964,3 +964,12 @@ class GuessedHomepageTests(TestCase):
         self.assertEqual(guess_homepage(SimpleNamespace(name="Slipstream"), "", fetch_html=lambda url: "<title>Slipstream</title>"), "")
         intersect = SimpleNamespace(name="Intersect Power")
         self.assertEqual(guess_homepage(intersect, "", fetch_html=lambda url: "<title>Intersect</title>"), "")
+
+
+class ReadingListTitleTests(TestCase):
+    def test_reading_lists_are_not_openings(self):
+        from jobs.services.importers.common import _is_generic_listing_title
+        self.assertTrue(_is_generic_listing_title("List of Places to Find Roles at Top Startup Companies"))
+        self.assertTrue(_is_generic_listing_title("List of Internship and Residency Programs, Machine Learning"))
+        self.assertFalse(_is_generic_listing_title("Listings Operations Manager"))
+        self.assertFalse(_is_generic_listing_title("Policy Analyst"))
