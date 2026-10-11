@@ -562,6 +562,7 @@
         </div>
     </form>
 
+    <div id="job-results-area" aria-live="polite" aria-busy="false" class="transition-opacity">
     <div class="mt-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-1">
         <p class="text-[13px] text-muted-foreground">
             <span class="tabular-nums text-foreground">{{ page_obj.paginator.count }}</span> open role{{ page_obj.paginator.count|pluralize }}{% if page_obj.paginator.num_pages > 1 %}<span class="hidden sm:inline"> · showing <span class="tabular-nums">{{ page_obj.start_index }}–{{ page_obj.end_index }}</span></span>{% endif %}
@@ -640,6 +641,7 @@
         {% endif %}
     </nav>
     {% endif %}
+    </div>
 
     <div class="surface mt-10 flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div>
@@ -668,19 +670,79 @@
         });
     }
 
-    // Sort select handler
-    const sortSelect = document.getElementById('sort-select');
-    if (sortSelect) {
-        sortSelect.addEventListener('change', function() {
-            const url = new URL(window.location.href);
-            if (this.value) {
-                url.searchParams.set('sort', this.value);
-            } else {
-                url.searchParams.delete('sort');
+    // Live results: filters, sort and search update the list without pressing Search.
+    // The URL is kept in sync, so links, reloads and back/forward behave as before.
+    (function () {
+        const form = document.querySelector('form[role="search"]');
+        const area = document.getElementById('job-results-area');
+        if (!form || !area || !window.fetch || !window.DOMParser) return;
+        let timer = null;
+        let controller = null;
+
+        function targetUrl() {
+            const params = new URLSearchParams(new FormData(form));
+            for (const [key, value] of [...params.entries()]) {
+                if (value === '') params.delete(key);
             }
-            url.searchParams.delete('page'); // Reset to first page on sort change
-            window.location.href = url.toString();
+            const sort = document.getElementById('sort-select');
+            if (sort && sort.value && sort.value !== 'date') params.set('sort', sort.value);
+            const query = params.toString();
+            return form.action + (query ? '?' + query : '');
+        }
+
+        async function refresh() {
+            const url = targetUrl();
+            if (controller) controller.abort();
+            controller = new AbortController();
+            area.setAttribute('aria-busy', 'true');
+            area.style.opacity = '0.55';
+            try {
+                const response = await fetch(url, { signal: controller.signal, headers: { 'X-Requested-With': 'fetch' } });
+                if (!response.ok) throw new Error(String(response.status));
+                const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+                const fresh = doc.getElementById('job-results-area');
+                if (!fresh) throw new Error('no results area');
+                area.innerHTML = fresh.innerHTML;
+                // The heading and title describe the active filters too.
+                const heading = document.querySelector('main h1');
+                const freshHeading = doc.querySelector('main h1');
+                if (heading && freshHeading) heading.textContent = freshHeading.textContent;
+                if (doc.title) document.title = doc.title;
+                history.replaceState(null, '', url);
+                if (window.Alpine && Alpine.initTree) Alpine.initTree(area);
+            } catch (error) {
+                if (error.name !== 'AbortError') window.location.href = url;
+            } finally {
+                area.setAttribute('aria-busy', 'false');
+                area.style.opacity = '';
+            }
+        }
+
+        function schedule(delay) {
+            clearTimeout(timer);
+            timer = setTimeout(refresh, delay);
+        }
+
+        form.addEventListener('change', function (event) {
+            if (event.target.name === 'q') return;  // text search refreshes while typing
+            schedule(350);
         });
-    }
+        form.addEventListener('input', function (event) {
+            if (event.target.name === 'q') schedule(500);
+        });
+        // A filter's "Clear" resets its boxes through Alpine, which fires no change event.
+        form.addEventListener('click', function (event) {
+            const button = event.target.closest('button[type="button"]');
+            if (button && button.textContent.trim() === 'Clear') schedule(350);
+        });
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            refresh();
+        });
+        // Sort lives outside the form; delegate so it keeps working after the list is replaced.
+        area.addEventListener('change', function (event) {
+            if (event.target.id === 'sort-select') schedule(0);
+        });
+    })();
 </script>
 {% endblock %}
