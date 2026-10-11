@@ -973,3 +973,13 @@ class ReadingListTitleTests(TestCase):
         self.assertTrue(_is_generic_listing_title("List of Internship and Residency Programs, Machine Learning"))
         self.assertFalse(_is_generic_listing_title("Listings Operations Manager"))
         self.assertFalse(_is_generic_listing_title("Policy Analyst"))
+
+
+class ParkedDomainTests(TestCase):
+    def test_parked_pages_are_detected(self):
+        from jobs.services.org_sites import looks_parked
+        self.assertTrue(looks_parked("<title>American Indian College Fund</title> This domain is for sale! Make an offer"))
+        self.assertTrue(looks_parked("Buy this domain at HugeDomains"))
+        self.assertFalse(looks_parked("<title>American Indian College Fund</title> Scholarships for Native students"))
+        self.assertFalse(looks_parked('<a href="https://www.jerrdan.com">Jerr-Dan</a>'))
+        self.assertTrue(looks_parked("Listed on dan.com"))

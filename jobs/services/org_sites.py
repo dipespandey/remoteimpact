@@ -121,6 +121,16 @@ def resolve_homepage(org, application_urls, claim_domains=(), fetch=None):
 
 
 GUESS_TLDS = ("org", "com", "io", "net", "ai", "earth", "co")
+PARKED = re.compile(
+    r"domain (?:name )?(?:is |may be )?for sale|buy this domain|this domain (?:is|may be) (?:for sale|available)|"
+    r"make an offer|domain parking|parked (?:free|domain)|hugedomains|(?<![\w.-])dan\.com\b|sedo(?:parking)?\b|afternic|"
+    r"godaddy\.com/domainsearch|is available for purchase",
+    re.I,
+)
+
+
+def looks_parked(html: str) -> bool:
+    return bool(PARKED.search((html or "")[:200_000]))
 
 
 def guessed_domains(org, careers_url: str = "") -> list[str]:
@@ -174,6 +184,6 @@ def guess_homepage(org, careers_url: str = "", fetch_html=None) -> str:
         if len(name_words(org.name)) < 2:
             continue
         html = fetch_html(f"https://{domain}/")
-        if html and page_names_org_fully(html, org.name):
+        if html and not looks_parked(html) and page_names_org_fully(html, org.name):
             return f"https://{domain}/"
     return ""

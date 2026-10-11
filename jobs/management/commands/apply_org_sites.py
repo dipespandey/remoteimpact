@@ -10,7 +10,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from jobs.models import Organization
-from jobs.services.org_sites import domain_matches, employer_host, host_of, page_names_org
+from jobs.services.org_sites import domain_matches, employer_host, host_of, looks_parked, page_names_org
 from jobs.services.safe_fetch import fetch_public_html
 
 BLOCKED = {"http_403", "http_429", "http_503"}
@@ -52,7 +52,7 @@ class Command(BaseCommand):
             host = host_of(homepage)
             if homepage and not org.homepage_url and employer_host(host):
                 page = fetch_public_html(f"https://{host}/", max_bytes=4_000_000, total_timeout=15)
-                named = page.status == "ok" and (
+                named = page.status == "ok" and not looks_parked(page.text) and (
                     page_names_org(page.text, org.name) or domain_matches(host, org.name) or short_name_in_title(page.text, org.name))
                 # Sites that block bots: keep only when the domain itself carries the organization's name.
                 blocked = page.status in BLOCKED and domain_matches(host, org.name)
