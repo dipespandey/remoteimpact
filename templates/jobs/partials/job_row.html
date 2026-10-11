@@ -1,8 +1,8 @@
 {% load humanize job_extras %}{# One job row for list-surface lists. Expects `job`. Optional: `heading` ("h3", default h2), `featured_slot` (adds ?source=featured_slot and the Featured badge), `show_org` (default true). #}
 <article class="job-row relative">
     <div class="flex items-start gap-3">
-        {% if job.organization.logo %}
-        <img src="{{ job.organization.logo.url }}" alt="" loading="lazy" class="mt-0.5 hidden h-9 w-9 shrink-0 rounded-xl bg-muted object-cover sm:block">
+        {% if job.organization.logo_src %}
+        <img src="{{ job.organization.logo_src }}" alt="" loading="lazy" class="mt-0.5 hidden h-9 w-9 shrink-0 rounded-xl bg-muted object-cover sm:block">
         {% elif show_org is not False and job.organization %}
         <span class="avatar mt-0.5 hidden sm:inline-grid {{ job.organization.name|org_tone }}" aria-hidden="true">{{ job.organization.name|initials }}</span>
         {% endif %}

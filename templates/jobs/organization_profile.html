@@ -29,7 +29,7 @@
     "name": "{{ organization.name|escapejs }}",
     {% if organization.description %}"description": "{{ organization.description|escapejs|truncatewords:50 }}",{% endif %}
     {% if organization.website %}"url": "{{ organization.website }}",{% endif %}
-    {% if organization.logo %}"logo": "{{ SITE_URL }}{{ organization.logo.url }}",{% endif %}
+    {% if organization.logo_src %}"logo": "{{ SITE_URL }}{{ organization.logo_src }}",{% endif %}
     {% if organization.founded_year %}"foundingDate": "{{ organization.founded_year }}",{% endif %}
     {% if organization.team_size %}"numberOfEmployees": {
         "@type": "QuantitativeValue",
@@ -52,16 +52,8 @@
         {
             "@type": "ListItem",
             "position": {{ forloop.counter }},
-            "item": {
-                "@type": "JobPosting",
-                "title": "{{ job.title|escapejs }}",
-                "hiringOrganization": {
-                    "@type": "Organization",
-                    "name": "{{ organization.name|escapejs }}"
-                },
-                "datePosted": "{{ job.posted_at|date:'Y-m-d' }}",
-                "url": "{{ SITE_URL }}{{ job.get_absolute_url }}"
-            }
+            "name": "{{ job.title|escapejs }}",
+            "url": "{{ SITE_URL }}{{ job.get_absolute_url }}"
         }{% if not forloop.last %},{% endif %}
         {% endfor %}
     ]
@@ -83,8 +75,8 @@
             </ol>
         </nav>
         <div class="mt-3 flex items-start gap-4">
-            {% if organization.logo %}
-            <img src="{{ organization.logo.url }}" alt="{{ organization.name }}" class="h-12 w-12 shrink-0 rounded-xl bg-muted object-cover sm:h-14 sm:w-14" fetchpriority="high">
+            {% if organization.logo_src %}
+            <img src="{{ organization.logo_src }}" alt="{{ organization.name }}" class="h-12 w-12 shrink-0 rounded-xl bg-muted object-cover sm:h-14 sm:w-14" fetchpriority="high">
             {% endif %}
             <div class="min-w-0">
                 <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">

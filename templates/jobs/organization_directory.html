@@ -50,8 +50,8 @@
         {% for org in organizations %}
         <li>
             <a href="{% url 'jobs:organization_profile' slug=org.slug %}" class="flex items-center gap-3 rounded-xl px-3.5 py-3 transition-colors hover:bg-muted sm:px-4">
-                {% if org.logo %}
-                <img src="{{ org.logo.url }}" alt="" loading="lazy" class="h-9 w-9 shrink-0 rounded-lg bg-muted object-cover">
+                {% if org.logo_src %}
+                <img src="{{ org.logo_src }}" alt="" loading="lazy" class="h-9 w-9 shrink-0 rounded-lg bg-muted object-cover">
                 {% endif %}
                 <div class="min-w-0 flex-1">
                     <h2 class="truncate text-[15px] font-semibold text-foreground">{{ org.name }}</h2>

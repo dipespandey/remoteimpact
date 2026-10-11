@@ -296,12 +296,9 @@ def job_posting_schema_json(job, site_url: str) -> str:
     website = safe_application_destination(job.organization.website)
     if website:
         data["hiringOrganization"]["sameAs"] = website
-    logo = getattr(job.organization, "logo", None)
+    logo = job.organization.logo_src
     if logo:
-        try:
-            data["hiringOrganization"]["logo"] = site_url.rstrip("/") + logo.url if logo.url.startswith("/") else logo.url
-        except ValueError:
-            pass
+        data["hiringOrganization"]["logo"] = site_url.rstrip("/") + logo if logo.startswith("/") else logo
     # Eligibility must be grounded in positive residency/remote-work source
     # evidence. A normalized country field alone can be a lossy import label.
     remote = bool(re.search(r"\bremote\b", job.location or "", re.I))

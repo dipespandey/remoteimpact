@@ -63,7 +63,7 @@
                 {% for job in jobs %}
                 <article class="card flex items-start gap-4 p-4 transition hover:border-brand-300 sm:p-5">
                     <div class="hidden h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-muted text-sm font-semibold text-muted-foreground sm:grid">
-                        {% if job.organization.logo %}<img src="{{ job.organization.logo.url }}" alt="{{ job.organization.name }}" loading="lazy" class="h-full w-full object-contain">{% else %}{{ job.organization.name|default:"RI"|slice:":2"|upper }}{% endif %}
+                        {% if job.organization.logo_src %}<img src="{{ job.organization.logo_src }}" alt="{{ job.organization.name }}" loading="lazy" class="h-full w-full object-contain">{% else %}{{ job.organization.name|default:"RI"|slice:":2"|upper }}{% endif %}
                     </div>
                     <div class="min-w-0 flex-1">
                         <h2 class="job-title">

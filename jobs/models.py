@@ -27,6 +27,9 @@ class Organization(models.Model):
     )
     website = models.TextField(blank=True)  # TextField to handle long/multi-language URLs
     logo = models.ImageField(upload_to="organizations/", blank=True, null=True)
+    # Logo fetched from the organization's own site (OrganizationLogo), versioned for cache busting
+    logo_version = models.CharField(max_length=16, blank=True)
+    logo_checked_at = models.DateTimeField(null=True, blank=True)
     members = models.ManyToManyField(
         get_user_model(), related_name="organizations", blank=True
     )
@@ -140,6 +143,19 @@ class Organization(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def logo_src(self) -> str:
+        """Site-relative URL of the logo to show: an uploaded one first, then the one fetched from its site."""
+        if self.logo:
+            try:
+                return self.logo.url
+            except ValueError:
+                pass
+        if self.logo_version and self.slug:
+            from django.urls import reverse
+            return f"{reverse('jobs:organization_logo', args=[self.slug])}?v={self.logo_version}"
+        return ""
 
     @property
     def impact_profile_completeness(self) -> int:
@@ -1810,3 +1826,12 @@ class CountryDailyActivity(models.Model):
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["date", "country"], name="unique_country_daily_activity")]
+
+
+class OrganizationLogo(models.Model):
+    """A small square PNG of the organization's icon, re-encoded from its own website."""
+
+    organization = models.OneToOneField(Organization, on_delete=models.CASCADE, primary_key=True, related_name="fetched_logo")
+    png = models.BinaryField()
+    source_url = models.TextField(blank=True)
+    fetched_at = models.DateTimeField(auto_now=True)

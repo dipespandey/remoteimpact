@@ -30,6 +30,7 @@ class FetchResult:
     status_code: int = 0
     text: str = ""
     headers: dict = field(default_factory=dict)
+    content: bytes = b""
 
 
 def resolve_public_url(url, *, dns_timeout=5):
@@ -117,10 +118,26 @@ def _request_pinned(parsed, hostname, port, ip, headers, remaining):
         raise
 
 
+HTML_TYPES = frozenset({"text/html", "application/xhtml+xml"})
+IMAGE_TYPES = frozenset({"image/png", "image/jpeg", "image/webp", "image/x-icon", "image/vnd.microsoft.icon", "image/gif"})
+
+
 def fetch_public_html(url, *, headers=None, max_bytes=1_000_000, total_timeout=15, max_redirects=3):
     """Return only bounded HTML; every redirect gets fresh validation/pinning."""
+    return _fetch_public(url, headers=headers, max_bytes=max_bytes, total_timeout=total_timeout,
+                         max_redirects=max_redirects, allowed_types=HTML_TYPES, accept="text/html,application/xhtml+xml")
+
+
+def fetch_public_image(url, *, max_bytes=300_000, total_timeout=10, max_redirects=3):
+    """Bounded raster image bytes (FetchResult.content); SVG is never accepted."""
+    return _fetch_public(url, headers=None, max_bytes=max_bytes, total_timeout=total_timeout,
+                         max_redirects=max_redirects, allowed_types=IMAGE_TYPES, accept="image/png,image/webp,image/*;q=0.8",
+                         binary=True)
+
+
+def _fetch_public(url, *, headers, max_bytes, total_timeout, max_redirects, allowed_types, accept, binary=False):
     deadline = time.monotonic() + total_timeout
-    request_headers = {"User-Agent": "RemoteImpactBot/1.0", "Accept": "text/html,application/xhtml+xml", **(headers or {}), "Accept-Encoding": "identity"}
+    request_headers = {"User-Agent": "RemoteImpactBot/1.0", "Accept": accept, **(headers or {}), "Accept-Encoding": "identity"}
     for hop in range(max_redirects + 1):
         pool = response = None
         try:
@@ -144,7 +161,7 @@ def fetch_public_html(url, *, headers=None, max_bytes=1_000_000, total_timeout=1
                 continue
             if status != 200:
                 return FetchResult(f"http_{status}", status, headers=response_headers)
-            if response.headers.get("Content-Type", "").split(";", 1)[0].strip().lower() not in {"text/html", "application/xhtml+xml"}:
+            if response.headers.get("Content-Type", "").split(";", 1)[0].strip().lower() not in allowed_types:
                 return FetchResult("non_html", status)
             if response.headers.get("Content-Encoding", "identity").lower() not in {"identity", ""}:
                 return FetchResult("unsupported_encoding", status)
@@ -166,7 +183,10 @@ def fetch_public_html(url, *, headers=None, max_bytes=1_000_000, total_timeout=1
                 if size > max_bytes:
                     return FetchResult("page_too_large", status)
                 chunks.append(chunk)
-            return FetchResult("ok", status, b"".join(chunks).decode("utf-8", errors="replace"), response_headers)
+            body = b"".join(chunks)
+            if binary:
+                return FetchResult("ok", status, headers=response_headers, content=body)
+            return FetchResult("ok", status, body.decode("utf-8", errors="replace"), response_headers)
         except (UnsafeURL, UnicodeError):
             return FetchResult("unsafe_or_unresolvable_url")
         except (OSError, urllib3.exceptions.HTTPError, ValueError):

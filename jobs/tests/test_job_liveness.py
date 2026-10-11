@@ -836,3 +836,54 @@ class ScoutJobTypeTests(TestCase):
         self.assertEqual(set(types), {"full-time", "freelance"})
         self.assertEqual(JobScoutService._explicit_job_types("Permanent roles only"), ["full-time"])
         self.assertEqual(JobScoutService._explicit_job_types("A permanent impact on climate"), [])
+
+
+class OrganizationLogoTests(TestCase):
+    def png(self, size=(200, 200)):
+        import io
+        from PIL import Image
+        out = io.BytesIO()
+        Image.new("RGBA", size, (20, 120, 60, 255)).save(out, format="PNG")
+        return out.getvalue()
+
+    def test_icon_candidates_prefer_apple_touch_and_skip_svg(self):
+        from jobs.services.org_logos import icon_candidates
+        html = ('<link rel="icon" href="/favicon-32.png" sizes="32x32"><link rel="icon" href="/logo.svg">'
+                '<link rel="apple-touch-icon" href="/apple.png">')
+        urls = icon_candidates(html, "https://org.example/about/")
+        self.assertEqual(urls[0], "https://org.example/apple.png")
+        self.assertNotIn("https://org.example/logo.svg", urls)
+        self.assertIn("https://org.example/favicon.ico", urls)
+
+    def test_square_icons_are_reencoded_and_banners_rejected(self):
+        from jobs.services.org_logos import to_square_png
+        out = to_square_png(self.png())
+        self.assertTrue(out.startswith(b"\x89PNG"))
+        self.assertIsNone(to_square_png(self.png((600, 200))))
+        self.assertIsNone(to_square_png(self.png((16, 16))))
+        self.assertIsNone(to_square_png(b"<svg onload=alert(1)></svg>"))
+
+    def test_logo_is_served_and_used_in_schema(self):
+        import json
+        from jobs.models import Job, Organization, OrganizationLogo
+        from jobs.services.job_quality import job_posting_schema_json
+        org = Organization.objects.create(name="Logo Org", slug="logo-org", logo_version="abc123")
+        OrganizationLogo.objects.create(organization=org, png=self.png())
+        response = self.client.get(reverse("jobs:organization_logo", args=["logo-org"]))
+        self.assertEqual(response["Content-Type"], "image/png")
+        self.assertIn("immutable", response["Cache-Control"])
+        self.assertEqual(org.logo_src, "/org/logo-org/logo.png?v=abc123")
+        job = Job.objects.create(title="Analyst", slug="analyst-logo", organization=org, location="Remote",
+                                 description="Analyse.", application_url="https://example.org/a")
+        data = json.loads(job_posting_schema_json(job, "https://remoteimpact.org"))
+        self.assertEqual(data["hiringOrganization"]["logo"], "https://remoteimpact.org/org/logo-org/logo.png?v=abc123")
+        self.assertEqual(self.client.get(reverse("jobs:organization_logo", args=["missing"])).status_code, 404)
+
+
+class EmployerSiteTests(TestCase):
+    def test_platform_profiles_are_not_employer_sites(self):
+        from jobs.management.commands.fetch_org_logos import employer_site
+        self.assertFalse(employer_site("https://www.idealist.org/en/nonprofit/abc"))
+        self.assertFalse(employer_site("https://jobs.lever.co/acme"))
+        self.assertTrue(employer_site("https://www.actalliance.org/"))
+        self.assertTrue(employer_site("80000hours.org"))

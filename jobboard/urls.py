@@ -125,11 +125,11 @@ Disallow: /jobs/*/feature/
 Disallow: /jobs/*/go/
 Crawl-delay: 2
 
+# AI search and training crawlers that cite or learn from public pages: allowed (they follow the
+# default rules above). Common Crawl (CCBot) feeds many AI models; Amazonbot powers Alexa/Rufus answers.
+
 # Block low-value scrapers
 User-agent: Bytespider
-Disallow: /
-
-User-agent: CCBot
 Disallow: /
 
 User-agent: DataForSeoBot
@@ -139,9 +139,6 @@ User-agent: SemrushBot
 Disallow: /
 
 User-agent: AhrefsBot
-Disallow: /
-
-User-agent: Amazonbot
 Disallow: /
 
 User-agent: PetalBot

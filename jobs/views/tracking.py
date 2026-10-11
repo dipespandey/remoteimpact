@@ -36,3 +36,18 @@ class JobApplyRedirectView(View):
         response["Cache-Control"] = "no-store"
         response["Referrer-Policy"] = "origin"
         return response
+
+
+def organization_logo(request, slug):
+    """An organization's fetched logo, served from our own domain (the URL carries a version)."""
+    from django.http import HttpResponse
+
+    from ..models import OrganizationLogo
+
+    logo = OrganizationLogo.objects.only("png").filter(organization__slug=slug).first()
+    if logo is None:
+        return HttpResponse(status=404)
+    response = HttpResponse(bytes(logo.png), content_type="image/png")
+    response["Cache-Control"] = "public, max-age=2592000, immutable"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
