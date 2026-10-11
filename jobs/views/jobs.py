@@ -361,9 +361,9 @@ class JobDetailView(DetailView):
             pk=self.object.pk
         ).exists()
 
-        from ..services.job_quality import job_posting_schema_json, safe_application_destination
+        from ..services.job_quality import google_job_posting_json, safe_application_destination
         context["job_posting_schema_json"] = (
-            job_posting_schema_json(self.object, getattr(settings, "SITE_URL", "https://remoteimpact.org"))
+            google_job_posting_json(self.object, getattr(settings, "SITE_URL", "https://remoteimpact.org"))
             if context["job_available"] else ""
         )
         # Imported fields can repeat an entire source description. Display a

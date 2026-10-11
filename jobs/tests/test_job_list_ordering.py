@@ -386,6 +386,7 @@ class JobDetailAvailabilityTest(TestCase):
             slug="open-engineer",
             organization=self.organization,
             description="A current role.",
+            location="Remote (US)",
             posted_at=timezone.now() - timedelta(days=2),
             is_active=True,
         )

@@ -43,7 +43,7 @@ class AvailabilityPolicyTests(TestCase):
             (dict(quality_score=55), True),
         ]
         for values, expected in examples:
-            job = self.job(**values)
+            job = self.job(location='Remote (US)', **values)
             with self.subTest(values=values):
                 self.assertEqual(job.is_available, expected)
                 self.assertEqual(visible_jobs().filter(pk=job.pk).exists(), expected)
@@ -185,3 +185,15 @@ class SchemaLabelCountryTests(TestCase):
         self.assertIn('Design grid upgrades.\n', data['description'])
         self.assertIn('- Model loads', data['description'])
         self.assertEqual(data['identifier']['name'], 'Label Org')
+
+
+class GoogleJobPostingTests(TestCase):
+    def test_remote_job_without_country_carries_no_job_posting(self):
+        from jobs.services.job_quality import google_job_posting_json
+        org = Organization.objects.create(name='Worldwide Org')
+        worldwide = Job.objects.create(title='Writer', slug='writer-ww', organization=org, location='Remote',
+                                       description='Write.', application_url='https://example.org/a')
+        us = Job.objects.create(title='Writer', slug='writer-us', organization=org, location='Remote (US)',
+                                description='Write.', application_url='https://example.org/b')
+        self.assertEqual(google_job_posting_json(worldwide, 'https://example.org'), '')
+        self.assertIn('"JobPosting"', google_job_posting_json(us, 'https://example.org'))

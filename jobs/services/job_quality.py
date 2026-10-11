@@ -335,3 +335,18 @@ def job_posting_schema_json(job, site_url: str) -> str:
     # JSON serialization is necessary: escapejs emits JavaScript escapes (\\u0027
     # is valid, \\x is not JSON), and source text may contain a script terminator.
     return json.dumps(data, ensure_ascii=False).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+
+
+def google_job_posting_json(job, site_url: str) -> str:
+    """JobPosting markup for the job page, or "" when Google can't use it.
+
+    Google requires an applicant country on remote postings; a remote role with no known country would only
+    show up as an invalid item, so the page carries no JobPosting at all (it stays a normal indexable page).
+    """
+    import json
+
+    encoded = job_posting_schema_json(job, site_url)
+    data = json.loads(encoded)
+    if data.get("jobLocationType") == "TELECOMMUTE" and not data.get("applicantLocationRequirements"):
+        return ""
+    return encoded
