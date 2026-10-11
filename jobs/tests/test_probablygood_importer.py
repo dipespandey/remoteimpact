@@ -128,11 +128,14 @@ class ProbablyGoodImporterTest(SimpleTestCase):
                 }
             ]
         }
-        post.side_effect = [config_response, search_response]
+        # One search per index slice; the same hit in both slices is kept once.
+        post.side_effect = [config_response, search_response, search_response]
 
         jobs = fetch_job_listings(max_pages=1, delay=0)
 
         self.assertEqual(len(jobs), 1)
+        self.assertEqual([c.kwargs["json"]["requests"][0]["facetFilters"] for c in post.call_args_list[1:]],
+                         [["has_salary:true"], ["has_salary:false"]])
         self.assertEqual(jobs[0]["title"], "Writer and Editor")
         search_call = post.call_args_list[1]
         self.assertEqual(search_call.kwargs["json"]["requests"][0]["indexName"], "jobs_prod")

@@ -624,6 +624,9 @@ def _extract_job_from_algolia_hit(hit: Dict) -> Optional[Dict]:
     }
 
 
+PARTITIONS = (["has_salary:true"], ["has_salary:false"])
+
+
 def fetch_job_listings(
     max_pages: Optional[int] = 60,
     delay: float = 1.0,
@@ -639,42 +642,51 @@ def fetch_job_listings(
         "X-Algolia-API-Key": config["api_key"],
     }
     jobs = []
-    page = 0
+    seen = set()
     page_size = 100
     logger.info("Starting Probably Good Algolia fetch (max_pages=%s)", max_pages)
 
-    while max_pages is None or page < max_pages:
-        response = requests.post(
-            search_url,
-            json={
-                "requests": [
-                    {
-                        "indexName": config["index_name_jobs"],
-                        "query": "",
-                        "hitsPerPage": page_size,
-                        "page": page,
-                    }
-                ]
-            },
-            headers=headers,
-            timeout=30,
-        )
-        response.raise_for_status()
-        result = response.json()["results"][0]
-        hits = result.get("hits", [])
-        if not hits:
-            break
-        for hit in hits:
-            payload = _extract_job_from_algolia_hit(hit)
-            if payload:
-                jobs.append(payload)
-                if limit and len(jobs) >= limit:
-                    return jobs[:limit]
-        page += 1
-        if page >= result.get("nbPages", 0):
-            break
-        if delay:
-            time.sleep(min(delay, 1.0))
+    # Algolia returns at most 1,000 hits per query, and the index holds more than that, so
+    # read it in slices that each stay under the cap (salary listed / not listed covers all).
+    for facet_filters in PARTITIONS:
+        page = 0
+        while max_pages is None or page < max_pages:
+            response = requests.post(
+                search_url,
+                json={
+                    "requests": [
+                        {
+                            "indexName": config["index_name_jobs"],
+                            "query": "",
+                            "hitsPerPage": page_size,
+                            "page": page,
+                            "facetFilters": facet_filters,
+                        }
+                    ]
+                },
+                headers=headers,
+                timeout=30,
+            )
+            response.raise_for_status()
+            result = response.json()["results"][0]
+            if page == 0 and result.get("nbHits", 0) >= 1000:
+                logger.warning("Probably Good slice %s has %s hits; some are beyond the 1,000 cap",
+                               facet_filters, result.get("nbHits"))
+            hits = result.get("hits", [])
+            if not hits:
+                break
+            for hit in hits:
+                payload = _extract_job_from_algolia_hit(hit)
+                if payload and payload["external_id"] not in seen:
+                    seen.add(payload["external_id"])
+                    jobs.append(payload)
+                    if limit and len(jobs) >= limit:
+                        return jobs[:limit]
+            page += 1
+            if page >= result.get("nbPages", 0):
+                break
+            if delay:
+                time.sleep(min(delay, 1.0))
 
     return jobs
 

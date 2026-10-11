@@ -1001,3 +1001,12 @@ class RegionFilterTests(TestCase):
         params = QueryDict("country=Europe&country=Germany&country=Czech Republic")
         found = set(JobService.get_filtered_jobs(params).filter(organization=org).values_list("slug", flat=True))
         self.assertEqual(found, {"eu", "europe", "de"})
+
+
+class MultiLocationTests(TestCase):
+    def test_any_global_option_makes_it_worldwide(self):
+        from jobs.services.location_normalizer import normalize_location
+        self.assertEqual(normalize_location("Remote, USA; Remote, Global"), "Remote")
+        self.assertEqual(normalize_location("Remote, Global"), "Remote")
+        self.assertEqual(normalize_location("Remote, USA; Remote, UK"), "Remote (US)")
+        self.assertEqual(normalize_location("Remote, Europe"), "Remote (EU)")

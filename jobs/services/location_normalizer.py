@@ -195,6 +195,11 @@ def normalize_location(location: str) -> str:
     if loc_lower == "flexible" or loc_lower == "anywhere":
         return "Remote"
 
+    # Several remote options where one is global ("Remote, USA; Remote, Global"): open worldwide
+    parts = [p.strip() for p in re.split(r"[;|]", loc_lower) if p.strip()]
+    if len(parts) > 1 and any(re.fullmatch(r"(?:remote[,\s-]*)?(?:global|worldwide|anywhere)(?:\s*\(.*\))?", p) for p in parts):
+        return "Remote"
+
     # Check for garbage data (job titles in location field)
     # Pattern: "Job Title Company Added Date Location"
     garbage_pattern = r"Added\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d+"
