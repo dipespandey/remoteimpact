@@ -1028,3 +1028,16 @@ class BestMatchUnderFiltersTests(TestCase):
         self.assertEqual([j.pk for j in only], [jobs[0].pk])
         self.assertEqual(len(everything), 4)
         self.assertEqual(everything[0].pk, jobs[0].pk)
+
+
+class SalaryPlausibilityTests(TestCase):
+    def test_wide_ranges_are_dropped_and_recorded(self):
+        from decimal import Decimal
+        from jobs.services.importers.common import drop_implausible_salary
+        wide = {"salary_min": Decimal("10000"), "salary_max": Decimal("600000"), "salary_currency": "USD", "raw_data": {}}
+        drop_implausible_salary(wide)
+        self.assertIsNone(wide["salary_min"])
+        self.assertEqual(wide["raw_data"]["salary_rejected"]["reason"], "range_too_wide")
+        normal = {"salary_min": Decimal("80000"), "salary_max": Decimal("120000"), "salary_currency": "USD", "raw_data": {}}
+        drop_implausible_salary(normal)
+        self.assertEqual(normal["salary_max"], Decimal("120000"))

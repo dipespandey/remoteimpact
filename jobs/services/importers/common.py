@@ -62,6 +62,20 @@ _NON_OPENING_LISTING_PATTERNS = (
 )
 
 PUBLIC_DESCRIPTION_MIN_LENGTH = 120
+# A real advertised range is rarely more than ~3x wide; wider ones are mixed currencies
+# ("£36k ... 5.1M KES") or ATS placeholder bands ("$10,000 - $600,000").
+MAX_SALARY_RANGE_RATIO = 5
+
+
+def drop_implausible_salary(defaults: Dict[str, Any]) -> None:
+    low, high = defaults.get("salary_min"), defaults.get("salary_max")
+    if low and high and float(low) > 0 and float(high) / float(low) > MAX_SALARY_RANGE_RATIO:
+        raw = dict(defaults.get("raw_data") or {})
+        raw["salary_rejected"] = {"min": str(low), "max": str(high), "currency": defaults.get("salary_currency") or "",
+                                  "reason": "range_too_wide"}
+        defaults["raw_data"] = raw
+        defaults["salary_min"] = defaults["salary_max"] = None
+        defaults["salary_currency"] = ""
 
 
 def _public_listing_quality_ready(payload: Dict[str, Any]) -> bool:
@@ -591,6 +605,7 @@ def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
         "raw_data": payload.get("raw_data", {}),
         "last_seen_at": timezone.now(),
     }
+    drop_implausible_salary(defaults)
 
     job = Job.objects.filter(
         source=payload["source"],
@@ -621,6 +636,7 @@ def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
         if defaults["salary_min"] is None and defaults["salary_max"] is None:
             for field in ("salary_min", "salary_max", "salary_currency"):
                 defaults[field] = getattr(job, field)
+        drop_implausible_salary(defaults)
         incoming_raw = dict(defaults["raw_data"] or {})
         for key in ("quality_enrichment", "source_page_enrichment", "source_verification", "last_stale_check", "crawl_error", "ats", "ats_check"):
             if key in old_raw and key not in incoming_raw and (same_destination or key == "quality_enrichment"):
