@@ -13,6 +13,20 @@ from jobs.models import Organization
 from jobs.services.org_sites import domain_matches, employer_host, host_of, page_names_org
 from jobs.services.safe_fetch import fetch_public_html
 
+BLOCKED = {"http_403", "http_429", "http_503"}
+
+
+def short_name_in_title(html: str, name: str) -> bool:
+    """Short names (RMI, xAI, SES) as a whole word in the page title."""
+    import re
+
+    words = re.findall(r"[A-Za-z0-9]+", name or "")
+    if not words or len(words) > 2 or len(words[0]) > 4:
+        return False
+    title = " ".join(re.findall(r"<title[^>]*>(.*?)</title>", html or "", re.I | re.S)[:1])
+    return bool(re.search(r"\b" + re.escape(words[0]) + r"\b", title, re.I))
+
+
 ATS_HOSTS = ("greenhouse.io", "lever.co", "ashbyhq.com", "workable.com", "bamboohr.com", "recruitee.com",
              "personio.de", "personio.com", "breezy.hr", "smartrecruiters.com", "myworkdayjobs.com", "teamtailor.com",
              "applytojob.com", "jobvite.com", "rippling.com", "pinpointhq.com", "dover.com", "paylocity.com")
@@ -37,8 +51,12 @@ class Command(BaseCommand):
             homepage = (row.get("homepage") or "").strip()
             host = host_of(homepage)
             if homepage and not org.homepage_url and employer_host(host):
-                page = fetch_public_html(f"https://{host}/", max_bytes=800_000, total_timeout=12)
-                if page.status == "ok" and (page_names_org(page.text, org.name) or domain_matches(host, org.name)):
+                page = fetch_public_html(f"https://{host}/", max_bytes=4_000_000, total_timeout=15)
+                named = page.status == "ok" and (
+                    page_names_org(page.text, org.name) or domain_matches(host, org.name) or short_name_in_title(page.text, org.name))
+                # Sites that block bots: keep only when the domain itself carries the organization's name.
+                blocked = page.status in BLOCKED and domain_matches(host, org.name)
+                if named or blocked:
                     update.update(homepage_url=f"https://{host}/", homepage_source="search")
                     kept += 1
                 else:
