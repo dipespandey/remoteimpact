@@ -231,6 +231,50 @@ def schema_applicant_countries(job) -> list[str]:
     return [str(countries.name(code)) for code in sorted(selected)]
 
 
+EU_COUNTRY_CODES = "AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE".split()
+LABEL_COUNTRY_CODES = {"US": ["US"], "USA": ["US"], "UK": ["GB"], "EU": EU_COUNTRY_CODES}
+RESIDENCY_CLAUSE = (
+    r"remote\s+(?:within|from|in)|(?:must|need to|only)\s+(?:be\s+)?(?:based|reside|located)|"
+    r"(?:candidates|applicants)\s+(?:must\s+)?(?:be\s+)?(?:based|reside|located)|work\s+authori[sz]ation|"
+    r"eligible\s+to\s+work|right\s+to\s+work"
+)
+
+
+def label_applicant_countries(job) -> list[str]:
+    """Countries from the visible "Remote (US)" style label, when the listing says nothing else about where
+    applicants must live. Any residency wording in the text leaves the decision to the strict source rules."""
+    import re
+    from django_countries import countries
+    from jobs.services.scout_constraints import plain_job_field
+
+    match = re.fullmatch(r"\s*remote\s*\(([^)]+)\)\s*", job.location or "", re.I)
+    if not match:
+        return []
+    body = " ".join(plain_job_field(job, field) for field in ("description", "requirements"))
+    if re.search(RESIDENCY_CLAUSE, body, re.I):
+        return []
+    label = match.group(1).strip()
+    codes = LABEL_COUNTRY_CODES.get(label.upper())
+    if codes is None:
+        code = countries.by_name(label)
+        codes = [code] if code else []
+    return [str(countries.name(code)) for code in codes]
+
+
+def _schema_description(job) -> str:
+    """Listing text with its paragraph and list breaks kept (strip_tags alone runs sentences together)."""
+    import re
+    from django.utils.html import strip_tags
+
+    text = job.description or job.requirements or job.impact or job.title
+    text = re.sub(r"(?i)<\s*(?:br\s*/?|/p|/li|/h[1-6]|/div|/ul|/ol)\s*>", "\n", text)
+    text = re.sub(r"(?i)<\s*li[^>]*>", "\n- ", text)
+    text = strip_tags(text).replace("\xa0", " ")
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n\s*\n+", "\n\n", text).strip()
+    return text[:5000]
+
+
 def job_posting_schema_json(job, site_url: str) -> str:
     """Serialize source facts without invented expiry, employer identity or geography."""
     import json
@@ -239,8 +283,8 @@ def job_posting_schema_json(job, site_url: str) -> str:
 
     data = {
         "@context": "https://schema.org", "@type": "JobPosting",
-        "title": job.title, "description": strip_tags(job.description or job.requirements or job.impact or job.title)[:5000],
-        "identifier": {"@type": "PropertyValue", "name": "Remote Impact", "value": str(job.pk)},
+        "title": job.title, "description": _schema_description(job),
+        "identifier": {"@type": "PropertyValue", "name": job.organization.name, "value": str(job.pk)},
         "url": site_url.rstrip("/") + job.get_absolute_url(),
         "datePosted": job.posted_at.isoformat(),
         "hiringOrganization": {"@type": "Organization", "name": job.organization.name},
@@ -252,12 +296,18 @@ def job_posting_schema_json(job, site_url: str) -> str:
     website = safe_application_destination(job.organization.website)
     if website:
         data["hiringOrganization"]["sameAs"] = website
+    logo = getattr(job.organization, "logo", None)
+    if logo:
+        try:
+            data["hiringOrganization"]["logo"] = site_url.rstrip("/") + logo.url if logo.url.startswith("/") else logo.url
+        except ValueError:
+            pass
     # Eligibility must be grounded in positive residency/remote-work source
     # evidence. A normalized country field alone can be a lossy import label.
     remote = bool(re.search(r"\bremote\b", job.location or "", re.I))
     if remote:
         data["jobLocationType"] = "TELECOMMUTE"
-        eligible_countries = schema_applicant_countries(job)
+        eligible_countries = schema_applicant_countries(job) or label_applicant_countries(job)
         if eligible_countries:
             requirements = [{"@type": "Country", "name": name} for name in eligible_countries]
             data["applicantLocationRequirements"] = requirements[0] if len(requirements) == 1 else requirements

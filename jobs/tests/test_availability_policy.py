@@ -156,3 +156,32 @@ class AvailabilityPolicyTests(TestCase):
         job.refresh_from_db()
         self.assertEqual(job.requirements, text)
         self.assertEqual(job.impact, text)
+
+
+class SchemaLabelCountryTests(TestCase):
+    def setUp(self):
+        self.org = Organization.objects.create(name='Label Org')
+
+    def job(self, **kwargs):
+        values = dict(title='Grid Engineer', slug=f'grid-{Job.objects.count()}', organization=self.org, source='ashby',
+                      description='<p>Design grid upgrades.</p><ul><li>Model loads</li><li>Write reports</li></ul>',
+                      application_url='https://jobs.example.org/role', location='Remote (US)')
+        values.update(kwargs)
+        return Job.objects.create(**values)
+
+    def test_visible_label_gives_country_when_text_is_silent(self):
+        data = json.loads(job_posting_schema_json(self.job(), 'https://example.org'))
+        self.assertEqual(data['applicantLocationRequirements']['name'], 'United States of America')
+        data = json.loads(job_posting_schema_json(self.job(location='Remote (EU)'), 'https://example.org'))
+        self.assertEqual(len(data['applicantLocationRequirements']), 27)
+
+    def test_residency_wording_leaves_it_to_the_strict_rules(self):
+        job = self.job(description='This role is remote in the United States or Canada.')
+        self.assertNotIn('applicantLocationRequirements', json.loads(job_posting_schema_json(job, 'https://example.org')))
+
+    def test_worldwide_remote_and_descriptions_keep_breaks(self):
+        data = json.loads(job_posting_schema_json(self.job(location='Remote'), 'https://example.org'))
+        self.assertNotIn('applicantLocationRequirements', data)
+        self.assertIn('Design grid upgrades.\n', data['description'])
+        self.assertIn('- Model loads', data['description'])
+        self.assertEqual(data['identifier']['name'], 'Label Org')
