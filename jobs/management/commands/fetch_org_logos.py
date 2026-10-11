@@ -49,14 +49,15 @@ class Command(BaseCommand):
             board_query |= Q(application_url__icontains=host)
         orgs = list(
             Organization.objects.filter(pk__in=live)
-            .filter(~Q(website="") | Q(pk__in=live_jobs.filter(board_query).values("organization_id")))
+            .filter(~Q(website="") | ~Q(homepage_url="") | Q(pk__in=live_jobs.filter(board_query).values("organization_id")))
             .filter(Q(logo="") | Q(logo__isnull=True))
             .filter(Q(logo_checked_at__isnull=True) | Q(logo_checked_at__lt=stale))
             .order_by("logo_checked_at", "name")
-            .only("pk", "website", "name")[: options["limit"]]
+            .only("pk", "website", "homepage_url", "name")[: options["limit"]]
         )
         def fetch(org):
-            found = fetch_logo(org.website) if org.website and employer_site(org.website) else None
+            site = org.homepage_url or org.website
+            found = fetch_logo(site) if site and employer_site(site) else None
             if not found:
                 # Fall back to the employer's page on its applicant-tracking board
                 for url in live_jobs.filter(organization=org).filter(board_query).values_list("application_url", flat=True)[:1]:

@@ -28,14 +28,14 @@
     "@type": "Organization",
     "name": "{{ organization.name|escapejs }}",
     {% if organization.description %}"description": "{{ organization.description|escapejs|truncatewords:50 }}",{% endif %}
-    {% if organization.website %}"url": "{{ organization.website }}",{% endif %}
+    {% if organization.homepage_url %}"url": "{{ organization.homepage_url|escapejs }}",{% endif %}
     {% if organization.logo_src %}"logo": "{{ SITE_URL }}{{ organization.logo_src }}",{% endif %}
     {% if organization.founded_year %}"foundingDate": "{{ organization.founded_year }}",{% endif %}
     {% if organization.team_size %}"numberOfEmployees": {
         "@type": "QuantitativeValue",
         "value": "{{ organization.get_team_size_display }}"
     },{% endif %}
-    "sameAs": [{% if organization.website %}"{{ organization.website }}"{% endif %}],
+    "sameAs": [{% if organization.homepage_url %}"{{ organization.homepage_url|escapejs }}"{% endif %}{% if organization.careers_url %}{% if organization.homepage_url %}, {% endif %}"{{ organization.careers_url|escapejs }}"{% endif %}],
     "dateModified": "{{ date_modified }}"
 }
 </script>
@@ -148,8 +148,11 @@
                     <div class="flex justify-between gap-4"><dt class="text-muted-foreground">Founded</dt><dd class="tabular-nums text-foreground">{{ organization.founded_year }}</dd></div>
                     {% endif %}
                 </dl>
-                {% if organization.website %}
-                <a href="{{ organization.website }}" target="_blank" rel="noopener" class="mt-4 inline-flex max-w-full items-center gap-1 text-sm font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground"><span class="truncate">{{ organization.website|truncatechars:50 }}</span><svg class="h-3.5 w-3.5 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg></a>
+                {% if organization.homepage_url or organization.careers_url %}
+                <div class="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                {% if organization.homepage_url %}<a href="{{ organization.homepage_url }}" target="_blank" rel="noopener" class="inline-flex max-w-full items-center gap-1 font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground"><span class="truncate">Website</span><svg class="h-3.5 w-3.5 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg></a>{% endif %}
+                {% if organization.careers_url %}<a href="{{ organization.careers_url }}" target="_blank" rel="noopener" class="inline-flex max-w-full items-center gap-1 font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground"><span class="truncate">Careers page</span><svg class="h-3.5 w-3.5 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg></a>{% endif %}
+                </div>
                 {% endif %}
                 {% if organization.impact_statement %}
                 <p class="mt-4 text-sm leading-relaxed text-foreground">{{ organization.impact_statement }}</p>

@@ -232,7 +232,7 @@ class ClaimOrganizationView(TemplateView):
         except ValidationError:
             messages.error(request, "Enter a valid work email.")
             return redirect(request.path)
-        site_domain = _domain(self.organization.website)
+        site_domain = _domain(self.organization.homepage_url or self.organization.website)
         claim, _ = OrganizationClaim.objects.get_or_create(organization=self.organization, email=email)
         claim.name = name or claim.name
         claim.domain_match = bool(site_domain) and email.split("@", 1)[1] in (site_domain, f"mail.{site_domain}")

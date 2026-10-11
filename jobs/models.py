@@ -27,6 +27,11 @@ class Organization(models.Model):
     )
     website = models.TextField(blank=True)  # TextField to handle long/multi-language URLs
     logo = models.ImageField(upload_to="organizations/", blank=True, null=True)
+    # The employer's own sites, derived and checked by `discover_org_sites` (never a job board or profile page)
+    homepage_url = models.TextField(blank=True)
+    careers_url = models.TextField(blank=True)
+    homepage_source = models.CharField(max_length=20, blank=True)  # website | claim | apply_domain | guessed
+    sites_checked_at = models.DateTimeField(null=True, blank=True)
     # Logo fetched from the organization's own site (OrganizationLogo), versioned for cache busting
     logo_version = models.CharField(max_length=16, blank=True)
     logo_checked_at = models.DateTimeField(null=True, blank=True)

@@ -907,3 +907,60 @@ class BoardLogoTests(TestCase):
         out = io.BytesIO(); Image.new("RGB", (300, 160), "white").save(out, format="PNG")
         self.assertIsNone(to_square_png(out.getvalue()))
         self.assertIsNotNone(to_square_png(out.getvalue(), max_ratio=2.0))
+
+
+class OrgSitesTests(TestCase):
+    def test_domain_must_carry_the_organization_name(self):
+        from jobs.services.org_sites import domain_matches
+        self.assertTrue(domain_matches("givedirectly.org", "GiveDirectly"))
+        self.assertTrue(domain_matches("clintonhealthaccess.org", "Clinton Health Access Initiative (CHAI)"))
+        self.assertTrue(domain_matches("ifrc.org", "International Federation of Red Cross (IFRC)"))
+        self.assertTrue(domain_matches("rand.org", "RAND Corporation"))
+        self.assertFalse(domain_matches("airtable.com", "Ocean Conservancy"))
+        self.assertFalse(domain_matches("example.co.uk", "Climate Policy Lab"))
+
+    def test_careers_page_from_ats_links_and_homepage_candidates(self):
+        from types import SimpleNamespace
+        from jobs.services.org_sites import careers_url_for, homepage_candidates, resolve_homepage
+        urls = ["https://job-boards.greenhouse.io/givedirectly/jobs/4739348005",
+                "https://job-boards.greenhouse.io/givedirectly/jobs/4738732005",
+                "https://jobs.lever.co/other/abc"]
+        self.assertEqual(careers_url_for(urls), "https://job-boards.greenhouse.io/givedirectly")
+        org = SimpleNamespace(name="GiveDirectly", website="https://www.idealist.org/en/nonprofit/x")
+        apply = ["https://careers.givedirectly.org/jobs/1"]
+        self.assertEqual(homepage_candidates(org, apply), [("https://givedirectly.org/", "apply_domain")])
+        self.assertEqual(homepage_candidates(org, ["https://airtable.com/form"]), [])
+        claimed = homepage_candidates(org, [], claim_domains=["givedirectly.org", "gmail.com"])
+        self.assertEqual(claimed, [("https://givedirectly.org/", "claim")])
+        self.assertEqual(resolve_homepage(org, apply, fetch=lambda url: False), ("", ""))
+        self.assertEqual(resolve_homepage(org, apply, fetch=lambda url: True), ("https://givedirectly.org/", "apply_domain"))
+
+    def test_org_page_links_verified_sites_only(self):
+        from jobs.models import Organization
+        org = Organization.objects.create(name="Sites Org", slug="sites-org", website="https://www.idealist.org/x",
+                                          homepage_url="https://sitesorg.org/", careers_url="https://jobs.lever.co/sitesorg")
+        from allauth.socialaccount.models import SocialApp
+        from django.contrib.sites.models import Site
+        for provider, pid in (("google", ""), ("openid_connect", "linkedin")):
+            SocialApp.objects.create(provider=provider, provider_id=pid, name=pid or provider, client_id="x", secret="y",
+                                     settings={"server_url": "https://www.linkedin.com/oauth"} if pid else {}).sites.add(Site.objects.get_current())
+        html = self.client.get(reverse("jobs:organization_profile", args=["sites-org"])).content.decode()
+        self.assertIn('href="https://sitesorg.org/"', html)
+        self.assertIn("Careers page", html)
+        self.assertNotIn("idealist.org/x", html)
+
+
+class GuessedHomepageTests(TestCase):
+    def test_guess_needs_the_page_to_name_the_organization(self):
+        from types import SimpleNamespace
+        from jobs.services.org_sites import guess_homepage, guessed_domains
+        org = SimpleNamespace(name="Open Door Legal")
+        self.assertIn("opendoorlegal.org", guessed_domains(org, ""))
+        pages = {"https://opendoorlegal.org/": "<title>Domain for sale</title>",
+                 "https://opendoorlegal.com/": "<title>Open Door Legal | Free legal help</title>"}
+        self.assertEqual(guess_homepage(org, "", fetch_html=pages.get), "https://opendoorlegal.com/")
+        self.assertEqual(guess_homepage(org, "", fetch_html=lambda url: "<title>Open Doors Realty</title>"), "")
+        # one-word names are too ambiguous to guess
+        self.assertEqual(guess_homepage(SimpleNamespace(name="Slipstream"), "", fetch_html=lambda url: "<title>Slipstream</title>"), "")
+        intersect = SimpleNamespace(name="Intersect Power")
+        self.assertEqual(guess_homepage(intersect, "", fetch_html=lambda url: "<title>Intersect</title>"), "")
