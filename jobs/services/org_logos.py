@@ -12,7 +12,7 @@ from jobs.services.safe_fetch import fetch_public_html, fetch_public_image
 
 SIZE = 128
 MIN_SIDE = 48
-MAX_PIXELS = 4_000_000
+MAX_PIXELS = 20_000_000  # bytes are capped separately; this guards decompression bombs
 
 
 class _IconLinks(HTMLParser):
@@ -105,7 +105,7 @@ def board_root(application_url: str) -> str:
     if not any(host == h or host.endswith("." + h) for h in BOARD_HOSTS):
         return ""
     if host.endswith("bamboohr.com"):
-        return f"https://{host}/careers"
+        return f"https://{host}/"
     first = next((part for part in parsed.path.split("/") if part), "")
     return f"https://{host}/{first}" if first else ""
 

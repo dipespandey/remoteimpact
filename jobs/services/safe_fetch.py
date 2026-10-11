@@ -119,7 +119,9 @@ def _request_pinned(parsed, hostname, port, ip, headers, remaining):
 
 
 HTML_TYPES = frozenset({"text/html", "application/xhtml+xml"})
-IMAGE_TYPES = frozenset({"image/png", "image/jpeg", "image/webp", "image/x-icon", "image/vnd.microsoft.icon", "image/gif"})
+# Object stores often label images generically; callers must decode and validate the bytes themselves.
+IMAGE_TYPES = frozenset({"image/png", "image/jpeg", "image/jpg", "image/webp", "image/x-icon", "image/vnd.microsoft.icon",
+                         "image/gif", "application/octet-stream", "binary/octet-stream"})
 
 
 def fetch_public_html(url, *, headers=None, max_bytes=1_000_000, total_timeout=15, max_redirects=3):

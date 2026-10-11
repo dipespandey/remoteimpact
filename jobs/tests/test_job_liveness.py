@@ -893,7 +893,7 @@ class BoardLogoTests(TestCase):
     def test_board_root_and_logo_pick_skip_platform_logo(self):
         from jobs.services.org_logos import board_logo_url, board_root
         self.assertEqual(board_root("https://job-boards.greenhouse.io/givedirectly/jobs/47"), "https://job-boards.greenhouse.io/givedirectly")
-        self.assertEqual(board_root("https://cet.bamboohr.com/careers/12"), "https://cet.bamboohr.com/careers")
+        self.assertEqual(board_root("https://cet.bamboohr.com/careers/12"), "https://cet.bamboohr.com/")
         self.assertEqual(board_root("https://example.org/jobs/1"), "")
         html = ('<img alt="Lever logo" src="/img/lever-logo-refresh.svg">'
                 '<img src="https://cdn.greenhouse.io/logos/400/original/thumb.jpg" alt="GiveDirectly Logo" class="logo"/>')
