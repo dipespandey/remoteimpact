@@ -237,7 +237,13 @@ class JobListView(ListView):
 
         # Handle sort options
         sort = self.request.GET.get("sort")
-        if not sort and context.get("seeker_profile") and not context.get("search_query"):
+        # The personal "Best for you" feed is the default only with no filters; filtered
+        # results are newest first, so the dropdown says so.
+        filtered = any(
+            value.strip() for key, values in self.request.GET.lists()
+            if key not in {"page", "source", "sort"} and not key.startswith("utm_") for value in values
+        )
+        if not sort and context.get("seeker_profile") and not context.get("search_query") and not filtered:
             context["sort"] = "best-match"
         # Paid placement: up to three featured roles matching the current
         # filters, pinned above page one and clearly labelled.

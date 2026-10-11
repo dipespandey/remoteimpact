@@ -689,7 +689,10 @@
             // personalised default must not turn into an explicit "matches only" request.
             const sort = document.getElementById('sort-select');
             const urlSort = new URLSearchParams(location.search).get('sort');
-            const sortValue = sortTouched ? (sort && sort.value) : urlSort;
+            let sortValue = sortTouched ? (sort && sort.value) : urlSort;
+            // "Best for you" is the personal feed; once filters are on, results are newest first
+            // unless it was just picked from the dropdown.
+            if (sortValue === 'best-match' && !sortTouched && [...params.keys()].length) sortValue = '';
             if (sortValue && sortValue !== 'date') params.set('sort', sortValue);
             const query = params.toString();
             return form.action + (query ? '?' + query : '');
