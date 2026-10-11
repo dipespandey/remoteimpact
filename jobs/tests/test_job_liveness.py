@@ -1010,3 +1010,21 @@ class MultiLocationTests(TestCase):
         self.assertEqual(normalize_location("Remote, Global"), "Remote")
         self.assertEqual(normalize_location("Remote, USA; Remote, UK"), "Remote (US)")
         self.assertEqual(normalize_location("Remote, Europe"), "Remote (EU)")
+
+
+class BestMatchUnderFiltersTests(TestCase):
+    def test_keep_all_ranks_matches_first_without_dropping_others(self):
+        from unittest import mock
+        from types import SimpleNamespace
+        from jobs.models import Job, Organization
+        from jobs.services.unified_matching_service import UnifiedMatchingService
+        org = Organization.objects.create(name="Match Org")
+        jobs = [Job.objects.create(title=f"Role {i}", slug=f"role-{i}", organization=org, description="x",
+                                   application_url=f"https://example.org/{i}") for i in range(4)]
+        matched = SimpleNamespace(job=jobs[0])
+        with mock.patch.object(UnifiedMatchingService, "get_matches", return_value=[matched]):
+            only = UnifiedMatchingService.order_jobs_for_seeker(Job.objects.all(), seeker=None)
+            everything = UnifiedMatchingService.order_jobs_for_seeker(Job.objects.all(), seeker=None, keep_all=True)
+        self.assertEqual([j.pk for j in only], [jobs[0].pk])
+        self.assertEqual(len(everything), 4)
+        self.assertEqual(everything[0].pk, jobs[0].pk)

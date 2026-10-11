@@ -148,12 +148,21 @@ class UnifiedMatchingService:
     MATCH_CACHE_TTL = 15 * 60  # User-facing matches can be a few minutes stale.
 
     @classmethod
-    def order_jobs_for_seeker(cls, queryset, seeker: SeekerProfile):
-        """Show a fresh chronological feed from a pool of relevant jobs."""
+    def order_jobs_for_seeker(cls, queryset, seeker: SeekerProfile, keep_all: bool = False):
+        """Show a fresh chronological feed from a pool of relevant jobs.
+
+        With ``keep_all`` (explicit filters), every filtered job stays and the seeker's
+        matches come first; otherwise only the match pool is shown.
+        """
         matches = cls.get_matches(seeker, limit=100)
         ranked_ids = [result.job.id for result in matches]
         if not ranked_ids:
             return queryset.order_by("-posted_at", "-id")
+        if keep_all:
+            from django.db.models import Case, IntegerField, Value, When
+            return queryset.annotate(
+                _seeker_match=Case(When(pk__in=ranked_ids, then=Value(0)), default=Value(1), output_field=IntegerField())
+            ).order_by("_seeker_match", "-posted_at", "-id")
 
         # Keep relevance as the candidate pool, then let publication date be
         # the visible ordering. This prevents an old but semantically strong

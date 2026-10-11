@@ -111,7 +111,8 @@ class JobListView(ListView):
                 .first()
             )
             if seeker:
-                return UnifiedMatchingService.order_jobs_for_seeker(jobs, seeker)
+                # Under filters, rank matches first but keep every result that fits them.
+                return UnifiedMatchingService.order_jobs_for_seeker(jobs, seeker, keep_all=has_filters)
         return jobs
 
     def get_context_data(self, **kwargs):

@@ -676,14 +676,19 @@
         if (!form || !area || !window.fetch || !window.DOMParser) return;
         let timer = null;
         let controller = null;
+        let sortTouched = false;
 
         function targetUrl() {
             const params = new URLSearchParams(new FormData(form));
             for (const [key, value] of [...params.entries()]) {
                 if (value === '') params.delete(key);
             }
+            // Send the sort only when it's in the URL or the visitor picked one; the page's
+            // personalised default must not turn into an explicit "matches only" request.
             const sort = document.getElementById('sort-select');
-            if (sort && sort.value && sort.value !== 'date') params.set('sort', sort.value);
+            const urlSort = new URLSearchParams(location.search).get('sort');
+            const sortValue = sortTouched ? (sort && sort.value) : urlSort;
+            if (sortValue && sortValue !== 'date') params.set('sort', sortValue);
             const query = params.toString();
             return form.action + (query ? '?' + query : '');
         }
@@ -739,7 +744,7 @@
         });
         // Sort lives outside the form; delegate so it keeps working after the list is replaced.
         area.addEventListener('change', function (event) {
-            if (event.target.id === 'sort-select') schedule(0);
+            if (event.target.id === 'sort-select') { sortTouched = true; schedule(0); }
         });
     })();
 </script>
