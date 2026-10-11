@@ -983,3 +983,21 @@ class ParkedDomainTests(TestCase):
         self.assertFalse(looks_parked("<title>American Indian College Fund</title> Scholarships for Native students"))
         self.assertFalse(looks_parked('<a href="https://www.jerrdan.com">Jerr-Dan</a>'))
         self.assertTrue(looks_parked("Listed on dan.com"))
+
+
+class RegionFilterTests(TestCase):
+    def test_europe_covers_eu_labels_and_countries_but_not_us(self):
+        from django.http import QueryDict
+        from jobs.models import Job, Organization
+        from jobs.services.job_service import JobService
+        org = Organization.objects.create(name="Region Org")
+        def make(slug, **kw):
+            return Job.objects.create(title=f"Analyst {slug}", slug=slug, organization=org, description="Analyse.",
+                                      application_url=f"https://example.org/{slug}", **kw)
+        eu = make("eu", location="Remote (EU)")
+        europe = make("europe", country="Europe", location="Remote")
+        germany = make("de", location="Remote (Germany)")
+        us = make("us", location="Remote (US)", country="USA")
+        params = QueryDict("country=Europe&country=Germany&country=Czech Republic")
+        found = set(JobService.get_filtered_jobs(params).filter(organization=org).values_list("slug", flat=True))
+        self.assertEqual(found, {"eu", "europe", "de"})

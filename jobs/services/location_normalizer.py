@@ -16,6 +16,8 @@ def country_filter_aliases(value: str) -> set[str]:
     value = str(value).strip()
     if value.lower() in {"global", "worldwide", "anywhere"}:
         return {"Global", "Worldwide", "Anywhere"}
+    if value.lower() in {"europe", "eu", "emea", "european union"}:
+        return {"Europe", "EU", "EMEA", "European Union"}
     canonical = RawDataExtractor._normalize_country(value)
     aliases = {value, canonical} - {None, ""}
     aliases.update(

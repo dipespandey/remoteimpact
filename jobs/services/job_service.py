@@ -79,14 +79,18 @@ class JobService:
         if countries:
             from .location_normalizer import country_filter_aliases
 
-            country_q = Q()
-            for country in countries:
-                for alias in country_filter_aliases(country):
-                    country_q |= Q(country__iexact=alias)
-                    # Two-letter codes such as "in" and "at" are ordinary
-                    # words too; use those only against the structured field.
-                    if len(alias) > 2 or alias.lower() in {"us", "uk"}:
-                        country_q |= Q(location__iregex=rf"(^|[^a-z0-9_]){re.escape(alias)}([^a-z0-9_]|$)")
+            aliases = set()
+            for country in countries[:40]:
+                aliases |= {alias.lower() for alias in country_filter_aliases(country) if alias}
+            # One pattern per field instead of one per alias: a region such as Europe
+            # expands to ~70 spellings, and OR-ing that many regexes took seconds.
+            exact = "|".join(sorted(re.escape(alias) for alias in aliases))
+            # Two-letter codes such as "in" and "at" are ordinary words too; use those
+            # only against the structured field (US, UK and EU are unambiguous).
+            words = sorted(re.escape(a) for a in aliases if len(a) > 2 or a in {"us", "uk", "eu"})
+            country_q = Q(country__iregex=rf"^({exact})$")
+            if words:
+                country_q |= Q(location__iregex=rf"(^|[^a-z0-9_])({'|'.join(words)})([^a-z0-9_]|$)")
             jobs = jobs.filter(country_q)
 
         # "Has salary listed" filter - only show jobs with actual salary data

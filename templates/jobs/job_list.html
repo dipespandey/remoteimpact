@@ -191,7 +191,7 @@
                 search: '',
                 regions: {
                     'Global (Anywhere)': ['Global'],
-                    'Europe': ['UK', 'Germany', 'France', 'Netherlands', 'Spain', 'Italy', 'Switzerland', 'Sweden', 'Belgium', 'Austria', 'Denmark', 'Ireland', 'Norway', 'Poland', 'Portugal', 'Finland', 'Czechia', 'Czech Republic', 'Greece', 'Hungary', 'Romania', 'Bulgaria', 'Estonia'],
+                    'Europe': ['Europe', 'UK', 'Germany', 'France', 'Netherlands', 'Spain', 'Italy', 'Switzerland', 'Sweden', 'Belgium', 'Austria', 'Denmark', 'Ireland', 'Norway', 'Poland', 'Portugal', 'Finland', 'Czechia', 'Czech Republic', 'Greece', 'Hungary', 'Romania', 'Bulgaria', 'Estonia'],
                     'North America': ['USA', 'Canada', 'Mexico'],
                     'Asia Pacific': ['Australia', 'India', 'Japan', 'Singapore', 'New Zealand', 'China', 'South Korea', 'Hong Kong', 'Taiwan', 'Philippines', 'Malaysia', 'Thailand', 'Indonesia', 'Vietnam'],
                     'Latin America': ['Brazil', 'Argentina', 'Colombia', 'Chile', 'Peru', 'Ecuador'],
@@ -202,9 +202,8 @@
                 toggleRegion(regionName) {
                     const regionCountries = this.regions[regionName] || [];
                     // For Global region, always include even if not in allCountries
-                    const available = regionName === 'Global (Anywhere)'
-                        ? regionCountries
-                        : regionCountries.filter(c => this.allCountries.includes(c));
+                    // Region labels (Global, Europe) are always offered; countries only when some job has them
+                    const available = regionCountries.filter(c => c === 'Global' || c === 'Europe' || this.allCountries.includes(c));
                     const allSelected = available.length > 0 && available.every(c => this.selected.includes(c));
                     if (allSelected) {
                         this.selected = this.selected.filter(c => !available.includes(c));
@@ -217,9 +216,8 @@
                 isRegionSelected(regionName) {
                     const regionCountries = this.regions[regionName] || [];
                     // For Global region, always include
-                    const available = regionName === 'Global (Anywhere)'
-                        ? regionCountries
-                        : regionCountries.filter(c => this.allCountries.includes(c));
+                    // Region labels (Global, Europe) are always offered; countries only when some job has them
+                    const available = regionCountries.filter(c => c === 'Global' || c === 'Europe' || this.allCountries.includes(c));
                     return available.length > 0 && available.every(c => this.selected.includes(c));
                 },
                 get filteredCountries() {
