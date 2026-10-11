@@ -225,6 +225,19 @@ class JobService:
         return JobService._order_jobs(jobs, sort, interleave=True)
 
     @staticmethod
+    def count_openings(jobs=None) -> int:
+        """Distinct openings, as the job list shows them (regional reposts of one role count once)."""
+        from django.core.cache import cache
+        if jobs is None:
+            cached = cache.get("job_openings_count:v1")
+            if cached is not None:
+                return cached
+            value = JobService._collapse_location_variants(JobService.get_available_jobs()).count()
+            cache.set("job_openings_count:v1", value, 15 * 60)
+            return value
+        return JobService._collapse_location_variants(jobs).count()
+
+    @staticmethod
     def _collapse_location_variants(jobs):
         """Show one row per organization and title.
 

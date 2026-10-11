@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from jobs.models import Job
 
-CACHE_KEY = "trust_stats:v1"
+CACHE_KEY = "trust_stats:v2"
 REMOVED_STATUSES = ["closed", "not_remote", "dead"]
 
 
@@ -19,7 +19,8 @@ def trust_stats(refresh=False):
 
     now = timezone.now()
     available = JobService.get_available_jobs()
-    live = available.count()
+    live = JobService.count_openings()  # distinct openings, as the job list counts them
+    listings = available.count()  # every listing, including regional reposts: the base for the shares
     confirmed = available.filter(
         raw_data__source_verification__method="ats_api",
         raw_data__source_verification__status="open",
@@ -42,9 +43,10 @@ def trust_stats(refresh=False):
     stats = {
         "live": live,
         "confirmed_open": confirmed,
-        "confirmed_share": round(100 * confirmed / live) if live else 0,
+        "listings": listings,
+        "confirmed_share": round(100 * confirmed / listings) if listings else 0,
         "organizations": available.values("organization").distinct().count(),
-        "salary_share": round(100 * with_salary / live) if live else 0,
+        "salary_share": round(100 * with_salary / listings) if listings else 0,
         "removed_7d": sum(removed.values()),
         "removed_closed_7d": removed["closed"],
         "removed_not_remote_7d": removed["not_remote"],

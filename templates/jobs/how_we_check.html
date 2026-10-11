@@ -24,7 +24,7 @@
 
     <div class="prose prose-neutral mt-10 max-w-none text-[15px] leading-relaxed prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-a:text-foreground">
         <h2>1. We ask the employer, not another job board</h2>
-        <p>Most listings link to the employer's own hiring system: Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Workable, BambooHR, Personio, Recruitee or Breezy. Every morning we ask that system directly whether each role is still open. If the employer has closed it, we take it down the same day. {{ stats.confirmed_open|intcomma }} of today's {{ stats.live|intcomma }} roles were confirmed this way, and those pages say so with the date of the check.</p>
+        <p>Most listings link to the employer's own hiring system: Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Workable, BambooHR, Personio, Recruitee or Breezy. Every morning we ask that system directly whether each role is still open. If the employer has closed it, we take it down the same day. {{ stats.confirmed_open|intcomma }} of today's {{ stats.listings|intcomma }} listings were confirmed this way, and those pages say so with the date of the check.</p>
 
         <h2>2. Remote means remote</h2>
         <p>When the employer's own system marks a role as on-site or hybrid, we take it down, even if another job board called it remote. Hybrid roles stay only when the employer also lists a remote location. {% if stats.removed_not_remote_7d %}This week that removed {{ stats.removed_not_remote_7d|intcomma }} listings.{% endif %}</p>

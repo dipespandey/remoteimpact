@@ -51,8 +51,8 @@ def icon_candidates(html: str, page_url: str) -> list[str]:
     return [u for u in dict.fromkeys(urls) if u.startswith(("http://", "https://"))][:6]
 
 
-def to_square_png(data: bytes) -> bytes | None:
-    """Re-encode an icon as a 128px square PNG, or None if it isn't a usable square icon."""
+def to_square_png(data: bytes, max_ratio: float = 1.25) -> bytes | None:
+    """Re-encode an icon as a 128px square PNG (padded when slightly wide), or None if it isn't usable."""
     from PIL import Image
 
     try:
@@ -61,7 +61,8 @@ def to_square_png(data: bytes) -> bytes | None:
             sizes = sorted(image.info.get("sizes") or [image.size], key=lambda s: s[0] * s[1])
             image.size = sizes[-1]
         width, height = image.size
-        if width * height > MAX_PIXELS or min(width, height) < MIN_SIDE or not 0.8 <= width / height <= 1.25:
+        if width * height > MAX_PIXELS or min(width, height) < MIN_SIDE // 2 or max(width, height) < MIN_SIDE \
+                or not 1 / max_ratio <= width / height <= max_ratio:
             return None
         image.load()
         image = image.convert("RGBA")
@@ -88,3 +89,54 @@ def fetch_logo(website: str) -> tuple[bytes, str] | None:
         if png:
             return png, url
     return None
+
+
+# Applicant-tracking boards that show the employer's own logo on their board page
+BOARD_HOSTS = ("greenhouse.io", "bamboohr.com", "lever.co")
+_BOARD_LOGO = re.compile(r"<img\b[^>]*>", re.I)
+
+
+def board_root(application_url: str) -> str:
+    """The employer's board page on an ATS (job-boards.greenhouse.io/<org>, <org>.bamboohr.com, jobs.lever.co/<org>)."""
+    from urllib.parse import urlparse
+
+    parsed = urlparse(application_url or "")
+    host = parsed.netloc.lower()
+    if not any(host == h or host.endswith("." + h) for h in BOARD_HOSTS):
+        return ""
+    if host.endswith("bamboohr.com"):
+        return f"https://{host}/careers"
+    first = next((part for part in parsed.path.split("/") if part), "")
+    return f"https://{host}/{first}" if first else ""
+
+
+def board_logo_url(html: str, page_url: str) -> str:
+    """The employer logo on an ATS board page (never the ATS's own logo)."""
+    for tag in _BOARD_LOGO.findall(html or ""):
+        src = re.search(r"""\bsrc\s*=\s*["']([^"']+)""", tag)
+        if not src:
+            continue
+        url = src.group(1)
+        lowered = (tag + url).lower()
+        if url.lower().split("?")[0].endswith(".svg") or "lever-logo" in lowered or "greenhouse-logo" in lowered:
+            continue
+        if "logo" in lowered or "/logos/" in url:
+            return urljoin(page_url, url)
+    return ""
+
+
+def fetch_board_logo(application_url: str) -> tuple[bytes, str] | None:
+    root = board_root(application_url)
+    if not root:
+        return None
+    page = fetch_public_html(root, max_bytes=1_500_000, total_timeout=12)
+    if page.status != "ok":
+        return None
+    url = board_logo_url(page.text, root)
+    if not url:
+        return None
+    result = fetch_public_image(url, max_bytes=600_000)
+    if result.status != "ok":
+        return None
+    png = to_square_png(result.content, max_ratio=2.0)
+    return (png, url) if png else None

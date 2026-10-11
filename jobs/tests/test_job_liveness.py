@@ -887,3 +887,23 @@ class EmployerSiteTests(TestCase):
         self.assertFalse(employer_site("https://jobs.lever.co/acme"))
         self.assertTrue(employer_site("https://www.actalliance.org/"))
         self.assertTrue(employer_site("80000hours.org"))
+
+
+class BoardLogoTests(TestCase):
+    def test_board_root_and_logo_pick_skip_platform_logo(self):
+        from jobs.services.org_logos import board_logo_url, board_root
+        self.assertEqual(board_root("https://job-boards.greenhouse.io/givedirectly/jobs/47"), "https://job-boards.greenhouse.io/givedirectly")
+        self.assertEqual(board_root("https://cet.bamboohr.com/careers/12"), "https://cet.bamboohr.com/careers")
+        self.assertEqual(board_root("https://example.org/jobs/1"), "")
+        html = ('<img alt="Lever logo" src="/img/lever-logo-refresh.svg">'
+                '<img src="https://cdn.greenhouse.io/logos/400/original/thumb.jpg" alt="GiveDirectly Logo" class="logo"/>')
+        self.assertEqual(board_logo_url(html, "https://job-boards.greenhouse.io/givedirectly"),
+                         "https://cdn.greenhouse.io/logos/400/original/thumb.jpg")
+
+    def test_slightly_wide_board_logos_are_padded(self):
+        import io
+        from PIL import Image
+        from jobs.services.org_logos import to_square_png
+        out = io.BytesIO(); Image.new("RGB", (300, 160), "white").save(out, format="PNG")
+        self.assertIsNone(to_square_png(out.getvalue()))
+        self.assertIsNotNone(to_square_png(out.getvalue(), max_ratio=2.0))

@@ -108,7 +108,7 @@ class HomeView(TemplateView):
         from ..services.country_activity import weekly_summary as country_activity_summary
 
         # Stats for hero section (rounded down to nearest 100)
-        active_jobs_count = available_jobs.count()
+        active_jobs_count = JobService.count_openings()
         active_jobs_rounded = (active_jobs_count // 100) * 100
         categories_count = Category.objects.count()
 

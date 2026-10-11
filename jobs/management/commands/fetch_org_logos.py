@@ -12,7 +12,7 @@ from django.utils import timezone
 
 from jobs.models import Organization, OrganizationLogo
 from jobs.services.job_service import JobService
-from jobs.services.org_logos import fetch_logo
+from jobs.services.org_logos import BOARD_HOSTS, fetch_board_logo, fetch_logo
 
 
 # Job boards, applicant-tracking systems and social sites: an organization "website" on one of these
@@ -43,15 +43,25 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         stale = timezone.now() - timedelta(days=30)
         live = JobService.get_available_jobs().values("organization_id")
+        live_jobs = JobService.get_available_jobs()
+        board_query = Q()
+        for host in BOARD_HOSTS:
+            board_query |= Q(application_url__icontains=host)
         orgs = list(
-            Organization.objects.filter(pk__in=live).exclude(website="")
+            Organization.objects.filter(pk__in=live)
+            .filter(~Q(website="") | Q(pk__in=live_jobs.filter(board_query).values("organization_id")))
             .filter(Q(logo="") | Q(logo__isnull=True))
             .filter(Q(logo_checked_at__isnull=True) | Q(logo_checked_at__lt=stale))
             .order_by("logo_checked_at", "name")
             .only("pk", "website", "name")[: options["limit"]]
         )
         def fetch(org):
-            return org, fetch_logo(org.website) if employer_site(org.website) else None
+            found = fetch_logo(org.website) if org.website and employer_site(org.website) else None
+            if not found:
+                # Fall back to the employer's page on its applicant-tracking board
+                for url in live_jobs.filter(organization=org).filter(board_query).values_list("application_url", flat=True)[:1]:
+                    found = fetch_board_logo(url)
+            return org, found
 
         if options["workers"] > 1:
             with ThreadPoolExecutor(max_workers=options["workers"]) as pool:

@@ -170,8 +170,8 @@ def llms_txt(request):
     site_url = getattr(settings, 'SITE_URL', 'https://remoteimpact.org').rstrip('/')
     available_jobs = JobService.get_available_jobs()
     
-    # Get live stats
-    job_count = available_jobs.count()
+    # Get live stats (distinct openings, matching the job list)
+    job_count = JobService.count_openings()
     org_count = Organization.objects.filter(jobs__is_active=True).distinct().count()
     category_counts = dict(
         available_jobs.values('category_id')
@@ -407,7 +407,7 @@ def ai_plugin_json(request):
     from jobs.services.job_service import JobService
     
     site_url = getattr(settings, 'SITE_URL', 'https://remoteimpact.org').rstrip('/')
-    job_count = JobService.get_available_jobs().count()
+    job_count = JobService.count_openings()
     
     manifest = {
         "schema_version": "v1",
