@@ -124,7 +124,7 @@
     <a href="#main-content" class="skip-link">Skip to main content</a>
     <div class="relative min-h-screen overflow-x-clip">
         {% url 'jobs:job_list' as nav_jobs_url %}
-        {% url 'jobs:job_alerts' as nav_scout_url %}
+        {% if user.is_authenticated %}{% url 'jobs:job_alerts' as nav_scout_url %}{% else %}{% url 'jobs:public_pricing' as nav_scout_url %}{% endif %}
         {% url 'jobs:resources' as nav_guides_url %}
         {% url 'gigs:gig_list' as nav_gigs_url %}
         {% url 'jobs:tools_index' as nav_tools_url %}

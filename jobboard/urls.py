@@ -224,6 +224,8 @@ Remote Impact is a curated job board exclusively for **remote positions at impac
 - {site_url}/salaries/ - Salary benchmarks by domain (updated daily)
 - {site_url}/organizations/ - Organization directory
 - {site_url}/domains/ - Browse by impact area
+- {site_url}/how-we-check/ - How every listing is verified daily against the employer's own job board (closed, office-based and reseller listings are removed)
+- {site_url}/alerts/ - AI Job Scout: describe the role you want in plain words and get matching current roles by email
 
 ### Impact Domain Pages
 {domain_list}
@@ -380,8 +382,8 @@ def llms_full_txt(request):
 ### Blog
 - {site_url}/blog/ : Articles on impact careers, job search strategies, and industry news.
 
-### Talent Directory
-- {site_url}/talent/ : Browse profiles of impact professionals open to new opportunities.
+### How listings are checked
+- {site_url}/how-we-check/ : How every listing is verified daily against the employer's own job board, with live numbers.
 
 ## Data Freshness
 - Job listings refreshed through automated source imports
@@ -480,7 +482,6 @@ sitemaps = {
     'categories': CategorySitemap,
     'organizations': OrganizationSitemap,
     'tools': ToolsSitemap,
-    'talent': TalentSitemap,
     'blog': BlogSitemap,
     'guides': GuidesSitemap,
     'roles': RolePagesSitemap,

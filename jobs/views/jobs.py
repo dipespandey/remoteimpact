@@ -712,8 +712,8 @@ class CategoryLandingView(ListView):
         seo_title = self.SEO_TITLES.get(cat.slug, f"Remote {cat.name} Jobs")
         context["meta_title"] = f"{seo_title} — Remote Impact"
         context["meta_description"] = (
-            f"Browse {context['page_obj'].paginator.count}+ remote {cat.name.lower()} jobs. "
-            f"Find purpose-driven roles in {cat.name.lower()} from top impact organizations."
+            f"Browse {context['page_obj'].paginator.count}+ remote {cat.name} jobs, checked daily against each "
+            f"employer's own job board. Purpose-driven roles from impact organizations."
         )
         
         context["sponsored_jobs"] = (
