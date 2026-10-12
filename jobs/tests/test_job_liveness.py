@@ -1124,3 +1124,24 @@ class OrgHiringSummaryTests(TestCase):
         self.assertEqual(summary["pay_count"], 3)
         self.assertIn(org, list(OrganizationSitemap().items()))
         self.assertEqual(OrganizationProfileView._hiring_summary(org, Job.objects.none()), {})
+
+
+class GroundedLabelTests(TestCase):
+    def test_quotes_must_appear_in_the_posting(self):
+        from jobs.management.commands.label_job_fields import verified
+        body = "We need 5+ years of experience. A Master's degree is required."
+        self.assertTrue(verified("5+ years of experience", body))
+        self.assertTrue(verified("A Master's degree is required", body))
+        self.assertFalse(verified("ten years of experience", body))
+        self.assertFalse(verified("", body))
+
+
+class RestrictiveQuoteTests(TestCase):
+    def test_only_explicit_requirements_naming_the_country_count(self):
+        from jobs.management.commands.restrict_worldwide_jobs import restrictive
+        self.assertTrue(restrictive("Candidates must have existing authorization to work in India", "India"))
+        self.assertTrue(restrictive("This role is based in Brazil and you will support customer sites", "Brazil"))
+        self.assertTrue(restrictive("Applicants must be currently authorized to work in the United States.", "USA"))
+        self.assertFalse(restrictive("Must reside within 25 miles of Phoenix Valley, AZ", "Azerbaijan"))
+        self.assertFalse(restrictive("Preferred work location is Carlsbad, California. However, remote candidates welcome in the US", "USA"))
+        self.assertFalse(restrictive("Lead corporate engagement in Colombia to negotiate policies", "Colombia"))
