@@ -165,10 +165,11 @@ class UnifiedMatchingService:
                 _seeker_match=Case(When(pk__in=ranked_ids, then=Value(0)), default=Value(1), output_field=IntegerField())
             ).order_by("_seeker_match", "-posted_at", "-id")
 
-        # Keep relevance as the candidate pool, then let publication date be
-        # the visible ordering. This prevents an old but semantically strong
-        # role from pushing genuinely new opportunities below the fold.
-        return queryset.filter(pk__in=ranked_ids).order_by("-posted_at", "-id")
+        # "Best for you" means best first: order by match rank. (The pool is already limited to open,
+        # recently checked roles, so stale listings can't float to the top.)
+        from django.db.models import Case, IntegerField, Value, When
+        rank = Case(*[When(pk=pk, then=Value(i)) for i, pk in enumerate(ranked_ids)], output_field=IntegerField())
+        return queryset.filter(pk__in=ranked_ids).annotate(_match_rank=rank).order_by("_match_rank", "-posted_at")
 
     @classmethod
     def get_matches(
@@ -780,10 +781,16 @@ class UnifiedMatchingService:
         if len(overlap) > 0:
             reasons.append(f"{len(overlap)} relevant skill{'s' if len(overlap) != 1 else ''} match this role")
 
-        # Convert missing slugs to labels
+        # Missing skills in the job's own order, leaving out soft skills ("communication" isn't a gap to close).
+        from jobs.services.job_service import JobService
+        soft = tuple(JobService.SOFT_SKILL_STEMS)
         gaps = []
-        for slug in list(missing)[:5]:
+        for slug in [s for s in (job.skills or []) if s in missing]:
+            if any(stem in str(slug).lower() for stem in soft) or "customer-service" in str(slug).lower():
+                continue
             gaps.append(cls._skill_label(slug))
+            if len(gaps) == 5:
+                break
 
         return score, gaps
 
