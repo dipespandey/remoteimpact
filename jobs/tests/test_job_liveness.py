@@ -1145,3 +1145,13 @@ class RestrictiveQuoteTests(TestCase):
         self.assertFalse(restrictive("Must reside within 25 miles of Phoenix Valley, AZ", "Azerbaijan"))
         self.assertFalse(restrictive("Preferred work location is Carlsbad, California. However, remote candidates welcome in the US", "USA"))
         self.assertFalse(restrictive("Lead corporate engagement in Colombia to negotiate policies", "Colombia"))
+
+
+class SeoTrimFilterTests(TestCase):
+    def test_trims_at_word_boundary_without_breaking_entities(self):
+        from jobs.templatetags.job_extras import seo_trim
+        self.assertEqual(seo_trim("Climate &amp; Energy jobs", 160), "Climate &amp; Energy jobs")
+        out = seo_trim("Free salary to hourly calculator. Convert annual salary to hourly rate and back, " * 3, 160)
+        self.assertLessEqual(len(out), 160)
+        self.assertTrue(out.endswith("…"))
+        self.assertNotIn("&amp;amp;", seo_trim("A &amp; B " * 30, 60))

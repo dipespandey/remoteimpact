@@ -252,3 +252,14 @@ def initials(name):
 def listing_language_filter(job):
     from jobs.services.listing_language import listing_language
     return listing_language(getattr(job, "title", ""), getattr(job, "description", ""))
+
+
+@register.filter
+def seo_trim(value, limit=160):
+    """Trim rendered title/description text to fit search results, at a word boundary, entity-safe."""
+    import html as _html
+    from django.utils.html import escape
+    from django.utils.safestring import mark_safe
+    from jobs.services.seo_text import _trim
+    text = _html.unescape(str(value or ""))
+    return mark_safe(escape(_trim(text, int(limit))))
