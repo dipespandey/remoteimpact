@@ -37,3 +37,12 @@ class PaidPostApplyTests(TestCase):
         Job.objects.filter(pk=self.job.pk).update(source=Job.Source.MANUAL, is_paid=False)
         response = self.client.get(self.job.get_absolute_url())
         self.assertFalse(response.context["apply_inplatform"])
+
+
+class FeaturedNotDuplicatedTests(PaidPostApplyTests):
+    def test_featured_role_listed_once_on_jobs_page(self):
+        response = self.client.get("/jobs/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([j.id for j in response.context["sponsored_jobs"]], [self.job.id])
+        self.assertNotIn(self.job.id, [j.id for j in response.context["jobs"]])
+        self.assertNotContains(response, "No roles match these filters")

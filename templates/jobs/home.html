@@ -102,7 +102,15 @@
                 <a href="{{ job.get_absolute_url }}?source=featured_slot" class="job-row">
                     <span class="badge badge-featured">Featured</span>
                     <h3 class="job-title mt-1.5">{{ job.title|display_title }}</h3>
-                    <p class="job-meta"><span class="font-medium text-foreground">{{ job.organization.name|display_title }}</span><span>{{ job.location|default:"Remote" }}</span>{% if job|compensation_display %}<span>{{ job|compensation_display }}</span>{% endif %}<
+                    <p class="job-meta"><span class="font-medium text-foreground">{{ job.organization.name|display_title }}</span><span>{{ job.location|default:"Remote" }}</span>{% if job|compensation_display %}<span>{{ job|compensation_display }}</span>{% endif %}</p>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endif %}
+
 <section aria-labelledby="sides-heading" class="pb-12">
     <div class="container">
         <h2 id="sides-heading" class="sr-only">For job seekers and employers</h2>
@@ -166,14 +174,6 @@
 </section>
 {% endif %}
 
-/p>
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-</section>
-{% endif %}
 
 
 

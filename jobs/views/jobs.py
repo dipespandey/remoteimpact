@@ -24,6 +24,13 @@ from .impact_wizard import profile_scout_url
 logger = logging.getLogger(__name__)
 
 
+
+def _drop_pinned_duplicates(context):
+    """A featured role pinned above the results shouldn't appear again in them."""
+    pinned = {job.id for job in context.get("sponsored_jobs") or []}
+    if pinned and context.get("jobs") is not None:
+        context["jobs"] = [job for job in context["jobs"] if job.id not in pinned]
+
 class JobListView(ListView):
     model = Job
     template_name = "jobs/job_list.html"
@@ -258,6 +265,7 @@ class JobListView(ListView):
                 )
             except Exception:  # noqa: BLE001 - placement must never break search
                 logger.exception("Could not load featured jobs")
+        _drop_pinned_duplicates(context)
 
         # If no results, get recommended organizations
         if not context.get("object_list") or context["page_obj"].paginator.count == 0:
@@ -742,6 +750,7 @@ class CategoryLandingView(ListView):
             list(self.get_queryset().filter(Job.sponsored_filter()).order_by("featured_until")[:3])
             if context["page_obj"].number == 1 else []
         )
+        _drop_pinned_duplicates(context)
 
         # If no jobs in this category, get recommended organizations
         if context["page_obj"].paginator.count == 0:

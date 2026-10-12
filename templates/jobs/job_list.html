@@ -595,7 +595,7 @@
             {% endfor %}
         </ul>
         {% endif %}
-        {% if not jobs %}
+        {% if not jobs and not sponsored_jobs %}
         <div class="card p-6 sm:p-8{% if sponsored_jobs %} mt-4{% endif %}">
             <h2 class="section-title">No roles match these filters</h2>
             <p class="mt-1.5 max-w-xl text-sm text-muted-foreground">Try removing a filter or using a broader search term. You can also set up a job alert and we will email you when a matching role is posted.</p>
