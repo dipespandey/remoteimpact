@@ -204,7 +204,9 @@ class StaticSitemap(Sitemap):
             ('gigs:ai_evaluation', 0.6, 'monthly'),
             ('jobs:public_pricing', 0.7, 'monthly'),
             ('jobs:salary_benchmarks', 0.8, 'daily'),  # Salary data page - high value SEO
-            ('jobs:post_job', 0.5, 'monthly'),
+            ('jobs:all_role_pages', 0.6, 'weekly'),
+            ('jobs:all_keyword_pages', 0.6, 'weekly'),
+            ('blog:post_list', 0.5, 'weekly'),
             ('gigs:gig_list', 0.8, 'daily'),
             ('jobs:organization_directory', 0.8, 'weekly'),
             ('jobs:all_domains', 0.7, 'weekly'),
@@ -238,3 +240,17 @@ class TalentSitemap(Sitemap):
 
     def lastmod(self, obj):
         return obj.updated_at
+
+
+class RegionSitemap(Sitemap):
+    """Regional landing pages (/remote-jobs/<region>/) with enough open roles to be indexed."""
+    changefreq = "daily"
+    priority = 0.7
+
+    def items(self):
+        from jobs.seo_config import MIN_INDEXABLE_JOBS
+        from jobs.views.locations import REGIONS, region_jobs
+        return [slug for slug, region in REGIONS.items() if region_jobs(region).count() >= MIN_INDEXABLE_JOBS]
+
+    def location(self, slug):
+        return reverse('jobs:region_jobs', args=[slug])

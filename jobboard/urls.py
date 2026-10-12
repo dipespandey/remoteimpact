@@ -30,7 +30,7 @@ from django.views.generic import RedirectView
 from jobs.views import admin_analytics
 from jobs.sitemaps import (
     StaticSitemap, CategorySitemap,
-    OrganizationSitemap, ToolsSitemap, TalentSitemap,
+    OrganizationSitemap, ToolsSitemap, TalentSitemap, RegionSitemap,
     GuidesSitemap, RolePagesSitemap, KeywordPagesSitemap,
     visible_jobs,
 )
@@ -484,6 +484,7 @@ sitemaps = {
     'guides': GuidesSitemap,
     'roles': RolePagesSitemap,
     'keywords': KeywordPagesSitemap,
+    'regions': RegionSitemap,
 }
 
 def healthz(request):

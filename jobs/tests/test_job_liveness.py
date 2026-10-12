@@ -1155,3 +1155,18 @@ class SeoTrimFilterTests(TestCase):
         self.assertLessEqual(len(out), 160)
         self.assertTrue(out.endswith("…"))
         self.assertNotIn("&amp;amp;", seo_trim("A &amp; B " * 30, 60))
+
+
+class RegionSitemapTests(TestCase):
+    def test_regions_with_enough_open_roles_are_listed(self):
+        from jobs.models import Job, Organization
+        from jobs.sitemaps import RegionSitemap, StaticSitemap
+        org = Organization.objects.create(name="Region SM Org", slug="region-sm-org")
+        for i in range(3):
+            Job.objects.create(title=f"EU Role {i}", slug=f"eu-role-{i}", organization=org, description="x " * 80,
+                               location="Remote (Germany)", country="Germany", application_url=f"https://example.org/{i}")
+        regions = RegionSitemap().items()
+        self.assertIn("worldwide", regions)
+        names = [item[0] for item in StaticSitemap().items()]
+        self.assertNotIn("jobs:post_job", names)
+        self.assertIn("jobs:all_role_pages", names)

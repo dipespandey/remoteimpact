@@ -96,6 +96,18 @@ REGIONS = {
 }
 
 
+def region_jobs(region):
+    """Publishable jobs for a region (same rule as the job list, sitemap and robots tag)."""
+    qs = Job.objects.filter(Job.availability_filter())
+    location_terms = region.get("filter")
+    if location_terms:
+        q = Q()
+        for term in location_terms:
+            q |= Q(location__icontains=term) | Q(country__icontains=term)
+        qs = qs.filter(q)
+    return qs
+
+
 class RegionJobsView(ListView):
     """SEO-optimized landing page for a geographic region."""
     model = Job
@@ -110,21 +122,7 @@ class RegionJobsView(ListView):
         self.region = REGIONS[slug]
         self.region_slug = slug
 
-        now = timezone.now()
-        cutoff = now - timedelta(days=180)
-        qs = (
-            Job.objects.filter(is_active=True)
-            .exclude(expires_at__lt=now)
-            .exclude(expires_at__isnull=True, posted_at__lt=cutoff)
-            .select_related("organization", "category")
-        )
-
-        location_terms = self.region.get("filter")
-        if location_terms:
-            q = Q()
-            for term in location_terms:
-                q |= Q(location__icontains=term) | Q(country__icontains=term)
-            qs = qs.filter(q)
+        qs = region_jobs(self.region).select_related("organization", "category")
 
         # Optional category filter
         cat_slug = self.request.GET.get("category")
