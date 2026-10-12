@@ -1086,3 +1086,41 @@ class RoleInsightsTests(TestCase):
         Organization.objects.filter(pk=org.pk).update(slug="")
         self.assertEqual(self.client.get(reverse("jobs:job_detail", args=[jobs[9].slug])).status_code, 200)
         self.assertIn("more than 90%", html)
+
+
+class SeoTextTests(TestCase):
+    def test_titles_and_descriptions_fit_search_results(self):
+        from jobs.services.seo_text import DESCRIPTION_LIMIT, TITLE_LIMIT, job_meta_description, job_title_tag
+        short = job_title_tag("Policy Analyst", "RAND")
+        self.assertEqual(short, "Policy Analyst at RAND | Remote Impact")
+        long_title = job_title_tag("Head of Litigation", "Legal Advocates for Safe Science and Technology")
+        self.assertLessEqual(len(long_title), TITLE_LIMIT)
+        self.assertTrue(long_title.startswith("Head of Litigation at Legal"))
+        huge = job_title_tag("Principal Software Engineer, Infrastructure Security and Reliability", "OpenAI")
+        self.assertLessEqual(len(huge), TITLE_LIMIT)
+        desc = job_meta_description("Head of Litigation", "LASST", "Remote (US)", "Full-time", "$150,000 – $190,000 per year",
+                                    "<p>" + "Lead the organization's litigation strategy. " * 20 + "</p>")
+        self.assertLessEqual(len(desc), DESCRIPTION_LIMIT)
+        self.assertIn("Remote (US), full-time, $150,000", desc)
+
+
+class OrgHiringSummaryTests(TestCase):
+    def test_summary_and_sitemap_agree_with_the_page(self):
+        from decimal import Decimal
+        from jobs.models import Category, Job, Organization
+        from jobs.sitemaps import OrganizationSitemap
+        from jobs.views.organizations import OrganizationProfileView
+        cat = Category.objects.create(name="Org Area", slug="org-area")
+        org = Organization.objects.create(name="Summary Org", slug="summary-org")
+        for i in range(3):
+            Job.objects.create(title=f"Org Role {i}", slug=f"org-role-{i}", organization=org, category=cat, description="x " * 80,
+                               location="Remote" if i == 0 else "Remote (US)", application_url=f"https://example.org/{i}",
+                               salary_min=Decimal("60000"), salary_max=Decimal("80000"), salary_currency="USD", job_type="full-time")
+        jobs = Job.objects.filter(organization=org)
+        summary = OrganizationProfileView._hiring_summary(org, jobs)
+        self.assertEqual(summary["open"], 3)
+        self.assertEqual(summary["areas"], ["Org Area"])
+        self.assertEqual(summary["worldwide"], 1)
+        self.assertEqual(summary["pay_count"], 3)
+        self.assertIn(org, list(OrganizationSitemap().items()))
+        self.assertEqual(OrganizationProfileView._hiring_summary(org, Job.objects.none()), {})

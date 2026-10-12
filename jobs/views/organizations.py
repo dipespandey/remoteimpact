@@ -70,15 +70,30 @@ class OrganizationProfileView(ListView):
 
     def get_queryset(self):
         self.organization = get_object_or_404(Organization, slug=self.kwargs["slug"])
-        now = timezone.now()
-        cutoff = now - timedelta(days=180)
+        # The same publishable set as the job list and the sitemap, so the page, its robots tag and
+        # the sitemap always agree on whether this employer has open roles.
         return (
-            Job.objects.filter(is_active=True, organization=self.organization)
-            .exclude(expires_at__lt=now)
-            .exclude(expires_at__isnull=True, posted_at__lt=cutoff)
+            Job.objects.filter(Job.availability_filter(), organization=self.organization)
             .select_related("organization", "category")
             .order_by("-posted_at")
         )
+
+    @staticmethod
+    def _hiring_summary(org, jobs):
+        """Facts about what this employer is hiring for, from its live listings (empty when too little)."""
+        from collections import Counter
+        rows = list(jobs.values_list("category__name", "job_type", "location", "salary_min", "salary_max", "salary_currency"))
+        if not rows:
+            return {}
+        areas = [a for a, _ in Counter(r[0] for r in rows if r[0]).most_common(3)]
+        types = [t.replace("-", " ") for t, _ in Counter(r[1] for r in rows if r[1]).most_common(2)]
+        worldwide = sum(1 for r in rows if (r[2] or "").strip().lower() in {"remote", "remote, global", "remote (global)"})
+        mids = [(float(r[3] or r[4]) + float(r[4] or r[3])) / 2 for r in rows if r[5] == "USD" and (r[3] or r[4])]
+        summary = {"open": len(rows), "areas": areas, "types": types, "worldwide": worldwide}
+        if len(mids) >= 3:
+            summary["pay_low"], summary["pay_high"] = round(min(mids), -3), round(max(mids), -3)
+            summary["pay_count"] = len(mids)
+        return summary
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -93,6 +108,7 @@ class OrganizationProfileView(ListView):
         job_count = context["page_obj"].paginator.count
         context["job_count"] = job_count
         context["index_page"] = job_count > 0 and not self.request.GET
+        context["hiring_summary"] = self._hiring_summary(org, context["page_obj"].paginator.object_list)
         
         # Check for SEO-optimized organizations (striking distance keywords)
         seo_data = SEO_OPTIMIZED_ORGS.get(org.slug)
