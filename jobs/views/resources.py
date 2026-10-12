@@ -162,6 +162,8 @@ class HomeView(TemplateView):
                 "activity": country_activity_summary(),
                 "preview_tabs": self._preview_tabs(available_jobs, latest_jobs, active_jobs_rounded, featured_jobs),
                 "featured_ids": {job.id for job in featured_jobs},
+                # The first two are pinned in the top list; the section below shows the rest.
+                "featured_more": featured_jobs[2:],
             }
         )
         return context

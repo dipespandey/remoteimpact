@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.shortcuts import redirect
 from django.conf import settings
 from django.utils import timezone
@@ -18,6 +18,7 @@ from ..models import (
     UserPath,
     NewsletterSubscriber,
     AssistantSubscription,
+    Job,
 )
 from ..services.onboarding_service import OnboardingService
 from .impact_wizard import profile_scout_url
@@ -60,7 +61,11 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
         if profile.account_type == UserProfile.AccountType.EMPLOYER:
             context["is_employer"] = True
-            posted_jobs = list(user.posted_jobs.all().order_by("-posted_at"))
+            # Their own posts and drafts, plus roles colleagues at their organization paid for.
+            posted_jobs = list(
+                Job.objects.filter(Q(poster=user) | Q(is_paid=True, organization__members=user))
+                .distinct().select_related("organization").order_by("-posted_at")
+            )
             context["posted_jobs"] = posted_jobs
             context["active_jobs_count"] = sum(1 for j in posted_jobs if j.is_active)
             context["total_candidates"] = sum(j.applications.count() for j in posted_jobs)

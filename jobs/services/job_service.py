@@ -520,6 +520,21 @@ class JobService:
         return job
 
     @staticmethod
+    def _verified_on_domain(user, org) -> bool:
+        from allauth.account.models import EmailAddress
+
+        from jobs.services.org_sites import NOT_EMPLOYER_HOSTS, host_of
+
+        site = host_of(org.homepage_url or org.website)
+        if not site or any(site == d or site.endswith("." + d) for d in NOT_EMPLOYER_HOSTS):
+            return False
+        for address in EmailAddress.objects.filter(user=user, verified=True).values_list("email", flat=True):
+            domain = address.rsplit("@", 1)[-1].lower()
+            if domain == site or site.endswith("." + domain) or domain.endswith("." + site):
+                return True
+        return False
+
+    @staticmethod
     def _organization_for_poster(org_name, data, user):
         """Reuse an organization only when it has no owners or the poster is one.
 
@@ -530,6 +545,10 @@ class JobService:
         for org in Organization.objects.filter(name=org_name).order_by("id"):
             members = org.members.all()
             if not members.exists() or (is_user and members.filter(pk=user.pk).exists()):
+                return org
+            # A colleague: their verified email is on the organization's own website domain.
+            if is_user and JobService._verified_on_domain(user, org):
+                org.members.add(user)
                 return org
         organization = Organization.objects.create(
             name=org_name,

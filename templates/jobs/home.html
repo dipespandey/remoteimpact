@@ -89,7 +89,7 @@
     </div>
 </section>
 
-{% if featured_jobs %}
+{% if featured_more %}
 <section aria-labelledby="featured-roles-heading" class="pb-14">
     <div class="container">
         <div class="flex items-baseline justify-between px-1">
@@ -97,7 +97,7 @@
             <a href="{% url 'jobs:employers' %}" class="text-[13px] text-muted-foreground hover:text-foreground">About featured listings</a>
         </div>
         <ul class="list-surface mt-3 grid gap-0.5 md:grid-cols-2">
-            {% for job in featured_jobs %}
+            {% for job in featured_more %}
             <li>
                 <a href="{{ job.get_absolute_url }}?source=featured_slot" class="job-row">
                     <span class="badge badge-featured">Featured</span>
