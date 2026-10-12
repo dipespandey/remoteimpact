@@ -390,6 +390,9 @@ class JobDetailView(DetailView):
         if context["safe_application_url"]:
             # Route through the counting redirect so employers can see clicks.
             context["apply_redirect_url"] = reverse("jobs:job_apply_redirect", kwargs={"slug": self.object.slug})
+        # Paid posts take applications on Remote Impact; their own link stays as a secondary option.
+        context["apply_inplatform"] = self.object.source == Job.Source.MANUAL and (
+            self.object.is_paid or not context.get("apply_redirect_url"))
         context["safe_organization_website"] = safe_application_destination(self.object.organization.website)
         verification = (self.object.raw_data or {}).get("source_verification") or {}
         verification = dict(verification) if isinstance(verification, dict) else {}
@@ -552,7 +555,9 @@ class ApplicationGuideView(DetailView):
         context["safe_organization_website"] = safe_application_destination(self.object.organization.website)
         if context["safe_application_url"]:
             context["apply_redirect_url"] = reverse("jobs:job_apply_redirect", kwargs={"slug": self.object.slug})
-        
+        context["apply_inplatform"] = self.object.source == Job.Source.MANUAL and (
+            self.object.is_paid or not context.get("apply_redirect_url"))
+
         return context
 
 

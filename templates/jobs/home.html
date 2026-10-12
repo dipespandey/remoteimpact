@@ -70,7 +70,7 @@
                             <a href="{{ job.get_absolute_url }}" class="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted">
                                 {% if job.organization.logo_src %}<img src="{{ job.organization.logo_src }}" alt="" loading="lazy" class="h-9 w-9 shrink-0 rounded-xl bg-muted object-cover">{% else %}<span class="avatar" aria-hidden="true">{{ job.organization.name|initials }}</span>{% endif %}
                                 <span class="min-w-0 flex-1">
-                                    <span class="block truncate text-sm font-medium text-foreground">{{ job.title|display_title }}</span>
+                                    <span class="block truncate text-sm font-medium text-foreground">{% if job.id in featured_ids %}<span class="badge badge-featured mr-1.5 align-[1px]">Featured</span>{% endif %}{{ job.title|display_title }}</span>
                                     <span class="block truncate text-[13px] text-muted-foreground">{{ job.organization.name|display_title }} · {{ job.location|default:"Remote" }}</span>
                                 </span>
                                 {% if job.posted_at %}<span class="shrink-0 text-[12px] text-muted-foreground">{{ job.posted_at|naturalday:"M j" }}</span>{% endif %}
@@ -89,6 +89,20 @@
     </div>
 </section>
 
+{% if featured_jobs %}
+<section aria-labelledby="featured-roles-heading" class="pb-14">
+    <div class="container">
+        <div class="flex items-baseline justify-between px-1">
+            <h2 id="featured-roles-heading" class="section-title">Featured by employers</h2>
+            <a href="{% url 'jobs:employers' %}" class="text-[13px] text-muted-foreground hover:text-foreground">About featured listings</a>
+        </div>
+        <ul class="list-surface mt-3 grid gap-0.5 md:grid-cols-2">
+            {% for job in featured_jobs %}
+            <li>
+                <a href="{{ job.get_absolute_url }}?source=featured_slot" class="job-row">
+                    <span class="badge badge-featured">Featured</span>
+                    <h3 class="job-title mt-1.5">{{ job.title|display_title }}</h3>
+                    <p class="job-meta"><span class="font-medium text-foreground">{{ job.organization.name|display_title }}</span><span>{{ job.location|default:"Remote" }}</span>{% if job|compensation_display %}<span>{{ job|compensation_display }}</span>{% endif %}<
 <section aria-labelledby="sides-heading" class="pb-12">
     <div class="container">
         <h2 id="sides-heading" class="sr-only">For job seekers and employers</h2>
@@ -152,20 +166,7 @@
 </section>
 {% endif %}
 
-{% if featured_jobs %}
-<section aria-labelledby="featured-roles-heading" class="pb-14">
-    <div class="container">
-        <div class="flex items-baseline justify-between px-1">
-            <h2 id="featured-roles-heading" class="section-title">Featured by employers</h2>
-            <a href="{% url 'jobs:employers' %}" class="text-[13px] text-muted-foreground hover:text-foreground">About featured listings</a>
-        </div>
-        <ul class="list-surface mt-3 grid gap-0.5 md:grid-cols-2">
-            {% for job in featured_jobs %}
-            <li>
-                <a href="{{ job.get_absolute_url }}?source=featured_slot" class="job-row">
-                    <span class="badge badge-featured">Featured</span>
-                    <h3 class="job-title mt-1.5">{{ job.title|display_title }}</h3>
-                    <p class="job-meta"><span class="font-medium text-foreground">{{ job.organization.name|display_title }}</span><span>{{ job.location|default:"Remote" }}</span>{% if job|compensation_display %}<span>{{ job|compensation_display }}</span>{% endif %}</p>
+/p>
                 </a>
             </li>
             {% endfor %}

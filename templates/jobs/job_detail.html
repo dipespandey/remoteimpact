@@ -192,7 +192,7 @@
                 {% if job.expires_at %}<p class="mt-0.5 text-[13px] text-muted-foreground">Deadline {{ job.expires_at|date:"M d, Y" }}</p>{% endif %}
 
                 <div class="mt-4">
-                {% if job.source == 'manual' and not apply_redirect_url %}
+                {% if apply_inplatform %}
                 <a href="{% url 'jobs:apply_job' slug=job.slug %}"
                     class="btn btn-primary btn-lg btn-block"
                     data-track="apply_inplatform" data-track-category="job_action" data-track-label="{{ job.slug }}">
@@ -211,6 +211,12 @@
                     data-track="apply_email" data-track-category="job_action" data-track-label="{{ job.slug }}">
                     Apply via email
                 </a>
+                {% endif %}
+                {% if apply_inplatform and safe_application_url %}
+                <p class="mt-2 text-center text-[13px] text-muted-foreground">
+                    or <a href="{{ apply_redirect_url|default:safe_application_url }}" target="_blank" rel="noopener nofollow" class="underline underline-offset-2 hover:text-foreground"
+                        data-track="apply_click" data-track-category="job_action" data-track-label="{{ job.slug }}">apply on {{ job.organization.name }}'s site</a>
+                </p>
                 {% endif %}
                 </div>
 
@@ -429,7 +435,7 @@
 </div>
 
 
-{% if job_available %}{% if job.source == 'manual' and not apply_redirect_url or safe_application_url or job.application_email %}
+{% if job_available %}{% if apply_inplatform or safe_application_url or job.application_email %}
 <!-- Mobile apply bar: keeps the primary action in reach while reading -->
 <div id="mobile-apply-bar" class="fixed inset-x-0 bottom-0 z-40 bg-card/95 px-4 pt-3 shadow-[0_-1px_0_rgb(20_20_25/0.05),0_-8px_24px_-12px_rgb(20_20_25/0.12)] backdrop-blur transition-transform duration-200 lg:hidden" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
     <div class="flex items-center gap-3">
@@ -437,7 +443,7 @@
             <p class="truncate text-sm font-medium text-foreground">{{ job.title|display_title }}</p>
             <p class="truncate text-[13px] text-muted-foreground">{{ job.organization.name }}</p>
         </div>
-        {% if job.source == 'manual' and not apply_redirect_url %}
+        {% if apply_inplatform %}
         <a href="{% url 'jobs:apply_job' slug=job.slug %}"
             class="btn btn-primary flex-shrink-0"
             data-track="apply_inplatform" data-track-category="job_action" data-track-label="{{ job.slug }}">

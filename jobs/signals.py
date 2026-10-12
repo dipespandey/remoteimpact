@@ -277,6 +277,12 @@ def notify_employer_payment(sender, instance, created, **kwargs):
     _send_payment_notices(f"New payment: {product} on Remote Impact", lines,
                           poster_job=job if product == "job post" else None)
 
+    # Cached pages (homepage, job list) are kept up to an hour; show the new featured role now.
+    from django.core.cache import cache
+    from django.db import transaction
+
+    transaction.on_commit(cache.clear)
+
 
 @receiver(post_save, sender=ConsumerFunnelEvent)
 def notify_consumer_payment(sender, instance, created, **kwargs):

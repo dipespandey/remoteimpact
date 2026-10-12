@@ -55,9 +55,10 @@ class HomeView(TemplateView):
     template_name = "jobs/home.html"
 
     @staticmethod
-    def _preview_tabs(available_jobs, latest_jobs, total):
-        """Homepage preview: the latest roles, then the three biggest impact areas."""
-        tabs = [{"key": "latest", "label": "Latest", "jobs": latest_jobs[:4],
+    def _preview_tabs(available_jobs, latest_jobs, total, featured_jobs=()):
+        """Homepage preview: featured roles pinned first, then the latest, then the three biggest impact areas."""
+        pinned = list(featured_jobs)[:2]
+        tabs = [{"key": "latest", "label": "Latest", "jobs": pinned + latest_jobs[:4 - len(pinned)],
                  "url": reverse("jobs:job_list"), "count": total, "noun": "open"}]
         for slug, label, noun in PREVIEW_AREAS:
             area_jobs = available_jobs.filter(category__slug=slug)
@@ -159,7 +160,8 @@ class HomeView(TemplateView):
                 "has_impact_profile": has_impact_profile,
                 "trust": trust_stats(),
                 "activity": country_activity_summary(),
-                "preview_tabs": self._preview_tabs(available_jobs, latest_jobs, active_jobs_rounded),
+                "preview_tabs": self._preview_tabs(available_jobs, latest_jobs, active_jobs_rounded, featured_jobs),
+                "featured_ids": {job.id for job in featured_jobs},
             }
         )
         return context

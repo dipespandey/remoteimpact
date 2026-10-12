@@ -131,9 +131,10 @@ class ApplicationCreateView(LoginRequiredMixin, FormView):
                 send_mail(
                     subject=f"New application: {self.job.title}",
                     message=(
-                        f"A new application has been received for \"{self.job.title}\".\n\n"
-                        f"Applicant: {self.request.user.email}\n"
-                        f"View in admin: {settings.SITE_URL}/admin/jobs/application/{app.pk}/change/\n"
+                        f"A new application has been received for \"{self.job.title}\" on Remote Impact.\n\n"
+                        f"Applicant: {app.full_name or self.request.user.get_full_name()} <{app.email or self.request.user.email}>\n"
+                        f"See the application, CV and cover letter (sign in with this email address):\n"
+                        f"{settings.SITE_URL}{reverse('jobs:employer_job_applications', kwargs={'slug': self.job.slug})}\n"
                     ),
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=org_emails,
