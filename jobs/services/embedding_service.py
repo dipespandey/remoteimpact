@@ -38,6 +38,22 @@ def get_model():
     return _model
 
 
+# Similarity cut-offs differ per model: gte-small scores almost every pair between 0.8 and 0.9, MiniLM
+# between 0.2 and 0.6. These were matched by rank on 729k real seeker-job pairs (same share of pairs
+# above each cut-off), so scores keep their meaning when the model changes.
+CALIBRATION = {
+    "all-MiniLM-L6-v2": {"floor": 0.50, "ceiling": 0.68, "min_candidate": 0.45},
+    "thenlper/gte-small": {"floor": 0.8677, "ceiling": 0.9009, "min_candidate": 0.8584},
+}
+
+
+def calibration():
+    from django.conf import settings
+
+    name = getattr(settings, "EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+    return CALIBRATION.get(name) or CALIBRATION.get(name.split("/")[-1]) or CALIBRATION["all-MiniLM-L6-v2"]
+
+
 def load_for_batch():
     """Batch commands (alerts, sourcing) aren't web workers, so nothing preloads the model for them.
 

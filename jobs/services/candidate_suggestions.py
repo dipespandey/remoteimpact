@@ -84,10 +84,13 @@ def suggested_candidates(job, limit=10):
         pool = pool.filter(pk__in=[pk for pk, _ in cached_ids])
     # Let Postgres rank by cosine distance and hand back only the plausible few, instead of
     # loading every profile's embedding into Python.
+    from jobs.services.embedding_service import calibration
+    # The cut-off follows the embedding model (MIN_SIMILARITY is the MiniLM value, used in tests).
+    min_similarity = calibration()["min_candidate"] if connection.vendor == "postgresql" else MIN_SIMILARITY
     in_db = connection.vendor == "postgresql"
     if in_db:
         pool = (pool.annotate(distance=CosineDistance("embedding", job_vec.tolist()))
-                .filter(distance__lte=1 - MIN_SIMILARITY).order_by("distance").defer("embedding")[:CANDIDATE_POOL])
+                .filter(distance__lte=1 - min_similarity).order_by("distance").defer("embedding")[:CANDIDATE_POOL])
     job_skills = set(job.skills or [])
     suggestions = []
     for profile in pool:
@@ -102,7 +105,7 @@ def suggested_candidates(job, limit=10):
         areas = {c.pk: c.name for c in profile.impact_areas.all()}
         shared_area = areas.get(job.category_id, "")
         # A high embedding score alone isn't a reason an employer can check.
-        if similarity < MIN_SIMILARITY or not (shared_area or len(shared_skills) >= 2):
+        if similarity < min_similarity or not (shared_area or len(shared_skills) >= 2):
             continue
         suggestions.append(Suggestion(
             profile=profile, similarity=similarity, shared_skills=shared_skills[:6], shared_area=shared_area,

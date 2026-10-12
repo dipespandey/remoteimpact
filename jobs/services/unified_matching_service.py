@@ -42,6 +42,7 @@ WEIGHTS = {
 # Production top-k similarities cluster around 0.52-0.67, with rare excellent
 # matches above that. Calibrate against that range so semantic scoring helps
 # ranking without making every plausible match look perfect.
+# MiniLM values, kept for reference; the live cut-offs come from embedding_service.calibration().
 SEMANTIC_SIMILARITY_FLOOR = 0.50
 SEMANTIC_SIMILARITY_CEILING = 0.68
 
@@ -391,8 +392,10 @@ class UnifiedMatchingService:
     @staticmethod
     def _semantic_score_from_similarity(similarity: float) -> float:
         similarity = max(-1.0, min(1.0, float(similarity)))
-        span = SEMANTIC_SIMILARITY_CEILING - SEMANTIC_SIMILARITY_FLOOR
-        score = (similarity - SEMANTIC_SIMILARITY_FLOOR) / span * 100
+        from jobs.services.embedding_service import calibration
+        cal = calibration()  # cut-offs depend on the embedding model
+        span = cal["ceiling"] - cal["floor"]
+        score = (similarity - cal["floor"]) / span * 100
         return max(5.0, min(100.0, score))
 
     @classmethod
