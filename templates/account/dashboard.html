@@ -4,125 +4,191 @@
 {% block title %}Account - Remote Impact{% endblock %}
 
 {% block content %}
-<div class="page-narrow max-w-5xl space-y-8">
+<div class="{% if is_employer %}container py-8 sm:py-10{% else %}page-narrow max-w-5xl{% endif %} space-y-8">
 
-    <a href="{% url 'jobs:shortlist' %}" class="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground">My shortlist &amp; application progress &rarr;</a>
     {% if is_employer %}
     <!-- Employer dashboard -->
-    <header class="!mt-2 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div class="min-w-0">
-            <p class="kicker">Hiring dashboard</p>
-            <h1 class="page-title mt-1 break-words">{% if organization %}{{ organization.name}}{% else %}Your company{% endif %}</h1>
-            <p class="page-lede">Manage your job listings and applicants.</p>
+    <header class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        <div class="flex min-w-0 items-center gap-4">
+            {% if organization.logo_src %}
+            <img src="{{ organization.logo_src }}" alt="" class="h-14 w-14 shrink-0 rounded-2xl bg-card object-contain shadow-card">
+            {% else %}
+            <div class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-muted text-lg font-semibold text-muted-foreground">{{ organization.name|default:"?"|slice:":1" }}</div>
+            {% endif %}
+            <div class="min-w-0">
+                <p class="kicker">Hiring dashboard</p>
+                <h1 class="page-title mt-0.5 break-words">{% if organization %}{{ organization.name }}{% else %}Your company{% endif %}</h1>
+            </div>
         </div>
-        <a href="{% url 'jobs:post_job' %}" class="btn btn-primary self-start">
-            Post a job
-        </a>
+        <div class="flex flex-wrap items-center gap-2">
+            {% if organization.slug %}<a href="{% url 'jobs:organization_profile' organization.slug %}" class="btn btn-ghost btn-sm">Company page</a>{% endif %}
+            <a href="{% url 'jobs:edit_company_profile' %}" class="btn btn-outline btn-sm">Edit company profile</a>
+            <a href="{% url 'jobs:post_job' %}" class="btn btn-primary btn-sm">Post a job</a>
+        </div>
     </header>
 
-    <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <div class="stat">
-            <p class="stat-value">{{ active_jobs_count|default:0 }}</p>
-            <p class="stat-label">Active jobs</p>
-        </div>
-        <div class="stat">
-            <p class="stat-value">{{ total_candidates|default:0 }}</p>
-            <p class="stat-label">Total candidates</p>
-        </div>
+    <div class="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <div class="stat"><p class="stat-value">{{ active_jobs_count|default:0 }}</p><p class="stat-label">Live roles</p></div>
+        <div class="stat"><p class="stat-value">{{ total_candidates|default:0 }}</p><p class="stat-label">Applications</p></div>
+        <div class="stat"><p class="stat-value">{{ interested_total|default:0 }}</p><p class="stat-label">Interested candidates</p></div>
+        <div class="stat"><p class="stat-value">{{ views_total|default:0 }}</p><p class="stat-label">Views, last 30 days</p></div>
+        <div class="stat"><p class="stat-value">{{ apply_clicks_total|default:0 }}</p><p class="stat-label">Apply clicks, last 30 days</p></div>
     </div>
 
-    <div class="grid gap-6 lg:grid-cols-3 lg:gap-8">
-        <!-- Jobs list -->
-        <section class="min-w-0 lg:col-span-2" aria-labelledby="postings-heading">
-            <h2 id="postings-heading" class="section-title px-1">Your job postings</h2>
-            {% if posted_jobs %}
-            <ul class="list-surface mt-3">
-                {% for job in posted_jobs %}
-                <li class="rounded-xl px-4 py-3.5 transition-colors hover:bg-muted/60 sm:px-5">
-                    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                        <div class="min-w-0">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <a href="{{ job.get_absolute_url }}" class="job-title break-words hover:underline">{{ job.title|display_title }}</a>
-                                {% if job.is_active %}
-                                <span class="badge badge-success">Active</span>
-                                {% else %}
-                                <span class="badge badge-warning">Draft</span>
-                                {% endif %}
-                            </div>
-                            <p class="job-meta">Posted {{ job.posted_at|date:"M d, Y" }}</p>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-1.5">
-                            {% if job.is_paid %}
-                            <a href="{% url 'jobs:employer_shortlist' job.slug %}" class="btn btn-ghost btn-sm">Interested candidates</a>
-                            <a href="{{ job.get_absolute_url }}" class="btn btn-ghost btn-sm">View</a>
-                            <a href="{% url 'jobs:employer_job_applications' job.slug %}" class="btn btn-outline btn-sm">View applicants (<span class="tabular-nums">{{ job.applications.count }}</span>)</a>
-                            {% else %}
-                            <a href="{% url 'jobs:job_checkout' job.slug %}" class="btn btn-primary btn-sm">Finish and pay</a>
-                            {% endif %}
-                        </div>
-                    </div>
+    {% if live_jobs %}
+    <section class="card p-5 sm:p-6" aria-labelledby="assistant-heading">
+        <div class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+            <h2 id="assistant-heading" class="section-title">Your hiring assistant</h2>
+            <p class="text-[13px] text-muted-foreground">Included with every paid post</p>
+        </div>
+        <div class="mt-4 grid gap-3 md:grid-cols-3">
+            <div class="rounded-xl bg-muted/60 p-4">
+                <p class="text-sm font-medium text-foreground">Reads every application</p>
+                <p class="mt-1 text-[13px] leading-relaxed text-muted-foreground">Checks each one against the role's must-haves and quotes the applicant's own words as evidence. You decide.</p>
+            </div>
+            <div class="rounded-xl bg-muted/60 p-4">
+                <p class="text-sm font-medium text-foreground">Finds people who fit</p>
+                <p class="mt-1 text-[13px] leading-relaxed text-muted-foreground">Looks through new candidate profiles every day and drafts an invitation for each strong match. You review and send.</p>
+            </div>
+            <div class="rounded-xl bg-muted/60 p-4">
+                <p class="text-sm font-medium text-foreground">Coaches your listing</p>
+                <p class="mt-1 text-[13px] leading-relaxed text-muted-foreground">Points out what stops good people applying, like missing pay or unclear location rules.</p>
+            </div>
+        </div>
+    </section>
+    {% endif %}
 
-                    {% if job.matching_data_quality < 0.55 %}
-                    <div class="alert alert-warning mt-3 flex-col gap-0.5 p-3">
-                        <p class="font-medium">Matching needs more detail</p>
-                        <p class="text-[13px]">Add a fuller job description, requirements, and skills to get reliable candidate matches.</p>
+    <section aria-labelledby="live-heading" class="space-y-4">
+        <h2 id="live-heading" class="section-title px-1">Live roles</h2>
+        {% for job in live_jobs %}
+        <article class="card overflow-hidden">
+            <div class="grid lg:grid-cols-5">
+                <!-- The role -->
+                <div class="p-5 sm:p-6 lg:col-span-2 lg:border-r lg:border-border/60">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="badge badge-success">Live</span>
+                        {% if job.featured_now %}<span class="badge badge-featured">Featured until {{ job.featured_until|date:"M j" }}</span>{% endif %}
                     </div>
-                    {% elif job.top_candidates %}
-                    <div class="mt-3">
-                        <p class="text-[13px] text-muted-foreground">Top matching candidates</p>
-                        <div class="mt-2 flex flex-wrap gap-2">
-                            {% for match in job.top_candidates %}
-                            <a href="{% url 'jobs:talent_profile' match.seeker.user_id %}"
-                               class="flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm transition-colors hover:bg-accent">
-                                <div class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-card text-xs font-medium text-foreground">
-                                    {{ match.seeker.user.first_name|default:"?"|slice:":1" }}
-                                </div>
-                                <div class="min-w-0">
-                                    <p class="text-xs font-medium text-foreground">{{ match.seeker.headline|truncatewords:4|default:"Candidate" }}</p>
-                                    <p class="text-xs tabular-nums text-muted-foreground">{{ match.score }}% match</p>
-                                </div>
-                            </a>
-                            {% endfor %}
-                        </div>
+                    <h3 class="mt-2 text-lg font-semibold leading-snug text-foreground"><a href="{{ job.get_absolute_url }}" class="hover:underline">{{ job.title|display_title }}</a></h3>
+                    <p class="mt-1 text-[13px] text-muted-foreground">{{ job.location|default:"Remote" }} · Posted {{ job.posted_at|date:"M j, Y" }}{% if job.edited_at %} · Updated {{ job.edited_at|date:"M j" }}{% endif %}{% if job.expires_at %} · Closes {{ job.expires_at|date:"M j" }}{% endif %}</p>
+                    <dl class="mt-4 grid grid-cols-4 gap-2 text-center">
+                        <div class="rounded-xl bg-muted px-2 py-2.5"><dt class="text-[11px] text-muted-foreground">Views</dt><dd class="text-base font-semibold tabular-nums text-foreground">{{ job.views_30d }}</dd></div>
+                        <div class="rounded-xl bg-muted px-2 py-2.5"><dt class="text-[11px] text-muted-foreground">Apply clicks</dt><dd class="text-base font-semibold tabular-nums text-foreground">{{ job.apply_clicks_30d }}</dd></div>
+                        <div class="rounded-xl bg-muted px-2 py-2.5"><dt class="text-[11px] text-muted-foreground">Applied</dt><dd class="text-base font-semibold tabular-nums text-foreground">{{ job.applicant_count }}</dd></div>
+                        <div class="rounded-xl bg-muted px-2 py-2.5"><dt class="text-[11px] text-muted-foreground">Interested</dt><dd class="text-base font-semibold tabular-nums text-foreground">{{ job.interested_count }}</dd></div>
+                    </dl>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="{% url 'jobs:employer_job_applications' job.slug %}" class="btn btn-primary btn-sm">Applications ({{ job.applicant_count }})</a>
+                        <a href="{% url 'jobs:employer_shortlist' job.slug %}" class="btn btn-outline btn-sm">Candidates</a>
+                        <a href="{% url 'jobs:job_edit' job.slug %}" class="btn btn-ghost btn-sm">Edit role</a>
+                        <a href="{{ job.get_absolute_url }}" class="btn btn-ghost btn-sm">View listing</a>
+                        {% if not job.featured_now %}<a href="{% url 'jobs:feature_job' job.slug %}" class="btn btn-ghost btn-sm">Feature it</a>{% endif %}
+                    </div>
+                    {% if job.tips %}
+                    <div class="mt-5 rounded-xl bg-amber-50/70 p-3.5 dark:bg-amber-500/10">
+                        <p class="text-[13px] font-semibold text-foreground">Make this listing stronger</p>
+                        <ul class="mt-1.5 list-disc space-y-1 pl-4 text-[13px] leading-snug text-muted-foreground">
+                            {% for tip in job.tips|slice:":3" %}<li>{{ tip }}</li>{% endfor %}
+                        </ul>
+                        <a href="{% url 'jobs:job_edit' job.slug %}" class="mt-2 inline-block text-[13px] font-medium text-foreground underline decoration-border hover:decoration-foreground">Edit the role</a>
                     </div>
                     {% endif %}
+                </div>
+
+                <!-- People who fit -->
+                <div class="border-t border-border/60 bg-muted/30 p-5 sm:p-6 lg:col-span-3 lg:border-t-0">
+                    <div class="flex items-baseline justify-between gap-3">
+                        <h4 class="text-sm font-semibold text-foreground">People who fit this role</h4>
+                        {% if job.suggestions %}<a href="{% url 'jobs:employer_shortlist' job.slug %}" class="text-[13px] text-muted-foreground hover:text-foreground">See all &rarr;</a>{% endif %}
+                    </div>
+                    {% if job.sourced %}
+                    <ul class="mt-3 grid gap-2 sm:grid-cols-2">
+                        {% for s in job.sourced %}
+                        <li class="flex flex-col justify-between gap-3 rounded-xl bg-card p-3.5 shadow-card">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-medium text-foreground">{% if s.seeker.visibility == 'public' %}{{ s.seeker.user.first_name|default:"Candidate" }}{% else %}Candidate (shares details when invited){% endif %}</p>
+                                {% if s.seeker.headline %}<p class="mt-0.5 line-clamp-2 text-[13px] leading-snug text-muted-foreground">{{ s.seeker.headline }}</p>{% endif %}
+                                <ul class="mt-2 space-y-1">
+                                    {% for r in s.reasons|slice:":3" %}<li class="text-[12px] leading-snug text-foreground"><span class="text-emerald-600" aria-hidden="true">&check;</span> {{ r.label }}</li>{% endfor %}
+                                </ul>
+                            </div>
+                            <a href="{% url 'jobs:talent_invite' s.seeker.user_id %}?job={{ job.pk }}&amp;suggestion={{ s.pk }}" class="btn btn-outline btn-sm self-start">Review invitation</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% elif job.matching_data_quality < 0.55 %}
+                    <p class="mt-3 text-[13px] leading-relaxed text-muted-foreground">Add a fuller description, requirements and skills to this role and we can suggest people who fit.</p>
+                    {% elif job.suggestions %}
+                    <ul class="mt-3 grid gap-2 sm:grid-cols-2">
+                        {% for s in job.suggestions %}
+                        <li class="flex flex-col justify-between gap-3 rounded-xl bg-card p-3.5 shadow-card">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-medium text-foreground">{{ s.display_name }}</p>
+                                {% if s.profile.headline %}<p class="mt-0.5 line-clamp-2 text-[13px] leading-snug text-muted-foreground">{{ s.profile.headline }}</p>{% endif %}
+                                <div class="mt-2 flex flex-wrap gap-1">
+                                    {% if s.shared_area %}<span class="badge badge-outline">{{ s.shared_area }}</span>{% endif %}
+                                    {% for skill in s.shared_skills|slice:":3" %}<span class="badge badge-primary">{{ skill|skill_label }}</span>{% endfor %}
+                                </div>
+                                {% if s.experience_note %}<p class="mt-1.5 text-[12px] text-muted-foreground">{{ s.experience_note }}</p>{% endif %}
+                            </div>
+                            <a href="{% url 'jobs:talent_invite' s.profile.user_id %}?job={{ job.pk }}" class="btn btn-outline btn-sm self-start">Invite to apply</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="mt-3 text-[13px] leading-relaxed text-muted-foreground">No strong matches in our candidate pool yet. We check new profiles every day, and people who say they're interested appear under Candidates.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </article>
+        {% empty %}
+        <div class="surface p-8 text-center">
+            <h3 class="text-[15px] font-semibold text-foreground">No live roles</h3>
+            <p class="mt-1 text-sm text-muted-foreground">Post a role ($99 for 30 days, featured) and applications and matching candidates will appear here.</p>
+            <a href="{% url 'jobs:post_job' %}" class="btn btn-primary btn-sm mt-4">Post a job</a>
+        </div>
+        {% endfor %}
+    </section>
+
+    {% if draft_jobs or closed_jobs %}
+    <div class="grid gap-6 lg:grid-cols-2">
+        {% if draft_jobs %}
+        <section aria-labelledby="drafts-heading">
+            <h2 id="drafts-heading" class="section-title px-1">Drafts</h2>
+            <ul class="list-surface mt-3">
+                {% for job in draft_jobs %}
+                <li class="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
+                    <div class="min-w-0">
+                        <p class="truncate text-sm font-medium text-foreground">{{ job.title|display_title }}</p>
+                        <p class="text-[13px] text-muted-foreground">Started {{ job.posted_at|date:"M j, Y" }}{% if job.poster != request.user and job.poster %} by {{ job.poster.email }}{% endif %}</p>
+                    </div>
+                    {% if job.poster == request.user %}<a href="{% url 'jobs:job_checkout' job.slug %}" class="btn btn-primary btn-sm shrink-0">Finish and pay</a>{% endif %}
                 </li>
                 {% endfor %}
             </ul>
-            {% else %}
-            <div class="surface mt-3 p-8 text-center">
-                <h3 class="text-[15px] font-semibold text-foreground">No jobs posted yet</h3>
-                <p class="mt-1 text-sm text-muted-foreground">Post your first role ($99 for a 30-day listing) and applicants will appear here.</p>
-                <a href="{% url 'jobs:post_job' %}" class="btn btn-primary btn-sm mt-4">Create a job posting</a>
-            </div>
-            {% endif %}
         </section>
-
-        <!-- Sidebar: organization -->
-        <aside class="space-y-6">
-            <div class="card p-5 sm:p-6">
-                <div class="mb-4 flex items-center gap-3">
-                    {% if organization.logo_src %}
-                    <img src="{{ organization.logo_src }}" loading="lazy" class="h-11 w-11 shrink-0 rounded-xl bg-card object-contain shadow-card" alt="{{ organization.name }}">
-                    {% else %}
-                    <div class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-muted text-base font-semibold text-muted-foreground">
-                        {{ organization.name|slice:":1" }}
-                    </div>
-                    {% endif %}
+        {% endif %}
+        {% if closed_jobs %}
+        <section aria-labelledby="closed-heading">
+            <h2 id="closed-heading" class="section-title px-1">Closed</h2>
+            <ul class="list-surface mt-3">
+                {% for job in closed_jobs %}
+                <li class="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
                     <div class="min-w-0">
-                        <h3 class="truncate text-[15px] font-semibold text-foreground">{{ organization.name }}</h3>
-                        <a href="{{ organization.website }}" target="_blank" rel="noopener" class="block truncate text-[13px] text-muted-foreground hover:text-foreground">{{organization.website|truncatechars:20 }}</a>
+                        <p class="truncate text-sm font-medium text-foreground">{{ job.title|display_title }}</p>
+                        <p class="text-[13px] text-muted-foreground">Posted {{ job.posted_at|date:"M j, Y" }}</p>
                     </div>
-                </div>
-                <p class="text-sm leading-6 text-muted-foreground">{{ organization.description|truncatewords:20 }}</p>
-                <a href="{% url 'jobs:edit_company_profile' %}" class="btn btn-outline btn-sm btn-block mt-5">Edit company profile</a>
-            </div>
-
-            {% comment %}Talent directory hidden for now{% endcomment %}
-        </aside>
+                    <a href="{% url 'jobs:employer_job_applications' job.slug %}" class="btn btn-ghost btn-sm shrink-0">Applications</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </section>
+        {% endif %}
     </div>
+    {% endif %}
 
     {% elif is_seeker %}
+    <a href="{% url 'jobs:shortlist' %}" class="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground">My shortlist &amp; application progress &rarr;</a>
     <!-- Job seeker dashboard -->
     <header class="!mt-2 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div class="min-w-0">

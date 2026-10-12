@@ -28,3 +28,25 @@ class ColleagueOrgTests(TestCase):
         for user in (self._user("x@gmail.com"), self._user("y@rtt.org", verified=False)):
             org = JobService._organization_for_poster("RTT", {}, user)
             self.assertNotEqual(org.pk, self.org.pk)
+
+
+class ColleagueCanManagePaidRoleTests(TestCase):
+    def test_colleague_sees_paid_role_but_not_others_drafts(self):
+        from django.utils import timezone
+
+        from jobs.models import Category, Job
+        from jobs.services.employer_access import hiring_jobs
+
+        User = get_user_model()
+        poster, colleague, outsider = (User.objects.create_user(n, f"{n}@rtt.org", "pw") for n in ("jobs", "sarah", "x"))
+        org = Organization.objects.create(name="RTT", slug="rtt", website="https://rtt.org/")
+        org.members.add(poster, colleague)
+        cat = Category.objects.create(name="Impact", slug="impact")
+        now = timezone.now()
+        common = dict(organization=org, category=cat, description="d", location="Remote", job_type="full-time",
+                      source=Job.Source.MANUAL, poster=poster, posted_at=now)
+        paid = Job.objects.create(title="Paid", slug="paid", is_paid=True, is_active=True, **common)
+        draft = Job.objects.create(title="Draft", slug="draft", is_paid=False, is_active=False, **common)
+        self.assertEqual(set(hiring_jobs(colleague)), {paid})
+        self.assertEqual(set(hiring_jobs(poster)), {paid, draft})
+        self.assertFalse(hiring_jobs(outsider).exists())

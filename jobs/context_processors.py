@@ -29,4 +29,16 @@ def site_settings(request):
         'SITE_URL': getattr(settings, 'SITE_URL', 'https://remoteimpact.org'),
         'SITE_NAME': getattr(settings, 'SITE_NAME', 'Remote Impact'),
         'CSS_VERSION': css_version(),
+        'nav_employer': _is_employer(request),
     }
+
+
+def _is_employer(request):
+    """Employers get a hiring navigation instead of the job-seeker one."""
+    user = getattr(request, "user", None)
+    if not user or not user.is_authenticated:
+        return False
+    try:
+        return user.profile.account_type == "employer"
+    except Exception:  # noqa: BLE001 - no profile yet
+        return False

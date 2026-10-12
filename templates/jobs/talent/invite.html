@@ -65,8 +65,8 @@
                 <textarea id="invite-message" name="message" rows="5" required
                           aria-describedby="invite-message-help"
                           placeholder="Say which role you have in mind and why their background fits it."
-                          class="textarea"></textarea>
-                <p class="help" id="invite-message-help">This is included in the invitation email.</p>
+                          class="textarea">{{ draft_message }}</textarea>
+                <p class="help" id="invite-message-help">This is included in the invitation email.{% if draft_message %} Drafted by your hiring assistant; edit it as you like before sending.{% elif selected_job_id %} <a class="underline decoration-border hover:decoration-foreground" href="?job={{ selected_job_id }}&amp;draft=1">Draft it for me</a>{% endif %}</p>
             </div>
 
             {% if active_jobs %}

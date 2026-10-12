@@ -1,0 +1,14 @@
+Hi,
+
+Your hiring assistant found {{ suggestions|length }} {% if suggestions|length == 1 %}person{% else %}people{% endif %} on Remote Impact whose profile fits {{ job.title }}. Each has an invitation drafted for you. Nothing is sent until you review it and click send.
+{% for s in suggestions %}
+- {% if s.seeker.visibility == 'public' %}{{ s.seeker.user.first_name|default:"Candidate" }}{% else %}Candidate (shares details when invited){% endif %}{% if s.seeker.headline %}: {{ s.seeker.headline }}{% endif %}{% for r in s.reasons %}
+  - {{ r.label }}: "{{ r.quote }}"{% endfor %}
+  Review invitation: {{ invite_base }}/talent/{{ s.seeker.user_id }}/invite/?job={{ job.pk }}&suggestion={{ s.pk }}
+{% endfor %}
+All candidates for this role: {{ candidates_url }}
+Hiring dashboard: {{ dashboard_url }}
+
+Remote Impact
+
+You get this because you posted {{ job.title }} on Remote Impact. Reply to stop these suggestions.

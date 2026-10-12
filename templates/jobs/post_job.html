@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{% if is_edit %}Finish &amp; Pay{% else %}Post a Job{% endif %} - Remote Impact Jobs{% endblock %}
+{% block title %}{% if is_paid_edit %}Edit role{% elif is_edit %}Finish &amp; Pay{% else %}Post a Job{% endif %} - Remote Impact Jobs{% endblock %}
 
 {% block content %}
 <style>
@@ -28,8 +28,8 @@
 </style>
 <div class="container py-8 sm:py-10">
     <header class="page-header max-w-2xl">
-        <h1 class="page-title">{% if is_edit %}Review and pay{% else %}Post a role{% endif %}</h1>
-        <p class="page-lede">{% if is_edit %}Edit anything below, then continue to payment to publish.{% else %}Reach people looking for remote work at impact organizations. Your listing goes live as soon as payment completes and stays up for 30 days.{% endif %}</p>
+        <h1 class="page-title">{% if is_paid_edit %}Edit {{ job.title }}{% elif is_edit %}Review and pay{% else %}Post a role{% endif %}</h1>
+        <p class="page-lede">{% if is_paid_edit %}Changes go live as soon as you save, and job seekers see when the listing was last updated.{% elif is_edit %}Edit anything below, then continue to payment to publish.{% else %}Reach people looking for remote work at impact organizations. Your listing goes live as soon as payment completes and stays up for 30 days.{% endif %}</p>
     </header>
 
     <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10">
@@ -47,6 +47,10 @@
                         <li><span class="font-medium text-foreground">Featured</span> label and a pinned slot at the top of matching search and category pages</li>
                         <li>Shown in the homepage Featured roles section</li>
                         <li>Eligible for AI Job Scout matches when it fits someone's brief, plus views and apply-click stats</li>
+                        <li>Applications on Remote Impact, with your own application link kept as an option</li>
+                        <li><span class="font-medium text-foreground">Hiring assistant</span>: reads each application against your must-haves, quoting the applicant's own words</li>
+                        <li>Daily candidate suggestions with invitations drafted for you to review and send</li>
+                        <li>Edit the role any time while it's live</li>
                     </ul>
                 </section>
 
@@ -245,7 +249,7 @@
 
             <div class="flex pt-2 sm:justify-end">
                 <button type="submit" class="btn btn-primary btn-lg w-full sm:w-auto">
-                    Continue to payment ($99)
+                    {% if is_paid_edit %}Save changes{% else %}Continue to payment ($99){% endif %}
                 </button>
             </div>
         </form>

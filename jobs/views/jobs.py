@@ -31,7 +31,30 @@ def _drop_pinned_duplicates(context):
     if pinned and context.get("jobs") is not None:
         context["jobs"] = [job for job in context["jobs"] if job.id not in pinned]
 
-class JobListView(ListView):
+
+class FastJobPaginationMixin:
+    """Rank on ids, then load full rows for the one page shown.
+
+    Sorting the whole result set with every column (descriptions included) made Postgres spill
+    to disk on each request; sorting ids alone stays in memory.
+    """
+
+    def paginate_queryset(self, queryset, page_size):
+        from django.db.models.query import QuerySet
+
+        if not isinstance(queryset, QuerySet):
+            return super().paginate_queryset(queryset, page_size)
+        paginator, page, ids, is_paginated = super().paginate_queryset(
+            queryset.values_list("pk", flat=True), page_size)
+        ids = list(ids)
+        rows = Job.objects.filter(pk__in=ids).select_related("organization", "category").defer(
+            "embedding", "search_vector")
+        by_id = {job.pk: job for job in rows}
+        page.object_list = [by_id[pk] for pk in ids if pk in by_id]
+        return paginator, page, page.object_list, is_paginated
+
+
+class JobListView(FastJobPaginationMixin, ListView):
     model = Job
     template_name = "jobs/job_list.html"
     context_object_name = "jobs"
@@ -683,7 +706,7 @@ class OrganizationSearchView(View):
 
 
 
-class CategoryLandingView(ListView):
+class CategoryLandingView(FastJobPaginationMixin, ListView):
     """SEO-optimized landing page for each impact category."""
     model = Job
     template_name = "jobs/category_landing.html"

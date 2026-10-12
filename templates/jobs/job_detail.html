@@ -91,6 +91,17 @@
                     <dt class="text-[13px] text-muted-foreground">Posted</dt>
                     <dd class="font-medium tabular-nums text-foreground">{{ job.posted_at|date:"M d, Y" }}</dd>
                 </div>
+                {% if job.edited_at %}
+                <div class="min-w-0">
+                    <dt class="text-[13px] text-muted-foreground">Last updated</dt>
+                    <dd class="font-medium tabular-nums text-foreground">{{ job.edited_at|date:"M d, Y" }}</dd>
+                </div>
+                {% elif job.last_seen_at and job.source != 'manual' %}
+                <div class="min-w-0">
+                    <dt class="text-[13px] text-muted-foreground">Last checked</dt>
+                    <dd class="font-medium tabular-nums text-foreground">{{ job.last_seen_at|date:"M d, Y" }}</dd>
+                </div>
+                {% endif %}
                 {% if job.expires_at %}
                 <div class="min-w-0">
                     <dt class="text-[13px] text-muted-foreground">Deadline</dt>
@@ -178,7 +189,7 @@
                 </div>
                 {% endif %}
             </div>
-            {% elif not seeker_profile and user.is_authenticated %}
+            {% elif not seeker_profile and user.is_authenticated and not nav_employer %}
             <!-- Prompt to complete profile -->
             <div class="surface order-2 p-5 lg:order-1">
                 <h2 class="text-sm font-semibold text-foreground">See how you match</h2>
@@ -187,6 +198,28 @@
             </div>
             {% endif %}
 
+            {% if nav_employer %}
+            <div class="card order-1 p-5 sm:p-6 lg:sticky lg:top-24 lg:order-2">
+                {% if job.poster == user or user in job.organization.members.all %}
+                <h2 class="card-title">Your role</h2>
+                <p class="mt-1 text-[13px] text-muted-foreground">{% if job.is_paid %}Live{% if job.expires_at %} until {{ job.expires_at|date:"M j" }}{% endif %}{% else %}Draft, not published yet{% endif %}</p>
+                <div class="mt-4 grid gap-2">
+                    {% if job.is_paid %}
+                    <a href="{% url 'jobs:employer_job_applications' job.slug %}" class="btn btn-primary btn-block">Applications</a>
+                    <a href="{% url 'jobs:employer_shortlist' job.slug %}" class="btn btn-outline btn-block">Candidates</a>
+                    <a href="{% url 'jobs:job_edit' job.slug %}" class="btn btn-outline btn-block">Edit role</a>
+                    {% elif job.poster == user %}
+                    <a href="{% url 'jobs:job_checkout' job.slug %}" class="btn btn-primary btn-block">Finish and pay</a>
+                    {% endif %}
+                    <a href="{% url 'jobs:account' %}" class="btn btn-ghost btn-block">Hiring dashboard</a>
+                </div>
+                {% else %}
+                <h2 class="card-title">Hiring for a similar role?</h2>
+                <p class="mt-1 text-[13px] leading-relaxed text-muted-foreground">Post it on Remote Impact for $99: featured for 30 days, with applications and matching candidates in your dashboard.</p>
+                <a href="{% url 'jobs:post_job' %}" class="btn btn-primary btn-block mt-4">Post a job</a>
+                {% endif %}
+            </div>
+            {% else %}
             <div id="apply-panel" class="card order-1 p-5 sm:p-6 lg:sticky lg:top-24 lg:order-2">
                 <h2 class="card-title">Apply for this role</h2>
                 {% if job.expires_at %}<p class="mt-0.5 text-[13px] text-muted-foreground">Deadline {{ job.expires_at|date:"M d, Y" }}</p>{% endif %}
@@ -245,6 +278,7 @@
                 <p class="mt-4 text-center text-[13px] text-muted-foreground"><span class="badge badge-featured">★ Featured</span> by the employer</p>
                 {% endif %}
             </div>
+            {% endif %}
             {% endif %}
         </aside>
 
@@ -373,6 +407,7 @@
                     </a>
             </section>
 
+            {% if not nav_employer %}
             <div class="surface mt-8 grid gap-6 p-5 sm:grid-cols-2 sm:p-6">
                 <!-- AI Assistant CTA -->
                 <section class="flex flex-col">
@@ -396,6 +431,7 @@
                     </a>
                 </section>
             </div>
+            {% endif %}
 
             {% if related_seo_links %}
             <section class="mt-8">
@@ -435,7 +471,7 @@
 </div>
 
 
-{% if job_available %}{% if apply_inplatform or safe_application_url or job.application_email %}
+{% if job_available and not nav_employer %}{% if apply_inplatform or safe_application_url or job.application_email %}
 <!-- Mobile apply bar: keeps the primary action in reach while reading -->
 <div id="mobile-apply-bar" class="fixed inset-x-0 bottom-0 z-40 bg-card/95 px-4 pt-3 shadow-[0_-1px_0_rgb(20_20_25/0.05),0_-8px_24px_-12px_rgb(20_20_25/0.12)] backdrop-blur transition-transform duration-200 lg:hidden" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
     <div class="flex items-center gap-3">

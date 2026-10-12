@@ -1,4 +1,5 @@
 {% extends "jobs/shortlists/base.html" %}
+{% load job_extras %}
 {% block title %}{{ collection_title }} | Remote Impact{% endblock %}
 {% block robots %}{% if private_collection %}noindex, nofollow{% else %}index, follow{% endif %}{% endblock %}
 {% block meta_description %}Recent remote software and data roles in impact-focused organizations. Browse the roles, build a shortlist and find matches for your own search.{% endblock %}
@@ -13,8 +14,8 @@
     <p id="copy-status" class="help" role="status"></p>
   </header>
   <section class="surface flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"><div class="max-w-2xl"><h2 class="section-title">Find your own fit</h2><p class="mt-1 text-sm text-muted-foreground">Describe the work you want. Your first Scout search and match email are free. Ongoing alerts are $10/month.</p></div><a class="btn btn-primary shrink-0" href="{{ scout_url }}" data-track="collection_scout_start">Find my matches</a></section>
-  <ul class="list-surface mt-6">
-  {% for job in jobs %}<li class="flex min-w-0 items-start gap-4 rounded-xl px-4 py-3.5 transition-colors hover:bg-muted sm:px-5">{% if job.organization.logo_src %}<img class="hidden h-10 w-10 shrink-0 rounded-xl bg-card object-contain shadow-soft sm:block" src="{{ job.organization.logo_src }}" alt="" loading="lazy">{% endif %}{% include "jobs/shortlists/job.html" %}</li>{% empty %}<li class="px-4 py-10 text-center"><h2 class="section-title">No current roles in this collection</h2><p class="mt-1.5 text-sm text-muted-foreground">Listings close or expire. Browse the current jobs for similar roles.</p><a class="btn btn-outline mt-5" href="{% url 'jobs:job_list' %}">Browse current jobs</a></li>{% endfor %}
+  <ul class="list-surface list-divided mt-6">
+  {% for job in jobs %}<li class="flex min-w-0 items-start gap-4 rounded-xl px-4 py-4 transition-colors hover:bg-muted/60 sm:px-5">{% if job.organization.logo_src %}<img class="mt-0.5 hidden h-10 w-10 shrink-0 rounded-xl bg-card object-contain ring-1 ring-border/70 sm:block" src="{{ job.organization.logo_src }}" alt="" loading="lazy">{% else %}<span class="avatar mt-0.5 hidden h-10 w-10 sm:inline-grid {{ job.organization.name|org_tone }}" aria-hidden="true">{{ job.organization.name|initials }}</span>{% endif %}{% include "jobs/shortlists/job.html" %}</li>{% empty %}<li class="px-4 py-10 text-center"><h2 class="section-title">No current roles in this collection</h2><p class="mt-1.5 text-sm text-muted-foreground">Listings close or expire. Browse the current jobs for similar roles.</p><a class="btn btn-outline mt-5" href="{% url 'jobs:job_list' %}">Browse current jobs</a></li>{% endfor %}
   </ul>
   <p class="mt-4 px-1 text-[13px] text-muted-foreground">Listings include aggregated and employer-posted roles. Check the original application page for current availability, salary details and location restrictions.</p>
   {% if is_owner %}<section class="mt-8"><form method="post" action="{% url 'jobs:revoke_shortlist' collection.token %}">{% csrf_token %}<button class="btn btn-outline" type="submit">Revoke this sharing link</button></form></section>{% endif %}

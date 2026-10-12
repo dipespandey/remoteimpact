@@ -46,3 +46,32 @@ class FeaturedNotDuplicatedTests(PaidPostApplyTests):
         self.assertEqual([j.id for j in response.context["sponsored_jobs"]], [self.job.id])
         self.assertNotIn(self.job.id, [j.id for j in response.context["jobs"]])
         self.assertNotContains(response, "No roles match these filters")
+
+
+class EditPaidRoleTests(PaidPostApplyTests):
+    def test_colleague_can_edit_paid_role_and_seekers_see_update(self):
+        colleague = get_user_model().objects.create_user("sarah", "sarah@org.example", "pw")
+        self.job.organization.members.add(colleague)
+        Job.objects.filter(pk=self.job.pk).update(raw_data={"benefits": "Health", "source_note": "keep me"},
+                                                  must_haves=[{"label": "x", "quote": "y"}])
+        self.client.force_login(colleague)
+        page = self.client.get(f"/jobs/{self.job.slug}/edit/")
+        self.assertEqual(page.status_code, 200)
+        data = {k: v for k, v in page.context["form"].initial.items() if v is not None}
+        data.update({"title": "Program Lead (updated)", "description": "New description of the role. " * 10,
+                     "requirements": "Five years running programs.",
+                     "category": self.job.category_id, "custom_questions": "[]"})
+        response = self.client.post(f"/jobs/{self.job.slug}/edit/", data)
+        self.assertEqual(response.status_code, 302, getattr(response, "context", {}) and response.context["form"].errors)
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.title, "Program Lead (updated)")
+        self.assertIsNotNone(self.job.edited_at)
+        self.assertEqual(self.job.raw_data.get("source_note"), "keep me")
+        self.assertEqual(self.job.must_haves, [])
+        self.client.logout()
+        self.assertContains(self.client.get(self.job.get_absolute_url()), "Last updated")
+
+    def test_outsider_cannot_edit(self):
+        outsider = get_user_model().objects.create_user("x", "x@else.example", "pw")
+        self.client.force_login(outsider)
+        self.assertEqual(self.client.get(f"/jobs/{self.job.slug}/edit/").status_code, 404)

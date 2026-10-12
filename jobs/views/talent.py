@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import ListView, DetailView, TemplateView
 
+from ..services.employer_access import hiring_jobs
 from ..models import (
     SeekerProfile,
     Category,
@@ -150,7 +151,7 @@ class TalentInviteView(LoginRequiredMixin, View):
             is_employer = request.user.profile.account_type == UserProfile.AccountType.EMPLOYER
         except UserProfile.DoesNotExist:
             is_employer = False
-        has_paid_post = Job.objects.filter(poster=request.user, is_paid=True).exists()
+        has_paid_post = hiring_jobs(request.user).filter(is_paid=True).exists()
         if not (is_employer or has_paid_post or request.user.is_staff):
             raise Http404
         return super().dispatch(request, *args, **kwargs)
@@ -170,12 +171,12 @@ class TalentInviteView(LoginRequiredMixin, View):
         org = user.organizations.first()
         if org:
             return org
-        latest = Job.objects.filter(poster=user).select_related("organization").order_by("-posted_at").first()
+        latest = hiring_jobs(user).select_related("organization").order_by("-posted_at").first()
         return latest.organization if latest else None
 
     @staticmethod
     def _jobs(user, seeker):
-        jobs = Job.objects.filter(poster=user, is_active=True)
+        jobs = hiring_jobs(user).filter(is_active=True)
         if seeker.visibility != SeekerProfile.Visibility.PUBLIC:
             jobs = jobs.filter(is_paid=True)
         return jobs.order_by("-posted_at")
@@ -196,7 +197,20 @@ class TalentInviteView(LoginRequiredMixin, View):
             return self._back(seeker)
         existing = TalentInvitation.objects.filter(seeker=seeker, organization=org).values_list("job_id", flat=True)
         selected = request.GET.get("job", "")
+        draft = ""
+        suggestion_id = request.GET.get("suggestion", "")
+        if suggestion_id.isdigit():
+            from ..models import SourcingSuggestion
+            found = SourcingSuggestion.objects.filter(
+                pk=int(suggestion_id), seeker=seeker, job__in=self._jobs(request.user, seeker)).first()
+            draft = found.draft_message if found else ""
+        elif request.GET.get("draft") and selected.isdigit():
+            job = self._jobs(request.user, seeker).filter(pk=int(selected)).select_related("organization").first()
+            if job:
+                from ..services.hiring_assistant import draft_invite, sourcing_evidence
+                draft = draft_invite(job, sourcing_evidence(job, seeker))
         return render(request, "jobs/talent/invite.html", {
+            "draft_message": draft,
             "seeker": seeker,
             "is_public": seeker.visibility == SeekerProfile.Visibility.PUBLIC,
             "organization": org,

@@ -1,6 +1,7 @@
 from django.urls import path
 from django.views.generic import RedirectView
 from . import views
+from .views.resources import home as resources_home
 from .views import shortlists, tracking, employers
 from .feeds import LatestJobsFeed, CategoryJobsFeed, IndeedXMLFeed, LinkedInXMLFeed
 
@@ -16,7 +17,7 @@ urlpatterns = [
     path("employers/jobs/<slug:slug>/shortlist/", shortlists.employer_shortlist, name="employer_shortlist"),
     path("employers/jobs/<slug:slug>/shortlist/<int:pk>/stage/", shortlists.employer_stage, name="employer_interest_stage"),
     # Public
-    path("", views.HomeView.as_view(), name="home"),
+    path("", resources_home, name="home"),
     path("resources/", views.ResourcesView.as_view(), name="resources"),
     path("resources/remote-impact-jobs/", views.PartnerResourcesView.as_view(), name="partner_resources"),
     path("insights/remote-impact-jobs/", views.ImpactJobsSnapshotView.as_view(), name="impact_jobs_snapshot"),
@@ -44,6 +45,7 @@ urlpatterns = [
     path("jobs/<slug:slug>/og-image/", views.JobOGImageView.as_view(), name="job_og_image"),
     path("jobs/<slug:slug>/save/", views.SaveJobView.as_view(), name="save_job"),
     path("jobs/<slug:slug>/checkout/", views.JobCheckoutView.as_view(), name="job_checkout"),
+    path("jobs/<slug:slug>/edit/", views.JobEditView.as_view(), name="job_edit"),
     path("applications/<int:pk>/job/", views.AppliedJobDetailView.as_view(), name="applied_job_detail"),
     # API
     path("api/organizations/search/", views.OrganizationSearchView.as_view(), name="organization_search"),

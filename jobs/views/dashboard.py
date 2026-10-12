@@ -39,6 +39,48 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             return redirect(redirect_url)
         return super().dispatch(request, *args, **kwargs)
 
+    @staticmethod
+    def _hiring_overview(posted_jobs):
+        """Live roles with their numbers and best-matching people; drafts and closed roles apart."""
+        from ..services import job_stats
+        from ..services.candidate_suggestions import suggested_candidates
+        from ..services.shortlists import visible_interests
+        from ..services.hiring_assistant import listing_checks
+        from ..services.unified_matching_service import UnifiedMatchingService
+
+        now = timezone.now()
+        live = [j for j in posted_jobs if j.is_paid and j.is_active and j.is_available]
+        drafts = [j for j in posted_jobs if not j.is_paid]
+        closed = [j for j in posted_jobs if j.is_paid and j not in live]
+        stats = job_stats.totals([j.pk for j in live], days=30)
+        for job in live:
+            row = stats.get(job.pk) or {}
+            job.views_30d = row.get("views") or 0
+            job.apply_clicks_30d = row.get("apply_clicks") or 0
+            job.applicant_count = job.applications.count()
+            job.interested_count = visible_interests(job).count()
+            job.featured_now = bool(job.featured_until and job.featured_until > now)
+            job.tips = listing_checks(job)
+            job.screened_count = job.applications.exclude(screening={}).count()
+            invited = set(job.talent_invitations.values_list("seeker_id", flat=True))
+            job.sourced = [s for s in job.sourcing_suggestions.select_related("seeker", "seeker__user").order_by("-created_at")
+                           if s.seeker_id not in invited][:4]
+            try:
+                job.matching_data_quality = UnifiedMatchingService._job_data_quality(job)
+                job.suggestions = suggested_candidates(job, limit=4)
+            except Exception:  # noqa: BLE001 - matching must never break the dashboard
+                job.matching_data_quality, job.suggestions = 0, []
+        return {
+            "live_jobs": live,
+            "draft_jobs": drafts,
+            "closed_jobs": closed,
+            "active_jobs_count": len(live),
+            "total_candidates": sum(j.applicant_count for j in live) + sum(j.applications.count() for j in closed),
+            "interested_total": sum(j.interested_count for j in live),
+            "views_total": sum(j.views_30d for j in live),
+            "apply_clicks_total": sum(j.apply_clicks_30d for j in live),
+        }
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
@@ -62,41 +104,15 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         if profile.account_type == UserProfile.AccountType.EMPLOYER:
             context["is_employer"] = True
             # Their own posts and drafts, plus roles colleagues at their organization paid for.
+            from ..services.employer_access import hiring_jobs
+
             posted_jobs = list(
-                Job.objects.filter(Q(poster=user) | Q(is_paid=True, organization__members=user))
-                .distinct().select_related("organization").order_by("-posted_at")
+                hiring_jobs(user).select_related("organization", "poster")
+                .defer("search_vector", "raw_data").order_by("-posted_at")
             )
             context["posted_jobs"] = posted_jobs
-            context["active_jobs_count"] = sum(1 for j in posted_jobs if j.is_active)
-            context["total_candidates"] = sum(j.applications.count() for j in posted_jobs)
             context["organization"] = user.organizations.first()
-
-            # Top matching candidates for each active job (attached to job objects)
-            try:
-                from ..services.unified_matching_service import UnifiedMatchingService
-                for job in posted_jobs:
-                    if job.is_active:
-                        try:
-                            job.matching_data_quality = UnifiedMatchingService._job_data_quality(job)
-                            results = UnifiedMatchingService.get_candidate_matches(job, limit=5)
-                            job.top_candidates = [
-                                {
-                                    "seeker": result.seeker,
-                                    "score": int(result.score),
-                                    "reasons": result.reasons[:2],
-                                }
-                                for result in results[:5]
-                            ]
-                        except Exception:
-                            job.matching_data_quality = 0
-                            job.top_candidates = []
-                    else:
-                        job.matching_data_quality = 0
-                        job.top_candidates = []
-            except (ImportError, Exception):
-                for job in posted_jobs:
-                    job.matching_data_quality = 0
-                    job.top_candidates = []
+            context.update(self._hiring_overview(posted_jobs))
 
         elif profile.account_type == UserProfile.AccountType.SEEKER:
             context["is_seeker"] = True

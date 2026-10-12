@@ -383,6 +383,11 @@ class Job(models.Model):
     quality_score = models.PositiveSmallIntegerField(default=0, db_index=True)
     quality_issues = models.JSONField(default=list, blank=True)
 
+    # Hiring assistant: the role's must-haves, each with the posting text it came from.
+    must_haves = models.JSONField(default=list, blank=True)
+    # When the employer last changed the listing's content (shown to job seekers as "Updated").
+    edited_at = models.DateTimeField(null=True, blank=True)
+
     # Vector search fields
     embedding = VectorField(dimensions=384, null=True, blank=True)
     embedding_content_hash = models.CharField(max_length=64, blank=True, default="")
@@ -611,6 +616,10 @@ class Application(models.Model):
         null=True,
         help_text="PDF or DOC resume (max 5 MB)",
     )
+
+    # Hiring assistant: how the application compares with the role's must-haves, each "met"
+    # backed by a quote from the applicant's own words. Advisory only; people decide.
+    screening = models.JSONField(default=dict, blank=True)
 
     applied_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -1852,3 +1861,17 @@ class OutreachSend(models.Model):
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["campaign", "email"], name="outreach_once_per_campaign")]
+
+
+class SourcingSuggestion(models.Model):
+    """A candidate the hiring assistant put in front of an employer for a role, with a drafted invite."""
+
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="sourcing_suggestions")
+    seeker = models.ForeignKey("SeekerProfile", on_delete=models.CASCADE, related_name="sourcing_suggestions")
+    reasons = models.JSONField(default=list, blank=True)
+    draft_message = models.TextField(blank=True)
+    notified_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["job", "seeker"], name="one_suggestion_per_job_seeker")]

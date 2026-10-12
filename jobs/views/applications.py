@@ -11,6 +11,23 @@ from ..models import Job, Application, CoverLetter, SeekerProfile
 from ..forms import ApplicationForm
 
 
+def _screen_in_background(application_id):
+    import threading
+
+    from django.db import close_old_connections, transaction
+
+    def run():
+        close_old_connections()
+        try:
+            from ..services.hiring_assistant import screen_and_save
+            app = Application.objects.select_related("job", "job__organization", "applicant").get(pk=application_id)
+            screen_and_save(app)
+        finally:
+            close_old_connections()
+
+    transaction.on_commit(lambda: threading.Thread(target=run, daemon=True).start())
+
+
 class ApplicationCreateView(LoginRequiredMixin, FormView):
     """On-platform job application form."""
     template_name = "jobs/apply.html"
@@ -91,6 +108,10 @@ class ApplicationCreateView(LoginRequiredMixin, FormView):
         except IntegrityError:
             messages.info(self.request, "You have already applied to this position.")
             return redirect(self.job.get_absolute_url())
+
+        # Hiring assistant: read the application against the role's must-haves in the background.
+        if self.job.is_paid:
+            _screen_in_background(app.pk)
 
         # Save resume to seeker profile if they uploaded a new one and don't have one
         if form.cleaned_data.get("resume"):

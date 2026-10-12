@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><body style="margin:0;padding:24px;background:#fcfcfb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1d1d22;font-size:15px;line-height:1.6">
+<div style="max-width:580px;margin:0 auto">
+<p>Hi,</p>
+<p>Your hiring assistant found {{ suggestions|length }} {% if suggestions|length == 1 %}person{% else %}people{% endif %} on Remote Impact whose profile fits <b>{{ job.title }}</b>. Each has an invitation drafted for you. Nothing is sent until you review it and click send.</p>
+{% for s in suggestions %}
+<div style="margin:16px 0;padding:14px 16px;background:#fff;border:1px solid #ececea;border-radius:12px">
+<p style="margin:0;font-weight:600">{% if s.seeker.visibility == 'public' %}{{ s.seeker.user.first_name|default:"Candidate" }}{% else %}Candidate (shares details when invited){% endif %}</p>
+{% if s.seeker.headline %}<p style="margin:2px 0 0;color:#6b6b70;font-size:14px">{{ s.seeker.headline }}</p>{% endif %}
+{% for r in s.reasons %}<p style="margin:6px 0 0;font-size:13px;color:#3d3d42">&check; {{ r.label }} <span style="color:#6b6b70;font-style:italic">&ldquo;{{ r.quote }}&rdquo;</span></p>{% endfor %}
+<p style="margin:10px 0 0"><a href="{{ invite_base }}/talent/{{ s.seeker.user_id }}/invite/?job={{ job.pk }}&amp;suggestion={{ s.pk }}" style="display:inline-block;padding:8px 14px;background:#1d1d22;color:#fff;text-decoration:none;border-radius:999px;font-size:14px;font-weight:600">Review invitation</a></p>
+</div>
+{% endfor %}
+<p><a href="{{ candidates_url }}">All candidates for this role</a> · <a href="{{ dashboard_url }}">Hiring dashboard</a></p>
+<p>Remote Impact</p>
+<p style="margin-top:28px;font-size:12px;color:#6b6b70">You get this because you posted {{ job.title }} on Remote Impact. Reply to stop these suggestions.</p>
+</div></body></html>

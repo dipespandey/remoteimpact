@@ -130,6 +130,11 @@
   .job-title { @apply text-[15px] font-semibold leading-snug text-foreground sm:text-base; }
   .job-meta { @apply mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[13px] text-muted-foreground; }
   .list-surface { @apply rounded-2xl bg-card p-1.5 shadow-soft; }
+  /* Rows separated by a hairline (single-column lists; grids keep their own spacing). */
+  .list-divided > li + li,
+  .list-surface:not([class*="grid"]) > li + li { @apply relative; }
+  .list-divided > li + li::before,
+  .list-surface:not([class*="grid"]) > li + li::before { content: ""; @apply pointer-events-none absolute inset-x-4 top-0 h-px bg-border/70 sm:inset-x-5; }
 
   /* Tones: one soft colour per impact-area family (and for org avatars). Colour always
      means something: which area a role belongs to, or which organization it is. */

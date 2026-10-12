@@ -190,3 +190,35 @@ class ProBillingPortalView(LoginRequiredMixin, View):
             logger.exception("Could not create Stripe billing portal session")
             messages.error(request, "We could not open billing settings. Please try again.")
             return redirect("jobs:account")
+
+
+class JobEditView(JobCheckoutView):
+    """Edit a live, paid listing. Colleagues at the organization can edit it too."""
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        from ..services.employer_access import hiring_jobs
+        self.job = get_object_or_404(hiring_jobs(request.user), slug=kwargs["slug"])
+        if not self.job.is_paid:
+            return redirect("jobs:job_checkout", slug=self.job.slug)
+        return FormView.dispatch(self, request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["is_paid_edit"] = True
+        return context
+
+    def form_valid(self, form):
+        from django.core.cache import cache
+        from django.utils import timezone
+
+        before = (self.job.description, self.job.requirements)
+        job = JobService.update_job(self.job, form.cleaned_data)
+        updates = {"edited_at": timezone.now()}
+        if (job.description, job.requirements) != before:
+            updates["must_haves"] = []  # the hiring assistant re-reads the new requirements
+        Job.objects.filter(pk=job.pk).update(**updates)
+        cache.clear()  # cached pages show the new text straight away
+        messages.success(self.request, "Your changes are live.")
+        return redirect("jobs:account")

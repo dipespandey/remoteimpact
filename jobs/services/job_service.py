@@ -579,6 +579,7 @@ class JobService:
                 org.save(update_fields=["website", "description"])
 
         job.title = data.get("title") or job.title
+        job.job_type = data.get("job_type") or job.job_type
         job.category = data.get("category") or job.category
         job.description = data.get("description") or job.description
         job.requirements = data.get("requirements") or job.requirements
@@ -597,7 +598,9 @@ class JobService:
             "benefits": data.get("benefits"),
             "how_to_apply": data.get("how_to_apply"),
         }
-        job.raw_data = {k: v for k, v in raw_payload.items() if v}
+        # Keep anything else stored on the listing; only the form's own fields are replaced.
+        kept = {k: v for k, v in (job.raw_data or {}).items() if k not in raw_payload}
+        job.raw_data = {**kept, **{k: v for k, v in raw_payload.items() if v}}
 
         job.save()
         return job

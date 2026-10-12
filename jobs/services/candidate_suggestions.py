@@ -9,10 +9,13 @@ from dataclasses import dataclass, field
 
 import numpy as np
 from django.core.cache import cache
+from django.db import connection
+from pgvector.django import CosineDistance
 
 from jobs.models import SeekerProfile, TalentInvitation
 
 MIN_SIMILARITY = 0.45
+CANDIDATE_POOL = 80
 EXPERIENCE_ORDER = ["entry", "early", "mid", "senior", "lead", "executive"]
 
 
@@ -79,13 +82,22 @@ def suggested_candidates(job, limit=10):
     )
     if cached_ids is not None:
         pool = pool.filter(pk__in=[pk for pk, _ in cached_ids])
+    # Let Postgres rank by cosine distance and hand back only the plausible few, instead of
+    # loading every profile's embedding into Python.
+    in_db = connection.vendor == "postgresql"
+    if in_db:
+        pool = (pool.annotate(distance=CosineDistance("embedding", job_vec.tolist()))
+                .filter(distance__lte=1 - MIN_SIMILARITY).order_by("distance").defer("embedding")[:CANDIDATE_POOL])
     job_skills = set(job.skills or [])
     suggestions = []
     for profile in pool:
-        vec = _vector(profile.embedding)
-        if vec is None:
-            continue
-        similarity = float(np.dot(job_vec, vec))
+        if in_db:
+            similarity = 1 - float(profile.distance)
+        else:
+            vec = _vector(profile.embedding)
+            if vec is None:
+                continue
+            similarity = float(np.dot(job_vec, vec))
         shared_skills = sorted(job_skills & set(profile.skills or []))
         areas = {c.pk: c.name for c in profile.impact_areas.all()}
         shared_area = areas.get(job.category_id, "")

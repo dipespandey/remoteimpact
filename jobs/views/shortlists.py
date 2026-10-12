@@ -22,6 +22,7 @@ from jobs.models import (
 from jobs.services.candidate_suggestions import suggested_candidates
 from jobs.services.funnel import record_consumer_event, record_employer_event
 from jobs.services.shortlists import candidate_jobs, live_jobs, visible_interests
+from jobs.services.employer_access import hiring_jobs
 
 
 class InterestForm(forms.ModelForm):
@@ -130,7 +131,10 @@ def interest(request, slug):
 
 
 def employer_job(request, slug):
-    return get_object_or_404(Job.objects.select_related("organization"), slug=slug, poster=request.user)
+    return get_object_or_404(
+        hiring_jobs(request.user).select_related("organization"),
+        slug=slug,
+    )
 
 
 @never_cache

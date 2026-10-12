@@ -54,6 +54,7 @@ class PublicPricingView(TemplateView):
 class HomeView(TemplateView):
     template_name = "jobs/home.html"
 
+
     @staticmethod
     def _preview_tabs(available_jobs, latest_jobs, total, featured_jobs=()):
         """Homepage preview: featured roles pinned first, then the latest, then the three biggest impact areas."""
@@ -162,8 +163,6 @@ class HomeView(TemplateView):
                 "activity": country_activity_summary(),
                 "preview_tabs": self._preview_tabs(available_jobs, latest_jobs, active_jobs_rounded, featured_jobs),
                 "featured_ids": {job.id for job in featured_jobs},
-                # The first two are pinned in the top list; the section below shows the rest.
-                "featured_more": featured_jobs[2:],
             }
         )
         return context
@@ -1398,3 +1397,17 @@ class SalaryBenchmarksView(TemplateView):
         })
         
         return ctx
+
+
+def home(request, *args, **kwargs):
+    """Homepage; signed-in employers go to their hiring dashboard (checked before the page cache)."""
+    from django.shortcuts import redirect
+
+    from ..context_processors import _is_employer
+
+    if _is_employer(request) and "home" not in request.GET:
+        return redirect("jobs:account")
+    return _home_view(request, *args, **kwargs)
+
+
+_home_view = HomeView.as_view()
