@@ -42,6 +42,8 @@ WEIGHTS = {
 # Production top-k similarities cluster around 0.52-0.67, with rare excellent
 # matches above that. Calibrate against that range so semantic scoring helps
 # ranking without making every plausible match look perfect.
+GENERIC_CATEGORY_SLUGS = {"impact-careers"}
+
 # MiniLM values, kept for reference; the live cut-offs come from embedding_service.calibration().
 SEMANTIC_SIMILARITY_FLOOR = 0.50
 SEMANTIC_SIMILARITY_CEILING = 0.68
@@ -662,6 +664,9 @@ class UnifiedMatchingService:
         """Score based on impact area alignment."""
         if not job.category:
             return 60.0  # Neutral if no category
+        # "Impact Careers" is a catch-all for roles that fit no specific area; sharing it says nothing about fit.
+        if job.category.slug in GENERIC_CATEGORY_SLUGS:
+            return 60.0
 
         if match_context and "impact_area_ids" in match_context:
             seeker_areas = match_context["impact_area_ids"]

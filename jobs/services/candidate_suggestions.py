@@ -13,6 +13,7 @@ from django.db import connection
 from pgvector.django import CosineDistance
 
 from jobs.models import SeekerProfile, TalentInvitation
+from jobs.services.unified_matching_service import GENERIC_CATEGORY_SLUGS
 
 MIN_SIMILARITY = 0.45
 CANDIDATE_POOL = 80
@@ -104,6 +105,8 @@ def suggested_candidates(job, limit=10):
         shared_skills = sorted(job_skills & set(profile.skills or []))
         areas = {c.pk: c.name for c in profile.impact_areas.all()}
         shared_area = areas.get(job.category_id, "")
+        if job.category and job.category.slug in GENERIC_CATEGORY_SLUGS:
+            shared_area = ""  # the catch-all category is not a shared focus
         # A high embedding score alone isn't a reason an employer can check.
         if similarity < min_similarity or not (shared_area or len(shared_skills) >= 2):
             continue
