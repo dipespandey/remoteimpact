@@ -693,7 +693,8 @@
             // "Best for you" is the personal feed; once filters are on, results are newest first
             // unless it was just picked from the dropdown.
             if (sortValue === 'best-match' && !sortTouched && [...params.keys()].length) sortValue = '';
-            if (sortValue && sortValue !== 'date') params.set('sort', sortValue);
+            // "Newest" must be sent when picked: signed in, the unfiltered default is "Best for you".
+            if (sortValue && (sortValue !== 'date' || sortTouched || urlSort === 'date')) params.set('sort', sortValue);
             const query = params.toString();
             return form.action + (query ? '?' + query : '');
         }
