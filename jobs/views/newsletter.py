@@ -56,13 +56,24 @@ class NewsletterUnsubscribeView(TemplateView):
         user_id = TimestampSigner(salt="newsletter-unsubscribe").unsign(token)
         return get_user_model().objects.get(id=user_id)
 
+    def _unsubscribe_subscriber(self, token):
+        """Newsletter subscribers without an account carry a signed email instead of a user id."""
+        email = TimestampSigner(salt="subscriber-unsubscribe").unsign(token)
+        NewsletterSubscriber.objects.filter(email__iexact=email, unsubscribed=False).update(
+            unsubscribed=True, unsubscribed_at=timezone.now()
+        )
+        return email
+
     def get(self, request, token):
         context = self.get_context_data()
         try:
-            user = self._user_for(token)
-            unsubscribe_user(user)
+            if "@" in token:
+                context["email"] = self._unsubscribe_subscriber(token)
+            else:
+                user = self._user_for(token)
+                unsubscribe_user(user)
+                context["email"] = user.email
             context["success"] = True
-            context["email"] = user.email
         except BadSignature:
             context["error"] = "This unsubscribe link isn't valid. Reply to any of our emails and we'll remove you."
         except Exception:  # noqa: BLE001 - never leave someone unable to unsubscribe silently
@@ -73,7 +84,10 @@ class NewsletterUnsubscribeView(TemplateView):
     def post(self, request, token):
         """RFC 8058 one-click unsubscribe from the mail client."""
         try:
-            unsubscribe_user(self._user_for(token))
+            if "@" in token:
+                self._unsubscribe_subscriber(token)
+            else:
+                unsubscribe_user(self._user_for(token))
         except Exception:  # noqa: BLE001
             logger.exception("One-click unsubscribe failed")
             return HttpResponse(status=400)

@@ -1,0 +1,10 @@
+Hi,
+
+We list {{ count }} of {{ org.name }}'s open remote role{{ count|pluralize }} at {{ org_url }}, checked daily against your careers page.
+
+You can claim the page for free to correct details and get a monthly report on views and applies: {{ claim_url }}
+
+Reply "no thanks" and we won't email again.
+
+Dipesh
+Remote Impact · remoteimpact.org

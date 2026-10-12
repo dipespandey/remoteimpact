@@ -1840,3 +1840,15 @@ class OrganizationLogo(models.Model):
     png = models.BinaryField()
     source_url = models.TextField(blank=True)
     fetched_at = models.DateTimeField(auto_now=True)
+
+
+class OutreachSend(models.Model):
+    """One campaign email sent to one address, so no one gets the same campaign twice."""
+
+    campaign = models.CharField(max_length=50)
+    email = models.EmailField()
+    organization = models.ForeignKey("Organization", null=True, blank=True, on_delete=models.SET_NULL)
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["campaign", "email"], name="outreach_once_per_campaign")]
