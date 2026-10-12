@@ -447,6 +447,10 @@ class JobDetailView(DetailView):
 
         context["related_jobs"] = self._get_related_jobs()
         context["related_seo_links"] = self._get_related_seo_links()
+        context["role_insights"] = {}
+        if context["job_available"]:
+            from ..services.role_insights import role_insights
+            context["role_insights"] = role_insights(self.object, self.object.category.name if self.object.category_id else "")
         return context
 
     def _get_related_jobs(self):

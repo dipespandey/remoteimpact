@@ -1052,3 +1052,37 @@ class JsonFeedTests(TestCase):
         data = self.client.get(reverse("jobs:jobs_json_feed")).json()
         self.assertEqual(data["version"], "https://jsonfeed.org/version/1.1")
         self.assertIn("Feed Analyst at Feed Org", [i["title"] for i in data["items"]])
+
+
+class RoleInsightsTests(TestCase):
+    def test_pay_comparison_needs_enough_peers_and_page_renders_facts(self):
+        from decimal import Decimal
+        from django.core.cache import cache
+        from jobs.models import Category, Job, Organization
+        from jobs.services.role_insights import role_insights
+        cache.clear()
+        cat = Category.objects.create(name="Test Area", slug="test-area")
+        org = Organization.objects.create(name="Insight Org", slug="insight-org")
+        def make(i, lo, hi):
+            return Job.objects.create(title=f"Insight Role {i}", slug=f"insight-{i}", organization=org, category=cat,
+                                      description="A role with a distinct description " * 5, location="Remote (US)",
+                                      application_url=f"https://example.org/{i}", salary_min=Decimal(lo), salary_max=Decimal(hi),
+                                      salary_currency="USD", job_type="full-time")
+        jobs = [make(i, 50000 + i * 5000, 60000 + i * 5000) for i in range(10)]
+        facts = role_insights(jobs[9], "Test Area")
+        self.assertEqual(facts["similar_open"], 10)
+        self.assertEqual(facts["pay_percentile"], 90)
+        self.assertEqual(facts["org_other_open"], 9)
+        few = role_insights(Job(category=cat, job_type="part-time", organization=org, salary_currency="USD"), "Test Area")
+        self.assertNotIn("pay_percentile", few)
+        from allauth.socialaccount.models import SocialApp
+        from django.contrib.sites.models import Site
+        for provider, pid in (("google", ""), ("openid_connect", "linkedin")):
+            SocialApp.objects.create(provider=provider, provider_id=pid, name=pid or provider, client_id="x", secret="y",
+                                     settings={"server_url": "https://www.linkedin.com/oauth"} if pid else {}).sites.add(Site.objects.get_current())
+        html = self.client.get(reverse("jobs:job_detail", args=[jobs[9].slug])).content.decode()
+        self.assertIn("This role at a glance", html)
+        # an organization without a page address must not break the page
+        Organization.objects.filter(pk=org.pk).update(slug="")
+        self.assertEqual(self.client.get(reverse("jobs:job_detail", args=[jobs[9].slug])).status_code, 200)
+        self.assertIn("more than 90%", html)

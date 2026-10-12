@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load job_extras %}
+{% load humanize job_extras %}
 
 {% block title %}{% if not job_available %}Unavailable: {% endif %}{{ job.title }} at {{ job.organization.name }} - Remote Impact Jobs{% endblock %}
 
@@ -245,6 +245,25 @@
         <!-- Body -->
         <div class="min-w-0 lg:col-start-1 lg:row-start-2">
             <div class="max-w-[68ch] space-y-10">
+                {% if job_available and role_insights %}
+                <section aria-labelledby="glance-heading" class="surface p-5">
+                    <h2 id="glance-heading" class="text-sm font-semibold text-foreground">This role at a glance</h2>
+                    <ul class="mt-3 space-y-2 text-[14px] leading-6 text-muted-foreground">
+                        {% if source_verification.method == 'ats_api' and source_verification.status == 'open' %}
+                        <li><span class="font-medium text-foreground">Open right now.</span> {{ job.organization.name }}'s own job board listed it on {{ source_verification.checked_on|date:"F j" }}; we check again every day and take the listing down when they close it.</li>
+                        {% endif %}
+                        {% if role_insights.pay_percentile is not None %}
+                        <li><span class="font-medium text-foreground">Pay.</span> About ${{ role_insights.pay_mid|floatformat:0|intcomma }} a year at the midpoint, more than {{ role_insights.pay_percentile }}% of the {{ role_insights.peer_count }} open {{ job.get_job_type_display|lower }} {{ role_insights.area }} roles here that list pay (median about ${{ role_insights.peer_median|floatformat:0|intcomma }}).</li>
+                        {% endif %}
+                        {% if role_insights.similar_open %}
+                        <li><span class="font-medium text-foreground">Competition for attention.</span> {{ role_insights.similar_open|intcomma }} open {{ job.get_job_type_display|lower }} {{ role_insights.area }} role{{ role_insights.similar_open|pluralize }} on Remote Impact right now, {{ role_insights.similar_new_7d|intcomma }} of them posted in the last week.</li>
+                        {% endif %}
+                        {% if role_insights.org_other_open %}
+                        <li><span class="font-medium text-foreground">{{ job.organization.name }}</span> has {{ role_insights.org_other_open }} other open remote role{{ role_insights.org_other_open|pluralize }} here{% if job.organization.slug %}: <a class="underline decoration-border underline-offset-4 hover:decoration-foreground" href="{% url 'jobs:organization_profile' slug=job.organization.slug %}">see them all</a>{% endif %}{% if job.organization.careers_url %}{% if job.organization.slug %}, or visit{% else %}; visit{% endif %} their <a class="underline decoration-border underline-offset-4 hover:decoration-foreground" href="{{ job.organization.careers_url }}" rel="noopener" target="_blank">careers page</a>{% endif %}.</li>
+                        {% endif %}
+                    </ul>
+                </section>
+                {% endif %}
                 <section>
                     <h2 class="section-title">Job description</h2>
                     <div class="prose prose-zinc max-w-none break-words text-[15px] leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto mt-3">
