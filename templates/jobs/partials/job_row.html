@@ -1,5 +1,5 @@
 {% load humanize job_extras %}{# One job row for list-surface lists. Expects `job`. Optional: `heading` ("h3", default h2), `featured_slot` (adds ?source=featured_slot and the Featured badge), `show_org` (default true). #}
-<article class="job-row relative">
+<article class="job-row relative" data-rank-job="{{ job.pk }}">
     <div class="flex items-start gap-3">
         {% if job.organization.logo_src %}
         <img src="{{ job.organization.logo_src }}" alt="" loading="lazy" class="mt-0.5 hidden h-9 w-9 shrink-0 rounded-xl bg-muted object-cover sm:block">

@@ -244,6 +244,44 @@
     </section>
     {% endif %}
 
+    {% if seeker_profile %}
+    <section class="card p-5 sm:p-6" aria-labelledby="cv-heading">
+        <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div class="min-w-0 max-w-2xl">
+                <h2 id="cv-heading" class="section-title">Your CV{% if seeker_profile.resume %} <a href="{% url 'jobs:my_cv' %}" target="_blank" rel="noopener" class="ml-2 text-[13px] font-normal text-muted-foreground underline decoration-border hover:text-foreground">View file</a>{% endif %}</h2>
+                {% if seeker_profile.resume %}
+                {% with f=seeker_profile.cv_facts %}
+                {% if f.roles or f.skills %}
+                <p class="mt-1 text-sm text-muted-foreground">Here's what we read from it. Matching, Scout and employer suggestions use these; nothing else is inferred.</p>
+                <ul class="mt-3 space-y-1 text-sm text-foreground">
+                    {% for r in f.roles|slice:":4" %}<li>{{ r.title }}{% if r.organization %} · {{ r.organization }}{% endif %}{% if r.years %} <span class="text-muted-foreground">({{ r.years }})</span>{% endif %}</li>{% endfor %}
+                </ul>
+                {% if f.skills %}<div class="mt-3 flex flex-wrap gap-1">{% for sk in f.skills|slice:":12" %}<span class="badge badge-outline">{{ sk.name }}</span>{% endfor %}</div>{% endif %}
+                {% if f.languages %}<p class="mt-2 text-[13px] text-muted-foreground">Languages: {% for l in f.languages %}{{ l.language }}{% if l.level %} ({{ l.level }}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+                {% elif seeker_profile.cv_read_at %}
+                <p class="mt-1 text-sm text-muted-foreground">We couldn't read text from this file. A PDF exported from Word or Google Docs works best (scanned images can't be read).</p>
+                {% else %}
+                <p class="mt-1 text-sm text-muted-foreground">We're reading your CV. Refresh in a minute to see what we found.</p>
+                {% endif %}
+                {% endwith %}
+                {% else %}
+                <p class="mt-1 text-sm leading-6 text-muted-foreground">Add your CV and we'll read your roles, skills and languages, show you exactly what we found, and use them to match you with roles and to employers looking for people like you (as your visibility settings allow).</p>
+                {% endif %}
+            </div>
+            <div class="flex shrink-0 flex-col gap-2">
+                <form method="post" action="{% url 'jobs:upload_cv' %}" enctype="multipart/form-data" class="flex flex-col gap-2">
+                    {% csrf_token %}
+                    <input type="file" name="cv" accept=".pdf,.docx" required class="text-[13px]" aria-label="CV file (PDF or Word, max 5 MB)">
+                    <button type="submit" class="btn btn-primary btn-sm">{% if seeker_profile.resume %}Replace CV{% else %}Upload CV{% endif %}</button>
+                </form>
+                {% if seeker_profile.resume %}
+                <form method="post" action="{% url 'jobs:remove_cv' %}">{% csrf_token %}<button type="submit" class="btn btn-ghost btn-sm">Remove CV</button></form>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div class="stat">
             <p class="stat-value">{{ profile_views_week }}</p>

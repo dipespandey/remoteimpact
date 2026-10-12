@@ -36,6 +36,8 @@ class Command(BaseCommand):
         parser.add_argument("--per-job", type=int, default=5)
 
     def handle(self, *args, **options):
+        from jobs.services import embedding_service
+        embedding_service.load_for_batch()
         if options["screen"]:
             self.screen()
         if options["sourcing"]:

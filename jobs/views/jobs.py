@@ -32,6 +32,7 @@ def _drop_pinned_duplicates(context):
         context["jobs"] = [job for job in context["jobs"] if job.id not in pinned]
 
 
+
 class FastJobPaginationMixin:
     """Rank on ids, then load full rows for the one page shown.
 
@@ -632,6 +633,11 @@ class EmployerPricingView(TemplateView):
 class SaveJobView(LoginRequiredMixin, View):
     def post(self, request, slug):
         saved = JobService.toggle_save_job(request.user, slug)
+        if saved:
+            from ..services.ranking_log import log_outcome
+            job_id = Job.objects.filter(slug=slug).values_list("pk", flat=True).first()
+            if job_id:
+                log_outcome(request, "save", job_id)
         return JsonResponse({"saved": saved})
 
 

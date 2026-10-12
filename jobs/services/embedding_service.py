@@ -31,9 +31,23 @@ REMOTE_LABELS = {
 def get_model():
     global _model
     if _model is None:
+        from django.conf import settings
         from sentence_transformers import SentenceTransformer
-        _model = SentenceTransformer('all-MiniLM-L6-v2')
+        _model = SentenceTransformer(getattr(settings, "EMBEDDING_MODEL", "all-MiniLM-L6-v2"), device="cpu")
+        _model.max_seq_length = min(512, _model.max_seq_length or 512)
     return _model
+
+
+def load_for_batch():
+    """Batch commands (alerts, sourcing) aren't web workers, so nothing preloads the model for them.
+
+    Without this, Scout's query embedding is skipped and matching silently runs keyword-only.
+    """
+    try:
+        get_model()
+    except Exception:  # noqa: BLE001 - keyword retrieval still works
+        import logging
+        logging.getLogger(__name__).exception("Embedding model failed to load for a batch run")
 
 
 def embed(text):
@@ -159,6 +173,9 @@ def embed_seeker(seeker):
         if answers:
             parts.append("Additional preferences: " + "; ".join(answers[:8]))
 
+    if getattr(seeker, "cv_facts", None):
+        from jobs.services.cv_reader import facts_summary
+        parts.append("From their CV: " + _clean_text(facts_summary(seeker.cv_facts), 1500))
     return embed(' '.join(parts)) if parts else None
 
 

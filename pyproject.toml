@@ -35,6 +35,8 @@ dependencies = [
     "torch>=2.7.0",
     "markdown>=3.5",
     "redis>=5.0.0,<5.2.0",
+    "pypdf>=5",
+    "python-docx>=1.1",
 ]
 
 [tool.uv]

@@ -38,6 +38,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        from jobs.services import embedding_service
+        embedding_service.load_for_batch()
         dry_run = options["dry_run"]
         frequency = options["frequency"]
         force = options["force"]

@@ -42,6 +42,7 @@ def _seeker_embedding_hash(profile):
         profile.impact_areas,
         profile.work_styles,
         profile.experience_level,
+        profile.cv_facts,
     ])
 
 # IndexNow configuration
@@ -108,6 +109,34 @@ def ping_indexnow_on_job_save(sender, instance, created, **kwargs):
         thread.start()
     except Exception as e:
         logger.error(f"IndexNow: Error preparing ping for job {instance.pk}: {e}")
+
+
+@receiver(post_save, sender=SeekerProfile)
+def read_cv_on_upload(sender, instance, created, **kwargs):
+    """A new or replaced CV is read in the background, then the profile is re-embedded with what it says."""
+    if not instance.resume or instance.resume.name == instance.cv_source:
+        return
+    from django.db import close_old_connections, transaction
+
+    profile_id, source = instance.pk, instance.resume.name
+
+    def run():
+        close_old_connections()
+        try:
+            from jobs.services.cv_reader import read_profile_cv
+            from jobs.services.embedding_service import embed_seeker
+            profile = SeekerProfile.objects.get(pk=profile_id)
+            read_profile_cv(profile)
+            SeekerProfile.objects.filter(pk=profile_id).update(cv_source=source)
+            if profile.wizard_completed:
+                SeekerProfile.objects.filter(pk=profile_id).update(
+                    embedding=embed_seeker(profile), embedding_content_hash=_seeker_embedding_hash(profile))
+        except Exception:  # noqa: BLE001 - reading a CV must never break saving a profile
+            logger.exception("CV reading failed for profile %s", profile_id)
+        finally:
+            close_old_connections()
+
+    transaction.on_commit(lambda: threading.Thread(target=run, daemon=True).start())
 
 
 @receiver(post_save, sender=SeekerProfile)

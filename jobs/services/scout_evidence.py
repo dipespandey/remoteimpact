@@ -67,6 +67,9 @@ def experience_conflict(job, prefs, text):
         value=YEAR_WORDS.get(m[1].lower())
         if value is None:value=int(m[1])
         if value>ceiling:return True
+        # "2+ years" or "at least 2 years" is a floor, so it is already beyond an entry-level brief.
+        floor=bool(re.match(r'\s*\+',text[m.end(1):m.end(1)+3])) or re.search(r'\b(?:at least|minimum(?: of)?|min\.?)\s*$',text[max(0,m.start()-20):m.start()],re.I)
+        if entry and value==ceiling and value>=2 and floor:return True
     return False
 
 

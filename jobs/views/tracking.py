@@ -3,6 +3,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.utils.decorators import method_decorator
 
 from ..models import Job
@@ -31,6 +32,8 @@ class JobApplyRedirectView(View):
             raise Http404("This job has no external application link.")
         if not job_stats.is_probably_bot(request) and job_stats.viewed_today(job.pk, request):
             job_stats.record(job.pk, "apply_clicks", request=request)
+            from jobs.services.ranking_log import log_outcome
+            log_outcome(request, "apply", job.pk)
         response = HttpResponseRedirect(job_stats.with_referral(destination))
         response["X-Robots-Tag"] = "noindex, nofollow"
         response["Cache-Control"] = "no-store"
@@ -89,3 +92,25 @@ def jobs_json_feed(request):
     }, json_dumps_params={"ensure_ascii": False})
     response["Cache-Control"] = "public, max-age=900"
     return response
+
+
+@csrf_exempt
+@require_POST
+def ranking_click(request):
+    """Beacons from results lists: {"t":"imp","k","s","q","ids"} when shown, {"t":"click","k","j","p"} when clicked."""
+    import json
+
+    from jobs.services import ranking_log
+
+    try:
+        data = json.loads(request.body[:4000] or b"{}")
+        if data.get("t") == "imp":
+            ranking_log.log_impression(request, str(data.get("k", "")), str(data.get("s", "")),
+                                       data.get("ids") or [], data.get("q", ""))
+        elif data.get("t") == "click":
+            position = int(data.get("p"))
+            if 1 <= position <= 200:
+                ranking_log.log_click(request, str(data.get("k", "")), int(data.get("j")), position)
+    except (TypeError, ValueError, AttributeError):
+        pass
+    return HttpResponse(status=204)

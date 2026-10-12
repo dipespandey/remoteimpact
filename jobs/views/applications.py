@@ -211,3 +211,53 @@ class EmployerJobApplicationsView(LoginRequiredMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         ctx["job"] = self.job
         return ctx
+
+
+def _send_private_file(field, download_name):
+    """Stream an uploaded file from storage. Never public: callers check who may see it."""
+    import mimetypes
+    import os
+
+    from django.http import FileResponse, Http404
+
+    if not field:
+        raise Http404
+    try:
+        handle = field.open("rb")
+    except (FileNotFoundError, OSError):
+        raise Http404("This file is no longer available.")
+    content_type = mimetypes.guess_type(field.name)[0] or "application/octet-stream"
+    response = FileResponse(handle, content_type=content_type, as_attachment=False,
+                            filename=download_name + os.path.splitext(field.name)[1].lower())
+    response["Cache-Control"] = "private, no-store"
+    response["X-Robots-Tag"] = "noindex, nofollow"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+def application_cv(request, pk):
+    """An applicant's CV: only for people hiring for that role, the applicant, and staff."""
+    from django.contrib.auth.views import redirect_to_login
+    from django.http import Http404
+
+    if not request.user.is_authenticated:
+        return redirect_to_login(request.get_full_path())
+    app = get_object_or_404(Application.objects.select_related("job", "applicant"), pk=pk)
+    from ..services.employer_access import hiring_jobs
+    allowed = (request.user.is_staff or app.applicant_id == request.user.pk
+               or hiring_jobs(request.user).filter(pk=app.job_id, is_paid=True).exists()
+               or (app.job.poster_id == request.user.pk))
+    if not allowed:
+        raise Http404
+    name = (app.full_name or "applicant").strip().replace(" ", "-")[:60] or "applicant"
+    return _send_private_file(app.resume, f"CV-{name}")
+
+
+def my_cv(request):
+    """The signed-in seeker's own uploaded CV."""
+    from django.contrib.auth.views import redirect_to_login
+
+    if not request.user.is_authenticated:
+        return redirect_to_login(request.get_full_path())
+    profile = get_object_or_404(SeekerProfile, user=request.user)
+    return _send_private_file(profile.resume, "my-CV")

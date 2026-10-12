@@ -113,6 +113,16 @@ def applicant_material(application):
     for answer in application.custom_question_answers or []:
         if answer.get("answer"):
             parts.append(f"{answer.get('question', 'Question')}: {answer['answer']}")
+    if application.resume and not application.resume_text:
+        from jobs.services.cv_reader import extract_text
+        try:
+            with application.resume.open("rb") as handle:
+                application.resume_text = extract_text(handle, application.resume.name)
+            type(application).objects.filter(pk=application.pk).update(resume_text=application.resume_text)
+        except Exception:  # noqa: BLE001 - a missing file just means no CV text
+            pass
+    if application.resume_text:
+        parts.append("CV: " + application.resume_text[:5000])
     profile = getattr(application.applicant, "seeker_profile", None)
     if profile:
         for label, value in (("Headline", profile.headline), ("About", profile.bio),
@@ -120,7 +130,7 @@ def applicant_material(application):
                              ("Skills", ", ".join(profile.skills or []))):
             if value:
                 parts.append(f"{label}: {value}")
-    return "\n".join(parts)[:9000]
+    return "\n".join(parts)[:14000]
 
 
 def eligibility_notes(application, job):
@@ -191,7 +201,9 @@ def profile_material(profile):
                          ("Experience level", profile.experience_level or "")):
         if value:
             parts.append(f"{label}: {value}")
-    return "\n".join(parts)[:6000]
+    if getattr(profile, "resume_text", ""):
+        parts.append("CV: " + profile.resume_text[:6000])
+    return "\n".join(parts)[:10000]
 
 
 def screen_and_save(application, client=None):

@@ -127,3 +127,14 @@ class HeldoutRerank(SimpleTestCase):
         self.assertEqual(generate.call_args.kwargs['max_retries'],0)
         self.assertEqual(generate.call_args.kwargs['timeout'],6.0)
         self.assertEqual(generate.call_args.kwargs['max_tokens'],1400)
+
+
+class RerankQuoteTolerance(SimpleTestCase):
+    def test_quote_from_unsent_field_does_not_void_other_decisions(self):
+        evidence={1:{'title':'Grants Manager','description':'behavioral health grants programs'},
+                  2:{'title':'Data Analyst','description':'python and sql dashboards for health programs'}}
+        output=json.dumps({'decisions':[
+            {'id':1,'relevant':True,'evidence':[{'field':'location','quote':'Remote, Europe'},
+                                                {'field':'description','quote':'behavioral health grants programs'}]},
+            {'id':2,'relevant':True,'evidence':[{'field':'location','quote':'Remote, anywhere'}]}]})
+        self.assertEqual([pk for pk, _ in validate_decisions(output,evidence)],[1])

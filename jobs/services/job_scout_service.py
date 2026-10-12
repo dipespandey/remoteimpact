@@ -22,6 +22,7 @@ class JobScoutService:
     """Interpret job intent once, then match cheaply and predictably."""
 
     MAX_MATCHES = 10
+    RERANK_WIDE_LIMIT = 20
     # Offer clearly labelled "possible" matches when verified ones run out.
     RELAXED_FILL = True
     # Below this many matches, add labelled close matches (settings.SCOUT_CLOSE_MATCHES).
@@ -573,6 +574,12 @@ skills is not a request for invented, exact job titles. JSON only."""
         for pattern, value in patterns:
             if re.search(pattern, text or "") and value not in result:
                 result.append(value)
+        # Fractional, interim and project-based work is part-time or contract, never a permanent full-time post.
+        if re.search(r"\bfractional\b|\binterim\b|\bproject[- ]based\b", text or "", re.I):
+            result += [value for value in ("part-time", "contract") if value not in result]
+        hours = re.search(r"\b(\d{1,2})\s*(?:[-–]|to)?\s*(\d{1,2})?\s*(?:hours|hrs)\s*(?:a|per|/)\s*week\b", text or "", re.I)
+        if hours and int(hours.group(2) or hours.group(1)) <= 30 and "part-time" not in result:
+            result.append("part-time")
         return result
 
     @staticmethod
@@ -891,7 +898,27 @@ skills is not a request for invented, exact job titles. JSON only."""
         from jobs.services.scout_reranker import rerank
         # The model only re-judges jobs that already passed every gate and the
         # score threshold; it can drop or reorder them, never add new ones.
-        selected = rerank(scored, preferences, scored, diagnostics)
+        pool = scored
+        if getattr(settings, "SCOUT_RERANK_WIDE", False):
+            # The keyword title check rejects most retrieved jobs, so the evidence-checking model
+            # rarely sees enough. Let it also judge jobs that pass every hard rule (location, pay,
+            # type, level) but miss on title words; the strict list stays the fallback.
+            extra = []
+            for job in candidates:
+                if len(scored) + len(extra) >= cls.RERANK_WIDE_LIMIT:
+                    break
+                if job in scored or not evaluate_job(job, preferences).allowed:
+                    continue
+                levels = preferences.get("experience_levels", [])
+                if levels and job.experience_level and job.experience_level not in levels:
+                    continue
+                if (levels and set(levels) <= {"internship", "entry"} and not job.experience_level
+                        and cls.SENIOR_TITLE.search(job.title or "")):
+                    continue
+                extra.append(job)
+            pool = scored + extra
+            diagnostics["rerank_wide_extra"] = len(extra)
+        selected = rerank(pool, preferences, scored, diagnostics)
         # One opening can have several regional source postings. Keep the best
         # eligible region, and never merge unrelated jobs with similar titles.
         distinct = []; seen = set()

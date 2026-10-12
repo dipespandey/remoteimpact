@@ -833,7 +833,8 @@ class ScoutJobTypeTests(TestCase):
     def test_permanent_counts_as_full_time(self):
         from jobs.services.job_scout_service import JobScoutService
         types = JobScoutService._explicit_job_types("Open to permanent, freelance, and fractional roles.")
-        self.assertEqual(set(types), {"full-time", "freelance"})
+        # "fractional" is open to part-time and contract roles too (job types are an allow-list).
+        self.assertEqual(set(types), {"full-time", "freelance", "part-time", "contract"})
         self.assertEqual(JobScoutService._explicit_job_types("Permanent roles only"), ["full-time"])
         self.assertEqual(JobScoutService._explicit_job_types("A permanent impact on climate"), [])
 

@@ -1,5 +1,5 @@
 from .jobs import JobListView, JobDetailView, ApplicationGuideView, PostJobView, EmployerPricingView, SaveJobView, MyMatchesView, OrganizationSearchView, AppliedJobDetailView, CategoryLandingView
-from .dashboard import DashboardView, AccountDeleteView
+from .dashboard import DashboardView, AccountDeleteView, UploadCVView, RemoveCVView
 from .onboarding import (
     StartOnboardingView,
     OnboardingSelectTypeView,

@@ -200,12 +200,16 @@ def extract_constraints(text):
     codes=re.findall(r'\b(?:in|within|from|based in)\s+([A-Z]{2})\b',positive)
     if any(code not in {'US','UK','GB','EU'} for code in codes):
         unresolved.append('location_code')
-    amount=r'(?P<currency>US\$|C\$|A\$|USD|EUR|GBP|CAD|AUD|CHF|NOK|INR|\$|£|€)?\s*(?P<amount>\d[\d,]*(?:\.\d+)?)\s*(?P<k>k)?'
-    pattern=r'(?:at least|minimum(?: salary)?|min(?:imum)? pay|over|above|salary(?: of)?|pay(?: of)?)\s*'+amount
+    amount=r'(?P<currency>US\$|C\$|A\$|USD|EUR|GBP|CAD|AUD|CHF|NOK|INR|\$|£|€)?\s*(?P<amount>\d[\d,]*(?:\.\d+)?)\s*(?P<k>k\b|thousand\b)?'
+    pattern=r'(?:at least|minimum(?: salary)?|min(?:imum)? pay|over|above|from|starting at|salary(?: of)?|pay(?: of)?)\s*'+amount
     match=re.search(pattern,positive,re.I)
     if not match:
         match=re.search(amount+r'\s*(?:or more|and up|minimum|\+)',positive,re.I)
-    if match and not match.group('currency') and not re.search(r'\b(?:salary|pay|wages?|compensation|remuneration)\b',positive[max(0,match.start()-40):match.end()+40],re.I):
+    if not match:
+        # A stated rate with its unit ("$40/hour", "80 thousand a year") is a pay requirement on its own.
+        match=re.search(amount+r'\s*(?=(?:a|per|/)\s*(?:year|yr|annum|hour|hr|month)\b)',positive,re.I)
+        if match and not (match.group('currency') or match.group('k')):match=None
+    if match and not match.group('currency') and not re.search(r'\b(?:salary|pay|wages?|compensation|remuneration|a year|per year|annually)\b',positive[max(0,match.start()-40):match.end()+40],re.I):
         match=None
     if match:
         value=Decimal(match.group('amount').replace(',',''))*(1000 if match.group('k') else 1)
@@ -391,6 +395,8 @@ def evaluate_job(job, prefs, relaxed=False):
     requirement=prefs.get('salary_requirement')
     if not requirement and prefs.get('min_salary'):
         requirement={'amount':str(prefs['min_salary']),'currency':'USD','period':'year'}
+    if requirement and re.search(r'\bunpaid\b|\bvolunteer (?:role|position|opportunity)\b',fields,re.I):
+        return Eligibility(False,'salary')
     if not salary_compatible(job,requirement):
         caveat=salary_caveat(job,requirement) if relaxed else None
         if not caveat:return Eligibility(False,'salary')

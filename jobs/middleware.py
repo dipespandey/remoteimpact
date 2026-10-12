@@ -189,7 +189,9 @@ class CloudflareEdgeCacheMiddleware:
         # Don't cache for authenticated users
         user = getattr(request, 'user', None)
         if user and getattr(user, 'is_authenticated', False):
-            response['Cache-Control'] = 'private, no-cache'
+            # Keep a stricter "no-store" (private files such as CVs) rather than weakening it.
+            if 'no-store' not in response.get('Cache-Control', ''):
+                response['Cache-Control'] = 'private, no-cache'
             return response
         
         # Don't cache if response already has strong cache directive

@@ -84,7 +84,7 @@
     </div>
 
     <!-- Job listings -->
-    <section class="relative z-10 mt-3" aria-label="Job results">
+    <section class="relative z-10 mt-3" aria-label="Job results" data-rank-surface="category">
         {% if jobs or sponsored_jobs %}
         <ul class="list-surface">
             {% include "jobs/partials/sponsored_jobs.html" %}
@@ -158,4 +158,31 @@
     }
     </script>
 </div>
+<script>
+(function () {
+    // What each results list showed and which result was clicked, for measuring ranking. No personal data.
+    if (!navigator.sendBeacon || window.__rankBeacon) return;
+    window.__rankBeacon = true;
+    function send(payload) {
+        navigator.sendBeacon('/t/rank/', new Blob([JSON.stringify(payload)], {type: 'application/json'}));
+    }
+    function key() { return Math.random().toString(36).slice(2, 12) + Date.now().toString(36); }
+    function report(area) {
+        var ids = Array.prototype.map.call(area.querySelectorAll('[data-rank-job]'), function (row) { return +row.dataset.rankJob; });
+        if (!ids.length || area.dataset.rankKey) return;
+        area.dataset.rankKey = key();
+        send({t: 'imp', k: area.dataset.rankKey, s: area.dataset.rankSurface, q: new URLSearchParams(location.search).get('q') || '', ids: ids});
+    }
+    function scan() { document.querySelectorAll('[data-rank-surface]').forEach(report); }
+    scan();
+    new MutationObserver(scan).observe(document.body, {childList: true, subtree: true});
+    document.addEventListener('click', function (e) {
+        var row = e.target.closest('[data-rank-job]');
+        var area = row && row.closest('[data-rank-surface]');
+        if (!area || !area.dataset.rankKey) return;
+        var rows = Array.prototype.slice.call(area.querySelectorAll('[data-rank-job]'));
+        send({t: 'click', k: area.dataset.rankKey, j: +row.dataset.rankJob, p: rows.indexOf(row) + 1});
+    });
+})();
+</script>
 {% endblock %}

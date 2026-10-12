@@ -2,7 +2,7 @@ from django.urls import path
 from django.views.generic import RedirectView
 from . import views
 from .views.resources import home as resources_home
-from .views import shortlists, tracking, employers
+from .views import shortlists, tracking, employers, applications
 from .feeds import LatestJobsFeed, CategoryJobsFeed, IndeedXMLFeed, LinkedInXMLFeed
 
 app_name = "jobs"
@@ -42,6 +42,7 @@ urlpatterns = [
     path("jobs/<slug:slug>/application-guide/", views.ApplicationGuideView.as_view(), name="application_guide"),
     path("jobs/<slug:slug>/v/", tracking.JobViewBeaconView.as_view(), name="job_view_beacon"),
     path("jobs/<slug:slug>/go/", tracking.JobApplyRedirectView.as_view(), name="job_apply_redirect"),
+    path("t/rank/", tracking.ranking_click, name="ranking_click"),
     path("jobs/<slug:slug>/og-image/", views.JobOGImageView.as_view(), name="job_og_image"),
     path("jobs/<slug:slug>/save/", views.SaveJobView.as_view(), name="save_job"),
     path("jobs/<slug:slug>/checkout/", views.JobCheckoutView.as_view(), name="job_checkout"),
@@ -52,6 +53,10 @@ urlpatterns = [
     # Account / Onboarding
     path("account/", views.DashboardView.as_view(), name="account"),
     path("account/delete/", views.AccountDeleteView.as_view(), name="account_delete"),
+    path("account/cv/", views.UploadCVView.as_view(), name="upload_cv"),
+    path("account/cv/remove/", views.RemoveCVView.as_view(), name="remove_cv"),
+    path("account/cv/file/", applications.my_cv, name="my_cv"),
+    path("applications/<int:pk>/cv/", applications.application_cv, name="application_cv"),
     path("account/company/edit/", views.EditCompanyProfileView.as_view(), name="edit_company_profile"),
     path("onboarding/", views.StartOnboardingView.as_view(), name="start_onboarding"),
     path(

@@ -620,6 +620,7 @@ class Application(models.Model):
     # Hiring assistant: how the application compares with the role's must-haves, each "met"
     # backed by a quote from the applicant's own words. Advisory only; people decide.
     screening = models.JSONField(default=dict, blank=True)
+    resume_text = models.TextField(blank=True)
 
     applied_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -1158,6 +1159,11 @@ class SeekerProfile(models.Model):
     # Vector Search
     # -------------------------------------------------------------------------
 
+    # Read from the uploaded CV: plain text plus grounded facts (each with a quote from the CV).
+    resume_text = models.TextField(blank=True)
+    cv_facts = models.JSONField(default=dict, blank=True)
+    cv_read_at = models.DateTimeField(null=True, blank=True)
+    cv_source = models.CharField(max_length=255, blank=True, help_text="File the CV facts were read from")
     embedding = VectorField(dimensions=384, null=True, blank=True)
     embedding_content_hash = models.CharField(max_length=64, blank=True, default="")
     search_vector = SearchVectorField(null=True, blank=True)
@@ -1875,3 +1881,34 @@ class SourcingSuggestion(models.Model):
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["job", "seeker"], name="one_suggestion_per_job_seeker")]
+
+
+class RankingEvent(models.Model):
+    """What a visitor was shown and what they did with it, so ranking can be measured on real outcomes.
+
+    One "impression" row per rendered results list (the ordered job ids); "click" rows carry the same
+    impression key and the position clicked; "apply" and "save" rows link by visitor and job. No personal data: a hashed visitor key, and the
+    user id only for signed-in people. Rows older than 120 days are deleted.
+    """
+
+    class Kind(models.TextChoices):
+        IMPRESSION = "impression", "Impression"
+        CLICK = "click", "Click"
+        APPLY = "apply", "Apply"
+        SAVE = "save", "Save"
+
+    kind = models.CharField(max_length=12, choices=Kind.choices)
+    surface = models.CharField(max_length=24, blank=True)
+    visitor = models.CharField(max_length=20, db_index=True)
+    user_id = models.IntegerField(null=True, blank=True)
+    query = models.CharField(max_length=200, blank=True)
+    filters = models.JSONField(default=dict, blank=True)
+    job_ids = models.JSONField(default=list, blank=True)
+    job_id = models.IntegerField(null=True, blank=True)
+    # Random key the browser creates for each rendered results list (works on cached pages too).
+    impression_key = models.CharField(max_length=32, blank=True, db_index=True)
+    position = models.PositiveSmallIntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["kind", "created_at"])]

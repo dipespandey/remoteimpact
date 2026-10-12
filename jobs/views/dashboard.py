@@ -206,3 +206,41 @@ class AccountDeleteView(LoginRequiredMixin, View):
         auth_logout(request)
         messages.success(request, "Your account and related data have been deleted.")
         return redirect("jobs:home")
+
+
+class UploadCVView(LoginRequiredMixin, View):
+    """Upload or replace a seeker's CV; it's read in the background (see signals.read_cv_on_upload)."""
+
+    MAX_BYTES = 5 * 1024 * 1024
+
+    def post(self, request):
+        import os
+
+        upload = request.FILES.get("cv")
+        if not upload:
+            messages.error(request, "Choose a PDF or Word file to upload.")
+            return redirect("jobs:account")
+        if upload.size > self.MAX_BYTES or os.path.splitext(upload.name)[1].lower() not in (".pdf", ".docx"):
+            messages.error(request, "Please upload a PDF or Word (.docx) file under 5 MB.")
+            return redirect("jobs:account")
+        profile = SeekerProfile.objects.filter(user=request.user).first()
+        if profile is None:
+            messages.error(request, "Set up your profile first, then add your CV.")
+            return redirect("jobs:account")
+        profile.resume = upload
+        profile.cv_read_at = None
+        profile.save()
+        messages.success(request, "Thanks. We're reading your CV now; refresh in a minute to see what we found.")
+        return redirect("jobs:account")
+
+
+class RemoveCVView(LoginRequiredMixin, View):
+    def post(self, request):
+        profile = SeekerProfile.objects.filter(user=request.user).first()
+        if profile and profile.resume:
+            profile.resume.delete(save=False)
+            profile.resume, profile.resume_text, profile.cv_facts = None, "", {}
+            profile.cv_read_at, profile.cv_source = None, ""
+            profile.save()  # re-embeds the profile without the CV
+            messages.success(request, "Your CV and everything we read from it have been removed.")
+        return redirect("jobs:account")
