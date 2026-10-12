@@ -688,7 +688,7 @@ class CategoryLandingView(ListView):
     SEO_TITLES = {
         "advocacy-or-policy": "Remote Advocacy & Policy Jobs",
         "ai-safety": "Remote AI Safety & Governance Jobs",
-        "animal-welfare": "Remote Animal Welfare Jobs",
+        "animal-welfare": "Remote Animal Welfare & Farmed Animal Jobs",
         "biosecurity": "Remote Biosecurity & Pandemic Prep Jobs",
         "buildings": "Remote Sustainable Buildings Jobs",
         "capital": "Remote Impact Capital & Finance Jobs",

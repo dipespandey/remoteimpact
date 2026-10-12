@@ -108,8 +108,8 @@ class OrganizationProfileView(ListView):
         job_count = context["page_obj"].paginator.count
         context["job_count"] = job_count
         context["index_page"] = job_count > 0 and not self.request.GET
-        context["hiring_summary"] = self._hiring_summary(org, context["page_obj"].paginator.object_list)
         
+        context["hiring_summary"] = self._hiring_summary(org, context["page_obj"].paginator.object_list)
         # Check for SEO-optimized organizations (striking distance keywords)
         seo_data = SEO_OPTIMIZED_ORGS.get(org.slug)
         if seo_data:
@@ -119,10 +119,14 @@ class OrganizationProfileView(ListView):
             context["key_info"] = seo_data.get("key_info", {})
             context["is_seo_optimized"] = True
         else:
-            context["meta_title"] = f"Jobs at {org.name} — Remote Impact Jobs"
+            # People search "<employer> careers" or "<employer> jobs"; lead with the name and that word.
+            roles = f"{job_count} open remote role{'' if job_count == 1 else 's'}"
+            context["meta_title"] = f"{org.name} careers: {roles}" if job_count else f"{org.name} careers and jobs"
+            areas = ", ".join((context.get("hiring_summary") or {}).get("areas", [])[:2])
             context["meta_description"] = (
-                f"Browse {job_count} remote job{'' if job_count == 1 else 's'} at {org.name}. "
-                f"Find purpose-driven roles at this impact organization."
+                f"{org.name} is hiring: {roles}{' in ' + areas if areas else ''}, each checked daily against "
+                f"{'their own job board' if org.careers_url else 'the employer’s site'}. See pay, location and how to apply."
+                if job_count else f"{org.name} has no open remote roles on Remote Impact right now. See similar impact jobs."
             )
             context["h1_title"] = org.name
             context["is_seo_optimized"] = False
