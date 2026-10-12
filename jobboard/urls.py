@@ -633,6 +633,7 @@ urlpatterns = [
     path("gigs/", include("gigs.urls")),
     path("robots.txt", robots_txt, name='robots_txt'),
     path("llms.txt", llms_txt, name='llms_txt'),
+    path(f"{settings.INDEXNOW_KEY}.txt", lambda request: HttpResponse(settings.INDEXNOW_KEY, content_type="text/plain"), name="indexnow_key"),
     path("llms-full.txt", llms_full_txt, name='llms_full_txt'),
     path("humans.txt", humans_txt, name='humans_txt'),
     path(".well-known/ai-plugin.json", ai_plugin_json, name='ai_plugin'),

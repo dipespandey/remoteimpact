@@ -51,6 +51,9 @@ if DEBUG:
 
 # Site URL for SEO (canonical URLs, sitemaps, OG tags)
 SITE_URL = os.getenv("SITE_URL", "https://remoteimpact.org")
+# IndexNow (Bing, Yandex, and the indexes behind ChatGPT search/Copilot). The key is public by design:
+# engines verify it at /<key>.txt.
+INDEXNOW_KEY = os.getenv("INDEXNOW_KEY", "84b0a7e661d3dec6c3f14bc272811705")
 SITE_NAME = "Remote Impact Jobs"  # Full brand name for SEO differentiation
 
 # Trust X-Forwarded-Proto header from reverse proxy (for HTTPS detection)
