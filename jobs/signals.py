@@ -223,3 +223,67 @@ try:
             logger.error(f"Error tracking referral: {e}")
 except ImportError:
     pass
+
+
+# ---------------------------------------------------------------------------
+# Payment notifications: tell the owner about every payment, and thank job posters.
+# ---------------------------------------------------------------------------
+
+from jobs.models import ConsumerFunnelEvent, EmployerFunnelEvent  # noqa: E402
+
+
+def _owner_email():
+    return getattr(settings, "PAYMENT_NOTIFY_EMAIL", "hello@remoteimpact.org")
+
+
+def _send_payment_notices(subject, lines, poster_job=None):
+    from django.db import transaction
+
+    def send():
+        from jobs.services.email_service import email_service
+
+        site = getattr(settings, "SITE_URL", "https://remoteimpact.org").rstrip("/")
+        text = "\n".join(lines)
+        try:
+            email_service.send_email(to=_owner_email(), subject=subject, text=text,
+                                     html="<p>" + "<br>".join(lines) + "</p>")
+        except Exception:  # noqa: BLE001 - a notice must never break a payment
+            logger.exception("Owner payment notice failed")
+        poster = getattr(poster_job, "poster", None)
+        if poster_job is not None and poster is not None and poster.email:
+            url = f"{site}{poster_job.get_absolute_url()}"
+            body = (f"Hi,\n\nThanks for posting \"{poster_job.title}\" on Remote Impact. Your payment went through "
+                    f"and the role is live for 30 days, featured at the top of search:\n{url}\n\n"
+                    f"We'll send people with matching profiles your way. Reply to this email if anything needs changing.\n\n"
+                    f"Dipesh\nRemote Impact")
+            try:
+                email_service.send_email(to=poster.email, subject=f"Your job is live: {poster_job.title}",
+                                         text=body, html="<p>" + body.replace("\n\n", "</p><p>").replace("\n", "<br>") + "</p>")
+            except Exception:  # noqa: BLE001
+                logger.exception("Poster payment confirmation failed")
+
+    transaction.on_commit(send)
+
+
+@receiver(post_save, sender=EmployerFunnelEvent)
+def notify_employer_payment(sender, instance, created, **kwargs):
+    if not created or instance.event != EmployerFunnelEvent.Event.PAYMENT_COMPLETED:
+        return
+    job = instance.job
+    product = (instance.metadata or {}).get("product", "job post")
+    who = getattr(instance.user, "email", "") or "unknown"
+    lines = [f"Payment: {product}", f"Job: {getattr(job, 'title', '?')} ({getattr(job.organization, 'name', '') if job else ''})",
+             f"Account: {who}"]
+    _send_payment_notices(f"New payment: {product} on Remote Impact", lines,
+                          poster_job=job if product == "job post" else None)
+
+
+@receiver(post_save, sender=ConsumerFunnelEvent)
+def notify_consumer_payment(sender, instance, created, **kwargs):
+    if not created or instance.event != ConsumerFunnelEvent.Event.PAYMENT_COMPLETED:
+        return
+    meta = instance.metadata or {}
+    plan = meta.get("plan", "pro")
+    lines = [f"Payment: Pro ({plan}){' trial start' if meta.get('trial') else ''}",
+             f"Account: {getattr(instance.user, 'email', '') or 'unknown'}"]
+    _send_payment_notices(f"New payment: Pro {plan} on Remote Impact", lines)
