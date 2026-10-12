@@ -227,3 +227,29 @@ class CloudflareEdgeCacheMiddleware:
         
         # Default: don't set aggressive caching for unmatched paths
         return response
+
+
+class ImpersonationReadOnlyMiddleware:
+    """While staff view the site as another user, refuse anything but reads (and the way back)."""
+
+    SAFE_METHODS = ("GET", "HEAD", "OPTIONS")
+    ALLOWED_PATHS = ("/admin/impersonate/stop/",)
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        impersonating = bool(getattr(request, "session", None) and request.session.get("impersonator_id"))
+        request.impersonating = impersonating
+        if impersonating and request.method not in self.SAFE_METHODS and request.path not in self.ALLOWED_PATHS:
+            from django.http import HttpResponse
+
+            return HttpResponse(
+                "Read-only: you're viewing the site as another user, so nothing can be saved. "
+                "Use the bar at the top of the page to go back to your own account.",
+                status=403, content_type="text/plain",
+            )
+        response = self.get_response(request)
+        if impersonating:
+            response["Cache-Control"] = "private, no-store"
+        return response

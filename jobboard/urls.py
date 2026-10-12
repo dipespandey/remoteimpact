@@ -27,7 +27,7 @@ from django.http import HttpResponse
 from django.urls import include, path, reverse
 from django.views.generic import RedirectView
 
-from jobs.views import admin_analytics
+from jobs.views import admin_analytics, impersonate
 from jobs.sitemaps import (
     StaticSitemap, CategorySitemap,
     OrganizationSitemap, ToolsSitemap, TalentSitemap, RegionSitemap,
@@ -618,6 +618,9 @@ urlpatterns = [
     path("admin/analytics/", admin.site.admin_view(admin_analytics.analytics), name="admin_analytics"),
     path("admin/outreach/", admin.site.admin_view(admin_analytics.outreach), name="admin_outreach"),
     path("admin/outreach/<int:org_id>/", admin.site.admin_view(admin_analytics.outreach_update), name="admin_outreach_update"),
+    path("admin/impersonate/", admin.site.admin_view(impersonate.impersonate_search), name="admin_impersonate"),
+    path("admin/impersonate/<int:user_id>/start/", admin.site.admin_view(impersonate.impersonate_start), name="admin_impersonate_start"),
+    path("admin/impersonate/stop/", impersonate.impersonate_stop, name="admin_impersonate_stop"),
     path("admin/", admin.site.urls),
     # A few historical clients appended a literal null path segment to these
     # auth pages. Keep the canonical destination instead of a repeat 404.

@@ -122,6 +122,14 @@
 
 <body class="bg-background text-foreground antialiased">
     <a href="#main-content" class="skip-link">Skip to main content</a>
+    {% if request.session.impersonator_id %}
+    <div style="position:sticky;top:0;z-index:100;background:#b45309;color:#fff;font-size:14px;padding:8px 16px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:center">
+        <span>Viewing as <b>{{ user.email|default:user.username }}</b> (read-only)</span>
+        <form method="post" action="/admin/impersonate/stop/" style="margin:0">{% csrf_token %}
+            <button type="submit" style="background:#fff;color:#b45309;border:0;border-radius:999px;padding:3px 12px;font-weight:600;cursor:pointer">Back to my account</button>
+        </form>
+    </div>
+    {% endif %}
     <div class="relative min-h-screen overflow-x-clip">
         {% url 'jobs:job_list' as nav_jobs_url %}
         {% if user.is_authenticated %}{% url 'jobs:job_alerts' as nav_scout_url %}{% else %}{% url 'jobs:public_pricing' as nav_scout_url %}{% endif %}

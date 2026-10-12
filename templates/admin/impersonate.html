@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>View as user · Remote Impact admin</title>
+{% include "admin/_ri_head.html" %}
+<style>
+  .search { display: flex; gap: 8px; margin: 16px 0; }
+  .search input { flex: 1; height: 34px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); color: var(--foreground); padding: 0 10px; font: inherit; }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; }
+  .row + .row { border-top: 1px solid var(--grid); }
+  .meta { color: var(--muted-foreground); font-size: 13px; }
+  .note { color: var(--muted-foreground); font-size: 13px; max-width: 640px; }
+</style>
+</head>
+<body>
+<main style="max-width: 860px; margin: 0 auto; padding: 24px 16px;">
+  <p><a href="/admin/">← Admin</a></p>
+  <h1>View the site as a user</h1>
+  <p class="note">Search by email, username or name, then click "View as". You'll browse the site exactly as they see it, read-only: anything that would save, post, pay or send is blocked. A bar at the top of every page takes you back to your own account. Staff accounts can't be viewed this way.</p>
+  <form class="search" method="get">
+    <input name="q" value="{{ query }}" placeholder="email, username or name" autofocus>
+    <button class="btn" type="submit">Search</button>
+  </form>
+  {% if query %}
+  <div class="card">
+    {% for u in users %}
+    <div class="row">
+      <div>
+        <div><b>{{ u.get_full_name|default:u.username }}</b> · {{ u.email }}</div>
+        <div class="meta">{{ u.profile.get_account_type_display|default:"" }} · joined {{ u.date_joined|date:"M j, Y" }} · last login {{ u.last_login|date:"M j, Y"|default:"never" }}</div>
+      </div>
+      <form method="post" action="/admin/impersonate/{{ u.pk }}/start/">{% csrf_token %}
+        <input type="hidden" name="next" value="/">
+        <button class="btn primary" type="submit">View as</button>
+      </form>
+    </div>
+    {% empty %}
+    <div class="row meta">No matching users.</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</main>
+</body>
+</html>

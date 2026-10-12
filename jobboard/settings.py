@@ -108,6 +108,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "jobs.middleware.ImpersonationReadOnlyMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "jobs.middleware.SocialLoginNetworkErrorMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
