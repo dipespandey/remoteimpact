@@ -81,7 +81,7 @@
                     <form method="post"
                           hx-post="{% url 'gigs:gig_list' %}"
                           hx-swap="none"
-                          hx-on::after-request="if(event.detail.xhr.status === 200) { this.reset(); showSuccessToast('Thanks. We\'ll email you when Impact Gigs opens.'); }"
+                          hx-on::after-request="if(event.detail.xhr.status === 200) { this.reset(); showSuccessToast('Thanks. We\'ll email you when Impact Gigs opens.'); } else if (event.detail.xhr.status === 422) { alert('Please enter a valid email address.'); }"
                           class="space-y-5">
                         {% csrf_token %}
 

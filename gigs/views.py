@@ -96,6 +96,12 @@ class GigListView(FormView):
         from django.http import HttpResponse
         return HttpResponse(status=200)
 
+    def form_invalid(self, form):
+        # A 200 here made the page show "Thanks" for a mistyped email that was never saved.
+        response = super().form_invalid(form)
+        response.status_code = 422
+        return response
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if "form" not in context:
