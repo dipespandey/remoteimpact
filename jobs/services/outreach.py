@@ -21,10 +21,12 @@ def _site():
     return getattr(settings, "SITE_URL", "https://remoteimpact.org").rstrip("/")
 
 
-def draft_email(org_name, role_title, views, clicks, days, report_link, feature_link, sender):
+def draft_email(org_name, role_title, views, clicks, days, report_link, feature_link, sender, live_roles=1):
+    # The numbers cover every live role, so only name a single role when there is just one.
+    target = f"your {role_title} role" if live_roles == 1 else f"your {live_roles} roles on Remote Impact"
     subject = (
-        f"{clicks} people clicked to apply to your {role_title} role"
-        if clicks else f"{views} people viewed your {role_title} listing"
+        f"{clicks} people clicked to apply to {target}"
+        if clicks else f"{views} people viewed {target}"
     )
     body = (
         f"Hi there,\n\n"
@@ -95,7 +97,8 @@ def outreach_targets(days=7, status="", limit=100, sender="Dipesh"):
             continue
         report_link = report_url(org)
         feature_link = f"{_site()}{reverse('jobs:feature_job', kwargs={'slug': top.slug})}?source=outreach"
-        subject, body = draft_email(org.name, top.title, views, clicks, days, report_link, feature_link, sender)
+        subject, body = draft_email(org.name, top.title, views, clicks, days, report_link, feature_link, sender,
+                                    live_roles=role_counts[oid])
         emails = sorted({e for e in org_jobs.exclude(application_email="").values_list("application_email", flat=True)})
         to = claimed.get(oid) or (record.contact if record and "@" in (record.contact or "") else "") or (emails[0] if emails else "")
         rows.append({
