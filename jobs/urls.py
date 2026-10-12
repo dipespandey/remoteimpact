@@ -198,6 +198,7 @@ urlpatterns = [
     path("tools/resignation-letter-generator/generate/", views.ResignationLetterGenerateView.as_view(), name="resignation_letter_generate"),
     # RSS Feeds
     path("feed/jobs/", LatestJobsFeed(), name="jobs_feed"),
+    path("feed/jobs.json", tracking.jobs_json_feed, name="jobs_json_feed"),
     path("feed/jobs/category/<slug:slug>/", CategoryJobsFeed(), name="category_feed"),
     # Job Aggregator Feeds (Indeed, LinkedIn, etc.)
     path("feed/indeed.xml", IndeedXMLFeed.as_view(), name="indeed_feed"),

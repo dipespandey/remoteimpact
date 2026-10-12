@@ -1041,3 +1041,14 @@ class SalaryPlausibilityTests(TestCase):
         normal = {"salary_min": Decimal("80000"), "salary_max": Decimal("120000"), "salary_currency": "USD", "raw_data": {}}
         drop_implausible_salary(normal)
         self.assertEqual(normal["salary_max"], Decimal("120000"))
+
+
+class JsonFeedTests(TestCase):
+    def test_json_feed_lists_open_roles(self):
+        from jobs.models import Job, Organization
+        org = Organization.objects.create(name="Feed Org", slug="feed-org")
+        Job.objects.create(title="Feed Analyst", slug="feed-analyst", organization=org, description="Analyse things.",
+                           application_url="https://example.org/f", location="Remote (US)")
+        data = self.client.get(reverse("jobs:jobs_json_feed")).json()
+        self.assertEqual(data["version"], "https://jsonfeed.org/version/1.1")
+        self.assertIn("Feed Analyst at Feed Org", [i["title"] for i in data["items"]])

@@ -284,6 +284,7 @@ Example search URLs:
 
 - Sitemap: https://remoteimpact.org/sitemap.xml
 - RSS Feed: {site_url}/feed/jobs/
+- JSON Feed (latest 200 open roles, with organization, location and salary): {site_url}/feed/jobs.json
 - Structured Data: Schema.org JobPosting on all job pages
 - API: Not currently public (contact for partnerships)
 

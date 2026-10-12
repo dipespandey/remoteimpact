@@ -51,3 +51,41 @@ def organization_logo(request, slug):
     response["Cache-Control"] = "public, max-age=2592000, immutable"
     response["X-Content-Type-Options"] = "nosniff"
     return response
+
+
+def jobs_json_feed(request):
+    """Open roles as JSON Feed 1.1, for AI assistants, aggregators and partner sites."""
+    from django.conf import settings
+    from django.http import JsonResponse
+    from django.utils.html import strip_tags
+
+    from ..services.job_service import JobService
+
+    site = settings.SITE_URL.rstrip("/")
+    jobs = (JobService._collapse_location_variants(JobService.get_available_jobs())
+            .select_related("organization", "category").order_by("-posted_at")[:200])
+    items = []
+    for job in jobs:
+        url = site + job.get_absolute_url()
+        items.append({
+            "id": url, "url": url, "title": f"{job.title} at {job.organization.name}",
+            "summary": " ".join(strip_tags(job.description or "").split())[:300],
+            "date_published": job.posted_at.isoformat() if job.posted_at else None,
+            "tags": [t for t in (job.category.name if job.category else "", job.location, job.job_type) if t],
+            "_remote_impact": {
+                "organization": job.organization.name, "organization_homepage": job.organization.homepage_url or None,
+                "location": job.location, "country": job.country, "job_type": job.job_type,
+                "salary_min": float(job.salary_min) if job.salary_min else None,
+                "salary_max": float(job.salary_max) if job.salary_max else None,
+                "salary_currency": job.salary_currency or None,
+            },
+        })
+    response = JsonResponse({
+        "version": "https://jsonfeed.org/version/1.1",
+        "title": "Remote Impact: latest remote jobs at impact organizations",
+        "home_page_url": site + "/jobs/", "feed_url": site + "/feed/jobs.json",
+        "description": "Remote roles in climate, global health, AI safety and social impact, checked daily against each employer's own job board.",
+        "items": items,
+    }, json_dumps_params={"ensure_ascii": False})
+    response["Cache-Control"] = "public, max-age=900"
+    return response
