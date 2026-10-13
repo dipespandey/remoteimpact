@@ -152,11 +152,13 @@ class UnifiedMatchingService:
     MATCH_CACHE_TTL = 15 * 60  # User-facing matches can be a few minutes stale.
 
     @classmethod
-    def order_jobs_for_seeker(cls, queryset, seeker: SeekerProfile, keep_all: bool = False):
-        """Show a fresh chronological feed from a pool of relevant jobs.
+    def order_jobs_for_seeker(cls, queryset, seeker: SeekerProfile, keep_all: bool = False, *, allow_compute: bool = True):
+        """Order the feed using cached matches or compute them when allowed.
 
         With ``keep_all`` (explicit filters), every filtered job stays and the seeker's
-        matches come first; otherwise only the match pool is shown.
+        matches come first; otherwise only the match pool is shown. With
+        ``allow_compute=False``, return None when fresh ranking is needed so
+        the caller can render usable jobs before refreshing asynchronously.
         """
         cached = cache.get(cls._matches_cache_key(seeker, 100)) if seeker is not None else None
         ranked_ids = None
@@ -165,6 +167,8 @@ class UnifiedMatchingService:
             available = set(JobService.get_available_jobs().filter(pk__in=ids).values_list("pk", flat=True))
             ranked_ids = [pk for pk in ids if pk in available]
         if ranked_ids is None or (cached and not ranked_ids):
+            if not allow_compute:
+                return None
             ranked_ids = [result.job.id for result in cls.get_matches(seeker, limit=100)]
         if not ranked_ids:
             return queryset.order_by("-posted_at", "-id")

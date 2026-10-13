@@ -128,11 +128,20 @@ class JobListView(FastJobPaginationMixin, ListView):
             )
             if seeker:
                 # Under filters, rank matches first but keep every result that fits them.
-                return UnifiedMatchingService.order_jobs_for_seeker(jobs, seeker, keep_all=has_filters)
+                # A cold ranking (including embedding a new profile) must not
+                # delay the initial HTML. Live refreshes populate the cache.
+                ranked = UnifiedMatchingService.order_jobs_for_seeker(
+                    jobs, seeker, keep_all=has_filters,
+                    allow_compute=self.request.headers.get("X-Requested-With") == "fetch",
+                )
+                if ranked is not None:
+                    return ranked
+                self.personalization_pending = True
         return jobs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["personalization_pending"] = getattr(self, "personalization_pending", False)
         categories = Category.objects.all()
         context["categories"] = categories
 

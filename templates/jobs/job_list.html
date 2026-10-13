@@ -562,7 +562,11 @@
         </div>
     </form>
 
-    <div id="job-results-area" aria-live="polite" aria-busy="false" class="transition-opacity">
+    <div id="job-results-status" role="status" class="mt-4 text-sm text-muted-foreground" {% if not personalization_pending %}hidden{% endif %}>
+        <span>{% if personalization_pending %}Showing latest roles while your matches load.{% endif %}</span>
+        <button id="job-results-retry" type="button" class="ml-2 font-medium underline underline-offset-4" hidden>Try again</button>
+    </div>
+    <div id="job-results-area" data-personalization-pending="{{ personalization_pending|yesno:'true,false' }}" aria-live="polite" aria-busy="false" class="transition-opacity">
     <div class="mt-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-1">
         <p class="text-[13px] text-muted-foreground">
             <span class="tabular-nums text-foreground">{{ page_obj.paginator.count }}</span> open role{{ page_obj.paginator.count|pluralize }}{% if page_obj.paginator.num_pages > 1 %}<span class="hidden sm:inline"> · showing <span class="tabular-nums">{{ page_obj.start_index }}–{{ page_obj.end_index }}</span></span>{% endif %}
@@ -682,7 +686,7 @@
 
 
 {% block extra_js %}
-<script>
+<script id="job-list-live-script">
     // Filter toggle for mobile
     const filterToggleBtn = document.getElementById('filter-toggle-btn');
     const filtersSection = document.getElementById('filters-section');
@@ -704,7 +708,11 @@
         const area = document.getElementById('job-results-area');
         if (!form || !area || !window.fetch || !window.DOMParser) return;
         let timer = null;
-        let controller = null;
+        const status = document.getElementById('job-results-status');
+        const statusText = status.querySelector('span');
+        const retry = document.getElementById('job-results-retry');
+        let activeRequest = null;
+        let failedRequest = null;
         let sortTouched = false;
 
         function targetUrl() {
@@ -726,16 +734,28 @@
             return form.action + (query ? '?' + query : '');
         }
 
-        async function refresh() {
-            const url = targetUrl();
-            if (controller) controller.abort();
-            controller = new AbortController();
+        async function refresh(options = {}) {
+            const initial = options.initial === true;
+            const url = options.url || (initial ? location.pathname + location.search : targetUrl());
+            if (activeRequest) activeRequest.controller.abort();
+            const request = { controller: new AbortController(), timedOut: false };
+            activeRequest = request;
+            failedRequest = null;
+            retry.hidden = true;
+            status.hidden = false;
+            statusText.textContent = initial ? 'Showing latest roles while your matches load.' : 'Updating results…';
             area.setAttribute('aria-busy', 'true');
-            area.style.opacity = '0.55';
+            area.style.opacity = initial ? '' : '0.55';
+            const timeout = setTimeout(function () {
+                request.timedOut = true;
+                request.controller.abort();
+            }, 12000);
             try {
-                const response = await fetch(url, { signal: controller.signal, headers: { 'X-Requested-With': 'fetch' } });
+                const response = await fetch(url, { signal: request.controller.signal, headers: { 'X-Requested-With': 'fetch' } });
                 if (!response.ok) throw new Error(String(response.status));
-                const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+                const html = await response.text();
+                if (activeRequest !== request) return;
+                const doc = new DOMParser().parseFromString(html, 'text/html');
                 const fresh = doc.getElementById('job-results-area');
                 if (!fresh) throw new Error('no results area');
                 area.innerHTML = fresh.innerHTML;
@@ -746,16 +766,35 @@
                 if (doc.title) document.title = doc.title;
                 history.replaceState(null, '', url);
                 if (window.Alpine && Alpine.initTree) Alpine.initTree(area);
+                status.hidden = true;
             } catch (error) {
-                if (error.name !== 'AbortError') window.location.href = url;
+                if (activeRequest !== request) return;
+                if (error.name !== 'AbortError' || request.timedOut) {
+                    statusText.textContent = initial
+                        ? 'Your matches could not load. Showing latest roles.'
+                        : 'Results could not update. Showing previous results.';
+                    retry.hidden = false;
+                    failedRequest = { url, initial };
+                }
             } finally {
-                area.setAttribute('aria-busy', 'false');
-                area.style.opacity = '';
+                clearTimeout(timeout);
+                // An older aborted request must not clear a newer request's busy state.
+                if (activeRequest === request) {
+                    activeRequest = null;
+                    area.setAttribute('aria-busy', 'false');
+                    area.style.opacity = '';
+                }
             }
         }
 
         function schedule(delay) {
             clearTimeout(timer);
+            if (activeRequest) activeRequest.controller.abort();
+            activeRequest = null;
+            failedRequest = null;
+            status.hidden = true;
+            area.setAttribute('aria-busy', 'false');
+            area.style.opacity = '';
             timer = setTimeout(refresh, delay);
         }
 
@@ -773,12 +812,17 @@
         });
         form.addEventListener('submit', function (event) {
             event.preventDefault();
+            clearTimeout(timer);
             refresh();
         });
         // Sort lives outside the form; delegate so it keeps working after the list is replaced.
         area.addEventListener('change', function (event) {
             if (event.target.id === 'sort-select') { sortTouched = true; schedule(0); }
         });
+        retry.addEventListener('click', function () {
+            if (failedRequest) refresh(failedRequest);
+        });
+        if (area.dataset.personalizationPending === 'true') refresh({ initial: true });
     })();
 </script>
 {% endblock %}

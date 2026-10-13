@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.sites.models import Site
+from django.core.cache import cache
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.http import QueryDict
@@ -12,6 +13,8 @@ from django.utils import timezone
 from jobs.models import AssistantSubscription, Job, Organization
 from jobs.models import SeekerProfile
 from jobs.services.job_service import JobService
+from jobs.services.unified_matching_service import UnifiedMatchingService
+from types import SimpleNamespace
 from jobs.views.jobs import JobListView
 from unittest.mock import patch
 from allauth.socialaccount.models import SocialApp
@@ -26,6 +29,88 @@ class JobListOrderingTest(TestCase):
                 settings={"server_url": "https://www.linkedin.com/oauth"} if provider_id else {},
             )
             app.sites.add(Site.objects.get_current())
+
+    def _personalized_fixture(self):
+        cache.clear()
+        user = get_user_model().objects.create_user(username="refresh-user")
+        seeker = SeekerProfile.objects.create(user=user, wizard_completed=True)
+        org = Organization.objects.create(name="Refresh Org")
+        older = Job.objects.create(title="Older match", slug="older-match", organization=org,
+                                   posted_at=timezone.now() - timedelta(days=1))
+        newer = Job.objects.create(title="Newer role", slug="newer-role", organization=org)
+        self.client.force_login(user)
+        return seeker, older, newer
+
+    @patch.object(UnifiedMatchingService, "get_matches", side_effect=AssertionError("Initial HTML must not rank"))
+    def test_cold_personalized_html_returns_jobs_without_computing_matches(self, compute):
+        self._personalized_fixture()
+        for query in ({}, {"sort": "best-match"}):
+            response = self.client.get(reverse("jobs:job_list"), query)
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(response.context["personalization_pending"])
+            self.assertEqual([job.title for job in response.context["jobs"]], ["Newer role", "Older match"])
+            self.assertContains(response, 'data-personalization-pending="true"')
+            self.assertContains(response, "Showing latest roles while your matches load.")
+        compute.assert_not_called()
+
+    @patch.object(UnifiedMatchingService, "get_matches")
+    def test_live_refresh_computes_personalized_results(self, compute):
+        seeker, older, newer = self._personalized_fixture()
+        compute.return_value = [SimpleNamespace(job=older), SimpleNamespace(job=newer)]
+        response = self.client.get(reverse("jobs:job_list"), HTTP_X_REQUESTED_WITH="fetch")
+        compute.assert_called_once()
+        self.assertEqual(compute.call_args.args[0].pk, seeker.pk)
+        self.assertEqual(compute.call_args.kwargs, {"limit": 100})
+        self.assertFalse(response.context["personalization_pending"])
+        self.assertEqual([job.pk for job in response.context["jobs"]], [older.pk, newer.pk])
+
+    @patch.object(UnifiedMatchingService, "get_matches", side_effect=AssertionError("Use cached ranks only"))
+    def test_warm_html_uses_cached_rank_and_removes_closed_jobs(self, compute):
+        seeker, older, newer = self._personalized_fixture()
+        cache.set(UnifiedMatchingService._matches_cache_key(seeker, 100), [
+            {"job_id": older.pk}, {"job_id": newer.pk}], 60)
+        Job.objects.filter(pk=newer.pk).update(is_active=False)
+        response = self.client.get(reverse("jobs:job_list"))
+        self.assertFalse(response.context["personalization_pending"])
+        self.assertEqual([job.pk for job in response.context["jobs"]], [older.pk])
+        compute.assert_not_called()
+
+    @patch.object(UnifiedMatchingService, "get_matches", side_effect=AssertionError("Do not recompute stale ranks in HTML"))
+    def test_fully_stale_cache_starts_background_refresh(self, compute):
+        seeker, older, newer = self._personalized_fixture()
+        cache.set(UnifiedMatchingService._matches_cache_key(seeker, 100), [{"job_id": older.pk}], 60)
+        Job.objects.filter(pk=older.pk).update(is_active=False)
+        response = self.client.get(reverse("jobs:job_list"))
+        self.assertTrue(response.context["personalization_pending"])
+        self.assertEqual([job.pk for job in response.context["jobs"]], [newer.pk])
+        compute.assert_not_called()
+
+    @patch.object(UnifiedMatchingService, "get_matches", side_effect=AssertionError("Known empty ranks are cached"))
+    def test_empty_match_cache_keeps_latest_roles_without_refresh(self, compute):
+        seeker, older, newer = self._personalized_fixture()
+        cache.set(UnifiedMatchingService._matches_cache_key(seeker, 100), [], 60)
+        response = self.client.get(reverse("jobs:job_list"))
+        self.assertFalse(response.context["personalization_pending"])
+        self.assertEqual([job.pk for job in response.context["jobs"]], [newer.pk, older.pk])
+        compute.assert_not_called()
+
+    @patch.object(UnifiedMatchingService, "get_matches", side_effect=AssertionError("Newest must never rank"))
+    def test_explicit_newest_remains_chronological_on_live_refresh(self, compute):
+        seeker, older, newer = self._personalized_fixture()
+        response = self.client.get(reverse("jobs:job_list"), {"sort": "date"}, HTTP_X_REQUESTED_WITH="fetch")
+        self.assertFalse(response.context["personalization_pending"])
+        self.assertEqual([job.pk for job in response.context["jobs"]], [newer.pk, older.pk])
+        compute.assert_not_called()
+
+    @patch.object(UnifiedMatchingService, "get_matches")
+    def test_live_personalized_filter_preserves_unmatched_results(self, compute):
+        seeker, older, newer = self._personalized_fixture()
+        compute.return_value = [SimpleNamespace(job=older)]
+        # Both rows fit this country filter; only one is in the personal match pool.
+        Job.objects.filter(pk__in=[older.pk, newer.pk]).update(country="United States")
+        response = self.client.get(reverse("jobs:job_list"), {"sort": "best-match", "country": "United States"},
+                                   HTTP_X_REQUESTED_WITH="fetch")
+        self.assertEqual([job.pk for job in response.context["jobs"]], [older.pk, newer.pk])
 
     def test_full_salary_slider_range_keeps_unknown_and_uncapped_jobs(self):
         organization = Organization.objects.create(name="Salary Default Org")
