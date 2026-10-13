@@ -23,7 +23,7 @@ class DuplicateImportHelperTests(SimpleTestCase):
         self.assertEqual(_canonical_duplicate_url("https://jobs.ashbyhq.com/far.ai"), "")
         self.assertEqual(_canonical_duplicate_url("https://job-boards.greenhouse.io/example/jobs/12345?utm_source=foo"), _canonical_duplicate_url("https://boards.greenhouse.io/example/jobs/12345"))
 
-    def test_canonical_duplicate_url_collapses_smartrecruiters_ids(self):
+    def test_canonical_duplicate_url_preserves_smartrecruiters_ids(self):
         first = (
             "https://jobs.smartrecruiters.com/Eurofins/"
             "744000133858449-senior-software-engineer?source=Climatebase"
@@ -33,13 +33,14 @@ class DuplicateImportHelperTests(SimpleTestCase):
             "744000133039917-senior-software-engineer?utm_source=Climatebase"
         )
 
-        self.assertEqual(_canonical_duplicate_url(first), _canonical_duplicate_url(second))
+        self.assertNotEqual(_canonical_duplicate_url(first), _canonical_duplicate_url(second))
+        self.assertEqual(_canonical_duplicate_url(first), _canonical_duplicate_url(first.split('?')[0] + '/apply'))
 
-    def test_canonical_duplicate_url_collapses_breezy_hashes(self):
+    def test_canonical_duplicate_url_preserves_breezy_hashes(self):
         first = "https://everlight-solar.breezy.hr/p/54375f57ce44-salesforce-administrator/apply"
         second = "https://everlight-solar.breezy.hr/p/fadedf5997dd-salesforce-administrator/apply"
 
-        self.assertEqual(_canonical_duplicate_url(first), _canonical_duplicate_url(second))
+        self.assertNotEqual(_canonical_duplicate_url(first), _canonical_duplicate_url(second))
 
     def test_normalize_duplicate_title_removes_remote_suffix(self):
         self.assertEqual(

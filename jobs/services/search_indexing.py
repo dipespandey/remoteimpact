@@ -27,6 +27,8 @@ def fingerprint(job):
               'salary_currency', 'skills', 'expires_at', 'posted_at', 'source', 'application_url')
     body = {field: getattr(job, field) for field in fields}
     body.update(available=job.is_available, organization=job.organization.name)
+    from jobs.services.seo_text import job_title_tag
+    body['title_tag'] = job_title_tag(job.title, job.organization.name)
     if job.is_available:
         from django.conf import settings
         from jobs.services.job_quality import google_job_posting_json

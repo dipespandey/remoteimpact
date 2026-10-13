@@ -157,7 +157,9 @@ class Command(BaseCommand):
             posted = timezone.make_aware(posted, dt_timezone.utc)
         return {
             "source": SOURCES[ref.ats],
-            "external_id": listing.job,
+            # BambooHR numbers postings independently on each company board.
+            # A bare "60" must never overwrite another employer's job #60.
+            "external_id": f"{ref.board.lower()}:{listing.job}" if ref.ats == 'bamboohr' else listing.job,
             "title": listing.title.strip(),
             "description": description,
             "requirements": description,
@@ -177,6 +179,7 @@ class Command(BaseCommand):
             "raw_data": {
                 "ats": {**ref.as_dict(), "job": listing.job},
                 "imported_from": "employer_board",
+                "posted_at_basis": "source" if posted is not None else "first_seen",
                 "source_verification": {
                     "status": "open", "method": "ats_api", "ats": ref.ats, "checked_at": checked_at,
                     "workplace": listing.workplace, "reason": "listed on employer board",

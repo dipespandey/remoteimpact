@@ -68,6 +68,16 @@ class SearchIndexingTests(TestCase):
         self.assertEqual(job.indexing_state, {})
         self.assertTrue(pending(job, 'indexnow'))
 
+    def test_title_rendering_policy_change_notifies_without_refreshing_job_dates(self):
+        job = self.job()
+        before = job.updated_at
+        acknowledge(job, 'indexnow', fingerprint(job))
+        job.refresh_from_db()
+        with patch('jobs.services.seo_text.job_title_tag', return_value='A clarified public role title'):
+            self.assertTrue(pending(job, 'indexnow'))
+        job.refresh_from_db()
+        self.assertEqual(job.updated_at, before)
+
     def test_closure_without_save_and_reopening_each_notify_once(self):
         job = self.job()
         acknowledge(job, 'indexnow', fingerprint(job))

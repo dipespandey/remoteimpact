@@ -23,7 +23,8 @@ from jobs.services.job_enrichment import enrich_job_payload
 from jobs.services.job_quality import refresh_job_quality
 
 logger = logging.getLogger(__name__)
-UNIQUE_ATS_POSTING_PREFIXES = ("ashby:", "lever:", "greenhouse:", "workable:", "personio:")
+UNIQUE_ATS_POSTING_PREFIXES = ("ashby:", "lever:", "greenhouse:", "workable:", "personio:",
+                               "smartrecruiters:", "breezy:", "idealist:")
 
 # Build lookup for standard impact areas
 _IMPACT_AREA_BY_SLUG = {area["slug"]: area for area in IMPACT_AREAS}
@@ -195,20 +196,20 @@ def _canonical_duplicate_url(value: Any) -> str:
             return f"recruitee:{host}:{match.group(1)}"
         return ''
 
-    if "smartrecruiters.com" in host:
+    if host == "jobs.smartrecruiters.com":
         path_parts = [part for part in path.split("/") if part]
         if len(path_parts) >= 2:
-            role_slug = re.sub(r"^\d+[-_]*", "", path_parts[1])
-            if role_slug:
-                return f"smartrecruiters:{path_parts[0]}:{role_slug}"
+            match = re.match(r"^(\d+)(?:[-_]|$)", path_parts[1])
+            if match:
+                return f"smartrecruiters:{path_parts[0]}:{match.group(1)}"
 
-    if host.endswith("breezy.hr") or ".breezy.hr" in host:
-        match = re.search(r"/p/(?:[a-f0-9]+-)?([^/]+)", path)
+    if host.endswith(".breezy.hr"):
+        match = re.search(r"/p/([a-f0-9]{6,})(?:-|/|$)", path)
         if match:
             return f"breezy:{host}:{match.group(1)}"
 
-    if "idealist.org" in host:
-        match = re.search(r"/nonprofit-job/(?:[a-f0-9]{16,}-)?([^/]+)", path)
+    if host == "idealist.org":
+        match = re.search(r"/(?:nonprofit-job|job)/([a-f0-9]{16,})(?:-|/|$)", path)
         if match:
             return f"idealist:{match.group(1)}"
 
@@ -684,11 +685,20 @@ def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
     if job:
         old_title = job.title
         old_raw = job.raw_data or {}
+        if (payload['source'] == Job.Source.BAMBOOHR and ':' in str(payload['external_id'])
+                and _canonical_duplicate_url(job.application_url)
+                == _canonical_duplicate_url(defaults['application_url'])):
+            # Adopt the board-scoped identity when refreshing an exact legacy
+            # destination; titles/companies never authorize a cross-board move.
+            job.external_id = payload['external_id']
         same_destination = job.application_url == defaults["application_url"]
         confirmed_dead = same_destination and verification_blocks_listing(old_raw)
         retired_duplicate = _retired_duplicate_has_available_keeper(job, defaults['application_url'], defaults['title'])
         if confirmed_dead or retired_duplicate:
             defaults["is_active"] = False
+        if (defaults['raw_data'] or {}).get('posted_at_basis') == 'first_seen':
+            # Missing employer dates do not make a previously seen role new.
+            defaults['posted_at'] = job.posted_at
         if not source_location and job.location:
             defaults["location"] = job.location
         if not source_country and defaults["country"] == "Worldwide" and source_location in (None, "", "Remote") and job.country:
