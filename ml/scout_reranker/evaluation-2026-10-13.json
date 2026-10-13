@@ -1,0 +1,548 @@
+{
+  "production_embedding": {
+    "name": "thenlper/gte-small",
+    "parameters": 33360000,
+    "dimensions": 384
+  },
+  "dataset": {
+    "seed": 20261013,
+    "source_rows": 3626,
+    "label_source": "title_family_weak_v1",
+    "limitations": [
+      "Weak occupational labels, not human judgments",
+      "Synthetic paraphrases; no private briefs or CVs",
+      "No salary, geography or eligibility labels",
+      "Organizations and duplicate content do not cross splits"
+    ],
+    "splits": {
+      "train": {
+        "pairs": 6257,
+        "positive": 2136,
+        "families": {
+          "hr": 176,
+          "program_management": 857,
+          "sales": 1735,
+          "communications": 498,
+          "software": 1199,
+          "fundraising": 206,
+          "data_science": 87,
+          "education": 228,
+          "data_engineering": 53,
+          "research": 210,
+          "operations": 295,
+          "accounting": 254,
+          "legal": 199,
+          "support": 179,
+          "data_analysis": 18,
+          "finance": 45,
+          "policy": 18
+        }
+      },
+      "dev": {
+        "pairs": 1265,
+        "positive": 432,
+        "families": {
+          "software": 222,
+          "sales": 387,
+          "operations": 96,
+          "program_management": 168,
+          "hr": 34,
+          "communications": 111,
+          "accounting": 27,
+          "legal": 9,
+          "research": 36,
+          "education": 17,
+          "support": 61,
+          "data_science": 27,
+          "finance": 9,
+          "data_engineering": 35,
+          "fundraising": 17,
+          "data_analysis": 9
+        }
+      },
+      "test": {
+        "pairs": 1486,
+        "positive": 507,
+        "families": {
+          "data_analysis": 25,
+          "software": 272,
+          "communications": 80,
+          "program_management": 255,
+          "sales": 459,
+          "research": 41,
+          "accounting": 53,
+          "support": 44,
+          "data_science": 35,
+          "operations": 90,
+          "legal": 62,
+          "data_engineering": 9,
+          "finance": 9,
+          "fundraising": 18,
+          "hr": 34
+        }
+      }
+    }
+  },
+  "embedding_baselines": {
+    "thenlper/gte-small": {
+      "test": {
+        "pairs": 1486,
+        "query_groups": 507,
+        "auc": 0.824961267485036,
+        "average_precision": 0.7129902838697761,
+        "ndcg_at_3": 0.9157001159904248,
+        "top_1_accuracy": 0.7869822485207101
+      },
+      "golden": {
+        "pairs": 80,
+        "query_groups": 20,
+        "auc": 0.9874999999999999,
+        "average_precision": 0.9769117647058823,
+        "ndcg_at_3": 1.0,
+        "top_1_accuracy": 1.0
+      }
+    },
+    "sentence-transformers/all-MiniLM-L6-v2": {
+      "test": {
+        "pairs": 1486,
+        "query_groups": 507,
+        "auc": 0.7516585978124439,
+        "average_precision": 0.619731111320234,
+        "ndcg_at_3": 0.8619048611792113,
+        "top_1_accuracy": 0.6706114398422091
+      },
+      "golden": {
+        "pairs": 80,
+        "query_groups": 20,
+        "auc": 0.9883333333333333,
+        "average_precision": 0.9688643790849673,
+        "ndcg_at_3": 1.0,
+        "top_1_accuracy": 1.0
+      }
+    }
+  },
+  "classifiers": {
+    "minilm": {
+      "base_model": "cross-encoder/ms-marco-MiniLM-L6-v2",
+      "parameters": 22713601,
+      "seed": 20261013,
+      "max_tokens": 320,
+      "label_source": "title_family_weak_v1",
+      "calibration": {
+        "pairs": 1265,
+        "query_groups": 432,
+        "auc": 0.998885665377262,
+        "average_precision": 0.9981676490690577,
+        "ndcg_at_3": 0.9979882633184524,
+        "top_1_accuracy": 0.9953703703703703,
+        "threshold": 0.655,
+        "precision": 0.9726027397260274,
+        "recall": 0.9861111111111112,
+        "false_positives": 12,
+        "false_negatives": 6,
+        "selected": 438,
+        "accepted": true
+      },
+      "baseline_test": {
+        "pairs": 1486,
+        "query_groups": 507,
+        "auc": 0.8036981744846913,
+        "average_precision": 0.7049134513036662,
+        "ndcg_at_3": 0.89362772454213,
+        "top_1_accuracy": 0.73767258382643,
+        "threshold": 0.10500000000000001,
+        "precision": 0.9324324324324325,
+        "recall": 0.13609467455621302,
+        "false_positives": 5,
+        "false_negatives": 438,
+        "selected": 74
+      },
+      "baseline_golden": {
+        "pairs": 80,
+        "query_groups": 20,
+        "auc": 0.9933333333333333,
+        "average_precision": 0.9820906432748537,
+        "ndcg_at_3": 0.9815464876785729,
+        "top_1_accuracy": 0.95,
+        "threshold": 0.10500000000000001,
+        "precision": 0.95,
+        "recall": 0.95,
+        "false_positives": 1,
+        "false_negatives": 1,
+        "selected": 20
+      },
+      "test": {
+        "pairs": 1486,
+        "query_groups": 507,
+        "auc": 0.995928301027696,
+        "average_precision": 0.9938896773364799,
+        "ndcg_at_3": 0.9956323047759936,
+        "top_1_accuracy": 0.9881656804733728,
+        "threshold": 0.655,
+        "precision": 0.9424184261036468,
+        "recall": 0.9684418145956607,
+        "false_positives": 30,
+        "false_negatives": 16,
+        "selected": 521
+      },
+      "golden": {
+        "pairs": 80,
+        "query_groups": 20,
+        "auc": 0.9958333333333333,
+        "average_precision": 0.9891666666666666,
+        "ndcg_at_3": 1.0,
+        "top_1_accuracy": 1.0,
+        "threshold": 0.655,
+        "precision": 0.9047619047619048,
+        "recall": 0.95,
+        "false_positives": 2,
+        "false_negatives": 1,
+        "selected": 21
+      },
+      "history": [
+        {
+          "epoch": 1,
+          "loss": 0.4478250230188156,
+          "seconds": 70.48368929210119,
+          "dev": {
+            "pairs": 1265,
+            "query_groups": 432,
+            "auc": 0.9959678315770752,
+            "average_precision": 0.9928351058675366,
+            "ndcg_at_3": 0.9942678680886246,
+            "top_1_accuracy": 0.9861111111111112,
+            "threshold": 0.92,
+            "precision": 0.9710843373493976,
+            "recall": 0.9328703703703703,
+            "false_positives": 12,
+            "false_negatives": 29,
+            "selected": 415
+          }
+        },
+        {
+          "epoch": 2,
+          "loss": 0.06080299386657436,
+          "seconds": 66.82786279194988,
+          "dev": {
+            "pairs": 1265,
+            "query_groups": 432,
+            "auc": 0.9986689120092482,
+            "average_precision": 0.9978785552547191,
+            "ndcg_at_3": 0.9976851851851852,
+            "top_1_accuracy": 0.9953703703703703,
+            "threshold": 0.36,
+            "precision": 0.9724137931034482,
+            "recall": 0.9791666666666666,
+            "false_positives": 12,
+            "false_negatives": 9,
+            "selected": 435
+          }
+        },
+        {
+          "epoch": 3,
+          "loss": 0.027861471992370504,
+          "seconds": 66.26594525016844,
+          "dev": {
+            "pairs": 1265,
+            "query_groups": 432,
+            "auc": 0.998885665377262,
+            "average_precision": 0.9981676490690577,
+            "ndcg_at_3": 0.9979882633184524,
+            "top_1_accuracy": 0.9953703703703703,
+            "threshold": 0.655,
+            "precision": 0.9726027397260274,
+            "recall": 0.9861111111111112,
+            "false_positives": 12,
+            "false_negatives": 6,
+            "selected": 438
+          }
+        }
+      ],
+      "cpu_latency": {
+        "batch_pairs": 12,
+        "threads": 1,
+        "median_ms": 21.139374934136868,
+        "hardware": "local development machine, not VPS"
+      },
+      "production_ready": false,
+      "activation_blockers": [
+        "Held-out weak-label precision below the 97% development target",
+        "Needs independently human-reviewed relevance judgments",
+        "Needs concurrent VPS/web-worker validation",
+        "Needs real-brief comparison against current DeepSeek decisions"
+      ],
+      "weights_sha256": "fede2b330b0e43aa8833956a13bd34f12544fe2e031167f3ffb4ddcbaa901c23",
+      "version": "fede2b330b0e43aa",
+      "base_revision": "233902d25c440f23af6f7d6e94d2946bac0bee0a"
+    },
+    "gte": {
+      "base_model": "thenlper/gte-small",
+      "parameters": 33360385,
+      "seed": 20261013,
+      "max_tokens": 320,
+      "label_source": "title_family_weak_v1",
+      "calibration": {
+        "pairs": 1265,
+        "query_groups": 432,
+        "auc": 0.9969682317371392,
+        "average_precision": 0.9959394351235522,
+        "ndcg_at_3": 0.9959765266369048,
+        "top_1_accuracy": 0.9907407407407407,
+        "threshold": 0.8450000000000001,
+        "precision": 0.9703872437357631,
+        "recall": 0.9861111111111112,
+        "false_positives": 13,
+        "false_negatives": 6,
+        "selected": 439,
+        "accepted": true
+      },
+      "baseline_test": {
+        "pairs": 1486,
+        "query_groups": 507,
+        "auc": 0.4640215733560591,
+        "average_precision": 0.3406368923067569,
+        "ndcg_at_3": 0.7018327714990242,
+        "top_1_accuracy": 0.3096646942800789,
+        "threshold": 1.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "false_positives": 0,
+        "false_negatives": 507,
+        "selected": 0
+      },
+      "baseline_golden": {
+        "pairs": 80,
+        "query_groups": 20,
+        "auc": 0.47750000000000004,
+        "average_precision": 0.2538767271498417,
+        "ndcg_at_3": 0.5273719014285831,
+        "top_1_accuracy": 0.1,
+        "threshold": 1.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "false_positives": 0,
+        "false_negatives": 20,
+        "selected": 0
+      },
+      "test": {
+        "pairs": 1486,
+        "query_groups": 507,
+        "auc": 0.99544779622567,
+        "average_precision": 0.9917241894147192,
+        "ndcg_at_3": 0.9949043555719924,
+        "top_1_accuracy": 0.9861932938856016,
+        "threshold": 0.8450000000000001,
+        "precision": 0.960552268244576,
+        "recall": 0.960552268244576,
+        "false_positives": 20,
+        "false_negatives": 20,
+        "selected": 507
+      },
+      "golden": {
+        "pairs": 80,
+        "query_groups": 20,
+        "auc": 0.935,
+        "average_precision": 0.7877741506759545,
+        "ndcg_at_3": 0.9630929753571458,
+        "top_1_accuracy": 0.9,
+        "threshold": 0.8450000000000001,
+        "precision": 0.7391304347826086,
+        "recall": 0.85,
+        "false_positives": 6,
+        "false_negatives": 3,
+        "selected": 23
+      },
+      "history": [
+        {
+          "epoch": 1,
+          "loss": 0.5071975919162768,
+          "seconds": 128.6188825839199,
+          "dev": {
+            "pairs": 1265,
+            "query_groups": 432,
+            "auc": 0.9883647903605888,
+            "average_precision": 0.9816064505770713,
+            "ndcg_at_3": 0.9896931435846567,
+            "top_1_accuracy": 0.9745370370370371,
+            "threshold": 0.8300000000000001,
+            "precision": 0.973170731707317,
+            "recall": 0.9236111111111112,
+            "false_positives": 11,
+            "false_negatives": 33,
+            "selected": 410
+          }
+        },
+        {
+          "epoch": 2,
+          "loss": 0.11932183027658025,
+          "seconds": 129.1424121670425,
+          "dev": {
+            "pairs": 1265,
+            "query_groups": 432,
+            "auc": 0.9965180516651105,
+            "average_precision": 0.9953743579700255,
+            "ndcg_at_3": 0.9951221973627647,
+            "top_1_accuracy": 0.9884259259259259,
+            "threshold": 0.8,
+            "precision": 0.9745958429561201,
+            "recall": 0.9768518518518519,
+            "false_positives": 11,
+            "false_negatives": 10,
+            "selected": 433
+          }
+        },
+        {
+          "epoch": 3,
+          "loss": 0.07121305785679066,
+          "seconds": 127.68374775000848,
+          "dev": {
+            "pairs": 1265,
+            "query_groups": 432,
+            "auc": 0.9969682317371392,
+            "average_precision": 0.9959394351235522,
+            "ndcg_at_3": 0.9959765266369048,
+            "top_1_accuracy": 0.9907407407407407,
+            "threshold": 0.8450000000000001,
+            "precision": 0.9703872437357631,
+            "recall": 0.9861111111111112,
+            "false_positives": 13,
+            "false_negatives": 6,
+            "selected": 439
+          }
+        }
+      ],
+      "cpu_latency": {
+        "batch_pairs": 12,
+        "threads": 1,
+        "median_ms": 41.26162501052022,
+        "hardware": "local development machine, not VPS"
+      },
+      "production_ready": false,
+      "activation_blockers": [
+        "Held-out weak-label precision below the 97% development target",
+        "Needs independently human-reviewed relevance judgments",
+        "Needs concurrent VPS/web-worker validation",
+        "Needs real-brief comparison against current DeepSeek decisions"
+      ],
+      "weights_sha256": "f2e98aae24fda05865587b378eed7dd1f82f651fc9ac5b33cdc2a15d86adf115",
+      "version": "f2e98aae24fda058",
+      "base_revision": "17e1f347d17fe144873b1201da91788898c639cd"
+    }
+  },
+  "data_sha256": {
+    "train": "5c694e05780fa514795fd7679210c45f2c9d8978a39afa1ef6ba92a8ee6c831e",
+    "dev": "90a0ec16e72e103a95ecf2a25ecceb56f647ce45a1d010a9a68bbd4cc0da44f3",
+    "test": "42c0ece93050e12883a07f4ec46a20efcb1de177fdf9e74aadd5c463f9981f5c"
+  },
+  "acceptance_sha256": "c4fe57b80533b5c8965cdad288c91294ba6a634e0fd304f9bcaa336e03c7a5f3",
+  "evaluation_scope": "Weak occupational relevance labels on organization-disjoint public jobs and developer-authored synthetic challenges; not production user accuracy.",
+  "embedding_input_scope": "Same short title/requirements/description texts at 320 tokens; not a replay of the production retrieval/index pipeline.",
+  "candidate": "minilm",
+  "production_activation": "not enabled; embedding settings and DeepSeek decisions stay unchanged",
+  "vps_benchmark": {
+    "cpu_threads": 1,
+    "platform": "Linux-5.15.0-173-generic-x86_64-with-glibc2.41",
+    "torch": "2.9.1+cpu",
+    "models": {
+      "minilm": {
+        "parameters": 22713601,
+        "load_ms_after_imports": 896.0580416023731,
+        "peak_process_rss_mb": 602.72265625,
+        "weights_sha256": "fede2b330b0e43aa8833956a13bd34f12544fe2e031167f3ffb4ddcbaa901c23",
+        "latency": {
+          "acceptance": {
+            "batch_pairs": 12,
+            "median_ms": 191.33769627660513,
+            "p95_ms": 231.4218357205391,
+            "repeats": 20
+          },
+          "public_sample": {
+            "batch_pairs": 12,
+            "median_ms": 1826.4979124069214,
+            "p95_ms": 1882.8659784048796,
+            "repeats": 20
+          }
+        }
+      },
+      "gte": {
+        "parameters": 33360385,
+        "load_ms_after_imports": 175.09574443101883,
+        "peak_process_rss_mb": 642.9609375,
+        "weights_sha256": "f2e98aae24fda05865587b378eed7dd1f82f651fc9ac5b33cdc2a15d86adf115",
+        "latency": {
+          "acceptance": {
+            "batch_pairs": 12,
+            "median_ms": 394.52642761170864,
+            "p95_ms": 467.3953838646412,
+            "repeats": 20
+          },
+          "public_sample": {
+            "batch_pairs": 12,
+            "median_ms": 3555.6915681809187,
+            "p95_ms": 3764.6410949528217,
+            "repeats": 20
+          }
+        }
+      }
+    }
+  },
+  "validation": {
+    "postgres_tests": 601,
+    "sqlite_tests": 601,
+    "sqlite_postgres_only_skips": 5,
+    "actual_local_backend_smoke": "loaded checksum-verified MiniLM, selected backend role over sales role, zero provider calls"
+  },
+  "vps_int8_benchmark": {
+    "cpu_threads": 1,
+    "platform": "Linux-5.15.0-173-generic-x86_64-with-glibc2.41",
+    "torch": "2.9.1+cpu",
+    "dynamic_int8": true,
+    "models": {
+      "minilm": {
+        "parameters": 22713601,
+        "load_ms_after_imports": 1156.0603100806475,
+        "peak_process_rss_mb": 628.2890625,
+        "weights_sha256": "fede2b330b0e43aa8833956a13bd34f12544fe2e031167f3ffb4ddcbaa901c23",
+        "latency": {
+          "acceptance": {
+            "batch_pairs": 12,
+            "median_ms": 207.69501756876707,
+            "p95_ms": 249.3770532310009,
+            "repeats": 20
+          },
+          "public_sample": {
+            "batch_pairs": 12,
+            "median_ms": 1711.9971783831716,
+            "p95_ms": 1827.489359304309,
+            "repeats": 20
+          }
+        }
+      },
+      "gte": {
+        "parameters": 33360385,
+        "load_ms_after_imports": 646.3479567319155,
+        "peak_process_rss_mb": 720.48046875,
+        "weights_sha256": "f2e98aae24fda05865587b378eed7dd1f82f651fc9ac5b33cdc2a15d86adf115",
+        "latency": {
+          "acceptance": {
+            "batch_pairs": 12,
+            "median_ms": 314.98644035309553,
+            "p95_ms": 355.925215408206,
+            "repeats": 20
+          },
+          "public_sample": {
+            "batch_pairs": 12,
+            "median_ms": 3298.352548852563,
+            "p95_ms": 3566.799361258745,
+            "repeats": 20
+          }
+        }
+      }
+    }
+  },
+  "quantization_decision": "Keep FP32 runtime: INT8 improved full-length VPS batches only modestly and its relevance/calibration are not accepted.",
+  "embedding_revisions": {
+    "thenlper/gte-small": "17e1f347d17fe144873b1201da91788898c639cd",
+    "sentence-transformers/all-MiniLM-L6-v2": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
+  }
+}

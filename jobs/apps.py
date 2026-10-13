@@ -23,6 +23,9 @@ def _warm_embedding_model():
         from jobs.services import embedding_service
 
         embedding_service.get_model()
+        from jobs.services.local_scout_reranker import warm_for_batch
+
+        warm_for_batch()
     except Exception:  # noqa: BLE001 - matching falls back to lexical retrieval
         pass
 

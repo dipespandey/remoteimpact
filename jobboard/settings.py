@@ -402,6 +402,10 @@ EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
 # Explicit opt-in until provider latency/cost and relevance are validated.
 # Evaluated 2026-10-09 on 167 real briefs: irrelevant matches -60%, relevant +10%.
 SCOUT_RERANK_ENABLED = os.getenv("SCOUT_RERANK_ENABLED", "true").lower() == "true"
+# Small local relevance models are opt-in; existing vectors/provider remain the default.
+SCOUT_RERANK_BACKEND = os.getenv("SCOUT_RERANK_BACKEND", "deepseek")
+SCOUT_LOCAL_MODEL_PATH = os.getenv("SCOUT_LOCAL_MODEL_PATH", "")
+SCOUT_LOCAL_ALLOW_EXPERIMENTAL = os.getenv("SCOUT_LOCAL_ALLOW_EXPERIMENTAL", "false").lower() == "true"
 SCOUT_CLOSE_MATCHES = os.getenv("SCOUT_CLOSE_MATCHES", "true").lower() == "true"
 # Experimental: let the reranker judge rule-passing jobs that miss the keyword title check.
 SCOUT_RERANK_WIDE = os.getenv("SCOUT_RERANK_WIDE", "false").lower() == "true"

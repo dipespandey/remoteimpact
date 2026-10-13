@@ -64,6 +64,12 @@ def load_for_batch():
     except Exception:  # noqa: BLE001 - keyword retrieval still works
         import logging
         logging.getLogger(__name__).exception("Embedding model failed to load for a batch run")
+    try:
+        from jobs.services.local_scout_reranker import warm_for_batch
+        warm_for_batch()
+    except Exception:  # noqa: BLE001 - local relevance is optional, embeddings are independent
+        import logging
+        logging.getLogger(__name__).warning("Local Scout reranker unavailable for batch; using eligible rules")
 
 
 def embed(text):

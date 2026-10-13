@@ -222,3 +222,15 @@ Stripe session URLs remain unchanged. The Django admin is excluded from HTML
 rewriting. UTMs identify our referrals to destination analytics; destinations
 still need to collect and retain them. No click-request or third-party tracking
 script is added by this tagging.
+
+### Small local Scout model pilot
+
+Production currently uses `thenlper/gte-small` (33.36M parameters) for embeddings.
+The optional local relevance backend and reproducible training/evaluation workflow
+are documented in [ml/scout_reranker/README.md](ml/scout_reranker/README.md).
+The first pilot trained 22.7M MiniLM and 33.36M GTE relevance classifiers from public
+job text with weak labels and synthetic queries. Neither checkpoint is enabled for
+production: held-out relevance precision and real-brief acceptance still need work.
+The application defaults to its existing DeepSeek relevance backend; stored embedding
+vectors and their calibration remain unchanged. Training data and model weights are
+excluded from Git and application build contexts.

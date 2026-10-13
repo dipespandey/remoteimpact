@@ -61,7 +61,13 @@ def rerank(candidates,preferences,fallback,diagnostics,relaxed=False):
     fallback=[job for job in fallback if evaluate_job(job,preferences,relaxed=relaxed).allowed]
     if not candidates or not preferences.get('intent_text'):
         diagnostics['reranker']='no_candidates_or_brief';return fallback
-    if not getattr(settings,'SCOUT_RERANK_ENABLED',False) or not getattr(settings,'DEEPSEEK_API_KEY',''):
+    if not getattr(settings,'SCOUT_RERANK_ENABLED',False):
+        diagnostics['reranker']='disabled';return fallback
+    backend = getattr(settings, 'SCOUT_RERANK_BACKEND', 'deepseek')
+    if backend == 'local':
+        from jobs.services.local_scout_reranker import rerank as local_rerank
+        return local_rerank(candidates, preferences, fallback, diagnostics, relaxed=relaxed)
+    if backend != 'deepseek' or not getattr(settings, 'DEEPSEEK_API_KEY', ''):
         diagnostics['reranker']='disabled';return fallback
     candidates=[job for job in candidates if evaluate_job(job,preferences,relaxed=relaxed).allowed][:MAX_CANDIDATES]
     evidence={};rows=[]
