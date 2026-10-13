@@ -224,3 +224,75 @@ Use the exported human labels for a subsequent independent evaluation; generatin
 the worksheet does not constitute review. Model cards, data and weights are in
 ignored local artifact directories and the private VPS pilot directory. The live
 production model configuration is unchanged.
+
+## Curated v3 curriculum (2026-10-13)
+
+`curation.py` adds short broad searches, transferable-function requests and precise
+exclusions. New anchors are sampled within the existing employer partitions;
+no private saved searches or CVs are read. Short broad requests have a median of
+10 words, compared with 46 words in the preceding teacher training set. A Pro
+teacher labels the student-visible candidate text; a separately prompted Flash
+teacher reviews every new training candidate without seeing the first judgment.
+Only grounded agreements enter training. Both teachers are related DeepSeek
+models, so agreement is a consistency filter, not independent human validation.
+
+Training contains 3,208 pairs: the existing 2,295 description-grounded teacher
+pairs plus 913 new agreements. Title-family rehearsal labels are removed. The
+curation pass rejects unsupported generation quotes, uncertain judgments and
+disputed decisions. A five-word-shingle Jaccard audit removes likely training
+reposts of evaluation text at similarity >= 0.85; none occurred in this snapshot.
+Development expands to 459 pairs. The old 394-pair test and 151-pair confirmation
+files stay byte-identical and are explicitly regression sets now. A fresh final
+set has 185 pairs from previously unused employers. The remaining source pool
+contains only jobs outside the old title taxonomy, which limits its coverage.
+
+`curriculum_training.py` keeps all candidates for a query in one batch, balances
+the positive loss using training-only class counts, applies mild label smoothing,
+and compares binary classification with classification plus pairwise ranking.
+Its threshold sweep uses actual development scores and keeps score ties together;
+the previous fixed grid could skip useful operating points. Each batch averages
+loss over query groups. Ranking is an additional objective, not a substitute for
+training no-match cases. The approach follows the distinctions in the official
+[CrossEncoder loss documentation](https://www.sbert.net/docs/package_reference/cross_encoder/losses.html).
+
+The initial plan compared two foundation-initialized variants. Their early
+development recall fell, so a recorded **development-only amendment**, made
+before final evaluation, adds the same two variants continued from the verified
+v2 ranking checkpoint at half the learning rate. Those continued branches retain
+v1 ancestry; removing title labels from this round does not erase earlier training.
+The original completed foundation BCE run is reused after provenance verification.
+Checkpoint and variant selection use development recall at 90% observed precision,
+then average precision. These point estimates on a small development set are not
+an accuracy guarantee. Final labels do not select the winning variant or threshold.
+
+The evaluation also recalibrates the old v2 model on exactly the same development
+set, separating weight improvements from threshold changes. Full production
+retrieval, eligibility, provider timeouts and fallback still require separate
+validation. Both releases retain `production_ready: false`.
+
+```sh
+.venv/bin/python -m ml.scout_reranker.curation prepare
+# teacher.py: generate-tasks.jsonl, shared content cache and bounded usage ledger
+.venv/bin/python -m ml.scout_reranker.curation mine
+# teacher.py: all label-tasks.jsonl AND review-tasks.jsonl, same cache/ledger
+.venv/bin/python -m ml.scout_reranker.curation finalize
+.venv/bin/python -m ml.scout_reranker.curriculum_training
+```
+
+For an amended reproduction, retain `scout-v3-work/plan.json` and the resulting
+dataset manifest supplied with the release; a fresh `prepare` creates the original
+two-variant plan. The saved amendment records why and when the candidate list grew.
+Data, models, provider responses and blind review worksheets remain ignored private
+artifacts. Paid labeling runs in an isolated process under a $5 reservation ceiling.
+
+The final comparison is **mixed**, not an overall replacement win. Selected v3
+improves original-test positive top-1 ranking from 90.4% to 94.2%, but at its frozen
+threshold recalls only 40.6% of positives. On the fresh 185-pair check, v3 accepts
+20/40 positives and zero negatives; the previous v2 frozen policy accepts 28/40
+positives and one negative. At the same newly expanded development calibration
+target, old v2 accepts 19/40 positives with zero negatives: the matched-policy
+gain is just one additional positive. Original-test current-provider relevance
+recall is still 97% on its shared valid subset, versus v3's 42%. Production stays
+on GTE + DeepSeek. See `evaluation-v3-2026-10-13.json` for full counts, alternative
+initializations, calibration comparison and limitations. The 419 teacher calls
+cost at most $1.17 at conservative peak/uncached rates; this is not an invoice.
