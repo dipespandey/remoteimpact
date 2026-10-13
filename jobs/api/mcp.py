@@ -29,7 +29,8 @@ TOOLS = [
         "name": "search_jobs",
         "title": "Search open remote impact roles",
         "description": "Find open, verified remote roles. Filter by text, impact area, the applicant's country, job type, "
-                       "level, minimum annual pay and recency. Returns up to 25 roles with eligibility, pay and links.",
+                       "level, minimum annual pay and recency. Returns the best matches with eligibility, pay and links "
+                       "(5 per call without a key, 10 with a free key, 25 with commercial access).",
         "inputSchema": {"type": "object", "properties": {
             "query": {"type": "string", "description": "Free text: role, skills, organization"},
             "area": {"type": "string", "description": "Impact area slug from list_areas, e.g. climate-environment"},
@@ -39,7 +40,7 @@ TOOLS = [
             "min_salary": {"type": "integer", "description": "Minimum annual pay (listing currency)"},
             "posted_within_days": {"type": "integer", "minimum": 1, "maximum": 90},
             "worldwide_only": {"type": "boolean", "description": "Only roles open from anywhere"},
-            "limit": {"type": "integer", "minimum": 1, "maximum": 25, "default": 10},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 25, "default": 5},
         }},
     },
     {
@@ -98,9 +99,12 @@ def _call(name, args, caller):
             params["posted_since"] = f"{int(args['posted_within_days'])}d"
         if args.get("worldwide_only"):
             params["remote_scope"] = "worldwide"
-        rows, total, _, limit = search(params, caller, limit=min(int(args.get("limit") or 10), 25))
+        cap = caller.limits["mcp_max"]
+        rows, total, _, limit = search(params, caller, limit=min(int(args.get("limit") or cap), cap))
         jobs = [serialize.job_record(j, enriched=enriched) for j in rows]
-        text = (f"{total} open roles match; showing {len(jobs)}.\n" + "\n".join(f"- {_summary(j)}" for j in jobs)
+        note = ("" if enriched else f" (this tier returns up to {cap} per search; commercial keys return 25 with enriched fields: "
+                                    f"{serialize._site()}/developers/)")
+        text = (f"{total} open roles match; showing {len(jobs)}{note}.\n" + "\n".join(f"- {_summary(j)}" for j in jobs)
                 if jobs else "No open roles match these filters. Try fewer filters or a broader area.")
         return text, {"total": total, "jobs": jobs}
     if name == "get_job":

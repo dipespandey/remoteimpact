@@ -14,6 +14,7 @@ This key switches on once we've confirmed the details with you, usually within a
 {% endif %}
 Docs and terms: {{ site }}/developers/
 
-Please link to the listing URL whenever you show a role, and don't republish full descriptions.
+Please link to the listing URL whenever you show a role, and don't republish full descriptions.{% if key.tier == 'free' %}
+This trial key is limited (500 requests a day, 100 roles per query). For a product or research on the full catalogue, request commercial access at {{ site }}/developers/#get-key{% endif %}
 
 Remote Impact

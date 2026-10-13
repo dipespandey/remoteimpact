@@ -12,10 +12,11 @@
   <header class="page-header max-w-3xl">
     <p class="kicker">For developers, researchers and AI agents</p>
     <h1 class="page-title mt-1">Verified remote impact jobs, as data.</h1>
-    <p class="page-lede">{{ active_jobs_count|intcomma }} open remote roles at climate, global health, AI safety, education and other impact organizations, each checked daily against the employer's own job board, with eligibility, pay, level and must-haves made structured. Available as a REST API and as an MCP server your AI assistant can call directly.</p>
+    <p class="page-lede">{{ active_jobs_count|intcomma }} open remote roles at climate, global health, AI safety, education and other impact organizations, each checked daily against the employer's own job board, with eligibility, pay, level and must-haves made structured. Available as a REST API and as an MCP server your AI assistant can call directly. Try it free; licence the full catalogue for your product.</p>
     <div class="mt-5 flex flex-wrap gap-2">
-      <a href="#get-key" class="btn btn-primary">Get a free key</a>
-      <a href="#mcp" class="btn btn-outline">Connect an AI assistant</a>
+      <a href="#get-key" class="btn btn-primary">Request commercial access</a>
+      <a href="#get-key" class="btn btn-outline">Get a free trial key</a>
+      <a href="#mcp" class="btn btn-ghost">Connect an AI assistant</a>
       <a href="{{ site }}/api/v1/openapi.json" class="btn btn-ghost">OpenAPI spec</a>
     </div>
   </header>
@@ -47,10 +48,11 @@
     <aside class="surface p-5 sm:p-6">
       <h2 class="text-[15px] font-semibold text-foreground">Tiers</h2>
       <dl class="mt-3 space-y-3 text-sm">
-        <div><dt class="font-medium text-foreground">No key</dt><dd class="text-muted-foreground">30 requests a minute, 500 a day, 50 per page. Try it from anywhere.</dd></div>
-        <div><dt class="font-medium text-foreground">Free key</dt><dd class="text-muted-foreground">120 a minute, 5,000 a day, 100 per page. Non-commercial use with attribution.</dd></div>
-        <div><dt class="font-medium text-foreground">Commercial</dt><dd class="text-muted-foreground">600 a minute, 100,000 a day, 500 per page, enriched fields, commercial use. From $149 a month; we confirm the details with you first.</dd></div>
+        <div><dt class="font-medium text-foreground">No key</dt><dd class="text-muted-foreground">Try it: 10 requests a minute, 100 a day, 10 roles per page, 3 pages per query. MCP returns 5 roles per search.</dd></div>
+        <div><dt class="font-medium text-foreground">Free key</dt><dd class="text-muted-foreground">Evaluation and small non-commercial projects: 30 a minute, 500 a day, 20 per page, 5 pages per query. MCP returns 10 per search. Attribution required.</dd></div>
+        <div><dt class="font-medium text-foreground">Commercial</dt><dd class="text-muted-foreground">The full catalogue: 600 a minute, 100,000 a day, 500 per page, unlimited paging, enriched fields (skills, must-haves, full text of employer-posted roles), commercial licence, MCP returns 25 per search. From $149 a month; we confirm the details with you first.</dd></div>
       </dl>
+      <p class="mt-4 text-[13px] text-muted-foreground">The free tiers let you check the data quality. Building a product, an agent or research on the whole catalogue needs commercial access.</p>
     </aside>
   </section>
 
@@ -121,8 +123,8 @@ claude mcp add --transport http remote-impact {{ mcp_url }} \
       {% csrf_token %}
       <input type="hidden" name="kind" value="free">
       <input type="text" name="website" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true">
-      <h2 id="key-heading" class="section-title">Get a free key</h2>
-      <p class="mt-1 text-sm text-muted-foreground">For non-commercial use: research, community tools, personal projects, trying the MCP server. Issued instantly.</p>
+      <h2 id="key-heading" class="section-title">Get a free trial key</h2>
+      <p class="mt-1 text-sm text-muted-foreground">To evaluate the data or for a small non-commercial project. Limited to 500 requests a day and 100 roles per query. Issued instantly.</p>
       <div class="mt-4 grid gap-3">
         <div><label class="label" for="free-name">Name</label><input id="free-name" name="name" required class="input"></div>
         <div><label class="label" for="free-email">Email</label><input id="free-email" name="email" type="email" required class="input"></div>

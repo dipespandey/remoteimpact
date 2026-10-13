@@ -66,7 +66,7 @@ def jobs_json_feed(request):
 
     site = settings.SITE_URL.rstrip("/")
     jobs = (JobService._collapse_location_variants(JobService.get_available_jobs())
-            .select_related("organization", "category").order_by("-posted_at")[:200])
+            .select_related("organization", "category").order_by("-posted_at")[:50])
     items = []
     for job in jobs:
         url = site + job.get_absolute_url()
@@ -85,7 +85,7 @@ def jobs_json_feed(request):
         })
     response = JsonResponse({
         "version": "https://jsonfeed.org/version/1.1",
-        "title": "Remote Impact: latest remote jobs at impact organizations",
+        "title": "Remote Impact: latest 50 remote jobs at impact organizations (full data: remoteimpact.org/developers/)",
         "home_page_url": site + "/jobs/", "feed_url": site + "/feed/jobs.json",
         "description": "Remote roles in climate, global health, AI safety and social impact, checked daily against each employer's own job board.",
         "items": items,

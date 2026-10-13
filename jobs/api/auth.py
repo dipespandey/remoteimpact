@@ -11,10 +11,12 @@ from django.db.models import F
 from django.utils import timezone
 
 TIERS = {
-    # per-minute, per-day, max page size, enriched fields
-    "anonymous": {"per_minute": 30, "per_day": 500, "page_max": 50, "enriched": False},
-    "free": {"per_minute": 120, "per_day": 5000, "page_max": 100, "enriched": False},
-    "commercial": {"per_minute": 600, "per_day": 100000, "page_max": 500, "enriched": True},
+    # The free tiers are for evaluating the data and small non-commercial projects; the catalogue itself
+    # (thousands of roles, enriched fields, bulk paging) is the commercial product.
+    # per-minute, per-day, max page size, how many pages per query, MCP results per call, enriched fields
+    "anonymous": {"per_minute": 10, "per_day": 100, "page_max": 10, "max_pages": 3, "mcp_max": 5, "enriched": False},
+    "free": {"per_minute": 30, "per_day": 500, "page_max": 20, "max_pages": 5, "mcp_max": 10, "enriched": False},
+    "commercial": {"per_minute": 600, "per_day": 100000, "page_max": 500, "max_pages": 10000, "mcp_max": 25, "enriched": True},
 }
 
 
@@ -32,6 +34,10 @@ class Caller:
 class RateLimited(Exception):
     def __init__(self, retry_after: int):
         self.retry_after = retry_after
+
+
+class TierLimit(Exception):
+    """The request is valid but beyond what this tier may fetch."""
 
 
 def _raw_key(request) -> str:

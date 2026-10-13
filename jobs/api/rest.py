@@ -17,7 +17,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 from jobs.api import serialize
-from jobs.api.auth import RateLimited, identify
+from jobs.api.auth import RateLimited, TierLimit, identify
 
 CORS = {
     "Access-Control-Allow-Origin": "*",
@@ -53,6 +53,9 @@ def api_view(func):
             return response
         try:
             return func(request, caller, *args, **kwargs)
+        except TierLimit as exc:
+            return respond({"error": "tier_limit", "message": str(exc), "docs": serialize._site() + "/developers/"},
+                           status=403, caller=caller)
         except ValueError as exc:
             return respond({"error": "bad_request", "message": str(exc)}, status=400, caller=caller)
     return wrapper
@@ -73,7 +76,7 @@ def _posted_since(value):
     return timezone.make_aware(timezone.datetime.combine(date, timezone.datetime.min.time()))
 
 
-def search(params, caller, *, limit=None, page=1):
+def search(params, caller, *, limit=None, page=None):
     """Shared by the REST list endpoint and the MCP search tool. Returns (jobs, total, page, limit)."""
     from jobs.models import Job
     from jobs.services.job_service import JobService
@@ -109,8 +112,11 @@ def search(params, caller, *, limit=None, page=1):
     if not text_search:
         jobs = jobs.order_by("-posted_at", "-id")
     page_max = caller.limits["page_max"]
-    limit = max(1, min(int(limit or params.get("limit") or 20), page_max))
+    limit = max(1, min(int(limit or params.get("limit") or min(20, page_max)), page_max))
     page = max(1, int(page or params.get("page") or 1))
+    if page > caller.limits["max_pages"]:
+        raise TierLimit(f"The {caller.tier} tier can fetch {caller.limits['max_pages']} pages per query "
+                        f"({caller.limits['max_pages'] * page_max} roles). Commercial access removes this limit.")
     total = jobs.count()
     rows = list(jobs.select_related("organization", "category")[(page - 1) * limit: page * limit])
     return rows, total, page, limit

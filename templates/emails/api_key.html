@@ -8,6 +8,6 @@
 <pre style="background:#f1f1ef;padding:10px 14px;border-radius:8px;font-size:13px;white-space:pre-wrap">curl -H "Authorization: Bearer {{ raw }}" "{{ site }}/api/v1/jobs/?area=climate-environment&amp;limit=5"</pre>
 <p>MCP (for AI assistants): <code>{{ site }}/mcp/</code> with the same Authorization header.</p>
 {% if key.tier == 'commercial' %}<p>This key switches on once we've confirmed the details with you, usually within a day. Reply to this email with any questions.</p>{% endif %}
-<p><a href="{{ site }}/developers/">Docs and terms</a>. Please link to the listing URL whenever you show a role, and don't republish full descriptions.</p>
+<p><a href="{{ site }}/developers/">Docs and terms</a>. Please link to the listing URL whenever you show a role, and don't republish full descriptions.</p>{% if key.tier == 'free' %}<p>This trial key is limited (500 requests a day, 100 roles per query). For a product or research on the full catalogue, <a href="{{ site }}/developers/#get-key">request commercial access</a>.</p>{% endif %}
 <p>Remote Impact</p>
 </div></body></html>

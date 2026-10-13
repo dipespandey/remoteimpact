@@ -284,7 +284,7 @@ Example search URLs:
 
 - Sitemap: https://remoteimpact.org/sitemap.xml
 - RSS Feed: {site_url}/feed/jobs/
-- JSON Feed (latest 200 open roles, with organization, location and salary): {site_url}/feed/jobs.json
+- JSON Feed (latest 50 open roles, with organization, location and salary): {site_url}/feed/jobs.json
 - Structured Data: Schema.org JobPosting on all job pages
 - Jobs API (REST, JSON, no key needed to start): {site_url}/api/v1/jobs/ ; spec {site_url}/api/v1/openapi.json ; docs {site_url}/developers/
 - MCP server for AI assistants (Streamable HTTP, tools: search_jobs, get_job, list_areas, get_organization): {site_url}/mcp/
