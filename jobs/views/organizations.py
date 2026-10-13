@@ -2,8 +2,6 @@ from django.views.generic import ListView
 from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Q, Count
 from django.utils import timezone
-from datetime import timedelta
-from django.http import Http404
 from django.utils.decorators import method_decorator
 from ..services.page_cache import cache_public_page
 from .mixins import FastJobPaginationMixin
@@ -150,24 +148,16 @@ class OrganizationDirectoryView(ListView):
     paginate_by = 30
 
     def get_queryset(self):
-        now = timezone.now()
-        cutoff = now - timedelta(days=180)
+        # Match profile pages and the sitemap, including freshness, quality and
+        # rejected-employer rules. An expired sibling must not hide an open job.
+        visible_jobs = Job.objects.filter(Job.availability_filter())
         qs = (
-            Organization.objects.filter(
-                jobs__is_active=True,
-            )
-            .exclude(jobs__expires_at__lt=now)
+            Organization.objects.exclude(slug__in=OLD_SLUG_REDIRECTS)
             .annotate(
-                active_job_count=Count(
-                    "jobs",
-                    filter=Q(
-                        jobs__is_active=True,
-                    ) & ~Q(jobs__expires_at__lt=now),
-                )
+                active_job_count=Count("jobs", filter=Q(jobs__in=visible_jobs))
             )
             .filter(active_job_count__gt=0)
             .order_by("-active_job_count", "name")
-            .distinct()
         )
         q = self.request.GET.get("q", "").strip()
         if q:
