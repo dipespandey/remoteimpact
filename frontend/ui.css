@@ -44,10 +44,28 @@
     line-height: 1.6;
   }
   h1, h2, h3, .font-display { font-family: Geist, Inter, system-ui, sans-serif; letter-spacing: -0.012em; }
+  h1, h2, h3 { text-wrap: balance; }
   :focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
   input::placeholder, textarea::placeholder { color: hsl(var(--muted-foreground) / 0.8); opacity: 1; }
   ::selection { background: hsl(var(--ring) / 0.18); }
   a { text-underline-offset: 3px; }
+}
+
+/* Keep the compact desktop rhythm, with comfortable controls on phones.
+   16px editable text also avoids automatic form zoom in iOS Safari. */
+@media (max-width: 767px) {
+  input.input, select.select, textarea.textarea { font-size: 16px; }
+  .btn:not(.btn-link), .tab, #filters-section button[id^="filter-"], #sort-select { min-height: 44px; }
+  #mobile-menu-btn { min-width: 44px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @layer components {

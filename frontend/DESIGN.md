@@ -11,7 +11,7 @@ Build after changing templates (the CSS only contains classes it finds):
 ## Principles
 
 - Calm, editorial, trustworthy. Warm off-white page, white cards, ink text,
-  lime brand used sparingly for primary actions and highlights.
+  ink actions, and colour reserved for meaningful states and impact areas.
 - One primary action per view. Everything else is outline/ghost/link.
 - Mobile first. Every page must work at 360px wide with no horizontal scroll.
 - Content width: `container` (max 1200px) or `page-narrow` (max 768px) for forms/reading.
@@ -25,15 +25,16 @@ Build after changing templates (the CSS only contains classes it finds):
 | `bg-background` / `text-foreground` | page background, body text |
 | `bg-card` / `text-card-foreground` | cards, panels, inputs |
 | `bg-muted` / `text-muted-foreground` | subtle fills, secondary text |
-| `bg-primary` / `text-primary-foreground` | lime primary buttons (dark text on lime) |
-| `bg-secondary` / `text-secondary-foreground` | ink buttons / dark surfaces (white text) |
-| `bg-accent` / `text-accent-foreground` | light lime tints, kicker text |
+| `bg-primary` / `text-primary-foreground` | ink primary buttons (white text) |
+| `bg-secondary` / `text-secondary-foreground` | muted secondary controls (ink text) |
+| `bg-accent` / `text-accent-foreground` | neutral hover and selected fills |
 | `border-border`, `border-input`, `ring-ring` | borders, inputs, focus |
 | `bg-destructive`, `success`, `warning` | states |
 | `brand-50..900` | legacy brand scale, still valid |
 | radius: `rounded-lg` (12px), `rounded-md`, `rounded-sm`; shadows: `shadow-card`, `shadow-lift` |
 
-Fonts: `font-display` (Sora) for headings, default sans (Inter) for body.
+Fonts: locally hosted variable Geist for headings and body, Geist Mono for code.
+`font-display` and `font-sans` share the same family. No external font stylesheet.
 
 ## Components
 
@@ -119,9 +120,9 @@ repo: `templates/jobs/home.html` and the nav in `templates/base.html`.
   amber = featured/warning, emerald = success, red = error, blue = focus ring.
   Never use `brand-*`, `bg-primary` as decoration, `text-white`, gradients, or coloured
   icon tiles.
-- **Borders are rare.** Separate content with spacing and surfaces, not lines. No
-  `border-y`/`border-t`/`border-b` dividers between page sections. No `divide-y` lists
-  (use hover-fill rows inside `list-surface`); tables may keep row lines.
+- **Borders are rare.** Use spacing and surfaces between page sections. Lists use
+  hover-fill rows inside `list-surface`, which draws quiet hairlines between rows;
+  tables may keep row lines.
 - **Surfaces**: `card` (white, soft shadow, rounded-2xl) or `surface` (muted fill,
   rounded-2xl). Never nest a card inside a card. Never put `btn-secondary` on a `surface`
   (it disappears): use `btn-primary` or `btn-outline` there.
@@ -167,3 +168,21 @@ preview of real roles (Latest + the three biggest areas, four roles each, one pe
 organization). Below it: a single line of hiring organizations, featured roles only when
 someone paid, two short cards (seekers, employers), one line of popular searches. Don't add
 more lists to the homepage; link to them instead.
+
+## Mobile and interaction quality (October 2026)
+
+Keep the existing neutral design rather than introducing another visual theme.
+The shared stylesheet provides:
+
+- Balanced heading wrapping, with the same Geist hierarchy on every page.
+- At least 44px height for buttons, tabs, filter triggers and job sorting below 768px.
+  Text links and informational tags remain compact; the navigation menu is 44px wide.
+- 16px editable text on mobile to avoid Safari's automatic input zoom. Body and metadata
+  keep their existing sizes; desktop controls retain their compact rhythm.
+- Visible keyboard focus and reduced-motion support that removes animated transitions
+  without hiding controls or notifications.
+
+Use component classes before adding page-specific styling. Preserve form names, URLs,
+accessible labels, tracking attributes, Alpine and HTMX bindings during changes.
+Build with `npm ci && npm run build` from `frontend`; generated CSS and local vendor
+assets belong in the release.
