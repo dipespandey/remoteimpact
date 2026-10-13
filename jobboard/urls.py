@@ -638,6 +638,10 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path("gigs/", include("gigs.urls")),
     path("robots.txt", robots_txt, name='robots_txt'),
+    # Proves we own remoteimpact.org to the official MCP Registry (namespace org.remoteimpact/*).
+    path(".well-known/mcp-registry-auth", lambda request: HttpResponse(
+        "v=MCPv1; k=ed25519; p=SxTQDehy/6tOXr1anhrqxmhu0e6a9nv86Zk0prHJk8c=\n", content_type="text/plain"),
+        name="mcp_registry_auth"),
     path("llms.txt", llms_txt, name='llms_txt'),
     path(f"{settings.INDEXNOW_KEY}.txt", lambda request: HttpResponse(settings.INDEXNOW_KEY, content_type="text/plain"), name="indexnow_key"),
     path("llms-full.txt", llms_full_txt, name='llms_full_txt'),
