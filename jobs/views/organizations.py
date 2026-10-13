@@ -1,41 +1,11 @@
 from django.views.generic import ListView
 from django.shortcuts import get_object_or_404, redirect
-from django.db.models import Q, Count
-from django.utils import timezone
+from django.db.models import Q, Count, Max
 from django.utils.decorators import method_decorator
 from ..services.page_cache import cache_public_page
 from .mixins import FastJobPaginationMixin
 
 from ..models import Job, Organization, Category
-
-# SEO-optimized metadata for "striking distance" keywords
-# These organizations have specific high-value search queries we're targeting
-SEO_OPTIMIZED_ORGS = {
-    "carnegie-endowment-for-international-peace": {
-        "meta_title": "Carnegie Endowment for International Peace Internships & Jobs 2026 | Remote Impact",
-        "meta_description": "Apply now for Carnegie Endowment for International Peace internships and jobs in 2026. Browse {count} open roles in policy research, communications, and international affairs. Remote & DC-based positions available.",
-        "h1_title": "Carnegie Endowment for International Peace Internships & Jobs",
-        "key_info": {
-            "organization_type": "Think Tank / Policy Research",
-            "headquarters": "Washington, DC",
-            "focus_areas": "International Affairs, Foreign Policy, Nuclear Policy, Democracy",
-            "internship_cycles": "Spring, Summer, Fall (Rolling applications)",
-            "eligibility": "Graduate students, Recent graduates, Early-career professionals",
-        }
-    },
-    "chatham-house": {
-        "meta_title": "Chatham House Jobs & Careers 2026 | Remote Impact",
-        "meta_description": "Apply now for Chatham House jobs in 2026. Browse {count} open roles at the Royal Institute of International Affairs. Research, policy, and communications positions in London & remote.",
-        "h1_title": "Chatham House Jobs & Careers",
-        "key_info": {
-            "organization_type": "Think Tank / Policy Research",
-            "headquarters": "London, UK",
-            "focus_areas": "International Affairs, Geopolitics, Energy, Economy",
-            "also_known_as": "Royal Institute of International Affairs",
-            "eligibility": "Researchers, Policy analysts, Communications professionals",
-        }
-    },
-}
 
 # Map old broken slugs to new correct slugs for 301 redirects
 OLD_SLUG_REDIRECTS = {
@@ -103,8 +73,7 @@ class OrganizationProfileView(FastJobPaginationMixin, ListView):
         context["organization"] = org
         context["categories"] = (
             Category.objects.filter(
-                jobs__organization=org,
-                jobs__is_active=True,
+                jobs__in=self.object_list,
             ).distinct().order_by("name")
         )
         job_count = context["page_obj"].paginator.count
@@ -112,30 +81,23 @@ class OrganizationProfileView(FastJobPaginationMixin, ListView):
         context["index_page"] = job_count > 0 and not self.request.GET
         
         context["hiring_summary"] = self._hiring_summary(org, context["page_obj"].paginator.object_list)
-        # Check for SEO-optimized organizations (striking distance keywords)
-        seo_data = SEO_OPTIMIZED_ORGS.get(org.slug)
-        if seo_data:
-            context["meta_title"] = seo_data["meta_title"]
-            context["meta_description"] = seo_data["meta_description"].format(count=job_count)
-            context["h1_title"] = seo_data["h1_title"]
-            context["key_info"] = seo_data.get("key_info", {})
-            context["is_seo_optimized"] = True
-        else:
-            # People search "<employer> careers" or "<employer> jobs"; lead with the name and that word.
-            roles = f"{job_count} open remote role{'' if job_count == 1 else 's'}"
-            context["meta_title"] = f"{org.name} careers: {roles}" if job_count else f"{org.name} careers and jobs"
-            areas = ", ".join((context.get("hiring_summary") or {}).get("areas", [])[:2])
-            context["meta_description"] = (
-                f"{org.name} is hiring: {roles}{' in ' + areas if areas else ''}, each checked daily against "
-                f"{'their own job board' if org.careers_url else 'the employer’s site'}. See pay, location and how to apply."
-                if job_count else f"{org.name} has no open remote roles on Remote Impact right now. See similar impact jobs."
-            )
-            context["h1_title"] = org.name
-            context["is_seo_optimized"] = False
-        
-        # Add dateModified for schema freshness signal
-        context["date_modified"] = timezone.now().strftime("%Y-%m-%d")
-        
+        # Describe the current inventory, without promising unverified locations,
+        # internship cycles, eligibility or a daily source-verification cadence.
+        roles = f"{job_count} open remote role{'' if job_count == 1 else 's'}"
+        context["meta_title"] = f"{org.name} careers: {roles}" if job_count else f"{org.name} careers and jobs"
+        areas = ", ".join(context["hiring_summary"].get("areas", [])[:2])
+        context["meta_description"] = (
+            f"Browse {roles} at {org.name}{' in ' + areas if areas else ''} on Remote Impact. "
+            "See listing details, location requirements and how to apply."
+            if job_count else f"{org.name} has no open remote roles on Remote Impact right now. See similar impact jobs."
+        )
+        context["h1_title"] = org.name
+        context["is_seo_optimized"] = False
+        # Listing edits, including closures, are evidence of an inventory change.
+        # Request time is not a content modification date.
+        latest_change = Job.objects.filter(organization=org).aggregate(latest=Max("updated_at"))["latest"]
+        context["date_modified"] = latest_change.isoformat() if latest_change else None
+
         return context
 
 

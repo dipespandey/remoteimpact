@@ -35,8 +35,7 @@
         "@type": "QuantitativeValue",
         "value": "{{ organization.get_team_size_display }}"
     },{% endif %}
-    "sameAs": [{% if organization.homepage_url %}"{{ organization.homepage_url|escapejs }}"{% endif %}{% if organization.careers_url %}{% if organization.homepage_url %}, {% endif %}"{{ organization.careers_url|escapejs }}"{% endif %}],
-    "dateModified": "{{ date_modified }}"
+    "sameAs": [{% if organization.homepage_url %}"{{ organization.homepage_url|escapejs }}"{% endif %}{% if organization.careers_url %}{% if organization.homepage_url %}, {% endif %}"{{ organization.careers_url|escapejs }}"{% endif %}]
 }
 </script>
 {% if jobs %}
@@ -44,7 +43,7 @@
 {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": "{{ h1_title }} - Open Positions",
+    "name": "{{ h1_title|escapejs }} - Open Positions",
     "numberOfItems": {{ job_count }},
     "dateModified": "{{ date_modified }}",
     "itemListElement": [

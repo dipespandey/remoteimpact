@@ -47,3 +47,39 @@ class OrganizationDirectoryInventoryTests(TestCase):
         self.job(canonical, 'canonical-role')
         self.assertEqual([r.pk for r in self.directory('FAR')], [canonical.pk])
         self.assertEqual(self.directory('unmatched'), [])
+
+
+class OrganizationProfileMetadataTests(TestCase):
+    def context(self, org):
+        from jobs.views.organizations import OrganizationProfileView
+        view = OrganizationProfileView()
+        view.setup(RequestFactory().get('/organizations/' + org.slug + '/'), slug=org.slug)
+        view.object_list = view.get_queryset()
+        return view.get_context_data()
+
+    def test_categories_and_metadata_only_describe_available_jobs(self):
+        from jobs.models import Category
+        org = Organization.objects.create(name='Research Team', slug='research-team')
+        open_area = Category.objects.create(name='Climate', slug='climate')
+        closed_area = Category.objects.create(name='Education', slug='education')
+        for slug, category, active in [('open', open_area, True), ('closed', closed_area, False)]:
+            Job.objects.create(organization=org, title=slug, slug=slug, category=category,
+                               source=Job.Source.MANUAL, is_active=active)
+        changed = timezone.now() - timedelta(days=8)
+        Job.objects.filter(organization=org).update(updated_at=changed)
+        context = self.context(org)
+        self.assertEqual(list(context['categories']), [open_area])
+        self.assertEqual(context['job_count'], 1)
+        self.assertEqual(context['date_modified'], changed.isoformat())
+        self.assertIn('Climate', context['meta_description'])
+        self.assertNotIn('checked daily', context['meta_description'])
+
+    def test_empty_target_employer_does_not_advertise_unverified_internships(self):
+        org = Organization.objects.create(name='Carnegie Endowment for International Peace',
+                                         slug='carnegie-endowment-for-international-peace')
+        context = self.context(org)
+        self.assertFalse(context['index_page'])
+        self.assertIn('no open remote roles', context['meta_description'])
+        self.assertNotIn('Apply now', context['meta_description'])
+        self.assertNotIn('Internships', context['meta_title'])
+        self.assertIsNone(context['date_modified'])
