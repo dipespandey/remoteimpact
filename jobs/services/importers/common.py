@@ -222,7 +222,7 @@ def _canonical_duplicate_url(value: Any) -> str:
              and key.lower() not in {'gclid', 'fbclid', 'msclkid', '_ga'}
              and not (host.endswith('.bamboohr.com') and key.lower() == 'source')]
     generic_paths = {'', '/', '/jobs', '/careers', '/vacancies', '/openings', '/positions'}
-    functional_id = any(key.lower() in {'id', 'jobid', 'job_id', 'jid', 'postingid'} and val
+    functional_id = any(key.lower() in {'id', 'jobid', 'job_id', 'jid', 'postingid', 'ashby_jid', 'gh_jid'} and val
                         for key, val in query)
     if path in generic_paths and not functional_id:
         return ''
