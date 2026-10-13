@@ -106,3 +106,10 @@ Deployed `219f3f6` and `a6fd583`. Organization profiles derive categories and de
 Public application-guide GET/HEAD requests now read a valid saved guide or return immediate, clearly labeled general guidance. They never call a model or save generated content. Generic fallback pages are noindex; valid saved guides retain existing indexability. The generation service remains available for explicit offline work; page views no longer generate guides.
 
 Verification: 45 relevant tests passed. Three production profiles and two guide pages returned HTTP 200. Sample guide responses were 209ms cached and 254ms fallback, not a sitewide performance guarantee. Empty employer profiles and generic guides intentionally remain noindex. Complete scoped findings and URL dispositions: `.audit/seo-profile-guide-handoff.html` and JSON. Broader SEO review remains active.
+
+
+### Reviewed posting consolidation — 2026-10-13
+
+Retired eight aggregator copies only after exact Ashby, Workable or Personio posting-ID matches and available employer-board keepers were revalidated under transaction locks. Added permanent redirects; all eight old URLs were crawled and returned 301 to the intended HTTP 200 destination. Full row backup and plan are privately retained on the VPS under `/opt/remoteimpact-backups/2026-10-13-release/reviewed-postings/`. Recruitee slug-based pair was excluded from this strict-ID batch.
+
+A 500-page technical crawl returned three grouped findings (42 duplicate-title URLs, two duplicate-description URLs, 35 title-width review URLs). All 79 affected rows were retrieved; crawl coverage is capped and provider joins were skipped. This crawl overlapped the cleanup, so a second identical report was started for post-cleanup reconciliation. Handoff: `.audit/seo-consolidation-handoff.html` and JSON; do not treat pending findings as resolved.
