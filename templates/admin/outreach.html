@@ -40,6 +40,7 @@
       <a href="?days=30{% if status %}&status={{ status }}{% endif %}" class="{% if days == 30 %}on{% endif %}">30d</a>
     </nav>
     <a class="btn" href="{% url 'admin_analytics' %}">Analytics</a>
+    <a class="btn" href="{% url 'admin_backlinks' %}">Backlinks</a>
     <a class="btn" href="{% url 'admin:index' %}">Admin</a>
   </div>
 </header>

@@ -1,0 +1,28 @@
+{% extends "admin/change_list.html" %}
+{% block content %}
+<div class="module" style="padding:20px; margin-bottom:20px">
+  <h2 style="margin-top:0">Earn links that help impact job seekers</h2>
+  <p>Research a relevant page, record why it helps its readers, draft a pitch, then review it. Record outreach after you send it yourself.</p>
+  <p><strong>{{ pipeline.total }}</strong> prospects · <strong>{{ pipeline.drafts }}</strong> drafts · <strong>{{ pipeline.reviewed }}</strong> reviewed · <strong>{{ pipeline.due }}</strong> follow-ups due · <strong>{{ pipeline.verified }}</strong> target links observed at last check</p>
+  <p>Recorded campaign results: <strong>{{ pipeline.visits|default_if_none:"Not measured" }}</strong> referral visits · <strong>{{ pipeline.signups|default_if_none:"Not measured" }}</strong> Scout signups. Counts come from manually entered analytics reports and their saved reporting windows.</p>
+  <p>Research → Draft ready → Reviewed → Contacted manually → Replied → Placement reported → Verify the link</p>
+  <p>Link checks observe HTML only. A blocked request or a missing JavaScript-rendered link needs manual review. A found link does not prove indexing or ranking impact.</p>
+  {% if has_add_permission %}
+  <form method="post" action="{% url 'admin:jobs_linkprospect_seed' %}" style="margin:16px 0">{% csrf_token %}
+    <button type="submit" class="button">Add six researched starting prospects</button>
+  </form>
+  <details><summary>Import prospects from CSV</summary>
+    <p>Required: <code>url</code>. Optional: <code>name,sector,kind,audience,fit_reason,target_url,priority</code>. Existing pages are skipped, preserving notes and contact history. Maximum 200 rows.</p>
+    <form method="post" enctype="multipart/form-data" action="{% url 'admin:jobs_linkprospect_import' %}">{% csrf_token %}
+      <label for="prospect-csv">Prospect CSV</label> <input id="prospect-csv" name="file" type="file" accept=".csv,text/csv" required>
+      <button type="submit" class="button">Import</button>
+    </form>
+  </details>
+  {% endif %}
+  <details style="margin-top:16px"><summary>Find more relevant pages</summary>
+    <p>Start with these searches. Assess each page before adding it; search results are leads, not endorsements.</p>
+    <ul>{% for item in research_queries %}<li>{{ item.sector|title }}: <a href="{{ item.url }}" target="_blank" rel="noopener noreferrer">{{ item.query }}</a></li>{% endfor %}</ul>
+  </details>
+</div>
+{{ block.super }}
+{% endblock %}

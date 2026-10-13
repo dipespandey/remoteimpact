@@ -1,0 +1,148 @@
+{% load humanize %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Backlinks · Remote Impact admin</title>
+{% include "admin/_ri_head.html" %}
+<style>
+  .filters,.tools,.links { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .filters { margin-bottom:16px; }
+  .chip,.pill { border-radius:999px; background:var(--muted); color:var(--muted-foreground); padding:4px 10px; text-decoration:none; font-size:12px; }
+  .chip.on,.btn.primary { background:var(--primary); color:var(--primary-foreground); }
+  .pill.approved,.pill.placed { color:var(--good); }
+  .pill.do_not_contact,.pill.declined { color:var(--critical); }
+  .lead { padding:20px; display:grid; grid-template-columns:minmax(0,1fr) 190px; gap:20px; }
+  .lead + .lead { border-top:1px solid var(--grid); }
+  .lead h2 { margin:0 0 6px; font-size:15px; font-weight:600; }
+  .meta,.links { font-size:12px; color:var(--muted-foreground); margin:8px 0; }
+  .actions { display:flex; flex-direction:column; gap:8px; }
+  .actions .btn { justify-content:center; }
+  button { cursor:pointer; color:inherit; font:inherit; }
+  button:disabled { opacity:.5; cursor:default; }
+  input,select,textarea { border:1px solid var(--border); border-radius:var(--radius); background:var(--card); color:var(--foreground); padding:7px 10px; font:inherit; width:100%; min-width:0; }
+  input[type=file] { max-width:320px; }
+  textarea { min-height:100px; resize:vertical; }
+  textarea.draftbox { font:12px/1.6 "Geist Mono",ui-monospace,monospace; min-height:280px; background:var(--muted); }
+  label { display:block; font-size:12px; margin:0 0 4px; font-weight:500; }
+  .fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:12px; }
+  .field:has(textarea) { grid-column:1/-1; }
+  .help { font-size:11px; color:var(--muted-foreground); margin-top:3px; }
+  .errorlist { color:var(--critical); padding-left:18px; margin:4px 0; font-size:12px; }
+  details { margin-top:12px; }
+  summary { cursor:pointer; font-size:13px; font-weight:500; }
+  .tools { margin-bottom:18px; }
+  .tools details { margin:0; }
+  .tools .panel { margin:10px 0; }
+  .search { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+  .search input { flex:1; min-width:160px; }
+  .search select { width:auto; }
+  .notice { padding:10px 14px; margin-bottom:12px; border:1px solid var(--border); border-radius:var(--radius); }
+  .notice.error { border-color:var(--critical); }
+  .pagination { display:flex; align-items:center; justify-content:space-between; margin-top:16px; }
+  .wrap { overflow-wrap:anywhere; }
+  :focus-visible { outline:2px solid var(--ring); outline-offset:3px; }
+  @media (max-width:760px) { .lead { grid-template-columns:1fr; padding:16px; } .actions { flex-direction:row; flex-wrap:wrap; } .fields { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="mark">RI</span><span class="name">Remote Impact</span><span class="crumb">/ Backlinks</span></div>
+  <nav class="controls" aria-label="Staff pages">
+    <a class="btn" href="{% url 'admin_outreach' %}">Outreach</a>
+    <a class="btn" href="{% url 'admin_analytics' %}">Analytics</a>
+    <a class="btn" href="{% url 'admin:index' %}">Admin</a>
+  </nav>
+</header>
+<main>
+  <div class="title"><div><h1>Backlink outreach</h1><div class="sub">Find relevant partners, review a useful pitch, then record the conversation and resulting link.</div></div>
+    <a class="btn" href="{% url 'admin_backlinks_export' %}">Export all prospects</a>
+  </div>
+  {% for message in messages %}<div class="notice {{ message.tags }}" role="status">{{ message }}</div>{% endfor %}
+  <section class="kpis" aria-label="Pipeline totals">
+    <div class="card kpi"><div class="label">Prospects</div><div class="value num">{{ pipeline.total|intcomma }}</div></div>
+    <div class="card kpi"><div class="label">Drafts ready</div><div class="value num">{{ pipeline.drafts|intcomma }}</div></div>
+    <div class="card kpi"><div class="label">Reviewed</div><div class="value num">{{ pipeline.reviewed|intcomma }}</div></div>
+    <div class="card kpi"><div class="label">Follow-ups due</div><div class="value num">{{ pipeline.due|intcomma }}</div></div>
+    <div class="card kpi"><div class="label">Links observed</div><div class="value num">{{ pipeline.verified|intcomma }}</div></div>
+    <div class="card kpi"><div class="label">Recorded referral visits</div><div class="value num">{{ pipeline.visits|default_if_none:"—"|intcomma }}</div><div class="meta">{{ pipeline.signups|default_if_none:"—" }} Scout signups</div></div>
+  </section>
+  <div class="tools">
+    {% if can_add %}
+    <details {% if create_form.errors %}open{% endif %}><summary class="btn">Add a prospect</summary><div class="card panel">
+      <form method="post" action="{% url 'admin_backlinks_create' %}">{% csrf_token %}
+        {{ create_form.non_field_errors }}<div class="fields">{% for field in create_form %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}{% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}</div>{% endfor %}</div>
+        <button class="btn primary" type="submit" style="margin-top:12px">Add to research</button>
+      </form>
+    </div></details>
+    <details><summary class="btn">Import CSV</summary><div class="card panel"><p class="sub">Required header: url. Optional: name, sector, kind, audience, fit_reason, target_url, priority. Up to 200 rows. Existing records are preserved.</p>
+      <form method="post" enctype="multipart/form-data" action="{% url 'admin_backlinks_import' %}">{% csrf_token %}<label for="prospect-csv">Prospect CSV</label><input id="prospect-csv" name="file" type="file" accept=".csv,text/csv" required> <button class="btn" type="submit">Import</button></form>
+    </div></details>
+    <form method="post" action="{% url 'admin_backlinks_seed' %}">{% csrf_token %}<button class="btn" type="submit">Add starting leads</button></form>
+    {% endif %}
+    <details><summary class="btn">Find prospects</summary><div class="card panel"><p class="sub">Search for resources your audience already uses. Check each page before pitching it.</p><ul>{% for item in research_queries %}<li><a href="{{ item.url }}" target="_blank" rel="noopener noreferrer">{{ item.query }}</a></li>{% endfor %}</ul></div></details>
+  </div>
+  <form method="get" class="search" aria-label="Filter prospects">
+    <input type="search" name="q" value="{{ selected.q }}" aria-label="Search prospects" placeholder="Search name, site or audience">
+    <select name="sector" aria-label="Sector"><option value="">All sectors</option>{% for value,label in sectors %}<option value="{{ value }}" {% if selected.sector == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+    <select name="due" aria-label="Follow-ups"><option value="">All follow-ups</option><option value="1" {% if selected.due %}selected{% endif %}>Follow-ups due</option></select>
+    <input type="hidden" name="status" value="{{ selected.status }}"><button class="btn" type="submit">Filter</button>
+  </form>
+  <nav class="filters" aria-label="Prospect status"><a class="chip {% if not selected.status %}on{% endif %}" href="?{{ all_query }}">All</a>{% for item in status_links %}<a class="chip {% if selected.status == item.value %}on{% endif %}" href="?{{ item.query }}">{{ item.label }} · {{ item.count }}</a>{% endfor %}</nav>
+  <section class="card" aria-label="Prospect queue">
+  {% for row in rows %}{% with p=row.prospect %}
+    <article class="lead" id="prospect-{{ p.pk }}">
+      <div style="min-width:0">
+        <h2>{{ p.name }} <span class="pill {{ p.status }}">{{ p.get_status_display }}</span></h2>
+        <div class="meta">{{ p.get_sector_display }} · {{ p.get_kind_display }} · {{ p.get_priority_display }} priority{% if p.follow_up_on %} · Follow up {{ p.follow_up_on|date:"M j, Y" }}{% endif %}</div>
+        {% if p.fit_reason %}<p>{{ p.fit_reason }}</p>{% else %}<p class="sub">Inspect this page and record who it helps before generating a pitch.</p>{% endif %}
+        <div class="links"><a href="{{ p.url }}" target="_blank" rel="noopener noreferrer">Prospect page ↗</a>{% if p.target_url %}<a href="{{ p.target_url }}" target="_blank" rel="noopener noreferrer">Our resource ↗</a>{% endif %}<a href="{% url 'admin:jobs_linkprospect_change' p.pk %}">Full record &amp; history</a></div>
+        <div class="meta">{% if p.contact_email %}{{ p.contact_email }}{% elif p.contact_url %}Public contact page recorded{% else %}Contact not researched{% endif %}{% if p.check_status %} · Last check: {{ p.check_status }}{% endif %}</div>
+        {% if p.pitch %}<details><summary>Email draft</summary><textarea class="draftbox" readonly id="draft-{{ p.pk }}" aria-label="Email draft for {{ p.name }}">Subject: {{ p.subject }}
+
+{{ p.pitch }}</textarea></details>{% endif %}
+        {% if can_change %}
+        <details {% if row.form.errors %}open{% endif %}><summary>Edit research, contact and pitch</summary>
+          <form id="edit-{{ p.pk }}" method="post" action="{% url 'admin_backlinks_update' p.pk %}">{% csrf_token %}
+            {% for key,value in selected.items %}<input type="hidden" name="_filter_{{ key }}" value="{{ value }}">{% endfor %}<input type="hidden" name="page" value="{{ page.number }}">
+            {{ row.form.non_field_errors }}
+            {% for title,fields in row.groups %}<details {% if row.form.errors %}open{% endif %}><summary>{{ title }}</summary><div class="fields">{% for field in fields %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}{% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}</div>{% endfor %}</div></details>{% endfor %}
+            <button class="btn primary" type="submit" name="operation" value="save" style="margin-top:12px">Save changes</button>
+          </form>
+        </details>
+        {% endif %}
+        {% if p.contact_candidates or p.link_evidence %}<details><summary>Research evidence</summary><p class="sub">Public contact candidates need checking before use. Link observations describe the last inspected page.</p>
+          {% for candidate in p.contact_candidates %}<div class="sub wrap">{% if candidate.email %}{{ candidate.email }}{% else %}{{ candidate.label }}: {{ candidate.url }}{% endif %} · Source: {{ candidate.source_url }}</div>{% endfor %}
+          {% for link in p.link_evidence %}<div class="sub wrap">{{ link.anchor }} · {{ link.url }} · rel: {{ link.rel|join:", "|default:"none" }}{% if link.page_noindex %} · Page has noindex{% endif %}{% if link.matches_target %} · Matches target{% endif %}</div>{% endfor %}
+        </details>{% endif %}
+      </div>
+      <div class="actions">
+        {% if row.mailto %}<a class="btn primary" href="{{ row.mailto }}">Open in mail</a>{% endif %}
+        {% if p.pitch %}<button class="btn" type="button" data-copy="draft-{{ p.pk }}">Copy draft</button>{% endif %}
+        {% if can_change %}
+          <button class="btn" type="submit" form="edit-{{ p.pk }}" name="operation" value="inspect">Inspect page</button>
+          {% if p.status == 'research' or p.status == 'draft' %}<button class="btn" type="submit" form="edit-{{ p.pk }}" name="operation" value="draft">Generate pitch</button>{% endif %}
+          {% if p.status == 'draft' %}<button class="btn primary" type="submit" form="edit-{{ p.pk }}" name="operation" value="approve">Review and approve</button>{% endif %}
+          {% if p.status == 'approved' %}<button class="btn" type="submit" form="edit-{{ p.pk }}" name="operation" value="contact">Record manual outreach</button>{% endif %}
+          {% if p.placement_url %}<button class="btn" type="submit" form="edit-{{ p.pk }}" name="operation" value="verify">Verify placement</button>{% endif %}
+        {% endif %}
+      </div>
+    </article>
+  {% endwith %}{% empty %}<div class="panel"><h2>No prospects match these filters.</h2><p class="sub">Adjust the filters or add researched pages to start the queue.</p></div>{% endfor %}
+  </section>
+  {% if page.has_other_pages %}<nav class="pagination" aria-label="Prospect pages"><div>{% if page.has_previous %}<a class="btn" href="?{{ page_query }}&page={{ page.previous_page_number }}">Previous</a>{% endif %}</div><span class="sub">Page {{ page.number }} of {{ page.paginator.num_pages }}</span><div>{% if page.has_next %}<a class="btn" href="?{{ page_query }}&page={{ page.next_page_number }}">Next</a>{% endif %}</div></nav>{% endif %}
+  <footer>Messages are sent manually. Link checks observe page HTML; they do not establish indexing or ranking impact. Campaign results are recorded from your analytics reports.</footer>
+</main>
+<script>
+document.querySelectorAll('[data-copy]').forEach(function(button) {
+  button.addEventListener('click', async function() {
+    var box = document.getElementById(button.dataset.copy);
+    try { await navigator.clipboard.writeText(box.value); button.textContent = 'Copied'; }
+    catch (error) { box.closest('details').open = true; box.focus(); box.select(); button.textContent = 'Select and copy'; }
+    setTimeout(function() { button.textContent = 'Copy draft'; }, 1800);
+  });
+});
+</script>
+</body>
+</html>

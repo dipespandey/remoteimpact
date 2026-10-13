@@ -1,4 +1,5 @@
 from django.contrib import admin
+from . import link_admin  # noqa: F401
 from django.utils.html import format_html
 from .models import (
     Application,

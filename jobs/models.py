@@ -1,4 +1,5 @@
 import uuid
+from .link_models import LinkProspect, LinkProspectEvent  # noqa: F401
 from datetime import timedelta
 
 from django.conf import settings

@@ -27,7 +27,7 @@ from django.http import HttpResponse
 from django.urls import include, path, reverse
 from django.views.generic import RedirectView
 
-from jobs.views import admin_analytics, impersonate
+from jobs.views import admin_analytics, admin_backlinks, impersonate
 from jobs.sitemaps import (
     StaticSitemap, CategorySitemap,
     OrganizationSitemap, ToolsSitemap, TalentSitemap, RegionSitemap,
@@ -618,6 +618,12 @@ urlpatterns = [
     path("healthz/", healthz, name="healthz"),
     path("admin/analytics/", admin.site.admin_view(admin_analytics.analytics), name="admin_analytics"),
     path("admin/outreach/", admin.site.admin_view(admin_analytics.outreach), name="admin_outreach"),
+    path("admin/backlinks/", admin.site.admin_view(admin_backlinks.workspace), name="admin_backlinks"),
+    path("admin/backlinks/add/", admin.site.admin_view(admin_backlinks.create), name="admin_backlinks_create"),
+    path("admin/backlinks/seed/", admin.site.admin_view(admin_backlinks.seed), name="admin_backlinks_seed"),
+    path("admin/backlinks/import/", admin.site.admin_view(admin_backlinks.import_csv), name="admin_backlinks_import"),
+    path("admin/backlinks/export/", admin.site.admin_view(admin_backlinks.export_csv), name="admin_backlinks_export"),
+    path("admin/backlinks/<int:pk>/", admin.site.admin_view(admin_backlinks.update), name="admin_backlinks_update"),
     path("admin/api-usage/", admin.site.admin_view(admin_analytics.api_usage), name="admin_api_usage"),
     path("admin/outreach/<int:org_id>/", admin.site.admin_view(admin_analytics.outreach_update), name="admin_outreach_update"),
     path("admin/impersonate/", admin.site.admin_view(impersonate.impersonate_search), name="admin_impersonate"),

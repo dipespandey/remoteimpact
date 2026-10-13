@@ -1,0 +1,17 @@
+{% extends "admin/change_form.html" %}
+{% block after_field_sets %}
+{{ block.super }}
+{% if original and has_change_permission %}
+<div class="module" style="padding:16px;margin:16px 0">
+  <h2>Workflow</h2>
+  <p>These actions save your edits first. Review requires an audience, fit reason, Remote Impact target, pitch, and sourced public contact. Recording contact does not send email.</p>
+  <div style="display:flex;flex-wrap:wrap;gap:10px">
+    <button type="submit" name="_workflow" value="inspect">Inspect page</button>
+    <button type="submit" name="_workflow" value="draft">Generate pitch</button>
+    <button type="submit" name="_workflow" value="approve">Review and approve</button>
+    <button type="submit" name="_workflow" value="contact">Record manual outreach</button>
+    <button type="submit" name="_workflow" value="verify">Verify placement</button>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

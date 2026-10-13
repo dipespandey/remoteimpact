@@ -31,6 +31,7 @@ class FetchResult:
     text: str = ""
     headers: dict = field(default_factory=dict)
     content: bytes = b""
+    final_url: str = ""
 
 
 def resolve_public_url(url, *, dns_timeout=5):
@@ -187,8 +188,8 @@ def _fetch_public(url, *, headers, max_bytes, total_timeout, max_redirects, allo
                 chunks.append(chunk)
             body = b"".join(chunks)
             if binary:
-                return FetchResult("ok", status, headers=response_headers, content=body)
-            return FetchResult("ok", status, body.decode("utf-8", errors="replace"), response_headers)
+                return FetchResult("ok", status, headers=response_headers, content=body, final_url=url)
+            return FetchResult("ok", status, body.decode("utf-8", errors="replace"), response_headers, final_url=url)
         except (UnsafeURL, UnicodeError):
             return FetchResult("unsafe_or_unresolvable_url")
         except (OSError, urllib3.exceptions.HTTPError, ValueError):
