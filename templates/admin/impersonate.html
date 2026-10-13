@@ -8,20 +8,20 @@
 {% include "admin/_ri_head.html" %}
 <style>
   .search { display: flex; gap: 8px; margin: 16px 0; }
-  .search input { flex: 1; height: 34px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); color: var(--foreground); padding: 0 10px; font: inherit; }
+  .search input { flex: 1; height: 40px; border: 1px solid transparent; border-radius: 12px; background: hsl(var(--muted)); color: hsl(var(--foreground)); padding: 0 10px; font: inherit; }
   .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; }
   .row + .row { border-top: 1px solid var(--grid); }
-  .meta { color: var(--muted-foreground); font-size: 13px; }
-  .note { color: var(--muted-foreground); font-size: 13px; max-width: 640px; }
+  .meta { color: hsl(var(--muted-foreground)); font-size: 13px; }
+  .note { color: hsl(var(--muted-foreground)); font-size: 13px; max-width: 640px; }
 </style>
 </head>
 <body>
-<main style="max-width: 860px; margin: 0 auto; padding: 24px 16px;">
-  <p><a href="/admin/">← Admin</a></p>
+{% include "admin/_ri_nav.html" %}
+<main>
   <h1>View the site as a user</h1>
   <p class="note">Search by email, username or name, then click "View as". You'll browse the site exactly as they see it, read-only: anything that would save, post, pay or send is blocked. A bar at the top of every page takes you back to your own account. Staff accounts can't be viewed this way.</p>
   <form class="search" method="get">
-    <input name="q" value="{{ query }}" placeholder="email, username or name" autofocus>
+    <input name="q" value="{{ query }}" aria-label="Search users" placeholder="email, username or name" autofocus>
     <button class="btn" type="submit">Search</button>
   </form>
   {% if query %}

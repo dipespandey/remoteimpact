@@ -8,18 +8,10 @@
 {% include "admin/_ri_head.html" %}
 </head>
 <body>
-<header class="top">
-  <div class="brand"><span class="mark">RI</span><span class="name">Remote Impact</span> <span class="crumb">/ Analytics</span></div>
-  <div class="controls">
-    <nav class="seg" aria-label="Date range">{% for r in m.ranges %}<a href="?days={{ r }}" class="{% if r == m.days %}on{% endif %}">{{ r }}d</a>{% endfor %}</nav>
-    <a class="btn" href="?days={{ m.days }}&refresh=1">Refresh</a>
-    <a class="btn" href="{% url 'admin_outreach' %}">Outreach</a>
-    <a class="btn" href="{% url 'admin_api_usage' %}">API usage</a>
-    <a class="btn" href="{% url 'admin:index' %}">Admin</a>
-  </div>
-</header>
+{% include "admin/_ri_nav.html" %}
 
 <main>
+<div class="controls" style="margin-bottom:20px"><nav class="seg" aria-label="Date range">{% for r in m.ranges %}<a href="?days={{ r }}" class="{% if r == m.days %}on{% endif %}">{{ r }}d</a>{% endfor %}</nav><a class="btn" href="?days={{ m.days }}&refresh=1">Refresh</a></div>
   <div class="title">
     <div>
       <h1>Last {{ m.days }} days</h1>

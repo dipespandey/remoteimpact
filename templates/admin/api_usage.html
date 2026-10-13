@@ -10,22 +10,16 @@
   .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
   .card.pad { padding: 14px 16px; } .card h2 { margin: 0 0 8px; font-size: 14px; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; } td, th { padding: 5px 0; text-align: left; border-bottom: 1px solid var(--grid); }
-  th { color: var(--muted-foreground); font-weight: 500; } .right { text-align: right; } .num { font-family: "Geist Mono", ui-monospace, monospace; }
-  .bars { display: flex; align-items: flex-end; gap: 3px; height: 90px; } .bars span { flex: 1; background: var(--primary); border-radius: 3px 3px 0 0; min-height: 2px; opacity: .85; }
+  th { color: hsl(var(--muted-foreground)); font-weight: 500; } .right { text-align: right; } .num { font-family: "Geist Mono", ui-monospace, monospace; }
+  .bars { display: flex; align-items: flex-end; gap: 3px; height: 90px; } .bars span { flex: 1; background: hsl(var(--primary)); border-radius: 3px 3px 0 0; min-height: 2px; opacity: .85; }
   @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
-<header class="top">
-  <div class="brand"><span class="mark">RI</span><span class="name">Remote Impact</span> <span class="crumb">/ API usage</span></div>
-  <div class="controls">
-    <nav class="seg" aria-label="Date range">{% for r in ranges %}<a href="?days={{ r }}" class="{% if r == days %}on{% endif %}">{{ r }}d</a>{% endfor %}</nav>
-    <a class="btn" href="{% url 'admin_analytics' %}">Analytics</a>
-    <a class="btn" href="{% url 'admin:jobs_apikey_changelist' %}">Keys</a>
-    <a class="btn" href="{% url 'admin:index' %}">Admin</a>
-  </div>
-</header>
+{% include "admin/_ri_nav.html" %}
 <main>
+<div class="controls" style="margin-bottom:20px"><nav class="seg" aria-label="Date range">{% for r in ranges %}<a href="?days={{ r }}" class="{% if r == days %}on{% endif %}">{{ r }}d</a>{% endfor %}</nav> <a class="btn" href="{% url 'admin:jobs_apikey_changelist' %}">API keys</a></div>
+
   <div class="title"><div><h1>Jobs API and MCP, last {{ days }} days</h1>
   <div class="sub">Counts by day from every REST and MCP call, plus developers-page views and key sign-ups (bots excluded from page views). <a href="{% url 'jobs:developers' %}">Developers page</a></div></div></div>
 

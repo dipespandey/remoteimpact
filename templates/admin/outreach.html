@@ -8,43 +8,37 @@
 {% include "admin/_ri_head.html" %}
 <style>
   .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
-  .chip { padding: 4px 10px; border-radius: 999px; background: var(--muted); color: var(--muted-foreground); text-decoration: none; font-size: 13px; }
-  .chip.on { background: var(--primary); color: var(--primary-foreground); }
+  .chip { padding: 4px 10px; border-radius: 999px; background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); text-decoration: none; font-size: 13px; }
+  .chip.on { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
   .lead { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; padding: 16px; }
   .lead + .lead { border-top: 1px solid var(--grid); }
   .lead h3 { margin: 0; font-size: 15px; font-weight: 600; }
-  .meta { margin-top: 2px; color: var(--muted-foreground); font-size: 13px; }
+  .meta { margin-top: 2px; color: hsl(var(--muted-foreground)); font-size: 13px; }
   .nums { display: flex; gap: 16px; margin-top: 8px; font-size: 13px; }
   .nums b { font-family: "Geist Mono", ui-monospace, monospace; font-weight: 500; }
-  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; background: var(--muted); color: var(--muted-foreground); }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); }
   .pill.won { background: #e7f6e7; color: #0a7d0a; } .pill.contacted { background: #eaf2fd; color: #1f5fae; } .pill.replied { background: #fff4dc; color: #8a5a00; }
   .actions { display: flex; flex-direction: column; gap: 6px; align-items: stretch; min-width: 220px; }
   .actions form { display: flex; gap: 6px; }
-  input.field, select.field { height: 30px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); color: var(--foreground); padding: 0 8px; font: inherit; font-size: 13px; min-width: 0; flex: 1; }
+  input.field, select.field { height: 36px; border: 1px solid transparent; border-radius: 12px; background: hsl(var(--muted)); color: hsl(var(--foreground)); padding: 0 8px; font: inherit; font-size: 13px; min-width: 0; flex: 1; }
   details.draft { margin-top: 10px; }
-  details.draft summary { cursor: pointer; font-size: 13px; color: var(--muted-foreground); }
-  textarea.draftbox { width: 100%; min-height: 220px; margin-top: 8px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--muted); color: var(--foreground); padding: 10px; font: 13px/1.5 "Geist Mono", ui-monospace, monospace; }
+  details.draft summary { cursor: pointer; font-size: 13px; color: hsl(var(--muted-foreground)); }
+  textarea.draftbox { width: 100%; min-height: 220px; margin-top: 8px; border: 1px solid hsl(var(--border)); border-radius: var(--radius); background: hsl(var(--muted)); color: hsl(var(--foreground)); padding: 10px; font: 13px/1.5 "Geist Mono", ui-monospace, monospace; }
   .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; font-size: 13px; }
-  .links a { color: var(--muted-foreground); }
-  .btn.primary { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+  .links a { color: hsl(var(--muted-foreground)); }
+  .btn.primary { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); border-color: hsl(var(--primary)); }
   @media (max-width: 760px) { .lead { grid-template-columns: 1fr; } .actions { min-width: 0; } }
 </style>
 </head>
 <body>
-<header class="top">
-  <div class="brand"><span class="mark">RI</span><span class="name">Remote Impact</span> <span class="crumb">/ Outreach</span></div>
-  <div class="controls">
-    <nav class="seg" aria-label="Engagement window">
+{% include "admin/_ri_nav.html" %}
+<main>
+<div class="controls" style="margin-bottom:20px"><nav class="seg" aria-label="Engagement window">
       <a href="?days=7{% if status %}&status={{ status }}{% endif %}" class="{% if days == 7 %}on{% endif %}">7d</a>
       <a href="?days=14{% if status %}&status={{ status }}{% endif %}" class="{% if days == 14 %}on{% endif %}">14d</a>
       <a href="?days=30{% if status %}&status={{ status }}{% endif %}" class="{% if days == 30 %}on{% endif %}">30d</a>
-    </nav>
-    <a class="btn" href="{% url 'admin_analytics' %}">Analytics</a>
-    <a class="btn" href="{% url 'admin_backlinks' %}">Backlinks</a>
-    <a class="btn" href="{% url 'admin:index' %}">Admin</a>
-  </div>
-</header>
-<main>
+    </nav></div>
+
   <div class="title">
     <div>
       <h1>Employer outreach</h1>

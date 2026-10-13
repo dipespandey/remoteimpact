@@ -1,9 +1,13 @@
 {% extends "admin/base.html" %}
+{% load static %}
 
-{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+{% block dark-mode-vars %}{% endblock %}
+{% block extrastyle %}{{ block.super }}{% include "admin/_ri_admin_styles.html" %}{% endblock %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | Remote Impact admin{% endblock %}
 
 {% block branding %}
-<div id="site-name"><a href="{% url 'admin:index' %}">{{ site_header|default:_('Django administration') }}</a></div>
+<div id="site-name"><a href="{% url 'admin:index' %}"><img src="{% static 'favicon.svg' %}" width="28" height="28" alt="">Remote Impact <span style="font-weight:400">/ Admin</span></a></div>
 {% endblock %}
 
 {% block userlinks %}

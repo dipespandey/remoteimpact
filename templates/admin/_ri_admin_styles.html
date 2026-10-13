@@ -1,0 +1,40 @@
+{% include "admin/_ri_assets.html" %}
+<style>
+  :root { color-scheme: only light; --ri-background: hsl(var(--background)); --ri-foreground: hsl(var(--foreground)); --ri-card: hsl(var(--card)); --ri-muted: hsl(var(--muted)); --ri-muted-text: hsl(var(--muted-foreground)); --ri-border: hsl(var(--border)); --ri-ring: hsl(var(--ring)); }
+  body {
+    --primary: var(--ri-foreground); --secondary: var(--ri-muted); --accent: var(--ri-foreground);
+    --body-bg: var(--ri-background); --body-fg: var(--ri-foreground); --body-quiet-color: var(--ri-muted-text); --body-loud-color: var(--ri-foreground);
+    --header-bg: var(--ri-card); --header-color: var(--ri-foreground); --header-branding-color: var(--ri-foreground); --header-link-color: var(--ri-foreground);
+    --breadcrumbs-bg: var(--ri-background); --breadcrumbs-fg: var(--ri-muted-text); --breadcrumbs-link-fg: var(--ri-foreground);
+    --link-fg: var(--ri-foreground); --link-hover-color: var(--ri-foreground); --link-selected-fg: var(--ri-foreground);
+    --hairline-color: var(--ri-border); --border-color: var(--ri-border); --darkened-bg: var(--ri-muted); --selected-bg: var(--ri-muted); --selected-row: var(--ri-muted);
+    --button-bg: var(--ri-foreground); --button-hover-bg: #353539; --default-button-bg: var(--ri-foreground); --default-button-hover-bg: #353539;
+    --close-button-bg: var(--ri-muted); --close-button-hover-bg: var(--ri-border); --object-tools-fg: var(--ri-foreground); --object-tools-bg: var(--ri-muted); --object-tools-hover-bg: var(--ri-border);
+    --message-success-bg: #ecfdf5; --message-warning-bg: #fffbeb; --message-error-bg: #fef2f2;
+    font-family: Geist, Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.6;
+  }
+  #header { padding: 16px 24px; border-bottom: 1px solid var(--ri-border); }
+  #branding #site-name a { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; }
+  #user-tools { text-transform: none; font-size: 12px; line-height: 2; }
+  #user-tools a { border: 0; }
+  #user-tools a:hover { text-decoration: underline; }
+  div.breadcrumbs { padding: 12px 24px; border-bottom: 1px solid var(--ri-border); font-size: 13px; }
+  #content h1 { font-size: 28px; font-weight: 600; letter-spacing: -.012em; }
+  .module, .inline-group, #changelist-filter, .submit-row { border-radius: 16px; }
+  .module { background: var(--ri-card); box-shadow: 0 0 0 1px rgb(20 20 25 / .04), 0 1px 2px rgb(20 20 25 / .04), 0 2px 8px -2px rgb(20 20 25 / .05); }
+  .module h2, .module caption, .inline-group h2, #changelist-filter h2 { padding: 12px 16px; border-radius: 16px 16px 0 0; background: var(--ri-muted); color: var(--ri-foreground); font-weight: 500; text-transform: none; }
+  .module caption a:link, .module caption a:visited { color: var(--ri-foreground); }
+  #nav-sidebar .module { box-shadow: none; }
+  #nav-sidebar { background: var(--ri-background); }
+  #nav-filter { padding: 10px; border-radius: 12px; }
+  .button, input[type=submit], input[type=button], .submit-row input, .object-tools a { border-radius: 999px; padding: 9px 16px; font-weight: 500; }
+  button { font: inherit; }
+  .module button:not(.related-widget-wrapper-link), #changelist .actions button { border: 1px solid var(--ri-border); border-radius: 999px; background: var(--ri-card); padding: 6px 12px; }
+  .module input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=submit]):not([type=button]):not([type=file]), .module select, .module textarea, #searchbar { background: var(--ri-muted); color: var(--ri-foreground); border: 1px solid transparent; border-radius: 12px; padding: 8px 12px; font: inherit; }
+  .module input:focus, .module textarea:focus, .module select:focus { outline: 2px solid var(--ri-ring); outline-offset: 2px; background: var(--ri-card); }
+  .help, p.help, form p.help, div.help, form div.help { color: var(--ri-muted-text); }
+  #changelist .actions { background: var(--ri-card); }
+  #logout-form button { color: var(--ri-foreground); }
+  .login #container { border-radius: 16px; border: 0; box-shadow: 0 0 0 1px rgb(20 20 25 / .04), 0 2px 8px -2px rgb(20 20 25 / .08); }
+  @media (max-width: 767px) { #header { padding: 16px; } #content { padding: 20px 16px; } .module input, .module select, .module textarea { font-size: 16px; } }
+</style>
