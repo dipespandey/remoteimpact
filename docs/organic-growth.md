@@ -113,3 +113,12 @@ Verification: 45 relevant tests passed. Three production profiles and two guide 
 Retired eight aggregator copies only after exact Ashby, Workable or Personio posting-ID matches and available employer-board keepers were revalidated under transaction locks. Added permanent redirects; all eight old URLs were crawled and returned 301 to the intended HTTP 200 destination. Full row backup and plan are privately retained on the VPS under `/opt/remoteimpact-backups/2026-10-13-release/reviewed-postings/`. Recruitee slug-based pair was excluded from this strict-ID batch.
 
 A 500-page technical crawl returned three grouped findings (42 duplicate-title URLs, two duplicate-description URLs, 35 title-width review URLs). All 79 affected rows were retrieved; crawl coverage is capped and provider joins were skipped. This crawl overlapped the cleanup, so a second identical report was started for post-cleanup reconciliation. Handoff: `.audit/seo-consolidation-handoff.html` and JSON; do not treat pending findings as resolved.
+
+
+### Homepage cold-cache bottleneck — 2026-10-13
+
+Profiling isolated a 13.2-second public trust-statistics rebuild; its historical removal aggregate alone took 12.5–14.1 seconds. Filtering recent events preserves exact counts but still takes several seconds. `39cccbf` moves rebuilding to `refresh_public_statistics`, saves a durable `PublicStatisticSnapshot`, and makes public reads use that snapshot. VPS cron refreshes at minutes 7/22/37/52 with flock. Snapshot timestamp stays visible on /how-we-check/. Cache clears do not trigger public aggregation; missing snapshots hide unavailable figures.
+
+Production cache-miss proof: 64ms, one snapshot query, no job scan. Fresh public crawl: homepage 228ms, /how-we-check/ 161ms, both HTTP 200 and no reported issues. Full suite: 695 tests passed with 5 skipped. Migrations 0077/0078 applied; concurrent expression indexes validated, but planner retained a scan in the filtered benchmark, so the visitor-latency fix is durable snapshots rather than a claimed index-only speedup.
+
+`30b05cc` also removes repeated exact employer attribution from search titles. A ninth reviewed duplicate (Recruitee) was consolidated after checking the employer board, with verified 301 -> 200. Latest completed 500-page sample has 28 duplicate-title URLs, 33 title-width observations and no duplicate-description finding. Full scoped handoff: `.audit/seo-title-cleanup-handoff.html` and JSON. Final same-input rerun after snapshot deployment was started; broader review remains active.
