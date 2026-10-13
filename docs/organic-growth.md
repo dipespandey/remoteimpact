@@ -38,6 +38,21 @@ enablement, verified Search Console ownership, and the applicable approval/quota
 Search Console's read-only SEO connection is separate from that publishing credential.
 Keep the publishing key in the VPS secret configuration, never in Git or chat.
 
+As of October 13, 2026, the dedicated publishing project is
+`remote-impact-indexing`. Its `job-indexing-publisher` service account has no
+Cloud project roles and is a delegated owner only of `sc-domain:remoteimpact.org`.
+The Indexing API is enabled. Production reads its JSON credential from a protected,
+read-only secret mount; the key is outside the repository. Three initial eligible
+job notifications were accepted, with zero failures. IndexNow also accepted an
+initial batch of 3,575 pending job URLs with HTTP 200. These acknowledgements prove
+receipt, not indexing or ranking.
+
+Search Console's server-error detail report currently retains 768 historical
+affected URLs (last update October 9), with validation started October 11. Keep
+that validation running and compare its examples against live responses before
+claiming the historical issue is resolved. The overview recommendation can show a
+different count; use the dated detail report for this audit.
+
 Sources: [Google Indexing API](https://developers.google.com/search/apis/indexing-api/v3/quickstart),
 [quota and pricing](https://developers.google.com/search/apis/indexing-api/v3/quota-pricing),
 [IndexNow](https://www.bing.com/indexnow/IndexNowView/IndexNowGetStartedView).
