@@ -24,6 +24,7 @@ class SearchIndexingTests(TestCase):
     def job(self, **kwargs):
         defaults = {'title': 'Software Engineer', 'slug': f'index-role-{Job.objects.count()}',
             'organization': self.org, 'source': 'ashby', 'description': 'Build useful software systems.',
+            'location': 'Remote (US)', 'country': 'United States',
             'application_url': 'https://example.org/software-role'}
         defaults.update(kwargs)
         return Job.objects.create(**defaults)
@@ -111,6 +112,7 @@ class SearchIndexingTests(TestCase):
         public = self.job()
         self.job(quality_score=54)
         self.job(is_active=False, source='manual')
+        self.job(location='Remote', country=None)
         module = 'jobs.management.commands.ping_google_indexing.Command'
         with patch(module+'.load_credentials', return_value={'private_key': 'unused'}), \
              patch(module+'.fetch_access_token', return_value='unused'), patch(module+'.publish', return_value=True) as send:

@@ -21,6 +21,7 @@ from django.utils import timezone
 
 from jobs.models import Job
 from jobs.services.search_indexing import candidates, pending, fingerprint, acknowledge
+from jobs.services.job_quality import google_job_posting_json
 
 
 class Command(BaseCommand):
@@ -99,6 +100,8 @@ class Command(BaseCommand):
 
         self.queued_jobs = {}
         for job in qs.select_related('organization').defer('embedding', 'search_vector').order_by('-updated_at').iterator(chunk_size=200):
+            if options['type'] == 'URL_UPDATED' and not google_job_posting_json(job, site_url):
+                continue  # Ordinary indexable pages without JobPosting cannot use this API.
             if pending(job, 'google'):
                 url = f'{site_url}{job.get_absolute_url()}'
                 self.queued_jobs[url] = (job, fingerprint(job))
