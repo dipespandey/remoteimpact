@@ -38,6 +38,14 @@ def _trim_role(text: str, limit: int) -> str:
 
 def job_title_tag(title: str, organization: str, suffix: str = "Remote Impact") -> str:
     """"Role at Employer | Remote Impact" when it fits; otherwise the role and employer, trimming the longer one."""
+    title = " ".join((title or "").split())
+    organization = " ".join((organization or "").split())
+    # Feeds sometimes append the employer to the role itself. Repeating it in
+    # the title tag crowds out the actual role and can force needless trimming.
+    if organization:
+        role = re.sub(r"\s+(?:at|for)\s+" + re.escape(organization) + r"$", "", title, flags=re.I)
+        if role.strip():
+            title = role.strip()
     base = f"{title} at {organization}"
     full = f"{base} | {suffix}"
     if len(full) <= TITLE_LIMIT:
