@@ -484,7 +484,7 @@ class JobDetailView(DetailView):
         context["related_seo_links"] = self._get_related_seo_links()
         from ..services.seo_text import job_meta_description, job_title_tag
         from ..templatetags.job_extras import compensation_display_filter as compensation_display
-        context["seo_title"] = job_title_tag(self.object.title, self.object.organization.name)
+        context["seo_title"] = job_title_tag(self.object.title, self.object.organization.name, location=self.object.location)
         context["seo_description"] = job_meta_description(
             self.object.title, self.object.organization.name, self.object.location,
             self.object.get_job_type_display(), compensation_display(self.object) or "", self.object.description)

@@ -42,3 +42,17 @@ class RoleWordingTests(SimpleTestCase):
         for role, title in zip(roles, titles):
             self.assertIn(role, title)
             self.assertIn("Africa Jobs Fund", title)
+
+
+class PostingLocationTitleTests(SimpleTestCase):
+    def test_country_restrictions_distinguish_same_role_at_same_employer(self):
+        titles = [job_title_tag("Solutions Architecture Lead", "AMPECO", location=place)
+                  for place in ["France", "Germany"]]
+        self.assertNotEqual(*titles)
+        self.assertIn("France", titles[0])
+        self.assertIn("Germany", titles[1])
+
+    def test_skip_generic_or_already_named_location(self):
+        self.assertEqual(job_title_tag("Analyst", "Acme", location="Remote"), job_title_tag("Analyst", "Acme"))
+        self.assertEqual(job_title_tag("Analyst (Remote, US)", "Acme", location="Remote (US)"),
+                         job_title_tag("Analyst (Remote, US)", "Acme"))

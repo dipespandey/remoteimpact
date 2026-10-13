@@ -21,7 +21,7 @@ def _trim(text: str, limit: int) -> str:
     return cut + "…"
 
 
-def job_title_tag(title: str, organization: str, suffix: str = "Remote Impact") -> str:
+def job_title_tag(title: str, organization: str, suffix: str = "Remote Impact", *, location: str = "") -> str:
     """Keep role and employer identity; omit optional branding on longer titles.
 
     Search result width is a display heuristic, not a reason to remove the
@@ -35,7 +35,11 @@ def job_title_tag(title: str, organization: str, suffix: str = "Remote Impact") 
         role = re.sub(r"\s+(?:at|for)\s+" + re.escape(organization) + r"$", "", title, flags=re.I)
         if role.strip():
             title = role.strip()
-    base = f"{title} at {organization}"
+    location = " ".join((location or "").split())
+    place_tokens = set(re.findall(r"\w+", location.casefold())) - {"remote", "global", "worldwide", "anywhere"}
+    role_tokens = set(re.findall(r"\w+", title.casefold()))
+    qualifier = f" — {location}" if place_tokens and not place_tokens.issubset(role_tokens) else ""
+    base = f"{title} at {organization}{qualifier}"
     full = f"{base} | {suffix}"
     if len(full) <= TITLE_LIMIT:
         return full
