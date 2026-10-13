@@ -75,6 +75,8 @@ def update_job_search_vector(sender, instance, created, **kwargs):
 
 def _ping_indexnow(url: str):
     """Send IndexNow ping to Bing (runs in background thread)."""
+    if not settings.INDEXNOW_ENABLED:
+        return
     try:
         site_url = getattr(settings, 'SITE_URL', 'https://remoteimpact.org')
         key_location = f"{site_url}/{INDEXNOW_KEY}.txt"
@@ -98,7 +100,7 @@ def _ping_indexnow(url: str):
 @receiver(post_save, sender=Job)
 def ping_indexnow_on_job_save(sender, instance, created, **kwargs):
     """Notify Bing when a new public job URL is created."""
-    if not created or not instance.is_active:
+    if not settings.INDEXNOW_ENABLED or not created or not instance.is_active:
         return
     try:
         site_url = getattr(settings, 'SITE_URL', 'https://remoteimpact.org')

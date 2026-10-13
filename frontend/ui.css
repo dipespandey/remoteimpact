@@ -3,6 +3,7 @@
  * surfaces, ink text and actions, colour only where it carries meaning,
  * soft corners, very few borders, compact headings.
  */
+@import "./generated-fonts.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

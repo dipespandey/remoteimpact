@@ -10,6 +10,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.core.cache import cache
 from django.views.generic import TemplateView
 
 from ..models import ConsumerFunnelEvent, EmployerFunnelEvent, Job, JobDailyStat, Organization
@@ -39,12 +40,15 @@ def report_url(organization):
 
 def audience_stats():
     """Platform-wide reach numbers shown to employers. Cached by callers' pages."""
+    cached = cache.get("employer-audience:v1")
+    if cached is not None:
+        return cached
     now = timezone.now()
     since = timezone.localdate() - timedelta(days=29)
     totals = JobDailyStat.objects.filter(date__gte=since).aggregate(
         views=Sum("views"), clicks=Sum("apply_clicks"), deliveries=Sum("scout_deliveries")
     )
-    return {
+    result = {
         "active_jobs": JobService.get_available_jobs().count(),
         "job_seekers_30d": ConsumerFunnelEvent.objects.filter(
             event=ConsumerFunnelEvent.Event.ACCOUNT_CREATED, created_at__gte=now - timedelta(days=30)
@@ -57,6 +61,8 @@ def audience_stats():
         "apply_clicks_30d": totals["clicks"] or 0,
         "scout_deliveries_30d": totals["deliveries"] or 0,
     }
+    cache.set("employer-audience:v1", result, 300)
+    return result
 
 
 from ..services import org_plans  # noqa: E402

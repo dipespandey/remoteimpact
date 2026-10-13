@@ -136,7 +136,7 @@ def _call(name, args, caller):
         from jobs.services.job_service import JobService
 
         ident = str(args.get("id", "")).strip()
-        qs = JobService.get_available_jobs().select_related("organization", "category")
+        qs = JobService.get_available_jobs().select_related("organization", "category").defer("embedding", "search_vector")
         job = qs.filter(slug=ident).first() or (qs.filter(pk=int(ident)).first() if ident.isdigit() else None)
         if job is None:
             return "No open role with that id (it may have closed).", {"job": None}
@@ -152,7 +152,7 @@ def _call(name, args, caller):
         org = Organization.objects.filter(slug=str(args.get("slug", "")).strip()).first()
         if org is None:
             return "No organization with that slug.", {"organization": None}
-        roles = JobService.get_available_jobs().filter(organization=org).select_related("organization", "category").order_by("-posted_at")[:25]
+        roles = JobService.get_available_jobs().filter(organization=org).select_related("organization", "category").order_by("-posted_at", "-id")[:caller.limits["mcp_max"]]
         jobs = [serialize.job_record(j, enriched=enriched) for j in roles]
         record = serialize.organization_record(org, with_counts=True)
         text = f"{org.name}: {record['open_roles']} open roles. {record['homepage_url'] or ''}\n" + "\n".join(f"- {_summary(j)}" for j in jobs)
@@ -179,11 +179,14 @@ def endpoint(request):
     if not isinstance(message, dict) or message.get("jsonrpc") != "2.0" or not isinstance(message.get("method"), str):
         return _error(None, -32600, "Invalid request", status=400)
     method, id_, params = message["method"], message.get("id"), message.get("params") or {}
+    if not isinstance(params, dict):
+        return _error(id_, -32602, "params must be an object", status=400)
     if id_ is None:  # notification
         return HttpResponse(status=202)
     try:
         caller = identify(request)
     except RateLimited as exc:
+        usage.record(request, exc.caller, "mcp", (params.get("name") if method == "tools/call" else method) or method, 429)
         response = _error(id_, -32000, "Rate limited; add an API key from remoteimpact.org/developers/ for higher limits.", status=429)
         response["Retry-After"] = str(exc.retry_after)
         return response

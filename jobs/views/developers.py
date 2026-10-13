@@ -3,7 +3,6 @@ import logging
 
 from django.conf import settings
 from django.contrib import messages
-from django.core.cache import cache
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.shortcuts import redirect
@@ -60,13 +59,10 @@ class DevelopersView(TemplateView):
             return redirect("jobs:developers")
         ip = request.META.get("HTTP_CF_CONNECTING_IP") or request.META.get("REMOTE_ADDR", "")
         counter = f"api-key-signup:{ip}"
-        try:
-            cache.add(counter, 0, 86400)
-            if cache.incr(counter) > KEYS_PER_IP_PER_DAY:
-                messages.error(request, "That's enough keys for today from this connection. Email hello@remoteimpact.org if you need more.")
-                return redirect("jobs:developers")
-        except Exception:  # noqa: BLE001
-            pass
+        from ..api.auth import _bump
+        if _bump(counter, 86400) > KEYS_PER_IP_PER_DAY:
+            messages.error(request, "That's enough keys for today from this connection. Email hello@remoteimpact.org if you need more.")
+            return redirect("jobs:developers")
         tier = ApiKey.Tier.COMMERCIAL if kind == "commercial" else ApiKey.Tier.FREE
         raw, key = ApiKey.issue(name=name, email=email, tier=tier, organization=organization, use_case=use_case,
                                 is_active=(tier == ApiKey.Tier.FREE))

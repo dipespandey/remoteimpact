@@ -9,6 +9,13 @@ from django.db import migrations
 from jobs.db_indexes import PostgresOnlyGinIndex, PostgresOnlyHnswIndex
 
 
+def ensure_vector_extension(apps, schema_editor):
+    # Bootstrap fresh databases before adding vector columns. Existing deployments
+    # already have this extension; never drop it when reversing this migration.
+    if schema_editor.connection.vendor == "postgresql":
+        schema_editor.execute("CREATE EXTENSION IF NOT EXISTS vector")
+
+
 def add_postgres_indexes(apps, schema_editor):
     """Create vector/search indexes only on the production PostgreSQL backend.
 
@@ -76,6 +83,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(ensure_vector_extension, migrations.RunPython.noop),
         migrations.AddField(
             model_name='job',
             name='embedding',

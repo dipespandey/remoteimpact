@@ -47,7 +47,7 @@ def api_view(func):
         try:
             caller = identify(request)
         except RateLimited as exc:
-            usage.record(request, type("C", (), {"tier": "anonymous", "key": None})(), "rest", func.__name__, 429)
+            usage.record(request, exc.caller, "rest", func.__name__, 429)
             response = respond({"error": "rate_limited", "message": "Too many requests for this tier.",
                                 "docs": serialize._site() + "/developers/"}, status=429)
             response["Retry-After"] = str(exc.retry_after)
@@ -61,6 +61,7 @@ def api_view(func):
             return respond({"error": "tier_limit", "message": str(exc), "docs": serialize._site() + "/developers/"},
                            status=403, caller=caller)
         except ValueError as exc:
+            usage.record(request, caller, "rest", func.__name__, 400)
             return respond({"error": "bad_request", "message": str(exc)}, status=400, caller=caller)
     return wrapper
 
@@ -96,7 +97,6 @@ def search(params, caller, *, limit=None, page=None):
     text_search = bool(params.get("q"))
     if text_search:
         filters["sort"] = "relevance"  # title matches first, then full-text rank; otherwise newest first
-    jobs = JobService.get_filtered_jobs(filters)
     country = params.get("country")
     if country:
         # "Open from this country": roles naming the country, its region (Africa, EMEA...) or worldwide.
@@ -105,7 +105,7 @@ def search(params, caller, *, limit=None, page=None):
 
         for value in [country, "Worldwide", *regions_for(country)]:
             filters.appendlist("country", value)
-        jobs = JobService.get_filtered_jobs(filters)
+    jobs = JobService.get_filtered_jobs(filters, collapse_variants=False)
     since = _posted_since(params.get("posted_since"))
     if since:
         jobs = jobs.filter(posted_at__gte=since)
@@ -122,7 +122,12 @@ def search(params, caller, *, limit=None, page=None):
         raise TierLimit(f"The {caller.tier} tier can fetch {caller.limits['max_pages']} pages per query "
                         f"({caller.limits['max_pages'] * page_max} roles). Commercial access removes this limit.")
     total = jobs.count()
-    rows = list(jobs.select_related("organization", "category")[(page - 1) * limit: page * limit])
+    # Sort narrow IDs, then fetch only the returned records. Do not sort source
+    # descriptions, raw payloads and vectors across the complete catalogue.
+    ids = list(jobs.values_list("pk", flat=True)[(page - 1) * limit: page * limit])
+    by_id = {j.pk: j for j in JobService.get_available_jobs().filter(pk__in=ids)
+             .select_related("organization", "category").defer("embedding", "search_vector")}
+    rows = [by_id[pk] for pk in ids if pk in by_id]
     return rows, total, page, limit
 
 
@@ -141,9 +146,9 @@ def job_detail(request, caller, slug):
     from jobs.models import Job
     from jobs.services.job_service import JobService
 
-    job = JobService.get_available_jobs().select_related("organization", "category").filter(slug=slug).first()
+    job = JobService.get_available_jobs().select_related("organization", "category").defer("embedding", "search_vector").filter(slug=slug).first()
     if job is None and slug.isdigit():
-        job = JobService.get_available_jobs().select_related("organization", "category").filter(pk=int(slug)).first()
+        job = JobService.get_available_jobs().select_related("organization", "category").defer("embedding", "search_vector").filter(pk=int(slug)).first()
     if job is None:
         closed = Job.objects.filter(slug=slug).first()
         return respond({"error": "not_found", "message": "No open role with that id.",
@@ -160,7 +165,7 @@ def organization_detail(request, caller, slug):
     org = Organization.objects.filter(slug=slug).first()
     if org is None:
         return respond({"error": "not_found"}, status=404, caller=caller)
-    roles = JobService.get_available_jobs().filter(organization=org).select_related("organization", "category").order_by("-posted_at")[:50]
+    roles = JobService.get_available_jobs().filter(organization=org).select_related("organization", "category").order_by("-posted_at", "-id")[:min(50, caller.limits["page_max"])]
     return respond({"organization": serialize.organization_record(org, with_counts=True),
                     "jobs": [serialize.job_record(j, enriched=caller.limits["enriched"]) for j in roles],
                     "attribution": ATTRIBUTION}, caller=caller)

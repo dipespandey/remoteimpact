@@ -64,7 +64,7 @@
 <section class="container section pt-0 sm:pt-0" id="plans" aria-labelledby="plans-heading">
   <div class="max-w-2xl px-1">
     <h2 id="plans-heading" class="section-title">Several roles? Pay once a month.</h2>
-    <p class="mt-1 text-sm text-muted-foreground">One price keeps your newest live roles featured, with the hiring assistant included. Cancel any time. Roles you post or feature individually stay as they are.</p>
+    <p class="mt-1 text-sm text-muted-foreground">One price keeps your newest live roles featured. Paid posts include the hiring assistant. Cancel any time. Roles you post or feature individually stay as they are.</p>
   </div>
   <div class="mt-4 grid gap-4 lg:grid-cols-3">
     {% for plan in plans %}
@@ -75,10 +75,10 @@
       <p class="mt-1 text-[13px] text-muted-foreground">Featuring {{ plan.roles }} roles one by one costs ${{ plan.individual }}. You save {{ plan.save_pct }}%.</p>
       <ul class="check-list mt-4 flex-1 space-y-2 text-sm">
         <li>Featured placement on search, category pages and the homepage</li>
-        <li>Hiring assistant: application screening and daily candidate suggestions</li>
-        <li>Applications on Remote Impact, with your own link kept as an option</li>
-        <li>Per-role views and apply clicks{% if plan.tier == 'growth' %}, plus a weekly stats email{% endif %}</li>
-        <li>Verified organization page, up to {{ plan.seats }} team members</li>
+        <li>Paid posts include application screening and candidate suggestions</li>
+        <li>Featured imported roles keep your own application link</li>
+        <li>Per-role views and apply clicks</li>
+        <li>Organization page and shared access for colleagues</li>
       </ul>
       <a href="{% url 'jobs:account' %}?plan={{ plan.tier }}" class="btn {% if plan.tier == 'pro' %}btn-primary{% else %}btn-outline{% endif %} btn-block mt-6" data-track="employer_plan_{{ plan.tier }}" data-track-category="employer">Choose {{ plan.name }}</a>
     </article>
@@ -102,11 +102,11 @@
   <div class="grid gap-6 lg:grid-cols-[1fr_2fr] lg:gap-10">
     <h2 class="section-title px-1">Questions</h2>
     <dl class="space-y-5 text-sm">
-      <div><dt class="font-semibold">How do I pay?</dt><dd class="mt-1 text-muted-foreground">Once, by card, Apple Pay or Google Pay. Stripe sends a receipt and an invoice for your records.</dd></div>
+      <div><dt class="font-semibold">How do I pay?</dt><dd class="mt-1 text-muted-foreground">Individual posts and features are one-time payments. Organization plans renew monthly until cancelled. Pay by card, Apple Pay or Google Pay through Stripe.</dd></div>
       <div><dt class="font-semibold">Does paying change AI Job Scout matches?</dt><dd class="mt-1 text-muted-foreground">No. Featured roles are pinned and labelled where people browse, but Scout matching is based on fit only.</dd></div>
       <div><dt class="font-semibold">How do I see results?</dt><dd class="mt-1 text-muted-foreground">A private link shows views, apply clicks and Scout matches for each live role.</dd></div>
       <div><dt class="font-semibold">Do you guarantee applicants?</dt><dd class="mt-1 text-muted-foreground">No. We guarantee placement and transparent numbers, not outcomes. If something is not right, email us and we will sort it out.</dd></div>
-      <div><dt class="font-semibold">Can I change a posted role?</dt><dd class="mt-1 text-muted-foreground">Yes. Email hello@remoteimpact.org with the change and we will update it within one business day.</dd></div>
+      <div><dt class="font-semibold">Can I change a posted role?</dt><dd class="mt-1 text-muted-foreground">Yes. Edit your paid posts from your hiring dashboard. For an imported listing, email hello@remoteimpact.org.</dd></div>
       <div><dt class="font-semibold">What do you remove?</dt><dd class="mt-1 text-muted-foreground">Roles that are not remote, are not real openings, or ask candidates to pay. Paid listings that break these rules are refunded and removed.</dd></div>
       <div><dt class="font-semibold">Do job seekers pay to apply?</dt><dd class="mt-1 text-muted-foreground">Never. Applying and expressing interest are always free.</dd></div>
     </dl>

@@ -232,8 +232,13 @@ class OrgPlanCheckoutView(LoginRequiredMixin, View):
 
         if tier not in org_plans.PLANS:
             return redirect("jobs:employers")
-        organization = request.user.organizations.filter(pk=request.POST.get("organization") or 0).first() \
-            or request.user.organizations.first()
+        organization_id = request.POST.get("organization")
+        if organization_id and not organization_id.isdigit():
+            organization = None
+        elif organization_id:
+            organization = request.user.organizations.filter(pk=organization_id).first()
+        else:
+            organization = request.user.organizations.first()
         if organization is None:
             messages.error(request, "Set up your organization first, then choose a plan.")
             return redirect("jobs:account")

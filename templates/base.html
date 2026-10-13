@@ -66,19 +66,13 @@
     </script>
     {% block structured_data %}{% endblock %}
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
-        rel="stylesheet">
-
-    <!-- Tailwind CSS CDN -->
+    <!-- Local variable fonts and scripts share the site's connection and asset cache. -->
+    <link rel="preload" href="{% static 'fonts/geist-latin-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{% static "tailwind.min.css" %}?v={{ CSS_VERSION }}">
-    <script defer src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script defer src="{% static 'vendor/htmx-1.9.10.min.js' %}"></script>
     <!-- Alpine.js for interactive components -->
     <style>[x-cloak] { display: none !important; }</style>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="{% static 'vendor/alpine-3.17.4.min.js' %}"></script>
 
     <!-- Google Analytics (privacy-friendly settings: no Google Signals, no ad personalization,
          no query strings). Click events never carry briefs, searches or emails. -->

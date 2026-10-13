@@ -6,7 +6,7 @@ from allauth.socialaccount.models import SocialApp
 from django.contrib.sites.models import Site
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -526,6 +526,7 @@ class UnsubscribeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(UserProfile.objects.get(user=self.user).email_newsletter_unsubscribed_at)
 
+    @override_settings(EMAIL_PROVIDER="resend")
     def test_marketing_emails_carry_list_unsubscribe_headers(self):
         from jobs.services.email_service import EmailService
         service = EmailService()

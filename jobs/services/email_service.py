@@ -57,6 +57,8 @@ class EmailService:
         bounce, falls back to Resend so a misconfiguration never silently drops mail.
         Returns True if a provider accepted the message.
         """
+        if getattr(settings, "EMAIL_PROVIDER", "resend") == "none":
+            return False
         headers = {}
         if unsubscribe_url:
             # One-click unsubscribe (RFC 8058), required by Gmail/Yahoo for bulk mail.

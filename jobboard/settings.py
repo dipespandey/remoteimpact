@@ -54,6 +54,7 @@ SITE_URL = os.getenv("SITE_URL", "https://remoteimpact.org")
 # IndexNow (Bing, Yandex, and the indexes behind ChatGPT search/Copilot). The key is public by design:
 # engines verify it at /<key>.txt.
 INDEXNOW_KEY = os.getenv("INDEXNOW_KEY", "84b0a7e661d3dec6c3f14bc272811705")
+INDEXNOW_ENABLED = os.getenv("INDEXNOW_ENABLED", "true").lower() == "true"
 SITE_NAME = "Remote Impact Jobs"  # Full brand name for SEO differentiation
 
 # Trust X-Forwarded-Proto header from reverse proxy (for HTTPS detection)
@@ -102,6 +103,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "django.middleware.gzip.GZipMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve static files in production
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -203,7 +205,10 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"  # For collectstatic in production
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -347,6 +352,7 @@ LOGGING = {
 # =============================================================================
 
 REDIS_URL = os.getenv("REDIS_URL", "")
+PUBLIC_PAGE_CACHE_ENABLED = True
 
 if REDIS_URL:
     CACHES = {
@@ -373,6 +379,14 @@ else:
 if len(sys.argv) > 1 and sys.argv[1] == "test":
     # Tests must not share cached LLM/matching results across runs.
     CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "KEY_PREFIX": "ri-test"}}
+    INDEXNOW_ENABLED = False
+    EMAIL_PROVIDER = "none"
+    EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+    RESEND_API_KEY = ""
+    DATABASES["default"]["CONN_MAX_AGE"] = 0
+    TEST_RUNNER = "jobboard.testing.ReleaseTestRunner"
+    PUBLIC_PAGE_CACHE_ENABLED = False
+    STORAGES["staticfiles"] = {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}
 
 # Cache timeouts for different content types (in seconds)
 CACHE_TTL_SHORT = 60  # 1 minute - for frequently changing content

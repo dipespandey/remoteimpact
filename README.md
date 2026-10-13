@@ -21,7 +21,7 @@ A remote-only job board platform dedicated to connecting passionate professional
 
 ### Prerequisites
 
-- Python 3.10 or higher
+- Python 3.12 or higher
 - [uv](https://github.com/astral-sh/uv) package manager
 
 ### Installation
@@ -149,17 +149,48 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
-2. Run tests (when implemented):
+2. Prepare the local embedding model once, then run the test suite:
 ```bash
-python manage.py test
+uv run python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2', device='cpu')"
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run python manage.py test --noinput
 ```
+
+Tests disable IndexNow notifications and outgoing email. PostgreSQL concurrency
+tests require a pgvector-enabled PostgreSQL database supplied through
+`DATABASE_URL`; they are skipped under SQLite. CI tests both database backends,
+checks migrations and production settings, and verifies the CSS build before deployment.
 
 ### Static Files
 
-Static files are served from the `static/` directory. In production, run:
+Build the stylesheet, local variable fonts, HTMX and Alpine from pinned dependencies:
+```bash
+cd frontend
+npm ci
+npm run build
+```
+
+Commit the generated assets with changes to their dependencies or templates.
+Production uses compressed, fingerprinted assets with long-lived caching. Run
+this from the repository root (the Docker build also does it):
 ```bash
 python manage.py collectstatic
 ```
+
+### Page performance
+
+`scripts/profile_pages.py` records cold and warm timings, query counts and slow
+SQL for 26 public, employer and seeker page flows. It only accepts an isolated
+PostgreSQL database named `remoteimpact_perf` on localhost. Apply migrations to
+that database, run the script with `--seed --output before.json` once to create
+the synthetic fixture, then run with `--output after.json` to compare changes.
+The fixture contains 5,000 jobs, 120 organizations and 240 seekers. Outgoing email
+and indexing notifications are disabled, and resource-board data uses a local
+fallback. These measurements describe the fixture, not production traffic.
+
+Anonymous page caches vary by cookie and HTMX request and bypass signed-in users.
+Dynamic browse pages cache for 60–300 seconds; this bounds catalogue staleness.
+Performance regression tests cover query budgets, cache isolation, candidate
+privacy, search ordering and atomic quota checks.
 
 ## License
 

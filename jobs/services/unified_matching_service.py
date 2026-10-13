@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from django.core.cache import cache
+from django.db import connection
 from django.contrib.postgres.search import SearchQuery, SearchRank
 from django.db.models import Q, Case, When, IntegerField
 from pgvector.django import CosineDistance
@@ -157,8 +158,14 @@ class UnifiedMatchingService:
         With ``keep_all`` (explicit filters), every filtered job stays and the seeker's
         matches come first; otherwise only the match pool is shown.
         """
-        matches = cls.get_matches(seeker, limit=100)
-        ranked_ids = [result.job.id for result in matches]
+        cached = cache.get(cls._matches_cache_key(seeker, 100)) if seeker is not None else None
+        ranked_ids = None
+        if cached is not None:
+            ids = [item["job_id"] for item in cached]
+            available = set(JobService.get_available_jobs().filter(pk__in=ids).values_list("pk", flat=True))
+            ranked_ids = [pk for pk in ids if pk in available]
+        if ranked_ids is None or (cached and not ranked_ids):
+            ranked_ids = [result.job.id for result in cls.get_matches(seeker, limit=100)]
         if not ranked_ids:
             return queryset.order_by("-posted_at", "-id")
         if keep_all:
@@ -189,7 +196,9 @@ class UnifiedMatchingService:
         """
         cache_key = cls._matches_cache_key(seeker, limit)
         cached = cache.get(cache_key)
-        if cached:
+        if cached is not None:
+            if not cached:
+                return []
             hydrated = cls._hydrate_cached_matches(cached)
             if hydrated:
                 return hydrated
@@ -198,6 +207,7 @@ class UnifiedMatchingService:
         candidates = cls._retrieve_candidates(seeker, limit=cls.CANDIDATE_LIMIT)
 
         if not candidates:
+            cache.set(cache_key, [], 60)
             return []
 
         match_context = cls._build_match_context(seeker)
@@ -568,7 +578,7 @@ class UnifiedMatchingService:
 
     @classmethod
     def _bulk_lexical_scores(cls, job_ids: list[int], search_terms: str) -> dict[int, float]:
-        if not job_ids or not search_terms:
+        if not job_ids or not search_terms or connection.vendor != "postgresql":
             return {}
 
         try:
@@ -718,7 +728,7 @@ class UnifiedMatchingService:
         job_ids = [item["job_id"] for item in cached if item.get("job_id")]
         jobs = JobService.get_available_jobs().filter(
             id__in=job_ids,
-        ).select_related("organization", "category")
+        ).select_related("organization", "category").defer("embedding", "search_vector")
         jobs_by_id = {job.id: job for job in jobs}
 
         results = []

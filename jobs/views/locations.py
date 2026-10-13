@@ -3,6 +3,9 @@ from django.http import Http404
 from django.db.models import Q
 from django.utils import timezone
 from datetime import timedelta
+from django.utils.decorators import method_decorator
+from ..services.page_cache import cache_public_page
+from .mixins import FastJobPaginationMixin
 
 from ..models import Job, Category
 from ..seo_config import MIN_INDEXABLE_JOBS
@@ -108,7 +111,8 @@ def region_jobs(region):
     return qs
 
 
-class RegionJobsView(ListView):
+@method_decorator(cache_public_page(120), name="dispatch")
+class RegionJobsView(FastJobPaginationMixin, ListView):
     """SEO-optimized landing page for a geographic region."""
     model = Job
     template_name = "jobs/region_landing.html"

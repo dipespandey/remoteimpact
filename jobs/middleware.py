@@ -4,6 +4,7 @@ import re
 import requests
 from django.contrib import messages
 from django.shortcuts import redirect
+from django.utils.cache import patch_vary_headers
 
 logger = logging.getLogger(__name__)
 
@@ -224,7 +225,7 @@ class CloudflareEdgeCacheMiddleware:
                 browser_ttl = min(edge_ttl, 60)
                 response['Cache-Control'] = f'public, max-age={browser_ttl}, s-maxage={edge_ttl}'
                 # CRITICAL: Include Cookie in Vary to prevent serving cached authenticated pages to wrong users
-                response['Vary'] = 'Accept-Encoding, Cookie'
+                patch_vary_headers(response, ('Accept-Encoding', 'Cookie'))
                 return response
         
         # Default: don't set aggressive caching for unmatched paths

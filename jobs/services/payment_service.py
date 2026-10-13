@@ -146,16 +146,18 @@ class PaymentService:
 
         # Organization plans carry product=org_plan metadata; everything else below is unchanged.
         if org_plans.is_org_plan_object(data_object):
+            event_created = event.get("created") or 0
             if event_type in ("checkout.session.completed", "checkout.session.async_payment_succeeded"):
                 if data_object.get("mode") == "subscription":
-                    org_plans.activate(data_object)
+                    org_plans.complete_checkout(data_object, event_created=event_created)
             elif event_type in ("customer.subscription.created", "customer.subscription.updated", "customer.subscription.resumed"):
                 if data_object.get("status") in ("active", "trialing", "past_due"):
-                    org_plans.activate(data_object)
+                    org_plans.activate(data_object, event_created=event_created)
                 else:
-                    org_plans.deactivate(data_object.get("id"), (data_object.get("metadata") or {}).get("organization_id"))
+                    org_plans.deactivate(data_object.get("id"), (data_object.get("metadata") or {}).get("organization_id"), event_created=event_created, status=data_object.get("status") or "canceled")
             elif event_type in ("customer.subscription.deleted", "customer.subscription.paused"):
-                org_plans.deactivate(data_object.get("id"), (data_object.get("metadata") or {}).get("organization_id"))
+                org_plans.deactivate(data_object.get("id"), (data_object.get("metadata") or {}).get("organization_id"), event_created=event_created,
+                                     status="paused" if event_type.endswith("paused") else "canceled")
             return
 
         if event_type in (

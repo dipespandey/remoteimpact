@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import asyncio
 
-from asgiref.sync import sync_to_async
+from asgiref.sync import sync_to_async, ThreadSensitiveContext
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
+from django.db import connections
 
 from django.utils import timezone
 
@@ -81,7 +82,7 @@ class Command(BaseCommand):
         run_started = timezone.now()
         # Run the async import
         summaries = asyncio.run(
-            self._run_imports(source, limit, dry_run, use_ai, batch_size, provider, new_only, max_pages)
+            self._run_imports_with_cleanup(source, limit, dry_run, use_ai, batch_size, provider, new_only, max_pages)
         )
 
         if not summaries:
@@ -128,6 +129,15 @@ class Command(BaseCommand):
 
         if failures and not dry_run:
             raise CommandError("Import completed with failures: " + "; ".join(failures))
+
+    async def _run_imports_with_cleanup(self, *args):
+        # Async ORM work uses another thread and therefore another connection.
+        # Close it before the executor exits, including when an importer raises.
+        async with ThreadSensitiveContext():
+            try:
+                return await self._run_imports(*args)
+            finally:
+                await sync_to_async(connections.close_all, thread_sensitive=True)()
 
     async def _run_imports(
         self,

@@ -1,4 +1,5 @@
 import json
+from unittest import mock
 
 from django.core.cache import cache
 from django.test import TestCase, override_settings
@@ -39,6 +40,46 @@ class ApiBase(TestCase):
 
 
 class RestApiTests(ApiBase):
+    def many_roles(self):
+        now = timezone.now()
+        Job.objects.bulk_create([Job(title=f"Extra {i}", slug=f"extra-{i}", organization=self.org,
+                                    category=self.cat, description="A real role " * 40, location="Remote, Worldwide",
+                                    source="feed", is_active=True, posted_at=now, last_seen_at=now) for i in range(55)])
+
+    def test_organization_results_follow_rest_tier_caps(self):
+        self.many_roles()
+        for tier, expected in (("anonymous", 10), ("free", 20), ("commercial", 50)):
+            headers = {}
+            if tier != "anonymous":
+                raw, _ = ApiKey.issue(name=tier, email=f"{tier}@example.org", tier=tier)
+                headers["HTTP_X_API_KEY"] = raw
+            response = self.client.get("/api/v1/organizations/example-org/", **headers)
+            self.assertEqual(len(response.json()["jobs"]), expected)
+            self.assertEqual(response.json()["organization"]["open_roles"], 57)
+
+    def test_daily_limit_uses_database_count_even_for_stale_callers(self):
+        from jobs.api import auth
+        _, key = ApiKey.issue(name="Free", email="free@example.org")
+        stale = ApiKey.objects.get(pk=key.pk)
+        caller = auth.Caller(tier="free", key=stale, scope=f"key:{key.pk}")
+        with mock.patch.dict(auth.TIERS["free"], per_day=2):
+            auth._count(caller)
+            auth._count(caller)
+            with self.assertRaises(auth.RateLimited):
+                auth._count(caller)
+        key.refresh_from_db()
+        self.assertEqual(key.requests_today, 2)
+
+    def test_daily_counter_resets_once_even_when_two_callers_have_yesterdays_key(self):
+        from jobs.api import auth
+        _, key = ApiKey.issue(name="Free", email="free@example.org")
+        ApiKey.objects.filter(pk=key.pk).update(requests_date=timezone.now().date() - timezone.timedelta(days=1), requests_today=400)
+        first, second = ApiKey.objects.get(pk=key.pk), ApiKey.objects.get(pk=key.pk)
+        for stale in (first, second):
+            auth._count(auth.Caller(tier="free", key=stale, scope=f"key:{key.pk}"))
+        key.refresh_from_db()
+        self.assertEqual(key.requests_today, 2)
+
     def test_list_is_open_without_a_key_and_carries_verification_and_eligibility(self):
         response = self.client.get("/api/v1/jobs/?area=climate-environment")
         self.assertEqual(response.status_code, 200)
@@ -101,6 +142,22 @@ class RestApiTests(ApiBase):
 
 
 class McpTests(ApiBase):
+    def test_non_object_params_return_protocol_errors_instead_of_server_errors(self):
+        for params in (["bad"], "bad", 42, True):
+            response = self.rpc("tools/call", params)
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.json()["error"]["code"], -32602)
+
+    def test_organization_results_follow_mcp_tier_caps(self):
+        RestApiTests.many_roles(self)
+        for tier, expected in (("anonymous", 5), ("free", 10), ("commercial", 25)):
+            headers = {}
+            if tier != "anonymous":
+                raw, _ = ApiKey.issue(name=tier, email=f"{tier}@example.org", tier=tier)
+                headers["HTTP_X_API_KEY"] = raw
+            response = self.rpc("tools/call", {"name": "get_organization", "arguments": {"slug": "example-org"}}, **headers)
+            self.assertEqual(len(response.json()["result"]["structuredContent"]["jobs"]), expected)
+
     def rpc(self, method, params=None, id_=1, **extra):
         payload = {"jsonrpc": "2.0", "method": method, "params": params or {}}
         if id_ is not None:
@@ -157,6 +214,26 @@ class DevelopersPageTests(ApiBase):
 
 
 class UsageAndCardTests(ApiBase):
+    def test_rate_limited_key_is_attributed_to_its_tier_and_key(self):
+        from jobs.api import auth
+        from jobs.models import ApiUsage
+        raw, key = ApiKey.issue(name="Free", email="free@example.org")
+        with mock.patch.dict(auth.TIERS["free"], per_day=1):
+            self.client.get("/api/v1/areas/", HTTP_X_API_KEY=raw)
+            self.assertEqual(self.client.get("/api/v1/areas/", HTTP_X_API_KEY=raw).status_code, 429)
+        row = ApiUsage.objects.get(status=429)
+        self.assertEqual((row.tier, row.key_prefix), ("free", key.prefix))
+
+    def test_expired_rate_counters_are_pruned_without_removing_active_buckets(self):
+        from io import StringIO
+        from django.core.management import call_command
+        from jobs.models import ApiRateBucket
+        now = timezone.now()
+        ApiRateBucket.objects.create(key="old", expires_at=now - timezone.timedelta(seconds=1))
+        ApiRateBucket.objects.create(key="active", expires_at=now + timezone.timedelta(minutes=2))
+        call_command("cleanup_api_limits", stdout=StringIO())
+        self.assertEqual(list(ApiRateBucket.objects.values_list("key", flat=True)), ["active"])
+
     def test_calls_are_counted_by_surface_endpoint_and_client(self):
         from jobs.models import ApiUsage
         self.client.get("/api/v1/areas/", HTTP_USER_AGENT="curl/8.7")

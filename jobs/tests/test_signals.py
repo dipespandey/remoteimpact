@@ -5,8 +5,13 @@ from django.test import SimpleTestCase, override_settings
 from jobs.signals import ping_indexnow_on_job_save
 
 
-@override_settings(SITE_URL="https://remoteimpact.org")
+@override_settings(SITE_URL="https://remoteimpact.org", INDEXNOW_ENABLED=True)
 class IndexNowSignalTest(SimpleTestCase):
+    @override_settings(INDEXNOW_ENABLED=False)
+    @patch("jobs.signals.threading.Thread")
+    def test_disabled_indexing_never_starts_a_worker(self, thread):
+        ping_indexnow_on_job_save(sender=None, instance=Mock(is_active=True), created=True)
+        thread.assert_not_called()
     @patch("jobs.signals.threading.Thread")
     def test_updates_do_not_ping_indexnow(self, thread):
         job = Mock(is_active=True)

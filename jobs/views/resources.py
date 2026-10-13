@@ -9,7 +9,7 @@ from django.utils.decorators import method_decorator
 from django.utils import timezone
 from django.utils.html import escape
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.cache import cache_page
+from ..services.page_cache import cache_public_page as cache_page
 from django.conf import settings
 from django.template import TemplateDoesNotExist
 from django.template.loader import get_template
@@ -249,7 +249,6 @@ class ImpactJobsSnapshotView(TemplateView):
         context = super().get_context_data(**kwargs)
         now = timezone.now()
         active_jobs = JobService.get_available_jobs()
-        active_count = active_jobs.count()
 
         explicitly_global_query = (
             Q(location__iregex=r"(^|[^a-z])(worldwide|anywhere|global|work from anywhere)([^a-z]|$)")
@@ -264,10 +263,22 @@ class ImpactJobsSnapshotView(TemplateView):
             & ~Q(country__iexact="global")
             & ~Q(country__iexact="anywhere")
         )
-        explicitly_global_count = active_jobs.filter(explicitly_global_query).count()
-        named_geography_count = active_jobs.filter(named_geography_query).exclude(
-            explicitly_global_query
-        ).count()
+        coverage_queries = [
+            ("Salary", Q(salary_min__gt=0) | Q(salary_max__gt=0)),
+            ("Normalized country", ~Q(country="")),
+            ("Experience level", ~Q(experience_level="")),
+            ("Education level", ~Q(education_level="")),
+            ("Extracted skills", ~Q(skills=[])),
+        ]
+        counts = active_jobs.aggregate(
+            total=Count("pk"), explicitly_global=Count("pk", filter=explicitly_global_query),
+            named_geography=Count("pk", filter=named_geography_query & ~explicitly_global_query),
+            week=Count("pk", filter=Q(posted_at__gte=now - timedelta(days=7))),
+            month=Count("pk", filter=Q(posted_at__gte=now - timedelta(days=30))),
+            **{f"coverage_{i}": Count("pk", filter=query) for i, (_, query) in enumerate(coverage_queries)})
+        active_count = counts["total"]
+        explicitly_global_count = counts["explicitly_global"]
+        named_geography_count = counts["named_geography"]
         unclear_scope_count = max(
             active_count - explicitly_global_count - named_geography_count,
             0,
@@ -276,8 +287,8 @@ class ImpactJobsSnapshotView(TemplateView):
         def percent(count):
             return round((count / active_count) * 100) if active_count else 0
 
-        def coverage(query):
-            covered = active_jobs.filter(query).count()
+        def coverage(index):
+            covered = counts[f"coverage_{index}"]
             return {
                 "count": covered,
                 "percent": percent(covered),
@@ -311,8 +322,8 @@ class ImpactJobsSnapshotView(TemplateView):
                 "snapshot_date": timezone.localdate(),
                 "snapshot_updated_at": now,
                 "active_count": active_count,
-                "last_7_days": active_jobs.filter(posted_at__gte=now - timedelta(days=7)).count(),
-                "last_30_days": active_jobs.filter(posted_at__gte=now - timedelta(days=30)).count(),
+                "last_7_days": counts["week"],
+                "last_30_days": counts["month"],
                 "remote_scope": {
                     "explicitly_global": {
                         "count": explicitly_global_count,
@@ -334,13 +345,7 @@ class ImpactJobsSnapshotView(TemplateView):
                 ),
                 "sources": sources,
                 "domains": domains,
-                "coverage": [
-                    ("Salary", coverage(Q(salary_min__gt=0) | Q(salary_max__gt=0))),
-                    ("Normalized country", coverage(~Q(country=""))),
-                    ("Experience level", coverage(~Q(experience_level=""))),
-                    ("Education level", coverage(~Q(education_level=""))),
-                    ("Extracted skills", coverage(~Q(skills=[]))),
-                ],
+                "coverage": [(label, coverage(i)) for i, (label, _) in enumerate(coverage_queries)],
             }
         )
         return context
@@ -1323,6 +1328,7 @@ class ClusterDetailView(TemplateView):
         return ctx
 
 
+@method_decorator(cache_page(300), name="dispatch")
 class SalaryBenchmarksView(TemplateView):
     """Salary benchmarks across impact domains - SEO and transparency."""
     template_name = "jobs/tools/salary_benchmarks.html"
@@ -1385,7 +1391,7 @@ class SalaryBenchmarksView(TemplateView):
         )
         
         # Top paying roles (sample)
-        top_paying = salary_jobs.order_by('-salary_max')[:10]
+        top_paying = salary_jobs.select_related("organization", "category").defer("embedding", "search_vector").order_by('-salary_max')[:10]
         
         ctx.update({
             'by_domain': list(by_domain),
@@ -1393,7 +1399,7 @@ class SalaryBenchmarksView(TemplateView):
             'by_experience': list(by_experience),
             'overall': overall,
             'top_paying': top_paying,
-            'total_with_salary': salary_jobs.count(),
+            'total_with_salary': overall['total_jobs'],
         })
         
         return ctx

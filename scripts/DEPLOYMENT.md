@@ -1,5 +1,38 @@
 # Remote Impact Jobs - Deployment Guide
 
+## Organization plans and API limits
+
+The deployment workflow waits for migrations, refreshes organization-plan featuring,
+and installs `ops/remoteimpact-org-plans.cron` on the host. The hourly tasks refresh
+featuring and prune expired API rate counters. For a manual deployment, install it
+as `/etc/cron.d/remoteimpact-org-plans` (root:root, mode 0644), confirm the host cron
+service is running, and run `python manage.py sync_org_plans` after migrations.
+The cron entry uses the existing `easyclaw-web-1` container name; adjust it if the
+Compose project name changes.
+
+Set `STRIPE_WEBHOOK_SECRET` and subscribe the Stripe webhook to checkout completion,
+async payment success, and subscription creation/update/deletion/pause/resume events.
+Stripe's billing portal needs an active configuration for cancellation and payment
+method management. Existing organization subscriptions cannot start another plan
+through checkout; plan changes should be handled through billing/support.
+
+Release verification:
+
+```bash
+uv run python manage.py check
+uv run python manage.py makemigrations --check --dry-run
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run python manage.py test --noinput
+DEBUG=False uv run python manage.py check --deploy --fail-level WARNING
+cd frontend
+npm ci
+npm run build
+```
+
+Prefetch the embedding model using the README command before an offline test run.
+Use a pgvector PostgreSQL database through `DATABASE_URL` to include concurrency
+tests. The production settings check requires a real, strong `SECRET_KEY`; the
+local development default is deliberately unsuitable for deployment.
+
 ## Cron Setup for Daily Job Imports
 
 ### 1. Edit the daily import script

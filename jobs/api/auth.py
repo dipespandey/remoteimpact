@@ -5,9 +5,10 @@ gets the anonymous tier (low limits, by IP), so AI assistants and scripts can tr
 """
 from dataclasses import dataclass
 from datetime import timedelta
+import hashlib
 
-from django.core.cache import cache
-from django.db.models import F
+from django.db.models import F, Q
+from django.db import connection
 from django.utils import timezone
 
 TIERS = {
@@ -32,8 +33,9 @@ class Caller:
 
 
 class RateLimited(Exception):
-    def __init__(self, retry_after: int):
+    def __init__(self, retry_after: int, caller=None):
         self.retry_after = retry_after
+        self.caller = caller
 
 
 class TierLimit(Exception):
@@ -68,11 +70,30 @@ def identify(request) -> Caller:
 
 
 def _bump(cache_key: str, timeout: int) -> int:
-    try:
-        cache.add(cache_key, 0, timeout)
-        return cache.incr(cache_key)
-    except Exception:  # noqa: BLE001 - a cache hiccup must not take the API down
-        return 0
+    from jobs.models import ApiRateBucket
+
+    # FileBasedCache.incr is a read/write pair and races between Gunicorn workers.
+    # Shared SQL counters work with both SQLite and PostgreSQL, independently of Redis.
+    key = hashlib.sha256(cache_key.encode()).hexdigest()
+    now = timezone.now()
+    if connection.vendor in ("postgresql", "sqlite") and connection.features.can_return_columns_from_insert:
+        # One atomic upsert returns this call's increment, avoiding a read/insert,
+        # expiry update, increment and second read on every API request.
+        table = connection.ops.quote_name(ApiRateBucket._meta.db_table)
+        field = ApiRateBucket._meta.get_field("expires_at")
+        expires = field.get_db_prep_value(now + timedelta(seconds=timeout), connection)
+        current = field.get_db_prep_value(now, connection)
+        with connection.cursor() as cursor:
+            cursor.execute(f'''INSERT INTO {table} ("key", "count", "expires_at") VALUES (%s, 1, %s)
+                ON CONFLICT ("key") DO UPDATE SET
+                "count" = CASE WHEN {table}."expires_at" <= %s THEN 1 ELSE {table}."count" + 1 END,
+                "expires_at" = CASE WHEN {table}."expires_at" <= %s THEN excluded."expires_at" ELSE {table}."expires_at" END
+                RETURNING "count"''', [key, expires, current, current])
+            return cursor.fetchone()[0]
+    ApiRateBucket.objects.get_or_create(key=key, defaults={"expires_at": now + timedelta(seconds=timeout)})
+    ApiRateBucket.objects.filter(key=key, expires_at__lte=now).update(count=0, expires_at=now + timedelta(seconds=timeout))
+    ApiRateBucket.objects.filter(key=key).update(count=F("count") + 1)
+    return ApiRateBucket.objects.values_list("count", flat=True).get(key=key)
 
 
 def _count(caller: Caller):
@@ -80,18 +101,22 @@ def _count(caller: Caller):
     limits = caller.limits
     minute = _bump(f"api:m:{caller.scope}:{now.strftime('%Y%m%d%H%M')}", 120)
     if minute > limits["per_minute"]:
-        raise RateLimited(60 - now.second)
+        raise RateLimited(60 - now.second, caller)
     if caller.key is not None:
         today = now.date()
         from jobs.models import ApiKey
 
-        if caller.key.requests_date != today:
-            ApiKey.objects.filter(pk=caller.key.pk).update(requests_today=0, requests_date=today)
-            caller.key.requests_today, caller.key.requests_date = 0, today
-        ApiKey.objects.filter(pk=caller.key.pk).update(requests_today=F("requests_today") + 1, last_used_at=now)
-        used = caller.key.requests_today + 1
+        # Compare and update in SQL: concurrent callers must not reset one another's daily usage
+        # or make admission decisions from a stale ApiKey instance.
+        ApiKey.objects.filter(pk=caller.key.pk).filter(
+            Q(requests_date__lt=today) | Q(requests_date__isnull=True)
+        ).update(requests_today=0, requests_date=today)
+        admitted = ApiKey.objects.filter(pk=caller.key.pk, requests_date=today,
+                                        requests_today__lt=limits["per_day"]).update(
+            requests_today=F("requests_today") + 1, last_used_at=now)
+        used = 0 if admitted else limits["per_day"] + 1
     else:
         used = _bump(f"api:d:{caller.scope}:{now.strftime('%Y%m%d')}", 90000)
     if used > limits["per_day"]:
         tomorrow = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-        raise RateLimited(int((tomorrow - now).total_seconds()))
+        raise RateLimited(int((tomorrow - now).total_seconds()), caller)

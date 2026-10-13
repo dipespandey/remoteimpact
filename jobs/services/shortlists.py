@@ -21,6 +21,10 @@ def candidate_jobs(user):
 
 
 def visible_interests(job):
+    return visible_interests_for_jobs([job.pk])
+
+
+def visible_interests_for_jobs(job_ids):
     # Old declarations are not represented as a fresh willingness to engage.
-    return job.candidate_interests.filter(share_with_employer=True,
+    return JobInterest.objects.filter(job_id__in=job_ids, share_with_employer=True,
         consented_at__gte=timezone.now() - timedelta(days=90)).exclude(status__in=["archived", "not_relevant"])

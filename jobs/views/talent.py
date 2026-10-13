@@ -44,7 +44,7 @@ class TalentDirectoryView(LoginRequiredMixin, ListView):
             visibility="public",
             is_actively_looking=True,
             wizard_completed=True,
-        ).select_related("user").prefetch_related("impact_areas")
+        ).select_related("user").prefetch_related("impact_areas").defer("embedding", "search_vector", "resume_text", "cv_facts")
 
         # Filters
         impact_area = self.request.GET.get("impact_area")

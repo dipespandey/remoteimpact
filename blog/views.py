@@ -9,7 +9,7 @@ class BlogListView(ListView):
     paginate_by = 12
 
     def get_queryset(self):
-        return BlogPost.objects.filter(status=BlogPost.Status.PUBLISHED)
+        return BlogPost.objects.filter(status=BlogPost.Status.PUBLISHED).defer("body")
 
 
 class BlogDetailView(DetailView):

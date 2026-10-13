@@ -9,7 +9,8 @@ Handles dynamic SEO landing pages for role-based searches:
 
 from django.conf import settings
 from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
+from ..services.page_cache import cache_public_page as cache_page
+from .mixins import FastJobPaginationMixin
 from django.views.generic import ListView
 from django.http import Http404
 from django.db.models import Count, Q
@@ -54,7 +55,7 @@ def visible_jobs():
 
 
 @method_decorator(cache_page(getattr(settings, 'CACHE_TTL_MEDIUM', 300)), name='dispatch')
-class RoleJobsView(ListView):
+class RoleJobsView(FastJobPaginationMixin, ListView):
     """
     Dynamic SEO landing page for role-based job searches.
     
@@ -89,7 +90,7 @@ class RoleJobsView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        job_count = self.get_queryset().count()
+        job_count = context['page_obj'].paginator.count
         
         # Page metadata
         context['config'] = self.config
@@ -150,6 +151,7 @@ class RoleJobsView(ListView):
         return context
 
 
+@method_decorator(cache_page(300), name="dispatch")
 class AllRolePagesView(ListView):
     """
     Index page showing all role-based SEO pages.
@@ -162,14 +164,18 @@ class AllRolePagesView(ListView):
     def get_queryset(self):
         """Get all role pages with job counts."""
         result = []
-        for config in ROLE_SEO_PAGES:
+        counters = {'total': Count('pk')}
+        for index, config in enumerate(ROLE_SEO_PAGES):
             patterns = config['patterns']
             q_objects = Q()
             for pattern in patterns:
                 q_objects |= Q(title__icontains=pattern)
             
-            count = visible_jobs().filter(q_objects).count()
-            
+            counters[f'role_{index}'] = Count('pk', filter=q_objects)
+        counts = visible_jobs().aggregate(**counters)
+        self.total_jobs = counts['total']
+        for index, config in enumerate(ROLE_SEO_PAGES):
+            count = counts[f'role_{index}']
             if count > 0:
                 result.append({
                     **config,
@@ -184,7 +190,7 @@ class AllRolePagesView(ListView):
         context = super().get_context_data(**kwargs)
         context['page_title'] = "Browse Remote Jobs by Role | Remote Impact"
         context['meta_description'] = "Explore remote job opportunities by role type. Find software engineer, data scientist, product manager, and more positions at impact organizations."
-        context['total_jobs'] = visible_jobs().count()
+        context['total_jobs'] = self.total_jobs
         return context
 
 
@@ -194,7 +200,7 @@ class AllRolePagesView(ListView):
 # =============================================================================
 
 @method_decorator(cache_page(getattr(settings, 'CACHE_TTL_MEDIUM', 300)), name='dispatch')
-class KeywordJobsView(ListView):
+class KeywordJobsView(FastJobPaginationMixin, ListView):
     """
     Dynamic SEO landing page for keyword-based job searches.
     
@@ -265,7 +271,7 @@ class KeywordJobsView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        job_count = self.get_queryset().count()
+        job_count = context['page_obj'].paginator.count
         
         # Page metadata
         context['config'] = self.config

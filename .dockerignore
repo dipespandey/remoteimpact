@@ -16,3 +16,9 @@ htmlcov
 media/*
 staticfiles/*
 .DS_Store
+**/node_modules
+marketing
+.agents
+.audit
+.seo
+ops/open-seo

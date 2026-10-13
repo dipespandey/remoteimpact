@@ -1,0 +1,5 @@
+# Installed by the deployment workflow as /etc/cron.d/remoteimpact-org-plans.
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+23 * * * * root /usr/bin/flock -n /var/lock/remoteimpact-org-plans.lock /usr/bin/docker exec easyclaw-web-1 /app/.venv/bin/python /app/manage.py sync_org_plans >> /var/log/remoteimpact-org-plans.log 2>&1
+41 * * * * root /usr/bin/flock -n /var/lock/remoteimpact-api-limits.lock /usr/bin/docker exec easyclaw-web-1 /app/.venv/bin/python /app/manage.py cleanup_api_limits >> /var/log/remoteimpact-api-limits.log 2>&1

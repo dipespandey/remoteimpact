@@ -4,6 +4,9 @@ from django.db.models import Q, Count
 from django.utils import timezone
 from datetime import timedelta
 from django.http import Http404
+from django.utils.decorators import method_decorator
+from ..services.page_cache import cache_public_page
+from .mixins import FastJobPaginationMixin
 
 from ..models import Job, Organization, Category
 
@@ -53,7 +56,8 @@ OLD_SLUG_REDIRECTS = {
 }
 
 
-class OrganizationProfileView(ListView):
+@method_decorator(cache_public_page(120), name="dispatch")
+class OrganizationProfileView(FastJobPaginationMixin, ListView):
     """SEO-optimized profile page for an organization."""
     model = Job
     template_name = "jobs/organization_profile.html"
@@ -137,6 +141,7 @@ class OrganizationProfileView(ListView):
         return context
 
 
+@method_decorator(cache_public_page(60), name="dispatch")
 class OrganizationDirectoryView(ListView):
     """Directory of all organizations with active jobs."""
     model = Organization

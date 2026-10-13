@@ -3,7 +3,8 @@ from django.contrib import messages
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Exists, OuterRef, Window, F
+from django.db.models.functions import RowNumber
 from django.shortcuts import redirect
 from django.conf import settings
 from django.utils import timezone
@@ -64,8 +65,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     def _hiring_overview(posted_jobs):
         """Live roles with their numbers and best-matching people; drafts and closed roles apart."""
         from ..services import job_stats
-        from ..services.candidate_suggestions import suggested_candidates
-        from ..services.shortlists import visible_interests
+        from ..services.candidate_suggestions import suggested_candidates_for_jobs
+        from ..services.shortlists import visible_interests_for_jobs
+        from ..models import Application, SourcingSuggestion
         from ..services.hiring_assistant import listing_checks
         from ..services.unified_matching_service import UnifiedMatchingService
 
@@ -74,21 +76,40 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         drafts = [j for j in posted_jobs if not j.is_paid]
         closed = [j for j in posted_jobs if j.is_paid and j not in live]
         stats = job_stats.totals([j.pk for j in live], days=30)
+        application_counts = {row["job_id"]: row for row in Application.objects.filter(
+            job_id__in=[j.pk for j in posted_jobs]).values("job_id").annotate(
+                total=Count("pk"), screened=Count("pk", filter=~Q(screening={}))) }
+        interest_counts = dict(visible_interests_for_jobs([j.pk for j in live])
+                               .values("job_id").annotate(total=Count("pk")).values_list("job_id", "total"))
+        from ..models import TalentInvitation
+        already_invited = TalentInvitation.objects.filter(job_id=OuterRef("job_id"), seeker_id=OuterRef("seeker_id"))
+        sourced = SourcingSuggestion.objects.filter(job_id__in=[j.pk for j in live]).annotate(
+            _invited=Exists(already_invited)).filter(_invited=False).annotate(
+                _position=Window(RowNumber(), partition_by=[F("job_id")], order_by=[F("created_at").desc(), F("pk").desc()])
+            ).filter(_position__lte=4).select_related("seeker", "seeker__user").defer(
+                "draft_message", "seeker__embedding", "seeker__resume_text", "seeker__cv_facts")
+        sourced_by_job = {}
+        for suggestion in sourced:
+            sourced_by_job.setdefault(suggestion.job_id, []).append(suggestion)
+        try:
+            candidate_suggestions = suggested_candidates_for_jobs([j for j in live if j.pk not in sourced_by_job], limit=4)
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception("Could not load candidate suggestions")
+            candidate_suggestions = {}
         for job in live:
             row = stats.get(job.pk) or {}
             job.views_30d = row.get("views") or 0
             job.apply_clicks_30d = row.get("apply_clicks") or 0
-            job.applicant_count = job.applications.count()
-            job.interested_count = visible_interests(job).count()
+            job.applicant_count = application_counts.get(job.pk, {}).get("total", 0)
+            job.interested_count = interest_counts.get(job.pk, 0)
             job.featured_now = bool(job.featured_until and job.featured_until > now)
             job.tips = listing_checks(job)
-            job.screened_count = job.applications.exclude(screening={}).count()
-            invited = set(job.talent_invitations.values_list("seeker_id", flat=True))
-            job.sourced = [s for s in job.sourcing_suggestions.select_related("seeker", "seeker__user").order_by("-created_at")
-                           if s.seeker_id not in invited][:4]
+            job.screened_count = application_counts.get(job.pk, {}).get("screened", 0)
+            job.sourced = sourced_by_job.get(job.pk, [])
             try:
                 job.matching_data_quality = UnifiedMatchingService._job_data_quality(job)
-                job.suggestions = suggested_candidates(job, limit=4)
+                job.suggestions = candidate_suggestions.get(job.pk, [])
             except Exception:  # noqa: BLE001 - matching must never break the dashboard
                 job.matching_data_quality, job.suggestions = 0, []
         return {
@@ -96,7 +117,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             "draft_jobs": drafts,
             "closed_jobs": closed,
             "active_jobs_count": len(live),
-            "total_candidates": sum(j.applicant_count for j in live) + sum(j.applications.count() for j in closed),
+            "total_candidates": sum(application_counts.get(j.pk, {}).get("total", 0) for j in live + closed),
             "interested_total": sum(j.interested_count for j in live),
             "views_total": sum(j.views_30d for j in live),
             "apply_clicks_total": sum(j.apply_clicks_30d for j in live),
@@ -128,8 +149,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             from ..services.employer_access import hiring_jobs
 
             posted_jobs = list(
-                hiring_jobs(user).select_related("organization", "poster")
-                .defer("search_vector", "raw_data").order_by("-posted_at")
+                hiring_jobs(user).select_related("organization", "poster", "category")
+                .defer("search_vector").order_by("-posted_at")
             )
             context["posted_jobs"] = posted_jobs
             context["organization"] = user.organizations.first()
@@ -164,12 +185,10 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 )
 
                 # Talent invitations count
-                context["invitation_count"] = TalentInvitation.objects.filter(
-                    seeker=seeker_profile
-                ).count()
-                context["new_invitation_count"] = TalentInvitation.objects.filter(
-                    seeker=seeker_profile, status=TalentInvitation.Status.SENT
-                ).count()
+                counts = TalentInvitation.objects.filter(seeker=seeker_profile).aggregate(
+                    total=Count("pk"), new=Count("pk", filter=Q(status=TalentInvitation.Status.SENT)))
+                context["invitation_count"] = counts["total"]
+                context["new_invitation_count"] = counts["new"]
 
                 # Recent invitations for dashboard display
                 context["talent_invitations"] = TalentInvitation.objects.filter(

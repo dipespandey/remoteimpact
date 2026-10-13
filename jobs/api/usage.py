@@ -29,7 +29,10 @@ def record(request, caller, surface, endpoint, status=200):
         with transaction.atomic():
             if not ApiUsage.objects.filter(**key).update(count=F("count") + 1):
                 try:
-                    ApiUsage.objects.create(count=1, **key)
+                    # Roll back just the conflicting insert before retrying the update.
+                    # Catching IntegrityError inside the outer transaction leaves it unusable.
+                    with transaction.atomic():
+                        ApiUsage.objects.create(count=1, **key)
                 except IntegrityError:
                     ApiUsage.objects.filter(**key).update(count=F("count") + 1)
     except Exception:  # noqa: BLE001

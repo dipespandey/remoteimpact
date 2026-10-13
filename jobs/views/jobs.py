@@ -20,6 +20,8 @@ from ..services.funnel import record_consumer_event
 from ..services.unified_matching_service import UnifiedMatchingService
 from ..seo_config import KEYWORD_SEO_PAGES, ROLE_SEO_PAGES
 from .impact_wizard import profile_scout_url
+from .mixins import FastJobPaginationMixin
+from ..services.page_cache import cache_public_page
 
 logger = logging.getLogger(__name__)
 
@@ -33,28 +35,7 @@ def _drop_pinned_duplicates(context):
 
 
 
-class FastJobPaginationMixin:
-    """Rank on ids, then load full rows for the one page shown.
-
-    Sorting the whole result set with every column (descriptions included) made Postgres spill
-    to disk on each request; sorting ids alone stays in memory.
-    """
-
-    def paginate_queryset(self, queryset, page_size):
-        from django.db.models.query import QuerySet
-
-        if not isinstance(queryset, QuerySet):
-            return super().paginate_queryset(queryset, page_size)
-        paginator, page, ids, is_paginated = super().paginate_queryset(
-            queryset.values_list("pk", flat=True), page_size)
-        ids = list(ids)
-        rows = Job.objects.filter(pk__in=ids).select_related("organization", "category").defer(
-            "embedding", "search_vector")
-        by_id = {job.pk: job for job in rows}
-        page.object_list = [by_id[pk] for pk in ids if pk in by_id]
-        return paginator, page, page.object_list, is_paginated
-
-
+@method_decorator(cache_public_page(60), name="dispatch")
 class JobListView(FastJobPaginationMixin, ListView):
     model = Job
     template_name = "jobs/job_list.html"
@@ -309,6 +290,7 @@ class JobListView(FastJobPaginationMixin, ListView):
         from ..models import Organization
         from django.contrib.postgres.search import TrigramSimilarity
         from django.db.models import Count, Q
+        from django.db import connection
 
         # Work from live roles only: matching against every job ever imported
         # (closed ones included) made an empty search take ~3 seconds.
@@ -325,11 +307,13 @@ class JobListView(FastJobPaginationMixin, ListView):
         chosen = []
         if search_query and search_query.strip():
             query = search_query.strip()
-            chosen += list(
-                Organization.objects.filter(pk__in=counts)
-                .annotate(similarity=TrigramSimilarity("name", query))
-                .filter(similarity__gt=0.1).order_by("-similarity").values_list("pk", flat=True)[:6]
-            )
+            organizations = Organization.objects.filter(pk__in=counts)
+            if connection.vendor == "postgresql":
+                organizations = organizations.annotate(similarity=TrigramSimilarity("name", query)).filter(
+                    similarity__gt=0.1).order_by("-similarity")
+            else:
+                organizations = organizations.filter(name__icontains=query).order_by("name")
+            chosen += list(organizations.values_list("pk", flat=True)[:6])
             if len(chosen) < 6:
                 matching = live.filter(Q(title__icontains=query) | Q(description__icontains=query)).values_list(
                     "organization_id", flat=True)
@@ -722,6 +706,7 @@ class OrganizationSearchView(View):
 
 
 
+@method_decorator(cache_public_page(120), name="dispatch")
 class CategoryLandingView(FastJobPaginationMixin, ListView):
     """SEO-optimized landing page for each impact category."""
     model = Job

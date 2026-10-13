@@ -22,7 +22,7 @@ class JobService:
         return Job.objects.filter(Job.availability_filter(stale_days=stale_days))
 
     @staticmethod
-    def get_filtered_jobs(filters):
+    def get_filtered_jobs(filters, *, collapse_variants=True):
         """
         Filter jobs based on query parameters.
         Supports both single values and multiple values (multiselect).
@@ -220,8 +220,10 @@ class JobService:
             # Search first, so "too few exact matches" counts every posting; then show
             # one row per role. Ordering set by the search is kept.
             jobs = JobService._apply_smart_search(jobs, query, sort=sort)
-            return JobService._collapse_location_variants(jobs)
+            return JobService._collapse_location_variants(jobs) if collapse_variants else jobs
 
+        if not collapse_variants:
+            return JobService._order_jobs(jobs, sort, interleave=False)
         jobs = JobService._collapse_location_variants(jobs)
 
         # The public feed is a chronological feed. Personalization belongs on
@@ -252,7 +254,7 @@ class JobService:
         from django.db.models import F, Window
         from django.db.models.functions import RowNumber
         representatives = (
-            Job.objects.filter(pk__in=jobs.values("pk"))
+            jobs.order_by()
             .annotate(_variant=Window(
                 expression=RowNumber(),
                 partition_by=[F("organization_id"), JobService._title_without_location()],
@@ -397,7 +399,7 @@ class JobService:
             fts_rank=RawSQL(
                 "ts_rank(search_vector, websearch_to_tsquery('english', %s))",
                 [query]
-            ),
+            ) if connection.vendor == "postgresql" else Value(0.0, output_field=FloatField()),
             title_phrase_match=Case(
                 When(title_phrase_q, then=Value(1)),
                 default=Value(0),

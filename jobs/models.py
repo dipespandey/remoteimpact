@@ -1362,6 +1362,10 @@ class OrgSubscription(models.Model):
     # Stripe integration
     stripe_subscription_id = models.CharField(max_length=100, blank=True)
     stripe_customer_id = models.CharField(max_length=100, blank=True)
+    stripe_checkout_session_id = models.CharField(max_length=255, blank=True)
+    stripe_checkout_expires_at = models.DateTimeField(null=True, blank=True)
+    stripe_event_created = models.PositiveBigIntegerField(default=0)
+    stripe_status = models.CharField(max_length=24, blank=True)
 
     # Usage tracking
     invites_used_this_month = models.PositiveIntegerField(default=0)
@@ -1955,6 +1959,14 @@ class ApiKey(models.Model):
         obj = cls.objects.create(name=name, email=email, tier=tier, organization=organization, use_case=use_case,
                                  is_active=is_active, key_hash=cls.hash_key(raw), prefix=raw[:10])
         return raw, obj
+
+
+class ApiRateBucket(models.Model):
+    """Atomic shared rate counters; scopes are hashed and expired buckets are pruned hourly."""
+
+    key = models.CharField(max_length=64, primary_key=True)
+    count = models.PositiveIntegerField(default=0)
+    expires_at = models.DateTimeField(db_index=True)
 
 
 class ApiUsage(models.Model):

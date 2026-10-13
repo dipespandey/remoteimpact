@@ -11,7 +11,7 @@ class StoryFeedView(ListView):
     paginate_by = 5
 
     def get_queryset(self):
-        return Story.objects.select_related("organization").order_by("-created_at")
+        return Story.objects.select_related("organization").prefetch_related("categories").order_by("-created_at")
 
 
 class StoryDetailView(DetailView):
@@ -19,6 +19,9 @@ class StoryDetailView(DetailView):
     template_name = "stories/detail.html"
     context_object_name = "story"
     pk_url_kwarg = "story_id"
+
+    def get_queryset(self):
+        return Story.objects.select_related("organization").prefetch_related("categories")
 
 
 class ResonateView(View):
