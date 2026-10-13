@@ -42,7 +42,7 @@ As of October 13, 2026, the dedicated publishing project is
 `remote-impact-indexing`. Its `job-indexing-publisher` service account has no
 Cloud project roles and is a delegated owner only of `sc-domain:remoteimpact.org`.
 The Indexing API is enabled. Production reads its JSON credential from a protected,
-read-only secret mount; the key is outside the repository. Three initial eligible
+read-only secret mount; the key is outside the repository. All 190 initial eligible
 job notifications were accepted, with zero failures. IndexNow also accepted an
 initial batch of 3,575 pending job URLs with HTTP 200. These acknowledgements prove
 receipt, not indexing or ranking.
