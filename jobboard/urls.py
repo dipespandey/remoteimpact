@@ -618,6 +618,7 @@ urlpatterns = [
     path("healthz/", healthz, name="healthz"),
     path("admin/analytics/", admin.site.admin_view(admin_analytics.analytics), name="admin_analytics"),
     path("admin/outreach/", admin.site.admin_view(admin_analytics.outreach), name="admin_outreach"),
+    path("admin/api-usage/", admin.site.admin_view(admin_analytics.api_usage), name="admin_api_usage"),
     path("admin/outreach/<int:org_id>/", admin.site.admin_view(admin_analytics.outreach_update), name="admin_outreach_update"),
     path("admin/impersonate/", admin.site.admin_view(impersonate.impersonate_search), name="admin_impersonate"),
     path("admin/impersonate/<int:user_id>/start/", admin.site.admin_view(impersonate.impersonate_start), name="admin_impersonate_start"),

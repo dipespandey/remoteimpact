@@ -1,0 +1,58 @@
+{% load humanize %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>API usage · Remote Impact admin</title>
+{% include "admin/_ri_head.html" %}
+<style>
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+  .card.pad { padding: 14px 16px; } .card h2 { margin: 0 0 8px; font-size: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; } td, th { padding: 5px 0; text-align: left; border-bottom: 1px solid var(--grid); }
+  th { color: var(--muted-foreground); font-weight: 500; } .right { text-align: right; } .num { font-family: "Geist Mono", ui-monospace, monospace; }
+  .bars { display: flex; align-items: flex-end; gap: 3px; height: 90px; } .bars span { flex: 1; background: var(--primary); border-radius: 3px 3px 0 0; min-height: 2px; opacity: .85; }
+  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="mark">RI</span><span class="name">Remote Impact</span> <span class="crumb">/ API usage</span></div>
+  <div class="controls">
+    <nav class="seg" aria-label="Date range">{% for r in ranges %}<a href="?days={{ r }}" class="{% if r == days %}on{% endif %}">{{ r }}d</a>{% endfor %}</nav>
+    <a class="btn" href="{% url 'admin_analytics' %}">Analytics</a>
+    <a class="btn" href="{% url 'admin:jobs_apikey_changelist' %}">Keys</a>
+    <a class="btn" href="{% url 'admin:index' %}">Admin</a>
+  </div>
+</header>
+<main>
+  <div class="title"><div><h1>Jobs API and MCP, last {{ days }} days</h1>
+  <div class="sub">Counts by day from every REST and MCP call. <a href="{% url 'jobs:developers' %}">Developers page</a></div></div></div>
+
+  <div class="stats stats-4">
+    <div class="stat"><div class="k">Calls</div><div class="v num">{{ total|intcomma }}</div></div>
+    <div class="stat"><div class="k">Refused (tier or rate limit)</div><div class="v num">{{ limited|intcomma }}</div></div>
+    <div class="stat"><div class="k">Keys (active)</div><div class="v num">{{ key_counts.all }} ({{ key_counts.active }})</div></div>
+    <div class="stat"><div class="k">Commercial requests to approve</div><div class="v num">{{ key_counts.commercial_pending }}</div></div>
+  </div>
+
+  <div class="card pad" style="margin-top:16px"><h2>Calls per day</h2>
+    <div class="bars" role="img" aria-label="Calls per day">{% for d in series %}<span style="height:{{ d.pct }}%" title="{{ d.date|date:'M j' }}: {{ d.n }}"></span>{% endfor %}</div>
+  </div>
+
+  <div class="grid2">
+    <div class="card pad"><h2>Endpoint / tool</h2><table>{% for r in endpoints %}<tr><td>{{ r.label }}</td><td class="num right">{{ r.n|intcomma }}</td></tr>{% empty %}<tr><td class="sub">No calls yet</td></tr>{% endfor %}</table></div>
+    <div class="card pad"><h2>Client</h2><table>{% for r in clients %}<tr><td>{{ r.label }}</td><td class="num right">{{ r.n|intcomma }}</td></tr>{% empty %}<tr><td class="sub">No calls yet</td></tr>{% endfor %}</table></div>
+    <div class="card pad"><h2>Surface</h2><table>{% for r in surfaces %}<tr><td>{{ r.label }}</td><td class="num right">{{ r.n|intcomma }}</td></tr>{% endfor %}</table>
+      <h2 style="margin-top:14px">Tier</h2><table>{% for r in tiers %}<tr><td>{{ r.label }}</td><td class="num right">{{ r.n|intcomma }}</td></tr>{% endfor %}</table></div>
+    <div class="card pad"><h2>Status</h2><table>{% for r in statuses %}<tr><td>{{ r.label }}</td><td class="num right">{{ r.n|intcomma }}</td></tr>{% endfor %}</table></div>
+  </div>
+
+  <div class="card pad" style="margin-top:16px"><h2>Keys</h2>
+    <table><thead><tr><th>Key</th><th>Who</th><th>Tier</th><th>Active</th><th class="right">Calls ({{ days }}d)</th><th>Last used</th></tr></thead>
+    {% for k in keys %}<tr><td class="num"><a href="{% url 'admin:jobs_apikey_change' k.pk %}">{{ k.prefix }}…</a></td><td>{{ k.name }}{% if k.organization %} · {{ k.organization }}{% endif %}<br><span class="sub">{{ k.email }}</span></td><td>{{ k.get_tier_display }}</td><td>{{ k.is_active|yesno:"yes,no" }}</td><td class="num right">{{ k.period_calls|intcomma }}</td><td>{{ k.last_used_at|naturaltime|default:"never" }}</td></tr>
+    {% empty %}<tr><td colspan="6" class="sub">No keys issued yet.</td></tr>{% endfor %}</table>
+  </div>
+</main>
+</body>
+</html>

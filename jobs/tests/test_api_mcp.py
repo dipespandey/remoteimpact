@@ -169,3 +169,15 @@ class UsageAndCardTests(ApiBase):
         card = self.client.get("/.well-known/mcp/server-card.json").json()
         self.assertTrue(card["serverInfo"]["description"])
         self.assertTrue(all(t["annotations"]["readOnlyHint"] and t["outputSchema"] for t in card["tools"]))
+
+
+class AdminApiUsageTests(ApiBase):
+    def test_staff_see_usage_page_others_do_not(self):
+        from django.contrib.auth import get_user_model
+        self.client.get("/api/v1/areas/")
+        self.assertEqual(self.client.get("/admin/api-usage/").status_code, 302)
+        staff = get_user_model().objects.create_user("boss", "boss@example.com", "pw", is_staff=True, is_superuser=True)
+        self.client.force_login(staff)
+        response = self.client.get("/admin/api-usage/")
+        self.assertContains(response, "Jobs API and MCP")
+        self.assertContains(response, "areas")

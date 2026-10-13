@@ -54,3 +54,39 @@ def outreach_update(request, org_id):
         record.notes = request.POST["notes"].strip()
     record.save()
     return redirect(request.POST.get("next") or "admin_outreach")
+
+
+def api_usage(request):
+    """Jobs API and MCP usage: calls by day, surface, endpoint/tool, tier, client and key (staff only)."""
+    from datetime import timedelta
+
+    from django.db.models import Count, Sum
+    from django.utils import timezone
+
+    from ..models import ApiKey, ApiUsage
+
+    raw = request.GET.get("days", "14")
+    days = int(raw) if raw.isdigit() and int(raw) in (7, 14, 30, 90) else 14
+    since = timezone.localdate() - timedelta(days=days - 1)
+    rows = ApiUsage.objects.filter(date__gte=since)
+
+    def top(field, limit=10):
+        return [{"label": r[field] or "-", "n": r["n"]} for r in rows.values(field).annotate(n=Sum("count")).order_by("-n")[:limit]]
+
+    per_day = {r["date"]: r["n"] for r in rows.values("date").annotate(n=Sum("count"))}
+    series = [{"date": since + timedelta(days=i), "n": per_day.get(since + timedelta(days=i), 0)} for i in range(days)]
+    biggest = max([d["n"] for d in series] + [1])
+    for d in series:
+        d["pct"] = round(d["n"] * 100 / biggest)
+    keys = list(ApiKey.objects.order_by("-last_used_at", "-created_at")[:25])
+    by_key = {r["key_prefix"]: r["n"] for r in rows.exclude(key_prefix="").values("key_prefix").annotate(n=Sum("count"))}
+    for key in keys:
+        key.period_calls = by_key.get(key.prefix, 0)
+    total = rows.aggregate(n=Sum("count"))["n"] or 0
+    limited = rows.filter(status__in=(403, 429)).aggregate(n=Sum("count"))["n"] or 0
+    return render(request, "admin/api_usage.html", {
+        **admin.site.each_context(request), "days": days, "ranges": (7, 14, 30, 90), "total": total, "limited": limited,
+        "series": series, "surfaces": top("surface"), "endpoints": top("endpoint"), "tiers": top("tier"), "clients": top("client"),
+        "statuses": top("status"), "keys": keys, "key_counts": {"all": ApiKey.objects.count(), "active": ApiKey.objects.filter(is_active=True).count(),
+                                                                 "commercial_pending": ApiKey.objects.filter(tier="commercial", is_active=False).count()},
+    })
