@@ -23,6 +23,7 @@ from jobs.services.job_enrichment import enrich_job_payload
 from jobs.services.job_quality import refresh_job_quality
 
 logger = logging.getLogger(__name__)
+UNIQUE_ATS_POSTING_PREFIXES = ("ashby:", "lever:", "greenhouse:", "workable:", "personio:")
 
 # Build lookup for standard impact areas
 _IMPACT_AREA_BY_SLUG = {area["slug"]: area for area in IMPACT_AREAS}
@@ -178,6 +179,22 @@ def _canonical_duplicate_url(value: Any) -> str:
             return f"greenhouse:{match.group(1)}:{match.group(2)}"
         return ''
 
+    if host == "apply.workable.com":
+        match = re.fullmatch(r"/(?:[^/]+/)?j/([A-Za-z0-9]{10,})(?:/apply|/application)?", parts.path.rstrip("/"))
+        if match:
+            return f"workable:{match.group(1)}"
+        return ''
+    if host.endswith((".jobs.personio.de", ".jobs.personio.com")):
+        match = re.fullmatch(r"/job/(\d+)(?:/apply|/application)?", path)
+        if match:
+            return f"personio:{host}:{match.group(1)}"
+        return ''
+    if host.endswith(".recruitee.com"):
+        match = re.fullmatch(r"/o/([^/]+)(?:/c/new)?", parts.path.rstrip("/"))
+        if match:
+            return f"recruitee:{host}:{match.group(1)}"
+        return ''
+
     if "smartrecruiters.com" in host:
         path_parts = [part for part in path.split("/") if part]
         if len(path_parts) >= 2:
@@ -227,8 +244,9 @@ def _payload_duplicate_key(payload: Dict) -> tuple[str, str, str, str] | None:
     )
     title = _normalize_duplicate_title(payload.get("title"))
     organization_name = _normalize_duplicate_text(payload.get("organization_name"))
-    if app_url.startswith(("ashby:", "lever:", "greenhouse:")):
+    if app_url.startswith(UNIQUE_ATS_POSTING_PREFIXES):
         organization_name = "unique-ats-posting"
+        title = "unique-ats-posting"
     if not (source and app_url and title and organization_name):
         return None
     return source, app_url, title, organization_name
@@ -303,8 +321,9 @@ def _retired_duplicate_has_available_keeper(job: Job, application_url=None, titl
     keeper = alias.job
     return (
         _canonical_duplicate_url(keeper.application_url) == identity
-        and _normalize_duplicate_title(title if title is not None else job.title) == _normalize_duplicate_title(keeper.title)
-        and (identity.startswith(('ashby:', 'lever:', 'greenhouse:')) or keeper.organization_id == job.organization_id)
+        and (identity.startswith(UNIQUE_ATS_POSTING_PREFIXES) or
+             _normalize_duplicate_title(title if title is not None else job.title) == _normalize_duplicate_title(keeper.title))
+        and (identity.startswith(UNIQUE_ATS_POSTING_PREFIXES) or keeper.organization_id == job.organization_id)
     )
 
 
@@ -423,7 +442,7 @@ def is_duplicate_job(
     # Reset stale connections before database query (important for long-running async imports)
     _reset_idle_connections()
     canonical_url = _canonical_duplicate_url(application_url)
-    unique_ats_posting = canonical_url.startswith(("ashby:", "lever:", "greenhouse:"))
+    unique_ats_posting = canonical_url.startswith(UNIQUE_ATS_POSTING_PREFIXES)
     query = Job.objects.filter(
         application_url__in=_duplicate_url_variants(application_url),
         is_active=True,
@@ -432,7 +451,7 @@ def is_duplicate_job(
         # Same-source duplicates are handled by _upsert_job so changed upstream
         # IDs can still refresh the existing row instead of being skipped.
         query = query.exclude(source=source)
-    if title:
+    if title and not unique_ats_posting:
         query = query.filter(title__iexact=title.strip())
     if organization_name and not unique_ats_posting:
         query = query.filter(organization__name__iexact=organization_name.strip())
@@ -451,7 +470,9 @@ def is_duplicate_job(
         # Same-source duplicates are handled by _upsert_job so changed upstream
         # IDs can still refresh the existing row instead of being skipped.
         canonical_query = canonical_query.exclude(source=source)
-    if title:
+    if unique_ats_posting:
+        canonical_query = canonical_query.filter(application_url__contains=canonical_url.rsplit(':', 1)[-1])
+    elif title:
         canonical_query = canonical_query.filter(title__iexact=title.strip())
     if organization_name and not unique_ats_posting:
         canonical_query = canonical_query.filter(
@@ -570,9 +591,10 @@ def _find_same_source_duplicate_job(payload: Dict, organization: Organization) -
     canonical_url = _canonical_duplicate_url(app_url)
     if canonical_url:
         canonical_query = base_query
-        if canonical_url.startswith(("ashby:", "lever:", "greenhouse:")):
+        if canonical_url.startswith(UNIQUE_ATS_POSTING_PREFIXES):
             canonical_query = Job.objects.filter(
-                source=payload["source"], title__iexact=title.strip(), is_active=True,
+                source=payload["source"], is_active=True,
+                application_url__contains=canonical_url.rsplit(':', 1)[-1],
             )
         for job in canonical_query.only("id", "application_url", "posted_at").order_by(
             "-posted_at", "-id"

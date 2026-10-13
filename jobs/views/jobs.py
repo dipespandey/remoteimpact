@@ -731,11 +731,13 @@ class CategoryLandingView(FastJobPaginationMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
+        if hasattr(self, '_category_queryset'):
+            return self._category_queryset
         self.category = get_object_or_404(Category, slug=self.kwargs["slug"])
-        return (
-            Job.objects.filter(Job.availability_filter(), category=self.category)
-            .select_related("organization", "category").order_by("-posted_at")
-        )
+        filters = self.request.GET.copy()
+        filters["category"] = self.category.slug
+        self._category_queryset = JobService.get_filtered_jobs(filters, collapse_variants=False).order_by("-posted_at")
+        return self._category_queryset
 
     # SEO-optimized titles for each category
     SEO_TITLES = {
@@ -782,9 +784,39 @@ class CategoryLandingView(FastJobPaginationMixin, ListView):
         seo_title = self.SEO_TITLES.get(cat.slug, f"Remote {cat.name} Jobs")
         context["meta_title"] = f"{seo_title} — Remote Impact"
         context["meta_description"] = (
-            f"Browse {context['page_obj'].paginator.count}+ remote {cat.name} jobs, checked daily against each "
-            f"employer's own job board. Purpose-driven roles from impact organizations."
+            f"Browse {context['page_obj'].paginator.count} {cat.name} listings at impact organizations. "
+            "Review remote-work eligibility, pay when published and employer application details."
         )
+        context["search_query"] = self.request.GET.get("q", "").strip()
+        context["job_count"] = context["page_obj"].paginator.count
+        pagination_params = self.request.GET.copy()
+        pagination_params.pop('page', None)
+        context['pagination_query'] = pagination_params.urlencode()
+        from .seo_pages import inventory_evidence
+        context.update(inventory_evidence(self.get_queryset(), [
+            (cat.name, {"slug": cat.slug, "count": context["job_count"]})]))
+        context["category_faqs"] = [
+            {"question": f"How many {cat.name.lower()} listings are available?",
+             "answer": f"There are {context['job_count']} listings in this search. The count follows the same availability rules as our job board."},
+            {"question": "Can I apply from any country?",
+             "answer": "Remote eligibility varies by employer. Check residency, work authorization, time zone and travel requirements in the source posting before applying."},
+            {"question": "How are these listings checked?",
+             "answer": "We aggregate employer and job-board sources and show recorded source sightings and verification results on job pages. A recent source sighting is not confirmation that applications are still open."},
+        ]
+        from ..services.seo_text import json_ld
+        page_url = settings.SITE_URL.rstrip("/") + reverse("jobs:category_landing", args=[cat.slug])
+        context["category_structured_data"] = json_ld([
+            {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": "Home", "item": settings.SITE_URL.rstrip("/") + "/"},
+                {"@type": "ListItem", "position": 2, "name": "Jobs", "item": settings.SITE_URL.rstrip("/") + reverse("jobs:job_list")},
+                {"@type": "ListItem", "position": 3, "name": cat.name, "item": page_url}]},
+            {"@context": "https://schema.org", "@type": "CollectionPage",
+             "name": seo_title, "description": context["meta_description"], "url": page_url,
+             "isPartOf": {"@type": "WebSite", "name": "Remote Impact", "url": settings.SITE_URL}},
+            {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
+                {"@type": "Question", "name": faq["question"], "acceptedAnswer":
+                 {"@type": "Answer", "text": faq["answer"]}} for faq in context["category_faqs"]]},
+        ])
         
         context["sponsored_jobs"] = (
             list(self.get_queryset().filter(Job.sponsored_filter()).order_by("featured_until")[:3])

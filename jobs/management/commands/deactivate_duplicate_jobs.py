@@ -16,6 +16,7 @@ from jobs.services.importers.common import (
     _normalize_duplicate_text,
     _normalize_duplicate_title,
     _normalize_duplicate_url,
+    UNIQUE_ATS_POSTING_PREFIXES,
 )
 
 
@@ -89,8 +90,11 @@ class Command(BaseCommand):
                 if canonical_url:
                     # Exact title + organization + canonical destination is safe
                     # to merge across aggregators as well as within one source.
-                    identity = None if canonical_url.startswith(("ashby:", "lever:", "greenhouse:")) else job.organization_id
-                    grouped_keys[("canonical-url", title, identity, canonical_url)].append(job.id)
+                    unique_posting = canonical_url.startswith(UNIQUE_ATS_POSTING_PREFIXES)
+                    identity = None if unique_posting else job.organization_id
+                    # A strict provider posting ID also survives title corrections
+                    # between aggregators; a title alone never identifies a job.
+                    grouped_keys[("canonical-url", None if unique_posting else title, identity, canonical_url)].append(job.id)
 
             if strategy in {"all", "raw-description"}:
                 raw_signature = _job_raw_description_signature(job)

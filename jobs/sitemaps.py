@@ -1,7 +1,6 @@
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
-from django.utils import timezone
-from django.db.models import Count, Q
+from django.db.models import Count, Max, Q
 
 from .models import Job, Category, SeekerProfile, Organization
 from .seo_config import MIN_INDEXABLE_JOBS
@@ -12,12 +11,13 @@ def visible_jobs():
     return Job.objects.filter(Job.availability_filter())
 
 
-def _live_count(view_name, config):
-    """Live jobs on a programmatic landing page, using the page's own query."""
+def _live_stats(view_name, config):
+    """Count and modification time from the page's own matching public jobs."""
     from .views import seo_pages
     view = getattr(seo_pages, view_name)()
     view.config = config
-    return view.get_queryset().count()
+    return view.get_queryset().order_by().values('pk', 'updated_at').aggregate(
+        total=Count('pk'), lastmod=Max('updated_at'))
 
 
 class JobSitemap(Sitemap):
@@ -44,18 +44,15 @@ class CategorySitemap(Sitemap):
     def items(self):
         # Only include categories with active jobs
         return Category.objects.annotate(
-            live=Count('jobs', filter=Q(jobs__in=visible_jobs()))
+            live=Count('jobs', filter=Q(jobs__in=visible_jobs())),
+            public_lastmod=Max('jobs__updated_at', filter=Q(jobs__in=visible_jobs())),
         ).filter(live__gte=MIN_INDEXABLE_JOBS).order_by('name')
 
     def location(self, obj):
         return reverse('jobs:category_landing', args=[obj.slug])
 
     def lastmod(self, obj):
-        # Use the most recent job update time
-        latest_job = visible_jobs().filter(category=obj).order_by('-updated_at').first()
-        if latest_job:
-            return latest_job.updated_at
-        return timezone.now()
+        return obj.public_lastmod
 
 
 class OrganizationSitemap(Sitemap):
@@ -65,19 +62,18 @@ class OrganizationSitemap(Sitemap):
 
     def items(self):
         # Only include organizations with active job listings
+        from .views.organizations import OLD_SLUG_REDIRECTS
         return Organization.objects.filter(
             jobs__in=visible_jobs()
-        ).distinct().order_by('name')
+        ).exclude(slug__in=OLD_SLUG_REDIRECTS).annotate(
+            public_lastmod=Max('jobs__updated_at', filter=Q(jobs__in=visible_jobs()))
+        ).order_by('name')
 
     def location(self, obj):
         return reverse('jobs:organization_profile', args=[obj.slug])
 
     def lastmod(self, obj):
-        # Use the most recent job update time
-        latest_job = visible_jobs().filter(organization=obj).order_by('-updated_at').first()
-        if latest_job:
-            return latest_job.updated_at
-        return timezone.now()
+        return obj.public_lastmod
 
 
 class ToolsSitemap(Sitemap):
@@ -157,15 +153,16 @@ class RolePagesSitemap(Sitemap):
 
     def items(self):
         from .seo_config import ROLE_SEO_PAGES
-        return [page for page in ROLE_SEO_PAGES if _live_count('RoleJobsView', page) >= MIN_INDEXABLE_JOBS]
+        if not hasattr(self, '_page_stats'):
+            self._page_stats = {page['slug']: _live_stats('RoleJobsView', page) for page in ROLE_SEO_PAGES}
+        return [page for page in ROLE_SEO_PAGES if self._page_stats[page['slug']]['total'] >= MIN_INDEXABLE_JOBS]
 
     def location(self, item):
         return reverse('jobs:role_jobs', kwargs={'role_slug': item['slug']})
 
     def lastmod(self, item):
-        return visible_jobs().order_by('-updated_at').values_list(
-            'updated_at', flat=True
-        ).first()
+        self.items()
+        return self._page_stats[item['slug']]['lastmod']
 
 
 class KeywordPagesSitemap(Sitemap):
@@ -175,15 +172,16 @@ class KeywordPagesSitemap(Sitemap):
 
     def items(self):
         from .seo_config import KEYWORD_SEO_PAGES
-        return [page for page in KEYWORD_SEO_PAGES if _live_count('KeywordJobsView', page) >= MIN_INDEXABLE_JOBS]
+        if not hasattr(self, '_page_stats'):
+            self._page_stats = {page['slug']: _live_stats('KeywordJobsView', page) for page in KEYWORD_SEO_PAGES}
+        return [page for page in KEYWORD_SEO_PAGES if self._page_stats[page['slug']]['total'] >= MIN_INDEXABLE_JOBS]
 
     def location(self, item):
         return reverse('jobs:keyword_jobs', kwargs={'keyword_slug': item['slug']})
 
     def lastmod(self, item):
-        return visible_jobs().order_by('-updated_at').values_list(
-            'updated_at', flat=True
-        ).first()
+        self.items()
+        return self._page_stats[item['slug']]['lastmod']
 
 
 class StaticSitemap(Sitemap):

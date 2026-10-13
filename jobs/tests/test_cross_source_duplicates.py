@@ -95,3 +95,30 @@ class CrossSourceDuplicatesTests(TestCase):
         self.assertEqual(_canonical_duplicate_url('https://example.org/careers'), '')
         self.assertEqual(_canonical_duplicate_url('https://org.bamboohr.com/careers/42?source=board'),
                          _canonical_duplicate_url('https://org.bamboohr.com/careers/42'))
+
+    def test_strict_posting_id_survives_title_corrections_and_feed_refresh(self):
+        from jobs.services.importers.common import _mark_job_seen
+        org = Organization.objects.create(name='Impact Employer', slug='posting-id-employer')
+        url = 'https://jobs.ashbyhq.com/employer/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+        keeper = Job.objects.create(title='Science Communications Officer, Innovation', slug='updated-title',
+            organization=org, source='ashby', application_url=url, quality_score=90)
+        old = Job.objects.create(title='Science Communications Officer', slug='old-title',
+            organization=org, source='probablygood', external_id='old-title', application_url=url+'?utm_source=board', quality_score=60)
+        self.assertTrue(is_duplicate_job(url, source='probablygood', title=old.title, organization_name=org.name))
+        call_command('deactivate_duplicate_jobs', strategy='canonical-url', stdout=StringIO())
+        old.refresh_from_db()
+        self.assertFalse(old.is_active)
+        self.assertEqual(JobSlugRedirect.objects.get(old_slug=old.slug).job_id, keeper.pk)
+        _mark_job_seen(old.source, old.external_id)
+        old.refresh_from_db()
+        self.assertFalse(old.is_active)
+
+    def test_application_routes_and_language_variants_preserve_actual_posting_ids(self):
+        pairs=[('https://apply.workable.com/j/1EF50F64B4', 'https://apply.workable.com/j/1EF50F64B4/apply?source=Climatebase'),
+               ('https://employer.jobs.personio.de/job/2832457', 'https://employer.jobs.personio.de/job/2832457?display=en&gh_src=Climatebase&language=en'),
+               ('https://employer.recruitee.com/o/editor', 'https://employer.recruitee.com/o/editor/c/new?source=Climatebase')]
+        for first,second in pairs:
+            self.assertEqual(_canonical_duplicate_url(first), _canonical_duplicate_url(second))
+        self.assertNotEqual(_canonical_duplicate_url(pairs[0][0]), _canonical_duplicate_url(pairs[0][0].replace('1EF50F64B4','D1701EEC39')))
+        self.assertNotEqual(_canonical_duplicate_url(pairs[1][0]), _canonical_duplicate_url(pairs[1][0].replace('2832457','2828413')))
+        self.assertEqual(_canonical_duplicate_url('https://apply.workable.com/employer/'), '')
