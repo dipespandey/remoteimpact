@@ -59,6 +59,8 @@ class EmailService:
         """
         if getattr(settings, "EMAIL_PROVIDER", "resend") == "none":
             return False
+        from jobs.services.outbound_links import attribute_html_links
+        html = attribute_html_links(html, medium="email", campaign="remote_impact_emails")
         headers = {}
         if unsubscribe_url:
             # One-click unsubscribe (RFC 8058), required by Gmail/Yahoo for bulk mail.

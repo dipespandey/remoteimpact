@@ -63,6 +63,7 @@ def jobs_json_feed(request):
     from django.utils.html import strip_tags
 
     from ..services.job_service import JobService
+    from ..services.outbound_links import with_outbound_attribution
 
     site = settings.SITE_URL.rstrip("/")
     jobs = (JobService._collapse_location_variants(JobService.get_available_jobs())
@@ -76,7 +77,7 @@ def jobs_json_feed(request):
             "date_published": job.posted_at.isoformat() if job.posted_at else None,
             "tags": [t for t in (job.category.name if job.category else "", job.location, job.job_type) if t],
             "_remote_impact": {
-                "organization": job.organization.name, "organization_homepage": job.organization.homepage_url or None,
+                "organization": job.organization.name, "organization_homepage": with_outbound_attribution(job.organization.homepage_url) or None,
                 "location": job.location, "country": job.country, "job_type": job.job_type,
                 "salary_min": float(job.salary_min) if job.salary_min else None,
                 "salary_max": float(job.salary_max) if job.salary_max else None,

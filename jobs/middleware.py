@@ -9,6 +9,32 @@ from django.utils.cache import patch_vary_headers
 logger = logging.getLogger(__name__)
 
 
+class OutboundAttributionMiddleware:
+    """Cover template and imported-content links, including HTMX fragments."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        if (response.streaming or response.get("Content-Encoding")
+                or not response.get("Content-Type", "").startswith("text/html")
+                or request.path.startswith("/admin/")):
+            return response
+        from jobs.services.outbound_links import attribute_html_links
+        from urllib.parse import urlsplit
+
+        original = response.content.decode(response.charset)
+        updated = attribute_html_links(original, internal_hosts=(urlsplit(request.build_absolute_uri("/")).hostname,))
+        if updated != original:
+            response.content = updated.encode(response.charset)
+            if response.has_header("Content-Length"):
+                response["Content-Length"] = len(response.content)
+            if response.has_header("ETag"):
+                del response["ETag"]
+        return response
+
+
 class SecurityHeadersMiddleware:
     """Add conservative browser security headers site-wide."""
 

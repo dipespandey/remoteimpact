@@ -57,12 +57,13 @@ def salary(job):
 
 
 def organization_record(org, *, with_counts=False):
+    from jobs.services.outbound_links import with_outbound_attribution
     site = _site()
     record = {
         "name": org.name, "slug": org.slug,
         "url": site + reverse("jobs:organization_profile", kwargs={"slug": org.slug}) if org.slug else None,
-        "homepage_url": org.homepage_url or org.website or None,
-        "careers_url": org.careers_url or None,
+        "homepage_url": with_outbound_attribution(org.homepage_url or org.website) or None,
+        "careers_url": with_outbound_attribution(org.careers_url) or None,
         "logo_url": (site + org.logo_src) if (org.logo_src and org.logo_src.startswith("/")) else (org.logo_src or None),
     }
     if with_counts:

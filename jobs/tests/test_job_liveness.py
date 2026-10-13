@@ -947,7 +947,7 @@ class OrgSitesTests(TestCase):
             SocialApp.objects.create(provider=provider, provider_id=pid, name=pid or provider, client_id="x", secret="y",
                                      settings={"server_url": "https://www.linkedin.com/oauth"} if pid else {}).sites.add(Site.objects.get_current())
         html = self.client.get(reverse("jobs:organization_profile", args=["sites-org"])).content.decode()
-        self.assertIn('href="https://sitesorg.org/"', html)
+        self.assertIn('href="https://sitesorg.org/?utm_source=remoteimpact&amp;utm_medium=referral', html)
         self.assertIn("Careers page", html)
         self.assertNotIn("idealist.org/x", html)
 

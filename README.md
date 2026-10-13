@@ -203,3 +203,22 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 https://www.unjobnet.org/
 https://app.unv.org/?type=online&rows=200&sortField=CountryCode&sortOrder=-1
+
+### Outbound attribution
+
+Public and account-page outbound anchor links (including imported content and HTMX
+fragments) receive `utm_source=remoteimpact`, `utm_medium=referral`, and
+`utm_campaign=remote_impact_referrals`. Apply redirects use `job_board` /
+`remote_impact_jobs`; external links in HTML emails use `email` /
+`remote_impact_emails`. Organization homepage/careers links in API/MCP records and
+homepage links in JSON Feed also carry attribution.
+
+The shared `jobs/services/outbound_links.py` helper replaces inherited UTM tags,
+retains destination parameters byte for byte and fragments, and sets Lever's
+`lever-source=RemoteImpact` once. Only recognized referral parameters lose named
+aggregator values; unrelated values and employer-specific source tokens survive.
+Internal links, assets, forms, metadata, downloads, signed URLs, OAuth/SSO and
+Stripe session URLs remain unchanged. The Django admin is excluded from HTML
+rewriting. UTMs identify our referrals to destination analytics; destinations
+still need to collect and retain them. No click-request or third-party tracking
+script is added by this tagging.

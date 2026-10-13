@@ -87,32 +87,8 @@ def totals(job_ids, days=30):
     return {row["job_id"]: row for row in rows}
 
 
-AGGREGATOR_NAMES = re.compile(
-    r"^(?:climatebase|idealist|80,?000\s*hours|80000hours|80k|probably\s*good|probablygood|reliefweb|job_board|"
-    r"jobboard|linkedin|indeed|google_jobs)$",
-    re.IGNORECASE,
-)
-REFERRAL = {"utm_source": "remoteimpact", "utm_medium": "job_board", "utm_campaign": "remote_impact_jobs"}
-
-
 def with_referral(url):
-    """Credit Remote Impact on outbound apply links.
+    """Credit Remote Impact on apply links while preserving destination payloads."""
+    from jobs.services.outbound_links import with_outbound_attribution
 
-    Employers see where applicants come from in their ATS and web analytics. Imported
-    links often still carry the aggregator's tags (utm_source=climatebase,
-    gh_src=Climatebase), which would credit someone else for our traffic, so those are
-    replaced. Other query parameters are kept untouched.
-    """
-    from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
-
-    parts = urlsplit(url)
-    if parts.scheme not in ("http", "https"):
-        return url
-    kept = [
-        (key, value) for key, value in parse_qsl(parts.query, keep_blank_values=True)
-        if not key.lower().startswith("utm_") and not AGGREGATOR_NAMES.match(value.strip())
-    ]
-    kept += list(REFERRAL.items())
-    if parts.netloc.lower() in ("jobs.lever.co", "jobs.eu.lever.co"):
-        kept.append(("lever-source", "RemoteImpact"))
-    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(kept), parts.fragment))
+    return with_outbound_attribution(url, medium="job_board", campaign="remote_impact_jobs")
