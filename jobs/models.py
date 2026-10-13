@@ -1986,3 +1986,10 @@ class ApiUsage(models.Model):
     class Meta:
         constraints = [models.UniqueConstraint(
             fields=["date", "surface", "endpoint", "tier", "client", "key_prefix", "status"], name="api_usage_daily")]
+
+
+class PublicStatisticSnapshot(models.Model):
+    """Durable public aggregates, refreshed outside visitor requests."""
+    key = models.CharField(max_length=50, primary_key=True)
+    payload = models.JSONField(default=dict)
+    computed_at = models.DateTimeField()

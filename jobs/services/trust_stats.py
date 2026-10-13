@@ -5,15 +5,23 @@ from django.core.cache import cache
 from django.db.models import Q, Count
 from django.utils import timezone
 
-from jobs.models import Job
+from jobs.models import Job, PublicStatisticSnapshot
 
-CACHE_KEY = "trust_stats:v3"
+CACHE_KEY = "trust_stats:v4"
 REMOVED_STATUSES = ["closed", "not_remote", "dead"]
 
 
 def trust_stats(refresh=False):
     stats = None if refresh else cache.get(CACHE_KEY)
     if stats is not None:
+        return stats
+    if not refresh:
+        snapshot = PublicStatisticSnapshot.objects.filter(pk="trust").first()
+        if snapshot is None:
+            # Hide unavailable figures; a visitor must never trigger a rebuild.
+            return {}
+        stats = dict(snapshot.payload, computed_at=snapshot.computed_at)
+        cache.set(CACHE_KEY, stats, 60 * 60)
         return stats
     from jobs.services.job_service import JobService
 
@@ -30,7 +38,9 @@ def trust_stats(refresh=False):
     checked_recently = Q(raw_data__source_verification__checked_at__gte=week_ago)
     checked_removed = checked_recently & Q(raw_data__source_verification__status__in=REMOVED_STATUSES)
     left_feed = Q(raw_data__removed_from_source_at__gte=week_ago)
-    removed = Job.objects.filter(is_active=False).aggregate(
+    # Restrict aggregation to potentially relevant removal events. This runs
+    # in the scheduled refresh, never while rendering a public page.
+    removed = Job.objects.filter(is_active=False).filter(checked_recently | left_feed).aggregate(
         closed=Count("pk", filter=checked_recently & Q(raw_data__source_verification__status__in=["closed", "dead"])),
         not_remote=Count("pk", filter=checked_recently & Q(raw_data__source_verification__status="not_remote")),
         left_feed=Count("pk", filter=left_feed),
@@ -50,5 +60,8 @@ def trust_stats(refresh=False):
         "removed_left_feed_7d": removed["left_feed"],
         "computed_at": now,
     }
+    PublicStatisticSnapshot.objects.update_or_create(
+        key="trust", defaults={"payload": {k: v for k, v in stats.items() if k != "computed_at"}, "computed_at": now}
+    )
     cache.set(CACHE_KEY, stats, 60 * 60)
     return stats

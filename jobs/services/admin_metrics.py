@@ -172,7 +172,8 @@ def build_metrics(days=30, refresh=False):
         .order_by("-clicks", "-views")[:10]
     )
 
-    trust = trust_stats()
+    # Staff diagnostics may initialize a missing snapshot; public pages never do.
+    trust = trust_stats() or trust_stats(refresh=True)
     live = Job.objects.filter(Job.availability_filter())
     live_by_source = dict(live.values_list("source").annotate(n=Count("id")))
     source_labels = dict(Job.Source.choices)

@@ -19,7 +19,7 @@
             {% if trust.confirmed_open %}
             <a href="{% url 'jobs:how_we_check' %}" class="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-[13px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
-                <span><span class="tabular-nums">{{ trust.confirmed_open|intcomma }}</span> roles confirmed open today</span>
+                <span><span class="tabular-nums">{{ trust.confirmed_open|intcomma }}</span> roles confirmed open at last source check</span>
                 <span aria-hidden="true">&rarr;</span>
             </a>
             {% endif %}

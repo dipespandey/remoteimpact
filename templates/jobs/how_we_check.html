@@ -1,19 +1,20 @@
 {% extends 'base.html' %}
 {% load humanize %}
 
-{% block title %}How we check every job on Remote Impact{% endblock %}
-{% block meta_description %}Every listing on Remote Impact is checked against the employer's own job board or source every day. Closed, office-based and reseller listings are taken down. Here is exactly how.{% endblock %}
-{% block og_title %}How we check every job on Remote Impact{% endblock %}
-{% block og_description %}Daily checks against employers' own job boards, no resellers, and remote means remote.{% endblock %}
+{% block title %}How we check job listings on Remote Impact{% endblock %}
+{% block meta_description %}See how Remote Impact checks job listings, identifies closed roles and reports employer-board verification coverage.{% endblock %}
+{% block og_title %}How we check job listings on Remote Impact{% endblock %}
+{% block og_description %}How we verify job sources, review remote eligibility and remove unavailable listings.{% endblock %}
 {% block canonical %}{{ SITE_URL }}{% url 'jobs:how_we_check' %}{% endblock %}
 
 {% block content %}
 <div class="page-narrow">
     <header class="page-header">
-        <h1 class="page-title">How we check every job</h1>
-        <p class="page-lede">Job boards fill up with roles that closed weeks ago, "remote" jobs that need an office, and reposts from agencies. We take those down every day. This page explains how, with today's numbers.</p>
+        <h1 class="page-title">How we check job listings</h1>
+        <p class="page-lede">Job boards fill up with roles that closed weeks ago, "remote" jobs that need an office, and reposts from agencies. We take those down every day. This page explains how, with our latest verification statistics.</p>
     </header>
 
+    {% if stats %}
     <dl class="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div class="stat"><dt class="stat-label">Open roles</dt><dd class="stat-value">{{ stats.live|intcomma }}</dd></div>
         <div class="stat"><dt class="stat-label">Confirmed on the employer's board</dt><dd class="stat-value">{{ stats.confirmed_share }}%</dd></div>
@@ -21,10 +22,11 @@
         <div class="stat"><dt class="stat-label">Show a salary</dt><dd class="stat-value">{{ stats.salary_share }}%</dd></div>
     </dl>
     <p class="mt-2 text-[13px] text-muted-foreground">Updated {{ stats.computed_at|date:"M j, Y, H:i" }} UTC.</p>
+    {% else %}<p class="mt-4 text-sm text-muted-foreground">Verification statistics are being updated.</p>{% endif %}
 
     <div class="prose prose-neutral mt-10 max-w-none text-[15px] leading-relaxed prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-a:text-foreground">
         <h2>1. We ask the employer, not another job board</h2>
-        <p>Most listings link to the employer's own hiring system: Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Workable, BambooHR, Personio, Recruitee or Breezy. Every morning we ask that system directly whether each role is still open. If the employer has closed it, we take it down the same day. {{ stats.confirmed_open|intcomma }} of today's {{ stats.listings|intcomma }} listings were confirmed this way, and those pages say so with the date of the check.</p>
+        <p>Most listings link to the employer's own hiring system: Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Workable, BambooHR, Personio, Recruitee or Breezy. Every morning we ask that system directly whether each role is still open. If the employer has closed it, we take it down the same day. {% if stats %}{{ stats.confirmed_open|intcomma }} of {{ stats.listings|intcomma }} listings in the latest statistics were confirmed this way; listing pages show the date of their source check.{% endif %}</p>
 
         <h2>2. Remote means remote</h2>
         <p>When the employer's own system marks a role as on-site or hybrid, we take it down, even if another job board called it remote. Hybrid roles stay only when the employer also lists a remote location. {% if stats.removed_not_remote_7d %}This week that removed {{ stats.removed_not_remote_7d|intcomma }} listings.{% endif %}</p>

@@ -323,7 +323,7 @@ class TrustStatsTests(TestCase):
                                            settings={"server_url": "https://www.linkedin.com/oauth"} if provider_id else {})
             app.sites.add(site)
         response = self.client.get(reverse("jobs:how_we_check"))
-        self.assertContains(response, "How we check every job")
+        self.assertContains(response, "How we check job listings")
 
 
 class CandidateSuggestionTests(TestCase):
