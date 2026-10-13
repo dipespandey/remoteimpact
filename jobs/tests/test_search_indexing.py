@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.db import transaction
+from django.db import connection, transaction
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
@@ -129,3 +129,15 @@ class SearchIndexingTests(TestCase):
                 except RuntimeError:
                     pass
             thread.assert_not_called()
+
+    def test_database_default_allows_old_workers_to_insert_during_rollout(self):
+        job = self.job()
+        quote = connection.ops.quote_name
+        columns = [field.column for field in Job._meta.concrete_fields
+                   if field.name not in {'id', 'slug', 'indexing_state'}]
+        joined = ', '.join(quote(name) for name in columns)
+        with connection.cursor() as cursor:
+            cursor.execute(f'INSERT INTO {quote(Job._meta.db_table)} ({joined}, {quote("slug")}) '
+                f'SELECT {joined}, %s FROM {quote(Job._meta.db_table)} WHERE {quote("id")} = %s',
+                ['legacy-worker-job', job.pk])
+        self.assertEqual(Job.objects.get(slug='legacy-worker-job').indexing_state, {})

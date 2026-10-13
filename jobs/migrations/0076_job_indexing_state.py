@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='job',
             name='indexing_state',
-            field=models.JSONField(blank=True, default=dict, editable=False),
+            field=models.JSONField(blank=True, db_default={}, default=dict, editable=False),
         ),
     ]
