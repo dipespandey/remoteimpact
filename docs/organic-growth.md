@@ -97,3 +97,12 @@ FirstIndex's public website describes a $2,000/month managed workflow covering
 research, content, tools, fixes, index checks and AI visibility. We can run an
 evidence-based workflow with the existing stack, but its example growth figures
 do not forecast Remote Impact's results. A cadence does not guarantee 10x traffic.
+
+
+### Organization metadata and public guide follow-up — 2026-10-13
+
+Deployed `219f3f6` and `a6fd583`. Organization profiles derive categories and descriptions from available inventory; removed fixed internship/eligibility claims and request-time modification dates. Directory eligibility was aligned in `1edc6b4`.
+
+Public application-guide GET/HEAD requests now read a valid saved guide or return immediate, clearly labeled general guidance. They never call a model or save generated content. Generic fallback pages are noindex; valid saved guides retain existing indexability. The generation service remains available for explicit offline work; page views no longer generate guides.
+
+Verification: 45 relevant tests passed. Three production profiles and two guide pages returned HTTP 200. Sample guide responses were 209ms cached and 254ms fallback, not a sitewide performance guarantee. Empty employer profiles and generic guides intentionally remain noindex. Complete scoped findings and URL dispositions: `.audit/seo-profile-guide-handoff.html` and JSON. Broader SEO review remains active.
