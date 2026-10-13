@@ -170,3 +170,27 @@ class PosterOrganizationTests(TestCase):
         org.refresh_from_db()
         self.assertEqual(org.website, "https://imported.example")
         self.assertEqual(org.description, "Now described")
+
+
+class PostJobViewCountingTests(TestCase):
+    def setUp(self):
+        from allauth.socialaccount.models import SocialApp
+        from django.contrib.sites.models import Site
+        from django.core.cache import cache
+        cache.clear()
+        for provider, provider_id in (("google", ""), ("openid_connect", "linkedin")):
+            SocialApp.objects.create(provider=provider, provider_id=provider_id, name=provider, client_id="x", secret="y").sites.add(Site.objects.get_current())
+
+    def test_bots_are_skipped_and_a_visitor_counts_once_a_day(self):
+        from django.contrib.auth import get_user_model
+        from jobs.models import EmployerFunnelEvent
+        user = get_user_model().objects.create_user("emp", "emp@example.com", "pw")
+        self.client.force_login(user)
+        browser = {"HTTP_USER_AGENT": "Mozilla/5.0 (Macintosh) Safari/605"}
+        self.client.get("/jobs/post/", HTTP_USER_AGENT="Googlebot/2.1")
+        self.assertEqual(EmployerFunnelEvent.objects.filter(event="post_job_viewed").count(), 0)
+        self.client.get("/jobs/post/?source=employers_hero", **browser)
+        self.client.get("/jobs/post/", **browser)
+        views = EmployerFunnelEvent.objects.filter(event="post_job_viewed")
+        self.assertEqual(views.count(), 1)
+        self.assertEqual(views.first().metadata["page"], "post")

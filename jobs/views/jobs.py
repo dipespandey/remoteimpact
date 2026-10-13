@@ -599,8 +599,18 @@ class PostJobView(LoginRequiredMixin, FormView):
 
     def get(self, request, *args, **kwargs):
         from ..models import EmployerFunnelEvent
+        from ..services import job_stats
         from ..services.funnel import record_employer_event
-        record_employer_event(EmployerFunnelEvent.Event.POST_JOB_VIEWED, user=request.user)
+
+        # Count people, not crawlers or reloads: bots are skipped and a visitor counts once a day.
+        if not job_stats.is_probably_bot(request):
+            try:
+                first_today = cache.add(f"post-job-view:{job_stats.visitor_key(request)}", 1, 60 * 60 * 20)
+            except Exception:  # noqa: BLE001 - analytics must never break the page
+                first_today = True
+            if first_today:
+                record_employer_event(EmployerFunnelEvent.Event.POST_JOB_VIEWED, user=request.user,
+                                      metadata={"page": "post", "source": request.GET.get("source", "")[:80]})
         return super().get(request, *args, **kwargs)
 
     def form_valid(self, form):
