@@ -181,3 +181,21 @@ class AdminApiUsageTests(ApiBase):
         response = self.client.get("/admin/api-usage/")
         self.assertContains(response, "Jobs API and MCP")
         self.assertContains(response, "areas")
+
+
+class PageViewLoggingTests(ApiBase):
+    def test_developers_page_views_and_signups_are_counted_separately_from_calls(self):
+        from jobs.models import ApiUsage
+        self.client.get("/developers/", HTTP_USER_AGENT="Mozilla/5.0 (Macintosh) Safari/605")
+        self.client.get("/developers/", HTTP_USER_AGENT="Googlebot/2.1")
+        self.assertEqual(ApiUsage.objects.get(surface="page", endpoint="developers_page").count, 1)
+        self.client.post("/developers/", {"kind": "free", "name": "Ana", "email": "ana@example.com"},
+                         HTTP_USER_AGENT="Mozilla/5.0 (Macintosh) Safari/605")
+        self.assertTrue(ApiUsage.objects.filter(surface="page", endpoint="key_signup_free").exists())
+        from django.contrib.auth import get_user_model
+        staff = get_user_model().objects.create_user("boss", "boss@example.com", "pw", is_staff=True, is_superuser=True)
+        self.client.force_login(staff)
+        page = self.client.get("/admin/api-usage/")
+        self.assertContains(page, "Developers page views")
+        self.assertEqual(page.context["total"], 0)  # page views are not API calls
+        self.assertEqual((page.context["page_views"], page.context["signups"]), (1, 1))

@@ -20,6 +20,18 @@ KEYS_PER_IP_PER_DAY = 3
 class DevelopersView(TemplateView):
     template_name = "jobs/developers.html"
 
+    def get(self, request, *args, **kwargs):
+        self._log("developers_page")
+        return super().get(request, *args, **kwargs)
+
+    def _log(self, endpoint, tier="anonymous"):
+        """Page views and sign-ups appear in the API usage dashboard under surface "page" (bots skipped)."""
+        from ..api import usage
+        from ..services.job_stats import is_probably_bot
+
+        if not is_probably_bot(self.request):
+            usage.record(self.request, type("Visitor", (), {"tier": tier, "key": None})(), "page", endpoint)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         site = getattr(settings, "SITE_URL", "https://remoteimpact.org").rstrip("/")
@@ -59,6 +71,7 @@ class DevelopersView(TemplateView):
         raw, key = ApiKey.issue(name=name, email=email, tier=tier, organization=organization, use_case=use_case,
                                 is_active=(tier == ApiKey.Tier.FREE))
         self._email_key(key, raw)
+        self._log("key_signup_" + tier.value, tier.value)
         if tier == ApiKey.Tier.FREE:
             request.session["new_api_key"] = raw
             messages.success(request, "Your key is ready. It's shown once below and has been emailed to you.")

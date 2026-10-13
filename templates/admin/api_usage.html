@@ -27,10 +27,12 @@
 </header>
 <main>
   <div class="title"><div><h1>Jobs API and MCP, last {{ days }} days</h1>
-  <div class="sub">Counts by day from every REST and MCP call. <a href="{% url 'jobs:developers' %}">Developers page</a></div></div></div>
+  <div class="sub">Counts by day from every REST and MCP call, plus developers-page views and key sign-ups (bots excluded from page views). <a href="{% url 'jobs:developers' %}">Developers page</a></div></div></div>
 
-  <div class="stats stats-4">
-    <div class="stat"><div class="k">Calls</div><div class="v num">{{ total|intcomma }}</div></div>
+  <div class="stats stats-6">
+    <div class="stat"><div class="k">API and MCP calls</div><div class="v num">{{ total|intcomma }}</div></div>
+    <div class="stat"><div class="k">Developers page views</div><div class="v num">{{ page_views|intcomma }}</div></div>
+    <div class="stat"><div class="k">Key sign-ups (form submits)</div><div class="v num">{{ signups|intcomma }}</div></div>
     <div class="stat"><div class="k">Refused (tier or rate limit)</div><div class="v num">{{ limited|intcomma }}</div></div>
     <div class="stat"><div class="k">Keys (active)</div><div class="v num">{{ key_counts.all }} ({{ key_counts.active }})</div></div>
     <div class="stat"><div class="k">Commercial requests to approve</div><div class="v num">{{ key_counts.commercial_pending }}</div></div>
@@ -38,6 +40,8 @@
 
   <div class="card pad" style="margin-top:16px"><h2>Calls per day</h2>
     <div class="bars" role="img" aria-label="Calls per day">{% for d in series %}<span style="height:{{ d.pct }}%" title="{{ d.date|date:'M j' }}: {{ d.n }}"></span>{% endfor %}</div>
+    <h2 style="margin-top:14px">Developers page views per day</h2>
+    <div class="bars" role="img" aria-label="Page views per day">{% for d in series %}<span style="height:{{ d.views_pct }}%;opacity:.55" title="{{ d.date|date:'M j' }}: {{ d.views }}"></span>{% endfor %}</div>
   </div>
 
   <div class="grid2">

@@ -68,7 +68,9 @@ def api_usage(request):
     raw = request.GET.get("days", "14")
     days = int(raw) if raw.isdigit() and int(raw) in (7, 14, 30, 90) else 14
     since = timezone.localdate() - timedelta(days=days - 1)
-    rows = ApiUsage.objects.filter(date__gte=since)
+    everything = ApiUsage.objects.filter(date__gte=since)
+    rows = everything.exclude(surface="page")  # API and MCP calls only; page views are counted separately
+    page_rows = everything.filter(surface="page")
 
     def top(field, limit=10):
         return [{"label": r[field] or "-", "n": r["n"]} for r in rows.values(field).annotate(n=Sum("count")).order_by("-n")[:limit]]
@@ -84,8 +86,15 @@ def api_usage(request):
         key.period_calls = by_key.get(key.prefix, 0)
     total = rows.aggregate(n=Sum("count"))["n"] or 0
     limited = rows.filter(status__in=(403, 429)).aggregate(n=Sum("count"))["n"] or 0
+    page_views = page_rows.filter(endpoint="developers_page").aggregate(n=Sum("count"))["n"] or 0
+    signups = page_rows.filter(endpoint__startswith="key_signup_").aggregate(n=Sum("count"))["n"] or 0
+    page_per_day = {r["date"]: r["n"] for r in page_rows.filter(endpoint="developers_page").values("date").annotate(n=Sum("count"))}
+    page_biggest = max(list(page_per_day.values()) + [1])
+    for d in series:
+        d["views"] = page_per_day.get(d["date"], 0)
+        d["views_pct"] = round(d["views"] * 100 / page_biggest)
     return render(request, "admin/api_usage.html", {
-        **admin.site.each_context(request), "days": days, "ranges": (7, 14, 30, 90), "total": total, "limited": limited,
+        **admin.site.each_context(request), "days": days, "ranges": (7, 14, 30, 90), "total": total, "limited": limited, "page_views": page_views, "signups": signups,
         "series": series, "surfaces": top("surface"), "endpoints": top("endpoint"), "tiers": top("tier"), "clients": top("client"),
         "statuses": top("status"), "keys": keys, "key_counts": {"all": ApiKey.objects.count(), "active": ApiKey.objects.filter(is_active=True).count(),
                                                                  "commercial_pending": ApiKey.objects.filter(tier="commercial", is_active=False).count()},
