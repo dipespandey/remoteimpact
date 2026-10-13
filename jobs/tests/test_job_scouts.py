@@ -761,6 +761,7 @@ class JobScoutFlowTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["intent"], intent)
+        self.assertEqual(ConsumerFunnelEvent.objects.filter(event=ConsumerFunnelEvent.Event.SCOUT_PREVIEWED).latest("created_at").metadata["intent_text"], intent)
         self.assertEqual(response.context["preview_jobs"], [self.job])
         self.assertContains(response, "Send my 1 match")
         self.assertIn("/alerts/?intent=", response.context["next_path"])

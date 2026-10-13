@@ -128,9 +128,26 @@ def _revenue_cents(since, until):
     }
 
 
+def recent_scout_searches(since):
+    """Bounded staff-only visibility into saved briefs and recorded previews."""
+    alerts = list(JobAlert.objects.filter(created_at__gte=since).order_by("-created_at")[:50])
+    created = ConsumerFunnelEvent.objects.filter(event=CE.SCOUT_CREATED, alert_id__in=[a.pk for a in alerts]).order_by("created_at")
+    counts = {e.alert_id: e.metadata.get("match_count") for e in created}
+    rows = [{"intent": a.intent_text or a.keywords, "created_at": a.created_at,
+             "kind": "Saved Scout", "match_count": counts.get(a.pk), "alert_id": a.pk}
+            for a in alerts if a.intent_text or a.keywords]
+    previews = ConsumerFunnelEvent.objects.filter(event=CE.SCOUT_PREVIEWED, created_at__gte=since).order_by("-created_at")[:100]
+    for event in previews:
+        intent = event.metadata.get("intent_text")
+        if isinstance(intent, str) and intent.strip():
+            rows.append({"intent": intent[:2000], "created_at": event.created_at,
+                         "kind": "Preview", "match_count": event.metadata.get("match_count"), "alert_id": None})
+    return sorted(rows, key=lambda r: r["created_at"], reverse=True)[:50]
+
+
 def build_metrics(days=30, refresh=False):
     days = days if days in RANGES else 30
-    key = f"admin_metrics:v1:{days}"
+    key = f"admin_metrics:v2:{days}"
     cached = None if refresh else cache.get(key)
     if cached:
         return cached
@@ -198,6 +215,7 @@ def build_metrics(days=30, refresh=False):
 
     metrics = {
         "days": days, "ranges": RANGES, "generated_at": now,
+        "scout_searches": recent_scout_searches(since),
         "kpis": [
             _kpi("Revenue", revenue["total"] / 100, revenue_prev["total"] / 100, fmt="money",
                  note="Postings, features and Pro payments recorded here; trials excluded"),

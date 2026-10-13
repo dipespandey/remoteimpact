@@ -90,7 +90,10 @@ def location_requests(text):
         name=match.group()
         if name=='us' and not re.search(r'(?<![A-Za-z])US(?![A-Za-z])',str(text)[match.start():match.end()]):
             continue  # the pronoun "us", e.g. "let us know"
-        if EXPERIENCE_CONTEXT.search(lowered[max(0,match.start()-60):match.start()]):
+        prefix = lowered[max(0, match.start()-60):match.start()]
+        requested_role_location = bool(re.search(r"\b(?:jobs?|roles?|positions?|opportunities)\b[^.;!?]{0,30}\b(?:in|across|within|from)\s*$", prefix))
+        historical_context = bool(re.search(r"\b(?:worked|served|volunteered|studied|background|experience)\b[^.;!?]*$", prefix))
+        if EXPERIENCE_CONTEXT.search(prefix) and not (requested_role_location and not historical_context):
             continue
         if name not in result:
             result.append(name)

@@ -593,9 +593,13 @@ class ReferralSignupAdmin(admin.ModelAdmin):
 
 @admin.register(JobAlert)
 class JobAlertAdmin(admin.ModelAdmin):
-    list_display = ["user", "name", "frequency", "is_active", "last_sent_at", "created_at"]
+    list_display = ["user", "search_brief", "name", "frequency", "is_active", "last_sent_at", "created_at"]
     list_filter = ["frequency", "is_active"]
-    search_fields = ["user__email", "name", "keywords"]
+    search_fields = ["user__email", "name", "keywords", "intent_text"]
+
+    @admin.display(description="What they searched for")
+    def search_brief(self, obj):
+        return (obj.intent_text or obj.keywords or "—")[:160]
     readonly_fields = ["created_at", "updated_at", "last_sent_at"]
 
 

@@ -457,6 +457,11 @@ skills is not a request for invented, exact job titles. JSON only."""
                 if any(re.search(rf"\b{re.escape(skill.replace(chr(45), chr(32)))}\s+and\s+{re.escape(other.replace(chr(45), chr(32)))}\b", lowered)
                        or re.search(rf"\b{re.escape(other.replace(chr(45), chr(32)))}\s+and\s+{re.escape(skill.replace(chr(45), chr(32)))}\b", lowered)
                        for other in preferences["skills"] if other != skill)]
+        # An explicit tool requirement must survive close-match expansion.
+        for skill in preferences["skills"]:
+            label = skill.replace("-", " ")
+            if re.search(r"\b(?:using|requiring|must use|built with)\s+" + re.escape(label) + r"\b", lowered):
+                preferences["required_skills"] = list(dict.fromkeys([*preferences.get("required_skills", []), label]))
         return preferences
 
     @classmethod
@@ -707,6 +712,10 @@ skills is not a request for invented, exact job titles. JSON only."""
                 searchable_roots = title_roots
                 if not distinctive.intersection(title_roots) and ((legal_intent and legal_title) or research_family or operations_family or investment_family or technical_family or design_family):
                     searchable_roots = title_roots | context_roots()
+                if technical_family and distinctive == {"softwa"} and re.search(
+                    r"\b(?:full[- ]?stack|back[- ]?end|front[- ]?end|web|application|platform|python|programmer)\b", title, re.I
+                ):
+                    searchable_roots = searchable_roots | {"softwa"}
                 if not distinctive.intersection(searchable_roots):
                     continue
             elif global_distinctive and not global_distinctive.intersection(
@@ -728,6 +737,10 @@ skills is not a request for invented, exact job titles. JSON only."""
             order_failed = False
             for first, second in ordered_pairs:
                 if {first, second}.issubset(desired_roots):
+                    if (first, second) == ("softwa", "engine") and technical_family and re.search(
+                        r"\b(?:full[- ]?stack|back[- ]?end|front[- ]?end|web|application|platform|python|programmer)\b", title, re.I
+                    ):
+                        continue
                     first_positions = [
                         index for index, value in enumerate(title_root_list) if value == first
                     ]

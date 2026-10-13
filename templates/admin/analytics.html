@@ -110,6 +110,18 @@
       {% endwith %}
     </section>
 
+    <section class="card panel span-12" aria-labelledby="searches-h">
+      <h2 id="searches-h">What people are searching for</h2>
+      <p class="hint">Recent saved Scouts and recorded previews. Older preview phrases were not retained. Results are counts from the original run.</p>
+      <table>
+        <thead><tr><th>Search brief</th><th>Type</th><th>Results</th><th>When</th></tr></thead>
+        <tbody>{% for row in m.scout_searches %}
+          <tr><td>{% if row.alert_id %}<a href="{% url 'admin:jobs_jobalert_change' row.alert_id %}">{{ row.intent }}</a>{% else %}{{ row.intent }}{% endif %}</td>
+            <td>{{ row.kind }}</td><td>{% if row.match_count is not None %}{{ row.match_count }}{% else %}—{% endif %}</td><td>{{ row.created_at|date:"M j, H:i" }}</td></tr>
+        {% empty %}<tr><td colspan="4">No search briefs recorded in this period.</td></tr>{% endfor %}</tbody>
+      </table>
+    </section>
+
     <section class="card panel span-8" aria-labelledby="inv-h">
       <h2 id="inv-h">Job inventory</h2>
       <p class="hint">Live listings by source, and when each source last refreshed. Red means no sighting for 48 hours.</p>

@@ -225,6 +225,7 @@ class JobScoutPreviewView(TemplateView):
             user=self.request.user,
             metadata={
                 "match_count": len(matches),
+                "intent_text": self.intent[:2000],
                 "source": source,
                 "authenticated": self.request.user.is_authenticated,
             },
