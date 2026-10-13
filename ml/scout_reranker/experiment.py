@@ -110,14 +110,19 @@ def cpu_latency(model, tokenizer, rows):
 def train(name, train_rows, dev_rows, test_rows, golden, destination, args):
     random.seed(args.seed)
     torch.manual_seed(args.seed)
-    tokenizer = AutoTokenizer.from_pretrained(name, revision=BASE_REVISIONS[name])
-    model = AutoModelForSequenceClassification.from_pretrained(name, num_labels=1, revision=BASE_REVISIONS[name])
+    # Fine-tune a pinned base or continue from a locally verified pilot.
+    initial = getattr(args, 'init_checkpoint', None)
+    source = initial or name
+    source_options = {'local_files_only': True} if initial else {'revision': BASE_REVISIONS[name]}
+    tokenizer = AutoTokenizer.from_pretrained(source, **source_options)
+    model = AutoModelForSequenceClassification.from_pretrained(source, num_labels=1, **source_options)
     params = sum(parameter.numel() for parameter in model.parameters())
     if params > 100_000_000:
         raise ValueError('Parameter budget exceeded')
     model.to(args.device)
     baseline_dev = predict(model, tokenizer, dev_rows, args.device)
-    baseline_calibration = calibrate(dev_rows, baseline_dev)
+    precision_target = getattr(args, 'min_precision', 0.97)
+    baseline_calibration = calibrate(dev_rows, baseline_dev, min_precision=precision_target)
     baseline_test = metrics(test_rows, predict(model, tokenizer, test_rows, args.device), baseline_calibration['threshold'])
     baseline_golden = metrics(golden, predict(model, tokenizer, golden, args.device), baseline_calibration['threshold'])
     print(json.dumps({'event': 'baseline', 'base': name, 'test': baseline_test, 'golden': baseline_golden}), flush=True)
@@ -140,7 +145,11 @@ def train(name, train_rows, dev_rows, test_rows, golden, destination, args):
             target = torch.tensor([row['label'] for row in batch], device=args.device, dtype=torch.float32)
             optimizer.zero_grad(set_to_none=True)
             logits = model(**tokens(tokenizer, batch, args.device)).logits.flatten()
-            loss = torch.nn.functional.binary_cross_entropy_with_logits(logits, target)
+            weights = torch.tensor([float(row.get('weight', 1.0)) for row in batch], device=args.device)
+            if not bool(torch.all((weights > 0) & (weights <= 1))):
+                raise ValueError('Training weights must be in (0, 1]')
+            pair_loss = torch.nn.functional.binary_cross_entropy_with_logits(logits, target, reduction='none')
+            loss = (pair_loss * weights).sum() / weights.sum()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
@@ -149,13 +158,16 @@ def train(name, train_rows, dev_rows, test_rows, golden, destination, args):
             if offset // args.batch_size % 100 == 0:
                 print(json.dumps({'event': 'progress', 'epoch': epoch + 1, 'pairs': offset, 'total': len(rows)}), flush=True)
         scores = predict(model, tokenizer, dev_rows, args.device)
-        calibration = calibrate(dev_rows, scores)
+        calibration = calibrate(dev_rows, scores, min_precision=precision_target)
         dev = metrics(dev_rows, scores, calibration['threshold'])
         record = {'epoch': epoch + 1, 'loss': loss_sum / len(rows), 'seconds': time.perf_counter() - start, 'dev': dev}
         history.append(record)
         print(json.dumps({'event': 'epoch', 'base': name, **record}), flush=True)
         # Only development labels choose the checkpoint or acceptance threshold.
-        quality = (calibration['accepted'], dev['recall'] if calibration['accepted'] else 0, dev['ndcg_at_3'], dev['average_precision'])
+        quality = (calibration['accepted'], dev['recall'] if calibration['accepted'] else 0,
+                   dev['average_precision'], dev['ndcg_at_3'])
+        if getattr(args, 'selection_metric', 'precision_recall') == 'average_precision':
+            quality = (dev['average_precision'], dev['ndcg_at_3'])
         if best is None or quality > best:
             best = quality
             chosen_calibration = calibration
@@ -167,7 +179,16 @@ def train(name, train_rows, dev_rows, test_rows, golden, destination, args):
         torch.mps.empty_cache()
     model = AutoModelForSequenceClassification.from_pretrained(destination).to(args.device)
     threshold = chosen_calibration['threshold']
-    result = {'base_model': name, 'base_revision': BASE_REVISIONS[name], 'parameters': params, 'seed': args.seed, 'max_tokens': MAX_TOKENS, 'label_source': 'title_family_weak_v1', 'calibration': chosen_calibration, 'baseline_test': baseline_test, 'baseline_golden': baseline_golden, 'test': metrics(test_rows, predict(model, tokenizer, test_rows, args.device), threshold), 'golden': metrics(golden, predict(model, tokenizer, golden, args.device), threshold), 'history': history, 'cpu_latency': cpu_latency(model, tokenizer, golden)}
+    label_sources = sorted({row['label_source'] for row in train_rows})
+    result = {'base_model': name, 'base_revision': BASE_REVISIONS[name], 'initial_checkpoint': initial,
+              'initial_checkpoint_sha256': getattr(args, 'initial_sha256', None),
+              'parameters': params, 'seed': args.seed, 'max_tokens': MAX_TOKENS, 'label_source': '+'.join(label_sources),
+              'development_precision_target': precision_target,
+              'checkpoint_selection': getattr(args, 'selection_metric', 'precision_recall'),
+              'calibration': chosen_calibration, 'baseline_test': baseline_test, 'baseline_golden': baseline_golden,
+              'test': metrics(test_rows, predict(model, tokenizer, test_rows, args.device), threshold),
+              'golden': metrics(golden, predict(model, tokenizer, golden, args.device), threshold),
+              'history': history, 'cpu_latency': cpu_latency(model, tokenizer, golden)}
     # Weak labels and developer-authored examples cannot authorize production activation.
     result['production_ready'] = False
     result['activation_blockers'] = ['Needs independently human-reviewed relevance judgments', 'Needs VPS latency/concurrency measurement', 'Needs real-brief comparison against current DeepSeek decisions']
@@ -193,17 +214,36 @@ def main():
     parser.add_argument('--device', default='mps' if torch.backends.mps.is_available() else 'cpu')
     parser.add_argument('--bases', nargs='+', choices=list(BASES), default=['minilm', 'gte'])
     parser.add_argument('--max-train', type=int, default=0)
+    parser.add_argument('--init-checkpoint', help='Local checkpoint for continued training (one base only)')
+    parser.add_argument('--skip-embedding-baselines', action='store_true')
+    parser.add_argument('--selection-metric', choices=['precision_recall','average_precision'], default='precision_recall')
+    parser.add_argument('--min-precision',type=float,default=0.97)
     args = parser.parse_args()
+    if not 0 < args.min_precision <= 1:
+        raise ValueError('Invalid development precision target')
+    if args.init_checkpoint:
+        if len(args.bases)!=1:
+            raise ValueError('A continued checkpoint requires exactly one base')
+        card=json.loads((Path(args.init_checkpoint)/'remoteimpact_model.json').read_text())
+        digest=hashlib.sha256((Path(args.init_checkpoint)/'model.safetensors').read_bytes()).hexdigest()
+        if digest!=card['weights_sha256'] or card['base_model']!=BASES[args.bases[0]]:
+            raise ValueError('Initial checkpoint identity or checksum mismatch')
+        args.initial_sha256=digest
     torch.set_num_threads(4)
     directory = Path(args.data)
+    dataset = json.loads((directory / 'dataset.json').read_text())
+    for split in ['train', 'dev', 'test']:
+        expected = dataset.get('splits', {}).get(split, {}).get('sha256')
+        if expected and hashlib.sha256((directory / f'{split}.jsonl').read_bytes()).hexdigest() != expected:
+            raise ValueError('Training dataset content differs from its manifest')
     train_rows, dev_rows, test_rows = [read_rows(directory / f'{name}.jsonl') for name in ['train', 'dev', 'test']]
     if args.max_train:
         train_rows = train_rows[:args.max_train]
     golden = read_rows(Path(__file__).with_name('acceptance.jsonl'))
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=True)
-    report = {'production_embedding': {'name': 'thenlper/gte-small', 'parameters': 33360000, 'dimensions': 384}, 'dataset': json.loads((directory / 'dataset.json').read_text()), 'embedding_baselines': {}, 'classifiers': {}}
-    for name in ['thenlper/gte-small', 'sentence-transformers/all-MiniLM-L6-v2']:
+    report = {'production_embedding': {'name': 'thenlper/gte-small', 'parameters': 33360000, 'dimensions': 384}, 'dataset': dataset, 'embedding_baselines': {}, 'classifiers': {}}
+    for name in ([] if args.skip_embedding_baselines else ['thenlper/gte-small', 'sentence-transformers/all-MiniLM-L6-v2']):
         report['embedding_baselines'][name] = {'test': evaluate_embeddings(name, test_rows, args.device), 'golden': evaluate_embeddings(name, golden, args.device)}
         print(json.dumps({'event': 'embedding', 'name': name, **report['embedding_baselines'][name]}), flush=True)
         if args.device == 'mps':

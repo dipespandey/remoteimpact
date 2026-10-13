@@ -137,3 +137,90 @@ and in a private VPS pilot directory outside the app. Production activation is
 not enabled. Next evaluation should use independently reviewed real relevance
 judgments, including professional-domain distinctions missing from title-family
 labels. A generative teacher's output would also be a weak label, not ground truth.
+
+## Description-grounded v2 (2026-10-13)
+
+`better_data.py` partitions the public snapshot before sampling balanced anchors,
+generating synthetic briefs, and mining GTE neighbours. A separate Pro teacher
+judges the candidates without seeing their anchor identity. Labels require an
+exact supporting quotation from the **student-visible 320-token evidence**;
+uncertain or unsupported pairs are discarded. The title taxonomy balances
+sampling only; it does not assign these new labels. Training includes a bounded
+weak replay set at one-quarter loss weight.
+
+Final training has 3,716 pairs: 2,295 grounded teacher labels and 1,421 weak replay
+pairs. Development/test have 336/394 teacher-labeled pairs. Those two files stayed
+byte-identical when training expanded. A final confirmation set has 151 pairs
+from 26 new synthetic briefs and employers absent from every earlier candidate
+set. This remains teacher evaluation, with **zero independent human judgments**.
+The original test was observed during exploration; confirmation labels were not
+used to tune checkpoints, thresholds or prompts. There is no chronological or
+real-user holdout in this snapshot.
+
+Two 22.7M checkpoints retain the precision/recall tradeoff. On the 372-pair subset
+where the existing provider produced valid decisions:
+
+| Model / decision policy | Precision | Recall |
+| --- | ---: | ---: |
+| v1, original threshold | 43.6% | 89.0% |
+| v2, ranking checkpoint / development 90% target | 83.6% | 56.0% |
+| v2, strict checkpoint / development 97% target | 100% | 17.0% |
+| Current DeepSeek relevance prompt | 83.6% | 97.0% |
+
+The comparison uses fixed public candidates and the current production prompt
+and quote validator. Three invalid provider groups are excluded from **every**
+model in that table. It does not replay eligibility, retrieval, six-second timeouts
+or deterministic fallback. It does not establish that v2 can replace DeepSeek.
+The strict v2 ranks a positive first in 92.3% of positive-containing original test
+groups versus 84.6% for v1. On fresh confirmation, the ranking checkpoint makes
+zero false selections among 17 selected roles but misses 18 of 35 positives.
+Report counts alongside rates: these small samples are not production accuracy.
+
+`evaluation-v2-2026-10-13.json` records all operating points, domain sample counts,
+checksums, source limitations and isolated VPS benchmarks. Twelve long pairs take
+about 1.7–1.9 seconds on one VPS CPU; process RSS is about 605MB. The new data
+improves relevance distinctions; it does not change model architecture or solve
+concurrent-serving latency. Both manifests retain `production_ready: false`.
+
+The 779 offline teacher calls stayed below a $5 reservation ceiling. The conservative
+peak/uncached token-cost estimate is $2.49; actual billing can be lower. Rates were
+checked against [DeepSeek's official pricing](https://api-docs.deepseek.com/quick_start/pricing/).
+`teacher.py` reserves worst-case cost before dispatch, persists usage, reuses
+content-addressed responses, and retains reservations for interrupted attempts.
+Credentials are supplied only to the isolated teacher process. It has no database
+or web-serving access and logs counters rather than input or provider errors.
+
+To reproduce, run from the repository root. Teacher stages require a private API
+key environment; never put it in task files or commit datasets/cache responses.
+
+```sh
+.venv/bin/python -m ml.scout_reranker.better_data prepare --train-anchors-per-family 12
+# Run teacher.py on generate-tasks.jsonl; use the same cache and ledger for all stages.
+.venv/bin/python -m ml.scout_reranker.better_data mine
+# Run teacher.py on label-tasks.jsonl, then:
+.venv/bin/python -m ml.scout_reranker.better_data finalize
+.venv/bin/python -m ml.scout_reranker.experiment --data ml/data/scout-v2 \
+  --output ml/artifacts/scout-v2-expanded --bases minilm \
+  --init-checkpoint ml/artifacts/scout-v1/minilm --skip-embedding-baselines \
+  --epochs 6 --learning-rate 0.00002
+.venv/bin/python -m ml.scout_reranker.experiment --data ml/data/scout-v2 \
+  --output ml/artifacts/scout-v2-ranking --bases minilm \
+  --init-checkpoint ml/artifacts/scout-v1/minilm --skip-embedding-baselines \
+  --epochs 6 --learning-rate 0.00002 --selection-metric average_precision --min-precision 0.90
+.venv/bin/python -m ml.scout_reranker.compare prepare-current
+# Run teacher.py on current-tasks.jsonl for the provider comparison.
+# Freeze training choices before preparing/labeling the confirmation stages.
+.venv/bin/python -m ml.scout_reranker.confirmation prepare
+.venv/bin/python -m ml.scout_reranker.confirmation mine
+.venv/bin/python -m ml.scout_reranker.confirmation finalize
+.venv/bin/python -m ml.scout_reranker.compare evaluate \
+  --v2 ml/artifacts/scout-v2-ranking/minilm --strict-v2 ml/artifacts/scout-v2-expanded/minilm
+.venv/bin/python -m ml.scout_reranker.review
+```
+
+`review.html` is a standalone blind worksheet with keyboard judgments, local
+progress and JSONL export. It exposes neither teacher labels nor model scores.
+Use the exported human labels for a subsequent independent evaluation; generating
+the worksheet does not constitute review. Model cards, data and weights are in
+ignored local artifact directories and the private VPS pilot directory. The live
+production model configuration is unchanged.

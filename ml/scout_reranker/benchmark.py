@@ -18,13 +18,14 @@ def main():
     parser.add_argument('--root', required=True)
     parser.add_argument('--repeats', type=int, default=20)
     parser.add_argument('--quantize', action='store_true')
+    parser.add_argument('--models', nargs='+', choices=['minilm','gte'], default=['minilm','gte'])
     args = parser.parse_args()
     root = Path(args.root)
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
     output = {'cpu_threads': 1, 'platform': platform.platform(), 'torch': torch.__version__,
               'dynamic_int8': args.quantize, 'models': {}}
-    for name in ['minilm', 'gte']:
+    for name in args.models:
         directory = root / name
         card = json.loads((directory / 'remoteimpact_model.json').read_text())
         if hashlib.sha256((directory / 'model.safetensors').read_bytes()).hexdigest() != card['weights_sha256']:
