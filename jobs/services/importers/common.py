@@ -15,7 +15,7 @@ from django.db import connections, transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from jobs.models import Category, Job, Organization
+from jobs.models import Category, Job, Organization, JobSlugRedirect
 from jobs.utils import unique_slug
 from jobs.constants import IMPACT_AREAS
 from jobs.services.location_normalizer import normalize_location
@@ -286,6 +286,28 @@ def verification_blocks_listing(raw: Dict) -> bool:
             or (raw.get("source_page_enrichment") or {}).get("status") in {"http_404", "http_410"})
 
 
+def _retired_duplicate_has_available_keeper(job: Job, application_url=None, title=None) -> bool:
+    """A fresh feed sighting must not undo a proved canonical retirement.
+
+    A changed posting identity, unrelated editorial redirect, or unavailable
+    keeper must still allow the imported record to reopen normally.
+    """
+    if job.is_active:
+        return False
+    identity = _canonical_duplicate_url(application_url if application_url is not None else job.application_url)
+    if not identity:
+        return False
+    alias = JobSlugRedirect.objects.filter(old_slug=job.slug).select_related('job__organization').first()
+    if not alias or alias.job_id == job.pk or not alias.job.is_available:
+        return False
+    keeper = alias.job
+    return (
+        _canonical_duplicate_url(keeper.application_url) == identity
+        and _normalize_duplicate_title(title if title is not None else job.title) == _normalize_duplicate_title(keeper.title)
+        and (identity.startswith(('ashby:', 'lever:', 'greenhouse:')) or keeper.organization_id == job.organization_id)
+    )
+
+
 def _mark_job_seen(source: str, external_id: str) -> None:
     if source and external_id:
         updates = {"last_seen_at": timezone.now()}
@@ -293,8 +315,10 @@ def _mark_job_seen(source: str, external_id: str) -> None:
         # may remain indexed after the posting closes, so only the board API is
         # allowed to reactivate these records.
         if source not in {"greenhouse", "lever", "ashby", "workable", "recruitee", "personio", "bamboohr"}:
-            raw = Job.objects.filter(source=source, external_id=external_id).values_list("raw_data", flat=True).first() or {}
-            if not verification_blocks_listing(raw):
+            job = Job.objects.filter(source=source, external_id=external_id).only(
+                'raw_data', 'is_active', 'slug', 'title', 'application_url', 'organization_id'
+            ).first()
+            if job and not verification_blocks_listing(job.raw_data) and not _retired_duplicate_has_available_keeper(job):
                 updates["is_active"] = True
         Job.objects.filter(source=source, external_id=external_id).update(**updates)
 
@@ -640,7 +664,8 @@ def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
         old_raw = job.raw_data or {}
         same_destination = job.application_url == defaults["application_url"]
         confirmed_dead = same_destination and verification_blocks_listing(old_raw)
-        if confirmed_dead:
+        retired_duplicate = _retired_duplicate_has_available_keeper(job, defaults['application_url'], defaults['title'])
+        if confirmed_dead or retired_duplicate:
             defaults["is_active"] = False
         if not source_location and job.location:
             defaults["location"] = job.location

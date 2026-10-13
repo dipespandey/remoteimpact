@@ -4,10 +4,57 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from jobs.models import Job, Organization, JobSlugRedirect
-from jobs.services.importers.common import is_duplicate_job, _canonical_duplicate_url
+from jobs.services.importers.common import is_duplicate_job, _canonical_duplicate_url, _mark_job_seen, _upsert_job
 
 
 class CrossSourceDuplicatesTests(TestCase):
+    def retired_pair(self):
+        org = Organization.objects.create(name='Impact Employer', slug='impact-employer')
+        keeper = Job.objects.create(title='Operations Director', slug='keeper', organization=org,
+            source='probablygood', external_id='keeper', application_url='https://example.org/director', quality_score=90)
+        duplicate = Job.objects.create(title=keeper.title, slug='retired', organization=org,
+            source='80000hours', external_id='retired', application_url=keeper.application_url+'?utm_source=board',
+            quality_score=80, is_active=False)
+        JobSlugRedirect.objects.create(old_slug=duplicate.slug, job=keeper)
+        return keeper, duplicate
+
+    def refresh_payload(self, job, **overrides):
+        return dict(source=job.source, external_id=job.external_id, title=job.title,
+            organization_name=job.organization.name, location='Remote',
+            description='Manage operations and improve financial processes for an impact organization. '*4,
+            application_url=job.application_url, **overrides)
+
+    def test_feed_sighting_keeps_proved_duplicate_retired(self):
+        keeper, duplicate = self.retired_pair()
+        _mark_job_seen(duplicate.source, duplicate.external_id)
+        duplicate.refresh_from_db()
+        self.assertFalse(duplicate.is_active)
+        self.assertIsNotNone(duplicate.last_seen_at)
+
+    def test_full_refresh_keeps_campaign_duplicate_retired(self):
+        keeper, duplicate = self.retired_pair()
+        payload = self.refresh_payload(duplicate)
+        payload['application_url'] = keeper.application_url+'?utm_source=new-board'
+        updated, created = _upsert_job(payload)
+        self.assertFalse(created)
+        self.assertFalse(updated.is_active)
+        self.assertIn('financial processes', updated.description)
+
+    def test_changed_posting_destination_can_reopen(self):
+        keeper, duplicate = self.retired_pair()
+        payload = self.refresh_payload(duplicate)
+        payload['application_url'] = 'https://example.org/new-director'
+        updated, created = _upsert_job(payload)
+        self.assertTrue(updated.is_active)
+
+    def test_closed_keeper_does_not_hide_a_reopened_source(self):
+        keeper, duplicate = self.retired_pair()
+        keeper.is_active = False
+        keeper.save()
+        _mark_job_seen(duplicate.source, duplicate.external_id)
+        duplicate.refresh_from_db()
+        self.assertTrue(duplicate.is_active)
+
     def test_same_ats_posting_with_org_spelling_variants_keeps_richer_record(self):
         first_org = Organization.objects.create(name="FAR AI", slug="far-ai-rich")
         second_org = Organization.objects.create(name="Far.Ai", slug="far-ai-thin")
