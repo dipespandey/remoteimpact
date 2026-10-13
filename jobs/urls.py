@@ -215,6 +215,7 @@ urlpatterns = [
     path("api/v1/areas/", api_rest.areas, name="api_areas"),
     path("api/v1/openapi.json", api_rest.openapi, name="api_openapi"),
     path("mcp/", api_mcp.endpoint, name="mcp"),
+    path(".well-known/mcp/server-card.json", api_mcp.server_card, name="mcp_server_card"),
     path("feed/jobs/category/<slug:slug>/", CategoryJobsFeed(), name="category_feed"),
     # Job Aggregator Feeds (Indeed, LinkedIn, etc.)
     path("feed/indeed.xml", IndeedXMLFeed.as_view(), name="indeed_feed"),

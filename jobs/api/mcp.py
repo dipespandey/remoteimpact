@@ -11,12 +11,15 @@ from django.http import HttpResponse, JsonResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from jobs.api import serialize
+from jobs.api import serialize, usage
 from jobs.api.auth import RateLimited, identify
 from jobs.api.rest import ATTRIBUTION, CORS, search
 
 PROTOCOL_VERSIONS = ("2025-06-18", "2025-03-26", "2024-11-05")
-SERVER = {"name": "remote-impact-jobs", "version": "1.0.0", "title": "Remote Impact Jobs"}
+SERVER = {"name": "remote-impact-jobs", "version": "1.0.0", "title": "Remote Impact Jobs",
+          "description": "Verified remote jobs at climate, global health, AI safety and other impact organizations: search by area, "
+                         "the applicant's country, level and pay. Checked daily against each employer's own job board.",
+          "websiteUrl": "https://remoteimpact.org/developers/"}
 INSTRUCTIONS = (
     "Remote roles at climate, global health, AI safety, education and other impact organizations, checked daily "
     "against each employer's own job board. Use search_jobs with the person's constraints (country they live in, "
@@ -24,6 +27,18 @@ INSTRUCTIONS = (
     + ATTRIBUTION
 )
 
+READ_ONLY = {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False}
+_ORG = {"type": "object", "properties": {"name": {"type": "string"}, "slug": {"type": "string"}, "url": {"type": ["string", "null"]},
+                                         "homepage_url": {"type": ["string", "null"]}, "careers_url": {"type": ["string", "null"]}}}
+_JOB = {"type": "object", "description": "One verified open role", "properties": {
+    "id": {"type": "integer"}, "slug": {"type": "string"}, "title": {"type": "string"}, "organization": _ORG,
+    "location": {"type": "string"}, "remote_scope": {"type": "string", "enum": ["worldwide", "countries", "region", "unspecified"]},
+    "eligible_countries": {"type": "array", "items": {"type": "string"}}, "job_type": {"type": "string"},
+    "experience_level": {"type": ["string", "null"]},
+    "salary": {"type": ["object", "null"], "properties": {"min": {"type": ["number", "null"]}, "max": {"type": ["number", "null"]},
+                                                          "currency": {"type": "string"}, "period": {"type": "string"}}},
+    "posted_at": {"type": ["string", "null"]}, "verification": {"type": "object"}, "url": {"type": "string"}, "apply_url": {"type": "string"},
+    "description_excerpt": {"type": "string"}}, "required": ["id", "title", "url"]}
 TOOLS = [
     {
         "name": "search_jobs",
@@ -31,6 +46,8 @@ TOOLS = [
         "description": "Find open, verified remote roles. Filter by text, impact area, the applicant's country, job type, "
                        "level, minimum annual pay and recency. Returns the best matches with eligibility, pay and links "
                        "(5 per call without a key, 10 with a free key, 25 with commercial access).",
+        "annotations": READ_ONLY,
+        "outputSchema": {"type": "object", "properties": {"total": {"type": "integer"}, "jobs": {"type": "array", "items": _JOB}}, "required": ["total", "jobs"]},
         "inputSchema": {"type": "object", "properties": {
             "query": {"type": "string", "description": "Free text: role, skills, organization"},
             "area": {"type": "string", "description": "Impact area slug from list_areas, e.g. climate-environment"},
@@ -47,6 +64,8 @@ TOOLS = [
         "name": "get_job",
         "title": "Get one role",
         "description": "Full record for one open role by slug or id, including verification and eligibility.",
+        "annotations": READ_ONLY,
+        "outputSchema": {"type": "object", "properties": {"job": {"oneOf": [_JOB, {"type": "null"}]}}, "required": ["job"]},
         "inputSchema": {"type": "object", "properties": {"id": {"type": "string", "description": "Job slug or numeric id"}},
                         "required": ["id"]},
     },
@@ -54,13 +73,19 @@ TOOLS = [
         "name": "list_areas",
         "title": "List impact areas",
         "description": "Impact areas (categories) with the number of open roles in each.",
+        "annotations": READ_ONLY,
+        "outputSchema": {"type": "object", "properties": {"areas": {"type": "array", "items": {"type": "object", "properties": {
+            "name": {"type": "string"}, "slug": {"type": "string"}, "open_roles": {"type": "integer"}, "url": {"type": "string"}}}}}, "required": ["areas"]},
         "inputSchema": {"type": "object", "properties": {}},
     },
     {
         "name": "get_organization",
         "title": "Get an organization and its open roles",
         "description": "Organization details (homepage, careers page) and its open roles on Remote Impact.",
-        "inputSchema": {"type": "object", "properties": {"slug": {"type": "string"}}, "required": ["slug"]},
+        "annotations": READ_ONLY,
+        "outputSchema": {"type": "object", "properties": {"organization": {"oneOf": [_ORG, {"type": "null"}]}, "jobs": {"type": "array", "items": _JOB}},
+                         "required": ["organization", "jobs"]},
+        "inputSchema": {"type": "object", "properties": {"slug": {"type": "string", "description": "Organization slug, e.g. from a job's organization.slug"}}, "required": ["slug"]},
     },
 ]
 
@@ -162,6 +187,7 @@ def endpoint(request):
         response = _error(id_, -32000, "Rate limited; add an API key from remoteimpact.org/developers/ for higher limits.", status=429)
         response["Retry-After"] = str(exc.retry_after)
         return response
+    usage.record(request, caller, "mcp", (params.get("name") if method == "tools/call" else method) or method)
     if method == "initialize":
         requested = str(params.get("protocolVersion") or "")
         version = requested if requested in PROTOCOL_VERSIONS else PROTOCOL_VERSIONS[0]
@@ -188,3 +214,15 @@ def endpoint(request):
     if method in ("resources/list", "prompts/list"):
         return _reply({"jsonrpc": "2.0", "id": id_, "result": {method.split("/")[0]: []}}, caller=caller)
     return _error(id_, -32601, f"Method not found: {method}")
+
+
+def server_card(request):
+    """Static description of the server for registries and scanners (no handshake needed)."""
+    card = {"serverInfo": SERVER, "authentication": {"required": False, "schemes": ["bearer"],
+                                                      "description": "Optional API key for higher limits: https://remoteimpact.org/developers/"},
+            "instructions": INSTRUCTIONS, "tools": TOOLS, "resources": [], "prompts": []}
+    response = JsonResponse(card, json_dumps_params={"ensure_ascii": False})
+    for key, value in CORS.items():
+        response[key] = value
+    response["Cache-Control"] = "public, max-age=3600"
+    return response

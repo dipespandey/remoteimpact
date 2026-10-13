@@ -1955,3 +1955,20 @@ class ApiKey(models.Model):
         obj = cls.objects.create(name=name, email=email, tier=tier, organization=organization, use_case=use_case,
                                  is_active=is_active, key_hash=cls.hash_key(raw), prefix=raw[:10])
         return raw, obj
+
+
+class ApiUsage(models.Model):
+    """Daily call counts for the Jobs API and MCP server, by surface, endpoint or tool, tier and client."""
+
+    date = models.DateField(db_index=True)
+    surface = models.CharField(max_length=8)  # rest | mcp
+    endpoint = models.CharField(max_length=60)  # jobs, job, areas, ... or the MCP tool / method
+    tier = models.CharField(max_length=12)
+    client = models.CharField(max_length=40, blank=True)  # coarse user-agent family
+    key_prefix = models.CharField(max_length=12, blank=True)
+    status = models.PositiveSmallIntegerField(default=200)
+    count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(
+            fields=["date", "surface", "endpoint", "tier", "client", "key_prefix", "status"], name="api_usage_daily")]

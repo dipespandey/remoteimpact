@@ -154,3 +154,18 @@ class DevelopersPageTests(ApiBase):
         self.assertEqual((key.tier, key.is_active), ("commercial", False))
         self.client.post("/developers/", {"kind": "free", "name": "Bot", "email": "bot@example.com", "website": "spam"})
         self.assertFalse(ApiKey.objects.filter(email="bot@example.com").exists())
+
+
+class UsageAndCardTests(ApiBase):
+    def test_calls_are_counted_by_surface_endpoint_and_client(self):
+        from jobs.models import ApiUsage
+        self.client.get("/api/v1/areas/", HTTP_USER_AGENT="curl/8.7")
+        self.client.post("/mcp/", json.dumps({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                                              "params": {"name": "list_areas", "arguments": {}}}), content_type="application/json")
+        self.assertEqual(ApiUsage.objects.get(surface="rest", endpoint="areas").client, "curl")
+        self.assertEqual(ApiUsage.objects.get(surface="mcp", endpoint="list_areas").count, 1)
+
+    def test_server_card_and_tool_annotations(self):
+        card = self.client.get("/.well-known/mcp/server-card.json").json()
+        self.assertTrue(card["serverInfo"]["description"])
+        self.assertTrue(all(t["annotations"]["readOnlyHint"] and t["outputSchema"] for t in card["tools"]))

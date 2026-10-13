@@ -16,7 +16,7 @@ from django.http import JsonResponse, QueryDict
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
-from jobs.api import serialize
+from jobs.api import serialize, usage
 from jobs.api.auth import RateLimited, TierLimit, identify
 
 CORS = {
@@ -47,13 +47,17 @@ def api_view(func):
         try:
             caller = identify(request)
         except RateLimited as exc:
+            usage.record(request, type("C", (), {"tier": "anonymous", "key": None})(), "rest", func.__name__, 429)
             response = respond({"error": "rate_limited", "message": "Too many requests for this tier.",
                                 "docs": serialize._site() + "/developers/"}, status=429)
             response["Retry-After"] = str(exc.retry_after)
             return response
         try:
-            return func(request, caller, *args, **kwargs)
+            response = func(request, caller, *args, **kwargs)
+            usage.record(request, caller, "rest", func.__name__, response.status_code)
+            return response
         except TierLimit as exc:
+            usage.record(request, caller, "rest", func.__name__, 403)
             return respond({"error": "tier_limit", "message": str(exc), "docs": serialize._site() + "/developers/"},
                            status=403, caller=caller)
         except ValueError as exc:
