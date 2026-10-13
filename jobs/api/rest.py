@@ -86,6 +86,9 @@ def search(params, caller, *, limit=None, page=1):
                 filters.appendlist(internal, str(value))
     if params.get("source") == "employer_posted":
         filters["direct_apply"] = "1"
+    text_search = bool(params.get("q"))
+    if text_search:
+        filters["sort"] = "relevance"  # title matches first, then full-text rank; otherwise newest first
     jobs = JobService.get_filtered_jobs(filters)
     country = params.get("country")
     if country:
@@ -102,7 +105,9 @@ def search(params, caller, *, limit=None, page=1):
     scope = params.get("remote_scope")
     if scope == "worldwide":
         jobs = jobs.filter(location__iregex=r"worldwide|anywhere|global")
-    jobs = JobService._collapse_location_variants(jobs).order_by("-posted_at", "-id")
+    jobs = JobService._collapse_location_variants(jobs)
+    if not text_search:
+        jobs = jobs.order_by("-posted_at", "-id")
     page_max = caller.limits["page_max"]
     limit = max(1, min(int(limit or params.get("limit") or 20), page_max))
     page = max(1, int(page or params.get("page") or 1))
