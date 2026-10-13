@@ -95,8 +95,8 @@ def rerank(candidates,preferences,fallback,diagnostics,relaxed=False):
         if cached is not None:
             accepted=validate_decisions(cached,evidence);diagnostics['reranker']='cache'
         else:
-            from jobs.services.ai import AIClient
-            output=AIClient().generate(body,max_tokens=MAX_OUTPUT_TOKENS,temperature=0.0,
+            from jobs.services.scout_workflow import generate
+            output=generate(body,max_tokens=MAX_OUTPUT_TOKENS,temperature=0.0,
                                       timeout=TIMEOUT_SECONDS,max_retries=0,system_message=system)
             accepted=validate_decisions(output,evidence)
             try:

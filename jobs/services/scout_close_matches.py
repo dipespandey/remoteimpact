@@ -99,8 +99,8 @@ def close_matches(qs, preferences, terms, diagnostics, limit=MAX_PICKS, force=Fa
     try:
         output = cache.get(key)
         if output is None:
-            from jobs.services.ai import AIClient
-            output = AIClient().generate(body, max_tokens=900, temperature=0.0, timeout=12.0,
+            from jobs.services.scout_workflow import generate
+            output = generate(body, max_tokens=900, temperature=0.0, timeout=12.0,
                                          max_retries=0, system_message=system)
             cache.set(key, output, 3600)
         accepted = validate(output, evidence, limit)

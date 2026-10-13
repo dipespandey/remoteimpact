@@ -203,9 +203,10 @@ class JobScoutPreviewView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        preferences = JobScoutService._fallback_parse(self.intent)
-        matches = JobScoutService.get_matches_for_preferences(
-            preferences,
+        workflow_diagnostics = {}
+        preferences, matches = JobScoutService.search_intent(
+            self.intent,
+            diagnostics=workflow_diagnostics,
             since=timezone.now() - timedelta(days=30),
             limit=3,
         )
@@ -227,6 +228,7 @@ class JobScoutPreviewView(TemplateView):
             metadata={
                 "match_count": len(matches),
                 "intent_text": self.intent[:2000],
+                "workflow": workflow_diagnostics,
                 "source": source,
                 "authenticated": self.request.user.is_authenticated,
             },
