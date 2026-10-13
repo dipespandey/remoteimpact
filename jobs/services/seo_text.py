@@ -1,4 +1,4 @@
-"""Titles and meta descriptions that fit in search results (about 60 and 155 characters)."""
+"""Page-specific search titles and concise meta descriptions."""
 import re
 import json
 
@@ -21,23 +21,12 @@ def _trim(text: str, limit: int) -> str:
     return cut + "…"
 
 
-def _trim_role(text: str, limit: int) -> str:
-    """Keep a role's leading name and trailing region/specialization distinct."""
-    text = re.sub(r"\s+", " ", text or "").strip()
-    if len(text) <= limit:
-        return text
-    front_budget = max(1, int((limit - 3) * 0.6))
-    front = text[:front_budget].rsplit(" ", 1)[0].rstrip(" ,;:-–—") or text[:front_budget]
-    tail_budget = limit - len(front) - 3
-    tail = text[-tail_budget:]
-    if len(text) > tail_budget and text[-tail_budget - 1] != " ":
-        tail = tail.split(" ", 1)[-1]
-    tail = tail.lstrip(" ,;:-–—")
-    return f"{front} … {tail}"
-
-
 def job_title_tag(title: str, organization: str, suffix: str = "Remote Impact") -> str:
-    """"Role at Employer | Remote Impact" when it fits; otherwise the role and employer, trimming the longer one."""
+    """Keep role and employer identity; omit optional branding on longer titles.
+
+    Search result width is a display heuristic, not a reason to remove the
+    words that distinguish one posting from another.
+    """
     title = " ".join((title or "").split())
     organization = " ".join((organization or "").split())
     # Feeds sometimes append the employer to the role itself. Repeating it in
@@ -50,18 +39,7 @@ def job_title_tag(title: str, organization: str, suffix: str = "Remote Impact") 
     full = f"{base} | {suffix}"
     if len(full) <= TITLE_LIMIT:
         return full
-    if len(base) <= TITLE_LIMIT:
-        return base
-    room = TITLE_LIMIT - len(" at ")
-    # Keep both halves readable: give each up to half, and the unused part of the shorter one to the longer.
-    half = room // 2
-    if len(organization) <= half:
-        title = _trim_role(title, room - len(organization))
-    elif len(title) <= half:
-        organization = _trim(organization, room - len(title))
-    else:
-        title, organization = _trim_role(title, half), _trim(organization, room - half)
-    return f"{title} at {organization}"
+    return base
 
 
 def job_meta_description(title: str, organization: str, location: str, job_type: str, pay: str, description_html: str) -> str:

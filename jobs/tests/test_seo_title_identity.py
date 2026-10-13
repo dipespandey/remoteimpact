@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from jobs.services.seo_text import TITLE_LIMIT, job_title_tag
+from jobs.services.seo_text import job_title_tag
 
 
 class SeoTitleIdentityTests(SimpleTestCase):
@@ -10,13 +10,14 @@ class SeoTitleIdentityTests(SimpleTestCase):
         for title,region in zip(titles,['NW','SW']):
             self.assertIn(region+' Region',title)
             self.assertTrue(title.startswith('Regional'))
-            self.assertLessEqual(len(title),TITLE_LIMIT)
+            self.assertIn(employer, title)
 
     def test_specializations_are_not_trimmed_to_identical_titles(self):
         roles=['Technical Business Development Strategist – '+specialty for specialty in ['Distribution','EMA','Transmission Planning']]
         titles=[job_title_tag(role,'Electric Power Engineers') for role in roles]
         self.assertEqual(len(set(titles)),3)
-        for title in titles:self.assertLessEqual(len(title),TITLE_LIMIT)
+        for title, role in zip(titles, roles):
+            self.assertIn(role, title)
 
 
 class EmployerRepetitionTests(SimpleTestCase):
@@ -30,3 +31,14 @@ class EmployerRepetitionTests(SimpleTestCase):
         self.assertIn("Advocate for Children", job_title_tag("Advocate for Children", "Acme"))
         self.assertIn("RAND Policy Analyst", job_title_tag("RAND Policy Analyst", "RAND"))
         self.assertIn("Analyst for RAND Europe", job_title_tag("Analyst for RAND Europe", "RAND"))
+
+
+class RoleWordingTests(SimpleTestCase):
+    def test_middle_specializations_remain_distinct(self):
+        roles = ["Head of Francophone Africa " + specialty + " and Venture Builder"
+                 for specialty in ["Export Manufacturing", "Labour Mobility"]]
+        titles = [job_title_tag(role, "Africa Jobs Fund") for role in roles]
+        self.assertNotEqual(*titles)
+        for role, title in zip(roles, titles):
+            self.assertIn(role, title)
+            self.assertIn("Africa Jobs Fund", title)

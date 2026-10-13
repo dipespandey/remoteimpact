@@ -1096,10 +1096,10 @@ class SeoTextTests(TestCase):
         short = job_title_tag("Policy Analyst", "RAND")
         self.assertEqual(short, "Policy Analyst at RAND | Remote Impact")
         long_title = job_title_tag("Head of Litigation", "Legal Advocates for Safe Science and Technology")
-        self.assertLessEqual(len(long_title), TITLE_LIMIT)
+        self.assertIn("Legal Advocates for Safe Science and Technology", long_title)
         self.assertTrue(long_title.startswith("Head of Litigation at Legal"))
         huge = job_title_tag("Principal Software Engineer, Infrastructure Security and Reliability", "OpenAI")
-        self.assertLessEqual(len(huge), TITLE_LIMIT)
+        self.assertIn("Principal Software Engineer, Infrastructure Security and Reliability", huge)
         desc = job_meta_description("Head of Litigation", "LASST", "Remote (US)", "Full-time", "$150,000 – $190,000 per year",
                                     "<p>" + "Lead the organization's litigation strategy. " * 20 + "</p>")
         self.assertLessEqual(len(desc), DESCRIPTION_LIMIT)
