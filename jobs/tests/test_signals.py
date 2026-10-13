@@ -21,9 +21,10 @@ class IndexNowSignalTest(SimpleTestCase):
         thread.assert_not_called()
 
     @patch("jobs.signals.threading.Thread")
-    def test_new_public_jobs_ping_indexnow(self, thread):
+    @patch('jobs.signals.transaction.on_commit', side_effect=lambda fn: fn())
+    def test_new_public_jobs_ping_indexnow(self, on_commit, thread):
         worker = thread.return_value
-        job = Mock(is_active=True)
+        job = Mock(is_active=True, is_available=True, pk=1)
         job.get_absolute_url.return_value = "/jobs/example/"
 
         ping_indexnow_on_job_save(sender=None, instance=job, created=True)
@@ -31,7 +32,7 @@ class IndexNowSignalTest(SimpleTestCase):
         thread.assert_called_once()
         self.assertEqual(
             thread.call_args.kwargs["args"],
-            ("https://remoteimpact.org/jobs/example/",),
+            ("https://remoteimpact.org/jobs/example/", 1),
         )
         self.assertTrue(worker.daemon)
         worker.start.assert_called_once_with()

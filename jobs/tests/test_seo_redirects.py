@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.contrib.sites.models import Site
 from allauth.socialaccount.models import SocialApp
 
-from jobs.models import Category
+from jobs.models import Category, Job, JobSlugRedirect, Organization
 
 
 class StandardIconRedirectTests(TestCase):
@@ -60,6 +60,22 @@ class StandardIconRedirectTests(TestCase):
 
         self.assertContains(job_list, 'name="robots" content="noindex, follow"')
         self.assertContains(category_list, 'name="robots" content="noindex, follow"')
+
+    def test_proved_duplicate_archives_redirect_to_available_canonical_role(self):
+        org = Organization.objects.create(name='Employer', slug='canonical-employer')
+        keep = Job.objects.create(title='Software Engineer', slug='kept-software-role', organization=org,
+            source='ashby', application_url='https://example.org/role', is_active=True)
+        old = Job.objects.create(title=keep.title, slug='old-software-role', organization=org,
+            source='ashby', application_url=keep.application_url, is_active=False)
+        JobSlugRedirect.objects.create(old_slug=old.slug, job=keep)
+        response = self.client.get(old.get_absolute_url())
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response['Location'], keep.get_absolute_url())
+        keep.is_active = False
+        keep.save(update_fields=['is_active'])
+        response = self.client.get(old.get_absolute_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'noindex, follow')
 
     def test_home_scout_launcher_has_a_single_line_prompt(self):
         response = self.client.get("/")

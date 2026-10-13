@@ -355,7 +355,14 @@ class JobDetailView(DetailView):
 
     def get(self, request, *args, **kwargs):
         try:
-            return super().get(request, *args, **kwargs)
+            response = super().get(request, *args, **kwargs)
+            if not response.context_data.get('job_available'):
+                from ..models import JobSlugRedirect
+                moved = JobSlugRedirect.objects.filter(old_slug=self.object.slug,
+                    job__in=self._available_queryset()).select_related('job').first()
+                if moved and moved.job_id != self.object.pk:
+                    return redirect(moved.job.get_absolute_url(), permanent=True)
+            return response
         except Http404:
             # Fallback: check if this is an old slug and redirect to new one
             old_slug = self.kwargs.get("slug", "")

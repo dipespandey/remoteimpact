@@ -13,7 +13,8 @@ from ..services.page_cache import cache_public_page as cache_page
 from .mixins import FastJobPaginationMixin
 from django.views.generic import ListView
 from django.http import Http404
-from django.db.models import Count, Q
+from django.db.models import Count, Max, Q
+from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
 
@@ -42,16 +43,37 @@ def comparable_salary_jobs(jobs_qs):
     )
 
 def visible_jobs():
+    return Job.objects.filter(Job.availability_filter())
+
+
+GUIDES_BY_CATEGORY = {
+    'climate-environment': 'climate-environment-careers',
+    'ai-safety': 'ai-safety-careers',
+    'global-health': 'global-health-careers',
+    'humanitarian-ingo': 'humanitarian-ingo-careers',
+    'effective-altruism': 'effective-altruism-careers',
+    'education': 'education-edtech-careers',
+    'technology': 'tech-for-good-careers',
+}
+
+
+def inventory_evidence(queryset, categories):
+    """Useful live evidence from the same inventory displayed on the page."""
     now = timezone.now()
-    cutoff = now - timedelta(days=180)
-    return Job.objects.filter(is_active=True).filter(
-        Q(quality_score__gte=55) | Q(quality_score=0)
-    ).exclude(
-        expires_at__lt=now,
-    ).exclude(
-        expires_at__isnull=True,
-        posted_at__lt=cutoff,
+    counts = queryset.aggregate(
+        employers=Count('organization_id', distinct=True),
+        new_week=Count('pk', filter=Q(posted_at__gte=now - timedelta(days=7))),
+        last_source_sighting=Max('last_seen_at'),
     )
+    hubs = []
+    for name, info in categories:
+        hub = {'name': name, 'count': info['count'],
+               'url': reverse('jobs:category_landing', args=[info['slug']])}
+        guide = GUIDES_BY_CATEGORY.get(info['slug'])
+        if guide:
+            hub['guide_url'] = reverse('jobs:pillar_detail', args=[guide])
+        hubs.append(hub)
+    return {'inventory_evidence': counts, 'inventory_hubs': hubs, 'inventory_date': now}
 
 
 @method_decorator(cache_page(getattr(settings, 'CACHE_TTL_MEDIUM', 300)), name='dispatch')
@@ -117,6 +139,7 @@ class RoleJobsView(FastJobPaginationMixin, ListView):
             )
             for row in category_rows
         ]
+        context.update(inventory_evidence(jobs_qs, context['category_breakdown']))
         
         # Salary stats
         jobs_with_salary = comparable_salary_jobs(jobs_qs)
@@ -299,6 +322,7 @@ class KeywordJobsView(FastJobPaginationMixin, ListView):
             )
             for row in category_rows
         ]
+        context.update(inventory_evidence(jobs_qs, context['category_breakdown']))
         
         # Salary stats
         jobs_with_salary = comparable_salary_jobs(jobs_qs)

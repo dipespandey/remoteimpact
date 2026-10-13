@@ -7,7 +7,7 @@ import re
 from copy import deepcopy
 from datetime import datetime, timezone as dt_timezone
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
 import requests
 from asgiref.sync import sync_to_async
@@ -151,7 +151,7 @@ def _is_generic_listing_title(value: Any) -> bool:
 
 
 def _canonical_duplicate_url(value: Any) -> str:
-    """Collapse known ATS URLs that differ only by per-location posting IDs."""
+    """Identify a source posting, preserving functional IDs on generic URLs."""
     raw = str(value or "").strip()
     if not raw:
         return ""
@@ -171,10 +171,12 @@ def _canonical_duplicate_url(value: Any) -> str:
             match = re.fullmatch(rf"/([^/]+)/({uuid_pattern})(?:/application|/apply)?", path)
             if match:
                 return f"{prefix}:{match.group(1)}:{match.group(2)}"
+            return ''  # The company board is not an individual posting.
     if host in {"boards.greenhouse.io", "job-boards.greenhouse.io"}:
         match = re.fullmatch(r"/([^/]+)/jobs/(\d+)(?:/application)?", path)
         if match:
             return f"greenhouse:{match.group(1)}:{match.group(2)}"
+        return ''
 
     if "smartrecruiters.com" in host:
         path_parts = [part for part in path.split("/") if part]
@@ -193,7 +195,21 @@ def _canonical_duplicate_url(value: Any) -> str:
         if match:
             return f"idealist:{match.group(1)}"
 
-    return ""
+    # Employer pages and BambooHR copies often differ only by campaign tags.
+    # Keep every unknown query parameter: id=123 and id=456 are different jobs.
+    if parts.scheme.lower() not in {'http', 'https'} or parts.username or parts.password:
+        return ''
+    query = [(key, val) for key, val in parse_qsl(parts.query, keep_blank_values=True)
+             if not key.lower().startswith('utm_')
+             and key.lower() not in {'gclid', 'fbclid', 'msclkid', '_ga'}
+             and not (host.endswith('.bamboohr.com') and key.lower() == 'source')]
+    generic_paths = {'', '/', '/jobs', '/careers', '/vacancies', '/openings', '/positions'}
+    functional_id = any(key.lower() in {'id', 'jobid', 'job_id', 'jid', 'postingid'} and val
+                        for key, val in query)
+    if path in generic_paths and not functional_id:
+        return ''
+    return 'url:' + urlunsplit((parts.scheme.lower(), parts.netloc.lower(),
+                               parts.path.rstrip('/') or '/', urlencode(sorted(query)), ''))
 
 
 def _duplicate_url_variants(value: Any) -> list[str]:
@@ -396,7 +412,11 @@ def is_duplicate_job(
         query = query.filter(title__iexact=title.strip())
     if organization_name and not unique_ats_posting:
         query = query.filter(organization__name__iexact=organization_name.strip())
-    if query.exists():
+    if canonical_url:
+        if any(_canonical_duplicate_url(job.application_url) == canonical_url
+               for job in query.only('application_url')):
+            return True
+    elif query.exists():
         return True
 
     if not canonical_url:

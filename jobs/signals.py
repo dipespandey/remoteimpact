@@ -4,7 +4,7 @@ import threading
 
 import requests
 from django.conf import settings
-from django.db import connection
+from django.db import connection, transaction, close_old_connections
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -45,8 +45,7 @@ def _seeker_embedding_hash(profile):
         profile.cv_facts,
     ])
 
-# IndexNow configuration
-INDEXNOW_KEY = "db25ddbb333d413289a18c8820c32ca4"
+# IndexNow configuration (the public key comes from settings for both send paths).
 INDEXNOW_ENDPOINT = "https://www.bing.com/indexnow"
 
 
@@ -73,42 +72,57 @@ def update_job_search_vector(sender, instance, created, **kwargs):
         qs.update(search_vector=None)
 
 
-def _ping_indexnow(url: str):
+def _ping_indexnow(url: str, job_id=None):
     """Send IndexNow ping to Bing (runs in background thread)."""
     if not settings.INDEXNOW_ENABLED:
         return
+    close_old_connections()
     try:
+        from jobs.services.search_indexing import pending, fingerprint, acknowledge
+        job = Job.objects.select_related('organization').get(pk=job_id) if job_id else None
+        if job and (not job.is_available or not pending(job, 'indexnow')):
+            return
+        signature = fingerprint(job) if job else None
         site_url = getattr(settings, 'SITE_URL', 'https://remoteimpact.org')
-        key_location = f"{site_url}/{INDEXNOW_KEY}.txt"
+        if job and url != site_url.rstrip('/') + job.get_absolute_url():
+            return  # A renamed URL will be picked up by the persistent batch.
+        key = settings.INDEXNOW_KEY
+        key_location = f"{site_url}/{key}.txt"
         response = requests.get(
             INDEXNOW_ENDPOINT,
             params={
                 "url": url,
-                "key": INDEXNOW_KEY,
+                "key": key,
                 "keyLocation": key_location,
             },
             timeout=10,
         )
-        if response.status_code == 200:
+        if response.status_code in {200, 202}:
+            if job:
+                acknowledge(job, 'indexnow', signature)
             logger.info(f"IndexNow: Successfully pinged {url}")
         else:
             logger.warning(f"IndexNow: Got status {response.status_code} for {url}")
     except Exception as e:
         logger.error(f"IndexNow: Failed to ping {url}: {e}")
+    finally:
+        close_old_connections()
 
 
 @receiver(post_save, sender=Job)
 def ping_indexnow_on_job_save(sender, instance, created, **kwargs):
     """Notify Bing when a new public job URL is created."""
-    if not settings.INDEXNOW_ENABLED or not created or not instance.is_active:
+    if not settings.INDEXNOW_ENABLED or not created or not instance.is_available:
         return
     try:
         site_url = getattr(settings, 'SITE_URL', 'https://remoteimpact.org')
         job_url = f"{site_url}{instance.get_absolute_url()}"
         # Run in background thread to not block the request
-        thread = threading.Thread(target=_ping_indexnow, args=(job_url,))
-        thread.daemon = True
-        thread.start()
+        def start_after_commit():
+            thread = threading.Thread(target=_ping_indexnow, args=(job_url, instance.pk))
+            thread.daemon = True
+            thread.start()
+        transaction.on_commit(start_after_commit)
     except Exception as e:
         logger.error(f"IndexNow: Error preparing ping for job {instance.pk}: {e}")
 

@@ -14,6 +14,7 @@ from jobs.services.job_quality import job_posting_schema_json
 from jobs.services.source_page_enrichment import PageFetch
 from jobs.sitemaps import visible_jobs
 from jobs.views.jobs import JobDetailView
+from jobs.views.seo_pages import visible_jobs as seo_visible_jobs
 
 
 @override_settings(SOCIALACCOUNT_PROVIDERS={provider: {"APP": {"client_id": "test", "secret": "test", "key": ""}} for provider in ("google", "linkedin")})
@@ -47,6 +48,7 @@ class AvailabilityPolicyTests(TestCase):
             with self.subTest(values=values):
                 self.assertEqual(job.is_available, expected)
                 self.assertEqual(visible_jobs().filter(pk=job.pk).exists(), expected)
+                self.assertEqual(seo_visible_jobs().filter(pk=job.pk).exists(), expected)
                 self.assertEqual(JobDetailView._available_queryset().filter(pk=job.pk).exists(), expected)
                 response = self.client.get(reverse('jobs:job_detail', args=[job.slug]))
                 self.assertEqual(response.status_code, 200)

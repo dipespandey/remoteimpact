@@ -7,7 +7,9 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand
 
-from jobs.models import Job
+from django.db import transaction
+from django.utils import timezone
+from jobs.models import Job, JobSlugRedirect
 from jobs.services.importers.common import (
     _canonical_duplicate_url,
     _job_raw_description_signature,
@@ -62,6 +64,7 @@ class Command(BaseCommand):
                 "raw_data",
                 "description",
                 "quality_score",
+                "slug", "expires_at", "last_seen_at", "organization__verification_status",
             )
         )
 
@@ -139,13 +142,14 @@ class Command(BaseCommand):
         report = []
         for group in duplicate_groups:
             group.sort(
-                key=lambda job: (job.quality_score, job.posted_at or minimum_datetime, job.id),
+                key=lambda job: (job.is_available, job.quality_score, job.posted_at or minimum_datetime, job.id),
                 reverse=True,
             )
             keep = group[0]
             duplicates = group[1:]
             ids_to_deactivate.extend(job.id for job in duplicates)
-            report.append({"keep": keep.pk, "deactivate": [job.pk for job in duplicates], "previous_is_active": True})
+            report.append({"keep": keep.pk, "deactivate": [job.pk for job in duplicates],
+                           "duplicate_slugs": [job.slug for job in duplicates], "previous_is_active": True})
             if len(examples) < 8:
                 examples.append((keep, duplicates))
 
@@ -184,5 +188,12 @@ class Command(BaseCommand):
         if dry_run:
             return
 
-        updated = Job.objects.filter(id__in=ids_to_deactivate).update(is_active=False)
+        with transaction.atomic():
+            updated = Job.objects.filter(id__in=ids_to_deactivate).update(is_active=False, updated_at=timezone.now())
+            # Preserve saved/bookmarked URLs and consolidate the proved posting.
+            # Existing editorial redirects are never overwritten.
+            aliases = [JobSlugRedirect(old_slug=job.slug, job=keep)
+                       for group in duplicate_groups for keep in [group[0]]
+                       for job in group[1:] if keep.is_available and job.slug != keep.slug]
+            JobSlugRedirect.objects.bulk_create(aliases, ignore_conflicts=True)
         self.stdout.write(self.style.SUCCESS(f"Deactivated {updated} duplicate jobs."))

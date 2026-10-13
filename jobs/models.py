@@ -380,6 +380,7 @@ class Job(models.Model):
         max_length=255, blank=True, null=True, help_text="ID from the upstream source"
     )
     raw_data = models.JSONField(default=dict, blank=True)
+    indexing_state = models.JSONField(default=dict, blank=True, editable=False)
     last_seen_at = models.DateTimeField(null=True, blank=True, db_index=True)
     quality_score = models.PositiveSmallIntegerField(default=0, db_index=True)
     quality_issues = models.JSONField(default=list, blank=True)

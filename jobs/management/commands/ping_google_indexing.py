@@ -5,23 +5,22 @@ Environment:
     GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
     or GOOGLE_INDEXING_CREDENTIALS_JSON='{"type":"service_account",...}'
 
-The command exits cleanly when credentials are missing so it is safe to run
-from cron before the Search Console service account is configured.
+Missing credentials and rejected requests are explicit failures. Accepted
+notifications are persisted; feed sightings alone do not repeatedly resubmit.
 """
 
 import json
 import os
 import time
-from datetime import timedelta
 
 import jwt
 import requests
 from django.conf import settings
-from django.core.management.base import BaseCommand
-from django.db.models import Q
+from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
 from jobs.models import Job
+from jobs.services.search_indexing import candidates, pending, fingerprint, acknowledge
 
 
 class Command(BaseCommand):
@@ -34,7 +33,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--hours", type=int, default=24, help="Jobs updated in the last N hours.")
         parser.add_argument("--job-slug", help="Notify one job by slug.")
-        parser.add_argument("--limit", type=int, default=200, help="Maximum URLs to notify.")
+        parser.add_argument("--limit", type=int, default=100, help="Maximum URLs to notify (leaves room for removals).")
         parser.add_argument("--dry-run", action="store_true", help="Print URLs without calling Google.")
         parser.add_argument(
             "--type",
@@ -59,48 +58,53 @@ class Command(BaseCommand):
 
         credentials = self.load_credentials()
         if not credentials:
-            self.stdout.write(
-                self.style.WARNING(
-                    "Google Indexing API credentials are not configured; skipping."
-                )
-            )
-            return
+            raise CommandError('Google Indexing API credentials are not configured; no notifications sent.')
 
         access_token = self.fetch_access_token(credentials)
         if not access_token:
-            return
+            raise CommandError('Google OAuth failed; no notifications sent.')
 
         success = 0
         failed = 0
         for url in urls:
             if self.publish(access_token, url, notification_type):
                 success += 1
+                job, signature = self.queued_jobs[url]
+                acknowledge(job, 'google', signature)
                 self.stdout.write(f"  OK {url}")
             else:
                 failed += 1
                 self.stdout.write(self.style.ERROR(f"  FAIL {url}"))
+                raise CommandError('Google rejected a notification; remaining URLs stay pending for the next run.')
             time.sleep(0.1)
 
         self.stdout.write(self.style.SUCCESS(f"Done. Success: {success}; failed: {failed}."))
 
     def build_urls(self, options):
         site_url = getattr(settings, "SITE_URL", "https://remoteimpact.org").rstrip("/")
-        limit = max(1, options["limit"])
+        limit = options['limit']
+        if not 1 <= limit <= 200 or options['hours'] < 1:
+            raise CommandError('Invalid indexing bounds')
 
         if options["job_slug"]:
             qs = Job.objects.filter(slug=options["job_slug"])
         else:
-            cutoff = timezone.now() - timedelta(hours=options["hours"])
-            qs = Job.objects.filter(updated_at__gte=cutoff)
+            qs = candidates('google', options['hours'])
 
         now = timezone.now()
         if options["type"] == "URL_UPDATED":
-            qs = qs.filter(is_active=True).exclude(expires_at__lt=now)
+            qs = qs.filter(Job.availability_filter(now=now))
         else:
-            qs = qs.filter(Q(is_active=False) | Q(expires_at__lt=now))
+            qs = qs.exclude(Job.availability_filter(now=now))
 
-        qs = qs.order_by("-updated_at").only("slug")[:limit]
-        return [f"{site_url}{job.get_absolute_url()}" for job in qs]
+        self.queued_jobs = {}
+        for job in qs.select_related('organization').defer('embedding', 'search_vector').order_by('-updated_at').iterator(chunk_size=200):
+            if pending(job, 'google'):
+                url = f'{site_url}{job.get_absolute_url()}'
+                self.queued_jobs[url] = (job, fingerprint(job))
+            if len(self.queued_jobs) >= limit:
+                break
+        return list(self.queued_jobs)
 
     def load_credentials(self):
         raw_json = os.getenv("GOOGLE_INDEXING_CREDENTIALS_JSON")
@@ -156,10 +160,13 @@ class Command(BaseCommand):
         return response.json().get("access_token")
 
     def publish(self, access_token, url, notification_type):
-        response = requests.post(
+        try:
+            response = requests.post(
             self.PUBLISH_URL,
             headers={"Authorization": f"Bearer {access_token}"},
             json={"url": url, "type": notification_type},
             timeout=20,
-        )
+            )
+        except requests.RequestException:
+            return False
         return response.status_code in {200, 201}
