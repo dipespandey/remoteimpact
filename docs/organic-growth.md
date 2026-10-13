@@ -2,7 +2,9 @@
 
 The target is 10x **qualified organic traffic**, with Scout signups and application
 clicks as conversion checks. Set the numeric target from verified Search Console
-and GA4 periods; neither source is connected to the local SEO CLI yet. Raw job
+and GA4 periods. Both sources are now connected read-only to the local SEO CLI;
+query only `sc-domain:remoteimpact.org` and GA4 property `518242262`, with Remote
+Impact hostnames. Keep private baseline exports in the local audit directory. Raw job
 views, URL notifications and catalogue counts are not substitutes for that baseline.
 Do not infer search volumes or competitor traffic from hypotheses.
 
@@ -16,6 +18,10 @@ Do not infer search volumes or competitor traffic from hypotheses.
   paths. Proved duplicates are retired and their bookmarked URLs redirect to an
   available retained posting. Different source URLs without shared identity stay
   separate until verified; matching titles alone are insufficient.
+  Feed refreshes preserve a confirmed retirement while its canonical posting is
+  available. A changed posting identity or unavailable keeper may reopen normally.
+- Sign-in, signup and sign-out templates carry `noindex, follow`; public job
+  pages retain their own availability and indexability policy.
 - New-job IndexNow notifications start after transaction commit. The existing
   two-hour batch handles subsequent changes. Accepted content fingerprints live
   in the database, so unchanged sightings, embedding updates and page-cache resets
@@ -39,11 +45,15 @@ Sources: [Google Indexing API](https://developers.google.com/search/apis/indexin
 ## Daily work, weekly decisions
 
 Read `organic_growth_report` for first-party inventory and last notification
-acknowledgements. Use `seo` report evidence for technical checks. Once connected,
+acknowledgements. Use `seo` report evidence for technical checks. With the connection,
 use Search Console for non-branded queries, existing pages near useful positions,
 click-through opportunities and real demand. Compare equal periods and note
 job-inventory changes, indexing lag and seasonality. Track dated changes against
 organic Scout signups and outbound application clicks in GA4.
+The current generic `form_submit` key event is not a verified signup. Track
+`job_scout_created` and `apply_click` separately, and retain their event definitions.
+The daily growth heartbeat runs in the existing Codex chat; it selects at most
+one evidence-backed improvement per run and reports meaningful changes.
 
 ```sh
 .venv/bin/python manage.py organic_growth_report
