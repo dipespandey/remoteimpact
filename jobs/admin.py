@@ -613,3 +613,14 @@ class ProfileViewAdmin(admin.ModelAdmin):
     list_display = ("seeker", "viewer", "viewed_at")
     list_filter = ("viewed_at",)
     raw_id_fields = ("seeker", "viewer")
+
+
+from .models import ApiKey  # noqa: E402
+
+
+@admin.register(ApiKey)
+class ApiKeyAdmin(admin.ModelAdmin):
+    list_display = ("prefix", "name", "email", "organization", "tier", "is_active", "requests_today", "last_used_at", "created_at")
+    list_filter = ("tier", "is_active")
+    search_fields = ("name", "email", "organization", "prefix")
+    readonly_fields = ("key_hash", "prefix", "requests_today", "requests_date", "last_used_at", "created_at")

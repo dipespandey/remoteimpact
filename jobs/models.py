@@ -1912,3 +1912,46 @@ class RankingEvent(models.Model):
 
     class Meta:
         indexes = [models.Index(fields=["kind", "created_at"])]
+
+
+class ApiKey(models.Model):
+    """Access to the Jobs API and MCP server. Only a hash of the key is stored; the key is shown once."""
+
+    class Tier(models.TextChoices):
+        FREE = "free", "Free (non-commercial, attribution)"
+        COMMERCIAL = "commercial", "Commercial"
+
+    name = models.CharField(max_length=120)
+    email = models.EmailField()
+    organization = models.CharField(max_length=160, blank=True)
+    use_case = models.TextField(blank=True)
+    tier = models.CharField(max_length=12, choices=Tier.choices, default=Tier.FREE)
+    key_hash = models.CharField(max_length=64, unique=True)
+    prefix = models.CharField(max_length=12, help_text="First characters of the key, for display")
+    is_active = models.BooleanField(default=True)
+    requests_today = models.PositiveIntegerField(default=0)
+    requests_date = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.prefix}… ({self.get_tier_display()}) {self.email}"
+
+    @staticmethod
+    def hash_key(raw: str) -> str:
+        import hashlib
+
+        return hashlib.sha256(raw.encode()).hexdigest()
+
+    @classmethod
+    def issue(cls, *, name, email, tier=Tier.FREE, organization="", use_case="", is_active=True):
+        """Create a key; returns (raw_key, ApiKey). The raw key is not recoverable later."""
+        import secrets
+
+        raw = "ri_" + secrets.token_urlsafe(30)
+        obj = cls.objects.create(name=name, email=email, tier=tier, organization=organization, use_case=use_case,
+                                 is_active=is_active, key_hash=cls.hash_key(raw), prefix=raw[:10])
+        return raw, obj

@@ -2,7 +2,8 @@ from django.urls import path
 from django.views.generic import RedirectView
 from . import views
 from .views.resources import home as resources_home
-from .views import shortlists, tracking, employers, applications
+from .views import shortlists, tracking, employers, applications, developers
+from .api import mcp as api_mcp, rest as api_rest
 from .feeds import LatestJobsFeed, CategoryJobsFeed, IndeedXMLFeed, LinkedInXMLFeed
 
 app_name = "jobs"
@@ -206,6 +207,14 @@ urlpatterns = [
     # RSS Feeds
     path("feed/jobs/", LatestJobsFeed(), name="jobs_feed"),
     path("feed/jobs.json", tracking.jobs_json_feed, name="jobs_json_feed"),
+    # Jobs API and MCP server (see /developers/)
+    path("developers/", developers.DevelopersView.as_view(), name="developers"),
+    path("api/v1/jobs/", api_rest.jobs_list, name="api_jobs"),
+    path("api/v1/jobs/<slug:slug>/", api_rest.job_detail, name="api_job"),
+    path("api/v1/organizations/<slug:slug>/", api_rest.organization_detail, name="api_organization"),
+    path("api/v1/areas/", api_rest.areas, name="api_areas"),
+    path("api/v1/openapi.json", api_rest.openapi, name="api_openapi"),
+    path("mcp/", api_mcp.endpoint, name="mcp"),
     path("feed/jobs/category/<slug:slug>/", CategoryJobsFeed(), name="category_feed"),
     # Job Aggregator Feeds (Indeed, LinkedIn, etc.)
     path("feed/indeed.xml", IndeedXMLFeed.as_view(), name="indeed_feed"),

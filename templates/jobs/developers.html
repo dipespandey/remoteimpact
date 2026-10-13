@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Jobs API and MCP server | Remote Impact{% endblock %}
+{% block meta_description %}Structured, daily-verified data on {{ active_jobs_count|intcomma }} remote impact jobs: a REST API and an MCP server for AI assistants. Free tier with attribution; commercial access for products.{% endblock %}
+{% block og_title %}Remote Impact Jobs API and MCP server{% endblock %}
+{% block og_description %}Verified remote impact jobs as structured data, for apps, research and AI agents.{% endblock %}
+{% block canonical %}{{ SITE_URL }}{% url 'jobs:developers' %}{% endblock %}
+
+{% block content %}
+<div class="container py-8 sm:py-10">
+  <header class="page-header max-w-3xl">
+    <p class="kicker">For developers, researchers and AI agents</p>
+    <h1 class="page-title mt-1">Verified remote impact jobs, as data.</h1>
+    <p class="page-lede">{{ active_jobs_count|intcomma }} open remote roles at climate, global health, AI safety, education and other impact organizations, each checked daily against the employer's own job board, with eligibility, pay, level and must-haves made structured. Available as a REST API and as an MCP server your AI assistant can call directly.</p>
+    <div class="mt-5 flex flex-wrap gap-2">
+      <a href="#get-key" class="btn btn-primary">Get a free key</a>
+      <a href="#mcp" class="btn btn-outline">Connect an AI assistant</a>
+      <a href="{{ site }}/api/v1/openapi.json" class="btn btn-ghost">OpenAPI spec</a>
+    </div>
+  </header>
+
+  {% if new_key %}
+  <section class="card border border-emerald-200 bg-emerald-50/60 p-5 sm:p-6" aria-live="polite">
+    <h2 class="section-title">Your API key</h2>
+    <p class="mt-1 text-sm text-muted-foreground">Copy it now; it's shown once and has also been emailed to you.</p>
+    <code class="mt-3 block overflow-x-auto rounded-xl bg-card px-4 py-3 font-mono text-[14px] text-foreground">{{ new_key }}</code>
+    <pre class="mt-3 overflow-x-auto rounded-xl bg-muted px-4 py-3 font-mono text-[13px] text-foreground">curl -H "Authorization: Bearer {{ new_key }}" "{{ api_url }}?area=climate-environment&amp;limit=5"</pre>
+  </section>
+  {% endif %}
+
+  <section class="mt-10 grid gap-4 lg:grid-cols-3" aria-labelledby="what-heading">
+    <article class="card p-5 sm:p-6 lg:col-span-2">
+      <h2 id="what-heading" class="section-title">What you get for every role</h2>
+      <ul class="check-list mt-3 grid gap-1 text-sm leading-6 text-muted-foreground sm:grid-cols-2">
+        <li>Verification: status, method and when we last checked the employer's board</li>
+        <li>Eligible countries and remote scope (worldwide, specific countries, unspecified)</li>
+        <li>Pay range, currency and period, normalized</li>
+        <li>Job type and experience level</li>
+        <li>Organization: homepage, careers page, logo</li>
+        <li>Posted, last updated and closing dates</li>
+        <li>Listing URL and apply URL</li>
+        <li>Commercial tier: skills, must-haves with source quotes, full text of employer-posted roles</li>
+      </ul>
+      <p class="help mt-4">Most listings are gathered from employers' own boards and other sources, so the API carries a short excerpt of the description plus the link, never the full text, except for roles employers post directly on Remote Impact. Our added data (verification, eligibility, pay, must-haves, organization records) is what you're licensing.</p>
+    </article>
+    <aside class="surface p-5 sm:p-6">
+      <h2 class="text-[15px] font-semibold text-foreground">Tiers</h2>
+      <dl class="mt-3 space-y-3 text-sm">
+        <div><dt class="font-medium text-foreground">No key</dt><dd class="text-muted-foreground">30 requests a minute, 500 a day, 50 per page. Try it from anywhere.</dd></div>
+        <div><dt class="font-medium text-foreground">Free key</dt><dd class="text-muted-foreground">120 a minute, 5,000 a day, 100 per page. Non-commercial use with attribution.</dd></div>
+        <div><dt class="font-medium text-foreground">Commercial</dt><dd class="text-muted-foreground">600 a minute, 100,000 a day, 500 per page, enriched fields, commercial use. From $149 a month; we confirm the details with you first.</dd></div>
+      </dl>
+    </aside>
+  </section>
+
+  <section class="mt-10" aria-labelledby="rest-heading">
+    <h2 id="rest-heading" class="section-title">REST API</h2>
+    <p class="mt-1 max-w-[68ch] text-sm leading-6 text-muted-foreground">Base URL <code class="font-mono text-[13px]">{{ site }}/api/v1/</code>. JSON, CORS enabled, no key needed to start. Full parameter list in the <a href="{{ site }}/api/v1/openapi.json" class="underline decoration-border underline-offset-4 hover:decoration-foreground">OpenAPI spec</a>.</p>
+    <div class="mt-4 grid gap-4 lg:grid-cols-2">
+      <div class="card p-5">
+        <p class="text-[13px] font-medium text-foreground">Search open roles</p>
+        <pre class="mt-2 overflow-x-auto rounded-xl bg-muted px-4 py-3 font-mono text-[13px] text-foreground">GET {{ api_url }}?q=monitoring+evaluation&amp;country=Kenya&amp;level=mid&amp;posted_since=14d</pre>
+        <p class="mt-2 text-[13px] text-muted-foreground">Filters: <code>q</code>, <code>area</code>, <code>country</code>, <code>remote_scope=worldwide</code>, <code>job_type</code>, <code>level</code>, <code>min_salary</code>, <code>posted_since</code> (ISO date or <code>7d</code>), <code>organization</code>, <code>source=employer_posted</code>, <code>page</code>, <code>limit</code>.</p>
+      </div>
+      <div class="card p-5">
+        <p class="text-[13px] font-medium text-foreground">One role, an organization, the areas</p>
+        <pre class="mt-2 overflow-x-auto rounded-xl bg-muted px-4 py-3 font-mono text-[13px] text-foreground">GET {{ site }}/api/v1/jobs/&lt;slug&gt;/
+GET {{ site }}/api/v1/organizations/&lt;slug&gt;/
+GET {{ site }}/api/v1/areas/</pre>
+        <p class="mt-2 text-[13px] text-muted-foreground">A closed role answers 404 with <code>"status": "closed"</code>, so you can retire it on your side.</p>
+      </div>
+    </div>
+    <details class="card mt-4 p-5">
+      <summary class="cursor-pointer text-[13px] font-medium text-foreground">Example response</summary>
+<pre class="mt-3 overflow-x-auto rounded-xl bg-muted px-4 py-3 font-mono text-[12px] leading-5 text-foreground">{
+  "total": 212, "page": 1, "limit": 20,
+  "jobs": [{
+    "id": 31878, "slug": "managing-director-entertainment-resetting-the-table",
+    "title": "Managing Director, Entertainment",
+    "organization": {"name": "Resetting the Table", "slug": "resetting-the-table", "url": "...", "homepage_url": "https://www.resettingthetable.org/", "careers_url": null, "logo_url": null},
+    "area": {"name": "Impact Careers", "slug": "impact-careers"},
+    "location": "Remote within the contiguous U.S.", "remote_scope": "countries", "eligible_countries": ["United States of America"],
+    "job_type": "full-time", "experience_level": "executive",
+    "salary": {"min": 125000.0, "max": 155000.0, "currency": "USD", "period": "year"},
+    "posted_at": "2026-10-12T15:41:19+00:00", "content_updated_at": null, "expires_at": "2026-11-11T15:41:19+00:00",
+    "verification": {"status": "listed", "method": "employer_posted", "checked_at": null},
+    "source": "employer_posted", "featured": true,
+    "url": "{{ site }}/jobs/managing-director-entertainment-resetting-the-table/",
+    "apply_url": "{{ site }}/jobs/managing-director-entertainment-resetting-the-table/go/",
+    "description_excerpt": "Resetting the Table is hiring a Managing Director to lead..."
+  }],
+  "attribution": "Data from Remote Impact (remoteimpact.org). Link to the listing URL when you show a role."
+}</pre>
+    </details>
+  </section>
+
+  <section id="mcp" class="mt-10 scroll-mt-24" aria-labelledby="mcp-heading">
+    <h2 id="mcp-heading" class="section-title">MCP server for AI assistants</h2>
+    <p class="mt-1 max-w-[68ch] text-sm leading-6 text-muted-foreground">Claude, ChatGPT, Cursor and other assistants that support the Model Context Protocol can call the same data as tools: <code>search_jobs</code>, <code>get_job</code>, <code>list_areas</code>, <code>get_organization</code>. Streamable HTTP, no sign-up needed to try it; add a key for higher limits.</p>
+    <div class="mt-4 grid gap-4 lg:grid-cols-2">
+      <div class="card p-5">
+        <p class="text-[13px] font-medium text-foreground">Endpoint</p>
+        <code class="mt-2 block overflow-x-auto rounded-xl bg-muted px-4 py-3 font-mono text-[13px] text-foreground">{{ mcp_url }}</code>
+        <p class="mt-3 text-[13px] font-medium text-foreground">Claude Code</p>
+        <pre class="mt-2 overflow-x-auto rounded-xl bg-muted px-4 py-3 font-mono text-[13px] text-foreground">claude mcp add --transport http remote-impact {{ mcp_url }}
+# with a key:
+claude mcp add --transport http remote-impact {{ mcp_url }} \
+  --header "Authorization: Bearer ri_..."</pre>
+      </div>
+      <div class="card p-5">
+        <p class="text-[13px] font-medium text-foreground">Other clients</p>
+        <p class="mt-2 text-[13px] leading-6 text-muted-foreground">Add a remote MCP server (HTTP transport) with the endpoint above. In Claude Desktop and ChatGPT this is under connectors or custom MCP servers; in Cursor it's an <code>mcp.json</code> entry with <code>"url": "{{ mcp_url }}"</code>. Then ask: <em>"Find remote climate roles I can apply to from Kenya, mid-level, paying at least $40k."</em></p>
+        <p class="mt-3 text-[13px] text-muted-foreground">Read-only, no sessions. Every result carries the listing URL so the assistant can cite it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="get-key" class="mt-10 scroll-mt-24 grid gap-4 lg:grid-cols-2" aria-labelledby="key-heading">
+    <form method="post" class="card p-5 sm:p-6">
+      {% csrf_token %}
+      <input type="hidden" name="kind" value="free">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true">
+      <h2 id="key-heading" class="section-title">Get a free key</h2>
+      <p class="mt-1 text-sm text-muted-foreground">For non-commercial use: research, community tools, personal projects, trying the MCP server. Issued instantly.</p>
+      <div class="mt-4 grid gap-3">
+        <div><label class="label" for="free-name">Name</label><input id="free-name" name="name" required class="input"></div>
+        <div><label class="label" for="free-email">Email</label><input id="free-email" name="email" type="email" required class="input"></div>
+        <div><label class="label" for="free-use">What are you building? (optional)</label><textarea id="free-use" name="use_case" rows="2" class="textarea"></textarea></div>
+      </div>
+      <button type="submit" class="btn btn-primary mt-4">Create key</button>
+    </form>
+    <form method="post" class="card p-5 sm:p-6">
+      {% csrf_token %}
+      <input type="hidden" name="kind" value="commercial">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true">
+      <h2 class="section-title">Commercial access</h2>
+      <p class="mt-1 text-sm text-muted-foreground">For products, job tools, AI agents and data use inside a business. Higher limits, enriched fields, commercial licence. From $149 a month; we'll confirm volume and pricing with you before the key switches on.</p>
+      <div class="mt-4 grid gap-3">
+        <div><label class="label" for="com-name">Name</label><input id="com-name" name="name" required class="input"></div>
+        <div><label class="label" for="com-org">Company or product</label><input id="com-org" name="organization" required class="input"></div>
+        <div><label class="label" for="com-email">Work email</label><input id="com-email" name="email" type="email" required class="input"></div>
+        <div><label class="label" for="com-use">How you'll use the data, and roughly how many requests a day</label><textarea id="com-use" name="use_case" rows="3" required class="textarea"></textarea></div>
+      </div>
+      <button type="submit" class="btn btn-outline mt-4">Request commercial access</button>
+    </form>
+  </section>
+
+  <section class="mt-10 max-w-[72ch]" aria-labelledby="terms-heading">
+    <h2 id="terms-heading" class="section-title">Terms, in plain words</h2>
+    <ul class="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-6 text-muted-foreground">
+      <li><span class="text-foreground">Attribution:</span> show "via Remote Impact" and link to the listing URL whenever you display a role.</li>
+      <li><span class="text-foreground">No republishing of descriptions:</span> excerpts and our structured fields only. Full text belongs to the employer; the free tier is for non-commercial use.</li>
+      <li><span class="text-foreground">Keep it current:</span> re-fetch at least daily and drop roles that answer 404 or whose verification status is not open. Don't keep showing closed jobs.</li>
+      <li><span class="text-foreground">Limits:</span> stay within your tier; keys that scrape or share access can be revoked. We may change limits with notice.</li>
+      <li><span class="text-foreground">No personal data:</span> the API contains job and organization records only.</li>
+      <li>Questions, bulk needs or research partnerships: <a href="mailto:hello@remoteimpact.org" class="underline decoration-border underline-offset-4 hover:decoration-foreground">hello@remoteimpact.org</a>.</li>
+    </ul>
+    <p class="mt-4 text-[13px] text-muted-foreground">Prefer feeds? The <a href="{% url 'jobs:jobs_json_feed' %}" class="underline decoration-border underline-offset-4 hover:decoration-foreground">JSON feed</a> and <a href="{% url 'jobs:partner_resources' %}" class="underline decoration-border underline-offset-4 hover:decoration-foreground">RSS feeds</a> stay free for communities and newsletters.</p>
+  </section>
+</div>
+{% endblock %}
