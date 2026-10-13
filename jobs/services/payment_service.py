@@ -142,6 +142,22 @@ class PaymentService:
         event_id = event.get("id") or ""
         data_object = event.get("data", {}).get("object", {}) or {}
 
+        from . import org_plans
+
+        # Organization plans carry product=org_plan metadata; everything else below is unchanged.
+        if org_plans.is_org_plan_object(data_object):
+            if event_type in ("checkout.session.completed", "checkout.session.async_payment_succeeded"):
+                if data_object.get("mode") == "subscription":
+                    org_plans.activate(data_object)
+            elif event_type in ("customer.subscription.created", "customer.subscription.updated", "customer.subscription.resumed"):
+                if data_object.get("status") in ("active", "trialing", "past_due"):
+                    org_plans.activate(data_object)
+                else:
+                    org_plans.deactivate(data_object.get("id"), (data_object.get("metadata") or {}).get("organization_id"))
+            elif event_type in ("customer.subscription.deleted", "customer.subscription.paused"):
+                org_plans.deactivate(data_object.get("id"), (data_object.get("metadata") or {}).get("organization_id"))
+            return
+
         if event_type in (
             "checkout.session.completed",
             "checkout.session.async_payment_succeeded",

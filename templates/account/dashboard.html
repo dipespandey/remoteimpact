@@ -35,6 +35,31 @@
         <div class="stat"><p class="stat-value">{{ apply_clicks_total|default:0 }}</p><p class="stat-label">Apply clicks, last 30 days</p></div>
     </div>
 
+    {% if organization %}
+    <section class="card p-5 sm:p-6" aria-labelledby="plan-heading">
+        {% if plan_current %}
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h2 id="plan-heading" class="section-title">{{ plan_current_info.name|default:"Enterprise" }} plan</h2>
+                <p class="mt-1 text-sm text-muted-foreground">{% if plan_current_info %}Your newest {{ plan_current_info.role_cap }} live roles stay featured while the plan is active.{% else %}All your live roles stay featured.{% endif %} Renews around {{ plan_current.expires_at|date:"M j" }}.</p>
+            </div>
+            <a href="{% url 'jobs:org_billing_portal' %}" class="btn btn-outline btn-sm self-start">Manage billing</a>
+        </div>
+        {% elif plan_info %}
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="max-w-2xl">
+                <h2 id="plan-heading" class="section-title">Feature all your roles for ${{ plan_price }} a month</h2>
+                <p class="mt-1 text-sm leading-6 text-muted-foreground">You have {{ plan_live_roles }} live role{{ plan_live_roles|pluralize }} on Remote Impact. The {{ plan_info.name }} plan features {% if plan_live_roles > plan_info.role_cap %}your newest {{ plan_info.role_cap }}{% else %}all of them{% endif %}, adds the hiring assistant and a verified organization page, and saves ${{ plan_individual_cost }} a month compared with featuring each role at $49. Cancel any time.</p>
+            </div>
+            <form method="post" action="{% url 'jobs:org_plan_checkout' plan_tier %}" class="shrink-0">{% csrf_token %}<button type="submit" class="btn btn-primary">Start the {{ plan_info.name }} plan</button></form>
+        </div>
+        {% else %}
+        <h2 id="plan-heading" class="section-title">Enterprise plan</h2>
+        <p class="mt-1 text-sm text-muted-foreground">With {{ plan_live_roles }} live roles, Enterprise fits best. <a class="underline decoration-border hover:decoration-foreground" href="mailto:hello@remoteimpact.org?subject=Enterprise%20plan">Email us</a> for a quote.</p>
+        {% endif %}
+    </section>
+    {% endif %}
+
     {% if live_jobs %}
     <section class="card p-5 sm:p-6" aria-labelledby="assistant-heading">
         <div class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">

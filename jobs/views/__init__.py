@@ -8,7 +8,7 @@ from .onboarding import (
     OnboardingSeekerView,
     EditCompanyProfileView,
 )
-from .payments import PaymentSuccessView, PaymentCancelView, StripeWebhookView, JobCheckoutView, JobEditView, ProBillingPortalView
+from .payments import PaymentSuccessView, PaymentCancelView, StripeWebhookView, JobCheckoutView, JobEditView, ProBillingPortalView, OrgPlanCheckoutView, OrgBillingPortalView
 from .resources import (
     HomeView,
     AllDomainsView,

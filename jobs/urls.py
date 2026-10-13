@@ -48,6 +48,8 @@ urlpatterns = [
     path("jobs/<slug:slug>/save/", views.SaveJobView.as_view(), name="save_job"),
     path("jobs/<slug:slug>/checkout/", views.JobCheckoutView.as_view(), name="job_checkout"),
     path("jobs/<slug:slug>/edit/", views.JobEditView.as_view(), name="job_edit"),
+    path("employers/plan/<slug:tier>/", views.OrgPlanCheckoutView.as_view(), name="org_plan_checkout"),
+    path("account/plan/billing/", views.OrgBillingPortalView.as_view(), name="org_billing_portal"),
     path("applications/<int:pk>/job/", views.AppliedJobDetailView.as_view(), name="applied_job_detail"),
     # API
     path("api/organizations/search/", views.OrganizationSearchView.as_view(), name="organization_search"),

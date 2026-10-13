@@ -59,6 +59,9 @@ def audience_stats():
     }
 
 
+from ..services import org_plans  # noqa: E402
+
+
 class EmployerLandingView(TemplateView):
     template_name = "jobs/employers/landing.html"
 
@@ -70,6 +73,11 @@ class EmployerLandingView(TemplateView):
             post_days=JOB_POSTING_DURATION_DAYS,
             feature_price=FEATURE_PRICE_USD_CENTS // 100,
             feature_days=FEATURE_DURATION_DAYS,
+            plans=[{"tier": tier, "name": plan["name"], "price": plan["price_cents"] // 100, "roles": plan["role_cap"],
+                    "seats": plan["seats"], "individual": org_plans.individual_cost_cents(plan["role_cap"]) // 100,
+                    "save_pct": round(100 - plan["price_cents"] * 100 / org_plans.individual_cost_cents(plan["role_cap"]))}
+                   for tier, plan in org_plans.PLANS.items()],
+            enterprise_from=org_plans.ENTERPRISE["from_price_cents"] // 100,
         )
         return context
 

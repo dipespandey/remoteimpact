@@ -222,3 +222,41 @@ class JobEditView(JobCheckoutView):
         cache.clear()  # cached pages show the new text straight away
         messages.success(self.request, "Your changes are live.")
         return redirect("jobs:account")
+
+
+class OrgPlanCheckoutView(LoginRequiredMixin, View):
+    """Start a monthly organization plan (Team or Organization) for an organization the user belongs to."""
+
+    def post(self, request, tier):
+        from ..services import org_plans
+
+        if tier not in org_plans.PLANS:
+            return redirect("jobs:employers")
+        organization = request.user.organizations.filter(pk=request.POST.get("organization") or 0).first() \
+            or request.user.organizations.first()
+        if organization is None:
+            messages.error(request, "Set up your organization first, then choose a plan.")
+            return redirect("jobs:account")
+        try:
+            return redirect(org_plans.create_checkout_session(request.user, organization, tier, request.build_absolute_uri("/").rstrip("/")))
+        except ValueError as exc:
+            messages.info(request, str(exc))
+        except Exception:  # noqa: BLE001
+            logger.exception("Org plan checkout failed")
+            messages.error(request, "We couldn't start checkout. Please try again, or email hello@remoteimpact.org.")
+        return redirect("jobs:account")
+
+
+class OrgBillingPortalView(LoginRequiredMixin, View):
+    def get(self, request):
+        from ..services import org_plans
+
+        organization = request.user.organizations.first()
+        try:
+            if organization is None:
+                raise ValueError("No organization")
+            return redirect(org_plans.create_billing_portal_session(organization, request.build_absolute_uri("/").rstrip("/")))
+        except Exception:  # noqa: BLE001
+            logger.exception("Org billing portal failed")
+            messages.error(request, "We couldn't open billing settings. Email hello@remoteimpact.org and we'll sort it out.")
+            return redirect("jobs:account")

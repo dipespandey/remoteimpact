@@ -40,6 +40,27 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         return super().dispatch(request, *args, **kwargs)
 
     @staticmethod
+    def _plan_context(organization):
+        """Current organization plan, or the one that fits how many roles they have live."""
+        from ..models import OrgSubscription
+        from ..services import org_plans
+        from ..services.job_service import JobService
+
+        if organization is None:
+            return {}
+        subscription = OrgSubscription.objects.filter(organization=organization).first()
+        live = JobService.get_available_jobs().filter(organization=organization).count()
+        current = subscription if org_plans.is_active(subscription) else None
+        tier = org_plans.recommended_tier(live)
+        recommended = org_plans.PLANS.get(tier)
+        return {
+            "plan_current": current, "plan_current_info": org_plans.PLANS.get(current.tier) if current else None,
+            "plan_live_roles": live, "plan_tier": tier, "plan_info": recommended,
+            "plan_individual_cost": org_plans.individual_cost_cents(min(live, recommended["role_cap"])) // 100 if recommended else None,
+            "plan_price": recommended["price_cents"] // 100 if recommended else None,
+        }
+
+    @staticmethod
     def _hiring_overview(posted_jobs):
         """Live roles with their numbers and best-matching people; drafts and closed roles apart."""
         from ..services import job_stats
@@ -113,6 +134,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             context["posted_jobs"] = posted_jobs
             context["organization"] = user.organizations.first()
             context.update(self._hiring_overview(posted_jobs))
+            context.update(self._plan_context(context["organization"]))
 
         elif profile.account_type == UserProfile.AccountType.SEEKER:
             context["is_seeker"] = True
