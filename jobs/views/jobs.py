@@ -579,9 +579,10 @@ class ApplicationGuideView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Generate personalized guide content
-        from ..services.guide_generator import generate_application_guide
-        context["guide"] = generate_application_guide(self.object)
+        # Crawlers and visitors get an immediate response; generation is an
+        # explicit offline operation, never a side effect of GET or HEAD.
+        from ..services.guide_generator import public_application_guide
+        context["guide"], context["guide_is_personalized"] = public_application_guide(self.object)
         from ..services.job_quality import safe_application_destination
         context["safe_application_url"] = safe_application_destination(self.object.application_url)
         context["safe_organization_website"] = safe_application_destination(self.object.organization.website)

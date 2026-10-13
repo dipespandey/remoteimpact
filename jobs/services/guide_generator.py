@@ -14,6 +14,22 @@ from .json_utils import parse_json_object
 logger = logging.getLogger(__name__)
 
 
+def cached_application_guide(job) -> Optional[Dict[str, Any]]:
+    """Read a current generated guide without network requests or database writes."""
+    raw_data = job.raw_data if isinstance(job.raw_data, dict) else {}
+    cached = raw_data.get("application_guide")
+    if not isinstance(cached, dict) or cached.get("hash") != _create_job_hash(job):
+        return None
+    content = cached.get("content")
+    return content if isinstance(content, dict) and content else None
+
+
+def public_application_guide(job):
+    """Public GETs must never wait for model generation or mutate a listing."""
+    cached = cached_application_guide(job)
+    return (cached, True) if cached else (_get_default_content(job), False)
+
+
 def generate_application_guide(job) -> Dict[str, Any]:
     """
     Generate a personalized application guide for a job.
