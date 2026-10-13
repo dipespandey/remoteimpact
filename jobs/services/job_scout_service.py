@@ -977,8 +977,15 @@ skills is not a request for invented, exact job titles. JSON only."""
                                      diagnostics, limit=min(limit - len(selected), 5),
                                      exclude_titles=[job.title or "" for job in selected]):
                 selected.append(job)
-        diagnostics["match_count"] = min(len(selected), limit)
-        return selected[:limit]
+        selected = selected[:limit]
+        # Model evidence must never hide a constraint that remains unverified.
+        for job in selected:
+            caveats = getattr(job, "scout_caveats", [])
+            checks = [CAVEAT_TEXT.get(value, "Check: listing details") for value in caveats]
+            job.scout_reasons = list(dict.fromkeys([*getattr(job, "scout_reasons", []), *checks]))
+            job.scout_needs_confirmation = bool(getattr(job, "scout_needs_confirmation", False) or caveats or getattr(job, "scout_close_match", False))
+        diagnostics["match_count"] = len(selected)
+        return selected
 
     @staticmethod
     def _repost_key(job):

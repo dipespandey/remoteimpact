@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
@@ -41,6 +42,18 @@ class ReportedScoutQualityTests(TestCase):
                                  salary_max=100000, salary_currency='USD')
         prefs = loose_preferences(Scout._fallback_parse(self.climate))
         self.assertFalse(evaluate_job(job, prefs, relaxed=True).allowed)
+
+    def test_model_explanations_do_not_hide_unverified_salary(self):
+        org = Organization.objects.create(name='Policy', slug='provisional-policy')
+        job = Job.objects.create(title='Policy Analyst', organization=org, source=Job.Source.MANUAL)
+        job.scout_caveats = ['salary_unlisted']
+        job.scout_reasons = ['Evidence', 'Published recently', 'Uses climate policy']
+        with patch.object(Scout, '_rank_candidates', return_value=([job], [job])), \
+             patch('jobs.services.scout_reranker.rerank', return_value=[job]), \
+             patch('jobs.services.scout_close_matches.close_matches', return_value=[]):
+            matches = Scout.get_matches_for_preferences({}, limit=1)
+        self.assertIn('Check: salary not listed', matches[0].scout_reasons)
+        self.assertTrue(matches[0].scout_needs_confirmation)
 
 
 class ScoutSearchVisibilityTests(TestCase):

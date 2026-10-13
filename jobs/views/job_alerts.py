@@ -215,6 +215,7 @@ class JobScoutPreviewView(TemplateView):
             intent=self.intent,
             preferences=preferences,
             preview_jobs=matches,
+            provisional=any(getattr(job, "scout_needs_confirmation", False) for job in matches),
             next_path=next_path,
         )
         if not self.request.session.session_key:

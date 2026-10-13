@@ -116,6 +116,11 @@ def close_matches(qs, preferences, terms, diagnostics, limit=MAX_PICKS, force=Fa
         if title in titles:
             continue
         titles.add(title)
+        from jobs.services.scout_constraints import evaluate_job
+        eligibility = evaluate_job(job, loose_preferences(preferences), relaxed=True)
+        if not eligibility.allowed:
+            continue
+        job.scout_caveats = list(eligibility.caveats)
         job.scout_close_match = True
         job.scout_reasons = [f"{LABEL}: {difference}"]
         picked.append(job)
