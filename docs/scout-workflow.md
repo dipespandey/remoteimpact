@@ -176,3 +176,10 @@ signup does not promise a complete or larger result set.
 
 GTE embeddings and DeepSeek evidence review remain configured in production. This
 release does not promote experimental fine-tuned models or change embedding spaces.
+
+The final source audit additionally rejects explicit `Location: Remote/Canada`
+and `Remote/Europe` scope for worldwide requests, even after a lossy import.
+Qualification phrases such as “Strong coding proficiency” cannot establish main
+function duties. Alternatives cannot invent salary or full-time preferences.
+A requested environmental sector without supporting listing/employer evidence
+receives an explicit uncertainty warning rather than being silently confirmed.

@@ -71,6 +71,34 @@ class QueryConstraintParsingTests(TestCase):
 
 
 class SourceProfileTests(SimpleTestCase):
+    def test_labelled_remote_country_does_not_become_worldwide_after_lossy_import(self):
+        from jobs.services.scout_constraints import location_compatibility
+        for region in ['Canada','Europe']:
+            j=job(title='Grant Writer',description=f'Write proposals. Location: Remote/{region}.',location='Remote',country='Worldwide')
+            self.assertFalse(location_compatibility(j,['Worldwide']))
+            self.assertTrue(location_compatibility(j,[region]))
+        self.assertTrue(location_compatibility(job(description='Build remote/canada server routes.'),['Worldwide']))
+
+    def test_coding_proficiency_is_a_qualification_not_function_evidence(self):
+        from jobs.services.scout_review import review_checks
+        quote='Strong coding proficiency in Python and/or Go'
+        self.assertIsNone(review_checks({'checks':{'function':['confirmed','description',quote]}},{'description':quote},{}))
+
+    def test_unverified_environmental_sector_is_visible_for_a_function_match(self):
+        from jobs.services.scout_review import sector_caveats
+        prefs={'intent_text':'Product strategy in sustainability or circular economy'}
+        self.assertEqual(sector_caveats(job(description='Build Ethereum developer tools.'),prefs),['sector_unconfirmed'])
+        self.assertEqual(sector_caveats(job(description='Build sustainable construction products.'),prefs),[])
+
+    def test_alternative_cannot_invent_salary_or_working_hours(self):
+        from jobs.services.scout_close_matches import validate
+        quote='Lead the communications strategy and campaigns.'
+        pick={'id':1,'same_kind_of_work':True,'difference':'Communications leadership but with a slightly lower salary','evidence':{'field':'description','quote':quote},'checks':{'function':['confirmed','description',quote]}}
+        prefs={'intent_text':'Senior communications leadership roles'}
+        self.assertEqual(validate(json.dumps({'picks':[pick]}),{1:{'description':quote}},3,prefs),[])
+        pick['difference']='Part-time communications leadership rather than a full-time senior position'
+        self.assertEqual(validate(json.dumps({'picks':[pick]}),{1:{'description':quote}},3,prefs),[])
+
     def test_duties_exclude_company_intro_and_qualification_only_mentions(self):
         j=job(description='<h2>About Us</h2><p>We research climate policy.</p><h2>Responsibilities</h2><p>Maintain accounting records and reconcile bank statements.</p><h2>Qualifications</h2><p>Experience with policy is helpful.</p>')
         text=duties(j)

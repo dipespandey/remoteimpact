@@ -319,6 +319,11 @@ def extract_location_evidence(fields):
             denied |= expand([clause])
             if state_names(clause):denied.add('US')
     restrict=[]
+    # Explicit role-location labels can be lost during import. Scope this to
+    # labelled locations so remote/canada server paths are not residency rules.
+    for label in re.finditer(r'\b(?:work\s+)?location[\s*]*:[\s*]*remote[\s*]*(?:/|\(|[-–:])\s*([^.;!?]{2,100})',body,re.I):
+        region=re.split(r'\b(?:salary|position|contract|about|company|responsibilities|qualifications|requirements)\b',label[1],maxsplit=1,flags=re.I)[0]
+        if places(region) or state_names(region):restrict.append(region)
     for clause in re.split(r'[.!?;\n]',body):
         lowered=clause.lower()
         if re.search(r'\b(?:worldwide|globally|anywhere)\s*,?\s*(?:including|such as|for example)\b',clause,re.I):continue
@@ -367,6 +372,7 @@ class Eligibility:
 
 # Shown to the seeker when a job is offered without full verification.
 CAVEAT_TEXT = {
+    'sector_unconfirmed':'Check: requested environmental sector is not confirmed by the listing',
     'skill_expression':'Check: clarify which tools are required and which are alternatives',
     'review_remote': 'Check: fully remote arrangement not confirmed',
     'review_location': 'Check: hiring location not confirmed by listing',

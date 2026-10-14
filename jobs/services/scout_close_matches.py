@@ -74,6 +74,12 @@ def validate(output, evidence, limit, preferences=None):
             # Reject invented applicant geography in comparative explanations.
             import re
             from jobs.services.scout_constraints import expand
+            intent=preferences.get('intent_text','')
+            if re.search(r'\b(?:lower|higher|less|more)(?:\s+\w+){0,2}\s+(?:salary|pay|compensation)\b',difference,re.I) and not (preferences.get('salary_requirement') or preferences.get('min_salary')):continue
+            for arrangement in ('full-time','part-time'):
+                if re.search(r'\brather than\b.{0,30}\b'+arrangement.replace('-','[- ]')+r'\b',difference,re.I) and arrangement not in (preferences.get('job_types') or []) and not re.search(arrangement.replace('-','[- ]'),intent,re.I):break
+            else:arrangement=None
+            if arrangement is not None:continue
             comparison=re.search(r'(?:rather than|instead of|versus)\s+(.{0,100})',difference,re.I)
             if comparison and expand([comparison[1]]) - expand([preferences.get('intent_text','')]):
                 continue
@@ -115,7 +121,7 @@ def close_matches(qs, preferences, terms, diagnostics, limit=MAX_PICKS, force=Fa
         evidence[job.pk] = row
     body = json.dumps({"request": preferences["intent_text"][:2000], "candidates": rows}, ensure_ascii=False)
     system = SYSTEM.format(n=limit) + CHECK_INSTRUCTIONS.format(checks=', '.join(requested_checks(preferences)))
-    key = "scout-close-v6:" + hashlib.sha256((body + system).encode()).hexdigest()
+    key = "scout-close-v7:" + hashlib.sha256((body + system).encode()).hexdigest()
     try:
         output = cache.get(key)
         if output is None:

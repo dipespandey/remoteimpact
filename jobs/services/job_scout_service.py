@@ -1099,9 +1099,9 @@ skills is not a request for invented, exact job titles. JSON only."""
                                      exclude_titles=[job.title or "" for job in selected]):
                 selected.append(job)
         # Model evidence must never hide a constraint that remains unverified.
-        from jobs.services.scout_review import listing_caveats
+        from jobs.services.scout_review import listing_caveats,sector_caveats
         for job in selected:
-            job.scout_caveats = list(dict.fromkeys([*getattr(job, "scout_caveats", []), *listing_caveats(job)]))
+            job.scout_caveats = list(dict.fromkeys([*getattr(job, "scout_caveats", []), *listing_caveats(job), *sector_caveats(job,preferences)]))
             caveats = getattr(job, "scout_caveats", [])
             checks = [CAVEAT_TEXT.get(value, "Check: listing details") for value in caveats]
             job.scout_reasons = list(dict.fromkeys([*getattr(job, "scout_reasons", []), *checks]))

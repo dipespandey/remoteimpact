@@ -160,7 +160,7 @@ def review_checks(item, row, prefs):
             continue
         if status != 'confirmed' or field not in ('title', 'description', 'requirements', 'location', 'salary'):
             return None
-        if name == 'function' and isinstance(quote,str) and re.match(r'\s*(?:requires?\b|experience\b|proficiency\b|strong knowledge\b|\d+\+? years)',quote,re.I):
+        if name == 'function' and isinstance(quote,str) and re.match(r'[\s*#•-]*(?:requires?\b|required qualifications?\b|(?:prior )?experience\b|proficiency\b|familiarity\b|strong (?:coding )?(?:knowledge|proficiency)\b|\d+\+? years)',quote,re.I):
             return None
         if name == 'function' and field not in ('description', 'requirements'):
             return None
@@ -234,3 +234,14 @@ def listing_caveats(job):
         if re.search(r'\bcontingent position\b|\b(?:employment|hiring|position)\b.{0,80}(?:dependent upon|depends on|contingent (?:on|upon)).{0,80}contract award',clause,re.I):
             caveats.append('contingent_hiring');break
     return caveats
+
+
+def sector_caveats(job,prefs):
+    """A function match cannot silently establish an environmental sector."""
+    from jobs.services.scout_constraints import plain_job_field,positive_text
+    if not re.search(r'\b(?:climate|sustainability|circular economy)\b',positive_text(prefs.get('intent_text','')),re.I):return []
+    org=getattr(job,'organization',None)
+    text=' '.join([*(plain_job_field(job,f) for f in ('description','requirements','impact')),
+        str(getattr(org,'description','') or '')])
+    if re.search(r'\b(?:climate|environmental|circular economy|decarbon\w*|renewable\w*|clean energy|e[- ]?mobility|electric vehicles?)\b|\bsustainable\s+(?:buildings?|construction|materials?|transport|mobility)\b',text,re.I):return []
+    return ['sector_unconfirmed']
