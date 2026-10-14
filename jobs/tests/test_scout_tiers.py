@@ -76,3 +76,16 @@ class ScoutTierTests(TestCase):
         loose = loose_preferences(prefs)
         for key in ['required_skills', 'unresolved_constraints', 'locations', 'exclude_keywords', 'min_salary']:
             self.assertEqual(loose[key], prefs[key])
+
+    def test_open_ended_applications_are_never_inserted_to_fill_either_tier(self):
+        from jobs.services.scout_constraints import evaluate_job
+        for title in ['Software Engineer "Spontaneous Application"', 'Spontaneous application', 'General application']:
+            job = SimpleNamespace(title=title)
+            for relaxed in [False, True]:
+                self.assertEqual(evaluate_job(job, {}, relaxed=relaxed).reason, 'not_job_opening')
+
+    def test_policy_request_does_not_turn_science_work_into_an_alternative(self):
+        from jobs.services.scout_evidence import role_conflict
+        prefs = Scout._fallback_parse('Remote climate policy roles in Europe, mid-level, no internships.')
+        job = SimpleNamespace(title='Program Scientist, Arctic Stabilization Initiative')
+        self.assertTrue(role_conflict(job, prefs, 'Climate research funding and scientific programme management.'))

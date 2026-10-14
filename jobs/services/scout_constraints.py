@@ -373,6 +373,10 @@ def evaluate_job(job, prefs, relaxed=False):
     scheduling through with explicit caveats, so a Scout can show "possible"
     matches instead of nothing.
     """
+    from jobs.services.importers.common import _is_generic_listing_title
+    title = plain_job_field(job, 'title')
+    if _is_generic_listing_title(title) or re.search(r'\b(?:spontaneous|unsolicited)\s+applications?\b', title, re.I):
+        return Eligibility(False, 'not_job_opening')
     caveats=[]
     levels=prefs.get('experience_levels',[])
     level=getattr(job,'experience_level','')

@@ -83,6 +83,9 @@ def role_conflict(job, prefs, text):
             return True
         if not re.search(r'\b(?:therapist|psychotherapist|clinical social worker|licensed counselor|psychologist)\b', job.title, re.I):
             return True
+    if re.search(r'\bpolicy\s+(?:roles?|jobs?|positions?|work|analysts?|advisors?|officers?)\b', wanted, re.I):
+        if re.search(r'\b(?:scientist|engineer|developer|technician)\b', job.title, re.I) and not re.search(r'\b(?:policy|advocacy|regulatory)\b', job.title, re.I):
+            return True
     if 'full-time' in (prefs.get('job_types') or []) and re.search(r'\bconsultants?\b', job.title, re.I) and not re.search(r'\bfull[- ]time\b',text,re.I):
         return True
     if re.search(r'\bcommunications?\b', wanted, re.I):
