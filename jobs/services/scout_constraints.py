@@ -51,6 +51,38 @@ DOMAIN_VARIANTS = {
     'mental health': ('mental health',),
     'public health': ('public health',),
 }
+TOOL_VARIANTS = {name:(name,) for name in ('python','java','javascript','typescript','sql','rust','ruby','php',
+    'react','django','pytorch','tensorflow','kubernetes','terraform','azure','dbt','linux','docker','git','postgresql')}
+TOOL_VARIANTS.update({'gcp':('gcp','google cloud','google cloud platform'),
+    'aws':('aws','amazon web services'),'nodejs':('nodejs','node.js'),
+    'csharp':('csharp','c#'),'cpp':('cpp','c++')})
+
+
+def skill_requirement_groups(prefs):
+    groups=[TOOL_VARIANTS.get(str(skill).lower(),(str(skill),)) for skill in prefs.get('required_skills') or []]
+    for alternatives in prefs.get('required_skill_groups') or []:
+        groups.append(tuple(dict.fromkeys(v for skill in alternatives
+            for v in TOOL_VARIANTS.get(str(skill).lower(),(str(skill),)))))
+    return groups
+
+
+def explicit_tool_constraints(text):
+    required=[];alternatives=[];found=[];ambiguous=False
+    for marker in re.finditer(r'\b(?:using|requiring|must use|built with)\s+',text,re.I):
+        prefix=text[max(0,marker.start()-60):marker.start()]
+        if re.search(r'\b(?:experience|background|worked|working|proficient)\s*$',prefix,re.I):continue
+        fragment=text[marker.end():marker.end()+300]
+        fragment=re.split(r'[;!?]|\.(?:\s|$)|\b(?:in|from|open to|at least|salary|no|excluding|fully remote)\b',fragment,maxsplit=1,flags=re.I)[0]
+        tools=[]
+        for name,variants in TOOL_VARIANTS.items():
+            if any(re.search(r'(?<!\w)'+re.escape(v)+r'(?!\w)',fragment,re.I) for v in variants):tools.append(name)
+        if not tools:continue
+        found.extend(tools)
+        if re.search(r'\bor\b',fragment,re.I):
+            alternatives.append(tools)
+            ambiguous=ambiguous or bool(re.search(r'\band\b',fragment,re.I))
+        else:required.extend(tools)
+    return list(dict.fromkeys(required)),alternatives,list(dict.fromkeys(found)),ambiguous
 
 
 @lru_cache(maxsize=1)
@@ -93,9 +125,13 @@ def location_requests(text):
         if name=='us' and not re.search(r'(?<![A-Za-z])US(?![A-Za-z])',str(text)[match.start():match.end()]):
             continue  # the pronoun "us", e.g. "let us know"
         prefix = lowered[max(0, match.start()-60):match.start()]
+        explicit_eligibility=bool(re.search(r'\b(?:open to|available (?:in|to)|eligible (?:in|for)|'
+            r'applicants? (?:in|from)|candidates? (?:in|from)|'
+            r'(?:live|living|reside|residing|based|located|work remotely|working remotely) in|'
+            r'remote (?:in|from))\s*$',prefix))
         requested_role_location = bool(re.search(r"\b(?:jobs?|roles?|positions?|opportunities)\b[^.;!?]{0,30}\b(?:in|across|within|from)\s*$", prefix))
         historical_context = bool(re.search(r"\b(?:worked|served|volunteered|studied|background|experience)\b[^.;!?]*$", prefix))
-        if EXPERIENCE_CONTEXT.search(prefix) and not (requested_role_location and not historical_context):
+        if EXPERIENCE_CONTEXT.search(prefix) and not explicit_eligibility and not (requested_role_location and not historical_context):
             continue
         if name not in result:
             result.append(name)
@@ -249,10 +285,15 @@ HTML_TAGS=re.compile(r"""<(?:!--.*?--|/?[A-Za-z](?:[^<>"']|"[^"]*"|'[^']*')*)>""
 def plain_job_field(job, field):
     cached=getattr(job,'_scout_plain_fields',None)
     if cached is None:cached={};job._scout_plain_fields=cached
+    sources=getattr(job,'_scout_plain_sources',None)
+    if sources is None:sources={};job._scout_plain_sources=sources
+    raw=str(getattr(job,field,'') or '')
+    if sources.get(field)!=raw:
+        cached.pop(field,None)
+        sources[field]=raw
     if field not in cached:
-        raw=str(getattr(job,field,'') or '')
         other='description' if field=='requirements' else 'requirements' if field=='description' else None
-        if other in cached and raw==str(getattr(job,other,'') or ''):
+        if other in cached and raw==sources.get(other) and raw==str(getattr(job,other,'') or ''):
             cached[field]=cached[other]
         else:
             clean=' '.join(HTML_TAGS.sub(' ',raw).split())
@@ -260,34 +301,23 @@ def plain_job_field(job, field):
     return cached[field]
 
 
-def location_compatibility(job, desired):
-    if not desired:
-        return None
-    location=plain_job_field(job,'location')
-    country=plain_job_field(job,'country')
-    structured_location=source_location(job)
-    if structured_location:
-        location=structured_location
-    body=' '.join(plain_job_field(job,f) for f in ['description','requirements'])
+def extract_location_evidence(fields):
+    """Query-independent source geography, prepared once and source-hash checked."""
+    location=fields.get('_source_location') or fields.get('location','')
+    country=fields.get('country','')
+    body=' '.join(fields.get(f,'') for f in ['description','requirements'])
     body=re.sub(r'\bU\.S\.(?:A\.)?', 'USA', body, flags=re.I)
-    title=plain_job_field(job,'title')
-    # Parenthetical workplace qualifiers are source eligibility, even when an
-    # importer has collapsed its location field to Remote.
+    title=fields.get('title','')
     title_regions=re.findall(r'\b(?:hub[- ]remote|remote)\s*[:(]\s*([^)]*)\)',title,re.I)
     if title_regions:
         location='; '.join(title_regions)
         if re.search(r'\b(?:DC|Philly)\b',location):location += ' United States'
     location=re.sub(r'\bU\.S\.(?:A\.)?', 'USA', location, flags=re.I)
-    evidence=location
-    wanted=expand(desired)
-    if state_names(' '.join(str(v) for v in desired)):wanted.add('US')
-    # Explicit source exclusions override broad Remote/worldwide labels.
+    denied=set()
     for clause in re.split(r'[.!?;\n]',body+';'+location):
         if re.search(r'\b(?:not eligible|not available|cannot hire|unable to hire|excluding|except)\b',clause,re.I):
-            denied=expand([clause])
+            denied |= expand([clause])
             if state_names(clause):denied.add('US')
-            if denied & wanted:return False
-    # Positive restrictions in substantive source text beat lossy country labels.
     restrict=[]
     for clause in re.split(r'[.!?;\n]',body):
         lowered=clause.lower()
@@ -295,33 +325,35 @@ def location_compatibility(job, desired):
         if not any(token in lowered for token in ('remote','must','need to','only','candidates','applicants')):continue
         if re.search(r'remote\s+(?:within|from|in)|(?:must|need to|only)\s+(?:be\s+)?(?:based|reside|located)|(?:candidates|applicants)\s+(?:(?:must|can|may|should|will|need to)\s+)?(?:be\s+)?(?:based|reside|located|live)',clause,re.I):
             if places(clause) or state_names(clause):
-                # Negation applies to residency, not unrelated job duties.
                 if not re.search(r"\b(?:not|n't)\s+(?:be\s+)?(?:based|reside|located)|\bnot\s+remote\s+(?:in|within|from)",clause,re.I):restrict.append(clause)
     offered=expand(restrict or [location,country])
     offered_states=state_names(' '.join(restrict or [location]))
-    desired_states=state_names(' '.join(str(v) for v in desired))
     if offered_states:offered.add('US')
-    explicit_global=bool(re.search(r'\b(?:worldwide|anywhere|globally|global)\b',location,re.I))
-    if restrict:
-        explicit_global=False
-    requested_global=bool({str(v).lower() for v in desired}&WORLD)
-    if requested_global:
-        if offered:return False
-        return True if explicit_global else None
-    wanted=expand(desired)
-    if desired_states:wanted.add('US')
-    if offered_states and desired_states and not offered_states & desired_states:
-        return False
-    if offered:
-        return bool(offered&wanted) if wanted else None
-    if explicit_global:
-        return True
-    # Geography in titles is only considered when it explicitly qualifies the
-    # eligible region, not when US appears as the subject of the work.
-    title=plain_job_field(job,'title')
+    explicit_global=bool(re.search(r'\b(?:worldwide|anywhere|globally|global)\b',location,re.I)) and not restrict
+    title_region=None
     if re.search(r'any (?:african|european|asian) country',title,re.I):
-        region='africa' if 'african' in title.lower() else ('europe' if 'european' in title.lower() else 'asia')
-        return bool(REGIONS[region]&wanted)
+        title_region='africa' if 'african' in title.lower() else ('europe' if 'european' in title.lower() else 'asia')
+    return {'offered':sorted(offered),'offered_states':sorted(offered_states),
+        'denied':sorted(denied),'explicit_global':bool(explicit_global),'title_region':title_region}
+
+
+def location_compatibility(job, desired):
+    if not desired:return None
+    from jobs.services.scout_source_profile import profile_for
+    _,profile=profile_for(job,geography=True)
+    facts=profile['geography']
+    wanted=expand(desired)
+    desired_states=state_names(' '.join(str(v) for v in desired))
+    if desired_states:wanted.add('US')
+    if set(facts['denied']) & wanted:return False
+    offered=set(facts['offered']);offered_states=set(facts['offered_states'])
+    if {str(v).lower() for v in desired}&WORLD:
+        if offered:return False
+        return True if facts['explicit_global'] else None
+    if offered_states and desired_states and not offered_states & desired_states:return False
+    if offered:return bool(offered&wanted) if wanted else None
+    if facts['explicit_global']:return True
+    if facts['title_region']:return bool(REGIONS[facts['title_region']]&wanted)
     return None
 
 
@@ -335,6 +367,7 @@ class Eligibility:
 
 # Shown to the seeker when a job is offered without full verification.
 CAVEAT_TEXT = {
+    'skill_expression':'Check: clarify which tools are required and which are alternatives',
     'review_remote': 'Check: fully remote arrangement not confirmed',
     'review_location': 'Check: hiring location not confirmed by listing',
     'review_seniority': 'Check: requested seniority not confirmed',
@@ -393,7 +426,56 @@ def salary_compatible(job, requirement):
     except (InvalidOperation,ValueError,TypeError):return False
 
 
+def _eligibility_source(job):
+    """Fields used by eligibility; inspect loaded JSON without causing a deferred read."""
+    data=getattr(job,'__dict__',{})
+    raw=data.get('raw_data') or {}
+    if not isinstance(raw,dict):raw={}
+    api=raw.get('api_response') or {}
+    if not isinstance(api,dict):api={}
+    api_location=api.get('location') or {}
+    org=getattr(job,'organization',None)
+    return (
+        *(getattr(job,f,None) for f in ('title','description','requirements','location','country',
+            'experience_level','job_type','salary_min','salary_max','salary_currency')),
+        *(getattr(org,f,None) for f in ('name','description','organization_type')),
+        data.get('scout_source_location',api_location.get('name') if isinstance(api_location,dict) else None),
+        data.get('scout_source_period',raw.get('salaryPeriod')),
+        data.get('scout_salary_period',raw.get('salary_period')),
+        data.get('scout_source_pay_min',raw.get('salaryMinimum')),
+        data.get('scout_source_pay_max',raw.get('salaryMaximum')),
+    )
+
+
 def evaluate_job(job, prefs, relaxed=False):
+    from jobs.services.scout_workflow import eligibility_memo
+    memo=eligibility_memo()
+    if memo is None:
+        return _evaluate_job(job,prefs,relaxed)
+    import json
+    decisions,diagnostics=memo
+    # Keep the source object alive so Python cannot recycle its identity. A
+    # source/preferences edit, strict/relaxed switch or reloaded row misses.
+    signature=_eligibility_source(job)
+    if getattr(job,'_scout_eligibility_source',signature)!=signature:
+        job.__dict__.pop('_scout_nonprofit_status',None)
+    job._scout_eligibility_source=signature
+    preference_key=json.dumps(prefs,sort_keys=True,default=str)
+    key=(id(job),preference_key,bool(relaxed))
+    previous=decisions.get(key)
+    if previous is not None and previous[0] is job and previous[1]==signature:
+        diagnostics['eligibility_cache_hits']=diagnostics.get('eligibility_cache_hits',0)+1
+        return previous[2]
+    if previous is not None:
+        job.__dict__.pop('_scout_nonprofit_status',None)
+    result=_evaluate_job(job,prefs,relaxed)
+    if len(decisions)>=4096:decisions.clear()
+    decisions[key]=(job,_eligibility_source(job),result)
+    diagnostics['eligibility_evaluations']=diagnostics.get('eligibility_evaluations',0)+1
+    return result
+
+
+def _evaluate_job(job, prefs, relaxed=False):
     """Hard eligibility for a Scout.
 
     Strict mode (default) fails closed on anything unverified. ``relaxed`` keeps
@@ -416,9 +498,14 @@ def evaluate_job(job, prefs, relaxed=False):
         return Eligibility(False,'professional_domain')
     fields=' '.join(plain_job_field(job,f) for f in ['title','description','requirements'])
     fields_lower=fields.lower()
-    from jobs.services.scout_review import workplace_conflict,dominant_function_conflict
+    for group in skill_requirement_groups(prefs):
+        if not any(re.search(r'(?<!\w)'+re.escape(skill)+r'(?!\w)',fields,re.I) for skill in group):
+            return Eligibility(False,'required_skill')
+    from jobs.services.scout_review import remote_requested,dominant_function_conflict
     if dominant_function_conflict(fields,prefs,title):return Eligibility(False,"primary_function")
-    if workplace_conflict(job, prefs, fields):return Eligibility(False, 'workplace')
+    if remote_requested(prefs):
+        from jobs.services.scout_source_profile import profile_for
+        if profile_for(job,workplace=True)[1]['mandatory_workplace']:return Eligibility(False,'workplace')
     if experience_conflict(job,prefs,fields):return Eligibility(False,'experience_evidence')
     if role_conflict(job,prefs,fields):return Eligibility(False,'role_evidence')
     if prefs.get('required_employer_type')=='nonprofit':
@@ -472,6 +559,4 @@ def evaluate_job(job, prefs, relaxed=False):
                 if not re.search(r"\bnot\s+(?:required|necessary)|\b(?:do not|does not|don't|doesn't)\s+require|\bno\s+(?:US|USA|United States)\s+(?:work )?(?:authorization|citizenship)",clause,re.I)]
             if any(re.search(r'(?:'+re.escape(alias)+r')\s+(?:work )?(?:authorization|citizenship).{0,50}(?:required|must)|(?:require|must have).{0,50}\b'+re.escape(alias)+r'\b',clause,re.I) for alias in variants for clause in authorization_clauses):
                 return Eligibility(False,'work_authorization',location)
-    for skill in prefs.get('required_skills',[]):
-        if not re.search(r'(?<!\w)'+re.escape(skill)+r'(?!\w)',fields,re.I):return Eligibility(False,'required_skill',location)
     return Eligibility(True,location=location,caveats=tuple(dict.fromkeys(caveats)))

@@ -56,7 +56,7 @@ class SourceReviewTests(SimpleTestCase):
         item = {'checks': {'function': ['confirmed', 'description', 'Develop industrial policy recommendations'],
                            'location': ['confirmed', 'description', 'You must be located in Germany'],
                            'salary': ['unknown', '', '']}}
-        j = job()
+        j = job(description=row['description'],requirements='')
         self.assertTrue(apply_review(j, item, row, prefs))
         self.assertEqual(tier_for_job(j), 'consider')
         self.assertIn('Location evidence: You must be located in Germany', j.scout_reasons)

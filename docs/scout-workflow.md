@@ -121,3 +121,58 @@ explicit worldwide eligibility counts as verified; unknown eligibility may appea
 in Worth considering. Comparative alternative explanations cannot add applicant
 geography absent from the brief. The dated evaluation includes the 20 regression
 briefs and six additional constructed briefs, with repeated runs and source review.
+
+## Prepared source evidence and query fidelity — 14 October 2026
+
+Scout source profiles store versioned offsets into canonical public listing text
+and query-independent geography/workplace checks, with a hash covering title, description,
+requirements, location, country and the original structured source location.
+`prepare_scout_sources --limit 5000` prepares currently available listings without
+model calls, save signals, notifications, public-field edits or date changes.
+PostgreSQL updates only the profile JSON key atomically and checks source fields
+against concurrent edits. Missing, malformed or stale profiles rebuild from the
+current source. Both daily import scripts prepare profiles after inventory work.
+This projection does not infer missing salary, availability or applicant eligibility.
+
+Duty-based ordering preserves three original heuristic candidates, then recovers
+source-backed candidates missed by title/score gates within the same twelve-job
+review limit. Regional copies of one employer requisition do not consume several
+review slots. Similar titles with different requisitions remain separate. Profile
+ordering only chooses what receives evidence review; it never approves a match.
+Final quotes must occur in the original listing as well as the prompt excerpt.
+
+Explicit eligibility wording such as “open to Europe” survives surrounding research
+context. A comma-delimited “contract” is an employment preference; contract drafting
+and negotiation are not. Explicit technical-tool lists retain all conjunctions,
+cloud aliases and simple OR alternatives. Mixed AND/OR expressions remain uncertain
+and ask for clarification. This is bounded language handling, not a complete parser
+for arbitrary Boolean expressions or every technology.
+
+Interpretation can return six retrieval phrases in its existing provider call.
+Validated plans are bound to the original brief hash; old saved interpretations or
+invalid plans use the existing planner. `SCOUT_COMBINED_PLAN_ENABLED=False` disables
+this integration. The workflow remains at most four calls and an eighteen-second
+shared deadline, with zero provider retries. `SCOUT_SOURCE_RANKING_ENABLED=False`
+disables source-based shortlist recovery and the evidence-only PostgreSQL lexical
+branch. Semantic retrieval remains independent; unindexed lexical rows remain
+eligible for scanning.
+
+Required-tool and professional-domain necessary conditions run in SQL before long
+source scans. Final eligibility still checks source evidence. Request-local memoized
+decisions distinguish strict/relaxed modes, source objects, source changes and
+preference changes. Original hourly/monthly compensation annotations avoid deferred
+JSON fetches. Workplace checks skip full clause processing when no workplace terms
+are present, and required in-person attendance conflicts with remote-only briefs.
+
+Five-minute individual review caches bind each decision to the exact brief, source
+review row, provider model and instructions. Changed pools need review only for
+uncached candidates; source changes invalidate those decisions, and eligibility and
+quotes are checked again. A failed supplemental review or a response omitting decisions can retain already grounded
+matches, marking a partial review. Missing decisions stay unknown rather than becoming cached rejections.
+Markdown-wrapped JSON uses the established structured-response parser; invented IDs, duplicates,
+invalid schemas and unsupported quotes remain rejected. Unknown new candidates are withheld. Preview
+copy discloses incomplete review when fewer than the requested number were checked;
+signup does not promise a complete or larger result set.
+
+GTE embeddings and DeepSeek evidence review remain configured in production. This
+release does not promote experimental fine-tuned models or change embedding spaces.

@@ -5,13 +5,14 @@ import hashlib
 import json
 from datetime import datetime
 from time import monotonic
+import re
 
 from django.conf import settings
 from django.db import connection
 from django.db.models import Case, FloatField, Value, When, Q
 from django.core.cache import cache
 
-from jobs.services.scout_constraints import evaluate_job
+from jobs.services.scout_constraints import evaluate_job,DOMAIN_VARIANTS,skill_requirement_groups
 
 logger=logging.getLogger(__name__)
 
@@ -57,6 +58,29 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=20
     levels=preferences.get('experience_levels') or []
     if levels:
         qs=qs.filter(Q(experience_level__in=levels)|Q(experience_level__isnull=True)|Q(experience_level=''))
+    # Necessary conditions only. All required skills must occur in source
+    # fields under the final evaluator. Checking an ASCII word from each skill
+    # here avoids scanning thousands of unrelated long listings. Use a word,
+    # rather than the whole phrase, so HTML between phrase words stays eligible.
+    for group in skill_requirement_groups(preferences):
+        evidence=Q();safe=True
+        for skill in group:
+            words=re.findall(r'[A-Za-z]{2,}',str(skill))
+            if not words:safe=False;break
+            word=max(words,key=len)
+            evidence|=Q(title__icontains=word)|Q(description__icontains=word)|Q(requirements__icontains=word)
+        if safe:qs=qs.filter(evidence)
+    domains=preferences.get('required_domains') or []
+    if domains:
+        domain_evidence=Q();safe=True
+        for domain in domains:
+            for variant in DOMAIN_VARIANTS.get(str(domain).lower(),(str(domain),)):
+                words=re.findall(r'[A-Za-z]{2,}',variant)
+                if not words:safe=False;break
+                word=max(words,key=len)
+                domain_evidence|=(Q(title__icontains=word)|Q(description__icontains=word)
+                    |Q(requirements__icontains=word)|Q(organization__name__icontains=word))
+        if safe:qs=qs.filter(domain_evidence)
     skills={str(v).lower().replace('-',' ') for v in preferences.get('skills', [])}
     stack=skills & {'python','java','javascript','typescript','sql','c++','c#','rust','golang','ruby','php','react','django','node.js','pytorch','tensorflow','kubernetes','terraform','aws','azure'}
     if preferences.get('titles') and stack:
@@ -72,18 +96,23 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=20
         if amount.is_finite() and amount>=0:
             if requirement.get('mode')=='floor':known=Q(salary_currency=requirement['currency'],salary_min__gte=amount)
             else:known=Q(salary_currency=requirement['currency'])&(Q(salary_max__gte=amount)|Q(salary_max__isnull=True,salary_min__gte=amount))
-            if relaxed:
+            if relaxed and not re.search(r'\bguaranteed\b',preferences.get('intent_text',''),re.I):
                 # Unknown or non-comparable pay may be shown with a caveat;
                 # a known lower salary in the requested currency never is.
                 known|=Q(salary_min__isnull=True,salary_max__isnull=True)|~Q(salary_currency=requirement['currency'])
             qs=qs.filter(known)
     from django.db.models.fields.json import KeyTextTransform, KeyTransform
     qs=qs.annotate(scout_salary_period=KeyTextTransform('salary_period','raw_data'),
+        scout_source_profile=KeyTransform('scout_source_profile','raw_data'),
         scout_source_period=KeyTextTransform('salaryPeriod','raw_data'),
+        scout_source_pay_min=KeyTextTransform('salaryMinimum','raw_data'),
+        scout_source_pay_max=KeyTextTransform('salaryMaximum','raw_data'),
         scout_source_location=KeyTextTransform('name',KeyTransform('location',KeyTransform('api_response','raw_data'))),
         scout_requisition=KeyTextTransform('requisition_id',KeyTransform('api_response','raw_data'))).defer('embedding','embedding_content_hash','search_vector','raw_data','custom_questions','company_description','how_to_apply_text','benefits')
     score=Value(0.0,output_field=FloatField())
+    lexical_evidence=Q()
     for term in terms[:12]:
+        lexical_evidence|=Q(title__icontains=term)|Q(skills__icontains=term)
         score+=Case(When(title__icontains=term,then=Value(8.0)),
                     When(skills__icontains=term,then=Value(4.0)),
                     default=Value(0.0),output_field=FloatField())
@@ -92,8 +121,15 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=20
         # ts_rank repeatedly scans very large imported vectors. Boolean FTS
         # evidence plus title/skill weights preserves lexical recall cheaply.
         full_text_query=SearchQuery(' OR '.join(terms[:12]),search_type='websearch')
+        lexical_evidence|=Q(search_vector=full_text_query)|Q(search_vector__isnull=True)
         score+=Case(When(search_vector=full_text_query,then=Value(2.0)),default=Value(0.0),output_field=FloatField())
-    lexical=qs.annotate(scout_retrieval_score=score).order_by('-scout_retrieval_score','-posted_at','-id')
+    lexical_qs=qs
+    if connection.vendor=='postgresql' and terms and getattr(settings,'SCOUT_SOURCE_RANKING_ENABLED',True):
+        # A zero-evidence row cannot contribute to lexical retrieval. Keep
+        # not-yet-indexed rows and the independent semantic branch available.
+        lexical_qs=qs.filter(lexical_evidence)
+        diagnostics['lexical_evidence_only']=True
+    lexical=lexical_qs.annotate(scout_retrieval_score=score).order_by('-scout_retrieval_score','-posted_at','-id')
     branches=[('lexical',lexical)]
     embedding_start=monotonic()
     if connection.vendor=='postgresql':

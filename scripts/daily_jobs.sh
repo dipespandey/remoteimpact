@@ -30,6 +30,9 @@ echo ""
 echo "[4/4] Generating embeddings for new jobs..."
 /app/.venv/bin/python manage.py embed_jobs --only-missing
 
+# Source-grounded duty/geography offsets keep repeated Scout work off requests.
+/app/.venv/bin/python manage.py prepare_scout_sources --limit 5000
+
 echo ""
 echo "=========================================="
 echo "Daily Jobs Complete - $(date)"

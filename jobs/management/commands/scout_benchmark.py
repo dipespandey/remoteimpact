@@ -57,6 +57,7 @@ class Command(BaseCommand):
         parser.add_argument('--repeat',type=int,default=2,help='One cold and up to two warm runs per brief.')
         parser.add_argument('--inventory-snapshot',required=True,help='Existing or new JSON list of inventory IDs.')
         parser.add_argument('--output',required=True,help='Private JSONL evidence report.')
+        parser.add_argument('--warm-embeddings',action='store_true',help='Preload the configured local embedding model before measuring searches.')
 
     def handle(self,*args,**options):
         if not 1<=options['limit']<=30 or not 1<=options['repeat']<=3:
@@ -72,6 +73,9 @@ class Command(BaseCommand):
             ids=list(available().values_list('pk',flat=True))
             with os.fdopen(os.open(snapshot,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600),'w') as out:json.dump(ids,out)
         config={'default':{'BACKEND':'django.core.cache.backends.locmem.LocMemCache','LOCATION':'scout-benchmark'}}
+        if options.get('warm_embeddings'):
+            from jobs.services.embedding_service import load_for_batch
+            load_for_batch()
         with os.fdopen(os.open(options['output'],os.O_WRONLY|os.O_CREAT|os.O_TRUNC,0o600),'w') as out, \
              override_settings(CACHES=config), \
              patch.object(JobService,'get_available_jobs',side_effect=lambda *a,**k:available(*a,**k).filter(pk__in=ids)):
@@ -79,6 +83,8 @@ class Command(BaseCommand):
                 for run in range(options['repeat']):
                     started=monotonic();diagnostics={}
                     row={**query,'run':run,'inventory_size':len(ids),'at':str(timezone.now())}
+                    from jobs.services import embedding_service
+                    row['embedding_model_warmed']=embedding_service._model is not None
                     try:
                         prefs,jobs=JobScoutService.search_intent(query['brief'],limit=3,diagnostics=diagnostics)
                         row.update(preferences=prefs,matches=[result_evidence(j) for j in jobs])

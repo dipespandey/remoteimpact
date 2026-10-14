@@ -19,7 +19,7 @@ def bounded_workflow(diagnostics):
         return
     state = {'deadline': monotonic() + 18, 'calls': 0, 'diagnostics': diagnostics}
     token = _budget.set(state)
-    diagnostics['workflow_version'] = 2
+    diagnostics['workflow_version'] = 3
     try:
         yield
     finally:
@@ -44,6 +44,14 @@ def record_stage(stage, status, **metrics):
     state = _budget.get()
     if state is not None:
         state['diagnostics'].setdefault('stages', []).append({'stage': stage, 'status': status, **metrics})
+
+
+def eligibility_memo():
+    """Request-local decisions only; never reuse eligibility across searches."""
+    state = _budget.get()
+    if state is None:
+        return None
+    return state.setdefault('eligibility_memo', {}), state['diagnostics']
 
 
 def generate(prompt, **kwargs):
@@ -75,6 +83,13 @@ def plan_terms(preferences, diagnostics, *, retry=False):
     """Plan lexical retrieval only; the model cannot change eligibility preferences."""
     if not getattr(settings, 'SCOUT_MULTISTEP_ENABLED', True) or not preferences.get('intent_text') or not getattr(settings, 'DEEPSEEK_API_KEY', ''):
         return []
+    terms=preferences.get('_retrieval_terms')
+    if (not retry and getattr(settings,'SCOUT_COMBINED_PLAN_ENABLED',True)
+            and preferences.get('_retrieval_brief_hash')==hashlib.sha256(preferences['intent_text'].encode()).hexdigest()
+            and isinstance(terms,list) and len(terms)<=6
+            and all(isinstance(term,str) and 2<=len(term.strip())<=80 for term in terms)):
+        diagnostics['planning']='interpretation'
+        return terms
     payload = {'request': preferences['intent_text'][:2000], 'titles': preferences.get('titles', []),
                'required_skills': preferences.get('required_skills', []),
                'retry': retry, 'rejections': diagnostics.get('hard_rejections', {}) if retry else {}}

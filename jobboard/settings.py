@@ -398,6 +398,8 @@ CACHE_TTL_DAY = 86400  # 24 hours - for rarely changing content
 # Scout semantic retrieval uses the existing local model only after warmup.
 SCOUT_MULTISTEP_ENABLED = os.getenv("SCOUT_MULTISTEP_ENABLED", "true").lower() == "true"
 SCOUT_SEMANTIC_ENABLED = os.getenv("SCOUT_SEMANTIC_ENABLED", "true").lower() == "true"
+SCOUT_SOURCE_RANKING_ENABLED = os.getenv("SCOUT_SOURCE_RANKING_ENABLED", "true").lower() == "true"
+SCOUT_COMBINED_PLAN_ENABLED = os.getenv("SCOUT_COMBINED_PLAN_ENABLED", "true").lower() == "true"
 # Sentence-embedding model for jobs, seekers and Scout queries (384 dimensions, CPU).
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
 # Explicit opt-in until provider latency/cost and relevance are validated.

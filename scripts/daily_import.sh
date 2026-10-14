@@ -57,6 +57,7 @@ fi
 echo ""
 echo "[Step 4/4] Cleaning up expired and stale jobs..."
 uv run python manage.py cleanup_jobs --days 45
+uv run python manage.py prepare_scout_sources --limit 5000
 
 # Summary
 echo ""

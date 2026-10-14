@@ -42,3 +42,29 @@ eligibility. Illustrative worldwide country examples do not become restrictions.
 Contingent openings carry a hiring-condition caveat. Product marketing/sales is
 not substituted for a requested product-management profession unless explicitly
 requested. These checks apply before model selections can override eligibility.
+
+## Source-prepared comparison protocol
+
+`scout_benchmark --warm-embeddings` loads the configured local embedding model before
+measuring searches. Each report row records whether that model was warm; verify
+`semantic_used` rather than assuming preload alone supplied vector retrieval.
+Compare lexical-only and warmed semantic runs separately, with isolated caches and
+the same inventory IDs. Availability and listing contents remain live; timing
+includes source checks, database work and model waits. Warm repeat measurements
+include parse, plan, retrieval and review cache benefits; they are not new-query SLAs.
+
+The 14 October source-prepared run compares the 26 regression/constructed briefs
+against the prior deployed implementation, then uses twelve further constructed
+briefs frozen before final results are inspected. None is an independent human gold
+set. Audit job duties, source quotes, country restrictions, job type and required
+tools, including positive recommendations from the previous implementation.
+More nonzero searches alone do not establish better relevance: the research query
+with “contract, open to Europe” previously lost both constraints and could surface
+full-time India/US roles. Those selections must count as known failures, not recall.
+Record assistant judgments and unknowns separately from deterministic contradictions.
+
+Source preparation additionally checks geography parity across a public text snapshot
+and ten regions, and tests stale profiles, atomic JSON updates, live source changes,
+HTML-separated phrases, domain alternatives, tool aliases and cached-review timeouts
+on SQLite and an isolated PostgreSQL test database. Tests establish implementation
+behavior, not overall recommendation accuracy.

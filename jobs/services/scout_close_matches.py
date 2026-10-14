@@ -51,7 +51,8 @@ def loose_preferences(preferences):
 
 
 def validate(output, evidence, limit, preferences=None):
-    parsed = json.loads(output)
+    from jobs.services.json_utils import parse_json_object
+    parsed = parse_json_object(output)
     picks = parsed.get("picks") if isinstance(parsed, dict) else None
     if not isinstance(picks, list):
         raise ValueError("Invalid schema")
@@ -76,6 +77,9 @@ def validate(output, evidence, limit, preferences=None):
             comparison=re.search(r'(?:rather than|instead of|versus)\s+(.{0,100})',difference,re.I)
             if comparison and expand([comparison[1]]) - expand([preferences.get('intent_text','')]):
                 continue
+            if comparison:
+                invented=re.findall(r'\b(?:corporate|for[- ]profit|nonprofit|government|volunteer|unpaid)\b',comparison[1],re.I)
+                if any(word.lower() not in preferences.get('intent_text','').lower() for word in invented):continue
             from jobs.services.scout_review import review_checks
             if review_checks(item, evidence[pk], preferences) is None:
                 continue
@@ -92,7 +96,11 @@ def close_matches(qs, preferences, terms, diagnostics, limit=MAX_PICKS, force=Fa
         return []
     from jobs.services.scout_retrieval import retrieve
 
-    candidates = retrieve(qs, loose_preferences(preferences), terms, diagnostics.setdefault("close", {}), relaxed=True)[:CANDIDATES]
+    candidates = retrieve(qs, loose_preferences(preferences), terms, diagnostics.setdefault("close", {}), relaxed=True)
+    if getattr(settings,'SCOUT_SOURCE_RANKING_ENABLED',True):
+        from jobs.services.scout_source_profile import shortlist
+        candidates=shortlist(candidates,preferences,limit=CANDIDATES)
+    else:candidates=candidates[:CANDIDATES]
     if not candidates:
         return []
     from jobs.services.scout_review import evidence_fields, CHECK_INSTRUCTIONS, requested_checks, apply_review
@@ -121,7 +129,8 @@ def close_matches(qs, preferences, terms, diagnostics, limit=MAX_PICKS, force=Fa
         logger.warning("Scout close matches unavailable")
         return []
     jobs = {job.pk: job for job in candidates}
-    decisions = {item['id']: item for item in json.loads(output)['picks'] if isinstance(item, dict) and type(item.get('id')) is int}
+    from jobs.services.json_utils import parse_json_object
+    decisions = {item['id']: item for item in parse_json_object(output)['picks'] if isinstance(item, dict) and type(item.get('id')) is int}
     picked, titles = [], {" ".join(t.lower().split()) for t in exclude_titles}
     for pk, difference in accepted:
         job = jobs[pk]

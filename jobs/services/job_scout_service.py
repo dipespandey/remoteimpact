@@ -169,9 +169,12 @@ Extract only what the person explicitly requested. Do not suggest related titles
 infer seniority, or add skills that commonly accompany a role. Use empty arrays
 when a constraint is unspecified. A background summary or a list of existing
 skills is not a request for invented, exact job titles. JSON only."""
+        combined_plan=getattr(settings,'SCOUT_COMBINED_PLAN_ENABLED',True)
+        if combined_plan:
+            prompt+='\nAlso return retrieval_terms: up to six concise role synonyms or responsibility phrases, each 2–80 characters, for finding the same requested work. These are search wording only: preserve function and sector, never invent skills or alter eligibility. Use [] when no alternate wording is useful.'
         # Cache only validated interpretation, keyed by exact normalized brief,
         # model and taxonomy. Always re-ground it; never cache fallback failures.
-        key = 'scout-parse-v1:' + hashlib.sha256((intent_text + category_options +
+        key = 'scout-parse-v2:' + hashlib.sha256((intent_text + category_options + str(combined_plan) +
                 str(getattr(settings, 'DEEPSEEK_MODEL', ''))).encode()).hexdigest()
         from jobs.services.scout_workflow import record_stage
         try:
@@ -193,7 +196,7 @@ skills is not a request for invented, exact job titles. JSON only."""
                 # Exclude the original personal narrative from cached values.
                 cache.set(key, {k:v for k,v in parsed.items() if k in
                     {'titles','skills','include_keywords','exclude_keywords','locations',
-                     'job_types','experience_levels','min_salary','category_slugs'}}, 600)
+                     'job_types','experience_levels','min_salary','category_slugs','retrieval_terms'}}, 600)
             except Exception:
                 pass
             return grounded
@@ -316,8 +319,13 @@ skills is not a request for invented, exact job titles. JSON only."""
         )
 
         model_exclusions = preferences["exclude_keywords"]
-        preferences.update({key: fallback[key] for key in ("constraint_version", "intent_text", "candidate_years", "required_employer_type", "actual_annual_pay", "part_time_contract", "exclude_keywords", "locations", "excluded_locations", "excluded_work_authorization", "salary_requirement", "min_salary", "required_domains", "required_skills", "unresolved_constraints", "require_verified_location", "experience_levels") if key in fallback})
+        preferences.update({key: fallback[key] for key in ("constraint_version", "intent_text", "candidate_years", "required_employer_type", "actual_annual_pay", "part_time_contract", "exclude_keywords", "locations", "excluded_locations", "excluded_work_authorization", "salary_requirement", "min_salary", "required_domains", "required_skills", "required_skill_groups", "unresolved_constraints", "require_verified_location", "experience_levels") if key in fallback})
         preferences["exclude_keywords"] = list(dict.fromkeys([*preferences.get("exclude_keywords", []), *model_exclusions]))[:20]
+        terms=parsed.get('retrieval_terms')
+        if (getattr(settings,'SCOUT_COMBINED_PLAN_ENABLED',True) and isinstance(terms,list) and len(terms)<=6
+                and all(isinstance(term,str) and 2<=len(term.strip())<=80 for term in terms)):
+            preferences['_retrieval_terms']=list(dict.fromkeys(term.strip().lower() for term in terms))
+            preferences['_retrieval_brief_hash']=hashlib.sha256(intent_text.encode()).hexdigest()
         return preferences
 
     @classmethod
@@ -484,6 +492,15 @@ skills is not a request for invented, exact job titles. JSON only."""
             label = skill.replace("-", " ")
             if re.search(r"\b(?:using|requiring|must use|built with)\s+" + re.escape(label) + r"\b", lowered):
                 preferences["required_skills"] = list(dict.fromkeys([*preferences.get("required_skills", []), label]))
+        from jobs.services.scout_constraints import explicit_tool_constraints,TOOL_VARIANTS
+        required,groups,tools,ambiguous=explicit_tool_constraints(positive_text(intent_text))
+        captured={variant for tool in tools for variant in TOOL_VARIANTS[tool]}
+        preferences['required_skills']=[skill for skill in preferences.get('required_skills',[]) if skill.lower() not in captured]
+        preferences['required_skills']=list(dict.fromkeys([*preferences['required_skills'],*required]))
+        preferences['required_skill_groups']=groups
+        preferences['skills']=list(dict.fromkeys([*preferences['skills'],*tools]))[:12]
+        if ambiguous:
+            preferences['unresolved_constraints']=list(dict.fromkeys([*preferences.get('unresolved_constraints',[]),'skill_expression']))
         return preferences
 
     @classmethod
@@ -593,7 +610,8 @@ skills is not a request for invented, exact job titles. JSON only."""
                 r"\b(?:contract|contractor)\s+(?:job|jobs|role|roles|position|positions|work|employment)\b"
                 r"|\b(?:job|jobs|role|roles|position|positions|work|employment)\s+(?:on\s+)?(?:a\s+)?contract(?:\s+basis)?\b"
                 r"|\bwork(?:ing)?\s+as\s+(?:a\s+)?contractor\b"
-                r"|\b(?:part|full)[ -]?time\s+contract\b",
+                r"|\b(?:part|full)[ -]?time\s+contract\b"
+                r"|(?:^|[,;])\s*contract(?:\s+only)?\s*(?=[,;.!?]|$)",
                 "contract",
             ),
         ]
@@ -882,7 +900,7 @@ skills is not a request for invented, exact job titles. JSON only."""
 
         if alert.intent_text:
             grounded = cls._fallback_parse(alert.intent_text)
-            for key in ("constraint_version", "intent_text", "candidate_years", "required_employer_type", "actual_annual_pay", "part_time_contract", "exclude_keywords", "locations", "excluded_locations", "excluded_work_authorization", "salary_requirement", "min_salary", "required_domains", "required_skills", "unresolved_constraints", "require_verified_location", "experience_levels", "job_types"):
+            for key in ("constraint_version", "intent_text", "candidate_years", "required_employer_type", "actual_annual_pay", "part_time_contract", "exclude_keywords", "locations", "excluded_locations", "excluded_work_authorization", "salary_requirement", "min_salary", "required_domains", "required_skills", "required_skill_groups", "unresolved_constraints", "require_verified_location", "experience_levels", "job_types"):
                 preferences[key] = grounded.get(key, [] if key == "required_skills" else None)
             stored_exclusions = cls._grounded_exclusions(
                 (alert.parsed_preferences or {}).get("exclude_keywords", []), alert.intent_text
@@ -955,7 +973,7 @@ skills is not a request for invented, exact job titles. JSON only."""
         terms = cls._search_terms(preferences)
         diagnostics = diagnostics if diagnostics is not None else {}
         diagnostics.update({
-            "matcher_version": 4, "candidate_count": 0,
+            "matcher_version": 5, "candidate_count": 0,
             "location_rejected": 0, "experience_rejected": 0, "title_rejected": 0,
             "skill_evidence_rejected": 0, "score_rejected": 0,
         })
@@ -1019,6 +1037,22 @@ skills is not a request for invented, exact job titles. JSON only."""
             diagnostics["provisional"] = provisional_diagnostics
             pool = [*pool[:6], *provisional[:6], *pool[6:]]
             diagnostics["combined_review"] = True
+            if getattr(settings,'SCOUT_SOURCE_RANKING_ENABLED',True):
+                from jobs.services.scout_source_profile import shortlist,function_priority
+                present={job.pk for job in pool}
+                recovered=[]
+                # Heuristic title/score thresholds must not prevent grounded
+                # source review of the same work under an unusual job title.
+                for job in shared_candidates:
+                    if job.pk in present or function_priority(job,preferences)<8:continue
+                    eligibility=evaluate_job(job,preferences,relaxed=True)
+                    if not eligibility.allowed:continue
+                    job.scout_caveats=list(eligibility.caveats)
+                    recovered.append(job)
+                pool=shortlist([*pool,*recovered],preferences,anchors=pool[:3])
+                diagnostics['source_ranked_review']=True
+                diagnostics['source_recovered_candidates']=len(recovered)
+                diagnostics['source_prepared_candidates']=sum(bool(getattr(j,'_scout_source_profile_prepared',False)) for j in shared_candidates)
         selected = rerank(pool, preferences, scored, diagnostics, relaxed=combined_review)
         # One opening can have several regional source postings. Keep the best
         # eligible region, and never merge unrelated jobs with similar titles.
@@ -1083,8 +1117,9 @@ skills is not a request for invented, exact job titles. JSON only."""
         diagnostics['good_match_count'] = sum(tier_for_job(job) == 'good' for job in selected)
         diagnostics['worth_considering_count'] = len(selected) - diagnostics['good_match_count']
         diagnostics["match_count"] = len(selected)
-        diagnostics["review_incomplete"] = bool(not selected and (
+        diagnostics["review_incomplete"] = bool(len(selected)<limit and (
             diagnostics.get("reranker") == "review_unavailable" or
+            diagnostics.get("reranker") == "review_partial" or
             diagnostics.get("relaxed_review") == "review_unavailable" or
             diagnostics.get("close_matches") == "unavailable" or diagnostics.get("llm_budget_exhausted") or
             diagnostics.get("retrieval_deadline_reached")))

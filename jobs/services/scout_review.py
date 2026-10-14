@@ -83,8 +83,13 @@ def evidence_fields(job, preferences):
     requirements = plain_job_field(job, 'requirements')
     duplicate = requirements == description
     intent = preferences.get('intent_text', '')
+    from jobs.services.scout_source_profile import duty_excerpt
+    lead=duty_excerpt(job,preferences)
+    # Explicit workload shares retain precedence over incidental task matches.
+    if list(workload_allocations(description)):
+        lead=primary_duties(description,700)
     return {'title': plain_job_field(job, 'title'),
-            'description': primary_duties(description,700) + ' […] ' + excerpt(description, intent, 2100 if duplicate else 1100),
+            'description': lead + ' […] ' + excerpt(description, intent, 2100 if duplicate else 1100),
             'requirements': '' if duplicate else excerpt(requirements, intent, 1000)}
 
 
@@ -96,12 +101,14 @@ def remote_requested(prefs):
 def workplace_conflict(job, prefs, text):
     if not remote_requested(prefs):
         return False
+    if not re.search(r'\b(?:hybrid|on[- ]site|in[- ]office|office|in[- ]person)\b',text,re.I):
+        return False
     # Require workplace wording: hybrid cloud and remote build caches aren't locations.
-    pattern = r'\bhybrid (?:working|work|role|position|model|schedule|arrangement)|\b(?:role|position|work(?:ing)? (?:model|arrangement)) (?:is|offers|requires|will be) (?:a )?hybrid\b|\b(?:on[- ]site|in[- ]office) (?:role|position|work|attendance)\b|\b(?:required to|must|expected to) (?:work|be|attend) (?:in|from|at) (?:the|our|an) office\b'
+    pattern = r'\bhybrid (?:working|work|role|position|model|schedule|arrangement)|\b(?:role|position|work(?:ing)? (?:model|arrangement)) (?:is|offers|requires|will be) (?:a )?hybrid\b|\b(?:on[- ]site|in[- ]office) (?:role|position|work|attendance)\b|\b(?:required to|must|expected to) (?:work|be|attend) (?:in|from|at) (?:the|our|an) office\b|\b(?:in[- ]person|office) attendance (?:as )?required\b|\b(?:mandatory|required) (?:in[- ]person|office) attendance\b'
     for clause in re.split(r'[.!?;\n]', text):
         if re.search(r'remote and hybrid work options', clause, re.I):
             continue
-        if re.search(pattern, clause, re.I) and not re.search(r'\b(?:optional|not required|no mandatory|no hybrid|no on[- ]site|or fully remote|or remote|remote and hybrid work options)\b', clause, re.I):
+        if re.search(pattern, clause, re.I) and not re.search(r'\b(?:optional|not required|no mandatory|no required in[- ]person attendance|no required office attendance|no hybrid|no on[- ]site|or fully remote|or remote|remote and hybrid work options)\b', clause, re.I):
             return True
     return False
 
@@ -109,7 +116,7 @@ def workplace_conflict(job, prefs, text):
 def requested_checks(prefs):
     checks = ['function']
     for key, wanted in [('remote', remote_requested(prefs)), ('location', prefs.get('locations')),
-                        ('seniority', prefs.get('experience_levels')), ('skills', prefs.get('required_skills')),
+                        ('seniority', prefs.get('experience_levels')), ('skills', prefs.get('required_skills') or prefs.get('required_skill_groups')),
                         ('salary', prefs.get('salary_requirement') or prefs.get('min_salary'))]:
         if wanted:
             checks.append(key)
@@ -177,9 +184,21 @@ def review_checks(item, row, prefs):
     return unknown
 
 
+def source_checks_grounded(job,item):
+    from jobs.services.scout_constraints import plain_job_field
+    from jobs.services.scout_reranker import _normalized
+    # An excerpt separator is not original source evidence. Even a quote
+    # grounded in the prompt must also occur in the actual listing field.
+    for status,field,quote in item['checks'].values():
+        if status=='confirmed' and field in ('title','description','requirements','location'):
+            if _normalized(quote) not in _normalized(plain_job_field(job,field)):
+                return False
+    return True
+
+
 def apply_review(job, item, row, prefs):
     caveats = review_checks(item, row, prefs)
-    if caveats is None:
+    if caveats is None or not source_checks_grounded(job,item):
         return False
     existing = list(getattr(job, 'scout_caveats', []))
     aliases = {'review_location': 'location_unconfirmed', 'review_salary': 'salary_unlisted'}
