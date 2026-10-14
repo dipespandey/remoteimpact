@@ -88,6 +88,8 @@ def location_requests(text):
     result=[]
     for match in pattern.finditer(lowered):
         name=match.group()
+        if re.match(r'\s*(?:dollars?|currency)\b',lowered[match.end():]):
+            continue  # currency denomination is not applicant geography
         if name=='us' and not re.search(r'(?<![A-Za-z])US(?![A-Za-z])',str(text)[match.start():match.end()]):
             continue  # the pronoun "us", e.g. "let us know"
         prefix = lowered[max(0, match.start()-60):match.start()]
@@ -247,7 +249,12 @@ HTML_TAGS=re.compile(r"""<(?:!--.*?--|/?[A-Za-z](?:[^<>"']|"[^"]*"|'[^']*')*)>""
 def plain_job_field(job, field):
     cached=getattr(job,'_scout_plain_fields',None)
     if cached is None:cached={};job._scout_plain_fields=cached
-    if field not in cached:cached[field]=' '.join(HTML_TAGS.sub('',str(getattr(job,field,'') or '')).split())
+    if field not in cached:
+        raw=str(getattr(job,field,'') or '')
+        other='description' if field=='requirements' else 'requirements' if field=='description' else None
+        if other in cached and raw==str(getattr(job,other,'') or ''):
+            cached[field]=cached[other]
+        else:cached[field]=' '.join(HTML_TAGS.sub('',raw).split())
     return cached[field]
 
 
@@ -260,6 +267,15 @@ def location_compatibility(job, desired):
     if structured_location:
         location=structured_location
     body=' '.join(plain_job_field(job,f) for f in ['description','requirements'])
+    body=re.sub(r'\bU\.S\.(?:A\.)?', 'USA', body, flags=re.I)
+    title=plain_job_field(job,'title')
+    # Parenthetical workplace qualifiers are source eligibility, even when an
+    # importer has collapsed its location field to Remote.
+    title_regions=re.findall(r'\b(?:hub[- ]remote|remote)\s*[:(]\s*([^)]*)\)',title,re.I)
+    if title_regions:
+        location='; '.join(title_regions)
+        if re.search(r'\b(?:DC|Philly)\b',location):location += ' United States'
+    location=re.sub(r'\bU\.S\.(?:A\.)?', 'USA', location, flags=re.I)
     evidence=location
     wanted=expand(desired)
     if state_names(' '.join(str(v) for v in desired)):wanted.add('US')
@@ -327,6 +343,7 @@ CAVEAT_TEXT = {
     'working_timezone': 'Check: working hours not stated',
     'location_code': 'Check: location eligibility not confirmed',
     'salary_currency': 'Check: salary currency',
+    'paid_currency_unconfirmed': 'Check: payment in the requested currency is not confirmed',
 }
 
 
@@ -389,6 +406,9 @@ def evaluate_job(job, prefs, relaxed=False):
     if levels and level and level not in levels:return Eligibility(False,'experience')
     types=prefs.get('job_types',[])
     if types and getattr(job,'job_type','') not in types:return Eligibility(False,'job_type')
+    domains=prefs.get('required_domains',[])
+    if domains and not any(domain_evidence(job,domain) for domain in domains):
+        return Eligibility(False,'professional_domain')
     fields=' '.join(plain_job_field(job,f) for f in ['title','description','requirements'])
     fields_lower=fields.lower()
     from jobs.services.scout_review import workplace_conflict
@@ -410,10 +430,22 @@ def evaluate_job(job, prefs, relaxed=False):
     requirement=prefs.get('salary_requirement')
     if not requirement and prefs.get('min_salary'):
         requirement={'amount':str(prefs['min_salary']),'currency':'USD','period':'year'}
-    if requirement and re.search(r'\bunpaid\b|\bvolunteer (?:role|position|opportunity)\b',fields,re.I):
+    paid_requested=bool(requirement or re.search(r'\bpaid\b|\b(?:salary|compensation|pay)\b',prefs.get('intent_text',''),re.I))
+    volunteer_title=bool(re.search(r'\(volunteer\)|^volunteer\s*[,:(-]|^volunteer$',title,re.I))
+    if paid_requested and (volunteer_title or re.search(r'\bunpaid\b|\bvolunteer (?:role|position|opportunity)\b',fields,re.I)):
         return Eligibility(False,'salary')
+    currency_request=re.search(r'\bpaid in (US dollars|USD|EUR|euros|GBP|British pounds)\b',prefs.get('intent_text',''),re.I)
+    if currency_request:
+        requested_currency={'us dollars':'USD','usd':'USD','eur':'EUR','euros':'EUR','gbp':'GBP','british pounds':'GBP'}[currency_request.group(1).lower()]
+        has_pay=getattr(job,'salary_min',None) is not None or getattr(job,'salary_max',None) is not None
+        actual_currency=str(getattr(job,'salary_currency','') or '').upper()
+        if has_pay and actual_currency and actual_currency!=requested_currency:return Eligibility(False,'salary')
+        if not has_pay or not actual_currency:
+            if not relaxed:return Eligibility(False,'salary')
+            caveats.append('paid_currency_unconfirmed')
     if not salary_compatible(job,requirement):
-        caveat=salary_caveat(job,requirement) if relaxed else None
+        allow_unconfirmed=relaxed and not re.search(r'\bguaranteed\b',prefs.get('intent_text',''),re.I)
+        caveat=salary_caveat(job,requirement) if allow_unconfirmed else None
         if not caveat:return Eligibility(False,'salary')
         caveats.append(caveat)
     if prefs.get('unresolved_constraints'):
@@ -434,9 +466,6 @@ def evaluate_job(job, prefs, relaxed=False):
                 if not re.search(r"\bnot\s+(?:required|necessary)|\b(?:do not|does not|don't|doesn't)\s+require|\bno\s+(?:US|USA|United States)\s+(?:work )?(?:authorization|citizenship)",clause,re.I)]
             if any(re.search(r'(?:'+re.escape(alias)+r')\s+(?:work )?(?:authorization|citizenship).{0,50}(?:required|must)|(?:require|must have).{0,50}\b'+re.escape(alias)+r'\b',clause,re.I) for alias in variants for clause in authorization_clauses):
                 return Eligibility(False,'work_authorization',location)
-    domains=prefs.get('required_domains',[])
-    if domains and not any(domain_evidence(job,domain) for domain in domains):
-        return Eligibility(False,'professional_domain',location)
     for skill in prefs.get('required_skills',[]):
         if not re.search(r'(?<!\w)'+re.escape(skill)+r'(?!\w)',fields,re.I):return Eligibility(False,'required_skill',location)
     return Eligibility(True,location=location,caveats=tuple(dict.fromkeys(caveats)))

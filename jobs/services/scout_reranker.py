@@ -31,10 +31,18 @@ def validate_decisions(output,evidence,preferences=None):
     if len(decisions)!=len(evidence):raise ValueError('Incomplete candidate decisions')
     seen=set();accepted=[];ungrounded=0
     for item in decisions:
-        if not isinstance(item,dict) or set(item)!=({'id','relevant','evidence','checks'} if preferences is not None else {'id','relevant','evidence'}):raise ValueError('Invalid decision')
+        if not isinstance(item,dict):raise ValueError('Invalid decision')
+        if preferences is None and set(item)!={'id','relevant','evidence'}:raise ValueError('Invalid decision')
+        if preferences is not None and (not {'id','relevant'} <= set(item) or set(item)-{'id','relevant','checks','evidence'}):raise ValueError('Invalid decision')
         pk=item['id']
         if type(pk) is not int or pk not in evidence or pk in seen or type(item['relevant']) is not bool:raise ValueError('Unknown or duplicated job')
         seen.add(pk)
+        if preferences is not None:
+            from jobs.services.scout_review import review_checks
+            if item['relevant'] and review_checks(item,evidence[pk],preferences) is not None:
+                status,field,quote=item['checks']['function']
+                accepted.append((pk,[{'field':field,'quote':quote}]))
+            continue
         quotes=item['evidence']
         if not isinstance(quotes,list) or len(quotes)>3:raise ValueError('Invalid evidence')
         if item['relevant'] and not quotes:raise ValueError('Relevant decision without evidence')
@@ -48,10 +56,6 @@ def validate_decisions(output,evidence,preferences=None):
             if text in evidence[pk].get(field,'') or _normalized(text) in _normalized(evidence[pk].get(field,'')):
                 grounded.append(quote)
         if item['relevant']:
-            if preferences is not None:
-                from jobs.services.scout_review import review_checks
-                if review_checks(item, evidence[pk], preferences) is None:
-                    continue
             if grounded:accepted.append((pk,grounded))
             else:ungrounded+=1
     # One sloppy quote drops that job; a response with no grounded selections
@@ -92,11 +96,11 @@ def rerank(candidates,preferences,fallback,diagnostics,relaxed=False):
             'Judge the requested professional domain and responsibilities, not generic transferable skills. '
             'A job is relevant only if its main function is the kind of work requested; adjacent fields, clearly more senior '
             'or junior roles than requested, and roles whose core skills the request never mentions are not relevant. '
-            'Return JSON only: {"decisions":[{"id":1,"relevant":true,"evidence":[{"field":"description","quote":"verbatim supporting text"}],"checks":{}}]}. '
-            'Return exactly one decision for every candidate ID. Order by relevance. Every true decision needs one to three exact quotes, each 8 to 180 characters, from the provided title, description or requirements. '
-            'Return false with empty evidence and checks when function is uncertain. No confidence percentages. '
+            'Return JSON only: {"decisions":[{"id":1,"relevant":true,"checks":{}}]}. '
+            'Return exactly one decision for every candidate ID. Order by relevance. Every true decision needs the constraint checks below; do not duplicate their quotes in a separate evidence field. '
+            'Return only id and relevant:false when function is uncertain. No confidence percentages. '
             + CHECK_INSTRUCTIONS.format(checks=', '.join(requested_checks(preferences))))
-    key='scout-rerank-v4:'+hashlib.sha256((body+system+str(getattr(settings,'DEEPSEEK_MODEL',''))).encode()).hexdigest()
+    key='scout-rerank-v5:'+hashlib.sha256((body+system+str(getattr(settings,'DEEPSEEK_MODEL',''))).encode()).hexdigest()
     try:
         cached=cache.get(key)
         if cached is not None:
@@ -106,7 +110,7 @@ def rerank(candidates,preferences,fallback,diagnostics,relaxed=False):
             if relaxed and getattr(settings, 'SCOUT_CLOSE_MATCHES', False) and not can_call(reserve=1):
                 diagnostics['reranker'] = 'reserved_for_alternatives'
                 return []
-            output=generate(body,max_tokens=MAX_OUTPUT_TOKENS,temperature=0.0,
+            output=generate(body,stage='review',max_tokens=MAX_OUTPUT_TOKENS,temperature=0.0,
                                       timeout=TIMEOUT_SECONDS,max_retries=0,system_message=system)
             accepted=validate_decisions(output,evidence,preferences)
             try:
@@ -126,7 +130,8 @@ def rerank(candidates,preferences,fallback,diagnostics,relaxed=False):
         diagnostics['rerank_candidate_count']=len(rows)
         diagnostics['rerank_selected_count']=len(selected)
         return selected
-    except Exception:
+    except Exception as exc:
+        diagnostics['review_failure_type'] = type(exc).__name__
         # Do not turn a failed evidence review into confident recommendations.
         # Do not log raw user briefs, listings, provider messages or credentials.
         diagnostics['reranker']='review_unavailable'

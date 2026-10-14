@@ -81,3 +81,20 @@ representative relevance benchmark. Further evaluation should independently labe
 real search/candidate pairs and track hard-constraint violations, function precision,
 useful alternative coverage, known-match recall, run stability and latency. Do not
 claim general precision from passing software tests or these two searches.
+
+## Broader evaluation and performance — 14 October 2026
+
+See [the reproducible evaluation protocol](scout-evaluation.md). A frozen 20-brief
+suite expands beyond the two original searches. Development and held-out outcomes
+are recorded separately; once a held-out failure informs a fix, it becomes a
+regression case and is no longer claimed as untouched validation. Source-reviewed
+failures include paid-versus-volunteer work, currency denominations mistaken for
+geography, and eligibility restrictions preserved only in titles. Explicitly
+guaranteed pay cannot be satisfied by an undisclosed salary in either tier.
+
+Preview candidate-ID caching rechecks live availability and source eligibility;
+interpretation caching re-grounds every request. Streaming retrieval preserves
+existing scan/eligibility limits. Per-stage timings and safe review-failure types
+support operational diagnosis. Reduced review JSON keeps the same source-grounding
+and complete-candidate checks. None of these measures establish general recall or
+a blanket quality guarantee, and the model-call deadline is not a total latency SLA.

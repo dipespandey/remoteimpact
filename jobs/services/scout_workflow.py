@@ -19,7 +19,7 @@ def bounded_workflow(diagnostics):
         return
     state = {'deadline': monotonic() + 18, 'calls': 0, 'diagnostics': diagnostics}
     token = _budget.set(state)
-    diagnostics['workflow_version'] = 1
+    diagnostics['workflow_version'] = 2
     try:
         yield
     finally:
@@ -30,6 +30,20 @@ def bounded_workflow(diagnostics):
 def can_call(*, reserve=0):
     state = _budget.get()
     return state is None or (state['calls'] < 4 - reserve and state['deadline'] - monotonic() >= 0.25)
+
+
+def retrieval_time_available():
+    state = _budget.get()
+    if state is None or state['deadline'] - monotonic() >= 4:
+        return True
+    state['diagnostics']['retrieval_deadline_reached'] = True
+    return False
+
+
+def record_stage(stage, status, **metrics):
+    state = _budget.get()
+    if state is not None:
+        state['diagnostics'].setdefault('stages', []).append({'stage': stage, 'status': status, **metrics})
 
 
 def generate(prompt, **kwargs):
@@ -44,7 +58,17 @@ def generate(prompt, **kwargs):
         kwargs['timeout'] = min(kwargs.get('timeout', 6), remaining)
         state['calls'] += 1
     kwargs['max_retries'] = 0
-    return AIClient().generate(prompt, **kwargs)
+    stage = kwargs.pop('stage', 'model')
+    started = monotonic()
+    status = 'ok'
+    try:
+        return AIClient().generate(prompt, **kwargs)
+    except Exception:
+        status = 'error'
+        raise
+    finally:
+        record_stage(stage, status, seconds=round(monotonic()-started, 4),
+                     input_chars=len(prompt)+len(kwargs.get('system_message', '')))
 
 
 def plan_terms(preferences, diagnostics, *, retry=False):
@@ -68,7 +92,7 @@ def plan_terms(preferences, diagnostics, *, retry=False):
             if not can_call(reserve=2):
                 diagnostics['refinement' if retry else 'planning'] = 'reserved_for_review'
                 return []
-            output = generate(body, max_tokens=250, temperature=0, timeout=3, system_message=system)
+            output = generate(body, stage='refinement' if retry else 'plan', max_tokens=250, temperature=0, timeout=3, system_message=system)
         parsed = json.loads(output)
         if not isinstance(parsed, dict) or set(parsed) != {'terms'} or not isinstance(parsed['terms'], list) or len(parsed['terms']) > 6:
             raise ValueError('Invalid search plan')

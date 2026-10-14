@@ -1,6 +1,9 @@
 """Bounded lexical/vector retrieval and reciprocal rank fusion for Scouts."""
 from collections import Counter
 import logging
+import hashlib
+import json
+from datetime import datetime
 from time import monotonic
 
 from django.conf import settings
@@ -43,6 +46,10 @@ def query_embedding(text):
 
 def retrieve(qs,preferences,terms,diagnostics,relaxed=False):
     retrieval_start=monotonic()
+    from jobs.services.scout_workflow import retrieval_time_available
+    if not retrieval_time_available():
+        diagnostics['retrieval_deadline_reached']=True
+        return []
     # Ranking uses vectors inside PostgreSQL; transferring the full vector and
     # tsvector for thousands of rejected rows provides no matching evidence.
     # Push only necessary conditions of the later Python gates into SQL.
@@ -101,28 +108,71 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False):
             diagnostics['semantic_fallback']=True
             logger.warning('Scout semantic retrieval unavailable',exc_info=False)
     diagnostics['query_embedding_seconds']=round(monotonic()-embedding_start,4)
+    # Cache ranked IDs only for initial previews, never source text or user
+    # delivery history. Reload through the current availability/filter queryset
+    # and rerun eligibility on every hit. Newly imported jobs may take <=60s.
+    cache_key=None
+    if preferences.get('_scout_preview_cache') and getattr(settings,'SCOUT_RETRIEVAL_CACHE_ENABLED',connection.vendor=='postgresql'):
+        try:
+            sql,params=qs.query.sql_with_params()
+            canonical=[p.replace(minute=0,second=0,microsecond=0).isoformat() if isinstance(p,datetime) else p for p in params]
+            payload=[sql,canonical,preferences,terms,relaxed,len(branches),getattr(settings,'EMBEDDING_MODEL','')]
+            cache_key='scout-candidates-v1:'+hashlib.sha256(json.dumps(payload,sort_keys=True,default=str).encode()).hexdigest()
+            ids=cache.get(cache_key)
+            if isinstance(ids,list) and len(ids)<=400 and all(type(pk) is int for pk in ids):
+                by_id={job.pk:job for job in qs.filter(pk__in=ids)}
+                result=[]
+                for pk in ids:
+                    job=by_id.get(pk)
+                    if job is None:continue
+                    eligibility=evaluate_job(job,preferences,relaxed=relaxed)
+                    if eligibility.allowed:
+                        job._scout_caveats=eligibility.caveats
+                        result.append(job)
+                diagnostics.update(retrieval_cache='hit',semantic_used=len(branches)>1,
+                    retrieval_seconds=round(monotonic()-retrieval_start,4))
+                return result
+        except Exception:
+            diagnostics['retrieval_cache']='unavailable'
     count=200;scan=2000
     rejected=Counter();rankings=[];eligibility_cache={}
     diagnostics['retrieval']={}
     for name,query in branches:
         eligible=[];scanned=0
-        load_start=monotonic()
-        rows=list(query[:scan])
-        load_seconds=monotonic()-load_start
-        eligibility_start=monotonic()
-        for job in rows:
-            scanned+=1
-            if job.pk not in eligibility_cache:eligibility_cache[job.pk]=evaluate_job(job,preferences,relaxed=relaxed)
-            result=eligibility_cache[job.pk]
-            if result.allowed:
-                job._scout_caveats=result.caveats
-                eligible.append(job)
-            else:rejected[result.reason]+=1
-            if len(eligible)>=count:break
-        diagnostics['retrieval'][name]={'scanned':scanned,'eligible':len(eligible),'scan_limit_reached':scanned==scan,'load_seconds':round(load_seconds,4),'eligibility_seconds':round(monotonic()-eligibility_start,4)}
+        load_seconds=eligibility_seconds=0.0
+        # Keep SQL ordering, scan cap and eligibility semantics unchanged. A
+        # server-side cursor avoids materializing 2,000 long listings when the
+        # first few hundred already supply the eligible candidate limit.
+        rows=query[:scan].iterator(chunk_size=100)
+        try:
+            while len(eligible)<count:
+                if scanned % 25 == 0 and not retrieval_time_available():
+                    diagnostics['retrieval_deadline_reached']=True
+                    break
+                load_start=monotonic()
+                try:job=next(rows)
+                except StopIteration:
+                    load_seconds+=monotonic()-load_start
+                    break
+                load_seconds+=monotonic()-load_start
+                eligibility_start=monotonic()
+                scanned+=1
+                if job.pk not in eligibility_cache:eligibility_cache[job.pk]=evaluate_job(job,preferences,relaxed=relaxed)
+                result=eligibility_cache[job.pk]
+                if result.allowed:
+                    job._scout_caveats=result.caveats
+                    eligible.append(job)
+                else:rejected[result.reason]+=1
+                eligibility_seconds+=monotonic()-eligibility_start
+        finally:
+            rows.close()
+        diagnostics['retrieval'][name]={'scanned':scanned,'eligible':len(eligible),'scan_limit_reached':scanned==scan,'load_seconds':round(load_seconds,4),'eligibility_seconds':round(eligibility_seconds,4)}
         rankings.append(eligible)
     diagnostics['hard_rejections']=dict(rejected)
     diagnostics['semantic_used']=len(branches)>1
     result=reciprocal_rank_fusion(rankings)
+    if cache_key and not diagnostics.get('retrieval_deadline_reached'):
+        try:cache.set(cache_key,[job.pk for job in result],60)
+        except Exception:diagnostics['retrieval_cache']='unavailable'
     diagnostics['retrieval_seconds']=round(monotonic()-retrieval_start,4)
     return result

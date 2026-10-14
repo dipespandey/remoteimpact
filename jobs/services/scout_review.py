@@ -82,7 +82,8 @@ CHECK_INSTRUCTIONS = (
     'Each checks value is [status, field, verbatim_quote], where status is confirmed, conflicting, or unknown. '
     'Confirmed/conflicting needs an exact 8-180 character quote (short location labels are allowed) from title, description, requirements, location or salary. '
     'Unknown must use ["unknown", "", ""]. Function must be confirmed by actual duties in description/requirements, '
-    'never a title or company mission. Same sector with a different profession is conflicting, not adjacent. '
+    'never a title, a qualification, or company mission. Same sector with a different profession is conflicting, not adjacent. '
+    'Preserve functional qualifiers: partner operations means onboarding/workflows, not sales, fundraising or relationship development. '
     'Remote means the work arrangement, not remote servers/caches; hybrid office attendance conflicts. '
     'Location must reflect explicit hiring/residence eligibility, not an office address or inferred worldwide default. '
     'For a Europe-wide request a named European country is compatible, but quote its residence restriction. '
@@ -113,6 +114,9 @@ def review_checks(item, row, prefs):
             return None
         if name == 'function' and field not in ('description', 'requirements'):
             return None
+        if name == 'function' and re.search(r'\bpartner(?:ship)? operations\b', prefs.get('intent_text', ''), re.I):
+            if not isinstance(quote, str) or not re.search(r'\b(?:onboarding|workflows?|toolkits?|operations|enablement|processes)\b', quote, re.I):
+                return None
         if name == 'function' and re.search(r'\bpolicy\s+(?:roles?|jobs?|work|analyst|advisor)', prefs.get('intent_text', ''), re.I):
             if not isinstance(quote, str) or not re.search(r'\b(?:policy|policies|advocacy|legislation|government affairs|regulatory analysis)\b', quote, re.I):
                 return None
@@ -143,6 +147,12 @@ def apply_review(job, item, row, prefs):
                if not reason.startswith('Relevant evidence:') and not
                ('review_seniority' in caveats and 'experience level' in reason.lower())]
     job.scout_reasons = ['Relevant evidence: ' + item['checks']['function'][2], *reasons]
+    from jobs.services.scout_evidence import location_evidence_warning
+    from jobs.services.scout_constraints import plain_job_field
+    warning = location_evidence_warning(job, prefs, ' '.join(plain_job_field(job, f) for f in ['description', 'requirements']))
+    if warning:
+        job.scout_needs_confirmation = True
+        job.scout_reasons = list(dict.fromkeys([*job.scout_reasons, warning]))
     # Keep geographic restrictions visible even when the broad region matches.
     location = item['checks'].get('location')
     if location and location[0] == 'confirmed' and 'review_location' not in caveats:

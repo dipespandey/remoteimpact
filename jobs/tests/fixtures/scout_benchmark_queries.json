@@ -1,0 +1,22 @@
+[
+ {"id":"d01","split":"development","source":"anonymized_search_pattern","brief":"English-speaking remote DevOps or software engineering jobs."},
+ {"id":"d02","split":"development","source":"reported_regression","brief":"Remote software engineering roles using Python in Europe, mid-level, no internships."},
+ {"id":"d03","split":"development","source":"reported_regression","brief":"Remote climate policy roles in Europe, mid-level, at least $70k, no internships."},
+ {"id":"d04","split":"development","source":"anonymized_search_pattern","brief":"Remote project-based partner operations roles, building onboarding workflows and toolkits for partnerships."},
+ {"id":"d05","split":"development","source":"anonymized_search_pattern","brief":"Internships or entry-level communications jobs at environmental impact nonprofits."},
+ {"id":"d06","split":"development","source":"anonymized_search_pattern","brief":"Remote intake coordination or behavioral health utilization review roles, at least $90,000 annual salary."},
+ {"id":"d07","split":"development","source":"anonymized_search_pattern","brief":"Senior marketing or communications leadership roles with mission-driven organizations, remote."},
+ {"id":"d08","split":"development","source":"anonymized_search_pattern","brief":"Remote GRC information security analyst roles involving internal audits, control testing and risk assessments. Five years of experience."},
+ {"id":"h01","split":"holdout","source":"anonymized_search_pattern","brief":"Remote COO, CRM, RevOps or data entry roles, at least $80,000 salary."},
+ {"id":"h02","split":"holdout","source":"anonymized_search_pattern","brief":"Remote part-time social media roles open to applicants in Pakistan, paid in US dollars."},
+ {"id":"h03","split":"holdout","source":"anonymized_search_pattern","brief":"Logistics coordinator, supply chain manager or operations manager roles in humanitarian aid. Remote or based in Spain."},
+ {"id":"h04","split":"holdout","source":"anonymized_search_pattern","brief":"Remote service design and product strategy roles in sustainability or circular economy, open to EU applicants."},
+ {"id":"h05","split":"holdout","source":"anonymized_search_pattern","brief":"Remote or China-based education programme management, digital learning or higher education administration roles."},
+ {"id":"h06","split":"holdout","source":"anonymized_search_pattern","brief":"Remote mechanical engineer or substation engineer role, entry level, salary of at least 70000."},
+ {"id":"h07","split":"holdout","source":"anonymized_search_pattern","brief":"Senior data engineering or Head of Data roles using Python, SQL, GCP and dbt. Fully remote from Spain, at least EUR 90,000 annually. No junior roles."},
+ {"id":"h08","split":"holdout","source":"anonymized_search_pattern","brief":"Remote policy analysis or research roles in climate, education or advocacy, at least $20,000 annually."},
+ {"id":"c01","split":"control","source":"constructed_control","brief":"Remote software engineering jobs using Python, worldwide."},
+ {"id":"c02","split":"control","source":"constructed_control","brief":"Remote fundraising and grant writing jobs, worldwide."},
+ {"id":"c03","split":"control","source":"constructed_control","brief":"Remote Python software engineer jobs open to applicants in Nepal, no internships."},
+ {"id":"c04","split":"control","source":"constructed_control","brief":"Remote climate policy roles with a guaranteed minimum salary of USD 1000000 per year, no unpaid roles."}
+]

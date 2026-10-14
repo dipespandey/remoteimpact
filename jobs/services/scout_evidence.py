@@ -89,7 +89,9 @@ def role_conflict(job, prefs, text):
     if 'full-time' in (prefs.get('job_types') or []) and re.search(r'\bconsultants?\b', job.title, re.I) and not re.search(r'\bfull[- ]time\b',text,re.I):
         return True
     if re.search(r'\bcommunications?\b', wanted, re.I):
-        if not re.search(r'\b(?:communications?|media relations|public relations|press|editorial|content|copywriter)\b', job.title, re.I):
+        functions = r'communications?|media relations|public relations|press|editorial|content|copywriter'
+        if re.search(r'\bmarketing\b', wanted, re.I):functions += '|marketing|brand'
+        if not re.search(r'\b(?:' + functions + r')\b', job.title, re.I):
             return True
     return False
 
@@ -150,13 +152,13 @@ def location_evidence_warning(job, prefs, text):
     if prefs.get('locations'):return None
     from django.utils.html import strip_tags
     from jobs.services.scout_constraints import state_names,places
-    clean=strip_tags(text)
+    clean=re.sub(r'\bU\.S\.(?:A\.)?', 'USA', strip_tags(text), flags=re.I)
     names={'us':'United States','usa':'United States','united states':'United States','uk':'United Kingdom'}
     def country_warning(offered):
         return 'Location restricted to '+', '.join(sorted({names.get(p,p.title()) for p in offered}))+'; confirm eligibility'
     for clause in re.split(r'[.!?;\n]|\bbut\b',clean,flags=re.I):
         if re.search(r'\b(?:no need to|not required to|do not need to|need not|don.t need to)\b',clause,re.I):continue
-        if not re.search(r'\b(?:must|need to|only)\s+(?:be\s+)?(?:reside|based|located)|\bresidency required\b|\bremote\s+(?:within|from|in)\b',clause,re.I):continue
+        if not re.search(r'\b(?:must|need to|only)\s+(?:be\s+)?(?:reside|based|located)|\bresidency required\b|\bremote\s+(?:within|from|in)\b|\b(?:authorized|eligible) to work from\b',clause,re.I):continue
         states=state_names(clause)
         if states:return ', '.join(sorted(s.title() for s in states))+' residency required; confirm eligibility'
         offered=places(clause)
