@@ -39,3 +39,43 @@ rerank leaves the final call for close-match evidence review. Original required
 skills, location, salary, job type, seniority and unresolved constraints remain
 protected; sector/wording differences can only appear as labelled alternatives.
 Known-ineligible or unrelated jobs are not inserted to achieve a nonzero count.
+
+## Source evidence and constraint review — 14 October 2026
+
+Reviews now sample duties, work arrangement, residence restrictions, qualifications
+and compensation throughout the full stored listing. Identical description and
+requirements fields are sent once. Excerpts remain verbatim; this is bounded
+selection, not an assertion that every requirement has been extracted.
+
+Provider selections require separate quoted checks for function and every requested
+remote, location, seniority, skill and salary dimension. Missing/forged checks,
+explicit conflicts and unconfirmed job function cannot qualify. An office address
+alone cannot confirm hiring eligibility; "remote setting" cannot confirm fully
+remote employment. Mandatory hybrid/on-site arrangements are rejected for remote
+briefs, while optional office arrangements remain reviewable. Policy alternatives
+need policy-function evidence, not just a climate-sector company description.
+
+Unconfirmed dimensions remain visible in Worth considering. Geographic residence
+restrictions are displayed even when compatible with a broader requested region.
+Older-than-180-day postings receive a confirmation warning; feed sightings do not
+reset posting age or prove employer availability. This is a caution, not a closure
+verdict or a replacement for the existing availability checks.
+
+Results with fewer outstanding checks rank first within the second tier, before the
+final display limit is applied. UI fit numbers have been removed because they were
+uncalibrated ranking scores. Provider review failures withhold unreviewed results;
+an incomplete preview explicitly asks the seeker to retry rather than asserting
+that no suitable jobs exist. No automatic relaxation changes the seeker's brief.
+
+The four-call/18-second workflow budget remains. Strict evidence review is capped
+at 12 candidates and 44,000 prompt characters; alternatives now review at most 12
+candidates, with full-source excerpts instead of 30 introductions. This tradeoff
+needs recall monitoring. The offline training comparison now scopes its comparison
+to the current function-review layer; it does not measure end-to-end eligibility.
+
+Validation includes adversarial regression cases and read-only production-inventory
+runs of the two reported briefs. These are development checks, not a blinded or
+representative relevance benchmark. Further evaluation should independently label
+real search/candidate pairs and track hard-constraint violations, function precision,
+useful alternative coverage, known-match recall, run stability and latency. Do not
+claim general precision from passing software tests or these two searches.

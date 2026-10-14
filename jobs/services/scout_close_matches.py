@@ -4,7 +4,8 @@ Keeps the gates that make a match feel wrong (location conflicts, exclusions,
 work authorization, job type, seniority) and drops the ones about wording
 (title family, required domain or skill). A model then picks the few listings
 this person would plausibly want to see, quoting the listing as evidence and
-saying in one line how each differs from the request. Results are labelled as
+saying in one line how each differs from the request. Per-constraint evidence
+checks are required for every selection. Results are labelled as
 close matches and never mixed in above exact ones.
 """
 import hashlib
@@ -18,8 +19,7 @@ from jobs.services.scout_constraints import plain_job_field
 from jobs.services.scout_reranker import FIELDS, _normalized
 
 logger = logging.getLogger(__name__)
-CANDIDATES = 30
-FIELD_CHARS = 600
+CANDIDATES = 12
 MAX_PICKS = 5
 LABEL = "Close match, not exact"
 LOOSE_DROP = ("titles", "skills", "required_domains", "category_slugs")
@@ -35,7 +35,7 @@ SYSTEM = (
     "talent pools), or that conflicts with anything the person stated: location, salary floor, hours, contract "
     "type or things to avoid. Picking none is fine. Return JSON only: "
     '{{"picks":[{{"id":1,"same_kind_of_work":true,"difference":"one short sentence on how it differs from the request",'
-    '"evidence":{{"field":"description","quote":"verbatim text from the listing, 8 to 180 characters"}}}}]}}. '
+    '"evidence":{{"field":"description","quote":"verbatim text from the listing, 8 to 180 characters"}},"checks":{{}}}}]}}. '
     "Order by how likely they are to want it."
 )
 
@@ -50,7 +50,7 @@ def loose_preferences(preferences):
     return loose
 
 
-def validate(output, evidence, limit):
+def validate(output, evidence, limit, preferences=None):
     parsed = json.loads(output)
     picks = parsed.get("picks") if isinstance(parsed, dict) else None
     if not isinstance(picks, list):
@@ -69,6 +69,10 @@ def validate(output, evidence, limit):
             continue
         if text not in evidence[pk].get(field, "") and _normalized(text) not in _normalized(evidence[pk].get(field, "")):
             continue
+        if preferences is not None:
+            from jobs.services.scout_review import review_checks
+            if review_checks(item, evidence[pk], preferences) is None:
+                continue
         seen.add(pk)
         accepted.append((pk, difference.strip().rstrip(".")))
         if len(accepted) >= limit:
@@ -85,30 +89,33 @@ def close_matches(qs, preferences, terms, diagnostics, limit=MAX_PICKS, force=Fa
     candidates = retrieve(qs, loose_preferences(preferences), terms, diagnostics.setdefault("close", {}), relaxed=True)[:CANDIDATES]
     if not candidates:
         return []
+    from jobs.services.scout_review import evidence_fields, CHECK_INSTRUCTIONS, requested_checks, apply_review
+    from jobs.services.scout_evidence import compensation_display
     evidence = {}
     rows = []
     for job in candidates:
         row = {"id": job.pk, "organization": getattr(job.organization, "name", ""), "location": job.location,
-               "job_type": job.job_type, "salary": " ".join(str(v) for v in (job.salary_currency, job.salary_min, job.salary_max) if v),
-               **{field: plain_job_field(job, field)[:FIELD_CHARS] for field in FIELDS}}
+               "job_type": job.job_type, "salary": compensation_display(job),
+               **evidence_fields(job, preferences)}
         rows.append(row)
         evidence[job.pk] = row
     body = json.dumps({"request": preferences["intent_text"][:2000], "candidates": rows}, ensure_ascii=False)
-    system = SYSTEM.format(n=limit)
-    key = "scout-close-v5:" + hashlib.sha256((body + system).encode()).hexdigest()
+    system = SYSTEM.format(n=limit) + CHECK_INSTRUCTIONS.format(checks=', '.join(requested_checks(preferences)))
+    key = "scout-close-v6:" + hashlib.sha256((body + system).encode()).hexdigest()
     try:
         output = cache.get(key)
         if output is None:
             from jobs.services.scout_workflow import generate
-            output = generate(body, max_tokens=900, temperature=0.0, timeout=6.0,
+            output = generate(body, max_tokens=2200, temperature=0.0, timeout=6.0,
                                          max_retries=0, system_message=system)
             cache.set(key, output, 3600)
-        accepted = validate(output, evidence, limit)
+        accepted = validate(output, evidence, limit, preferences)
     except Exception:
         diagnostics["close_matches"] = "unavailable"
         logger.warning("Scout close matches unavailable")
         return []
     jobs = {job.pk: job for job in candidates}
+    decisions = {item['id']: item for item in json.loads(output)['picks'] if isinstance(item, dict) and type(item.get('id')) is int}
     picked, titles = [], {" ".join(t.lower().split()) for t in exclude_titles}
     for pk, difference in accepted:
         job = jobs[pk]
@@ -123,6 +130,8 @@ def close_matches(qs, preferences, terms, diagnostics, limit=MAX_PICKS, force=Fa
         job.scout_caveats = list(eligibility.caveats)
         job.scout_close_match = True
         job.scout_reasons = [f"{LABEL}: {difference}"]
+        if not apply_review(job, decisions[pk], evidence[pk], preferences):
+            continue
         picked.append(job)
     diagnostics["close_matches"] = len(picked)
     return picked

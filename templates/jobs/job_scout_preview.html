@@ -9,7 +9,7 @@
     <header class="page-header">
         <a href="{% url 'jobs:job_alerts' %}" class="text-[13px] text-muted-foreground hover:text-foreground">AI Job Scout</a>
         {% if preview_jobs %}<h1 class="page-title mt-1">Matches for your brief</h1>
-        <p class="page-lede">We found {{ preview_jobs|length }} current match{{ preview_jobs|length|pluralize:"es" }} for your brief. Create a free account and we will email the complete result, with up to five {% if provisional %}ranked matches to review{% else %}strong matches{% endif %}.</p>{% else %}<h1 class="page-title mt-1">No eligible matches in this preview</h1>
+        <p class="page-lede">We found {{ preview_jobs|length }} current match{{ preview_jobs|length|pluralize:"es" }} for your brief. Create a free account and we will email the complete result, with up to five {% if provisional %}ranked matches to review{% else %}strong matches{% endif %}.</p>{% elif review_incomplete %}<h1 class="page-title mt-1">Match review is temporarily incomplete</h1><p class="page-lede">Try again shortly; this does not mean there are no suitable jobs.</p>{% else %}<h1 class="page-title mt-1">No eligible matches in this preview</h1>
         <p class="page-lede">We did not find a strong current match in the available catalogue. You can edit your brief or create an account to save a Scout; this does not guarantee additional matches.</p>{% endif %}
     </header>
 
@@ -59,15 +59,14 @@
                                 {% endif %}
                             </div>
                             <div class="shrink-0 text-right">
-                                <p class="text-base font-semibold tabular-nums text-foreground">{{ job.scout_score }}</p>
-                                <p class="text-[12px] text-muted-foreground">{% if job.scout_needs_confirmation %}provisional fit{% else %}fit score{% endif %}</p>
+                                <p class="text-[12px] text-muted-foreground">{% if job.scout_needs_confirmation %}Review the details{% else %}Evidence checked{% endif %}</p>
                             </div>
                         </article>
                     </li>{% endfor %}
                 </ul>{% else %}<p class="mt-3 text-sm text-muted-foreground">No {{ tier.heading|lower }} in the current catalogue for this brief.</p>{% endif %}
             </section>{% endfor %}{% else %}<section class="card p-5 sm:p-6">
-                <h2 class="section-title">No strong recent match yet</h2>
-                <p class="mt-1.5 text-sm leading-6 text-muted-foreground">We have no verified match for these constraints among recent listings. Loosen a constraint in your brief, such as location or salary, or browse all jobs.</p>
+                <h2 class="section-title">{% if review_incomplete %}We couldn’t finish checking these matches{% else %}No verified match yet{% endif %}</h2>
+                <p class="mt-1.5 text-sm leading-6 text-muted-foreground">{% if review_incomplete %}Please try this search again shortly. We haven’t confirmed whether suitable jobs are available.{% else %}We have no verified match for these constraints in the current catalogue. You can change a constraint in your brief, such as location or salary, or browse all jobs.{% endif %}</p>
                 <a href="{% url 'jobs:job_list' %}" class="btn btn-outline btn-sm mt-4">Browse all jobs</a>
             </section>{% endif %}
         </div>

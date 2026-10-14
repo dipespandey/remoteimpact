@@ -997,8 +997,6 @@ skills is not a request for invented, exact job titles. JSON only."""
             possible = rerank(possible, preferences, possible, relaxed_diagnostics, relaxed=True)
             added = 0
             for job in possible:
-                if len(selected) >= limit:
-                    break
                 if not getattr(job, "scout_caveats", None):
                     continue
                 req = source_value(job, 'scout_requisition', 'api_response', 'requisition_id')
@@ -1008,6 +1006,7 @@ skills is not a request for invented, exact job titles. JSON only."""
                     continue
                 seen.add(key); seen.add(title_key); selected.append(job); added += 1
             diagnostics["relaxed_fill"] = added
+            diagnostics["relaxed_review"] = relaxed_diagnostics.get("reranker")
             diagnostics["relaxed_hard_rejections"] = relaxed_diagnostics.get("hard_rejections", {})
         if len(selected) < min(limit, cls.CLOSE_MATCH_BELOW):
             from jobs.services.scout_close_matches import close_matches
@@ -1015,21 +1014,29 @@ skills is not a request for invented, exact job titles. JSON only."""
                                      diagnostics, limit=min(limit - len(selected), 5),
                                      exclude_titles=[job.title or "" for job in selected]):
                 selected.append(job)
-        selected = selected[:limit]
         # Model evidence must never hide a constraint that remains unverified.
+        from jobs.services.scout_review import listing_caveats
         for job in selected:
+            job.scout_caveats = list(dict.fromkeys([*getattr(job, "scout_caveats", []), *listing_caveats(job)]))
             caveats = getattr(job, "scout_caveats", [])
             checks = [CAVEAT_TEXT.get(value, "Check: listing details") for value in caveats]
             job.scout_reasons = list(dict.fromkeys([*getattr(job, "scout_reasons", []), *checks]))
             job.scout_needs_confirmation = bool(getattr(job, "scout_needs_confirmation", False) or caveats or getattr(job, "scout_close_match", False))
         from jobs.services.scout_tiers import tier_for_job
-        selected.sort(key=lambda job: tier_for_job(job) != 'good')
+        selected.sort(key=lambda job: (tier_for_job(job) != 'good',
+                                       len(getattr(job, 'scout_caveats', [])),
+                                       -getattr(job, 'scout_score', 0)))
+        selected = selected[:limit]
         for job in selected:
             if tier_for_job(job) == 'consider':
                 job.scout_reasons = list(dict.fromkeys([*job.scout_reasons, 'Worth considering: review the differences above']))
         diagnostics['good_match_count'] = sum(tier_for_job(job) == 'good' for job in selected)
         diagnostics['worth_considering_count'] = len(selected) - diagnostics['good_match_count']
         diagnostics["match_count"] = len(selected)
+        diagnostics["review_incomplete"] = bool(not selected and (
+            diagnostics.get("reranker") == "review_unavailable" or
+            diagnostics.get("relaxed_review") == "review_unavailable" or
+            diagnostics.get("close_matches") == "unavailable" or diagnostics.get("llm_budget_exhausted")))
         return selected
 
     @staticmethod

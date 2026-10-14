@@ -4,6 +4,7 @@ import ast
 from collections import defaultdict
 import hashlib
 import json
+import re
 from pathlib import Path
 
 from .better_data import cache_result, read_jsonl, write_jsonl
@@ -16,7 +17,25 @@ def production_system():
     function=next(node for node in tree.body if isinstance(node,ast.FunctionDef) and node.name=='rerank')
     assignment=next(node for node in function.body if isinstance(node,ast.Assign)
                     and any(isinstance(target,ast.Name) and target.id=='system' for target in node.targets))
-    return ast.literal_eval(assignment.value)
+    base = ast.literal_eval(assignment.value.left)
+    return base + _review_namespace()['CHECK_INSTRUCTIONS'].format(checks='function')
+
+
+def _review_namespace():
+    """Load only pure evidence helpers; offline experiments don't boot Django."""
+    tree = ast.parse(Path('jobs/services/scout_review.py').read_text())
+    names = {'excerpt', 'remote_requested', 'requested_checks', 'review_checks'}
+    nodes = [node for node in tree.body if
+             isinstance(node, ast.FunctionDef) and node.name in names or
+             isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id in
+                 {'PATTERNS', 'CHECK_INSTRUCTIONS'} for t in node.targets)]
+    class PureImports(ast.NodeTransformer):
+        def visit_ImportFrom(self, node):
+            return None if node.module and node.module.startswith('jobs.services') else node
+    module = PureImports().visit(ast.Module(body=nodes, type_ignores=[]))
+    namespace = {'re': re}
+    exec(compile(module, 'production_review', 'exec'), namespace)
+    return namespace
 
 
 def production_validator():
@@ -26,7 +45,12 @@ def production_validator():
     functions=[node for node in tree.body if isinstance(node,ast.FunctionDef)
                and node.name in {'_normalized','validate_decisions'}]
     if len(functions)!=2:raise ValueError('Production decision validation changed')
-    namespace={'json':json,'FIELDS':('title','description','requirements')}
+    namespace=_review_namespace()
+    namespace.update({'json':json,'FIELDS':('title','description','requirements')})
+    class PureImports(ast.NodeTransformer):
+        def visit_ImportFrom(self, node):
+            return None if node.module == 'jobs.services.scout_review' else node
+    functions=[PureImports().visit(node) for node in functions]
     exec(compile(ast.Module(body=functions,type_ignores=[]),'production_validation','exec'),namespace)
     return namespace['validate_decisions']
 
@@ -34,18 +58,19 @@ def production_validator():
 def current_tasks(label_tasks,corpus):
     by_id={row['id']:row for row in corpus}
     system=production_system()
+    excerpt=_review_namespace()['excerpt']
     output=[]
     for task in label_tasks:
         if task['meta']['split']!='test':continue
         candidates=[]
         for candidate in task['meta']['candidates']:
             row=by_id[candidate['id']]
-            candidates.append({'id':row['id'],**{field:clean(row.get(field))[:900]
+            candidates.append({'id':row['id'],**{field:excerpt(clean(row.get(field)), task['meta']['query'], 1400)
                 for field in ['title','description','requirements']}})
         output.append({'model':'deepseek-flash','system':system,
             'payload':{'request':task['meta']['query'][:2000],'candidates':candidates},
-            'max_tokens':1400,'meta':{'query_id':task['meta']['query_id'],
-                'scope':'current_relevance_prompt_on_fixed_public_candidate_pool',
+            'max_tokens':3600,'meta':{'query_id':task['meta']['query_id'],
+                'scope':'current_function_review_on_fixed_public_candidate_pool',
                 'source_task_id':hashlib.sha256(json.dumps(task,sort_keys=True).encode()).hexdigest()}})
     return output
 
@@ -59,7 +84,7 @@ def provider_metrics(tasks,rows,cache):
         if result is None:missing+=1;continue
         try:
             evidence={row['id']:row for row in task['payload']['candidates']}
-            decisions=validate_decisions(json.dumps(result['output']),evidence)
+            decisions=validate_decisions(json.dumps(result['output']),evidence,preferences={})
             selected[query_id]=[identifier for identifier,quotes in decisions]
         except ValueError:invalid+=1
     scored=[row for row in rows if row['query_id'] in selected]

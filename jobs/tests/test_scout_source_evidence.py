@@ -168,9 +168,13 @@ class MatchingSourceTests(TestCase):
   template=engines['django'].get_template('jobs/job_scout_preview.html')
   context={'preview_jobs':[j],'preferences':{},'intent':'Entry level nonprofit operations coordinator.','next_path':'/alerts/','user':request.user}
   html=template.render(context,request)
-  self.assertIn('Worth considering',html);self.assertIn('provisional fit',html);self.assertNotIn('Strong current matches',html)
+  self.assertIn('Worth considering',html);self.assertIn('Review the details',html);self.assertNotIn('fit score',html);self.assertNotIn('Strong current matches',html)
   context['preview_jobs']=[]
   self.assertIn('No eligible matches in this preview',template.render(context,request))
+  context['review_incomplete']=True
+  html=template.render(context,request)
+  self.assertIn('Match review is temporarily incomplete',html)
+  self.assertNotIn('No eligible matches in this preview',html)
 
  def test_annual_filter_excludes_hourly_estimates_and_preserves_missing_json(self):
   from jobs.services.job_service import JobService

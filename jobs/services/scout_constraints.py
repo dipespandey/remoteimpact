@@ -315,6 +315,12 @@ class Eligibility:
 
 # Shown to the seeker when a job is offered without full verification.
 CAVEAT_TEXT = {
+    'review_remote': 'Check: fully remote arrangement not confirmed',
+    'review_location': 'Check: hiring location not confirmed by listing',
+    'review_seniority': 'Check: requested seniority not confirmed',
+    'review_skills': 'Check: required skills may not be core to this role',
+    'review_salary': 'Check: requested pay not confirmed',
+    'listing_age': 'Check: older posting; confirm the employer is still hiring',
     'salary_unlisted': 'Check: salary not listed',
     'salary_other_currency': 'Check: salary is in another currency',
     'location_unconfirmed': 'Check: location eligibility not confirmed',
@@ -385,6 +391,8 @@ def evaluate_job(job, prefs, relaxed=False):
     if types and getattr(job,'job_type','') not in types:return Eligibility(False,'job_type')
     fields=' '.join(plain_job_field(job,f) for f in ['title','description','requirements'])
     fields_lower=fields.lower()
+    from jobs.services.scout_review import workplace_conflict
+    if workplace_conflict(job, prefs, fields):return Eligibility(False, 'workplace')
     if experience_conflict(job,prefs,fields):return Eligibility(False,'experience_evidence')
     if role_conflict(job,prefs,fields):return Eligibility(False,'role_evidence')
     if prefs.get('required_employer_type')=='nonprofit':

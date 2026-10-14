@@ -76,7 +76,8 @@ class HeldoutGeography(SimpleTestCase):
 class HeldoutRerank(SimpleTestCase):
     def setUp(self):
         self.p=extract_constraints('Behavioral health program manager in Norway')
-        self.output=json.dumps({'decisions':[{'id':1,'relevant':True,'evidence':[{'field':'description','quote':'behavioral health grants programs'}]}]})
+        self.p['locations']=['Norway']
+        self.output=json.dumps({'decisions':[{'id':1,'relevant':True,'evidence':[{'field':'description','quote':'behavioral health grants programs'}], 'checks':{'function':['confirmed','description','behavioral health grants programs'],'location':['unknown','','']}}]})
 
     @patch('jobs.services.scout_reranker.cache')
     @patch('jobs.services.ai.AIClient.generate')
@@ -93,16 +94,16 @@ class HeldoutRerank(SimpleTestCase):
     def test_cache_read_outage_never_spends(self,generate,cache):
         cache.get.side_effect=RuntimeError('offline cache')
         diagnostics={};j=candidate()
-        self.assertEqual(rerank([j],self.p,[j],diagnostics),[j])
+        self.assertEqual(rerank([j],self.p,[j],diagnostics),[])
         generate.assert_not_called()
-        self.assertEqual(diagnostics['reranker'],'deterministic_fallback')
+        self.assertEqual(diagnostics['reranker'],'review_unavailable')
 
     @patch('jobs.services.scout_reranker.cache')
     @patch('jobs.services.ai.AIClient.generate')
     def test_cached_malformed_output_fails_without_provider(self,generate,cache):
         cache.get.return_value='{"decisions": []}'
         j=candidate();diagnostics={}
-        self.assertEqual(rerank([j],self.p,[j],diagnostics),[j])
+        self.assertEqual(rerank([j],self.p,[j],diagnostics),[])
         generate.assert_not_called()
 
     def test_schema_boolean_id_duplicate_extra_fields_are_rejected(self):
@@ -119,14 +120,14 @@ class HeldoutRerank(SimpleTestCase):
     def test_full_shortlist_has_bounded_call_and_exact_schema(self,generate,cache):
         cache.get.return_value=None
         jobs=[candidate(i) for i in range(1,21)]
-        generate.return_value=json.dumps({'decisions':[{'id':i,'relevant':False,'evidence':[]} for i in range(1,13)]})
+        generate.return_value=json.dumps({'decisions':[{'id':i,'relevant':False,'evidence':[], 'checks':{}} for i in range(1,13)]})
         d={};self.assertEqual(rerank(jobs,self.p,jobs,d),[])
         payload=json.loads(generate.call_args.args[0])
         self.assertEqual(len(payload['candidates']),12)
         self.assertEqual(d['rerank_candidate_count'],12)
         self.assertEqual(generate.call_args.kwargs['max_retries'],0)
         self.assertEqual(generate.call_args.kwargs['timeout'],6.0)
-        self.assertEqual(generate.call_args.kwargs['max_tokens'],1400)
+        self.assertEqual(generate.call_args.kwargs['max_tokens'],3600)
 
 
 class RerankQuoteTolerance(SimpleTestCase):

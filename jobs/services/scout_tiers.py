@@ -17,6 +17,6 @@ def groups(jobs):
          'description': 'Roles that match your requested work and pass our eligibility checks.',
          'jobs': [job for job in jobs if tier_for_job(job) == 'good']},
         {'key': 'consider', 'heading': 'Worth considering',
-         'description': 'Related roles or listings with details to confirm. Each result explains the difference.',
+         'description': 'Relevant work with differences or details to confirm. Review the checks before applying.',
          'jobs': [job for job in jobs if tier_for_job(job) == 'consider']},
     ]

@@ -76,7 +76,7 @@
                             <h3 class="job-title break-words"><a href="{{ job.get_absolute_url }}" class="hover:underline">{{ job.title|display_title }}</a></h3>
                             <p class="job-meta"><span class="font-medium text-foreground">{{ job.organization.name }}</span><span>{{ job.location|default:"Remote" }}</span><span>{{ job.get_job_type_display }}</span><span>Posted {{ job.posted_at|timesince }} ago</span></p>
                         </div>
-                        {% if job.scout_score %}<span class="badge badge-primary shrink-0 tabular-nums">{{ job.scout_score }} fit score</span>{% endif %}
+                        <span class="badge shrink-0">{% if tier.key == "consider" %}Review the details{% else %}Evidence checked{% endif %}</span>
                     </div>
                     {% if job.scout_reasons %}
                     <ul class="mt-2.5 flex flex-col items-start gap-1" aria-label="Why this matched">

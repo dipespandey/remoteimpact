@@ -216,6 +216,7 @@ class JobScoutPreviewView(TemplateView):
             intent=self.intent,
             preferences=preferences,
             preview_jobs=matches,
+            review_incomplete=workflow_diagnostics.get("review_incomplete", False),
             provisional=any(getattr(job, "scout_needs_confirmation", False) for job in matches),
             next_path=next_path,
         )
