@@ -27,6 +27,11 @@ def bounded_workflow(diagnostics):
         _budget.reset(token)
 
 
+def can_call(*, reserve=0):
+    state = _budget.get()
+    return state is None or (state['calls'] < 4 - reserve and state['deadline'] - monotonic() >= 0.25)
+
+
 def generate(prompt, **kwargs):
     """At most four provider calls and 18 seconds of total model time per search."""
     from jobs.services.ai import AIClient
@@ -59,6 +64,10 @@ def plan_terms(preferences, diagnostics, *, retry=False):
     try:
         output = cache.get(key)
         if output is None:
+            # Leave two calls for exact evidence and useful alternatives.
+            if not can_call(reserve=2):
+                diagnostics['refinement' if retry else 'planning'] = 'reserved_for_review'
+                return []
             output = generate(body, max_tokens=250, temperature=0, timeout=3, system_message=system)
         parsed = json.loads(output)
         if not isinstance(parsed, dict) or set(parsed) != {'terms'} or not isinstance(parsed['terms'], list) or len(parsed['terms']) > 6:

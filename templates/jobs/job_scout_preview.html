@@ -38,13 +38,14 @@
                 </div>
             </section>
 
-            {% if preview_jobs %}<section aria-labelledby="preview-heading">
+            {% if preview_jobs %}{% for tier in preview_jobs|scout_tiers %}<section aria-labelledby="preview-{{ tier.key }}-heading">
                 <div class="flex items-baseline justify-between gap-4 px-1">
-                    <h2 id="preview-heading" class="section-title">{% if provisional %}Current matches to review{% else %}Strong current matches{% endif %}</h2>
+                    <h2 id="preview-{{ tier.key }}-heading" class="section-title">{{ tier.heading }} · {{ tier.jobs|length }}</h2>
                     <span class="hidden text-[13px] text-muted-foreground sm:inline">Ranked by relevance and freshness</span>
                 </div>
-                <ul class="list-surface mt-3">
-                    {% for job in preview_jobs %}<li>
+                <p class="mt-2 text-sm text-muted-foreground">{{ tier.description }}</p>
+                {% if tier.jobs %}<ul class="list-surface mt-3">
+                    {% for job in tier.jobs %}<li>
                         <article class="flex items-start justify-between gap-4 rounded-xl px-4 py-3.5 transition-colors hover:bg-muted/60 sm:px-5">
                             <div class="min-w-0">
                                 <h3 class="job-title break-words"><a href="{{ job.get_absolute_url }}" class="hover:underline">{{ job.title|display_title }}</a></h3>
@@ -63,8 +64,8 @@
                             </div>
                         </article>
                     </li>{% endfor %}
-                </ul>
-            </section>{% else %}<section class="card p-5 sm:p-6">
+                </ul>{% else %}<p class="mt-3 text-sm text-muted-foreground">No {{ tier.heading|lower }} in the current catalogue for this brief.</p>{% endif %}
+            </section>{% endfor %}{% else %}<section class="card p-5 sm:p-6">
                 <h2 class="section-title">No strong recent match yet</h2>
                 <p class="mt-1.5 text-sm leading-6 text-muted-foreground">We have no verified match for these constraints among recent listings. Loosen a constraint in your brief, such as location or salary, or browse all jobs.</p>
                 <a href="{% url 'jobs:job_list' %}" class="btn btn-outline btn-sm mt-4">Browse all jobs</a>

@@ -794,8 +794,10 @@ skills is not a request for invented, exact job titles. JSON only."""
         if since is None:
             since = alert.last_sent_at or (timezone.now() - timedelta(days=7))
 
+        preferences = cls.preferences_for_alert(alert)
+        preferences['_scout_current_inventory'] = not alert.last_sent_at
         return cls.get_matches_for_preferences(
-            cls.preferences_for_alert(alert),
+            preferences,
             since=since,
             limit=limit,
             alert=alert,
@@ -867,6 +869,7 @@ skills is not a request for invented, exact job titles. JSON only."""
         diagnostics = diagnostics if diagnostics is not None else {}
         with bounded_workflow(diagnostics):
             preferences = cls.parse_intent(intent)
+            preferences['_scout_current_inventory'] = True
             return preferences, cls.get_matches_for_preferences(preferences, since=since, limit=limit, diagnostics=diagnostics)
 
     @classmethod
@@ -886,7 +889,11 @@ skills is not a request for invented, exact job titles. JSON only."""
 
         now = timezone.now()
         from jobs.services.job_service import JobService
-        qs = JobService.get_available_jobs().filter(posted_at__gte=since)
+        qs = JobService.get_available_jobs()
+        if not preferences.pop('_scout_current_inventory', False):
+            qs = qs.filter(posted_at__gte=since)
+        else:
+            diagnostics['inventory_scope'] = 'all_current_openings'
         if alert is not None and getattr(alert, "pk", None):
             qs = qs.exclude(alert_deliveries__alert=alert)
             qs = qs.exclude(pk__in=JobInterest.objects.filter(
@@ -1002,7 +1009,7 @@ skills is not a request for invented, exact job titles. JSON only."""
                 seen.add(key); seen.add(title_key); selected.append(job); added += 1
             diagnostics["relaxed_fill"] = added
             diagnostics["relaxed_hard_rejections"] = relaxed_diagnostics.get("hard_rejections", {})
-        if len(selected) < cls.CLOSE_MATCH_BELOW:
+        if len(selected) < min(limit, cls.CLOSE_MATCH_BELOW):
             from jobs.services.scout_close_matches import close_matches
             for job in close_matches(qs.exclude(pk__in=[job.pk for job in selected]), preferences, terms,
                                      diagnostics, limit=min(limit - len(selected), 5),
@@ -1015,6 +1022,13 @@ skills is not a request for invented, exact job titles. JSON only."""
             checks = [CAVEAT_TEXT.get(value, "Check: listing details") for value in caveats]
             job.scout_reasons = list(dict.fromkeys([*getattr(job, "scout_reasons", []), *checks]))
             job.scout_needs_confirmation = bool(getattr(job, "scout_needs_confirmation", False) or caveats or getattr(job, "scout_close_match", False))
+        from jobs.services.scout_tiers import tier_for_job
+        selected.sort(key=lambda job: tier_for_job(job) != 'good')
+        for job in selected:
+            if tier_for_job(job) == 'consider':
+                job.scout_reasons = list(dict.fromkeys([*job.scout_reasons, 'Worth considering: review the differences above']))
+        diagnostics['good_match_count'] = sum(tier_for_job(job) == 'good' for job in selected)
+        diagnostics['worth_considering_count'] = len(selected) - diagnostics['good_match_count']
         diagnostics["match_count"] = len(selected)
         return selected
 

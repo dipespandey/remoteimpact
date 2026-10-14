@@ -17,6 +17,12 @@ register = template.Library()
 
 
 @register.filter
+def scout_tiers(jobs):
+    from jobs.services.scout_tiers import groups
+    return groups(jobs)
+
+
+@register.filter
 def scout_needs_confirmation(jobs):
     return any(getattr(job, 'scout_needs_confirmation', False) for job in (jobs or ()))
 

@@ -95,7 +95,10 @@ def rerank(candidates,preferences,fallback,diagnostics,relaxed=False):
         if cached is not None:
             accepted=validate_decisions(cached,evidence);diagnostics['reranker']='cache'
         else:
-            from jobs.services.scout_workflow import generate
+            from jobs.services.scout_workflow import generate, can_call
+            if relaxed and getattr(settings, 'SCOUT_CLOSE_MATCHES', False) and not can_call(reserve=1):
+                diagnostics['reranker'] = 'reserved_for_alternatives'
+                return fallback
             output=generate(body,max_tokens=MAX_OUTPUT_TOKENS,temperature=0.0,
                                       timeout=TIMEOUT_SECONDS,max_retries=0,system_message=system)
             accepted=validate_decisions(output,evidence)

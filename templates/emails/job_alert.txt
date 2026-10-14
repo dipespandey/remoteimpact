@@ -5,9 +5,12 @@ Hi{% if user.first_name %} {{ user.first_name }}{% endif %},
 
 {% if is_initial and not is_one_time %}Your Job Scout is active.
 
-{% endif %}{% if job_count %}We found {{ job_count }} strong job match{{ job_count|pluralize:"es" }}{% if alert_name %} for "{{ alert_name }}"{% endif %}:{% else %}We did not find a strong current match{% if alert_name %} for "{{ alert_name }}"{% endif %}.{% endif %}
+{% endif %}{% if job_count %}We found {{ job_count }} job match{{ job_count|pluralize:"es" }}{% if alert_name %} for "{{ alert_name }}"{% endif %}:{% else %}We did not find a strong current match{% if alert_name %} for "{{ alert_name }}"{% endif %}.{% endif %}
 
-{% for job in jobs %}
+{% for tier in jobs|scout_tiers %}
+{% if tier.jobs %}{{ tier.heading }}
+{{ tier.description }}
+{% for job in tier.jobs %}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {{ job.title }}
 {{ job.organization.name }}
@@ -15,7 +18,7 @@ Hi{% if user.first_name %} {{ user.first_name }}{% endif %},
 {% if job.scout_reasons %}Why it matched: {{ job.scout_reasons|join:"; " }}{% endif %}
 
 View: {{ job.alert_email_url|safe }}
-{% endfor %}
+{% endfor %}{% endif %}{% endfor %}
 {% if jobs %}
 Were these useful matches? Rate them here:
 {{ review_url }}

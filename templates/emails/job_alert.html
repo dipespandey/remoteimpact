@@ -41,7 +41,7 @@
                                 Hi{% if user.first_name %} {{ user.first_name }}{% endif %},
                             </p>
                             <p style="margin: 12px 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #64748b; line-height: 1.5;">
-                                {% if is_initial and not is_one_time %}Your Job Scout is active. {% endif %}{% if job_count %}We found <strong style="color: #1e293b;">{{ job_count }} strong job match{{ job_count|pluralize:"es" }}</strong>{% if alert_name %} for "{{ alert_name }}"{% endif %}.{% else %}We did not find a strong current match{% if alert_name %} for "{{ alert_name }}"{% endif %}.{% endif %}
+                                {% if is_initial and not is_one_time %}Your Job Scout is active. {% endif %}{% if job_count %}We found <strong style="color: #1e293b;">{{ job_count }} job match{{ job_count|pluralize:"es" }}</strong>{% if alert_name %} for "{{ alert_name }}"{% endif %}.{% else %}We did not find a strong current match{% if alert_name %} for "{{ alert_name }}"{% endif %}.{% endif %}
                             </p>
                         </td>
                     </tr>
@@ -49,7 +49,8 @@
                     <!-- Jobs List -->
                     <tr>
                         <td style="padding: 16px 32px 32px;">
-                            {% for job in jobs %}
+                            {% for tier in jobs|scout_tiers %}
+{% if tier.jobs %}<h2 style="font-size:18px;color:#1e293b;">{{ tier.heading }}</h2><p>{{ tier.description }}</p>{% for job in tier.jobs %}
                             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 16px;">
                                 <tr>
                                     <td class="job-card" style="background-color: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0;">
@@ -91,7 +92,7 @@
                                     </td>
                                 </tr>
                             </table>
-                            {% endfor %}
+                            {% endfor %}{% endif %}{% endfor %}
 
                             {% if more_jobs > 0 %}
                             <p style="margin: 16px 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b; text-align: center;">

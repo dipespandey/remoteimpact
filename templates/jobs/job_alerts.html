@@ -64,8 +64,11 @@
         </div>
 
         {% if preview_jobs %}
-        <ul class="list-surface mt-4" aria-label="Matches from this Scout">
-            {% for job in preview_jobs %}
+        {% for tier in preview_jobs|scout_tiers %}
+        <h2 class="section-title mt-5">{{ tier.heading }} · {{ tier.jobs|length }}</h2>
+        <p class="mt-1 text-sm text-muted-foreground">{{ tier.description }}</p>
+        {% if tier.jobs %}<ul class="list-surface mt-4" aria-label="{{ tier.heading }}">
+            {% for job in tier.jobs %}
             <li class="rounded-xl px-4 py-3.5 transition-colors hover:bg-muted/60 sm:px-5">
                 <article class="min-w-0">
                     <div class="flex items-start justify-between gap-3">
@@ -96,7 +99,8 @@
                 </article>
             </li>
             {% endfor %}
-        </ul>
+        </ul>{% else %}<p class="mt-3 text-sm text-muted-foreground">No {{ tier.heading|lower }} for this brief yet.</p>{% endif %}
+        {% endfor %}
         {% elif location_blocked %}
         <div class="mt-4 px-1 text-sm leading-6 text-muted-foreground">
             <p><strong class="font-medium text-foreground">Most current roles like this are limited to other countries.</strong> Many remote employers can only hire in the US or Europe, so we'd rather tell you now than charge you to wait.</p>

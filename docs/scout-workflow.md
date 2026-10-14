@@ -21,3 +21,21 @@ part of planning. `SCOUT_MULTISTEP_ENABLED=False` disables planning/refinement.
 Preview event metadata records workflow version, provider-call count, retrieval passes,
 and stage/fallback diagnostics for operational review. The current provider remains
 DeepSeek; this change does not activate a locally trained model.
+
+## Two tiers and inventory coverage — 14 October 2026
+
+First-time searches use the whole currently available inventory, including older
+postings still admitted by the public source-freshness/expiry policy. Recurring
+Scouts retain the last-send posting cutoff and delivered/negative-feedback exclusions.
+
+Good matches are separated from Worth considering. Unverified constraints and
+model-reviewed adjacent roles are in the latter, with the caveat/difference visible.
+A persisted reason marker keeps that classification intact when restoring delivery
+history. Previews, saved results and email HTML/text use the same grouping function.
+Good matches are not a guarantee of employment eligibility or a calibrated score.
+
+Planning leaves two provider calls for relevance review and alternatives. A relaxed
+rerank leaves the final call for close-match evidence review. Original required
+skills, location, salary, job type, seniority and unresolved constraints remain
+protected; sector/wording differences can only appear as labelled alternatives.
+Known-ineligible or unrelated jobs are not inserted to achieve a nonzero count.
