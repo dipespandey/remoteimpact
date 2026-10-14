@@ -291,8 +291,9 @@ def location_compatibility(job, desired):
     restrict=[]
     for clause in re.split(r'[.!?;\n]',body):
         lowered=clause.lower()
+        if re.search(r'\b(?:worldwide|globally|anywhere)\s*,?\s*(?:including|such as|for example)\b',clause,re.I):continue
         if not any(token in lowered for token in ('remote','must','need to','only','candidates','applicants')):continue
-        if re.search(r'remote\s+(?:within|from|in)|(?:must|need to|only)\s+(?:be\s+)?(?:based|reside|located)|(?:candidates|applicants)\s+(?:must\s+)?(?:be\s+)?(?:based|reside|located)',clause,re.I):
+        if re.search(r'remote\s+(?:within|from|in)|(?:must|need to|only)\s+(?:be\s+)?(?:based|reside|located)|(?:candidates|applicants)\s+(?:(?:must|can|may|should|will|need to)\s+)?(?:be\s+)?(?:based|reside|located|live)',clause,re.I):
             if places(clause) or state_names(clause):
                 # Negation applies to residency, not unrelated job duties.
                 if not re.search(r"\b(?:not|n't)\s+(?:be\s+)?(?:based|reside|located)|\bnot\s+remote\s+(?:in|within|from)",clause,re.I):restrict.append(clause)
@@ -340,6 +341,7 @@ CAVEAT_TEXT = {
     'review_skills': 'Check: required skills may not be core to this role',
     'review_salary': 'Check: requested pay not confirmed',
     'listing_age': 'Check: older posting; confirm the employer is still hiring',
+    'contingent_hiring': 'Check: contingent opening; confirm hiring conditions',
     'salary_unlisted': 'Check: salary not listed',
     'salary_other_currency': 'Check: salary is in another currency',
     'location_unconfirmed': 'Check: location eligibility not confirmed',

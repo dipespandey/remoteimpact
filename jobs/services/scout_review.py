@@ -207,4 +207,11 @@ def listing_caveats(job):
     # Age is uncertainty, never proof that a vacancy has closed. A feed sighting
     # is not a fresh employer confirmation, so don't use last_seen_at here.
     posted = getattr(job, 'posted_at', None)
-    return ['listing_age'] if posted and posted < timezone.now()-timedelta(days=180) else []
+    caveats=['listing_age'] if posted and posted < timezone.now()-timedelta(days=180) else []
+    from jobs.services.scout_constraints import plain_job_field
+    text=' '.join(plain_job_field(job,f) for f in ['description','requirements'])
+    for clause in re.split(r'[.!?;\n]',text):
+        if re.search(r'\bnot (?:a )?contingent|\bnot dependent',clause,re.I):continue
+        if re.search(r'\bcontingent position\b|\b(?:employment|hiring|position)\b.{0,80}(?:dependent upon|depends on|contingent (?:on|upon)).{0,80}contract award',clause,re.I):
+            caveats.append('contingent_hiring');break
+    return caveats

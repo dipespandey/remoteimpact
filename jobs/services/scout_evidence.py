@@ -88,6 +88,10 @@ def role_conflict(job, prefs, text):
             return True
     if 'full-time' in (prefs.get('job_types') or []) and re.search(r'\bconsultants?\b', job.title, re.I) and not re.search(r'\bfull[- ]time\b',text,re.I):
         return True
+    from jobs.services.scout_constraints import positive_text
+    product_wanted=positive_text(wanted)
+    if re.search(r'\bproduct\s+(?:management|managers?|owners?|strategy)\b',product_wanted,re.I) and not re.search(r'\b(?:marketing|sales)\b',product_wanted,re.I):
+        if re.search(r'\bproduct\s+(?:marketing|sales)\b',job.title,re.I):return True
     if re.search(r'\bcommunications?\b', wanted, re.I):
         functions = r'communications?|media relations|public relations|press|editorial|content|copywriter'
         if re.search(r'\bmarketing\b', wanted, re.I):functions += '|marketing|brand'
@@ -157,8 +161,9 @@ def location_evidence_warning(job, prefs, text):
     def country_warning(offered):
         return 'Location restricted to '+', '.join(sorted({names.get(p,p.title()) for p in offered}))+'; confirm eligibility'
     for clause in re.split(r'[.!?;\n]|\bbut\b',clean,flags=re.I):
+        if re.search(r'\b(?:worldwide|globally|anywhere)\s*,?\s*(?:including|such as|for example)\b',clause,re.I):continue
         if re.search(r'\b(?:no need to|not required to|do not need to|need not|don.t need to)\b',clause,re.I):continue
-        if not re.search(r'\b(?:must|need to|only)\s+(?:be\s+)?(?:reside|based|located)|\bresidency required\b|\bremote\s+(?:within|from|in)\b|\b(?:authorized|eligible) to work from\b',clause,re.I):continue
+        if not re.search(r'\b(?:must|need to|only)\s+(?:be\s+)?(?:reside|based|located)|\bresidency required\b|\bremote\s+(?:within|from|in)\b|\b(?:authorized|eligible) to work from\b|\b(?:candidates|applicants)\s+(?:(?:must|can|may|should|will|need to)\s+)?(?:be\s+)?(?:based|reside|located|live)\b',clause,re.I):continue
         states=state_names(clause)
         if states:return ', '.join(sorted(s.title() for s in states))+' residency required; confirm eligibility'
         offered=places(clause)

@@ -35,3 +35,10 @@ A generic Remote label is unknown worldwide eligibility, not a verified conflict
 It remains excluded from strict matches and can only appear with a location caveat
 in Worth considering. Known country restrictions remain conflicts. Comparative
 alternative explanations cannot invent an applicant country absent from the brief.
+
+Final source checks also distinguish modal residence statements (for example,
+“candidates can be located in the United States or Canada”) from unknown worldwide
+eligibility. Illustrative worldwide country examples do not become restrictions.
+Contingent openings carry a hiring-condition caveat. Product marketing/sales is
+not substituted for a requested product-management profession unless explicitly
+requested. These checks apply before model selections can override eligibility.

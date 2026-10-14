@@ -69,6 +69,33 @@ class PrimaryWorkEvidenceTests(SimpleTestCase):
         self.assertTrue(Scout._title_matches_intent('Chief Operating Officer',['COO']))
         self.assertEqual(Scout._normalize_desired_titles(['RevOps','CRM Administrator']),['revenue operations','customer relationship management Administrator'])
 
+    def test_modal_country_restriction_cannot_be_offered_as_worldwide_or_nepal(self):
+        from jobs.services.scout_constraints import location_compatibility
+        from jobs.services.scout_evidence import location_evidence_warning
+        job=SimpleNamespace(title='Software Engineer',description='Candidates can be located anywhere in the United States or Canada.',requirements='',location='Remote',country='Worldwide',raw_data={})
+        self.assertFalse(location_compatibility(job,['Worldwide']))
+        self.assertFalse(location_compatibility(job,['Nepal']))
+        self.assertTrue(location_compatibility(job,['Canada']))
+        self.assertIn('United States',location_evidence_warning(job,{},job.description))
+        global_job=SimpleNamespace(title='Engineer',description='Candidates may be located worldwide, including the United States and Canada.',requirements='',location='Remote worldwide',country='Worldwide',raw_data={})
+        self.assertTrue(location_compatibility(global_job,['Worldwide']))
+        self.assertIsNone(location_evidence_warning(global_job,{},global_job.description))
+
+    def test_contract_award_contingency_requires_a_visible_caveat(self):
+        from jobs.services.scout_review import listing_caveats
+        job=SimpleNamespace(posted_at=None,description='This is a contingent position; employment is dependent upon receiving the contract award.',requirements='')
+        self.assertIn('contingent_hiring',listing_caveats(job))
+        job.description='This is not a contingent position. Work on our contract award-winning software.';job._scout_plain_fields={}
+        self.assertNotIn('contingent_hiring',listing_caveats(job))
+
+    def test_product_marketing_is_not_product_management(self):
+        from jobs.services.scout_evidence import role_conflict
+        prefs={'intent_text':'Remote product management roles in climate technology'}
+        self.assertTrue(role_conflict(SimpleNamespace(title='Product Marketing Manager'),prefs,'Manage regional product lifecycle and sales enablement.'))
+        self.assertTrue(role_conflict(SimpleNamespace(title='Product Marketing Manager'),{'intent_text':'Product management roles, no sales'},'Manage product lifecycle.'))
+        self.assertFalse(role_conflict(SimpleNamespace(title='Technical Product Owner'),prefs,'Own the backlog and product roadmap.'))
+        self.assertFalse(role_conflict(SimpleNamespace(title='Product Marketing Manager'),{'intent_text':'Product marketing manager roles'},''))
+
     def test_incidental_phrase_the_role_is_not_an_overview_heading(self):
         text='This job coordinates community programmes. Benefits include resources consistent with the role and salary.'
         self.assertTrue(primary_duties(text).startswith('This job coordinates'))
