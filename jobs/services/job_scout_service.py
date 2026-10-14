@@ -640,6 +640,7 @@ skills is not a request for invented, exact job titles. JSON only."""
     ) -> bool:
         if not desired_titles:
             return True
+        title = cls._expand_role_abbreviations(title)
         desired_titles = cls._normalize_desired_titles(desired_titles)
         if not desired_titles:
             return True
@@ -796,7 +797,12 @@ skills is not a request for invented, exact job titles. JSON only."""
         "coo": "chief operating officer", "cfo": "chief financial officer", "cto": "chief technology officer",
         "ceo": "chief executive officer", "cmo": "chief marketing officer", "cpo": "chief product officer",
         "vp": "vice president", "ux": "ux designer", "ui": "ui designer",
+        "revops": "revenue operations", "crm": "customer relationship management",
     }
+
+    @classmethod
+    def _expand_role_abbreviations(cls, value):
+        return re.sub(r'\b(?:COO|CRM|RevOps)\b',lambda m: cls.TITLE_ABBREVIATIONS[m[0].lower()],str(value),flags=re.I)
 
     @classmethod
     def _normalize_desired_titles(cls, desired_titles):
@@ -805,6 +811,7 @@ skills is not a request for invented, exact job titles. JSON only."""
         normalized = []
         for value in desired_titles:
             text = re.sub(r"\s+", " ", cls.EMPLOYMENT_QUALIFIERS.sub(" ", str(value))).strip(" ,-/")
+            text = cls._expand_role_abbreviations(text)
             text = cls.TITLE_ABBREVIATIONS.get(text.lower(), text)
             if text and text not in normalized:
                 normalized.append(text)
@@ -955,8 +962,16 @@ skills is not a request for invented, exact job titles. JSON only."""
         from jobs.services.scout_workflow import plan_terms
         planned = plan_terms(preferences, diagnostics)
         terms = list(dict.fromkeys([*terms[:6], *planned, *terms[6:]]))
-        candidates, scored = cls._rank_candidates(qs, preferences, terms, diagnostics, now)
-        if len(scored) < min(limit, 3):
+        combined_review = bool(cls.RELAXED_FILL and getattr(settings, "SCOUT_RERANK_ENABLED", False)
+                               and getattr(settings, "SCOUT_RERANK_BACKEND", "deepseek") == "deepseek"
+                               and getattr(settings, "DEEPSEEK_API_KEY", ""))
+        shared_candidates = None
+        if combined_review:
+            from jobs.services.scout_retrieval import retrieve
+            shared_candidates = retrieve(qs, preferences, terms, diagnostics, relaxed=True, candidate_limit=400)
+            diagnostics['shared_candidate_pool'] = True
+        candidates, scored = cls._rank_candidates(qs, preferences, terms, diagnostics, now, candidates=shared_candidates)
+        if not combined_review and len(scored) < min(limit, 3):
             refined = plan_terms(preferences, diagnostics, retry=True)
             if refined and set(refined) - set(terms):
                 retry_diagnostics = {"location_rejected": 0, "experience_rejected": 0, "title_rejected": 0,
@@ -994,15 +1009,14 @@ skills is not a request for invented, exact job titles. JSON only."""
             diagnostics["rerank_wide_extra"] = len(extra)
         # Review strict and caveated candidates together. Separate reviews used
         # the last call on a weak strict match before useful alternatives were seen.
-        combined_review = bool(cls.RELAXED_FILL and getattr(settings, "SCOUT_RERANK_ENABLED", False)
-                               and getattr(settings, "SCOUT_RERANK_BACKEND", "deepseek") == "deepseek"
-                               and getattr(settings, "DEEPSEEK_API_KEY", ""))
         if combined_review:
             provisional_diagnostics = {"location_rejected": 0, "experience_rejected": 0, "title_rejected": 0,
                                        "skill_evidence_rejected": 0, "score_rejected": 0}
             _, provisional = cls._rank_candidates(
                 qs.exclude(pk__in=[job.pk for job in pool]), preferences, terms,
-                provisional_diagnostics, now, relaxed=True)
+                provisional_diagnostics, now, relaxed=True,
+                candidates=[job for job in shared_candidates if job.pk not in {j.pk for j in pool}])
+            diagnostics["provisional"] = provisional_diagnostics
             pool = [*pool[:6], *provisional[:6], *pool[6:]]
             diagnostics["combined_review"] = True
         selected = rerank(pool, preferences, scored, diagnostics, relaxed=combined_review)
@@ -1082,10 +1096,11 @@ skills is not a request for invented, exact job titles. JSON only."""
         return ("repost", job.organization_id, " ".join((job.title or "").lower().split()), text)
 
     @classmethod
-    def _rank_candidates(cls, qs, preferences, terms, diagnostics, now, relaxed=False):
+    def _rank_candidates(cls, qs, preferences, terms, diagnostics, now, relaxed=False, candidates=None):
         """Retrieve, gate and score candidates. Returns (candidates, scored)."""
         from jobs.services.scout_retrieval import retrieve
-        candidates = retrieve(qs, preferences, terms, diagnostics, relaxed=relaxed)
+        if candidates is None:
+            candidates = retrieve(qs, preferences, terms, diagnostics, relaxed=relaxed)
         diagnostics["candidate_count"] = len(candidates)
         scored = []
         for job in candidates:
@@ -1211,6 +1226,11 @@ skills is not a request for invented, exact job titles. JSON only."""
             + preferences.get("include_keywords", [])
         )
         result = []
+        # Grounded abbreviations need their canonical role wording before the
+        # first-12-term retrieval cap; generic operations must not crowd out RevOps.
+        intent=preferences.get('intent_text','')
+        for abbreviation, expansion in [('revops','revenue operations'),('crm','customer relationship management'),('coo','chief operating officer')]:
+            if re.search(r'\b'+abbreviation+r'\b',intent,re.I):result.append(expansion)
         for value in values:
             value = str(value).replace("-", " ").strip().lower()
             if (
@@ -1224,7 +1244,7 @@ skills is not a request for invented, exact job titles. JSON only."""
 
     @classmethod
     def _score_job(cls, job, preferences: dict, now, location_fit=None):
-        title = (job.title or "").lower()
+        title = cls._expand_role_abbreviations(job.title or "").lower()
         body = " ".join([job.description or "", job.requirements or "", job.impact or ""]).lower()
         job_skills = {str(value).replace("-", " ").lower() for value in (job.skills or [])}
         score = 0.0
@@ -1233,7 +1253,7 @@ skills is not a request for invented, exact job titles. JSON only."""
 
         title_score = 0
         title_reason = ""
-        titles = preferences.get("titles", [])
+        titles = [cls._expand_role_abbreviations(value) for value in preferences.get("titles", [])]
         legal_requested = any("legal" in desired.lower() for desired in titles)
         legal_title = bool(
             re.search(

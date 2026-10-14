@@ -254,7 +254,9 @@ def plain_job_field(job, field):
         other='description' if field=='requirements' else 'requirements' if field=='description' else None
         if other in cached and raw==str(getattr(job,other,'') or ''):
             cached[field]=cached[other]
-        else:cached[field]=' '.join(HTML_TAGS.sub('',raw).split())
+        else:
+            clean=' '.join(HTML_TAGS.sub(' ',raw).split())
+            cached[field]=re.sub(r'\s+([.,;:!?])',r'\1',clean)
     return cached[field]
 
 
@@ -303,7 +305,8 @@ def location_compatibility(job, desired):
         explicit_global=False
     requested_global=bool({str(v).lower() for v in desired}&WORLD)
     if requested_global:
-        return explicit_global and not offered
+        if offered:return False
+        return True if explicit_global else None
     wanted=expand(desired)
     if desired_states:wanted.add('US')
     if offered_states and desired_states and not offered_states & desired_states:
@@ -411,7 +414,8 @@ def evaluate_job(job, prefs, relaxed=False):
         return Eligibility(False,'professional_domain')
     fields=' '.join(plain_job_field(job,f) for f in ['title','description','requirements'])
     fields_lower=fields.lower()
-    from jobs.services.scout_review import workplace_conflict
+    from jobs.services.scout_review import workplace_conflict,dominant_function_conflict
+    if dominant_function_conflict(fields,prefs,title):return Eligibility(False,"primary_function")
     if workplace_conflict(job, prefs, fields):return Eligibility(False, 'workplace')
     if experience_conflict(job,prefs,fields):return Eligibility(False,'experience_evidence')
     if role_conflict(job,prefs,fields):return Eligibility(False,'role_evidence')

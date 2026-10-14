@@ -55,7 +55,7 @@ class SourcePageEnrichmentTests(TestCase):
         from jobs.services.job_scout_service import JobScoutService
         for country, location, expected in (
             ("USA", "Remote (US)", False),
-            ("Worldwide", "Remote", False),
+            ("Worldwide", "Remote", None),  # unknown, not verified worldwide
             ("Worldwide", "Remote worldwide", True),
             ("USA", "Worldwide - US only", False),
         ):

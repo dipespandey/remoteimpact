@@ -98,3 +98,26 @@ existing scan/eligibility limits. Per-stage timings and safe review-failure type
 support operational diagnosis. Reduced review JSON keeps the same source-grounding
 and complete-candidate checks. None of these measures establish general recall or
 a blanket quality guarantee, and the model-call deadline is not a total latency SLA.
+
+## Recovery of relevant candidates and primary duties — 14 October 2026
+
+Combined review now shares one broader candidate pool before applying strict and
+caveated rank gates. Canonical RevOps/CRM/COO wording is prioritized before the
+retrieval term cap so generic operations terms cannot hide a requested function.
+A separate alternative-function pass remains bounded. Original location, pay,
+level, exclusions and delivery history still apply.
+
+HTML cleanup preserves word boundaries. Verbatim role overviews and workload
+allocations lead the model evidence; an explicit majority finance/accounting
+allocation excludes unrelated briefs before candidate selection. Qualifications
+cannot substitute for function duties. Grounded quote overruns up to 360 characters
+are accepted; unsupported text and unbounded quotes remain invalid. This resolves
+a concrete false negative where a model selected a policy job but its valid quote
+was slightly longer than the target. Unconfirmed remote/pay conditions remain
+caveats rather than confirmations.
+
+Unknown worldwide eligibility is now distinct from a country restriction. Only
+explicit worldwide eligibility counts as verified; unknown eligibility may appear
+in Worth considering. Comparative alternative explanations cannot add applicant
+geography absent from the brief. The dated evaluation includes the 20 regression
+briefs and six additional constructed briefs, with repeated runs and source review.

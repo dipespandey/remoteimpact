@@ -38,6 +38,45 @@ def excerpt(text, intent='', limit=2200):
     return ' […] '.join(text[a:b] for a, b in sorted(spans))
 
 
+def workload_allocations(text):
+    """Find rare percentage markers first, then inspect a bounded heading."""
+    for match in re.finditer(r'\((\d{1,3})%\)',text):
+        start=max(0,match.start()-65)
+        label=re.search(r'[A-Za-z][A-Za-z &,/-]{3,65}$',text[start:match.start()].rstrip())
+        if label:
+            yield label[0],int(match[1]),start+label.start(),match.end()
+
+
+def primary_duties(text, limit=900):
+    """Preserve the role overview and explicit workload allocations verbatim."""
+    headings=r'(?:position overview|position summary|job summary|about this role|about this team and role|role overview)'
+    match=re.search(r'\b'+headings+r'\b\s*[:*]*',text,re.I)
+    if match:
+        start=match.end()
+        stop=re.search(r'\b(?:key responsibilities|responsibilities|essential duties|qualifications|requirements|what you.ll do)\b',text[start:],re.I)
+        end=start+stop.start() if stop else len(text)
+        overview=text[start:min(end,start+650)]
+    else:
+        # Short structured descriptions usually lead with the actual work.
+        overview=text[:450]
+    shares=[]
+    for label,share,start,end in workload_allocations(text):
+        if 30<=share<=100:shares.append(text[start:min(len(text),end+100)])
+    return ' […] '.join([overview,*shares])[:limit]
+
+
+def dominant_function_conflict(text, prefs, title=""):
+    """Use explicit workload allocation, never keyword counts, as negative evidence."""
+    wanted=prefs.get('intent_text','')
+    if re.search(r'\b(?:COO|chief operating officer)\b',wanted,re.I) and re.search(r'\b(?:COO|chief operating officer)\b',title,re.I):
+        return False
+    for label,share,start,end in workload_allocations(text):
+        if share<50:continue
+        if re.search(r'\b(?:finance|financial (?:management|operations)|accounting|bookkeeping)\b',label,re.I) and not re.search(r'\b(?:finance|financial|accounting|bookkeeping|CFO|chief financial)\b',wanted,re.I):
+            return True
+    return False
+
+
 def evidence_fields(job, preferences):
     from jobs.services.scout_constraints import plain_job_field
     description = plain_job_field(job, 'description')
@@ -45,8 +84,8 @@ def evidence_fields(job, preferences):
     duplicate = requirements == description
     intent = preferences.get('intent_text', '')
     return {'title': plain_job_field(job, 'title'),
-            'description': excerpt(description, intent, 2800 if duplicate else 1800),
-            'requirements': '' if duplicate else excerpt(requirements, intent, 1400)}
+            'description': primary_duties(description,700) + ' […] ' + excerpt(description, intent, 2100 if duplicate else 1100),
+            'requirements': '' if duplicate else excerpt(requirements, intent, 1000)}
 
 
 def remote_requested(prefs):
@@ -82,7 +121,7 @@ CHECK_INSTRUCTIONS = (
     'Each checks value is [status, field, verbatim_quote], where status is confirmed, conflicting, or unknown. '
     'Confirmed/conflicting needs an exact 8-180 character quote (short location labels are allowed) from title, description, requirements, location or salary. '
     'Unknown must use ["unknown", "", ""]. Function must be confirmed by actual duties in description/requirements, '
-    'never a title, a qualification, or company mission. Same sector with a different profession is conflicting, not adjacent. '
+    'never a title, a qualification, or company mission. The description starts with the role overview and explicit workload shares. Compare those first: minor or incidental responsibilities cannot establish the requested profession. Same sector with a different profession is conflicting, not adjacent. '
     'Preserve functional qualifiers: partner operations means onboarding/workflows, not sales, fundraising or relationship development. '
     'Remote means the work arrangement, not remote servers/caches; hybrid office attendance conflicts. '
     'Location must reflect explicit hiring/residence eligibility, not an office address or inferred worldwide default. '
@@ -97,6 +136,8 @@ CHECK_INSTRUCTIONS = (
 def review_checks(item, row, prefs):
     """Return caveat keys for a valid selection, or None for unsupported/conflicting."""
     from jobs.services.scout_reranker import _normalized
+    if dominant_function_conflict(row.get('primary_duties',row.get('description','')),prefs,row.get('title','')):
+        return None
     checks = item.get('checks')
     if not isinstance(checks, dict) or set(checks) != set(requested_checks(prefs)):
         return None
@@ -112,6 +153,8 @@ def review_checks(item, row, prefs):
             continue
         if status != 'confirmed' or field not in ('title', 'description', 'requirements', 'location', 'salary'):
             return None
+        if name == 'function' and isinstance(quote,str) and re.match(r'\s*(?:requires?\b|experience\b|proficiency\b|strong knowledge\b|\d+\+? years)',quote,re.I):
+            return None
         if name == 'function' and field not in ('description', 'requirements'):
             return None
         if name == 'function' and re.search(r'\bpartner(?:ship)? operations\b', prefs.get('intent_text', ''), re.I):
@@ -120,7 +163,7 @@ def review_checks(item, row, prefs):
         if name == 'function' and re.search(r'\bpolicy\s+(?:roles?|jobs?|work|analyst|advisor)', prefs.get('intent_text', ''), re.I):
             if not isinstance(quote, str) or not re.search(r'\b(?:policy|policies|advocacy|legislation|government affairs|regulatory analysis)\b', quote, re.I):
                 return None
-        if not isinstance(quote, str) or not (2 if field == 'location' else 8) <= len(quote) <= 180:
+        if not isinstance(quote, str) or not (2 if field == 'location' else 8) <= len(quote) <= 360:
             return None
         if _normalized(quote) not in _normalized(row.get(field, '')):
             return None

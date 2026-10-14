@@ -49,6 +49,7 @@ class BoundedScoutWorkflowTests(TestCase):
         self.assertEqual(plan_terms({'intent_text': 'Python in Europe'}, diagnostics), [])
         self.assertEqual(diagnostics['planning'], 'fallback')
 
+    @override_settings(SCOUT_RERANK_ENABLED=False)
     @patch('jobs.services.scout_close_matches.close_matches', return_value=[])
     @patch('jobs.services.scout_reranker.rerank', return_value=[])
     @patch.object(Scout, '_rank_candidates', return_value=([], []))

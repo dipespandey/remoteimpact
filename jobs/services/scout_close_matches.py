@@ -36,7 +36,7 @@ SYSTEM = (
     "type or things to avoid. Picking none is fine. Return JSON only: "
     '{{"picks":[{{"id":1,"same_kind_of_work":true,"difference":"one short sentence on how it differs from the request",'
     '"evidence":{{"field":"description","quote":"verbatim text from the listing, 8 to 180 characters"}},"checks":{{}}}}]}}. '
-    "Order by how likely they are to want it."
+    "Order by how likely they are to want it. Do not invent applicant preferences: only compare against countries, languages, seniority or functions explicitly present in the request."
 )
 
 
@@ -65,11 +65,17 @@ def validate(output, evidence, limit, preferences=None):
         if not isinstance(difference, str) or not 8 <= len(difference.strip()) <= 160:
             continue
         field, text = quote.get("field"), quote.get("quote")
-        if field not in FIELDS or not isinstance(text, str) or not 8 <= len(text) <= 180:
+        if field not in FIELDS or not isinstance(text, str) or not 8 <= len(text) <= 360:
             continue
         if text not in evidence[pk].get(field, "") and _normalized(text) not in _normalized(evidence[pk].get(field, "")):
             continue
         if preferences is not None:
+            # Reject invented applicant geography in comparative explanations.
+            import re
+            from jobs.services.scout_constraints import expand
+            comparison=re.search(r'(?:rather than|instead of|versus)\s+(.{0,100})',difference,re.I)
+            if comparison and expand([comparison[1]]) - expand([preferences.get('intent_text','')]):
+                continue
             from jobs.services.scout_review import review_checks
             if review_checks(item, evidence[pk], preferences) is None:
                 continue

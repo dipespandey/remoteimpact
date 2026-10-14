@@ -1,0 +1,8 @@
+[
+ {"id":"p01","split":"primary_holdout","source":"constructed_fresh_holdout","brief":"Remote accounting or financial operations roles at nonprofits, open to Europe, at least EUR 60000 annually."},
+ {"id":"p02","split":"primary_holdout","source":"constructed_fresh_holdout","brief":"Remote product management roles in climate technology, mid-level, open to Europe."},
+ {"id":"p03","split":"primary_holdout","source":"constructed_fresh_holdout","brief":"Remote CRM administrator jobs using Salesforce at nonprofits, worldwide."},
+ {"id":"p04","split":"primary_holdout","source":"constructed_fresh_holdout","brief":"Remote senior grant writing or fundraising jobs open to applicants in the United States."},
+ {"id":"p05","split":"primary_holdout","source":"constructed_fresh_holdout","brief":"Remote UX research roles using qualitative research, contract, open to Europe."},
+ {"id":"p06","split":"primary_holdout","source":"constructed_fresh_holdout","brief":"Remote entry-level data analyst jobs using SQL or Python in education organizations, no internships."}
+]

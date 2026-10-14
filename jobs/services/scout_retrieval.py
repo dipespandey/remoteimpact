@@ -44,7 +44,7 @@ def query_embedding(text):
     return vector
 
 
-def retrieve(qs,preferences,terms,diagnostics,relaxed=False):
+def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=200):
     retrieval_start=monotonic()
     from jobs.services.scout_workflow import retrieval_time_available
     if not retrieval_time_available():
@@ -116,7 +116,7 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False):
         try:
             sql,params=qs.query.sql_with_params()
             canonical=[p.replace(minute=0,second=0,microsecond=0).isoformat() if isinstance(p,datetime) else p for p in params]
-            payload=[sql,canonical,preferences,terms,relaxed,len(branches),getattr(settings,'EMBEDDING_MODEL','')]
+            payload=[sql,canonical,preferences,terms,relaxed,candidate_limit,len(branches),getattr(settings,'EMBEDDING_MODEL','')]
             cache_key='scout-candidates-v1:'+hashlib.sha256(json.dumps(payload,sort_keys=True,default=str).encode()).hexdigest()
             ids=cache.get(cache_key)
             if isinstance(ids,list) and len(ids)<=400 and all(type(pk) is int for pk in ids):
@@ -134,7 +134,7 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False):
                 return result
         except Exception:
             diagnostics['retrieval_cache']='unavailable'
-    count=200;scan=2000
+    count=min(max(candidate_limit,1),400);scan=2000
     rejected=Counter();rankings=[];eligibility_cache={}
     diagnostics['retrieval']={}
     for name,query in branches:
