@@ -67,7 +67,9 @@ uncalibrated ranking scores. Provider review failures withhold unreviewed result
 an incomplete preview explicitly asks the seeker to retry rather than asserting
 that no suitable jobs exist. No automatic relaxation changes the seeker's brief.
 
-The four-call/18-second workflow budget remains. Strict evidence review is capped
+The four-call/18-second workflow budget remains. Strict and provisional candidates
+share one provider review, leaving time to judge alternatives; its timeout is at
+most 10 seconds and is further capped by the remaining workflow time. Strict evidence review is capped
 at 12 candidates and 44,000 prompt characters; alternatives now review at most 12
 candidates, with full-source excerpts instead of 30 introductions. This tradeoff
 needs recall monitoring. The offline training comparison now scopes its comparison

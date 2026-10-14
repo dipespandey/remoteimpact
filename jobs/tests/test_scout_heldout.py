@@ -126,7 +126,7 @@ class HeldoutRerank(SimpleTestCase):
         self.assertEqual(len(payload['candidates']),12)
         self.assertEqual(d['rerank_candidate_count'],12)
         self.assertEqual(generate.call_args.kwargs['max_retries'],0)
-        self.assertEqual(generate.call_args.kwargs['timeout'],6.0)
+        self.assertEqual(generate.call_args.kwargs['timeout'],10.0)
         self.assertEqual(generate.call_args.kwargs['max_tokens'],3600)
 
 

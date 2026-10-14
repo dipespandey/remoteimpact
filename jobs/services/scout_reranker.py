@@ -13,7 +13,7 @@ FIELDS=('title','description','requirements')
 MAX_CANDIDATES=12
 MAX_PROMPT_CHARS=44000
 MAX_OUTPUT_TOKENS=3600
-TIMEOUT_SECONDS=6.0
+TIMEOUT_SECONDS=10.0
 
 
 def _normalized(text):

@@ -969,7 +969,20 @@ skills is not a request for invented, exact job titles. JSON only."""
                 extra.append(job)
             pool = scored + extra
             diagnostics["rerank_wide_extra"] = len(extra)
-        selected = rerank(pool, preferences, scored, diagnostics)
+        # Review strict and caveated candidates together. Separate reviews used
+        # the last call on a weak strict match before useful alternatives were seen.
+        combined_review = bool(cls.RELAXED_FILL and getattr(settings, "SCOUT_RERANK_ENABLED", False)
+                               and getattr(settings, "SCOUT_RERANK_BACKEND", "deepseek") == "deepseek"
+                               and getattr(settings, "DEEPSEEK_API_KEY", ""))
+        if combined_review:
+            provisional_diagnostics = {"location_rejected": 0, "experience_rejected": 0, "title_rejected": 0,
+                                       "skill_evidence_rejected": 0, "score_rejected": 0}
+            _, provisional = cls._rank_candidates(
+                qs.exclude(pk__in=[job.pk for job in pool]), preferences, terms,
+                provisional_diagnostics, now, relaxed=True)
+            pool = [*pool[:6], *provisional[:6], *pool[6:]]
+            diagnostics["combined_review"] = True
+        selected = rerank(pool, preferences, scored, diagnostics, relaxed=combined_review)
         # One opening can have several regional source postings. Keep the best
         # eligible region, and never merge unrelated jobs with similar titles.
         distinct = []; seen = set()
@@ -983,7 +996,7 @@ skills is not a request for invented, exact job titles. JSON only."""
             if key in seen or title_key in seen:continue
             seen.add(key); seen.add(title_key); distinct.append(job)
         selected = distinct
-        if len(selected) < limit and cls.RELAXED_FILL:
+        if len(selected) < limit and cls.RELAXED_FILL and not combined_review:
             # Fill empty slots with possible matches whose salary, location or
             # schedule couldn't be verified. They carry explicit caveats and are
             # never preferred over verified matches.
