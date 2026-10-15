@@ -49,6 +49,8 @@ jobs:
           HF_HUB_OFFLINE: '0'
           TRANSFORMERS_OFFLINE: '0'
         run: uv run python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2', device='cpu')"
+      - name: Test deployment safety
+        run: python -m unittest discover -s ops/deploy -p 'test_*.py'
       - name: Check schema and run tests
         run: |
           uv run python manage.py check
@@ -69,10 +71,13 @@ jobs:
           git diff --exit-code -- ../static/tailwind.min.css
   deploy:
     needs: checks
+    concurrency:
+      group: remoteimpact-production
+      cancel-in-progress: false
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to simpleclaw-2
+      - name: Deploy checked commit with blue-green cutover
         env:
           DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -82,9 +87,6 @@ jobs:
           trap 'rm -f /tmp/deploy_key' EXIT
           ssh -o StrictHostKeyChecking=no -i /tmp/deploy_key "root@$DEPLOY_HOST" "
             cd /opt/easyclaw &&
-            git -C repo pull &&
-            docker compose build web &&
-            docker compose up -d web &&
-            install -o root -g root -m 0644 repo/ops/remoteimpact-org-plans.cron /etc/cron.d/remoteimpact-org-plans &&
-            bash repo/scripts/check_org_plan_release.sh
+            git -C repo fetch origin ${{ github.sha }} &&
+            /opt/easyclaw/deploy.sh --ref ${{ github.sha }}
           "

@@ -2,4 +2,4 @@
 # Hourly processing, at most one notification per paid role per 24 hours.
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-17 * * * * root /usr/bin/flock -n /var/lock/remoteimpact-interests.lock /usr/bin/docker exec easyclaw-web-1 /app/.venv/bin/python /app/manage.py send_interest_notifications >> /var/log/remoteimpact-interests.log 2>&1
+17 * * * * root /usr/bin/flock -n /var/lock/remoteimpact-interests.lock /opt/easyclaw/exec-active /app/.venv/bin/python /app/manage.py send_interest_notifications >> /var/log/remoteimpact-interests.log 2>&1

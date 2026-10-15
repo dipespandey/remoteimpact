@@ -1,11 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
-# Run from /opt/easyclaw after starting the web service. Its entrypoint may
-# still be applying migrations when docker compose up -d returns.
+# Run against the active release. Blue-green deployments gate migrations
+# before cutover; retries also support initial installation.
 for attempt in {1..30}; do
-    if docker compose exec -T web /app/.venv/bin/python /app/manage.py migrate --check; then
-        docker compose exec -T web /app/.venv/bin/python /app/manage.py sync_org_plans
+    if /opt/easyclaw/exec-active /app/.venv/bin/python /app/manage.py migrate --check; then
+        /opt/easyclaw/exec-active /app/.venv/bin/python /app/manage.py sync_org_plans
         exit 0
     fi
     sleep 2
