@@ -333,6 +333,15 @@ class KeywordJobsView(FastJobPaginationMixin, ListView):
             for row in category_rows
         ]
         context.update(inventory_evidence(jobs_qs, context['category_breakdown']))
+        if context['nonprofit_page'] and not context['role_query']:
+            choices = [('development', 'Development'), ('grant', 'Grants'),
+                       ('program', 'Programs'), ('operations', 'Operations'),
+                       ('communications', 'Communications'), ('finance', 'Finance'),
+                       ('fundrais', 'Fundraising')]
+            counts = jobs_qs.aggregate(**{term: Count('pk', filter=Q(title__icontains=term))
+                                         for term, label in choices})
+            context['nonprofit_roles'] = [{'query': term, 'label': label, 'count': counts[term]}
+                                         for term, label in choices if counts[term]]
         
         # Salary stats
         jobs_with_salary = comparable_salary_jobs(jobs_qs)

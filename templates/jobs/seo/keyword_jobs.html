@@ -87,12 +87,11 @@
             <button class="btn btn-primary btn-sm" type="submit">Find roles</button>
             {% if role_query %}<a href="{% url 'jobs:keyword_jobs' keyword_slug='remote-nonprofit-jobs' %}" class="btn btn-outline btn-sm">Clear search</a>{% endif %}
         </form>
+        {% if nonprofit_roles %}
         <nav aria-label="Nonprofit role searches" class="mt-4 flex flex-wrap gap-3 text-sm">
-            <a href="?q=fundrais" class="underline underline-offset-4">Fundraising</a>
-            <a href="?q=program" class="underline underline-offset-4">Programs</a>
-            <a href="?q=operations" class="underline underline-offset-4">Operations</a>
-            <a href="?q=communications" class="underline underline-offset-4">Communications</a>
+            {% for role in nonprofit_roles %}<a href="?q={{ role.query|urlencode }}" class="underline underline-offset-4">{{ role.label }} ({{ role.count }})</a>{% endfor %}
         </nav>
+        {% endif %}
         <p class="mt-4 text-sm text-muted-foreground">Looking beyond nonprofits? <a href="{% url 'jobs:job_list' %}" class="font-medium text-foreground underline underline-offset-4">Browse all impact jobs</a> at mission-driven companies, research groups and public-interest organizations.</p>
     </section>
     {% endif %}

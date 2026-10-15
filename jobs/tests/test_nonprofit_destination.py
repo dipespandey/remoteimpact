@@ -80,3 +80,12 @@ class NonprofitDestinationTests(TestCase):
         second = self.client.get(self.url, {'q': 'Program', 'page': '2'})
         self.assertEqual(len(second.context['jobs']), 1)
         self.assertContains(second, '?page=1&amp;q=Program')
+
+    def test_quick_role_links_only_offer_nonempty_searches(self):
+        self.job('grants', 'Example Charity', title='Grants Manager')
+        self.job('programs', 'Public Support', 'nonprofit', title='Program Director')
+        response = self.client.get(self.url)
+        self.assertEqual({r['query']: r['count'] for r in response.context['nonprofit_roles']},
+                         {'grant': 1, 'program': 1})
+        self.assertContains(response, 'Grants (1)')
+        self.assertNotContains(response, 'href="?q=fundrais"')
