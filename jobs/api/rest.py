@@ -111,7 +111,28 @@ def search(params, caller, *, limit=None, page=None):
         jobs = jobs.filter(posted_at__gte=since)
     scope = params.get("remote_scope")
     if scope == "worldwide":
-        jobs = jobs.filter(location__iregex=r"worldwide|anywhere|global")
+        from django.db.models import Q
+        jobs = jobs.filter(Q(location__iregex=r"worldwide|anywhere|global") |
+                           Q(country__iregex=r"worldwide|anywhere|global"))
+    if country or scope == "worldwide":
+        # Broad import labels are candidate retrieval, not eligibility evidence.
+        # Reuse Scout's source rules before totals, deduplication and pagination,
+        # so an explicit US restriction cannot be rescued by a "Global" label.
+        from types import SimpleNamespace
+        from django.db.models import F
+        from jobs.services.scout_constraints import location_compatibility
+
+        eligible_ids = []
+        candidates = jobs.select_related(None).annotate(
+            scout_source_location=F("raw_data__api_response__location__name")
+        ).values("pk", "title", "description", "requirements", "location", "country", "scout_source_location")
+        for fields in candidates.iterator(chunk_size=200):
+            candidate = SimpleNamespace(**fields)
+            country_fit = location_compatibility(candidate, [country]) if country else None
+            worldwide_fit = location_compatibility(candidate, ["worldwide"]) if scope == "worldwide" else None
+            if country_fit is not False and (scope != "worldwide" or worldwide_fit is True):
+                eligible_ids.append(fields["pk"])
+        jobs = jobs.filter(pk__in=eligible_ids)
     jobs = JobService._collapse_location_variants(jobs)
     if not text_search:
         jobs = jobs.order_by("-posted_at", "-id")

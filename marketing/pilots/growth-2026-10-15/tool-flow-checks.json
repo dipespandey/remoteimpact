@@ -1,0 +1,20 @@
+[
+  {
+    "mode": "htmx",
+    "success_cta": true,
+    "encoded_role_preserved": true,
+    "scout_context_preserved": true,
+    "no_implicit_level_filter": true,
+    "error_hides_old_cta": true,
+    "browser_errors": []
+  },
+  {
+    "mode": "fetch_fallback",
+    "success_cta": true,
+    "encoded_role_preserved": true,
+    "scout_context_preserved": true,
+    "no_implicit_level_filter": true,
+    "error_hides_old_cta": true,
+    "browser_errors": []
+  }
+]

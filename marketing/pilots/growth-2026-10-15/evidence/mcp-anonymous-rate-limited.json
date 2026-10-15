@@ -1,0 +1,171 @@
+{
+  "started_at": "2026-10-15T10:57:21.594505+00:00",
+  "limitations": [
+    "Installed connector already present in this chat. No unprimed assistant-selection inference.",
+    "Synthetic briefs mapped by researcher to tool arguments; tests protocol and results, not natural-language interpretation.",
+    "No-key tier caps search results; zero results may reflect catalogue coverage or filter quality."
+  ],
+  "setup": [
+    {
+      "method": "initialize",
+      "http_status": 429,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "initialize",
+        "error": {
+          "code": -32000,
+          "message": "Rate limited; add an API key from remoteimpact.org/developers/ for higher limits."
+        }
+      }
+    },
+    {
+      "method": "tools/list",
+      "http_status": 429,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "tools/list",
+        "error": {
+          "code": -32000,
+          "message": "Rate limited; add an API key from remoteimpact.org/developers/ for higher limits."
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "key": "areas",
+      "brief": "What impact areas can I search?",
+      "tool": "list_areas",
+      "arguments": {},
+      "http_status": 429,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "areas",
+        "error": {
+          "code": -32000,
+          "message": "Rate limited; add an API key from remoteimpact.org/developers/ for higher limits."
+        }
+      }
+    },
+    {
+      "key": "norway_climate",
+      "brief": "Find climate engineering roles open from Norway.",
+      "tool": "search_jobs",
+      "arguments": {
+        "query": "engineer",
+        "area": "climate-environment",
+        "country": "Norway",
+        "limit": 3
+      },
+      "http_status": 429,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "norway_climate",
+        "error": {
+          "code": -32000,
+          "message": "Rate limited; add an API key from remoteimpact.org/developers/ for higher limits."
+        }
+      }
+    },
+    {
+      "key": "kenya_health",
+      "brief": "Find health program roles open from Kenya.",
+      "tool": "search_jobs",
+      "arguments": {
+        "query": "program",
+        "area": "global-health",
+        "country": "Kenya",
+        "limit": 3
+      },
+      "http_status": 429,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "kenya_health",
+        "error": {
+          "code": -32000,
+          "message": "Rate limited; add an API key from remoteimpact.org/developers/ for higher limits."
+        }
+      }
+    },
+    {
+      "key": "canada_data",
+      "brief": "Find data analyst roles open from Canada.",
+      "tool": "search_jobs",
+      "arguments": {
+        "query": "data analyst",
+        "country": "Canada",
+        "limit": 3
+      },
+      "http_status": 429,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "canada_data",
+        "error": {
+          "code": -32000,
+          "message": "Rate limited; add an API key from remoteimpact.org/developers/ for higher limits."
+        }
+      }
+    },
+    {
+      "key": "us_entry",
+      "brief": "Find entry-level education roles open from the United States.",
+      "tool": "search_jobs",
+      "arguments": {
+        "area": "education",
+        "level": "entry",
+        "country": "United States",
+        "limit": 3
+      },
+      "http_status": 429,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "us_entry",
+        "error": {
+          "code": -32000,
+          "message": "Rate limited; add an API key from remoteimpact.org/developers/ for higher limits."
+        }
+      }
+    },
+    {
+      "key": "worldwide_ai",
+      "brief": "Find worldwide AI safety jobs.",
+      "tool": "search_jobs",
+      "arguments": {
+        "area": "ai-safety",
+        "worldwide_only": true,
+        "limit": 3
+      },
+      "http_status": 429,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "worldwide_ai",
+        "error": {
+          "code": -32000,
+          "message": "Rate limited; add an API key from remoteimpact.org/developers/ for higher limits."
+        }
+      }
+    },
+    {
+      "key": "negative",
+      "brief": "Search for an impossible exact job title.",
+      "tool": "search_jobs",
+      "arguments": {
+        "query": "zzqv_unobtainium_test_94716",
+        "limit": 3
+      },
+      "http_status": 429,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "negative",
+        "error": {
+          "code": -32000,
+          "message": "Rate limited; add an API key from remoteimpact.org/developers/ for higher limits."
+        }
+      }
+    },
+    {
+      "key": "detail",
+      "status": "blocked_no_returned_job"
+    }
+  ]
+}

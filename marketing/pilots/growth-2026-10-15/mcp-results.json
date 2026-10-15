@@ -1,0 +1,1687 @@
+{
+  "started_at": "2026-10-15T11:02:36.332736+00:00",
+  "access_mode": "temporary_free_key",
+  "limitations": [
+    "Installed connector already present in this chat. No unprimed assistant-selection inference.",
+    "Synthetic briefs mapped by researcher to tool arguments; tests protocol and results, not natural-language interpretation.",
+    "No-key tier caps search results; zero results may reflect catalogue coverage or filter quality."
+  ],
+  "setup": [
+    {
+      "method": "initialize",
+      "http_status": 200,
+      "elapsed_seconds": 0.171,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "initialize",
+        "result": {
+          "protocolVersion": "2025-06-18",
+          "capabilities": {
+            "tools": {
+              "listChanged": false
+            }
+          },
+          "serverInfo": {
+            "name": "remote-impact-jobs",
+            "version": "1.0.0",
+            "title": "Remote Impact Jobs",
+            "description": "Verified remote jobs at climate, global health, AI safety and other impact organizations: search by area, the applicant's country, level and pay. Checked daily against each employer's own job board.",
+            "websiteUrl": "https://remoteimpact.org/developers/"
+          },
+          "instructions": "Remote roles at climate, global health, AI safety, education and other impact organizations, checked daily against each employer's own job board. Use search_jobs with the person's constraints (country they live in, area, level, minimum pay); eligible_countries and remote_scope say who can apply. Always give the listing url. Data from Remote Impact (remoteimpact.org). Link to the listing URL when you show a role."
+        }
+      }
+    },
+    {
+      "method": "tools/list",
+      "http_status": 200,
+      "elapsed_seconds": 0.188,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "tools/list",
+        "result": {
+          "tools": [
+            {
+              "name": "search_jobs",
+              "title": "Search open remote impact roles",
+              "description": "Find open, verified remote roles. Filter by text, impact area, the applicant's country, job type, level, minimum annual pay and recency. Returns the best matches with eligibility, pay and links (5 per call without a key, 10 with a free key, 25 with commercial access).",
+              "annotations": {
+                "readOnlyHint": true,
+                "destructiveHint": false,
+                "idempotentHint": true,
+                "openWorldHint": false
+              },
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "integer"
+                  },
+                  "jobs": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "One verified open role",
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "organization": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "slug": {
+                              "type": "string"
+                            },
+                            "url": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "homepage_url": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "careers_url": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          }
+                        },
+                        "location": {
+                          "type": "string"
+                        },
+                        "remote_scope": {
+                          "type": "string",
+                          "enum": [
+                            "worldwide",
+                            "countries",
+                            "region",
+                            "unspecified"
+                          ]
+                        },
+                        "eligible_countries": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "job_type": {
+                          "type": "string"
+                        },
+                        "experience_level": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "salary": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "min": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "max": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "currency": {
+                              "type": "string"
+                            },
+                            "period": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "posted_at": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "verification": {
+                          "type": "object"
+                        },
+                        "url": {
+                          "type": "string"
+                        },
+                        "apply_url": {
+                          "type": "string"
+                        },
+                        "description_excerpt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "title",
+                        "url"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "total",
+                  "jobs"
+                ]
+              },
+              "inputSchema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "Free text: role, skills, organization"
+                  },
+                  "area": {
+                    "type": "string",
+                    "description": "Impact area slug from list_areas, e.g. climate-environment"
+                  },
+                  "country": {
+                    "type": "string",
+                    "description": "Country the applicant lives in, e.g. Kenya"
+                  },
+                  "job_type": {
+                    "type": "string",
+                    "enum": [
+                      "full-time",
+                      "part-time",
+                      "contract",
+                      "freelance",
+                      "internship"
+                    ]
+                  },
+                  "level": {
+                    "type": "string",
+                    "enum": [
+                      "internship",
+                      "entry",
+                      "mid",
+                      "senior",
+                      "executive"
+                    ]
+                  },
+                  "min_salary": {
+                    "type": "integer",
+                    "description": "Minimum annual pay (listing currency)"
+                  },
+                  "posted_within_days": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 90
+                  },
+                  "worldwide_only": {
+                    "type": "boolean",
+                    "description": "Only roles open from anywhere"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 25,
+                    "default": 5
+                  }
+                }
+              }
+            },
+            {
+              "name": "get_job",
+              "title": "Get one role",
+              "description": "Full record for one open role by slug or id, including verification and eligibility.",
+              "annotations": {
+                "readOnlyHint": true,
+                "destructiveHint": false,
+                "idempotentHint": true,
+                "openWorldHint": false
+              },
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "job": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "description": "One verified open role",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "slug": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "organization": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "slug": {
+                                "type": "string"
+                              },
+                              "url": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "homepage_url": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "careers_url": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              }
+                            }
+                          },
+                          "location": {
+                            "type": "string"
+                          },
+                          "remote_scope": {
+                            "type": "string",
+                            "enum": [
+                              "worldwide",
+                              "countries",
+                              "region",
+                              "unspecified"
+                            ]
+                          },
+                          "eligible_countries": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "job_type": {
+                            "type": "string"
+                          },
+                          "experience_level": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "salary": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "min": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "max": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "currency": {
+                                "type": "string"
+                              },
+                              "period": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "posted_at": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "verification": {
+                            "type": "object"
+                          },
+                          "url": {
+                            "type": "string"
+                          },
+                          "apply_url": {
+                            "type": "string"
+                          },
+                          "description_excerpt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "url"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "job"
+                ]
+              },
+              "inputSchema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Job slug or numeric id"
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            },
+            {
+              "name": "list_areas",
+              "title": "List impact areas",
+              "description": "Impact areas (categories) with the number of open roles in each.",
+              "annotations": {
+                "readOnlyHint": true,
+                "destructiveHint": false,
+                "idempotentHint": true,
+                "openWorldHint": false
+              },
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "areas": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "open_roles": {
+                          "type": "integer"
+                        },
+                        "url": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "areas"
+                ]
+              },
+              "inputSchema": {
+                "type": "object",
+                "properties": {}
+              }
+            },
+            {
+              "name": "get_organization",
+              "title": "Get an organization and its open roles",
+              "description": "Organization details (homepage, careers page) and its open roles on Remote Impact.",
+              "annotations": {
+                "readOnlyHint": true,
+                "destructiveHint": false,
+                "idempotentHint": true,
+                "openWorldHint": false
+              },
+              "outputSchema": {
+                "type": "object",
+                "properties": {
+                  "organization": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "slug": {
+                            "type": "string"
+                          },
+                          "url": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "homepage_url": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "careers_url": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "jobs": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "description": "One verified open role",
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "organization": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "slug": {
+                              "type": "string"
+                            },
+                            "url": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "homepage_url": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "careers_url": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          }
+                        },
+                        "location": {
+                          "type": "string"
+                        },
+                        "remote_scope": {
+                          "type": "string",
+                          "enum": [
+                            "worldwide",
+                            "countries",
+                            "region",
+                            "unspecified"
+                          ]
+                        },
+                        "eligible_countries": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "job_type": {
+                          "type": "string"
+                        },
+                        "experience_level": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "salary": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "min": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "max": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "currency": {
+                              "type": "string"
+                            },
+                            "period": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "posted_at": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "verification": {
+                          "type": "object"
+                        },
+                        "url": {
+                          "type": "string"
+                        },
+                        "apply_url": {
+                          "type": "string"
+                        },
+                        "description_excerpt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "title",
+                        "url"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "organization",
+                  "jobs"
+                ]
+              },
+              "inputSchema": {
+                "type": "object",
+                "properties": {
+                  "slug": {
+                    "type": "string",
+                    "description": "Organization slug, e.g. from a job's organization.slug"
+                  }
+                },
+                "required": [
+                  "slug"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "cases": [
+    {
+      "key": "areas",
+      "brief": "What impact areas can I search?",
+      "tool": "list_areas",
+      "arguments": {},
+      "http_status": 200,
+      "elapsed_seconds": 0.165,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "areas",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "- AI Safety & Governance (ai-safety): 338 open roles\n- Animal Welfare (animal-welfare): 132 open roles\n- Biosecurity & Pandemic Preparedness (biosecurity): 31 open roles\n- Buildings (buildings): 13 open roles\n- Capital (capital): 36 open roles\n- Children Youth (children-youth): 54 open roles\n- Civic Engagement (civic-engagement): 60 open roles\n- Climate & Environment (climate-environment): 1462 open roles\n- Communications & Media (communications): 55 open roles\n- Community Development (community-development): 43 open roles\n- Disability (disability): 4 open roles\n- Education & Research (education): 90 open roles\n- Effective Altruism (effective-altruism): 35 open roles\n- Energy (energy): 92 open roles\n- Food, Agriculture, & Land Use (food-agriculture-land-use): 39 open roles\n- Gender Equality and Social Inclusion (GESI) (gender-equality-social-inclusion): 5 open roles\n- Global Health (global-health): 218 open roles\n- Humanitarian & Disaster Relief (humanitarian): 13 open roles\n- Human Rights & Justice (human-rights): 33 open roles\n- Impact Careers (impact-careers): 183 open roles\n- Materials & Manufacturing (materials-manufacturing): 93 open roles\n- Nuclear Security (nuclear-security): 1 open roles\n- Operations & Administration (operations): 27 open roles\n- Other Impact Areas (other): 78 open roles\n- Policy & Advocacy (policy-advocacy): 119 open roles\n- Poverty & Economic Development (poverty-development): 21 open roles\n- Technology & Engineering (technology): 122 open roles\n- Transportation (transportation): 39 open roles"
+            }
+          ],
+          "structuredContent": {
+            "areas": [
+              {
+                "name": "AI Safety & Governance",
+                "slug": "ai-safety",
+                "open_roles": 338,
+                "url": "https://remoteimpact.org/jobs/category/ai-safety/"
+              },
+              {
+                "name": "Animal Welfare",
+                "slug": "animal-welfare",
+                "open_roles": 132,
+                "url": "https://remoteimpact.org/jobs/category/animal-welfare/"
+              },
+              {
+                "name": "Biosecurity & Pandemic Preparedness",
+                "slug": "biosecurity",
+                "open_roles": 31,
+                "url": "https://remoteimpact.org/jobs/category/biosecurity/"
+              },
+              {
+                "name": "Buildings",
+                "slug": "buildings",
+                "open_roles": 13,
+                "url": "https://remoteimpact.org/jobs/category/buildings/"
+              },
+              {
+                "name": "Capital",
+                "slug": "capital",
+                "open_roles": 36,
+                "url": "https://remoteimpact.org/jobs/category/capital/"
+              },
+              {
+                "name": "Children Youth",
+                "slug": "children-youth",
+                "open_roles": 54,
+                "url": "https://remoteimpact.org/jobs/category/children-youth/"
+              },
+              {
+                "name": "Civic Engagement",
+                "slug": "civic-engagement",
+                "open_roles": 60,
+                "url": "https://remoteimpact.org/jobs/category/civic-engagement/"
+              },
+              {
+                "name": "Climate & Environment",
+                "slug": "climate-environment",
+                "open_roles": 1462,
+                "url": "https://remoteimpact.org/jobs/category/climate-environment/"
+              },
+              {
+                "name": "Communications & Media",
+                "slug": "communications",
+                "open_roles": 55,
+                "url": "https://remoteimpact.org/jobs/category/communications/"
+              },
+              {
+                "name": "Community Development",
+                "slug": "community-development",
+                "open_roles": 43,
+                "url": "https://remoteimpact.org/jobs/category/community-development/"
+              },
+              {
+                "name": "Disability",
+                "slug": "disability",
+                "open_roles": 4,
+                "url": "https://remoteimpact.org/jobs/category/disability/"
+              },
+              {
+                "name": "Education & Research",
+                "slug": "education",
+                "open_roles": 90,
+                "url": "https://remoteimpact.org/jobs/category/education/"
+              },
+              {
+                "name": "Effective Altruism",
+                "slug": "effective-altruism",
+                "open_roles": 35,
+                "url": "https://remoteimpact.org/jobs/category/effective-altruism/"
+              },
+              {
+                "name": "Energy",
+                "slug": "energy",
+                "open_roles": 92,
+                "url": "https://remoteimpact.org/jobs/category/energy/"
+              },
+              {
+                "name": "Food, Agriculture, & Land Use",
+                "slug": "food-agriculture-land-use",
+                "open_roles": 39,
+                "url": "https://remoteimpact.org/jobs/category/food-agriculture-land-use/"
+              },
+              {
+                "name": "Gender Equality and Social Inclusion (GESI)",
+                "slug": "gender-equality-social-inclusion",
+                "open_roles": 5,
+                "url": "https://remoteimpact.org/jobs/category/gender-equality-social-inclusion/"
+              },
+              {
+                "name": "Global Health",
+                "slug": "global-health",
+                "open_roles": 218,
+                "url": "https://remoteimpact.org/jobs/category/global-health/"
+              },
+              {
+                "name": "Humanitarian & Disaster Relief",
+                "slug": "humanitarian",
+                "open_roles": 13,
+                "url": "https://remoteimpact.org/jobs/category/humanitarian/"
+              },
+              {
+                "name": "Human Rights & Justice",
+                "slug": "human-rights",
+                "open_roles": 33,
+                "url": "https://remoteimpact.org/jobs/category/human-rights/"
+              },
+              {
+                "name": "Impact Careers",
+                "slug": "impact-careers",
+                "open_roles": 183,
+                "url": "https://remoteimpact.org/jobs/category/impact-careers/"
+              },
+              {
+                "name": "Materials & Manufacturing",
+                "slug": "materials-manufacturing",
+                "open_roles": 93,
+                "url": "https://remoteimpact.org/jobs/category/materials-manufacturing/"
+              },
+              {
+                "name": "Nuclear Security",
+                "slug": "nuclear-security",
+                "open_roles": 1,
+                "url": "https://remoteimpact.org/jobs/category/nuclear-security/"
+              },
+              {
+                "name": "Operations & Administration",
+                "slug": "operations",
+                "open_roles": 27,
+                "url": "https://remoteimpact.org/jobs/category/operations/"
+              },
+              {
+                "name": "Other Impact Areas",
+                "slug": "other",
+                "open_roles": 78,
+                "url": "https://remoteimpact.org/jobs/category/other/"
+              },
+              {
+                "name": "Policy & Advocacy",
+                "slug": "policy-advocacy",
+                "open_roles": 119,
+                "url": "https://remoteimpact.org/jobs/category/policy-advocacy/"
+              },
+              {
+                "name": "Poverty & Economic Development",
+                "slug": "poverty-development",
+                "open_roles": 21,
+                "url": "https://remoteimpact.org/jobs/category/poverty-development/"
+              },
+              {
+                "name": "Technology & Engineering",
+                "slug": "technology",
+                "open_roles": 122,
+                "url": "https://remoteimpact.org/jobs/category/technology/"
+              },
+              {
+                "name": "Transportation",
+                "slug": "transportation",
+                "open_roles": 39,
+                "url": "https://remoteimpact.org/jobs/category/transportation/"
+              }
+            ]
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "key": "norway_climate",
+      "brief": "Find climate engineering roles open from Norway.",
+      "tool": "search_jobs",
+      "arguments": {
+        "query": "engineer",
+        "area": "climate-environment",
+        "country": "Norway",
+        "limit": 3
+      },
+      "http_status": 200,
+      "elapsed_seconds": 0.93,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "norway_climate",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "46 open roles match; showing 3 (this tier returns up to 10 per search; commercial keys return 25 with enriched fields: https://remoteimpact.org/developers/).\n- HIL Test Engineer - System Test at Glydways (Remote; open to: worldwide; pay not stated) https://remoteimpact.org/jobs/hil-test-engineer-system-test-glydways/\n-  Localization Systems Engineer at Glydways (Remote; open to: worldwide; pay not stated) https://remoteimpact.org/jobs/localization-systems-engineer-glydways/\n- Senior Mechanical Engineer at Frost Methane (Remote; open to: worldwide; USD 90,000\u2013140,000/year) https://remoteimpact.org/jobs/senior-mechanical-engineer-frost-methane/"
+            }
+          ],
+          "structuredContent": {
+            "total": 46,
+            "jobs": [
+              {
+                "id": 30964,
+                "slug": "hil-test-engineer-system-test-glydways",
+                "title": "HIL Test Engineer - System Test",
+                "organization": {
+                  "name": "Glydways",
+                  "slug": "glydways",
+                  "url": "https://remoteimpact.org/org/glydways/",
+                  "homepage_url": "https://glydways.com/?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                  "careers_url": "https://job-boards.greenhouse.io/glydways?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                  "logo_url": "https://remoteimpact.org/org/glydways/logo.png?v=8ca71eb0b4"
+                },
+                "area": {
+                  "name": "Climate & Environment",
+                  "slug": "climate-environment"
+                },
+                "location": "Remote",
+                "remote_scope": "worldwide",
+                "eligible_countries": [],
+                "listed_country": "Worldwide",
+                "job_type": "full-time",
+                "experience_level": "mid",
+                "salary": null,
+                "posted_at": "2026-09-11T20:34:15+00:00",
+                "content_updated_at": null,
+                "expires_at": null,
+                "verification": {
+                  "status": "open",
+                  "method": "employer_job_board",
+                  "checked_at": "2026-10-15T05:01:03.416378+00:00"
+                },
+                "source": "aggregated",
+                "featured": false,
+                "url": "https://remoteimpact.org/jobs/hil-test-engineer-system-test-glydways/",
+                "apply_url": "https://remoteimpact.org/jobs/hil-test-engineer-system-test-glydways/go/",
+                "description_excerpt": "**Who we are:** Glydways is reimagining what public transit can be. We believe that mobility is the gateway to opportunity\u2014connecting people to housing, education, employment, commerce, and care. By making transportation more accessible, affordable, and sustainable, we empower communities to thrive\u2026"
+              },
+              {
+                "id": 29443,
+                "slug": "localization-systems-engineer-glydways",
+                "title": " Localization Systems Engineer",
+                "organization": {
+                  "name": "Glydways",
+                  "slug": "glydways",
+                  "url": "https://remoteimpact.org/org/glydways/",
+                  "homepage_url": "https://glydways.com/?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                  "careers_url": "https://job-boards.greenhouse.io/glydways?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                  "logo_url": "https://remoteimpact.org/org/glydways/logo.png?v=8ca71eb0b4"
+                },
+                "area": {
+                  "name": "Climate & Environment",
+                  "slug": "climate-environment"
+                },
+                "location": "Remote",
+                "remote_scope": "worldwide",
+                "eligible_countries": [],
+                "listed_country": "Global",
+                "job_type": "full-time",
+                "experience_level": "mid",
+                "salary": null,
+                "posted_at": "2026-09-15T04:11:01.728000+00:00",
+                "content_updated_at": null,
+                "expires_at": null,
+                "verification": {
+                  "status": "open",
+                  "method": "employer_job_board",
+                  "checked_at": "2026-10-15T05:01:03.416378+00:00"
+                },
+                "source": "aggregated",
+                "featured": false,
+                "url": "https://remoteimpact.org/jobs/localization-systems-engineer-glydways/",
+                "apply_url": "https://remoteimpact.org/jobs/localization-systems-engineer-glydways/go/",
+                "description_excerpt": "Who we are:Glydways is reimagining what public transit can be. We believe that mobility is the gateway to opportunity\u2014connecting people to housing, education, employment, commerce, and care. By making transportation more accessible, affordable, and sustainable, we empower communities to thrive and\u2026"
+              },
+              {
+                "id": 31884,
+                "slug": "senior-mechanical-engineer-frost-methane",
+                "title": "Senior Mechanical Engineer",
+                "organization": {
+                  "name": "Frost Methane",
+                  "slug": "frost-methane",
+                  "url": "https://remoteimpact.org/org/frost-methane/",
+                  "homepage_url": "https://frostmethane.com/?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                  "careers_url": null,
+                  "logo_url": "https://remoteimpact.org/org/frost-methane/logo.png?v=4497f8c5f0"
+                },
+                "area": {
+                  "name": "Climate & Environment",
+                  "slug": "climate-environment"
+                },
+                "location": "Remote",
+                "remote_scope": "worldwide",
+                "eligible_countries": [],
+                "listed_country": "Global",
+                "job_type": "full-time",
+                "experience_level": "mid",
+                "salary": {
+                  "min": 90000.0,
+                  "max": 140000.0,
+                  "currency": "USD",
+                  "period": "year"
+                },
+                "posted_at": "2026-10-12T21:10:53.718000+00:00",
+                "content_updated_at": null,
+                "expires_at": "2026-12-12T21:10:53.718000+00:00",
+                "verification": {
+                  "status": "title_confirmed",
+                  "method": "source_feed",
+                  "checked_at": "2026-10-13T08:00:37.351682+00:00"
+                },
+                "source": "aggregated",
+                "featured": false,
+                "url": "https://remoteimpact.org/jobs/senior-mechanical-engineer-frost-methane/",
+                "apply_url": "https://remoteimpact.org/jobs/senior-mechanical-engineer-frost-methane/go/",
+                "description_excerpt": "We are looking for a passionate person who wants to create breakthroughs in untapped potential for significant climate impact - while working with and benefiting rural communities.&nbsp; We are a small team. This role is the mechanical engineering function, not a seat on a large bench \u2014 you will\u2026"
+              }
+            ]
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "key": "kenya_health",
+      "brief": "Find health program roles open from Kenya.",
+      "tool": "search_jobs",
+      "arguments": {
+        "query": "program",
+        "area": "global-health",
+        "country": "Kenya",
+        "limit": 3
+      },
+      "http_status": 200,
+      "elapsed_seconds": 0.345,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "kenya_health",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "33 open roles match; showing 3 (this tier returns up to 10 per search; commercial keys return 25 with enriched fields: https://remoteimpact.org/developers/).\n- Junior Program Manager / Senior Program Manager at Rethink Wellbeing (Remote, Global; open to: worldwide; USD 15,000\u201320,000/year) https://remoteimpact.org/jobs/junior-program-manager-senior-program-manager-rethink-wellbeing/\n- Program Manager, Career Planning at High Impact Medicine (Remote; open to: worldwide; USD 15,000\u201350,000/year) https://remoteimpact.org/jobs/program-manager-career-planning-high-impact-medicine/\n- Technical Advisor, Global HIV Access Program at Clinton Health Access Initiative (CHAI) (Remote; open to: worldwide; pay not stated) https://remoteimpact.org/jobs/technical-advisor-global-hiv-access-program-clinton-health-access-initiative-chai/"
+            }
+          ],
+          "structuredContent": {
+            "total": 33,
+            "jobs": [
+              {
+                "id": 14503,
+                "slug": "junior-program-manager-senior-program-manager-rethink-wellbeing",
+                "title": "Junior Program Manager / Senior Program Manager",
+                "organization": {
+                  "name": "Rethink Wellbeing",
+                  "slug": "rethink-wellbeing",
+                  "url": "https://remoteimpact.org/org/rethink-wellbeing/",
+                  "homepage_url": "https://rethinkwellbeing.org/?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                  "careers_url": null,
+                  "logo_url": null
+                },
+                "area": {
+                  "name": "Global Health",
+                  "slug": "global-health"
+                },
+                "location": "Remote, Global",
+                "remote_scope": "worldwide",
+                "eligible_countries": [],
+                "listed_country": "Worldwide",
+                "job_type": "full-time",
+                "experience_level": "senior",
+                "salary": {
+                  "min": 15000.0,
+                  "max": 20000.0,
+                  "currency": "USD",
+                  "period": "year"
+                },
+                "posted_at": "2026-03-11T00:00:00+00:00",
+                "content_updated_at": null,
+                "expires_at": null,
+                "verification": {
+                  "status": "unverified",
+                  "method": "source_feed",
+                  "checked_at": "2026-10-10T08:01:29.269081+00:00"
+                },
+                "source": "aggregated",
+                "featured": false,
+                "url": "https://remoteimpact.org/jobs/junior-program-manager-senior-program-manager-rethink-wellbeing/",
+                "apply_url": "https://remoteimpact.org/jobs/junior-program-manager-senior-program-manager-rethink-wellbeing/go/",
+                "description_excerpt": "In this role, you'll deliver and improve the CBT Lab, a digital mental health program, while managing and training facilitators. Recruit, train, and supervise volunteer facilitators delivering evidence-based CBT group sessions. Manage program coordination from enrollment through graduation,\u2026"
+              },
+              {
+                "id": 29990,
+                "slug": "program-manager-career-planning-high-impact-medicine",
+                "title": "Program Manager, Career Planning",
+                "organization": {
+                  "name": "High Impact Medicine",
+                  "slug": "high-impact-medicine",
+                  "url": "https://remoteimpact.org/org/high-impact-medicine/",
+                  "homepage_url": "https://highimpactmedicine.org/?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                  "careers_url": null,
+                  "logo_url": "https://remoteimpact.org/org/high-impact-medicine/logo.png?v=1b0d0441f6"
+                },
+                "area": {
+                  "name": "Global Health",
+                  "slug": "global-health"
+                },
+                "location": "Remote",
+                "remote_scope": "worldwide",
+                "eligible_countries": [],
+                "listed_country": "Global",
+                "job_type": "full-time",
+                "experience_level": null,
+                "salary": {
+                  "min": 15000.0,
+                  "max": 50000.0,
+                  "currency": "USD",
+                  "period": "year"
+                },
+                "posted_at": "2026-09-24T00:00:00+00:00",
+                "content_updated_at": null,
+                "expires_at": "2026-10-19T00:00:00+00:00",
+                "verification": {
+                  "status": "title_confirmed",
+                  "method": "source_feed",
+                  "checked_at": "2026-10-11T08:02:28.858933+00:00"
+                },
+                "source": "aggregated",
+                "featured": false,
+                "url": "https://remoteimpact.org/jobs/program-manager-career-planning-high-impact-medicine/",
+                "apply_url": "https://remoteimpact.org/jobs/program-manager-career-planning-high-impact-medicine/go/",
+                "description_excerpt": "In this role, you'll lead the Career Planning program, working with medical professionals globally on high-impact career guidance. Deliver career guidance through course facilitation, 1:1 advising, outreach, and participant coordination. Maintain the Information Hub by curating resources on global\u2026"
+              },
+              {
+                "id": 28596,
+                "slug": "technical-advisor-global-hiv-access-program-clinton-health-access-initiative-chai",
+                "title": "Technical Advisor, Global HIV Access Program",
+                "organization": {
+                  "name": "Clinton Health Access Initiative (CHAI)",
+                  "slug": "clinton-health-access-initiative-chai",
+                  "url": "https://remoteimpact.org/org/clinton-health-access-initiative-chai/",
+                  "homepage_url": "https://clintonhealthaccess.org/?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                  "careers_url": null,
+                  "logo_url": "https://remoteimpact.org/org/clinton-health-access-initiative-chai/logo.png?v=75c0eb10fa"
+                },
+                "area": {
+                  "name": "Global Health",
+                  "slug": "global-health"
+                },
+                "location": "Remote",
+                "remote_scope": "worldwide",
+                "eligible_countries": [],
+                "listed_country": "Worldwide",
+                "job_type": "full-time",
+                "experience_level": "mid",
+                "salary": null,
+                "posted_at": "2026-08-25T22:12:59.567937+00:00",
+                "content_updated_at": null,
+                "expires_at": null,
+                "verification": {
+                  "status": "unverified",
+                  "method": "source_feed",
+                  "checked_at": "2026-10-12T08:02:36.657020+00:00"
+                },
+                "source": "aggregated",
+                "featured": false,
+                "url": "https://remoteimpact.org/jobs/technical-advisor-global-hiv-access-program-clinton-health-access-initiative-chai/",
+                "apply_url": "https://remoteimpact.org/jobs/technical-advisor-global-hiv-access-program-clinton-health-access-initiative-chai/go/",
+                "description_excerpt": "Support HIV prevention scale-up in Southeast Asia by conducting analyses, managing projects, and providing technical guidance on long-acting injectable PrEP introduction. - Design quantitative and qualitative analyses on HIV testing, delivery models, costs, and health systems to enable injectable\u2026"
+              }
+            ]
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "key": "canada_data",
+      "brief": "Find data analyst roles open from Canada.",
+      "tool": "search_jobs",
+      "arguments": {
+        "query": "data analyst",
+        "country": "Canada",
+        "limit": 3
+      },
+      "http_status": 200,
+      "elapsed_seconds": 0.527,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "canada_data",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "19 open roles match; showing 3 (this tier returns up to 10 per search; commercial keys return 25 with enriched fields: https://remoteimpact.org/developers/).\n- Data Analyst / Senior Data Analyst at Forecasting Research Institute (Remote, Global; open to: worldwide; USD 70,000\u2013130,000/year) https://remoteimpact.org/jobs/data-analyst-senior-data-analyst-forecasting-research-institute/\n- Senior Operations Data Analyst at KoBold Metals (Remote; open to: worldwide; USD 100,000\u2013125,000/year) https://remoteimpact.org/jobs/senior-operations-data-analyst-kobold-metals/\n- Hardware Data Analyst - Remote at Aperia Technologies (Remote; open to: worldwide; USD 95,000\u2013123,000/year) https://remoteimpact.org/jobs/hardware-data-analyst-remote-aperia-technologies/"
+            }
+          ],
+          "structuredContent": {
+            "total": 19,
+            "jobs": [
+              {
+                "id": 20332,
+                "slug": "data-analyst-senior-data-analyst-forecasting-research-institute",
+                "title": "Data Analyst / Senior Data Analyst",
+                "organization": {
+                  "name": "Forecasting Research Institute",
+                  "slug": "forecasting-research-institute",
+                  "url": "https://remoteimpact.org/org/forecasting-research-institute/",
+                  "homepage_url": "https://forecastingresearch.org/?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                  "careers_url": null,
+                  "logo_url": "https://remoteimpact.org/org/forecasting-research-institute/logo.png?v=343d07d4f7"
+                },
+                "area": {
+                  "name": "Effective Altruism",
+                  "slug": "effective-altruism"
+                },
+                "location": "Remote, Global",
+                "remote_scope": "worldwide",
+                "eligible_countries": [],
+                "listed_country": "Worldwide",
+                "job_type": "internship",
+                "experience_level": "mid",
+                "salary": {
+                  "min": 70000.0,
+                  "max": 130000.0,
+                  "currency": "USD",
+                  "period": "year"
+                },
+                "posted_at": "2026-05-06T00:00:00+00:00",
+                "content_updated_at": null,
+                "expires_at": null,
+                "verification": {
+                  "status": "title_confirmed",
+                  "method": "source_feed",
+                  "checked_at": "2026-10-10T08:02:09.045354+00:00"
+                },
+                "source": "aggregated",
+                "featured": false,
+                "url": "https://remoteimpact.org/jobs/data-analyst-senior-data-analyst-forecasting-research-institute/",
+                "apply_url": "https://remoteimpact.org/jobs/data-analyst-senior-data-analyst-forecasting-research-institute/go/",
+                "description_excerpt": "Support research projects through data management, statistical analysis, and visualization of forecasting data.Conduct descriptive and statistical analyses of forecasting surveys and experimental data.Develop high-quality data visualizations to communicate findings.Help design experiments with\u2026"
+              },
+              {
+                "id": 28962,
+                "slug": "senior-operations-data-analyst-kobold-metals",
+                "title": "Senior Operations Data Analyst",
+                "organization": {
+                  "name": "KoBold Metals",
+                  "slug": "kobold-metals",
+                  "url": "https://remoteimpact.org/org/kobold-metals/",
+                  "homepage_url": "https://koboldmetals.com/?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                  "careers_url": "https://job-boards.greenhouse.io/koboldmetals?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                  "logo_url": "https://remoteimpact.org/org/kobold-metals/logo.png?v=b2b8cfabce"
+                },
+                "area": {
+                  "name": "Climate & Environment",
+                  "slug": "climate-environment"
+                },
+                "location": "Remote",
+                "remote_scope": "worldwide",
+                "eligible_countries": [],
+                "listed_country": "Global",
+                "job_type": "full-time",
+                "experience_level": "senior",
+                "salary": {
+                  "min": 100000.0,
+                  "max": 125000.0,
+                  "currency": "USD",
+                  "period": "year"
+                },
+                "posted_at": "2026-09-05T04:24:15.861000+00:00",
+                "content_updated_at": null,
+                "expires_at": null,
+                "verification": {
+                  "status": "open",
+                  "method": "employer_job_board",
+                  "checked_at": "2026-10-15T05:01:03.416378+00:00"
+                },
+                "source": "aggregated",
+                "featured": false,
+                "url": "https://remoteimpact.org/jobs/senior-operations-data-analyst-kobold-metals/",
+                "apply_url": "https://remoteimpact.org/jobs/senior-operations-data-analyst-kobold-metals/go/",
+                "description_excerpt": "Senior Operations Data AnalystAbout the Company The mining industry has steadily become worse at finding new ore deposits, requiring &gt;10X more capital to make discoveries compared to 30 years ago. The easy-to-find, near-surface deposits have largely been found, and the industry has chronically\u2026"
+              },
+              {
+                "id": 32012,
+                "slug": "hardware-data-analyst-remote-aperia-technologies",
+                "title": "Hardware Data Analyst - Remote",
+                "organization": {
+                  "name": "Aperia Technologies",
+                  "slug": "aperia-technologies",
+                  "url": "https://remoteimpact.org/org/aperia-technologies/",
+                  "homepage_url": null,
+                  "careers_url": null,
+                  "logo_url": null
+                },
+                "area": {
+                  "name": "Materials & Manufacturing",
+                  "slug": "materials-manufacturing"
+                },
+                "location": "Remote",
+                "remote_scope": "worldwide",
+                "eligible_countries": [],
+                "listed_country": "Global",
+                "job_type": "full-time",
+                "experience_level": "mid",
+                "salary": {
+                  "min": 95000.0,
+                  "max": 123000.0,
+                  "currency": "USD",
+                  "period": "year"
+                },
+                "posted_at": "2026-10-14T04:14:22.178000+00:00",
+                "content_updated_at": null,
+                "expires_at": null,
+                "verification": {
+                  "status": "open",
+                  "method": "employer_job_board",
+                  "checked_at": "2026-10-15T05:01:03.416378+00:00"
+                },
+                "source": "aggregated",
+                "featured": false,
+                "url": "https://remoteimpact.org/jobs/hardware-data-analyst-remote-aperia-technologies/",
+                "apply_url": "https://remoteimpact.org/jobs/hardware-data-analyst-remote-aperia-technologies/go/",
+                "description_excerpt": "Aperia is unlocking a new era of efficiency and sustainability for commercial vehicle fleets, by developing innovative hardware and data analytics solutions. Inventors of the award- winning and disruptive Halotm Automatic Tire Inflator, and the cloud delivered Halo Connect tire analytics platform.\u2026"
+              }
+            ]
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "key": "us_entry",
+      "brief": "Find entry-level education roles open from the United States.",
+      "tool": "search_jobs",
+      "arguments": {
+        "area": "education",
+        "level": "entry",
+        "country": "United States",
+        "limit": 3
+      },
+      "http_status": 200,
+      "elapsed_seconds": 0.36,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "us_entry",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "9 open roles match; showing 3 (this tier returns up to 10 per search; commercial keys return 25 with enriched fields: https://remoteimpact.org/developers/).\n- Operations Associate at California ChangeLawyers (Remote (US); open to: United States of America; USD 54,000\u201354,000/year) https://remoteimpact.org/jobs/operations-associate-california-changelawyers/\n- Digital Coordinator II at BWF Zuri (Remote (US); open to: United States of America; USD 59,000\u201359,000/year) https://remoteimpact.org/jobs/digital-coordinator-ii-bwf-zuri/\n- Annual Giving and Digital Marketing Coordinator II at BWF Zuri (Remote (US); open to: United States of America; USD 59,000\u201359,000/year) https://remoteimpact.org/jobs/annual-giving-and-digital-marketing-coordinator-ii-bwf-zuri-1/"
+            }
+          ],
+          "structuredContent": {
+            "total": 9,
+            "jobs": [
+              {
+                "id": 30772,
+                "slug": "operations-associate-california-changelawyers",
+                "title": "Operations Associate",
+                "organization": {
+                  "name": "California ChangeLawyers",
+                  "slug": "california-changelawyers",
+                  "url": "https://remoteimpact.org/org/california-changelawyers/",
+                  "homepage_url": "https://changelawyers.org/?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                  "careers_url": null,
+                  "logo_url": "https://remoteimpact.org/org/california-changelawyers/logo.png?v=564fe152b6"
+                },
+                "area": {
+                  "name": "Education & Research",
+                  "slug": "education"
+                },
+                "location": "Remote (US)",
+                "remote_scope": "countries",
+                "eligible_countries": [
+                  "United States of America"
+                ],
+                "listed_country": "USA",
+                "job_type": "part-time",
+                "experience_level": "entry",
+                "salary": {
+                  "min": 54000.0,
+                  "max": 54000.0,
+                  "currency": "USD",
+                  "period": "year"
+                },
+                "posted_at": "2026-10-08T21:08:40+00:00",
+                "content_updated_at": null,
+                "expires_at": null,
+                "verification": {
+                  "status": "unverified",
+                  "method": "source_feed",
+                  "checked_at": "2026-10-12T08:04:35.186261+00:00"
+                },
+                "source": "aggregated",
+                "featured": false,
+                "url": "https://remoteimpact.org/jobs/operations-associate-california-changelawyers/",
+                "apply_url": "https://remoteimpact.org/jobs/operations-associate-california-changelawyers/go/",
+                "description_excerpt": "Position: Operations Associate Location: Remote Reports To: Program Manager Status: Full-Time, Non-Exempt Start Date: December 2026 Salary: $54,000 This position is being funded by a project grant that ends July 2029. The role may not continue after July 2029 if additional funds are not raised.\u2026"
+              },
+              {
+                "id": 30671,
+                "slug": "digital-coordinator-ii-bwf-zuri",
+                "title": "Digital Coordinator II",
+                "organization": {
+                  "name": "BWF Zuri",
+                  "slug": "bwf-zuri",
+                  "url": "https://remoteimpact.org/org/bwf-zuri/",
+                  "homepage_url": "https://bwfzuri.com/?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                  "careers_url": null,
+                  "logo_url": "https://remoteimpact.org/org/bwf-zuri/logo.png?v=919bebc0ca"
+                },
+                "area": {
+                  "name": "Education & Research",
+                  "slug": "education"
+                },
+                "location": "Remote (US)",
+                "remote_scope": "countries",
+                "eligible_countries": [
+                  "United States of America"
+                ],
+                "listed_country": "USA",
+                "job_type": "full-time",
+                "experience_level": "entry",
+                "salary": {
+                  "min": 59000.0,
+                  "max": 59000.0,
+                  "currency": "USD",
+                  "period": "year"
+                },
+                "posted_at": "2026-10-07T15:30:45+00:00",
+                "content_updated_at": null,
+                "expires_at": null,
+                "verification": {
+                  "status": "unverified",
+                  "method": "source_feed",
+                  "checked_at": "2026-10-12T08:03:58.508946+00:00"
+                },
+                "source": "aggregated",
+                "featured": false,
+                "url": "https://remoteimpact.org/jobs/digital-coordinator-ii-bwf-zuri/",
+                "apply_url": "https://remoteimpact.org/jobs/digital-coordinator-ii-bwf-zuri/go/",
+                "description_excerpt": "BWF Zuri is the nonprofit sector\u2019s most comprehensive fundraising consulting firm, helping organizations thrive in a rapidly changing landscape. As donor participation declines, competition for attention intensifies, campaign goals get larger, and technology and AI continue to reshape engagement,\u2026"
+              },
+              {
+                "id": 30670,
+                "slug": "annual-giving-and-digital-marketing-coordinator-ii-bwf-zuri-1",
+                "title": "Annual Giving and Digital Marketing Coordinator II",
+                "organization": {
+                  "name": "BWF Zuri",
+                  "slug": "bwf-zuri",
+                  "url": "https://remoteimpact.org/org/bwf-zuri/",
+                  "homepage_url": "https://bwfzuri.com/?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                  "careers_url": null,
+                  "logo_url": "https://remoteimpact.org/org/bwf-zuri/logo.png?v=919bebc0ca"
+                },
+                "area": {
+                  "name": "Education & Research",
+                  "slug": "education"
+                },
+                "location": "Remote (US)",
+                "remote_scope": "countries",
+                "eligible_countries": [
+                  "United States of America"
+                ],
+                "listed_country": "USA",
+                "job_type": "full-time",
+                "experience_level": "entry",
+                "salary": {
+                  "min": 59000.0,
+                  "max": 59000.0,
+                  "currency": "USD",
+                  "period": "year"
+                },
+                "posted_at": "2026-10-07T15:30:45+00:00",
+                "content_updated_at": null,
+                "expires_at": null,
+                "verification": {
+                  "status": "unverified",
+                  "method": "source_feed",
+                  "checked_at": "2026-10-12T08:03:58.240381+00:00"
+                },
+                "source": "aggregated",
+                "featured": false,
+                "url": "https://remoteimpact.org/jobs/annual-giving-and-digital-marketing-coordinator-ii-bwf-zuri-1/",
+                "apply_url": "https://remoteimpact.org/jobs/annual-giving-and-digital-marketing-coordinator-ii-bwf-zuri-1/go/",
+                "description_excerpt": "BWF Zuri is the nonprofit sector\u2019s most comprehensive fundraising consulting firm, helping organizations thrive in a rapidly changing landscape. As donor participation declines, competition for attention intensifies, campaign goals get larger, and technology and AI continue to reshape engagement,\u2026"
+              }
+            ]
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "key": "worldwide_ai",
+      "brief": "Find worldwide AI safety jobs.",
+      "tool": "search_jobs",
+      "arguments": {
+        "area": "ai-safety",
+        "worldwide_only": true,
+        "limit": 3
+      },
+      "http_status": 200,
+      "elapsed_seconds": 0.938,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "worldwide_ai",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "60 open roles match; showing 3 (this tier returns up to 10 per search; commercial keys return 25 with enriched fields: https://remoteimpact.org/developers/).\n- Head of Frontier AI Risk at AI Safety Asia (Remote, Global; open to: worldwide; pay not stated) https://remoteimpact.org/jobs/head-of-frontier-ai-risk-ai-safety-asia/\n- AI\u00d7Animals Course at Sentient Futures (Remote, Global; open to: worldwide; pay not stated) https://remoteimpact.org/jobs/aianimals-course-sentient-futures/\n- AI Cyber Red Teamer at Trajectory Labs, PBC (Remote, Global; open to: worldwide; pay not stated) https://remoteimpact.org/jobs/ai-cyber-red-teamer-trajectory-labs-pbc/"
+            }
+          ],
+          "structuredContent": {
+            "total": 60,
+            "jobs": [
+              {
+                "id": 28475,
+                "slug": "head-of-frontier-ai-risk-ai-safety-asia",
+                "title": "Head of Frontier AI Risk",
+                "organization": {
+                  "name": "AI Safety Asia",
+                  "slug": "ai-safety-asia",
+                  "url": "https://remoteimpact.org/org/ai-safety-asia/",
+                  "homepage_url": "https://aisafety.asia/?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                  "careers_url": null,
+                  "logo_url": "https://remoteimpact.org/org/ai-safety-asia/logo.png?v=870d3829ea"
+                },
+                "area": {
+                  "name": "AI Safety & Governance",
+                  "slug": "ai-safety"
+                },
+                "location": "Remote, Global",
+                "remote_scope": "worldwide",
+                "eligible_countries": [],
+                "listed_country": "Worldwide",
+                "job_type": "full-time",
+                "experience_level": "executive",
+                "salary": null,
+                "posted_at": "2026-09-02T00:03:00+00:00",
+                "content_updated_at": null,
+                "expires_at": null,
+                "verification": {
+                  "status": "unverified",
+                  "method": "source_feed",
+                  "checked_at": "2026-10-10T08:05:26.200206+00:00"
+                },
+                "source": "aggregated",
+                "featured": false,
+                "url": "https://remoteimpact.org/jobs/head-of-frontier-ai-risk-ai-safety-asia/",
+                "apply_url": "https://remoteimpact.org/jobs/head-of-frontier-ai-risk-ai-safety-asia/go/",
+                "description_excerpt": "In this role, you'll serve as AISA's authoritative voice on frontier AI risk, briefing Asian government officials on AI capabilities, risks and governance options, and translating technical research into decision-relevant policy advice. Lead research on frontier AI governance, including\u2026"
+              },
+              {
+                "id": 28353,
+                "slug": "aianimals-course-sentient-futures",
+                "title": "AI\u00d7Animals Course",
+                "organization": {
+                  "name": "Sentient Futures",
+                  "slug": "sentient-futures",
+                  "url": "https://remoteimpact.org/org/sentient-futures/",
+                  "homepage_url": "https://sentientfutures.ai/?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                  "careers_url": null,
+                  "logo_url": "https://remoteimpact.org/org/sentient-futures/logo.png?v=35530f13d7"
+                },
+                "area": {
+                  "name": "AI Safety & Governance",
+                  "slug": "ai-safety"
+                },
+                "location": "Remote, Global",
+                "remote_scope": "worldwide",
+                "eligible_countries": [],
+                "listed_country": "Worldwide",
+                "job_type": "full-time",
+                "experience_level": null,
+                "salary": null,
+                "posted_at": "2026-08-31T00:00:00+00:00",
+                "content_updated_at": null,
+                "expires_at": null,
+                "verification": {
+                  "status": "title_confirmed",
+                  "method": "source_feed",
+                  "checked_at": "2026-10-10T08:05:12.900164+00:00"
+                },
+                "source": "aggregated",
+                "featured": false,
+                "url": "https://remoteimpact.org/jobs/aianimals-course-sentient-futures/",
+                "apply_url": "https://remoteimpact.org/jobs/aianimals-course-sentient-futures/go/",
+                "description_excerpt": "This 8-week course prepares fellows for high-impact careers at the frontier of AI and animals. Grapple with precision livestock farming, machine learning that aims to \u2018decode\u2019 animal communication, and where animal advocacy meets AI risk. Meet once a week for structured discussions. Take 2-3 hours\u2026"
+              },
+              {
+                "id": 28262,
+                "slug": "ai-cyber-red-teamer-trajectory-labs-pbc",
+                "title": "AI Cyber Red Teamer",
+                "organization": {
+                  "name": "Trajectory Labs, PBC",
+                  "slug": "trajectory-labs-pbc",
+                  "url": "https://remoteimpact.org/org/trajectory-labs-pbc/",
+                  "homepage_url": "https://trajectorylabs.net/?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                  "careers_url": null,
+                  "logo_url": "https://remoteimpact.org/org/trajectory-labs-pbc/logo.png?v=eda0a3af07"
+                },
+                "area": {
+                  "name": "AI Safety & Governance",
+                  "slug": "ai-safety"
+                },
+                "location": "Remote, Global",
+                "remote_scope": "worldwide",
+                "eligible_countries": [],
+                "listed_country": "Worldwide",
+                "job_type": "full-time",
+                "experience_level": null,
+                "salary": null,
+                "posted_at": "2026-08-28T00:03:00+00:00",
+                "content_updated_at": null,
+                "expires_at": null,
+                "verification": {
+                  "status": "title_confirmed",
+                  "method": "source_feed",
+                  "checked_at": "2026-10-10T08:05:00.448419+00:00"
+                },
+                "source": "aggregated",
+                "featured": false,
+                "url": "https://remoteimpact.org/jobs/ai-cyber-red-teamer-trajectory-labs-pbc/",
+                "apply_url": "https://remoteimpact.org/jobs/ai-cyber-red-teamer-trajectory-labs-pbc/go/",
+                "description_excerpt": "In this role, you'll attack the cyber safeguards of frontier AI models to find vulnerabilities and help train them out. Design novel attack strategies against guardrails that prevent models from writing exploits. Document security failures and identify robustness gaps against prompt injection and\u2026"
+              }
+            ]
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "key": "negative",
+      "brief": "Search for an impossible exact job title.",
+      "tool": "search_jobs",
+      "arguments": {
+        "query": "zzqv_unobtainium_test_94716",
+        "limit": 3
+      },
+      "http_status": 200,
+      "elapsed_seconds": 0.422,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "negative",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "No open roles match these filters. Try fewer filters or a broader area."
+            }
+          ],
+          "structuredContent": {
+            "total": 0,
+            "jobs": []
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "key": "detail",
+      "brief": "Show details and original source for a returned job.",
+      "tool": "get_job",
+      "arguments": {
+        "id": "30964"
+      },
+      "http_status": 200,
+      "elapsed_seconds": 0.161,
+      "body": {
+        "jsonrpc": "2.0",
+        "id": "detail",
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "HIL Test Engineer - System Test at Glydways (Remote; open to: worldwide; pay not stated) https://remoteimpact.org/jobs/hil-test-engineer-system-test-glydways/\n\n**Who we are:** Glydways is reimagining what public transit can be. We believe that mobility is the gateway to opportunity\u2014connecting people to housing, education, employment, commerce, and care. By making transportation more accessible, affordable, and sustainable, we empower communities to thrive\u2026"
+            }
+          ],
+          "structuredContent": {
+            "job": {
+              "id": 30964,
+              "slug": "hil-test-engineer-system-test-glydways",
+              "title": "HIL Test Engineer - System Test",
+              "organization": {
+                "name": "Glydways",
+                "slug": "glydways",
+                "url": "https://remoteimpact.org/org/glydways/",
+                "homepage_url": "https://glydways.com/?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                "careers_url": "https://job-boards.greenhouse.io/glydways?utm_source=remoteimpact&utm_medium=referral&utm_campaign=remote_impact_referrals",
+                "logo_url": "https://remoteimpact.org/org/glydways/logo.png?v=8ca71eb0b4"
+              },
+              "area": {
+                "name": "Climate & Environment",
+                "slug": "climate-environment"
+              },
+              "location": "Remote",
+              "remote_scope": "worldwide",
+              "eligible_countries": [],
+              "listed_country": "Worldwide",
+              "job_type": "full-time",
+              "experience_level": "mid",
+              "salary": null,
+              "posted_at": "2026-09-11T20:34:15+00:00",
+              "content_updated_at": null,
+              "expires_at": null,
+              "verification": {
+                "status": "open",
+                "method": "employer_job_board",
+                "checked_at": "2026-10-15T05:01:03.416378+00:00"
+              },
+              "source": "aggregated",
+              "featured": false,
+              "url": "https://remoteimpact.org/jobs/hil-test-engineer-system-test-glydways/",
+              "apply_url": "https://remoteimpact.org/jobs/hil-test-engineer-system-test-glydways/go/",
+              "description_excerpt": "**Who we are:** Glydways is reimagining what public transit can be. We believe that mobility is the gateway to opportunity\u2014connecting people to housing, education, employment, commerce, and care. By making transportation more accessible, affordable, and sustainable, we empower communities to thrive\u2026"
+            }
+          },
+          "isError": false
+        }
+      }
+    }
+  ]
+}

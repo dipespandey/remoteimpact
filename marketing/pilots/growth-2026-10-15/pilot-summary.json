@@ -1,0 +1,128 @@
+{
+  "date": "2026-10-15",
+  "deployed": true,
+  "backup": "/opt/easyclaw/backups/growth-pilot-20261015T110213Z",
+  "tests": {
+    "django_api_mcp": {
+      "passed": 24
+    },
+    "browser_modes": [
+      "htmx",
+      "fetch_fallback"
+    ],
+    "generation_response": "stubbed; no paid model calls"
+  },
+  "editorial": {
+    "researched": 10,
+    "new_records": 8,
+    "enriched_research_records": 2,
+    "draft_ids": [
+      9,
+      6,
+      2,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+    ],
+    "sent": 0,
+    "placements_verified": 0
+  },
+  "mcp": {
+    "registry": "active official listing org.remoteimpact/jobs 1.0.0",
+    "chat_anonymous": "429 daily allowance exhausted; Retry-After 46926 at 10:57 UTC",
+    "independent_vps_anonymous": "200 areas endpoint",
+    "functional_access": "temporary free keys; all disabled after probes",
+    "cases": [
+      {
+        "task": "areas",
+        "http_status": 200,
+        "is_error": false,
+        "before_total": null,
+        "after_total": null,
+        "returned_jobs": 0,
+        "elapsed_seconds": 0.165
+      },
+      {
+        "task": "norway_climate",
+        "http_status": 200,
+        "is_error": false,
+        "before_total": 54,
+        "after_total": 46,
+        "returned_jobs": 3,
+        "elapsed_seconds": 0.93
+      },
+      {
+        "task": "kenya_health",
+        "http_status": 200,
+        "is_error": false,
+        "before_total": 35,
+        "after_total": 33,
+        "returned_jobs": 3,
+        "elapsed_seconds": 0.345
+      },
+      {
+        "task": "canada_data",
+        "http_status": 200,
+        "is_error": false,
+        "before_total": 19,
+        "after_total": 19,
+        "returned_jobs": 3,
+        "elapsed_seconds": 0.527
+      },
+      {
+        "task": "us_entry",
+        "http_status": 200,
+        "is_error": false,
+        "before_total": 9,
+        "after_total": 9,
+        "returned_jobs": 3,
+        "elapsed_seconds": 0.36
+      },
+      {
+        "task": "worldwide_ai",
+        "http_status": 200,
+        "is_error": false,
+        "before_total": 60,
+        "after_total": 60,
+        "returned_jobs": 3,
+        "elapsed_seconds": 0.938
+      },
+      {
+        "task": "negative",
+        "http_status": 200,
+        "is_error": false,
+        "before_total": 0,
+        "after_total": 0,
+        "returned_jobs": 0,
+        "elapsed_seconds": 0.422
+      },
+      {
+        "task": "detail",
+        "http_status": 200,
+        "is_error": false,
+        "before_total": null,
+        "after_total": null,
+        "returned_jobs": 0,
+        "elapsed_seconds": 0.161
+      }
+    ],
+    "known_quality_limits": [
+      "AI safety result includes AI×Animals Course; opportunity-type classification needs a separate follow-up.",
+      "Several returned roles have source_feed/unverified status; successful RPC is not employer verification.",
+      "Unknown geography remains unknown; source checks reject known conflicts but do not establish immigration or work authorization.",
+      "Broad country/worldwide scans measured 7.4–7.8 seconds on the live catalogue; narrow Norway engineering search 0.9 seconds.",
+      "No fresh, unprimed assistant tool-selection test was performed; Remote Impact was already installed."
+    ],
+    "registry_name_search": "Timed out twice; exact-record lookup succeeded. Keyword discovery not verified."
+  },
+  "measurement": {
+    "tool": "Observe interview_prep_next_step_viewed -> interview_prep_jobs/interview_prep_scout -> source=interview_prep_tool Scout preview/signup/apply events; do not treat generic form_submit as signup.",
+    "review": "Review after 14 days or 100 completed question sets; low-volume findings are directional, not causal A/B results.",
+    "editorial": "Send only after explicit instruction/review. Track reply, actual placement URL, referral visits, Scout signups and applications separately.",
+    "mcp": "Retain the eight synthetic tasks; re-run after search/eligibility changes and use a fresh chat for unprimed selection research."
+  }
+}

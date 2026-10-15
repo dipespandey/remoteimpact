@@ -161,6 +161,15 @@
                     </div>
                 </div>
             </div>
+            <aside id="ip-job-next-step" class="surface mt-4 hidden p-5" aria-labelledby="ip-jobs-title">
+                <h2 id="ip-jobs-title" class="text-lg font-semibold text-foreground">Find your next interview</h2>
+                <p class="mt-2 text-sm text-muted-foreground">Explore impact roles for this job title, or preview a personal Scout search. Check each employer’s location requirements before applying.</p>
+                <div class="mt-4 flex flex-wrap gap-3">
+                    <a id="ip-role-jobs" href="{% url 'jobs:job_list' %}" class="btn btn-primary" data-track="interview_prep_jobs" data-track-category="tool_to_jobs">Explore roles</a>
+                    <a id="ip-role-scout" href="{% url 'jobs:job_scout_preview' %}" class="btn btn-outline" data-track="interview_prep_scout" data-track-category="tool_to_jobs">Preview my Scout</a>
+                </div>
+                <p class="help mt-3">Browse and preview free. Add your country and any pay requirements in Scout before asking for an email.</p>
+            </aside>
         </section>
     </div>
 </div>
@@ -233,6 +242,31 @@
             })
         })
 
+        var submittedRole = ''
+        var submittedOrganization = ''
+
+        function captureSearch() {
+            submittedRole = form.elements.job_title.value.trim()
+            submittedOrganization = form.elements.company_type.options[form.elements.company_type.selectedIndex].text
+            document.getElementById('ip-job-next-step').classList.add('hidden')
+        }
+
+        function showJobNextStep() {
+            var jobs = new URL("{% url 'jobs:job_list' %}", window.location.origin)
+            jobs.searchParams.set('q', submittedRole)
+            jobs.searchParams.set('sort', 'relevance')
+            jobs.searchParams.set('utm_source', 'interview_prep')
+            jobs.searchParams.set('utm_medium', 'tool')
+            jobs.searchParams.set('utm_campaign', 'tool_to_jobs_pilot')
+            document.getElementById('ip-role-jobs').href = jobs.pathname + jobs.search
+            var scout = new URL("{% url 'jobs:job_scout_preview' %}", window.location.origin)
+            scout.searchParams.set('intent', 'I am looking for remote ' + submittedRole + ' roles at ' + submittedOrganization + ' organizations. My country and pay requirements are not specified yet.')
+            scout.searchParams.set('source', 'interview_prep_tool')
+            document.getElementById('ip-role-scout').href = scout.pathname + scout.search
+            document.getElementById('ip-job-next-step').classList.remove('hidden')
+            if (window.gtag) window.gtag('event', 'interview_prep_next_step_viewed', {event_category: 'tool_to_jobs'})
+        }
+
         function readDraft() {
             try {
                 var draft = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || 'null')
@@ -295,6 +329,7 @@
                 return
             }
             clearDraft()
+            showJobNextStep()
             copyBtn.classList.remove('hidden')
             if (window.matchMedia('(max-width: 1023px)').matches) {
                 document.getElementById('ip-output-panel').scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -302,6 +337,7 @@
         }
 
         form.addEventListener('htmx:beforeRequest', function () {
+            captureSearch()
             errorBox.classList.add('hidden')
             setBusy(true)
         })
@@ -317,6 +353,7 @@
             if (window.htmx) return
             e.preventDefault()
             if (!form.reportValidity()) return
+            captureSearch()
             errorBox.classList.add('hidden')
             setBusy(true)
             fetch(ENDPOINT, {
