@@ -372,6 +372,7 @@ class Eligibility:
 
 # Shown to the seeker when a job is offered without full verification.
 CAVEAT_TEXT = {
+    'remote_policy_unconfirmed': 'Check: remote-work eligibility needs employer confirmation',
     'sector_unconfirmed':'Check: requested environmental sector is not confirmed by the listing',
     'skill_expression':'Check: clarify which tools are required and which are alternatives',
     'review_remote': 'Check: fully remote arrangement not confirmed',

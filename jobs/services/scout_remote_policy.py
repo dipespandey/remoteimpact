@@ -1,0 +1,138 @@
+"""Final, bounded remote-policy check shared by preview and saved Scouts.
+
+Only a single explicit requested country is supported. Missing applicant facts
+stay unknown. Rules run for every selected opening; one optional API batch uses
+the existing Scout deadline/call budget. This never adds or promotes a match.
+"""
+import hashlib
+import json
+import logging
+
+from django.conf import settings
+from django.core.cache import cache
+
+from ml.remote_policy.core import Candidate, NAMES, clean, rules
+from ml.remote_policy.llm import SYSTEM, PROMPT_VERSION, source_payload, decode_decision
+from ml.remote_policy.pipeline import combine, should_fallback
+from jobs.services.scout_evidence import source_location
+
+logger = logging.getLogger(__name__)
+VERSION = 'scout-policy-v1'
+MAX_BATCH = 6
+MAX_PROMPT_CHARS = 24000
+CAVEAT = 'remote_policy_unconfirmed'
+
+
+def requested_candidate(preferences):
+    """A work-from country is not evidence of authorization, state or hours."""
+    locations = preferences.get('locations') or []
+    if len(locations) != 1:
+        return None
+    name = str(locations[0]).strip()
+    code = NAMES.get(name.lower())
+    if not code and name.upper() in {c for c in NAMES.values()}:
+        code = name.upper()
+    if not code or name.lower() == 'georgia':
+        return None
+    return Candidate(code)
+
+
+def _cached(key, segments):
+    try:
+        content = cache.get(key)
+        if isinstance(content, str):
+            return decode_decision(content, segments, 'deepseek-cache')
+    except Exception:
+        pass
+    return None
+
+
+def check_matches(jobs, preferences, diagnostics):
+    jobs = list(jobs)
+    if not getattr(settings, 'SCOUT_REMOTE_POLICY_ENABLED', False):
+        diagnostics['remote_policy'] = 'disabled'
+        return jobs
+    candidate = requested_candidate(preferences)
+    if candidate is None:
+        diagnostics['remote_policy'] = 'unsupported_location_request'
+        return jobs
+    records = []
+    pending = []
+    model = str(getattr(settings, 'DEEPSEEK_MODEL', ''))
+    diagnostics['remote_policy'] = VERSION
+    diagnostics['remote_policy_cache_hits'] = 0
+    for index, job in enumerate(jobs):
+        text = clean('\n'.join(str(getattr(job, field, '') or '')
+                               for field in ('title', 'description', 'requirements')))
+        location = clean(source_location(job) or getattr(job, 'location', '') or '')
+        decision = rules(text, candidate, location=location)
+        record = {'job': job, 'decision': decision, 'text': text}
+        records.append(record)
+        # Never silently truncate a source to obtain a definitive decision.
+        if not should_fallback(decision, candidate, text) or len(text) + len(location) > 16000:
+            continue
+        segments, payload = source_payload(text, candidate, location)
+        key = 'scout-policy:' + hashlib.sha256(json.dumps(
+            [VERSION, PROMPT_VERSION, SYSTEM, model, payload], sort_keys=True).encode()).hexdigest()
+        cached = _cached(key, segments)
+        if cached is not None:
+            record['decision'] = combine(decision, cached, candidate, text)
+            diagnostics['remote_policy_cache_hits'] += 1
+            continue
+        row = {'id': index, **payload}
+        if len(pending) >= MAX_BATCH or len(json.dumps([r['row'] for r in pending] + [row])) > MAX_PROMPT_CHARS - 2000:
+            continue
+        pending.append({'row': row, 'record': record, 'segments': segments, 'key': key})
+
+    if pending and getattr(settings, 'DEEPSEEK_API_KEY', ''):
+        from jobs.services.scout_workflow import can_call, generate
+        if can_call():
+            try:
+                output = generate(json.dumps({'candidates': [r['row'] for r in pending]}),
+                    system_message=SYSTEM + '\nEvaluate each candidate independently. Return JSON only: '
+                        '{"decisions":[{"id":0,"label":"unknown","evidence_ids":[]}]}. '
+                        'Copy each supplied candidate ID exactly once.',
+                    max_tokens=700, temperature=0, timeout=3, stage='remote_policy')
+                value = json.loads(output)
+                rows = value.get('decisions') if isinstance(value, dict) else None
+                wanted = {r['row']['id'] for r in pending}
+                if not isinstance(rows, list) or len(rows) != len(wanted):
+                    raise ValueError('Missing policy decisions')
+                if any(not isinstance(row, dict) or type(row.get('id')) is not int for row in rows):
+                    raise ValueError('Invalid policy IDs')
+                if {row['id'] for row in rows} != wanted:
+                    raise ValueError('Duplicate or unexpected policy IDs')
+                by_id = {row['id']: row for row in rows}
+                for item in pending:
+                    content = json.dumps(by_id[item['row']['id']])
+                    result = decode_decision(content, item['segments'], 'deepseek')
+                    record = item['record']
+                    record['decision'] = combine(record['decision'], result, candidate, record['text'])
+                    # Failed/ungrounded outputs should be retried on the next run.
+                    if result.reasons:
+                        continue
+                    try:
+                        cache.set(item['key'], content, 86400)
+                    except Exception:
+                        pass
+                diagnostics['remote_policy_api'] = 'reviewed'
+            except Exception as exc:
+                diagnostics['remote_policy_api'] = 'unavailable'
+                logger.warning('Scout remote-policy fallback unavailable (%s)', type(exc).__name__)
+        else:
+            diagnostics['remote_policy_api'] = 'budget_exhausted'
+
+    kept = []
+    counts = {'compatible': 0, 'incompatible': 0, 'unknown': 0}
+    for record in records:
+        job, decision = record['job'], record['decision']
+        job.scout_remote_policy = decision.to_dict()
+        counts[decision.label] += 1
+        if decision.label == 'incompatible':
+            continue
+        if decision.label == 'unknown':
+            job.scout_caveats = list(dict.fromkeys([*getattr(job, 'scout_caveats', []), CAVEAT]))
+            job.scout_needs_confirmation = True
+        kept.append(job)
+    diagnostics['remote_policy_counts'] = counts
+    return kept

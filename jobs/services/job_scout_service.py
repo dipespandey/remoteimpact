@@ -1098,6 +1098,8 @@ skills is not a request for invented, exact job titles. JSON only."""
                                      diagnostics, limit=min(limit - len(selected), 5),
                                      exclude_titles=[job.title or "" for job in selected]):
                 selected.append(job)
+        from jobs.services.scout_remote_policy import check_matches
+        selected = check_matches(selected, preferences, diagnostics)
         # Model evidence must never hide a constraint that remains unverified.
         from jobs.services.scout_review import listing_caveats,sector_caveats
         for job in selected:
