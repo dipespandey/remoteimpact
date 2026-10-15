@@ -75,6 +75,8 @@ class ReleaseTests(unittest.TestCase):
             if args[0] == 'rsync':
                 import shutil
                 shutil.copytree(source, args[-1], dirs_exist_ok=True)
+            if args[:2] == ('docker', 'top'):
+                return 'PID\n1\n2\n3\n4\n5\n'
             if args[:2] == ('docker', 'create'):
                 return 'candidate'
             if migration_failure and args[-2:] == ('migrate', '--check'):
@@ -98,7 +100,7 @@ class ReleaseTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             release, source = self.pipeline_fixture(folder)
             calls = []
-            with patch.object(bg, 'run', side_effect=self.pipeline_run(source, calls)), patch.object(release, 'ready', side_effect=[None, None, None, RuntimeError('post check'), None]), patch.object(release, 'switch') as switch:
+            with patch.object(bg, 'run', side_effect=self.pipeline_run(source, calls)), patch.object(release, 'ready', side_effect=[None, None, None, None, RuntimeError('post check'), None]), patch.object(release, 'switch') as switch:
                 with self.assertRaisesRegex(RuntimeError, 'post check'):
                     release.deploy()
                 self.assertEqual(switch.call_args_list[-1].args[0]['id'], 'old')
@@ -110,7 +112,7 @@ class ReleaseTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             release, source = self.pipeline_fixture(folder)
             calls = []
-            with patch.object(bg, 'run', side_effect=self.pipeline_run(source, calls)), patch.object(release, 'ready', side_effect=[None, None, None, RuntimeError('post check')]), patch.object(release, 'switch', side_effect=[None, RuntimeError('rollback reload failed')]):
+            with patch.object(bg, 'run', side_effect=self.pipeline_run(source, calls)), patch.object(release, 'ready', side_effect=[None, None, None, None, RuntimeError('post check')]), patch.object(release, 'switch', side_effect=[None, RuntimeError('rollback reload failed')]):
                 with self.assertRaisesRegex(RuntimeError, 'rollback reload failed'):
                     release.deploy()
             self.assertNotIn(('docker', 'rm', '-f', 'candidate'), calls)
@@ -151,6 +153,18 @@ class ReleaseTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, 'uncommitted changes'):
                     release.deploy(ref='a' * 40)
             self.assertFalse(any(call.args[:2] == ('docker', 'create') for call in run.call_args_list))
+
+    def test_frozen_release_ignores_hup(self):
+        config_spec = importlib.util.spec_from_file_location('release_config', Path(__file__).with_name('gunicorn_release.py'))
+        config = importlib.util.module_from_spec(config_spec)
+        config_spec.loader.exec_module(config)
+        from unittest.mock import Mock
+        server = Mock()
+        original = server.handle_hup
+        config.on_starting(server)
+        server.handle_hup()
+        original.assert_not_called()
+        server.log.warning.assert_called_once()
 
     def test_state_is_atomic_private_json(self):
         with tempfile.TemporaryDirectory() as folder:

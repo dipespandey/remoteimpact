@@ -242,6 +242,14 @@ class Release:
                         raise RuntimeError('Candidate failed readiness within 90 seconds')
                     time.sleep(2)
             self.ready(target, ('/', '/jobs/', '/static/favicon.svg', '/static/tailwind.min.css'))
+            # Old callers still send HUP; verify the immutable candidate ignores it.
+            before = run('docker', 'top', cid, '-eo', 'pid', capture=True)
+            run('docker', 'kill', '--signal', 'HUP', cid)
+            time.sleep(0.5)
+            after = run('docker', 'top', cid, '-eo', 'pid', capture=True)
+            if not before.strip() or before != after:
+                raise RuntimeError('Candidate restarted workers on HUP; live traffic unchanged')
+            self.ready(target)
             atomic(folder / 'release.json', json.dumps(target, indent=2) + '\n')
             if check_only:
                 print('Candidate passed. Check-only: production traffic unchanged.', flush=True)
