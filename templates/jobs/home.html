@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load humanize job_extras %}
 
-{% block title %}Remote Impact: remote jobs in climate, global health and social impact{% endblock %}
+{% block title %}Remote Impact | Remote Jobs with Social Impact{% endblock %}
 
 {% block meta_description %}Describe your ideal remote impact job in your own words. Remote Impact finds strong matches across {{ active_jobs_count|intcomma }}+ current roles and can watch for new ones.{% endblock %}
 
@@ -48,6 +48,10 @@
                     Your first set of matches is free. <a href="{% url 'jobs:job_list' %}" class="font-medium text-foreground underline decoration-border hover:decoration-foreground" data-track="home_hero_browse_jobs" data-track-category="job_scout_acquisition" data-track-label="hero_secondary">Or browse all {{ active_jobs_count|intcomma }} roles</a>
                 </p>
             </div>
+            <nav aria-label="Browse impact jobs" class="mt-4 flex flex-wrap gap-4 text-sm">
+                <a href="{% url 'jobs:job_list' %}" class="font-medium text-foreground underline underline-offset-4">Browse impact jobs</a>
+                <a href="{% url 'jobs:keyword_jobs' keyword_slug='remote-nonprofit-jobs' %}" class="font-medium text-foreground underline underline-offset-4">Remote nonprofit jobs</a>
+            </nav>
             {% if has_impact_profile %}
             <p class="mt-3 text-[13px] text-muted-foreground">Your profile is set up. <a href="{% url 'jobs:my_matches' %}" class="font-medium text-foreground underline decoration-border">See your matches</a></p>
             {% endif %}

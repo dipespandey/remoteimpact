@@ -77,6 +77,26 @@
         {% if intro %}<p class="page-lede">{{ intro }}</p>{% endif %}
     </header>
 
+    {% if nonprofit_page %}
+    <section class="card mb-6 p-5" aria-labelledby="nonprofit-search-heading">
+        <h2 id="nonprofit-search-heading" class="section-title">Find the right nonprofit role</h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground">This search includes recorded nonprofits and foundations, and unclassified employers with nonprofit-related names. Name matches are discovery clues; legal nonprofit status is not verified for every employer. Remote roles may have country, time-zone or travel requirements.</p>
+        <form method="get" class="mt-4 flex flex-wrap items-end gap-3">
+            <div><label for="nonprofit-role" class="block text-sm font-medium">Search role titles</label>
+            <input id="nonprofit-role" name="q" value="{{ role_query }}" maxlength="100" placeholder="e.g. fundraising" class="mt-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"></div>
+            <button class="btn btn-primary btn-sm" type="submit">Find roles</button>
+            {% if role_query %}<a href="{% url 'jobs:keyword_jobs' keyword_slug='remote-nonprofit-jobs' %}" class="btn btn-outline btn-sm">Clear search</a>{% endif %}
+        </form>
+        <nav aria-label="Nonprofit role searches" class="mt-4 flex flex-wrap gap-3 text-sm">
+            <a href="?q=fundrais" class="underline underline-offset-4">Fundraising</a>
+            <a href="?q=program" class="underline underline-offset-4">Programs</a>
+            <a href="?q=operations" class="underline underline-offset-4">Operations</a>
+            <a href="?q=communications" class="underline underline-offset-4">Communications</a>
+        </nav>
+        <p class="mt-4 text-sm text-muted-foreground">Looking beyond nonprofits? <a href="{% url 'jobs:job_list' %}" class="font-medium text-foreground underline underline-offset-4">Browse all impact jobs</a> at mission-driven companies, research groups and public-interest organizations.</p>
+    </section>
+    {% endif %}
+
     {% include 'jobs/seo/_salary_summary.html' %}
     {% include 'jobs/seo/_inventory_evidence.html' %}
 
@@ -131,11 +151,11 @@
                 {% if page_obj.has_other_pages %}
                 <nav class="mt-6 flex flex-wrap items-center justify-between gap-3" aria-label="Pagination">
                     {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-sm" rel="prev">Previous</a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if nonprofit_page and role_query %}&amp;q={{ role_query|urlencode }}{% endif %}" class="btn btn-secondary btn-sm" rel="prev">Previous</a>
                     {% else %}<span></span>{% endif %}
                     <span class="text-[13px] tabular-nums text-muted-foreground">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
                     {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-sm" rel="next">Next</a>
+                    <a href="?page={{ page_obj.next_page_number }}{% if nonprofit_page and role_query %}&amp;q={{ role_query|urlencode }}{% endif %}" class="btn btn-secondary btn-sm" rel="next">Next</a>
                     {% else %}<span></span>{% endif %}
                 </nav>
                 {% endif %}

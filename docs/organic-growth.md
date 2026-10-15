@@ -122,3 +122,30 @@ Profiling isolated a 13.2-second public trust-statistics rebuild; its historical
 Production cache-miss proof: 64ms, one snapshot query, no job scan. Fresh public crawl: homepage 228ms, /how-we-check/ 161ms, both HTTP 200 and no reported issues. Full suite: 695 tests passed with 5 skipped. Migrations 0077/0078 applied; concurrent expression indexes validated, but planner retained a scan in the filtered benchmark, so the visitor-latency fix is durable snapshots rather than a claimed index-only speedup.
 
 `30b05cc` also removes repeated exact employer attribution from search titles. A ninth reviewed duplicate (Recruitee) was consolidated after checking the employer board, with verified 301 -> 200. Latest completed 500-page sample has 28 duplicate-title URLs, 33 title-width observations and no duplicate-description finding. Full scoped handoff: `.audit/seo-title-cleanup-handoff.html` and JSON. Final same-input rerun after snapshot deployment was started; broader review remains active.
+
+### Nonprofit destination and non-branded discovery — 2026-10-15
+
+The primary nonprofit destination is `/impact/remote-nonprofit-jobs/`. The identical
+`remote-positions-in-nonprofits` route redirects permanently, preserving query
+parameters, and is removed from the keyword inventory/sitemap. Nonprofit membership
+uses recorded nonprofit/foundation employer type or explicit nonprofit-related
+names only for unclassified employers; title/category words alone and known other
+employer types cannot qualify. Name matches remain discovery clues, not verified
+legal status. Public copy explains this limitation.
+
+The destination supports title searches and pagination within that inventory,
+with base canonical and noindex on query variants. Homepage, board and role/search
+inventory sections link directly to it. Home retains brand/Scout introduction;
+`/jobs/` owns browsing impact jobs with distinct title, heading and collection name.
+
+Non-branded measurement: finalized Google web Search Console aggregate with query
+regex exclusion `(?i)(remote[\s.-]*impact|site:)`; property
+`sc-domain:remoteimpact.org`. September 15–October 12: 3 clicks/280 impressions;
+August 18–September 14: 1 click/805 impressions. This excludes brand-overlapping
+“remote impact jobs” and site operators; anonymized queries are omitted. These
+28-day windows precede this release and do not measure its effect. Track the same
+filter/window length separately from unfiltered property totals and GA4. Do not
+claim qualified growth from clicks or repeated client conversion events.
+
+Private baseline, report outcomes, deployment manifest and validation are retained
+under `.audit/2026-10-15-nonprofit-*` and `.audit/2026-10-15-nonbrand-*`.

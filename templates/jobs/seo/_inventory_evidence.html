@@ -11,6 +11,9 @@
         <a href="{% url 'jobs:how_we_check' %}" class="font-medium text-foreground underline underline-offset-4">How we check listings</a> ·
         <a href="{% url 'jobs:impact_jobs_snapshot' %}" class="font-medium text-foreground underline underline-offset-4">Impact hiring snapshot</a>
     </p>
+    {% if not nonprofit_page %}
+    <p class="mt-3 text-sm text-muted-foreground">Prefer nonprofit work? <a href="{% url 'jobs:keyword_jobs' keyword_slug='remote-nonprofit-jobs' %}" class="font-medium text-foreground underline underline-offset-4">Explore remote nonprofit jobs</a> and compare location requirements and advertised pay.</p>
+    {% endif %}
     {% if inventory_hubs %}
     <ul class="mt-4 space-y-2 text-sm">
         {% for hub in inventory_hubs %}

@@ -12,7 +12,7 @@ from django.utils.decorators import method_decorator
 from ..services.page_cache import cache_public_page as cache_page
 from .mixins import FastJobPaginationMixin
 from django.views.generic import ListView
-from django.http import Http404
+from django.http import Http404, HttpResponsePermanentRedirect
 from django.db.models import Count, Max, Q
 from django.urls import reverse
 from django.utils import timezone
@@ -239,6 +239,10 @@ class KeywordJobsView(FastJobPaginationMixin, ListView):
 
     def dispatch(self, request, *args, **kwargs):
         self.keyword_slug = kwargs.get('keyword_slug')
+        if self.keyword_slug == 'remote-positions-in-nonprofits':
+            destination = reverse('jobs:keyword_jobs', args=['remote-nonprofit-jobs'])
+            query = request.GET.urlencode()
+            return HttpResponsePermanentRedirect(destination + ('?' + query if query else ''))
         self.config = get_keyword_page_config(self.keyword_slug)
         
         if not self.config:
@@ -272,14 +276,18 @@ class KeywordJobsView(FastJobPaginationMixin, ListView):
             return base_qs.none()
         
         elif filter_type == 'nonprofit':
-            # Filter by organization type or keywords
-            q_objects = Q(organization__organization_type='nonprofit')
-            for pattern in patterns:
-                q_objects |= Q(organization__name__icontains=pattern)
-                q_objects |= Q(title__icontains=pattern)
-                q_objects |= Q(category__name__icontains=pattern)
-            return base_qs.filter(q_objects).distinct().order_by('-posted_at')
-        
+            # Employer identity is stronger evidence than words in a job title.
+            # Unclassified employers with nonprofit-related names remain candidates,
+            # explicitly explained on the page; known other types never qualify by name.
+            named_candidate = Q(organization__organization_type='') & Q(
+                organization__name__iregex=r'(^|[^a-z0-9_])(non[ -]?profit|ngo|charit(y|ies)|foundation)([^a-z0-9_]|$)')
+            queryset = base_qs.filter(
+                Q(organization__organization_type__in=['nonprofit', 'foundation']) | named_candidate)
+            query = self.request.GET.get('q', '').strip()[:100] if hasattr(self, 'request') else ''
+            if query:
+                queryset = queryset.filter(title__icontains=query)
+            return queryset.order_by('-posted_at')
+
         elif filter_type == 'keyword':
             # Filter by keyword patterns in title, description, or category
             q_objects = Q()
@@ -306,6 +314,8 @@ class KeywordJobsView(FastJobPaginationMixin, ListView):
         context['intro'] = self.config['intro']
         context['icon'] = self.config['icon']
         context['keyword'] = self.config['keyword']
+        context['nonprofit_page'] = self.config.get('filter_type') == 'nonprofit'
+        context['role_query'] = self.request.GET.get('q', '').strip()[:100]
         
         # Get category breakdown
         jobs_qs = self.get_queryset()
@@ -359,6 +369,17 @@ class KeywordJobsView(FastJobPaginationMixin, ListView):
         
         # FAQs for structured data
         context['faqs'] = self._generate_faqs(job_count)
+        if context['nonprofit_page']:
+            context['faqs'] = [
+                {'question': 'Which employers appear in this nonprofit jobs search?',
+                 'answer': 'We include employers recorded as nonprofit or foundation, plus unclassified employers whose names explicitly mention nonprofit, NGO, charity or foundation. A name match is a discovery clue, not verification of legal nonprofit status. A job title alone does not qualify an employer.'},
+                {'question': 'Can I apply from any country?',
+                 'answer': 'Remote does not mean worldwide. Some employers hire only in specified countries or time zones, and some roles require travel. Read the location and original employer posting before applying.'},
+                {'question': 'How should I compare nonprofit salaries?',
+                 'answer': 'The salary summary covers only listings with comparable annual USD pay. Missing pay is unknown, not unpaid; hourly and other-currency figures are excluded from that summary.'},
+                {'question': 'How do I apply for a remote nonprofit job?',
+                 'answer': 'Open a listing to review its requirements and follow the application link to the employer or its recruiting platform. Check that the role is still open on the original posting.'},
+            ]
         
         return context
     
