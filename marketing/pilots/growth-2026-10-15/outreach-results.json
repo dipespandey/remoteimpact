@@ -1,0 +1,168 @@
+{
+  "date": "2026-10-15",
+  "authorization": "User explicitly requested sending the prepared outreach emails.",
+  "from": "hello@remoteimpact.org",
+  "receipts": [
+    {
+      "prospect_id": 9,
+      "to": "careerdev@lafollette.wisc.edu",
+      "subject": "Resource suggestion for Wisconsin La Follette Career Hub",
+      "attempted_at": "2026-10-15T11:06:19.295452+00:00",
+      "provider": "cloudflare",
+      "http_status": 200,
+      "success": true,
+      "result": {
+        "message_id": "<a0bJq1s1UAcSKKoG67ZhKGpUftlna1m0fnDv@remoteimpact.org>",
+        "delivered": [],
+        "queued": [
+          "careerdev@lafollette.wisc.edu"
+        ],
+        "permanent_bounces": [],
+        "suppressed_recipients": []
+      },
+      "errors": [],
+      "accepted": true
+    },
+    {
+      "prospect_id": 6,
+      "to": "ficinfo@mail.nih.gov",
+      "subject": "Resource suggestion for NIH Fogarty Global Health Careers",
+      "attempted_at": "2026-10-15T11:06:21.455501+00:00",
+      "provider": "cloudflare",
+      "http_status": 200,
+      "success": true,
+      "result": {
+        "message_id": "<2lxhsa2uWOHIxyYkF0o8YQ7lcJ1pBfeMXWYy@remoteimpact.org>",
+        "delivered": [],
+        "queued": [
+          "ficinfo@mail.nih.gov"
+        ],
+        "permanent_bounces": [],
+        "suppressed_recipients": []
+      },
+      "errors": [],
+      "accepted": true
+    },
+    {
+      "prospect_id": 2,
+      "to": "globalhealth@ohio.edu",
+      "subject": "Resource suggestion for Ohio University Global Health Initiative",
+      "attempted_at": "2026-10-15T11:06:23.501997+00:00",
+      "provider": "cloudflare",
+      "http_status": 200,
+      "success": true,
+      "result": {
+        "message_id": "<1KyK0fuzSrpmShfGkQpp16CbjUUmPJS4Qcyp@remoteimpact.org>",
+        "delivered": [],
+        "queued": [
+          "globalhealth@ohio.edu"
+        ],
+        "permanent_bounces": [],
+        "suppressed_recipients": []
+      },
+      "errors": [],
+      "accepted": true
+    },
+    {
+      "prospect_id": 10,
+      "to": "askcic@uw.edu",
+      "subject": "Resource suggestion for University of Washington Career & Internship Center",
+      "attempted_at": "2026-10-15T11:06:25.814808+00:00",
+      "provider": "cloudflare",
+      "http_status": 200,
+      "success": true,
+      "result": {
+        "message_id": "<DRd7ZVAmrF7foKQmuM57x59BhVcQ9wU6bW8K@remoteimpact.org>",
+        "delivered": [],
+        "queued": [
+          "askcic@uw.edu"
+        ],
+        "permanent_bounces": [],
+        "suppressed_recipients": []
+      },
+      "errors": [],
+      "accepted": true
+    },
+    {
+      "prospect_id": 11,
+      "to": "sphcareeroffice@bu.edu",
+      "subject": "Resource suggestion for Boston University School of Public Health",
+      "attempted_at": "2026-10-15T11:06:27.554628+00:00",
+      "provider": "cloudflare",
+      "http_status": 200,
+      "success": true,
+      "result": {
+        "message_id": "<DTTlHUfeZpZAYuV8KWTWjFv2y6g5VZBeHO4R@remoteimpact.org>",
+        "delivered": [],
+        "queued": [
+          "sphcareeroffice@bu.edu"
+        ],
+        "permanent_bounces": [],
+        "suppressed_recipients": []
+      },
+      "errors": [],
+      "accepted": true
+    },
+    {
+      "prospect_id": 14,
+      "to": "info@chooseust.org",
+      "subject": "Resource suggestion for UST nonprofit workforce resources",
+      "attempted_at": "2026-10-15T11:06:28.901272+00:00",
+      "provider": "cloudflare",
+      "http_status": 200,
+      "success": true,
+      "result": {
+        "message_id": "<kISxSbAk1FbcrPxwnhddVxHLuuQbBaYzQWRr@remoteimpact.org>",
+        "delivered": [],
+        "queued": [
+          "info@chooseust.org"
+        ],
+        "permanent_bounces": [],
+        "suppressed_recipients": []
+      },
+      "errors": [],
+      "accepted": true
+    },
+    {
+      "prospect_id": 15,
+      "to": "press@givebutter.com",
+      "subject": "Resource suggestion for Givebutter nonprofit hiring guide",
+      "attempted_at": "2026-10-15T11:06:31.497926+00:00",
+      "provider": "cloudflare",
+      "http_status": 200,
+      "success": true,
+      "result": {
+        "message_id": "<sHQ8K8ytAjH3uk29bzG7GwpYVDFIoAWXhOh0@remoteimpact.org>",
+        "delivered": [],
+        "queued": [
+          "press@givebutter.com"
+        ],
+        "permanent_bounces": [],
+        "suppressed_recipients": []
+      },
+      "errors": [],
+      "accepted": true
+    }
+  ],
+  "held": [
+    {
+      "id": 12,
+      "name": "Charity Charge",
+      "reason": "No suitable editorial/general email verified; public contact form retained. Financial-support address not used for editorial outreach."
+    },
+    {
+      "id": 13,
+      "name": "UC Berkeley",
+      "reason": "Official link-request instructions direct submissions to a form. Email send not made."
+    },
+    {
+      "id": 16,
+      "name": "National Nonprofits",
+      "reason": "Contact-page fetch blocked and public email obfuscated; no address guessed."
+    }
+  ],
+  "follow_up_eligible_on": "2026-10-22",
+  "follow_up_sent": false,
+  "recipient_delivery_verified": false,
+  "placement_verified": false
+}
