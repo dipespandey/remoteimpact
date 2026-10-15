@@ -600,6 +600,10 @@ KEYWORD_SEO_PAGES = [
     },
 ]
 
+# Equivalent catalogue pages share one indexable destination and one sitemap entry.
+from .services.seo_identity import IMPACT_PAGE_ALIASES
+KEYWORD_SEO_PAGES = [page for page in KEYWORD_SEO_PAGES if page['slug'] not in IMPACT_PAGE_ALIASES]
+
 # Create lookup dict for keyword pages
 KEYWORD_SEO_LOOKUP = {page['slug']: page for page in KEYWORD_SEO_PAGES}
 

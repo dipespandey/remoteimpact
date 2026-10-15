@@ -338,15 +338,10 @@ def job_posting_schema_json(job, site_url: str) -> str:
 
 
 def google_job_posting_json(job, site_url: str) -> str:
-    """JobPosting markup for the job page, or "" when Google can't use it.
+    """Keep factual JobPosting markup even when optional source facts are unknown.
 
-    Google requires an applicant country on remote postings; a remote role with no known country would only
-    show up as an invalid item, so the page carries no JobPosting at all (it stays a normal indexable page).
+    Missing remote eligibility may still prevent Google's job enhancement. Do
+    not hide the entire posting or invent a country to satisfy that validator.
+    Availability is checked by the page view before calling this serializer.
     """
-    import json
-
-    encoded = job_posting_schema_json(job, site_url)
-    data = json.loads(encoded)
-    if data.get("jobLocationType") == "TELECOMMUTE" and not data.get("applicantLocationRequirements"):
-        return ""
-    return encoded
+    return job_posting_schema_json(job, site_url)

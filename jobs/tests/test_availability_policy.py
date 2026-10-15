@@ -190,12 +190,14 @@ class SchemaLabelCountryTests(TestCase):
 
 
 class GoogleJobPostingTests(TestCase):
-    def test_remote_job_without_country_carries_no_job_posting(self):
+    def test_remote_job_without_country_keeps_factual_job_posting(self):
         from jobs.services.job_quality import google_job_posting_json
         org = Organization.objects.create(name='Worldwide Org')
         worldwide = Job.objects.create(title='Writer', slug='writer-ww', organization=org, location='Remote',
                                        description='Write.', application_url='https://example.org/a')
         us = Job.objects.create(title='Writer', slug='writer-us', organization=org, location='Remote (US)',
                                 description='Write.', application_url='https://example.org/b')
-        self.assertEqual(google_job_posting_json(worldwide, 'https://example.org'), '')
+        data = json.loads(google_job_posting_json(worldwide, 'https://example.org'))
+        self.assertEqual(data['@type'], 'JobPosting')
+        self.assertNotIn('applicantLocationRequirements', data)
         self.assertIn('"JobPosting"', google_job_posting_json(us, 'https://example.org'))

@@ -1,0 +1,175 @@
+{
+  "date": "2026-10-15",
+  "scope": "Three user-reviewed technical SEO issues; not a site-wide audit.",
+  "source_guidance": "https://developers.google.com/search/docs/appearance/structured-data/job-posting",
+  "deployed": true,
+  "backup": "/opt/easyclaw/backups/seo-review-20261015T112922Z",
+  "findings": [
+    {
+      "id": "user-1",
+      "title": "Missing JobPosting on live jobs",
+      "outcome": "fixed",
+      "reason": "Removed serializer-wide suppression when remote applicant country is unknown. Unavailable jobs still omit JobPosting. No invented geography, salary or deadlines.",
+      "verification": {
+        "before": {
+          "live": 3435,
+          "with_jobposting": 2143,
+          "missing": 1292
+        },
+        "after": {
+          "live": 3435,
+          "with_jobposting": 3435,
+          "missing": 0,
+          "errors": 0
+        },
+        "example": "https://remoteimpact.org/jobs/chief-operating-officer-apart-research/"
+      }
+    },
+    {
+      "id": "user-2",
+      "title": "Eight equivalent unfiltered impact pages",
+      "outcome": "fixed",
+      "reason": "Kept remote-social-impact-jobs; seven aliases permanently redirect directly to it and are removed from shared navigation and keyword sitemap configuration. Query strings preserved.",
+      "verification": "All seven bare URLs and query-string variants returned 301; keyword sitemap contains retained URL and excludes seven aliases. Old anonymous page-cache entry invalidated."
+    },
+    {
+      "id": "user-3",
+      "title": "Duplicate job page canonicals",
+      "outcome": "fixed",
+      "reason": "Live reviewed duplicate mappings and matching source-posting identities share one canonical URL. Matching title or numeric suffix alone is not enough. JSON-LD URL and identifier agree with canonical.",
+      "verification": "Original and copy both return 200; copy canonical and JSON-LD point to original. Tests preserve distinct requisitions and country variants, and avoid closed targets.",
+      "reviewed_mapping": {
+        "old_slug": "managing-director-collaborative-capital-gitlab-foundation-1",
+        "canonical_slug": "managing-director-collaborative-capital-gitlab-foundation",
+        "storage": "Existing JobSlugRedirect model; row created in production after identity checks."
+      }
+    },
+    {
+      "id": "cli-title_too_wide",
+      "title": "Title may truncate on some devices",
+      "outcome": "deferred",
+      "reason": "Unchanged 697.8px heuristic on Managing Director title. Outside these three fixes; not a Google limit or demonstrated defect."
+    },
+    {
+      "id": "cli-canonical_mismatch",
+      "title": "Canonical differs from final URL",
+      "outcome": "not-needed",
+      "reason": "Expected and explicitly requested for a duplicate job copy. Local fixture host mismatch is also intentional; fixtures retain the production canonical domain."
+    }
+  ],
+  "inventory": [
+    {
+      "url": "https://remoteimpact.org/impact/impact-jobs-remote/",
+      "status": 301,
+      "location": "/impact/remote-social-impact-jobs/"
+    },
+    {
+      "url": "https://remoteimpact.org/impact/impact-jobs-remote/?utm_source=review&page=2",
+      "status": 301,
+      "location": "/impact/remote-social-impact-jobs/?utm_source=review&page=2"
+    },
+    {
+      "url": "https://remoteimpact.org/impact/jobs-that-make-a-difference-remote/",
+      "status": 301,
+      "location": "/impact/remote-social-impact-jobs/"
+    },
+    {
+      "url": "https://remoteimpact.org/impact/jobs-that-make-a-difference-remote/?utm_source=review&page=2",
+      "status": 301,
+      "location": "/impact/remote-social-impact-jobs/?utm_source=review&page=2"
+    },
+    {
+      "url": "https://remoteimpact.org/impact/online-jobs-for-social-good/",
+      "status": 301,
+      "location": "/impact/remote-social-impact-jobs/"
+    },
+    {
+      "url": "https://remoteimpact.org/impact/online-jobs-for-social-good/?utm_source=review&page=2",
+      "status": 301,
+      "location": "/impact/remote-social-impact-jobs/?utm_source=review&page=2"
+    },
+    {
+      "url": "https://remoteimpact.org/impact/remote-jobs-that-help-others/",
+      "status": 301,
+      "location": "/impact/remote-social-impact-jobs/"
+    },
+    {
+      "url": "https://remoteimpact.org/impact/remote-jobs-that-help-others/?utm_source=review&page=2",
+      "status": 301,
+      "location": "/impact/remote-social-impact-jobs/?utm_source=review&page=2"
+    },
+    {
+      "url": "https://remoteimpact.org/impact/remote-jobs-with-purpose/",
+      "status": 301,
+      "location": "/impact/remote-social-impact-jobs/"
+    },
+    {
+      "url": "https://remoteimpact.org/impact/remote-jobs-with-purpose/?utm_source=review&page=2",
+      "status": 301,
+      "location": "/impact/remote-social-impact-jobs/?utm_source=review&page=2"
+    },
+    {
+      "url": "https://remoteimpact.org/impact/work-from-anywhere-impact-jobs/",
+      "status": 301,
+      "location": "/impact/remote-social-impact-jobs/"
+    },
+    {
+      "url": "https://remoteimpact.org/impact/work-from-anywhere-impact-jobs/?utm_source=review&page=2",
+      "status": 301,
+      "location": "/impact/remote-social-impact-jobs/?utm_source=review&page=2"
+    },
+    {
+      "url": "https://remoteimpact.org/impact/work-from-home-impact-jobs/",
+      "status": 301,
+      "location": "/impact/remote-social-impact-jobs/"
+    },
+    {
+      "url": "https://remoteimpact.org/impact/work-from-home-impact-jobs/?utm_source=review&page=2",
+      "status": 301,
+      "location": "/impact/remote-social-impact-jobs/?utm_source=review&page=2"
+    },
+    {
+      "url": "https://remoteimpact.org/jobs/chief-operating-officer-apart-research/",
+      "status": 200,
+      "canonical": "https://remoteimpact.org/jobs/chief-operating-officer-apart-research/",
+      "jobposting": true,
+      "schema_url": "https://remoteimpact.org/jobs/chief-operating-officer-apart-research/"
+    },
+    {
+      "url": "https://remoteimpact.org/jobs/managing-director-collaborative-capital-gitlab-foundation/",
+      "status": 200,
+      "canonical": "https://remoteimpact.org/jobs/managing-director-collaborative-capital-gitlab-foundation/",
+      "jobposting": true,
+      "schema_url": "https://remoteimpact.org/jobs/managing-director-collaborative-capital-gitlab-foundation/"
+    },
+    {
+      "url": "https://remoteimpact.org/jobs/managing-director-collaborative-capital-gitlab-foundation-1/",
+      "status": 200,
+      "canonical": "https://remoteimpact.org/jobs/managing-director-collaborative-capital-gitlab-foundation/",
+      "jobposting": true,
+      "schema_url": "https://remoteimpact.org/jobs/managing-director-collaborative-capital-gitlab-foundation/"
+    },
+    {
+      "url": "https://remoteimpact.org/sitemap-keywords.xml",
+      "status": 200,
+      "aliases_excluded": true,
+      "canonical_included": true
+    },
+    {
+      "url": "https://remoteimpact.org/healthz/",
+      "status": 200
+    }
+  ],
+  "local_verification": {
+    "tests_passed": 29,
+    "tested_both": "Working tree and isolated index checkout excluding unrelated work.",
+    "audit_page_reports": "Repeated for COO, duplicate job and impact alias against controlled local Django fixtures and production. All reports read in full; none truncated.",
+    "fixture_warnings": "Local reports exclude non-HTTP links from link evidence; they do not invalidate JobPosting or redirects."
+  },
+  "limitations": [
+    "Schema presence and JSON serialization were checked; Google Rich Results Test and subsequent indexing are not verified.",
+    "1292 remote listings still lack documented country eligibility. They now retain factual JobPosting, but Google Jobs inclusion may still require source-backed eligibility data.",
+    "Generic duplicate inference deliberately requires shared source identity; the cross-source GitLab example uses an explicit reviewed mapping.",
+    "Source/template changes do not guarantee rankings, traffic, indexing or appearance in Google Jobs."
+  ]
+}

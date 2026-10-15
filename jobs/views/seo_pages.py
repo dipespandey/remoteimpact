@@ -239,6 +239,11 @@ class KeywordJobsView(FastJobPaginationMixin, ListView):
 
     def dispatch(self, request, *args, **kwargs):
         self.keyword_slug = kwargs.get('keyword_slug')
+        from ..services.seo_identity import IMPACT_PAGE_ALIASES, IMPACT_CANONICAL_SLUG
+        if self.keyword_slug in IMPACT_PAGE_ALIASES:
+            destination = reverse('jobs:keyword_jobs', args=[IMPACT_CANONICAL_SLUG])
+            query = request.GET.urlencode()
+            return HttpResponsePermanentRedirect(destination + ('?' + query if query else ''))
         if self.keyword_slug == 'remote-positions-in-nonprofits':
             destination = reverse('jobs:keyword_jobs', args=['remote-nonprofit-jobs'])
             query = request.GET.urlencode()

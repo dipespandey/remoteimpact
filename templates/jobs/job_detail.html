@@ -6,7 +6,7 @@
 {% block meta_description %}{% if job_available %}{{ seo_description }}{% else %}This listing is no longer available on Remote Impact. Browse current related remote impact jobs.{% endif %}{% endblock %}
 {% block robots %}{% if job_available %}index, follow{% else %}noindex, follow{% endif %}{% endblock %}
 
-{% block canonical %}{{ SITE_URL }}{% url 'jobs:job_detail' job.slug %}{% endblock %}
+{% block canonical %}{{ job_canonical_url }}{% endblock %}
 
 {% block og_type %}article{% endblock %}
 {% block og_title %}{{ job.title }} at {{ job.organization.name|display_title }}{% endblock %}
