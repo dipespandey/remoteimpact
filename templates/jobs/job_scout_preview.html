@@ -15,7 +15,7 @@
 
     <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8">
         <div class="min-w-0 space-y-6">
-            {% if preview_jobs and review_incomplete %}<div class="alert alert-warning" role="status"><p>These matches were checked, but we couldn’t finish the full review. Try again shortly for additional results.</p></div>{% endif %}
+            {% if preview_jobs and review_incomplete %}<div class="alert alert-warning" role="status"><p>Some results still need confirmation. Review the checks on each listing, or try again shortly for additional results.</p></div>{% endif %}
             {% if 'working_timezone' in preferences.unresolved_constraints or 'location_code' in preferences.unresolved_constraints %}<div class="alert alert-warning" role="status"><p>Please clarify your location or working hours in the brief. Use a full state or country name; time-zone overlap is not yet verified, so we have not treated it as eligible.</p></div>{% endif %}
             {% if 'skill_expression' in preferences.unresolved_constraints %}<div class="alert alert-warning" role="status"><p>Please clarify which tools are required together and which are alternatives. We have kept that uncertainty visible in the results.</p></div>{% endif %}
 

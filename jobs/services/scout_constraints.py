@@ -250,7 +250,8 @@ def extract_constraints(text):
         # A stated rate with its unit ("$40/hour", "80 thousand a year") is a pay requirement on its own.
         match=re.search(amount+r'\s*(?=(?:a|per|/)\s*(?:year|yr|annum|hour|hr|month)\b)',positive,re.I)
         if match and not (match.group('currency') or match.group('k')):match=None
-    if match and not match.group('currency') and not re.search(r'\b(?:salary|pay|wages?|compensation|remuneration|a year|per year|annually)\b',positive[max(0,match.start()-40):match.end()+40],re.I):
+    if match and not match.group('currency') and not (re.search(r'\b(?:salary|pay|wages?|compensation|remuneration|a year|per year|annually)\b',positive[max(0,match.start()-40):match.end()+40],re.I)
+            or match.group('k') and re.match(r'starting at\b',match.group(),re.I)):
         match=None
     if match:
         value=Decimal(match.group('amount').replace(',',''))*(1000 if match.group('k') else 1)
@@ -372,6 +373,7 @@ class Eligibility:
 
 # Shown to the seeker when a job is offered without full verification.
 CAVEAT_TEXT = {
+    'source_review_pending': 'Check: possible match from listing evidence; full relevance review unavailable',
     'remote_policy_unconfirmed': 'Check: remote-work eligibility needs employer confirmation',
     'sector_unconfirmed':'Check: requested environmental sector is not confirmed by the listing',
     'skill_expression':'Check: clarify which tools are required and which are alternatives',
@@ -399,6 +401,8 @@ def salary_caveat(job, requirement):
     if getattr(job,'salary_min',None) is None and getattr(job,'salary_max',None) is None:
         return 'salary_unlisted'
     currency=requirement.get('currency')
+    if not currency:
+        return 'salary_currency'
     if currency and str(getattr(job,'salary_currency','') or '').upper() not in ('',currency.upper()):
         return 'salary_other_currency'
     return None

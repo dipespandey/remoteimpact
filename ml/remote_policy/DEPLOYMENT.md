@@ -16,7 +16,8 @@ Every selected opening receives a rules decision. Incompatible openings are
 removed; unknown openings retain an employer-confirmation caveat and cannot be
 classified as good matches. Compatible policy decisions cannot erase other
 caveats or revive previously rejected openings. This can reduce the result count;
-there is no additional retrieval pass to fill removed openings.
+source-backed recovery may fill removed slots from the already retrieved pool.
+Recovered openings pass the same policy gate without another API call or query.
 
 One optional DeepSeek batch interprets at most six unresolved policies. It uses
 the application's configured provider/model and existing four-call, 18-second
@@ -40,6 +41,30 @@ No trained classifier, local Ollama service, model weights, training corpus or
 database migration is required. Research reports and their frozen implementation
 hashes describe the experiments in `MODEL_CARD.md`; they do not independently
 validate this deployment adapter or establish customer accuracy.
+
+## Availability recovery
+
+Scout workflow version 4 caps interpretation at 2.5 seconds and shares a
+three-second preparation allowance across interpretation and planning. A failed
+interpretation skips planning. Retrieval leaves six seconds for evidence review;
+close-match review reuses the existing candidate pool where available and skips
+another provider request after a failed primary review.
+
+When fewer than three results survive, `scout_recovery` can select possibilities
+with an explicit profession in the request, a matching role title, and
+applicant-owned duties in the source. Supported function signatures are explicit
+and intentionally limited. Background/skills narratives alone, qualifications,
+company missions and generic requests are insufficient. Original eligibility,
+salary, work arrangement, exclusion and seniority gates still apply. Validated
+negative relevance decisions and policy conflicts are not restored. Reposts are
+deduplicated. All recovered results carry `source_review_pending` and remain in
+Worth considering. `SCOUT_RULE_RECOVERY_ENABLED=false` disables this path.
+
+`source_rule_recovery` records the number returned by this path; `recovery_policy`
+records its policy checks. `review_incomplete` remains true for results awaiting
+full review, even if all three slots are filled. Empty searches record
+`empty_reason` separately from the result count. Replay reports measure behavior
+on selected cases, not population-wide relevance or a guaranteed fill rate.
 
 For a bind-mounted VPS deployment, ship the committed runtime Python files and
 `countries.json`, and mount `ml/remote_policy` at `/app/ml/remote_policy:ro` in

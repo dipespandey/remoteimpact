@@ -382,6 +382,6 @@ class SourceProfileDatabaseTests(TestCase):
         with patch.object(Scout,'search_intent',side_effect=search):
             response=self.client.get(reverse('jobs:job_scout_preview'),{'intent':'Remote policy analyst roles with nonprofits.'})
         self.assertEqual(response.status_code,200)
-        self.assertContains(response,'These matches were checked')
+        self.assertContains(response,'Some results still need confirmation')
         self.assertContains(response,j.title)
         self.assertNotContains(response,'we will email the complete result')

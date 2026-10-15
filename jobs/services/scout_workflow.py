@@ -17,9 +17,11 @@ def bounded_workflow(diagnostics):
     if existing is not None:
         yield
         return
-    state = {'deadline': monotonic() + 18, 'calls': 0, 'diagnostics': diagnostics}
+    started = monotonic()
+    state = {'deadline': started + 18, 'preparation_deadline': started + 3,
+             'calls': 0, 'diagnostics': diagnostics}
     token = _budget.set(state)
-    diagnostics['workflow_version'] = 3
+    diagnostics['workflow_version'] = 4
     try:
         yield
     finally:
@@ -34,7 +36,7 @@ def can_call(*, reserve=0):
 
 def retrieval_time_available():
     state = _budget.get()
-    if state is None or state['deadline'] - monotonic() >= 4:
+    if state is None or state['deadline'] - monotonic() >= 6:
         return True
     state['diagnostics']['retrieval_deadline_reached'] = True
     return False
@@ -44,6 +46,13 @@ def record_stage(stage, status, **metrics):
     state = _budget.get()
     if state is not None:
         state['diagnostics'].setdefault('stages', []).append({'stage': stage, 'status': status, **metrics})
+
+
+def preparation_unavailable():
+    state = _budget.get()
+    if state is not None:
+        state['preparation_failed'] = True
+        state['diagnostics']['preparation_failed'] = True
 
 
 def eligibility_memo():
@@ -58,21 +67,27 @@ def generate(prompt, **kwargs):
     """At most four provider calls and 18 seconds of total model time per search."""
     from jobs.services.ai import AIClient
     state = _budget.get()
+    stage = kwargs.pop('stage', 'model')
     if state is not None:
         remaining = state['deadline'] - monotonic()
+        if stage in {'parse', 'plan', 'refinement'}:
+            remaining = min(remaining, state['preparation_deadline'] - monotonic())
+            if state.get('preparation_failed') or remaining < 0.25:
+                raise TimeoutError('Scout preparation budget exhausted')
         if state['calls'] >= 4 or remaining < 0.25:
             state['diagnostics']['llm_budget_exhausted'] = True
             raise TimeoutError('Scout model budget exhausted')
         kwargs['timeout'] = min(kwargs.get('timeout', 6), remaining)
         state['calls'] += 1
     kwargs['max_retries'] = 0
-    stage = kwargs.pop('stage', 'model')
     started = monotonic()
     status = 'ok'
     try:
         return AIClient().generate(prompt, **kwargs)
     except Exception:
         status = 'error'
+        if state is not None and stage in {'parse', 'plan', 'refinement'}:
+            preparation_unavailable()
         raise
     finally:
         record_stage(stage, status, seconds=round(monotonic()-started, 4),
@@ -82,6 +97,10 @@ def generate(prompt, **kwargs):
 def plan_terms(preferences, diagnostics, *, retry=False):
     """Plan lexical retrieval only; the model cannot change eligibility preferences."""
     if not getattr(settings, 'SCOUT_MULTISTEP_ENABLED', True) or not preferences.get('intent_text') or not getattr(settings, 'DEEPSEEK_API_KEY', ''):
+        return []
+    state = _budget.get()
+    if state is not None and state.get('preparation_failed'):
+        diagnostics['refinement' if retry else 'planning'] = 'preparation_failed'
         return []
     terms=preferences.get('_retrieval_terms')
     if (not retry and getattr(settings,'SCOUT_COMBINED_PLAN_ENABLED',True)

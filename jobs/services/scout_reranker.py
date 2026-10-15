@@ -185,6 +185,7 @@ def rerank(candidates,preferences,fallback,diagnostics,relaxed=False):
             diagnostics['reranker']='review_partial' if pending_failed else ('decision_cache' if not pending else 'model')
         selected=[]
         decisions={item['id']:item for item in json.loads(output)['decisions']}
+        diagnostics['review_rejected_ids'] = [pk for pk, item in decisions.items() if not item['relevant']]
         for pk,quotes in accepted:
             job=jobs[pk]
             if not evaluate_job(job,preferences,relaxed=relaxed).allowed:continue

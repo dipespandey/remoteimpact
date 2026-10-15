@@ -96,13 +96,21 @@ def validate(output, evidence, limit, preferences=None):
     return accepted
 
 
-def close_matches(qs, preferences, terms, diagnostics, limit=MAX_PICKS, force=False, exclude_titles=()):
+def close_matches(qs, preferences, terms, diagnostics, limit=MAX_PICKS, force=False, exclude_titles=(), candidates=None):
     """Up to ``limit`` labelled close matches, or [] when disabled or nothing fits."""
     if not (force or enabled()) or not preferences.get("intent_text"):
         return []
     from jobs.services.scout_retrieval import retrieve
 
-    candidates = retrieve(qs, loose_preferences(preferences), terms, diagnostics.setdefault("close", {}), relaxed=True)
+    if diagnostics.get('reranker') == 'review_unavailable':
+        diagnostics['close_matches'] = 'unavailable'
+        return []
+    if candidates is None:
+        candidates = retrieve(qs, loose_preferences(preferences), terms, diagnostics.setdefault("close", {}), relaxed=True)
+    else:
+        from jobs.services.scout_constraints import evaluate_job
+        candidates = [j for j in candidates if evaluate_job(j, loose_preferences(preferences), relaxed=True).allowed]
+        diagnostics['close_reused_candidates'] = len(candidates)
     if getattr(settings,'SCOUT_SOURCE_RANKING_ENABLED',True):
         from jobs.services.scout_source_profile import shortlist
         candidates=shortlist(candidates,preferences,limit=CANDIDATES)

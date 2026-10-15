@@ -47,7 +47,7 @@ def _cached(key, segments):
     return None
 
 
-def check_matches(jobs, preferences, diagnostics):
+def check_matches(jobs, preferences, diagnostics, *, allow_api=True):
     jobs = list(jobs)
     if not getattr(settings, 'SCOUT_REMOTE_POLICY_ENABLED', False):
         diagnostics['remote_policy'] = 'disabled'
@@ -84,7 +84,7 @@ def check_matches(jobs, preferences, diagnostics):
             continue
         pending.append({'row': row, 'record': record, 'segments': segments, 'key': key})
 
-    if pending and getattr(settings, 'DEEPSEEK_API_KEY', ''):
+    if allow_api and pending and getattr(settings, 'DEEPSEEK_API_KEY', ''):
         from jobs.services.scout_workflow import can_call, generate
         if can_call():
             try:
