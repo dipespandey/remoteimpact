@@ -68,7 +68,7 @@ class AvailabilityPolicyTests(TestCase):
 
     def test_schema_explicit_deadline_country_and_annual_salary(self):
         job = self.job(country='Norway', description='Applicants must be based in Norway. This role is remote in Norway.', expires_at=timezone.now() + timedelta(days=3),
-                       salary_min=Decimal('65000'), salary_max=Decimal('80000'), raw_data={'salaryPeriod':'YEAR'})
+                       salary_min=Decimal('65000'), salary_max=Decimal('80000'), raw_data={'salaryPeriod':'YEAR','salaryCurrency':'USD'})
         data = json.loads(job_posting_schema_json(job, 'https://example.org'))
         self.assertEqual(data['validThrough'], job.expires_at.isoformat())
         self.assertEqual(data['applicantLocationRequirements']['name'], 'Norway')

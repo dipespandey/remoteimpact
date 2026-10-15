@@ -266,30 +266,91 @@ def _schema_description(job) -> str:
     import re
     from django.utils.html import strip_tags
 
-    text = job.description or job.requirements or job.impact or job.title
+    text = job.description or ""
     text = re.sub(r"(?i)<\s*(?:br\s*/?|/p|/li|/h[1-6]|/div|/ul|/ol)\s*>", "\n", text)
     text = re.sub(r"(?i)<\s*li[^>]*>", "\n- ", text)
     text = strip_tags(text).replace("\xa0", " ")
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n\s*\n+", "\n\n", text).strip()
-    return text[:5000]
+    return text
+
+
+
+def _omit_unknown_schema_values(value):
+    """Omit absent values recursively without deleting meaningful False/zero."""
+    if isinstance(value, str):
+        clean = value.strip()
+        return None if clean.casefold() in {"", "unknown", "n/a", "not specified", "not provided", "null", "none"} else clean
+    if isinstance(value, dict):
+        result = {key: cleaned for key, item in value.items()
+                  if (cleaned := _omit_unknown_schema_values(item)) is not None}
+        return result if result and set(result) != {"@type"} else None
+    if isinstance(value, list):
+        result = [cleaned for item in value if (cleaned := _omit_unknown_schema_values(item)) is not None]
+        return result or None
+    return value
+
+
+def _schema_employment_type(job, raw):
+    """Database defaults alone are not evidence of an employment arrangement."""
+    import re
+    mappings = {"full-time": ("FULL_TIME", r"full[\s_-]*time"),
+                "part-time": ("PART_TIME", r"part[\s_-]*time"),
+                "contract": ("CONTRACTOR", r"contract(?:or)?"),
+                "freelance": ("CONTRACTOR", r"freelanc(?:e|er)"),
+                "internship": ("INTERN", r"intern(?:ship)?")}
+    selected = mappings.get(job.job_type)
+    if not selected:
+        return None
+    if job.source == job.Source.MANUAL:
+        return selected[0]
+    source_values = [raw.get(key) for key in ("employmentType", "employment_type", "jobType", "job_types", "job_type", "role_tags")]
+    api = raw.get("api_response")
+    if isinstance(api, dict):
+        source_values.extend(api.get(key) for key in ("employmentType", "employment_type", "commitment", "type"))
+    evidence = " ".join(str(value) for value in source_values if value)
+    evidence += " " + " ".join((job.description or "", job.requirements or ""))
+    return selected[0] if re.search(r"\b" + selected[1] + r"\b", evidence, re.I) else None
+
+
+def _schema_physical_location(raw):
+    """Only a source's structured worksite address, never a generic label as a city."""
+    from django_countries import countries
+    location = raw.get("jobLocation")
+    if not isinstance(location, dict):
+        return None
+    address = location.get("address")
+    if not isinstance(address, dict):
+        return None
+    country = address.get("addressCountry")
+    if isinstance(country, dict):
+        country = country.get("name")
+    if not isinstance(country, str):
+        return None
+    code = country.upper() if country.upper() in dict(countries) else countries.by_name(country)
+    if not code:
+        return None
+    clean_address = {"@type": "PostalAddress", "addressCountry": code}
+    clean_address.update({key: address[key] for key in ("streetAddress", "addressLocality", "addressRegion", "postalCode")
+                          if isinstance(address.get(key), str) and address[key].strip()})
+    return {"@type": "Place", "address": clean_address}
 
 
 def job_posting_schema_json(job, site_url: str) -> str:
     """Serialize source facts without invented expiry, employer identity or geography."""
     import json
     import re
-    from django.utils.html import strip_tags
 
+    raw = job.raw_data if isinstance(job.raw_data, dict) else {}
     data = {
         "@context": "https://schema.org", "@type": "JobPosting",
         "title": job.title, "description": _schema_description(job),
-        "identifier": {"@type": "PropertyValue", "name": job.organization.name, "value": str(job.pk)},
+        "identifier": {"@type": "PropertyValue", "name": job.organization.name, "value": str(job.pk)} if job.pk is not None else None,
         "url": site_url.rstrip("/") + job.get_absolute_url(),
-        "datePosted": job.posted_at.isoformat(),
+        "datePosted": job.posted_at.isoformat() if job.posted_at and raw.get("posted_at_basis") != "first_seen" else None,
         "hiringOrganization": {"@type": "Organization", "name": job.organization.name},
-        "employmentType": {"full-time": "FULL_TIME", "part-time": "PART_TIME", "contract": "CONTRACTOR", "freelance": "CONTRACTOR"}.get(job.job_type, "OTHER"),
-        "directApply": job.source == job.Source.MANUAL,
+        "employmentType": _schema_employment_type(job, raw),
+        "directApply": True if job.source == job.Source.MANUAL else None,
     }
     if job.expires_at:
         data["validThrough"] = job.expires_at.isoformat()
@@ -298,19 +359,19 @@ def job_posting_schema_json(job, site_url: str) -> str:
         data["hiringOrganization"]["sameAs"] = website
     logo = job.organization.logo_src
     if logo:
-        data["hiringOrganization"]["logo"] = site_url.rstrip("/") + logo if logo.startswith("/") else logo
+        logo_url = site_url.rstrip("/") + logo if logo.startswith("/") else logo
+        data["hiringOrganization"]["logo"] = safe_application_destination(logo_url)
     # Eligibility must be grounded in positive residency/remote-work source
     # evidence. A normalized country field alone can be a lossy import label.
-    remote = bool(re.search(r"\bremote\b", job.location or "", re.I))
+    remote = bool(re.search(r"\bremote\b", job.location or "", re.I)) and not re.search(r"\bhybrid\b", job.location or "", re.I)
     if remote:
         data["jobLocationType"] = "TELECOMMUTE"
         eligible_countries = schema_applicant_countries(job) or label_applicant_countries(job)
         if eligible_countries:
             requirements = [{"@type": "Country", "name": name} for name in eligible_countries]
             data["applicantLocationRequirements"] = requirements[0] if len(requirements) == 1 else requirements
-    elif job.location:
-        data["jobLocation"] = {"@type": "Place", "address": {"@type": "PostalAddress", "addressLocality": job.location}}
-    raw = job.raw_data or {}
+    elif location := _schema_physical_location(raw):
+        data["jobLocation"] = location
     salary_meta = (raw.get("quality_enrichment") or {}).get("salary") or {}
     annual_evidence = (
         job.source == job.Source.MANUAL
@@ -324,7 +385,10 @@ def job_posting_schema_json(job, site_url: str) -> str:
         annual_evidence = False
     salary_values = [value for value in (job.salary_min, job.salary_max) if value is not None]
     currency = str(job.salary_currency or "")
-    if annual_evidence and salary_values and all(0 < value <= 10_000_000 for value in salary_values) and re.fullmatch(r"[A-Z]{3}", currency) and not str(salary_meta.get("method", "")).startswith("rejected"):
+    currency_evidence = job.source == job.Source.MANUAL or any(
+        str(raw.get(field) or "").upper() == currency for field in ("salaryCurrency", "salary_currency", "currency")
+    ) or bool(currency and re.search(r"\b" + re.escape(currency) + r"\b", " ".join((job.description or "", job.requirements or ""))))
+    if currency_evidence and annual_evidence and salary_values and all(0 < value <= 10_000_000 for value in salary_values) and re.fullmatch(r"[A-Z]{3}", currency) and not str(salary_meta.get("method", "")).startswith("rejected"):
         if job.salary_min is None or job.salary_max is None or job.salary_min <= job.salary_max:
             value = {"@type": "QuantitativeValue", "unitText": "YEAR"}
             if job.salary_min is not None:
@@ -334,7 +398,7 @@ def job_posting_schema_json(job, site_url: str) -> str:
             data["baseSalary"] = {"@type": "MonetaryAmount", "currency": currency, "value": value}
     # JSON serialization is necessary: escapejs emits JavaScript escapes (\\u0027
     # is valid, \\x is not JSON), and source text may contain a script terminator.
-    return json.dumps(data, ensure_ascii=False).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+    return json.dumps(_omit_unknown_schema_values(data), ensure_ascii=False).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
 
 
 def google_job_posting_json(job, site_url: str) -> str:

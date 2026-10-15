@@ -1,0 +1,98 @@
+{
+  "date": "2026-10-15",
+  "scope": "JobPosting fields with absent or unsupported values; not a broad SEO audit.",
+  "deployed": true,
+  "source_sha256": "f77ce0d66b728f850d41f15a609237c601cf5929c3ae7b8a6e06b06a50bb4701",
+  "backup": "/opt/easyclaw/backups/schema-fields-20261015T113759Z",
+  "policy": [
+    "Omit empty strings, nulls, empty containers and explicit unknown placeholders recursively. Preserve meaningful false/zero values when they are otherwise valid.",
+    "Do not substitute job titles or requirements for missing descriptions; keep the full supplied description.",
+    "Employment type requires a supported value plus employer entry or matching source wording/labels; unknown types do not become OTHER.",
+    "Only set directApply=true for employer-posted applications handled by this site; unknown external journeys omit the field.",
+    "Dates explicitly marked first_seen are not employer publication dates. Missing dates and deadlines are omitted.",
+    "Only publish a physical jobLocation from a structured source address with a recognized country; generic location labels are not city addresses.",
+    "Do not mark explicitly hybrid labels as TELECOMMUTE.",
+    "Salary requires known units, positive consistent bounds and documented currency; missing bounds remain absent.",
+    "Use only safe HTTP(S) website/logo URLs."
+  ],
+  "catalogue": {
+    "live_jobs": 3435,
+    "with_jobposting": 3435,
+    "unknown_or_empty_values": 0,
+    "serialization_errors": 0,
+    "fields_before": {
+      "@context": 3435,
+      "@type": 3435,
+      "title": 3435,
+      "description": 3435,
+      "identifier": 3435,
+      "url": 3435,
+      "datePosted": 3435,
+      "hiringOrganization": 3435,
+      "employmentType": 3435,
+      "directApply": 3435,
+      "validThrough": 203,
+      "jobLocationType": 3008,
+      "applicantLocationRequirements": 1716,
+      "baseSalary": 333,
+      "jobLocation": 427
+    },
+    "fields_after": {
+      "@context": 3435,
+      "@type": 3435,
+      "title": 3435,
+      "description": 3435,
+      "identifier": 3435,
+      "url": 3435,
+      "datePosted": 3435,
+      "hiringOrganization": 3435,
+      "validThrough": 203,
+      "jobLocationType": 3008,
+      "applicantLocationRequirements": 1716,
+      "employmentType": 2128,
+      "baseSalary": 333,
+      "directApply": 1
+    },
+    "omitted_since_previous_release": {
+      "employmentType": 1307,
+      "directApply": 3434,
+      "jobLocation": 427
+    },
+    "remaining_required_data_gaps": {
+      "remote_applicant_country": 1292,
+      "physical_or_remote_location": 427
+    }
+  },
+  "verification": {
+    "tests_passed": 57,
+    "suites": [
+      "test_schema_missing_fields",
+      "test_availability_policy",
+      "test_seo_review_identity",
+      "test_scout_source_evidence"
+    ],
+    "live_example": "https://remoteimpact.org/jobs/chief-operating-officer-apart-research/",
+    "health_status": 200,
+    "audit_page": "Same report repeated on production and controlled local Django fixtures; all output fields reviewed, no truncated evidence.",
+    "audit_outcomes": [
+      {
+        "title": "Production page issues",
+        "outcome": "not-needed",
+        "reason": "No issues, recommendations or warnings returned by the bounded page audit; it does not validate Google-required JobPosting facts."
+      },
+      {
+        "title": "Canonical differs from final URL",
+        "outcome": "not-needed",
+        "reason": "Local fixture intentionally retains the production canonical URL. The live page is self-canonical."
+      }
+    ],
+    "local_warning": "Non-HTTP links excluded from page link evidence; unrelated to JSON-LD validity."
+  },
+  "limitations": [
+    "Valid JSON and omission of unknown fields do not establish Google Jobs rich-result eligibility.",
+    "Google requires source-backed location data for job enhancement. Omitting missing required facts cannot eliminate those eligibility errors.",
+    "All 3435 current records retained title, description, employer and date fields. Existing unflagged imported publication dates are preserved; this change does not independently verify each original employer date.",
+    "Google Rich Results Test, indexing and search appearance were not independently verified."
+  ],
+  "guidance": "https://developers.google.com/search/docs/appearance/structured-data/job-posting"
+}
