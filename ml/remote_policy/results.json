@@ -1,0 +1,5460 @@
+{
+  "date": "2026-10-15",
+  "status": "experimental",
+  "production_ready": false,
+  "independent_human_labels": 0,
+  "selected_architecture": "Deterministic policy checks plus guarded language-model fallback.",
+  "vps_fallback": "deepseek-flash, explicit opt-in API",
+  "offline_fallback": "qwen3.5:4b, explicit local Ollama model",
+  "dataset": {
+    "id": "jobicy/remote-jobs",
+    "revision": "38b2307f0dc34786a46041c0c4455b61bbc1a8dd",
+    "unique_jobs": 4389,
+    "source_files": 56,
+    "license": "Jobicy Dataset Terms; employer text not relicensed",
+    "split_manifest": {
+      "seed": 412,
+      "source_revision": "38b2307f0dc34786a46041c0c4455b61bbc1a8dd",
+      "independent_human_labels": 0,
+      "label_caveat": "Synthetic semantics and source metadata are weak supervision, not full-posting human gold.",
+      "splits": {
+        "train": {
+          "rows": 5692,
+          "synthetic": 5280,
+          "metadata": 412,
+          "sha256": "2bfaab0ef7e6f411974f247456a1438078fb1397b799b6bd09df551c7dcc1e3d"
+        },
+        "dev": {
+          "rows": 1731,
+          "synthetic": 1660,
+          "metadata": 71,
+          "sha256": "de3e0040cf28a75d8d6a6535957ae5908e34a2fdc1eef4f01d98fc7ca10ef7b7"
+        },
+        "test": {
+          "rows": 2304,
+          "synthetic": 1980,
+          "metadata": 324,
+          "sha256": "2e958d0e52ad0e65faacb73ad3f833918307b018d11c0cf63f1c23a9cb7953ce"
+        }
+      }
+    }
+  },
+  "trained_models": {
+    "minilm": {
+      "base": "cross-encoder/ms-marco-MiniLM-L6-v2",
+      "base_revision": "233902d25c440f23af6f7d6e94d2946bac0bee0a",
+      "parameters": 22714371,
+      "weights_sha256": "e76f1b84b3e5ed5ac87cc2460b8b8d896e27e5cbdea023a83d79ffd57f0c401c",
+      "selected_epoch": 4,
+      "development": {
+        "n": 1731,
+        "accuracy": 0.9127671865973426,
+        "macro_f1": 0.907030707631394,
+        "labels": [
+          "compatible",
+          "incompatible",
+          "unknown"
+        ],
+        "confusion_matrix": [
+          [
+            506,
+            23,
+            0
+          ],
+          [
+            41,
+            706,
+            0
+          ],
+          [
+            87,
+            0,
+            368
+          ]
+        ],
+        "false_compatible": 128,
+        "false_incompatible": 23,
+        "compatible_precision": 0.7981072555205048,
+        "incompatible_precision": 0.9684499314128944,
+        "abstention_rate": 0.21259387637203928,
+        "epoch": 4,
+        "loss": 0.12025924608781097,
+        "seconds": 8.896938958903775
+      },
+      "production_ready": false
+    },
+    "minilm-v2": {
+      "base": "cross-encoder/ms-marco-MiniLM-L6-v2",
+      "base_revision": "233902d25c440f23af6f7d6e94d2946bac0bee0a",
+      "parameters": 22714371,
+      "weights_sha256": "f474b1303a0ec6840e68bbf9799d142304722fd2701ef5e4316953d2b6f19605",
+      "selected_epoch": 5,
+      "development": {
+        "n": 1731,
+        "accuracy": 0.9202772963604853,
+        "macro_f1": 0.9123867848229539,
+        "labels": [
+          "compatible",
+          "incompatible",
+          "unknown"
+        ],
+        "confusion_matrix": [
+          [
+            528,
+            1,
+            0
+          ],
+          [
+            40,
+            707,
+            0
+          ],
+          [
+            94,
+            3,
+            358
+          ]
+        ],
+        "false_compatible": 134,
+        "false_incompatible": 4,
+        "compatible_precision": 0.797583081570997,
+        "incompatible_precision": 0.9943741209563994,
+        "abstention_rate": 0.20681686886192951,
+        "epoch": 5,
+        "loss": 0.0776676671223694,
+        "seconds": 17.15479383408092
+      },
+      "production_ready": false
+    },
+    "gte": {
+      "base": "thenlper/gte-small",
+      "base_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+      "parameters": 33361155,
+      "weights_sha256": "e00e1164521137937abde9ef535005829ae3a19021925c90d90364e29b89e34e",
+      "selected_epoch": 4,
+      "development": {
+        "n": 1731,
+        "accuracy": 0.8994800693240901,
+        "macro_f1": 0.8950084817896496,
+        "labels": [
+          "compatible",
+          "incompatible",
+          "unknown"
+        ],
+        "confusion_matrix": [
+          [
+            518,
+            11,
+            0
+          ],
+          [
+            43,
+            704,
+            0
+          ],
+          [
+            12,
+            108,
+            335
+          ]
+        ],
+        "false_compatible": 55,
+        "false_incompatible": 119,
+        "compatible_precision": 0.9040139616055847,
+        "incompatible_precision": 0.8554070473876063,
+        "abstention_rate": 0.19352975158867705,
+        "epoch": 4,
+        "loss": 0.09078013277455663,
+        "seconds": 41.35782237513922
+      },
+      "production_ready": false
+    }
+  },
+  "evaluations": {
+    "dev-final": {
+      "split": "dev",
+      "n": 55,
+      "input_sha256": "c43329289b7fb265e725b1cdd6386f40dda53d757b65b754bca31a5e77fd94ba",
+      "results": {
+        "rules": {
+          "n": 55,
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              24,
+              0,
+              0
+            ],
+            [
+              0,
+              20,
+              0
+            ],
+            [
+              0,
+              0,
+              11
+            ]
+          ],
+          "false_compatible": 0,
+          "false_incompatible": 0,
+          "compatible_precision": 1.0,
+          "incompatible_precision": 1.0,
+          "abstention_rate": 0.2,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 1.0,
+              "macro_f1": 1.0,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  20,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  16,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.23404255319148937
+            }
+          },
+          "latency_ms": {
+            "p50": 0.03395788371562958,
+            "p95": 0.11980454437434668,
+            "max": 0.883874949067831,
+            "hardware": "Apple Silicon development machine; not VPS"
+          }
+        },
+        "minilm": {
+          "n": 55,
+          "accuracy": 0.8909090909090909,
+          "macro_f1": 0.9073684210526315,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              22,
+              2,
+              0
+            ],
+            [
+              4,
+              16,
+              0
+            ],
+            [
+              0,
+              0,
+              11
+            ]
+          ],
+          "false_compatible": 4,
+          "false_incompatible": 2,
+          "compatible_precision": 0.8461538461538461,
+          "incompatible_precision": 0.8888888888888888,
+          "abstention_rate": 0.2,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.8723404255319149,
+              "macro_f1": 0.8857142857142857,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  18,
+                  2,
+                  0
+                ],
+                [
+                  4,
+                  12,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 4,
+              "false_incompatible": 2,
+              "compatible_precision": 0.8181818181818182,
+              "incompatible_precision": 0.8571428571428571,
+              "abstention_rate": 0.23404255319148937
+            }
+          },
+          "latency_ms": {
+            "p50": 2.288311952725053,
+            "p95": 3.5491876187734306,
+            "max": 4.976874915882945,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "weights_sha256": "e76f1b84b3e5ed5ac87cc2460b8b8d896e27e5cbdea023a83d79ffd57f0c401c"
+        },
+        "minilm-v2": {
+          "n": 55,
+          "accuracy": 0.9272727272727272,
+          "macro_f1": 0.9373219373219372,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              24,
+              0,
+              0
+            ],
+            [
+              4,
+              16,
+              0
+            ],
+            [
+              0,
+              0,
+              11
+            ]
+          ],
+          "false_compatible": 4,
+          "false_incompatible": 0,
+          "compatible_precision": 0.8571428571428571,
+          "incompatible_precision": 1.0,
+          "abstention_rate": 0.2,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.9148936170212766,
+              "macro_f1": 0.9220779220779219,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  20,
+                  0,
+                  0
+                ],
+                [
+                  4,
+                  12,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 4,
+              "false_incompatible": 0,
+              "compatible_precision": 0.8333333333333334,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.23404255319148937
+            }
+          },
+          "latency_ms": {
+            "p50": 2.321499981917441,
+            "p95": 3.6475835950113833,
+            "max": 5.130209028720856,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "weights_sha256": "f474b1303a0ec6840e68bbf9799d142304722fd2701ef5e4316953d2b6f19605"
+        },
+        "gte": {
+          "n": 55,
+          "accuracy": 0.9090909090909091,
+          "macro_f1": 0.9238886005881336,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              21,
+              3,
+              0
+            ],
+            [
+              2,
+              18,
+              0
+            ],
+            [
+              0,
+              0,
+              11
+            ]
+          ],
+          "false_compatible": 2,
+          "false_incompatible": 3,
+          "compatible_precision": 0.9130434782608695,
+          "incompatible_precision": 0.8571428571428571,
+          "abstention_rate": 0.2,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.8936170212765957,
+              "macro_f1": 0.9067599067599068,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  17,
+                  3,
+                  0
+                ],
+                [
+                  2,
+                  14,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 2,
+              "false_incompatible": 3,
+              "compatible_precision": 0.8947368421052632,
+              "incompatible_precision": 0.8235294117647058,
+              "abstention_rate": 0.23404255319148937
+            }
+          },
+          "latency_ms": {
+            "p50": 4.1728540090844035,
+            "p95": 6.660385290160775,
+            "max": 9.273167001083493,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "weights_sha256": "e00e1164521137937abde9ef535005829ae3a19021925c90d90364e29b89e34e"
+        },
+        "embeddings_logreg": {
+          "n": 55,
+          "accuracy": 0.7454545454545455,
+          "macro_f1": 0.7806267806267807,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              19,
+              5,
+              0
+            ],
+            [
+              9,
+              11,
+              0
+            ],
+            [
+              0,
+              0,
+              11
+            ]
+          ],
+          "false_compatible": 9,
+          "false_incompatible": 5,
+          "compatible_precision": 0.6785714285714286,
+          "incompatible_precision": 0.6875,
+          "abstention_rate": 0.2,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.7021276595744681,
+              "macro_f1": 0.7272727272727272,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  15,
+                  5,
+                  0
+                ],
+                [
+                  9,
+                  7,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 9,
+              "false_incompatible": 5,
+              "compatible_precision": 0.625,
+              "incompatible_precision": 0.5833333333333334,
+              "abstention_rate": 0.23404255319148937
+            }
+          },
+          "batch_ms": 411.8086248636246
+        },
+        "qwen3.5:0.8b": {
+          "n": 55,
+          "accuracy": 0.18181818181818182,
+          "macro_f1": 0.12345679012345678,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              0,
+              13,
+              11
+            ],
+            [
+              0,
+              10,
+              10
+            ],
+            [
+              0,
+              11,
+              0
+            ]
+          ],
+          "false_compatible": 0,
+          "false_incompatible": 24,
+          "compatible_precision": 0.0,
+          "incompatible_precision": 0.29411764705882354,
+          "abstention_rate": 0.38181818181818183,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 0.125,
+              "macro_f1": 0.13333333333333333,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  0,
+                  0,
+                  4
+                ],
+                [
+                  0,
+                  1,
+                  3
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 0.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.875
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.19148936170212766,
+              "macro_f1": 0.12244897959183675,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  0,
+                  13,
+                  7
+                ],
+                [
+                  0,
+                  9,
+                  7
+                ],
+                [
+                  0,
+                  11,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 24,
+              "compatible_precision": 0.0,
+              "incompatible_precision": 0.2727272727272727,
+              "abstention_rate": 0.2978723404255319
+            }
+          },
+          "latency_ms": {
+            "p50": 475.3750420641154,
+            "p95": 611.1980377929284,
+            "max": 715.1828750502318,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "cached_calls": 55,
+          "request_errors": 0,
+          "model_digest": "de63045f29755d4721c09d54c9b45c2dadb644f4fd7d604d4cac90d96049971c"
+        },
+        "rules+qwen3.5:0.8b": {
+          "n": 55,
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              24,
+              0,
+              0
+            ],
+            [
+              0,
+              20,
+              0
+            ],
+            [
+              0,
+              0,
+              11
+            ]
+          ],
+          "false_compatible": 0,
+          "false_incompatible": 0,
+          "compatible_precision": 1.0,
+          "incompatible_precision": 1.0,
+          "abstention_rate": 0.2,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 1.0,
+              "macro_f1": 1.0,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  20,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  16,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.23404255319148937
+            }
+          },
+          "fallback_fraction": 0.0
+        },
+        "qwen3.5:4b": {
+          "n": 55,
+          "accuracy": 0.8,
+          "macro_f1": 0.7123015873015873,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              21,
+              3,
+              0
+            ],
+            [
+              0,
+              20,
+              0
+            ],
+            [
+              3,
+              5,
+              3
+            ]
+          ],
+          "false_compatible": 3,
+          "false_incompatible": 8,
+          "compatible_precision": 0.875,
+          "incompatible_precision": 0.7142857142857143,
+          "abstention_rate": 0.05454545454545454,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.7659574468085106,
+              "macro_f1": 0.6928571428571427,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  17,
+                  3,
+                  0
+                ],
+                [
+                  0,
+                  16,
+                  0
+                ],
+                [
+                  3,
+                  5,
+                  3
+                ]
+              ],
+              "false_compatible": 3,
+              "false_incompatible": 8,
+              "compatible_precision": 0.85,
+              "incompatible_precision": 0.6666666666666666,
+              "abstention_rate": 0.06382978723404255
+            }
+          },
+          "latency_ms": {
+            "p50": 961.9411670137197,
+            "p95": 1449.5703213382512,
+            "max": 1547.3637080285698,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "cached_calls": 55,
+          "request_errors": 0,
+          "model_digest": "d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04"
+        },
+        "rules+qwen3.5:4b": {
+          "n": 55,
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              24,
+              0,
+              0
+            ],
+            [
+              0,
+              20,
+              0
+            ],
+            [
+              0,
+              0,
+              11
+            ]
+          ],
+          "false_compatible": 0,
+          "false_incompatible": 0,
+          "compatible_precision": 1.0,
+          "incompatible_precision": 1.0,
+          "abstention_rate": 0.2,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 1.0,
+              "macro_f1": 1.0,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  20,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  16,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.23404255319148937
+            }
+          },
+          "fallback_fraction": 0.0
+        }
+      }
+    },
+    "test-report": {
+      "split": "test",
+      "n": 133,
+      "input_sha256": "22d688a18492e9ab50e40650845d42b73111c94152f909c340e2f745691f1927",
+      "results": {
+        "rules": {
+          "n": 133,
+          "accuracy": 0.7368421052631579,
+          "macro_f1": 0.736682808716707,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              30,
+              0,
+              14
+            ],
+            [
+              5,
+              24,
+              11
+            ],
+            [
+              5,
+              0,
+              44
+            ]
+          ],
+          "false_compatible": 10,
+          "false_incompatible": 0,
+          "compatible_precision": 0.75,
+          "incompatible_precision": 1.0,
+          "abstention_rate": 0.518796992481203,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.46808510638297873,
+              "macro_f1": 0.4675020885547201,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  10,
+                  0,
+                  10
+                ],
+                [
+                  4,
+                  5,
+                  7
+                ],
+                [
+                  4,
+                  0,
+                  7
+                ]
+              ],
+              "false_compatible": 8,
+              "false_incompatible": 0,
+              "compatible_precision": 0.5555555555555556,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.5106382978723404
+            },
+            "jobicy_public_excerpt": {
+              "n": 48,
+              "accuracy": 0.875,
+              "macro_f1": 0.8602540834845734,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  8,
+                  0,
+                  3
+                ],
+                [
+                  0,
+                  8,
+                  3
+                ],
+                [
+                  0,
+                  0,
+                  26
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.6666666666666666
+            },
+            "original_challenge": {
+              "n": 30,
+              "accuracy": 0.8666666666666667,
+              "macro_f1": 0.8657017543859649,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  8,
+                  0,
+                  1
+                ],
+                [
+                  1,
+                  7,
+                  1
+                ],
+                [
+                  1,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 2,
+              "false_incompatible": 0,
+              "compatible_precision": 0.8,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.43333333333333335
+            }
+          },
+          "latency_ms": {
+            "p50": 0.04024989902973175,
+            "p95": 0.07859221659600735,
+            "max": 1.0050840210169554,
+            "hardware": "Apple Silicon development machine; not VPS"
+          }
+        },
+        "minilm": {
+          "n": 133,
+          "accuracy": 0.7142857142857143,
+          "macro_f1": 0.7112573099415204,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              30,
+              8,
+              6
+            ],
+            [
+              15,
+              25,
+              0
+            ],
+            [
+              7,
+              2,
+              40
+            ]
+          ],
+          "false_compatible": 22,
+          "false_incompatible": 10,
+          "compatible_precision": 0.5769230769230769,
+          "incompatible_precision": 0.7142857142857143,
+          "abstention_rate": 0.3458646616541353,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.6808510638297872,
+              "macro_f1": 0.6909642600699512,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  13,
+                  3,
+                  4
+                ],
+                [
+                  8,
+                  8,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 8,
+              "false_incompatible": 3,
+              "compatible_precision": 0.6190476190476191,
+              "incompatible_precision": 0.7272727272727273,
+              "abstention_rate": 0.3191489361702128
+            },
+            "jobicy_public_excerpt": {
+              "n": 48,
+              "accuracy": 0.7916666666666666,
+              "macro_f1": 0.7435353535353535,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  7,
+                  3,
+                  1
+                ],
+                [
+                  3,
+                  8,
+                  0
+                ],
+                [
+                  3,
+                  0,
+                  23
+                ]
+              ],
+              "false_compatible": 6,
+              "false_incompatible": 3,
+              "compatible_precision": 0.5384615384615384,
+              "incompatible_precision": 0.7272727272727273,
+              "abstention_rate": 0.5
+            },
+            "original_challenge": {
+              "n": 30,
+              "accuracy": 0.5666666666666667,
+              "macro_f1": 0.5696245444529197,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  6,
+                  2,
+                  1
+                ],
+                [
+                  4,
+                  5,
+                  0
+                ],
+                [
+                  4,
+                  2,
+                  6
+                ]
+              ],
+              "false_compatible": 8,
+              "false_incompatible": 4,
+              "compatible_precision": 0.42857142857142855,
+              "incompatible_precision": 0.5555555555555556,
+              "abstention_rate": 0.23333333333333334
+            }
+          },
+          "latency_ms": {
+            "p50": 2.194666536524892,
+            "p95": 2.52947915578261,
+            "max": 3.001541830599308,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "weights_sha256": "e76f1b84b3e5ed5ac87cc2460b8b8d896e27e5cbdea023a83d79ffd57f0c401c"
+        },
+        "minilm-v2": {
+          "n": 133,
+          "accuracy": 0.7142857142857143,
+          "macro_f1": 0.7038917694737469,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              31,
+              7,
+              6
+            ],
+            [
+              13,
+              22,
+              5
+            ],
+            [
+              6,
+              1,
+              42
+            ]
+          ],
+          "false_compatible": 19,
+          "false_incompatible": 8,
+          "compatible_precision": 0.62,
+          "incompatible_precision": 0.7333333333333333,
+          "abstention_rate": 0.39849624060150374,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.7446808510638298,
+              "macro_f1": 0.7426739926739927,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  15,
+                  1,
+                  4
+                ],
+                [
+                  5,
+                  9,
+                  2
+                ],
+                [
+                  0,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 5,
+              "false_incompatible": 1,
+              "compatible_precision": 0.75,
+              "incompatible_precision": 0.9,
+              "abstention_rate": 0.3617021276595745
+            },
+            "jobicy_public_excerpt": {
+              "n": 48,
+              "accuracy": 0.7708333333333334,
+              "macro_f1": 0.6905901116427432,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  7,
+                  3,
+                  1
+                ],
+                [
+                  3,
+                  5,
+                  3
+                ],
+                [
+                  1,
+                  0,
+                  25
+                ]
+              ],
+              "false_compatible": 4,
+              "false_incompatible": 3,
+              "compatible_precision": 0.6363636363636364,
+              "incompatible_precision": 0.625,
+              "abstention_rate": 0.6041666666666666
+            },
+            "original_challenge": {
+              "n": 30,
+              "accuracy": 0.5,
+              "macro_f1": 0.5062779497764017,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  5,
+                  3,
+                  1
+                ],
+                [
+                  5,
+                  4,
+                  0
+                ],
+                [
+                  5,
+                  1,
+                  6
+                ]
+              ],
+              "false_compatible": 10,
+              "false_incompatible": 4,
+              "compatible_precision": 0.3333333333333333,
+              "incompatible_precision": 0.5,
+              "abstention_rate": 0.23333333333333334
+            }
+          },
+          "latency_ms": {
+            "p50": 2.193583524785936,
+            "p95": 2.5753332884050906,
+            "max": 2.9659580904990435,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "weights_sha256": "f474b1303a0ec6840e68bbf9799d142304722fd2701ef5e4316953d2b6f19605"
+        },
+        "gte": {
+          "n": 133,
+          "accuracy": 0.7293233082706767,
+          "macro_f1": 0.7216989695441288,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              32,
+              6,
+              6
+            ],
+            [
+              8,
+              24,
+              8
+            ],
+            [
+              5,
+              3,
+              41
+            ]
+          ],
+          "false_compatible": 13,
+          "false_incompatible": 9,
+          "compatible_precision": 0.7111111111111111,
+          "incompatible_precision": 0.7272727272727273,
+          "abstention_rate": 0.41353383458646614,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.723404255319149,
+              "macro_f1": 0.721418918918919,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  14,
+                  0,
+                  6
+                ],
+                [
+                  3,
+                  9,
+                  4
+                ],
+                [
+                  0,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 3,
+              "false_incompatible": 0,
+              "compatible_precision": 0.8235294117647058,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.44680851063829785
+            },
+            "jobicy_public_excerpt": {
+              "n": 48,
+              "accuracy": 0.75,
+              "macro_f1": 0.7078985507246377,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  8,
+                  3,
+                  0
+                ],
+                [
+                  3,
+                  7,
+                  1
+                ],
+                [
+                  3,
+                  2,
+                  21
+                ]
+              ],
+              "false_compatible": 6,
+              "false_incompatible": 5,
+              "compatible_precision": 0.5714285714285714,
+              "incompatible_precision": 0.5833333333333334,
+              "abstention_rate": 0.4583333333333333
+            },
+            "original_challenge": {
+              "n": 30,
+              "accuracy": 0.6333333333333333,
+              "macro_f1": 0.6173890608875129,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  6,
+                  3,
+                  0
+                ],
+                [
+                  2,
+                  4,
+                  3
+                ],
+                [
+                  2,
+                  1,
+                  9
+                ]
+              ],
+              "false_compatible": 4,
+              "false_incompatible": 4,
+              "compatible_precision": 0.6,
+              "incompatible_precision": 0.5,
+              "abstention_rate": 0.4
+            }
+          },
+          "latency_ms": {
+            "p50": 3.8618125254288316,
+            "p95": 4.4719267170876265,
+            "max": 5.324957892298698,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "weights_sha256": "e00e1164521137937abde9ef535005829ae3a19021925c90d90364e29b89e34e"
+        },
+        "embeddings_logreg": {
+          "n": 133,
+          "accuracy": 0.556390977443609,
+          "macro_f1": 0.5541851012975633,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              23,
+              10,
+              11
+            ],
+            [
+              13,
+              20,
+              7
+            ],
+            [
+              14,
+              4,
+              31
+            ]
+          ],
+          "false_compatible": 27,
+          "false_incompatible": 14,
+          "compatible_precision": 0.46,
+          "incompatible_precision": 0.5882352941176471,
+          "abstention_rate": 0.3684210526315789,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.46808510638297873,
+              "macro_f1": 0.4677791344458011,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  9,
+                  5,
+                  6
+                ],
+                [
+                  8,
+                  5,
+                  3
+                ],
+                [
+                  2,
+                  1,
+                  8
+                ]
+              ],
+              "false_compatible": 10,
+              "false_incompatible": 6,
+              "compatible_precision": 0.47368421052631576,
+              "incompatible_precision": 0.45454545454545453,
+              "abstention_rate": 0.3617021276595745
+            },
+            "jobicy_public_excerpt": {
+              "n": 48,
+              "accuracy": 0.5416666666666666,
+              "macro_f1": 0.5227685492801772,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  5,
+                  5,
+                  1
+                ],
+                [
+                  2,
+                  7,
+                  2
+                ],
+                [
+                  10,
+                  2,
+                  14
+                ]
+              ],
+              "false_compatible": 12,
+              "false_incompatible": 7,
+              "compatible_precision": 0.29411764705882354,
+              "incompatible_precision": 0.5,
+              "abstention_rate": 0.3541666666666667
+            },
+            "original_challenge": {
+              "n": 30,
+              "accuracy": 0.6,
+              "macro_f1": 0.5881370091896407,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  5,
+                  0,
+                  4
+                ],
+                [
+                  3,
+                  4,
+                  2
+                ],
+                [
+                  2,
+                  1,
+                  9
+                ]
+              ],
+              "false_compatible": 5,
+              "false_incompatible": 1,
+              "compatible_precision": 0.5,
+              "incompatible_precision": 0.8,
+              "abstention_rate": 0.5
+            }
+          },
+          "batch_ms": 390.6217080075294
+        },
+        "qwen3.5:0.8b": {
+          "n": 133,
+          "accuracy": 0.24060150375939848,
+          "macro_f1": 0.14625501352485776,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              0,
+              32,
+              12
+            ],
+            [
+              0,
+              31,
+              9
+            ],
+            [
+              0,
+              48,
+              1
+            ]
+          ],
+          "false_compatible": 0,
+          "false_incompatible": 80,
+          "compatible_precision": 0.0,
+          "incompatible_precision": 0.27927927927927926,
+          "abstention_rate": 0.16541353383458646,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 0.0,
+              "macro_f1": 0.0,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  0,
+                  2,
+                  2
+                ],
+                [
+                  0,
+                  0,
+                  4
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 2,
+              "compatible_precision": 0.0,
+              "incompatible_precision": 0.0,
+              "abstention_rate": 0.75
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.2978723404255319,
+              "macro_f1": 0.16374269005847952,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  0,
+                  16,
+                  4
+                ],
+                [
+                  0,
+                  14,
+                  2
+                ],
+                [
+                  0,
+                  11,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 27,
+              "compatible_precision": 0.0,
+              "incompatible_precision": 0.34146341463414637,
+              "abstention_rate": 0.1276595744680851
+            },
+            "jobicy_public_excerpt": {
+              "n": 48,
+              "accuracy": 0.1875,
+              "macro_f1": 0.11320754716981131,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  0,
+                  7,
+                  4
+                ],
+                [
+                  0,
+                  9,
+                  2
+                ],
+                [
+                  0,
+                  26,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 33,
+              "compatible_precision": 0.0,
+              "incompatible_precision": 0.21428571428571427,
+              "abstention_rate": 0.125
+            },
+            "original_challenge": {
+              "n": 30,
+              "accuracy": 0.3,
+              "macro_f1": 0.19404761904761902,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  0,
+                  7,
+                  2
+                ],
+                [
+                  0,
+                  8,
+                  1
+                ],
+                [
+                  0,
+                  11,
+                  1
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 18,
+              "compatible_precision": 0.0,
+              "incompatible_precision": 0.3076923076923077,
+              "abstention_rate": 0.13333333333333333
+            }
+          },
+          "latency_ms": {
+            "p50": 165.51029216498137,
+            "p95": 180.2260586526245,
+            "max": 203.06866709142923,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "cached_calls": 1,
+          "request_errors": 0,
+          "model_digest": "de63045f29755d4721c09d54c9b45c2dadb644f4fd7d604d4cac90d96049971c"
+        },
+        "rules+qwen3.5:0.8b": {
+          "n": 133,
+          "accuracy": 0.7593984962406015,
+          "macro_f1": 0.753052503052503,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              30,
+              9,
+              5
+            ],
+            [
+              5,
+              28,
+              7
+            ],
+            [
+              5,
+              1,
+              43
+            ]
+          ],
+          "false_compatible": 10,
+          "false_incompatible": 10,
+          "compatible_precision": 0.75,
+          "incompatible_precision": 0.7368421052631579,
+          "abstention_rate": 0.41353383458646614,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.5106382978723404,
+              "macro_f1": 0.5091976428939526,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  10,
+                  6,
+                  4
+                ],
+                [
+                  4,
+                  7,
+                  5
+                ],
+                [
+                  4,
+                  0,
+                  7
+                ]
+              ],
+              "false_compatible": 8,
+              "false_incompatible": 6,
+              "compatible_precision": 0.5555555555555556,
+              "incompatible_precision": 0.5384615384615384,
+              "abstention_rate": 0.3404255319148936
+            },
+            "jobicy_public_excerpt": {
+              "n": 48,
+              "accuracy": 0.875,
+              "macro_f1": 0.8502132949119982,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  8,
+                  2,
+                  1
+                ],
+                [
+                  0,
+                  9,
+                  2
+                ],
+                [
+                  0,
+                  1,
+                  25
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 3,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 0.75,
+              "abstention_rate": 0.5833333333333334
+            },
+            "original_challenge": {
+              "n": 30,
+              "accuracy": 0.9,
+              "macro_f1": 0.8958386303924062,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  8,
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  8,
+                  0
+                ],
+                [
+                  1,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 2,
+              "false_incompatible": 1,
+              "compatible_precision": 0.8,
+              "incompatible_precision": 0.8888888888888888,
+              "abstention_rate": 0.36666666666666664
+            }
+          },
+          "fallback_fraction": 0.11278195488721804
+        },
+        "qwen3.5:4b": {
+          "n": 133,
+          "accuracy": 0.7969924812030075,
+          "macro_f1": 0.7961990727948175,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              36,
+              6,
+              2
+            ],
+            [
+              1,
+              38,
+              1
+            ],
+            [
+              7,
+              10,
+              32
+            ]
+          ],
+          "false_compatible": 8,
+          "false_incompatible": 16,
+          "compatible_precision": 0.8181818181818182,
+          "incompatible_precision": 0.7037037037037037,
+          "abstention_rate": 0.2631578947368421,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.7446808510638298,
+              "macro_f1": 0.723062015503876,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  14,
+                  6,
+                  0
+                ],
+                [
+                  0,
+                  16,
+                  0
+                ],
+                [
+                  1,
+                  5,
+                  5
+                ]
+              ],
+              "false_compatible": 1,
+              "false_incompatible": 11,
+              "compatible_precision": 0.9333333333333333,
+              "incompatible_precision": 0.5925925925925926,
+              "abstention_rate": 0.10638297872340426
+            },
+            "jobicy_public_excerpt": {
+              "n": 48,
+              "accuracy": 0.8333333333333334,
+              "macro_f1": 0.8305050505050505,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  9,
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  10,
+                  1
+                ],
+                [
+                  2,
+                  3,
+                  21
+                ]
+              ],
+              "false_compatible": 2,
+              "false_incompatible": 3,
+              "compatible_precision": 0.8181818181818182,
+              "incompatible_precision": 0.7692307692307693,
+              "abstention_rate": 0.5
+            },
+            "original_challenge": {
+              "n": 30,
+              "accuracy": 0.7666666666666667,
+              "macro_f1": 0.7637935418255783,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  9,
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  8,
+                  0
+                ],
+                [
+                  4,
+                  2,
+                  6
+                ]
+              ],
+              "false_compatible": 5,
+              "false_incompatible": 2,
+              "compatible_precision": 0.6428571428571429,
+              "incompatible_precision": 0.8,
+              "abstention_rate": 0.2
+            }
+          },
+          "latency_ms": {
+            "p50": 405.330624897033,
+            "p95": 552.3234498687088,
+            "max": 600.9102500975132,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "cached_calls": 1,
+          "request_errors": 0,
+          "model_digest": "d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04"
+        },
+        "rules+qwen3.5:4b": {
+          "n": 133,
+          "accuracy": 0.8345864661654135,
+          "macro_f1": 0.8340775207671544,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              39,
+              0,
+              5
+            ],
+            [
+              5,
+              29,
+              6
+            ],
+            [
+              5,
+              1,
+              43
+            ]
+          ],
+          "false_compatible": 10,
+          "false_incompatible": 1,
+          "compatible_precision": 0.7959183673469388,
+          "incompatible_precision": 0.9666666666666667,
+          "abstention_rate": 0.40601503759398494,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.6595744680851063,
+              "macro_f1": 0.6441336441336442,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  16,
+                  0,
+                  4
+                ],
+                [
+                  4,
+                  8,
+                  4
+                ],
+                [
+                  4,
+                  0,
+                  7
+                ]
+              ],
+              "false_compatible": 8,
+              "false_incompatible": 0,
+              "compatible_precision": 0.6666666666666666,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.3191489361702128
+            },
+            "jobicy_public_excerpt": {
+              "n": 48,
+              "accuracy": 0.9166666666666666,
+              "macro_f1": 0.9118165784832452,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  10,
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  9,
+                  2
+                ],
+                [
+                  0,
+                  1,
+                  25
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 1,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 0.9,
+              "abstention_rate": 0.5833333333333334
+            },
+            "original_challenge": {
+              "n": 30,
+              "accuracy": 0.9333333333333333,
+              "macro_f1": 0.9325660699062235,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  9,
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  8,
+                  0
+                ],
+                [
+                  1,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 2,
+              "false_incompatible": 0,
+              "compatible_precision": 0.8181818181818182,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.36666666666666664
+            }
+          },
+          "fallback_fraction": 0.11278195488721804
+        }
+      }
+    },
+    "diagnostic-v2": {
+      "split": "test",
+      "n": 133,
+      "input_sha256": "28f85885aa0ca083dded0fb748996e6dcc3320f2ed398d5fcb52152d20f19008",
+      "results": {
+        "rules": {
+          "n": 133,
+          "accuracy": 0.9022556390977443,
+          "macro_f1": 0.9042160199682323,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              32,
+              0,
+              11
+            ],
+            [
+              0,
+              38,
+              2
+            ],
+            [
+              0,
+              0,
+              50
+            ]
+          ],
+          "false_compatible": 0,
+          "false_incompatible": 0,
+          "compatible_precision": 1.0,
+          "incompatible_precision": 1.0,
+          "abstention_rate": 0.47368421052631576,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.8297872340425532,
+              "macro_f1": 0.8277777777777778,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  12,
+                  0,
+                  8
+                ],
+                [
+                  0,
+                  16,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.40425531914893614
+            },
+            "jobicy_public_excerpt": {
+              "n": 48,
+              "accuracy": 0.9375,
+              "macro_f1": 0.9295460874408242,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  8,
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  10,
+                  1
+                ],
+                [
+                  0,
+                  0,
+                  27
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.625
+            },
+            "original_challenge": {
+              "n": 30,
+              "accuracy": 0.9333333333333333,
+              "macro_f1": 0.9351432880844645,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  8,
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  8,
+                  1
+                ],
+                [
+                  0,
+                  0,
+                  12
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.4666666666666667
+            }
+          },
+          "latency_ms": {
+            "p50": 0.03641704097390175,
+            "p95": 0.07621706463396549,
+            "max": 0.9407091420143843,
+            "hardware": "Apple Silicon development machine; not VPS"
+          }
+        },
+        "minilm": {
+          "n": 133,
+          "accuracy": 0.7218045112781954,
+          "macro_f1": 0.7174707602339181,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              30,
+              8,
+              5
+            ],
+            [
+              15,
+              25,
+              0
+            ],
+            [
+              7,
+              2,
+              41
+            ]
+          ],
+          "false_compatible": 22,
+          "false_incompatible": 10,
+          "compatible_precision": 0.5769230769230769,
+          "incompatible_precision": 0.7142857142857143,
+          "abstention_rate": 0.3458646616541353,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.6808510638297872,
+              "macro_f1": 0.6909642600699512,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  13,
+                  3,
+                  4
+                ],
+                [
+                  8,
+                  8,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 8,
+              "false_incompatible": 3,
+              "compatible_precision": 0.6190476190476191,
+              "incompatible_precision": 0.7272727272727273,
+              "abstention_rate": 0.3191489361702128
+            },
+            "jobicy_public_excerpt": {
+              "n": 48,
+              "accuracy": 0.8125,
+              "macro_f1": 0.7590482833449586,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  7,
+                  3,
+                  0
+                ],
+                [
+                  3,
+                  8,
+                  0
+                ],
+                [
+                  3,
+                  0,
+                  24
+                ]
+              ],
+              "false_compatible": 6,
+              "false_incompatible": 3,
+              "compatible_precision": 0.5384615384615384,
+              "incompatible_precision": 0.7272727272727273,
+              "abstention_rate": 0.5
+            },
+            "original_challenge": {
+              "n": 30,
+              "accuracy": 0.5666666666666667,
+              "macro_f1": 0.5696245444529197,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  6,
+                  2,
+                  1
+                ],
+                [
+                  4,
+                  5,
+                  0
+                ],
+                [
+                  4,
+                  2,
+                  6
+                ]
+              ],
+              "false_compatible": 8,
+              "false_incompatible": 4,
+              "compatible_precision": 0.42857142857142855,
+              "incompatible_precision": 0.5555555555555556,
+              "abstention_rate": 0.23333333333333334
+            }
+          },
+          "latency_ms": {
+            "p50": 2.2384374169632792,
+            "p95": 2.6522291591390967,
+            "max": 3.176917089149356,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "weights_sha256": "e76f1b84b3e5ed5ac87cc2460b8b8d896e27e5cbdea023a83d79ffd57f0c401c"
+        },
+        "minilm-v2": {
+          "n": 133,
+          "accuracy": 0.7218045112781954,
+          "macro_f1": 0.7100631838495916,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              31,
+              7,
+              5
+            ],
+            [
+              13,
+              22,
+              5
+            ],
+            [
+              6,
+              1,
+              43
+            ]
+          ],
+          "false_compatible": 19,
+          "false_incompatible": 8,
+          "compatible_precision": 0.62,
+          "incompatible_precision": 0.7333333333333333,
+          "abstention_rate": 0.39849624060150374,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.7446808510638298,
+              "macro_f1": 0.7426739926739927,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  15,
+                  1,
+                  4
+                ],
+                [
+                  5,
+                  9,
+                  2
+                ],
+                [
+                  0,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 5,
+              "false_incompatible": 1,
+              "compatible_precision": 0.75,
+              "incompatible_precision": 0.9,
+              "abstention_rate": 0.3617021276595745
+            },
+            "jobicy_public_excerpt": {
+              "n": 48,
+              "accuracy": 0.7916666666666666,
+              "macro_f1": 0.7071846282372598,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  7,
+                  3,
+                  0
+                ],
+                [
+                  3,
+                  5,
+                  3
+                ],
+                [
+                  1,
+                  0,
+                  26
+                ]
+              ],
+              "false_compatible": 4,
+              "false_incompatible": 3,
+              "compatible_precision": 0.6363636363636364,
+              "incompatible_precision": 0.625,
+              "abstention_rate": 0.6041666666666666
+            },
+            "original_challenge": {
+              "n": 30,
+              "accuracy": 0.5,
+              "macro_f1": 0.5062779497764017,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  5,
+                  3,
+                  1
+                ],
+                [
+                  5,
+                  4,
+                  0
+                ],
+                [
+                  5,
+                  1,
+                  6
+                ]
+              ],
+              "false_compatible": 10,
+              "false_incompatible": 4,
+              "compatible_precision": 0.3333333333333333,
+              "incompatible_precision": 0.5,
+              "abstention_rate": 0.23333333333333334
+            }
+          },
+          "latency_ms": {
+            "p50": 2.2738334955647588,
+            "p95": 2.6145516894757748,
+            "max": 3.118832828477025,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "weights_sha256": "f474b1303a0ec6840e68bbf9799d142304722fd2701ef5e4316953d2b6f19605"
+        },
+        "gte": {
+          "n": 133,
+          "accuracy": 0.7218045112781954,
+          "macro_f1": 0.714344027357726,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              31,
+              6,
+              6
+            ],
+            [
+              8,
+              24,
+              8
+            ],
+            [
+              6,
+              3,
+              41
+            ]
+          ],
+          "false_compatible": 14,
+          "false_incompatible": 9,
+          "compatible_precision": 0.6888888888888889,
+          "incompatible_precision": 0.7272727272727273,
+          "abstention_rate": 0.41353383458646614,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.723404255319149,
+              "macro_f1": 0.721418918918919,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  14,
+                  0,
+                  6
+                ],
+                [
+                  3,
+                  9,
+                  4
+                ],
+                [
+                  0,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 3,
+              "false_incompatible": 0,
+              "compatible_precision": 0.8235294117647058,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.44680851063829785
+            },
+            "jobicy_public_excerpt": {
+              "n": 48,
+              "accuracy": 0.7291666666666666,
+              "macro_f1": 0.6830572808833679,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  7,
+                  3,
+                  0
+                ],
+                [
+                  3,
+                  7,
+                  1
+                ],
+                [
+                  4,
+                  2,
+                  21
+                ]
+              ],
+              "false_compatible": 7,
+              "false_incompatible": 5,
+              "compatible_precision": 0.5,
+              "incompatible_precision": 0.5833333333333334,
+              "abstention_rate": 0.4583333333333333
+            },
+            "original_challenge": {
+              "n": 30,
+              "accuracy": 0.6333333333333333,
+              "macro_f1": 0.6173890608875129,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  6,
+                  3,
+                  0
+                ],
+                [
+                  2,
+                  4,
+                  3
+                ],
+                [
+                  2,
+                  1,
+                  9
+                ]
+              ],
+              "false_compatible": 4,
+              "false_incompatible": 4,
+              "compatible_precision": 0.6,
+              "incompatible_precision": 0.5,
+              "abstention_rate": 0.4
+            }
+          },
+          "latency_ms": {
+            "p50": 4.070396535098553,
+            "p95": 4.760197072755545,
+            "max": 5.645290948450565,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "weights_sha256": "e00e1164521137937abde9ef535005829ae3a19021925c90d90364e29b89e34e"
+        },
+        "embeddings_logreg": {
+          "n": 133,
+          "accuracy": 0.5488721804511278,
+          "macro_f1": 0.5466404821243531,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              22,
+              10,
+              11
+            ],
+            [
+              13,
+              20,
+              7
+            ],
+            [
+              15,
+              4,
+              31
+            ]
+          ],
+          "false_compatible": 28,
+          "false_incompatible": 14,
+          "compatible_precision": 0.44,
+          "incompatible_precision": 0.5882352941176471,
+          "abstention_rate": 0.3684210526315789,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.46808510638297873,
+              "macro_f1": 0.4677791344458011,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  9,
+                  5,
+                  6
+                ],
+                [
+                  8,
+                  5,
+                  3
+                ],
+                [
+                  2,
+                  1,
+                  8
+                ]
+              ],
+              "false_compatible": 10,
+              "false_incompatible": 6,
+              "compatible_precision": 0.47368421052631576,
+              "incompatible_precision": 0.45454545454545453,
+              "abstention_rate": 0.3617021276595745
+            },
+            "jobicy_public_excerpt": {
+              "n": 48,
+              "accuracy": 0.5208333333333334,
+              "macro_f1": 0.4975533108866442,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  5,
+                  1
+                ],
+                [
+                  2,
+                  7,
+                  2
+                ],
+                [
+                  11,
+                  2,
+                  14
+                ]
+              ],
+              "false_compatible": 13,
+              "false_incompatible": 7,
+              "compatible_precision": 0.23529411764705882,
+              "incompatible_precision": 0.5,
+              "abstention_rate": 0.3541666666666667
+            },
+            "original_challenge": {
+              "n": 30,
+              "accuracy": 0.6,
+              "macro_f1": 0.5881370091896407,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  5,
+                  0,
+                  4
+                ],
+                [
+                  3,
+                  4,
+                  2
+                ],
+                [
+                  2,
+                  1,
+                  9
+                ]
+              ],
+              "false_compatible": 5,
+              "false_incompatible": 1,
+              "compatible_precision": 0.5,
+              "incompatible_precision": 0.8,
+              "abstention_rate": 0.5
+            }
+          },
+          "batch_ms": 257.1718750987202
+        },
+        "qwen3.5:0.8b": {
+          "n": 133,
+          "accuracy": 0.24060150375939848,
+          "macro_f1": 0.14612460142261466,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              0,
+              31,
+              12
+            ],
+            [
+              0,
+              31,
+              9
+            ],
+            [
+              0,
+              49,
+              1
+            ]
+          ],
+          "false_compatible": 0,
+          "false_incompatible": 80,
+          "compatible_precision": 0.0,
+          "incompatible_precision": 0.27927927927927926,
+          "abstention_rate": 0.16541353383458646,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 0.0,
+              "macro_f1": 0.0,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  0,
+                  2,
+                  2
+                ],
+                [
+                  0,
+                  0,
+                  4
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 2,
+              "compatible_precision": 0.0,
+              "incompatible_precision": 0.0,
+              "abstention_rate": 0.75
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.2978723404255319,
+              "macro_f1": 0.16374269005847952,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  0,
+                  16,
+                  4
+                ],
+                [
+                  0,
+                  14,
+                  2
+                ],
+                [
+                  0,
+                  11,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 27,
+              "compatible_precision": 0.0,
+              "incompatible_precision": 0.34146341463414637,
+              "abstention_rate": 0.1276595744680851
+            },
+            "jobicy_public_excerpt": {
+              "n": 48,
+              "accuracy": 0.1875,
+              "macro_f1": 0.11320754716981131,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  0,
+                  6,
+                  4
+                ],
+                [
+                  0,
+                  9,
+                  2
+                ],
+                [
+                  0,
+                  27,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 33,
+              "compatible_precision": 0.0,
+              "incompatible_precision": 0.21428571428571427,
+              "abstention_rate": 0.125
+            },
+            "original_challenge": {
+              "n": 30,
+              "accuracy": 0.3,
+              "macro_f1": 0.19404761904761902,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  0,
+                  7,
+                  2
+                ],
+                [
+                  0,
+                  8,
+                  1
+                ],
+                [
+                  0,
+                  11,
+                  1
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 18,
+              "compatible_precision": 0.0,
+              "incompatible_precision": 0.3076923076923077,
+              "abstention_rate": 0.13333333333333333
+            }
+          },
+          "latency_ms": {
+            "p50": 165.51029216498137,
+            "p95": 180.2260586526245,
+            "max": 203.06866709142923,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "cached_calls": 133,
+          "request_errors": 0,
+          "model_digest": "de63045f29755d4721c09d54c9b45c2dadb644f4fd7d604d4cac90d96049971c"
+        },
+        "rules+qwen3.5:0.8b": {
+          "n": 133,
+          "accuracy": 0.9097744360902256,
+          "macro_f1": 0.9046268510346179,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              32,
+              7,
+              4
+            ],
+            [
+              0,
+              40,
+              0
+            ],
+            [
+              0,
+              1,
+              49
+            ]
+          ],
+          "false_compatible": 0,
+          "false_incompatible": 8,
+          "compatible_precision": 1.0,
+          "incompatible_precision": 0.8333333333333334,
+          "abstention_rate": 0.39849624060150374,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.8297872340425532,
+              "macro_f1": 0.8283475783475783,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  12,
+                  4,
+                  4
+                ],
+                [
+                  0,
+                  16,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 4,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 0.8,
+              "abstention_rate": 0.3191489361702128
+            },
+            "jobicy_public_excerpt": {
+              "n": 48,
+              "accuracy": 0.9375,
+              "macro_f1": 0.9166736547868624,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  8,
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  11,
+                  0
+                ],
+                [
+                  0,
+                  1,
+                  26
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 3,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 0.7857142857142857,
+              "abstention_rate": 0.5416666666666666
+            },
+            "original_challenge": {
+              "n": 30,
+              "accuracy": 0.9666666666666667,
+              "macro_f1": 0.9628482972136223,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  8,
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  9,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  12
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 1,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 0.9,
+              "abstention_rate": 0.4
+            }
+          },
+          "fallback_fraction": 0.10526315789473684
+        },
+        "qwen3.5:4b": {
+          "n": 133,
+          "accuracy": 0.8045112781954887,
+          "macro_f1": 0.8041891444765726,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              36,
+              6,
+              1
+            ],
+            [
+              1,
+              38,
+              1
+            ],
+            [
+              7,
+              10,
+              33
+            ]
+          ],
+          "false_compatible": 8,
+          "false_incompatible": 16,
+          "compatible_precision": 0.8181818181818182,
+          "incompatible_precision": 0.7037037037037037,
+          "abstention_rate": 0.2631578947368421,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.7446808510638298,
+              "macro_f1": 0.723062015503876,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  14,
+                  6,
+                  0
+                ],
+                [
+                  0,
+                  16,
+                  0
+                ],
+                [
+                  1,
+                  5,
+                  5
+                ]
+              ],
+              "false_compatible": 1,
+              "false_incompatible": 11,
+              "compatible_precision": 0.9333333333333333,
+              "incompatible_precision": 0.5925925925925926,
+              "abstention_rate": 0.10638297872340426
+            },
+            "jobicy_public_excerpt": {
+              "n": 48,
+              "accuracy": 0.8541666666666666,
+              "macro_f1": 0.8510737628384687,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  9,
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  10,
+                  1
+                ],
+                [
+                  2,
+                  3,
+                  22
+                ]
+              ],
+              "false_compatible": 2,
+              "false_incompatible": 3,
+              "compatible_precision": 0.8181818181818182,
+              "incompatible_precision": 0.7692307692307693,
+              "abstention_rate": 0.5
+            },
+            "original_challenge": {
+              "n": 30,
+              "accuracy": 0.7666666666666667,
+              "macro_f1": 0.7637935418255783,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  9,
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  8,
+                  0
+                ],
+                [
+                  4,
+                  2,
+                  6
+                ]
+              ],
+              "false_compatible": 5,
+              "false_incompatible": 2,
+              "compatible_precision": 0.6428571428571429,
+              "incompatible_precision": 0.8,
+              "abstention_rate": 0.2
+            }
+          },
+          "latency_ms": {
+            "p50": 405.330624897033,
+            "p95": 552.3234498687088,
+            "max": 600.9102500975132,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "cached_calls": 133,
+          "request_errors": 0,
+          "model_digest": "d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04"
+        },
+        "rules+qwen3.5:4b": {
+          "n": 133,
+          "accuracy": 0.9699248120300752,
+          "macro_f1": 0.9687117879888963,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              40,
+              3,
+              0
+            ],
+            [
+              0,
+              40,
+              0
+            ],
+            [
+              0,
+              1,
+              49
+            ]
+          ],
+          "false_compatible": 0,
+          "false_incompatible": 4,
+          "compatible_precision": 1.0,
+          "incompatible_precision": 0.9090909090909091,
+          "abstention_rate": 0.3684210526315789,
+          "by_source": {
+            "jobicy/remote-jobs": {
+              "n": 8,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  4,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            },
+            "original_synthetic": {
+              "n": 47,
+              "accuracy": 0.9361702127659575,
+              "macro_f1": 0.9444015444015443,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  17,
+                  3,
+                  0
+                ],
+                [
+                  0,
+                  16,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  11
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 3,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 0.8421052631578947,
+              "abstention_rate": 0.23404255319148937
+            },
+            "jobicy_public_excerpt": {
+              "n": 48,
+              "accuracy": 0.9791666666666666,
+              "macro_f1": 0.979217938200711,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  10,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  11,
+                  0
+                ],
+                [
+                  0,
+                  1,
+                  26
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 1,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 0.9166666666666666,
+              "abstention_rate": 0.5416666666666666
+            },
+            "original_challenge": {
+              "n": 30,
+              "accuracy": 1.0,
+              "macro_f1": 1.0,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  9,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  9,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  12
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.4
+            }
+          },
+          "fallback_fraction": 0.10526315789473684
+        }
+      }
+    },
+    "release-regression": {
+      "split": "confirmation",
+      "n": 68,
+      "input_sha256": "7dbd2de77f19aa6f46152d2b12a33a8c4d6ea8178bb83967665c225c9edee7dc",
+      "results": {
+        "rules": {
+          "n": 68,
+          "accuracy": 0.9411764705882353,
+          "macro_f1": 0.9418543859250335,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              17,
+              0,
+              3
+            ],
+            [
+              0,
+              20,
+              1
+            ],
+            [
+              0,
+              0,
+              27
+            ]
+          ],
+          "false_compatible": 0,
+          "false_incompatible": 0,
+          "compatible_precision": 1.0,
+          "incompatible_precision": 1.0,
+          "abstention_rate": 0.45588235294117646,
+          "by_source": {
+            "confirmation_original": {
+              "n": 40,
+              "accuracy": 0.9,
+              "macro_f1": 0.90402576489533,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  12,
+                  0,
+                  3
+                ],
+                [
+                  0,
+                  11,
+                  1
+                ],
+                [
+                  0,
+                  0,
+                  13
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.425
+            },
+            "confirmation_public_excerpt": {
+              "n": 28,
+              "accuracy": 1.0,
+              "macro_f1": 1.0,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  5,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  9,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  14
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.5
+            }
+          },
+          "latency_ms": {
+            "p50": 0.07270846981555223,
+            "p95": 0.1316330162808299,
+            "max": 1.3589172158390284,
+            "hardware": "Apple Silicon development machine; not VPS"
+          }
+        },
+        "minilm": {
+          "n": 68,
+          "accuracy": 0.6617647058823529,
+          "macro_f1": 0.6501831501831502,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              11,
+              6,
+              3
+            ],
+            [
+              7,
+              13,
+              1
+            ],
+            [
+              4,
+              2,
+              21
+            ]
+          ],
+          "false_compatible": 11,
+          "false_incompatible": 8,
+          "compatible_precision": 0.5,
+          "incompatible_precision": 0.6190476190476191,
+          "abstention_rate": 0.36764705882352944,
+          "by_source": {
+            "confirmation_original": {
+              "n": 40,
+              "accuracy": 0.575,
+              "macro_f1": 0.5773504273504274,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  8,
+                  4,
+                  3
+                ],
+                [
+                  3,
+                  8,
+                  1
+                ],
+                [
+                  4,
+                  2,
+                  7
+                ]
+              ],
+              "false_compatible": 7,
+              "false_incompatible": 6,
+              "compatible_precision": 0.5333333333333333,
+              "incompatible_precision": 0.5714285714285714,
+              "abstention_rate": 0.275
+            },
+            "confirmation_public_excerpt": {
+              "n": 28,
+              "accuracy": 0.7857142857142857,
+              "macro_f1": 0.7083333333333334,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  3,
+                  2,
+                  0
+                ],
+                [
+                  4,
+                  5,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  14
+                ]
+              ],
+              "false_compatible": 4,
+              "false_incompatible": 2,
+              "compatible_precision": 0.42857142857142855,
+              "incompatible_precision": 0.7142857142857143,
+              "abstention_rate": 0.5
+            }
+          },
+          "latency_ms": {
+            "p50": 2.324916422367096,
+            "p95": 3.0424900469370186,
+            "max": 3.0978338327258825,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "weights_sha256": "e76f1b84b3e5ed5ac87cc2460b8b8d896e27e5cbdea023a83d79ffd57f0c401c"
+        },
+        "minilm-v2": {
+          "n": 68,
+          "accuracy": 0.6617647058823529,
+          "macro_f1": 0.6455886781090033,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              11,
+              6,
+              3
+            ],
+            [
+              7,
+              12,
+              2
+            ],
+            [
+              3,
+              2,
+              22
+            ]
+          ],
+          "false_compatible": 10,
+          "false_incompatible": 8,
+          "compatible_precision": 0.5238095238095238,
+          "incompatible_precision": 0.6,
+          "abstention_rate": 0.39705882352941174,
+          "by_source": {
+            "confirmation_original": {
+              "n": 40,
+              "accuracy": 0.575,
+              "macro_f1": 0.5777777777777778,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  8,
+                  4,
+                  3
+                ],
+                [
+                  4,
+                  7,
+                  1
+                ],
+                [
+                  3,
+                  2,
+                  8
+                ]
+              ],
+              "false_compatible": 7,
+              "false_incompatible": 6,
+              "compatible_precision": 0.5333333333333333,
+              "incompatible_precision": 0.5384615384615384,
+              "abstention_rate": 0.3
+            },
+            "confirmation_public_excerpt": {
+              "n": 28,
+              "accuracy": 0.7857142857142857,
+              "macro_f1": 0.7119905956112853,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  3,
+                  2,
+                  0
+                ],
+                [
+                  3,
+                  5,
+                  1
+                ],
+                [
+                  0,
+                  0,
+                  14
+                ]
+              ],
+              "false_compatible": 3,
+              "false_incompatible": 2,
+              "compatible_precision": 0.5,
+              "incompatible_precision": 0.7142857142857143,
+              "abstention_rate": 0.5357142857142857
+            }
+          },
+          "latency_ms": {
+            "p50": 2.31014599557966,
+            "p95": 2.946208172943443,
+            "max": 2.9697080608457327,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "weights_sha256": "f474b1303a0ec6840e68bbf9799d142304722fd2701ef5e4316953d2b6f19605"
+        },
+        "gte": {
+          "n": 68,
+          "accuracy": 0.5441176470588235,
+          "macro_f1": 0.5276515151515152,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              12,
+              1,
+              7
+            ],
+            [
+              6,
+              7,
+              8
+            ],
+            [
+              6,
+              3,
+              18
+            ]
+          ],
+          "false_compatible": 12,
+          "false_incompatible": 4,
+          "compatible_precision": 0.5,
+          "incompatible_precision": 0.6363636363636364,
+          "abstention_rate": 0.4852941176470588,
+          "by_source": {
+            "confirmation_original": {
+              "n": 40,
+              "accuracy": 0.6,
+              "macro_f1": 0.5941019389295251,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  10,
+                  1,
+                  4
+                ],
+                [
+                  4,
+                  5,
+                  3
+                ],
+                [
+                  4,
+                  0,
+                  9
+                ]
+              ],
+              "false_compatible": 8,
+              "false_incompatible": 1,
+              "compatible_precision": 0.5555555555555556,
+              "incompatible_precision": 0.8333333333333334,
+              "abstention_rate": 0.4
+            },
+            "confirmation_public_excerpt": {
+              "n": 28,
+              "accuracy": 0.4642857142857143,
+              "macro_f1": 0.40999860354699064,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  2,
+                  0,
+                  3
+                ],
+                [
+                  2,
+                  2,
+                  5
+                ],
+                [
+                  2,
+                  3,
+                  9
+                ]
+              ],
+              "false_compatible": 4,
+              "false_incompatible": 3,
+              "compatible_precision": 0.3333333333333333,
+              "incompatible_precision": 0.4,
+              "abstention_rate": 0.6071428571428571
+            }
+          },
+          "latency_ms": {
+            "p50": 4.183062585070729,
+            "p95": 5.450249474961311,
+            "max": 5.4831248708069324,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "weights_sha256": "e00e1164521137937abde9ef535005829ae3a19021925c90d90364e29b89e34e"
+        },
+        "embeddings_logreg": {
+          "n": 68,
+          "accuracy": 0.5588235294117647,
+          "macro_f1": 0.5501890329139661,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              9,
+              4,
+              7
+            ],
+            [
+              3,
+              10,
+              8
+            ],
+            [
+              0,
+              8,
+              19
+            ]
+          ],
+          "false_compatible": 3,
+          "false_incompatible": 12,
+          "compatible_precision": 0.75,
+          "incompatible_precision": 0.45454545454545453,
+          "abstention_rate": 0.5,
+          "by_source": {
+            "confirmation_original": {
+              "n": 40,
+              "accuracy": 0.625,
+              "macro_f1": 0.6197360376883517,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  9,
+                  2,
+                  4
+                ],
+                [
+                  2,
+                  6,
+                  4
+                ],
+                [
+                  0,
+                  3,
+                  10
+                ]
+              ],
+              "false_compatible": 2,
+              "false_incompatible": 5,
+              "compatible_precision": 0.8181818181818182,
+              "incompatible_precision": 0.5454545454545454,
+              "abstention_rate": 0.45
+            },
+            "confirmation_public_excerpt": {
+              "n": 28,
+              "accuracy": 0.4642857142857143,
+              "macro_f1": 0.3333333333333333,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  0,
+                  2,
+                  3
+                ],
+                [
+                  1,
+                  4,
+                  4
+                ],
+                [
+                  0,
+                  5,
+                  9
+                ]
+              ],
+              "false_compatible": 1,
+              "false_incompatible": 7,
+              "compatible_precision": 0.0,
+              "incompatible_precision": 0.36363636363636365,
+              "abstention_rate": 0.5714285714285714
+            }
+          },
+          "batch_ms": 185.71250000968575
+        },
+        "qwen3.5:4b": {
+          "n": 68,
+          "accuracy": 0.8088235294117647,
+          "macro_f1": 0.809625322997416,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              19,
+              1,
+              0
+            ],
+            [
+              3,
+              18,
+              0
+            ],
+            [
+              6,
+              3,
+              18
+            ]
+          ],
+          "false_compatible": 9,
+          "false_incompatible": 4,
+          "compatible_precision": 0.6785714285714286,
+          "incompatible_precision": 0.8181818181818182,
+          "abstention_rate": 0.2647058823529412,
+          "by_source": {
+            "confirmation_original": {
+              "n": 40,
+              "accuracy": 0.775,
+              "macro_f1": 0.7706349206349206,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  14,
+                  1,
+                  0
+                ],
+                [
+                  3,
+                  9,
+                  0
+                ],
+                [
+                  3,
+                  2,
+                  8
+                ]
+              ],
+              "false_compatible": 6,
+              "false_incompatible": 3,
+              "compatible_precision": 0.7,
+              "incompatible_precision": 0.75,
+              "abstention_rate": 0.2
+            },
+            "confirmation_public_excerpt": {
+              "n": 28,
+              "accuracy": 0.8571428571428571,
+              "macro_f1": 0.8499775078722447,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  5,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  9,
+                  0
+                ],
+                [
+                  3,
+                  1,
+                  10
+                ]
+              ],
+              "false_compatible": 3,
+              "false_incompatible": 1,
+              "compatible_precision": 0.625,
+              "incompatible_precision": 0.9,
+              "abstention_rate": 0.35714285714285715
+            }
+          },
+          "latency_ms": {
+            "p50": 399.2180834757164,
+            "p95": 550.8250230923295,
+            "max": 564.3637499306351,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "cached_calls": 68,
+          "request_errors": 0,
+          "model_digest": "d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04"
+        },
+        "rules+qwen3.5:4b": {
+          "n": 68,
+          "accuracy": 1.0,
+          "macro_f1": 1.0,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              20,
+              0,
+              0
+            ],
+            [
+              0,
+              21,
+              0
+            ],
+            [
+              0,
+              0,
+              27
+            ]
+          ],
+          "false_compatible": 0,
+          "false_incompatible": 0,
+          "compatible_precision": 1.0,
+          "incompatible_precision": 1.0,
+          "abstention_rate": 0.39705882352941174,
+          "by_source": {
+            "confirmation_original": {
+              "n": 40,
+              "accuracy": 1.0,
+              "macro_f1": 1.0,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  15,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  12,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  13
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.325
+            },
+            "confirmation_public_excerpt": {
+              "n": 28,
+              "accuracy": 1.0,
+              "macro_f1": 1.0,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  5,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  9,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  14
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.5
+            }
+          },
+          "fallback_fraction": 0.1323529411764706
+        }
+      }
+    },
+    "release-full-diagnostic": {
+      "split": "full-test",
+      "n": 2304,
+      "input_sha256": "14a48de8c832d7a11695a42403142268d45af14b5d87c8a3c23387ee0cade1a4",
+      "results": {
+        "rules": {
+          "n": 2304,
+          "accuracy": 0.8771701388888888,
+          "macro_f1": 0.8570391689239328,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              374,
+              0,
+              283
+            ],
+            [
+              0,
+              872,
+              0
+            ],
+            [
+              0,
+              0,
+              775
+            ]
+          ],
+          "false_compatible": 0,
+          "false_incompatible": 0,
+          "compatible_precision": 1.0,
+          "incompatible_precision": 1.0,
+          "abstention_rate": 0.4592013888888889,
+          "by_source": {
+            "original_synthetic": {
+              "n": 1980,
+              "accuracy": 0.8570707070707071,
+              "macro_f1": 0.8166013655375357,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  216,
+                  0,
+                  283
+                ],
+                [
+                  0,
+                  706,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  775
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.5343434343434343
+            },
+            "jobicy/remote-jobs": {
+              "n": 324,
+              "accuracy": 1.0,
+              "macro_f1": 0.6666666666666666,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  158,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  166,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 0,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.0
+            }
+          },
+          "latency_ms": {
+            "p50": 0.05639600567519665,
+            "p95": 0.08007059805095194,
+            "max": 1.3355838600546122,
+            "hardware": "Apple Silicon development machine; not VPS"
+          }
+        },
+        "minilm": {
+          "n": 2304,
+          "accuracy": 0.7309027777777778,
+          "macro_f1": 0.714351945201466,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              622,
+              15,
+              20
+            ],
+            [
+              399,
+              332,
+              141
+            ],
+            [
+              45,
+              0,
+              730
+            ]
+          ],
+          "false_compatible": 444,
+          "false_incompatible": 15,
+          "compatible_precision": 0.5834896810506567,
+          "incompatible_precision": 0.9567723342939481,
+          "abstention_rate": 0.38671875,
+          "by_source": {
+            "original_synthetic": {
+              "n": 1980,
+              "accuracy": 0.6919191919191919,
+              "macro_f1": 0.6413109594929015,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  474,
+                  5,
+                  20
+                ],
+                [
+                  399,
+                  166,
+                  141
+                ],
+                [
+                  45,
+                  0,
+                  730
+                ]
+              ],
+              "false_compatible": 444,
+              "false_incompatible": 5,
+              "compatible_precision": 0.5163398692810458,
+              "incompatible_precision": 0.9707602339181286,
+              "abstention_rate": 0.45
+            },
+            "jobicy/remote-jobs": {
+              "n": 324,
+              "accuracy": 0.9691358024691358,
+              "macro_f1": 0.6460268317853457,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  148,
+                  10,
+                  0
+                ],
+                [
+                  0,
+                  166,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 10,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 0.9431818181818182,
+              "abstention_rate": 0.0
+            }
+          },
+          "latency_ms": {
+            "p50": 2.2734995000064373,
+            "p95": 2.51571845728904,
+            "max": 2.5318749248981476,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "weights_sha256": "e76f1b84b3e5ed5ac87cc2460b8b8d896e27e5cbdea023a83d79ffd57f0c401c"
+        },
+        "minilm-v2": {
+          "n": 2304,
+          "accuracy": 0.8120659722222222,
+          "macro_f1": 0.8103942389245969,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              633,
+              4,
+              20
+            ],
+            [
+              171,
+              549,
+              152
+            ],
+            [
+              86,
+              0,
+              689
+            ]
+          ],
+          "false_compatible": 257,
+          "false_incompatible": 4,
+          "compatible_precision": 0.7112359550561798,
+          "incompatible_precision": 0.9927667269439421,
+          "abstention_rate": 0.3736979166666667,
+          "by_source": {
+            "original_synthetic": {
+              "n": 1980,
+              "accuracy": 0.7823232323232323,
+              "macro_f1": 0.7727688441294216,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  476,
+                  3,
+                  20
+                ],
+                [
+                  170,
+                  384,
+                  152
+                ],
+                [
+                  86,
+                  0,
+                  689
+                ]
+              ],
+              "false_compatible": 256,
+              "false_incompatible": 3,
+              "compatible_precision": 0.6502732240437158,
+              "incompatible_precision": 0.9922480620155039,
+              "abstention_rate": 0.4348484848484849
+            },
+            "jobicy/remote-jobs": {
+              "n": 324,
+              "accuracy": 0.9938271604938271,
+              "macro_f1": 0.6625489298968024,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  157,
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  165,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 1,
+              "false_incompatible": 1,
+              "compatible_precision": 0.9936708860759493,
+              "incompatible_precision": 0.9939759036144579,
+              "abstention_rate": 0.0
+            }
+          },
+          "latency_ms": {
+            "p50": 2.278271014802158,
+            "p95": 2.610906318295747,
+            "max": 2.8461250476539135,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "weights_sha256": "f474b1303a0ec6840e68bbf9799d142304722fd2701ef5e4316953d2b6f19605"
+        },
+        "gte": {
+          "n": 2304,
+          "accuracy": 0.7191840277777778,
+          "macro_f1": 0.7139732307290058,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              594,
+              1,
+              62
+            ],
+            [
+              23,
+              288,
+              561
+            ],
+            [
+              0,
+              0,
+              775
+            ]
+          ],
+          "false_compatible": 23,
+          "false_incompatible": 1,
+          "compatible_precision": 0.9627228525121556,
+          "incompatible_precision": 0.9965397923875432,
+          "abstention_rate": 0.6067708333333334,
+          "by_source": {
+            "original_synthetic": {
+              "n": 1980,
+              "accuracy": 0.6737373737373737,
+              "macro_f1": 0.6397838608069094,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  437,
+                  0,
+                  62
+                ],
+                [
+                  23,
+                  122,
+                  561
+                ],
+                [
+                  0,
+                  0,
+                  775
+                ]
+              ],
+              "false_compatible": 23,
+              "false_incompatible": 0,
+              "compatible_precision": 0.95,
+              "incompatible_precision": 1.0,
+              "abstention_rate": 0.706060606060606
+            },
+            "jobicy/remote-jobs": {
+              "n": 324,
+              "accuracy": 0.9969135802469136,
+              "macro_f1": 0.6646074646074646,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  157,
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  166,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 0,
+              "false_incompatible": 1,
+              "compatible_precision": 1.0,
+              "incompatible_precision": 0.9940119760479041,
+              "abstention_rate": 0.0
+            }
+          },
+          "latency_ms": {
+            "p50": 4.110333509743214,
+            "p95": 4.364958731457591,
+            "max": 4.499709000810981,
+            "hardware": "Apple Silicon development machine; not VPS"
+          },
+          "weights_sha256": "e00e1164521137937abde9ef535005829ae3a19021925c90d90364e29b89e34e"
+        },
+        "embeddings_logreg": {
+          "n": 2304,
+          "accuracy": 0.6614583333333334,
+          "macro_f1": 0.6494835417287761,
+          "labels": [
+            "compatible",
+            "incompatible",
+            "unknown"
+          ],
+          "confusion_matrix": [
+            [
+              294,
+              307,
+              56
+            ],
+            [
+              51,
+              543,
+              278
+            ],
+            [
+              14,
+              74,
+              687
+            ]
+          ],
+          "false_compatible": 65,
+          "false_incompatible": 381,
+          "compatible_precision": 0.8189415041782729,
+          "incompatible_precision": 0.5876623376623377,
+          "abstention_rate": 0.4431423611111111,
+          "by_source": {
+            "original_synthetic": {
+              "n": 1980,
+              "accuracy": 0.6090909090909091,
+              "macro_f1": 0.5611366028562157,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  141,
+                  302,
+                  56
+                ],
+                [
+                  50,
+                  378,
+                  278
+                ],
+                [
+                  14,
+                  74,
+                  687
+                ]
+              ],
+              "false_compatible": 64,
+              "false_incompatible": 376,
+              "compatible_precision": 0.6878048780487804,
+              "incompatible_precision": 0.5013262599469496,
+              "abstention_rate": 0.5156565656565657
+            },
+            "jobicy/remote-jobs": {
+              "n": 324,
+              "accuracy": 0.9814814814814815,
+              "macro_f1": 0.6543040293040293,
+              "labels": [
+                "compatible",
+                "incompatible",
+                "unknown"
+              ],
+              "confusion_matrix": [
+                [
+                  153,
+                  5,
+                  0
+                ],
+                [
+                  1,
+                  165,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "false_compatible": 1,
+              "false_incompatible": 5,
+              "compatible_precision": 0.9935064935064936,
+              "incompatible_precision": 0.9705882352941176,
+              "abstention_rate": 0.0
+            }
+          },
+          "batch_ms": 1120.5692919902503
+        }
+      }
+    }
+  },
+  "evaluation_status": {
+    "dev-final": "Development; not test evidence",
+    "test-report": "Initial held-out diagnostic, subsequently consumed for tuning",
+    "diagnostic-v2": "Post-diagnosis regression; not untouched holdout",
+    "release-regression": "68-case regression after confirmation-driven fixes; NOT independent test accuracy",
+    "release-full-diagnostic": "Previously consumed weak-labelled test, final implementation"
+  },
+  "first_confirmation": {
+    "n": 68,
+    "correct": 66,
+    "false_compatible": 1,
+    "false_incompatible": 1,
+    "label_origin": "Assistant-authored and assistant-reviewed source excerpts; no independent human labels"
+  },
+  "vps_cloud_comparison": {
+    "n": 40,
+    "input_sha256": "3948652b25c2b9ebae345d464c6af38303d2e2c469d9dffa0aefa57cdab63bce",
+    "scope": "Original synthetic policies only",
+    "summary": {
+      "rule": {
+        "n": 40,
+        "correct": 36,
+        "false_compatible": 0,
+        "false_incompatible": 0
+      },
+      "model": {
+        "n": 40,
+        "correct": 39,
+        "false_compatible": 0,
+        "false_incompatible": 1
+      },
+      "hybrid": {
+        "n": 40,
+        "correct": 40,
+        "false_compatible": 0,
+        "false_incompatible": 0
+      }
+    },
+    "usage": {
+      "prompt_tokens": 11559,
+      "completion_tokens": 579
+    },
+    "upper_bound_usd_at_verified_rates": 0.0041625,
+    "pricing_source": "https://api-docs.deepseek.com/quick_start/pricing/",
+    "latency_ms_p50": 891.2707269191742,
+    "implementation_sha256": {
+      "core.py": "5a4c143f377c6cdc625fbc635a2e40c8f29fa3955f8da419c60acaab389f88f9",
+      "pipeline.py": "4855b92950e4827a195df13b27b83f2deddba70c3b3c9a0f7579a1769722276d",
+      "cloud.py": "2897c77682315e77b739f70cfe3e287c7cb0a38f339b7fdbfa3cae48df0b2228",
+      "llm.py": "f2da73da3a1e2f6f21f91227d32b0d559345073a2689054d1842e69b5c9c2cb6"
+    }
+  },
+  "implementation_sha256": {
+    "core.py": "5a4c143f377c6cdc625fbc635a2e40c8f29fa3955f8da419c60acaab389f88f9",
+    "pipeline.py": "4855b92950e4827a195df13b27b83f2deddba70c3b3c9a0f7579a1769722276d",
+    "llm.py": "f2da73da3a1e2f6f21f91227d32b0d559345073a2689054d1842e69b5c9c2cb6"
+  },
+  "limitations": [
+    "No independent human or customer validation.",
+    "Full-posting commercial text rights are not established by dataset metadata license.",
+    "Initial test and confirmation cases were consumed during diagnosis; post-fix scores are regressions.",
+    "City/province, complex conditions and indirect policies can remain unknown.",
+    "API tests used original synthetic data only; no employer or private candidate text was uploaded.",
+    "Local 4B model does not fit comfortably alongside current VPS workloads.",
+    "No production routes, live Scout settings, database changes or production model activation."
+  ]
+}

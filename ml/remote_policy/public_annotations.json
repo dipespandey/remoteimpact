@@ -1,0 +1,350 @@
+[
+  {
+    "source_id": 149990,
+    "start": 1965,
+    "end": 2025,
+    "sha256": "ddf6a0fc66e1dfa3a044726f9dabc38faf41c87b2326053ae5b79316bb79939c",
+    "candidates": [
+      [
+        "NO",
+        "compatible",
+        {}
+      ],
+      [
+        "KE",
+        "compatible",
+        {}
+      ],
+      [
+        "NP",
+        "incompatible",
+        {}
+      ],
+      [
+        "US",
+        "incompatible",
+        {}
+      ]
+    ]
+  },
+  {
+    "source_id": 149565,
+    "start": 1975,
+    "end": 2026,
+    "sha256": "d0b4f8754a133932809c399f2a15780f1f85253a73f0530a94846a6997b7ed57",
+    "candidates": [
+      [
+        "NP",
+        "compatible",
+        {}
+      ],
+      [
+        "CA",
+        "compatible",
+        {}
+      ],
+      [
+        "DE",
+        "compatible",
+        {}
+      ],
+      [
+        "BR",
+        "compatible",
+        {}
+      ]
+    ]
+  },
+  {
+    "source_id": 152027,
+    "start": 4037,
+    "end": 4119,
+    "sha256": "81f8781f41a7cbd42d389d2749eaabb6affdeb1a1671b0d27cf16f73ae5e285c",
+    "candidates": [
+      [
+        "BR",
+        "compatible",
+        {}
+      ],
+      [
+        "MX",
+        "compatible",
+        {}
+      ],
+      [
+        "US",
+        "incompatible",
+        {}
+      ],
+      [
+        "NP",
+        "incompatible",
+        {}
+      ]
+    ]
+  },
+  {
+    "source_id": 151443,
+    "start": 5520,
+    "end": 5604,
+    "sha256": "72a4550ef2334cfa64bf848411f61176b8b3c9625dcbbcba2c698ee77828a2f0",
+    "candidates": [
+      [
+        "NO",
+        "unknown",
+        {}
+      ],
+      [
+        "US",
+        "incompatible",
+        {}
+      ],
+      [
+        "NP",
+        "incompatible",
+        {}
+      ],
+      [
+        "DE",
+        "unknown",
+        {}
+      ]
+    ]
+  },
+  {
+    "source_id": 151339,
+    "start": 1698,
+    "end": 1765,
+    "sha256": "a1289122c27a0b7cb8c0d83c85f988d58a826286064f81a4574d7df397855b7d",
+    "candidates": [
+      [
+        "US",
+        "unknown",
+        {}
+      ],
+      [
+        "NP",
+        "unknown",
+        {}
+      ],
+      [
+        "US",
+        "incompatible",
+        {
+          "authorized_countries": []
+        }
+      ],
+      [
+        "CA",
+        "incompatible",
+        {
+          "authorized_countries": [
+            "CA"
+          ]
+        }
+      ]
+    ]
+  },
+  {
+    "source_id": 153128,
+    "start": 5917,
+    "end": 6019,
+    "sha256": "ca46594af3d1b71538346b1650998f4ec60ec7ffe99f26fb041fe44e9164599e",
+    "candidates": [
+      [
+        "US",
+        "unknown",
+        {}
+      ],
+      [
+        "NP",
+        "unknown",
+        {}
+      ],
+      [
+        "US",
+        "incompatible",
+        {
+          "authorized_countries": []
+        }
+      ],
+      [
+        "CA",
+        "incompatible",
+        {
+          "authorized_countries": [
+            "CA"
+          ]
+        }
+      ]
+    ]
+  },
+  {
+    "source_id": 152994,
+    "start": 1806,
+    "end": 1972,
+    "sha256": "1e07be1482f247bd38ae19b1b949e8ec868727ee29d6eed2cd591814a99edc68",
+    "candidates": [
+      [
+        "NP",
+        "unknown",
+        {}
+      ],
+      [
+        "US",
+        "unknown",
+        {}
+      ],
+      [
+        "DE",
+        "unknown",
+        {}
+      ],
+      [
+        "CA",
+        "unknown",
+        {}
+      ]
+    ]
+  },
+  {
+    "source_id": 149972,
+    "start": 3096,
+    "end": 3193,
+    "sha256": "5e6f31bc3857913286e55153f68d12f31eb96101fd242bb34e95350dc4b9e8ad",
+    "candidates": [
+      [
+        "NP",
+        "unknown",
+        {}
+      ],
+      [
+        "US",
+        "unknown",
+        {}
+      ],
+      [
+        "DE",
+        "unknown",
+        {}
+      ],
+      [
+        "CA",
+        "unknown",
+        {}
+      ]
+    ]
+  },
+  {
+    "source_id": 151910,
+    "start": 498,
+    "end": 565,
+    "sha256": "21f954cf5ab92dd631a364ae47dda12e4a839461c5657e1af0b2e1e9cbe8a049",
+    "candidates": [
+      [
+        "NP",
+        "unknown",
+        {}
+      ],
+      [
+        "US",
+        "unknown",
+        {}
+      ],
+      [
+        "DE",
+        "unknown",
+        {}
+      ],
+      [
+        "CA",
+        "unknown",
+        {}
+      ]
+    ]
+  },
+  {
+    "source_id": 151950,
+    "start": 3636,
+    "end": 3720,
+    "sha256": "dc03e3fc73e8923adc5ff8264d67f064803906b9ff3cdc5ad300a34c34994f85",
+    "candidates": [
+      [
+        "NO",
+        "compatible",
+        {}
+      ],
+      [
+        "ZA",
+        "compatible",
+        {}
+      ],
+      [
+        "US",
+        "incompatible",
+        {}
+      ],
+      [
+        "NL",
+        "unknown",
+        {}
+      ]
+    ]
+  },
+  {
+    "source_id": 153732,
+    "start": 4821,
+    "end": 4910,
+    "sha256": "e599121da4f0db3fb98366a001aa9ba7bedbce2c53f39d4ca3d79f2a20123b41",
+    "candidates": [
+      [
+        "TH",
+        "unknown",
+        {}
+      ],
+      [
+        "US",
+        "unknown",
+        {}
+      ],
+      [
+        "NP",
+        "unknown",
+        {}
+      ],
+      [
+        "DE",
+        "unknown",
+        {}
+      ]
+    ]
+  },
+  {
+    "source_id": 153440,
+    "start": 5141,
+    "end": 5215,
+    "sha256": "a3eccac77579794f6aebd92c672fae32f803c27816b988467707bf8086fd5c69",
+    "candidates": [
+      [
+        "NP",
+        "unknown",
+        {}
+      ],
+      [
+        "US",
+        "unknown",
+        {}
+      ],
+      [
+        "DE",
+        "unknown",
+        {}
+      ],
+      [
+        "CA",
+        "unknown",
+        {}
+      ]
+    ]
+  }
+]

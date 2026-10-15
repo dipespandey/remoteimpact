@@ -1,0 +1,57 @@
+{
+  "review_date": "2026-10-15",
+  "selected": "jobicy/remote-jobs",
+  "selection_scope": "Best task fit among the inspected accessible sources; not an exhaustive claim about all datasets.",
+  "sources": [
+    {
+      "id": "jobicy/remote-jobs",
+      "revision": "38b2307f0dc34786a46041c0c4455b61bbc1a8dd",
+      "url": "https://huggingface.co/datasets/jobicy/remote-jobs",
+      "license": "Jobicy Remote Jobs Dataset Terms v1.0",
+      "decision": "Selected: first-party remote-specific historical data with source URLs, original posting text and explicit geography metadata.",
+      "caveat": "Jobicy licenses its own metadata and compilation, not employer text. Raw postings stay local and are not redistributed. Metadata-derived labels do not establish full-posting eligibility."
+    },
+    {
+      "id": "istrelov/freehire-jobs",
+      "revision": "390178f10f496e594e1d64f4b8d754317f89c9c3",
+      "url": "https://huggingface.co/datasets/istrelov/freehire-jobs",
+      "license": "unknown",
+      "decision": "Rejected for this release: unclear rights and no relevant verified policy labels; size alone does not fix this."
+    },
+    {
+      "id": "michaelozon/candidate-matching-synthetic",
+      "revision": "178ab864dcad9910c5670d43e4bdbbb901a11f18",
+      "url": "https://huggingface.co/datasets/michaelozon/candidate-matching-synthetic",
+      "license": "MIT according to publisher card",
+      "decision": "Not selected: synthetic resume/skill matching, not source-grounded remote restrictions. Existing job embeddings are not policy labels."
+    },
+    {
+      "id": "Armans33115/JobCCC-Conversational-Job-Recommendation-Bangladesh",
+      "revision": "43d7b858643812fd890fb66d625055d23a4fdfe3",
+      "url": "https://huggingface.co/datasets/Armans33115/JobCCC-Conversational-Job-Recommendation-Bangladesh",
+      "license": "MIT stated in card body; not present in metadata",
+      "decision": "Useful related work, not selected: Bangladesh conversational ranking and summarized structured job attributes, not the original policy interpretation target."
+    },
+    {
+      "id": "NextGig-Rocks/global-job-postings-multi-ats",
+      "revision": "fc9787e07b2a9b5f11a470c503c36e854abd6378",
+      "url": "https://huggingface.co/datasets/NextGig-Rocks/global-job-postings-multi-ats",
+      "license": "CC BY 4.0 according to publisher card",
+      "decision": "Not selected: job_description is an LLM summary and original URLs/source identifiers are removed. Cannot verify exact policy evidence against the original posting."
+    },
+    {
+      "id": "deanzoubi123/remote-jobs-dataset",
+      "revision": "01026f421f1d4056cdf232f88730742fc09d9fe9",
+      "url": "https://huggingface.co/datasets/deanzoubi123/remote-jobs-dataset",
+      "license": "MIT asserted by republisher",
+      "decision": "Not selected: third-party scrape of another board; first-party Jobicy source has clearer provenance."
+    },
+    {
+      "id": "xanderios/linkedin-job-postings",
+      "revision": "99206394a348ce110e192cc2349fdcd7d9719d1c",
+      "url": "https://huggingface.co/datasets/xanderios/linkedin-job-postings",
+      "license": "MIT asserted by republisher",
+      "decision": "Not selected: minimal provenance documentation and no relevant policy labels."
+    }
+  ]
+}
