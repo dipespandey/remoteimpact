@@ -86,7 +86,7 @@
   .btn-secondary { @apply bg-secondary text-secondary-foreground hover:bg-accent; }
   .btn-outline { @apply border border-input bg-card text-foreground hover:bg-muted; }
   .btn-ghost { @apply text-foreground hover:bg-muted; }
-  .btn-link { @apply h-auto rounded-none px-0 font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground; }
+  .btn-link { @apply h-auto min-h-0 rounded-none px-0 py-0 font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground; }
   .btn-destructive { @apply bg-destructive text-destructive-foreground hover:bg-destructive/90; }
   .btn-sm { @apply min-h-9 px-3 py-1.5 text-xs; }
   .btn-lg { @apply min-h-11 px-5 py-2.5 text-base; }
