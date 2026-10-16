@@ -52,6 +52,7 @@ class SearchDestinationTests(TestCase):
         self.assertContains(response, 'value="Canada" selected')
         self.assertContains(response, 'not verified applicant eligibility')
         self.assertContains(response, 'Teaching (1)')
+        self.assertNotContains(response, 'jobs by impact area')
 
     def test_filter_state_survives_pagination_and_unknown_location(self):
         Job.objects.bulk_create([Job(title='Curriculum Designer', slug=f'page-{n}', organization=self.org, source='manual', country='Canada') for n in range(26)])

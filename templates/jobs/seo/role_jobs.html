@@ -63,7 +63,7 @@
     {% if search_destination %}{% include 'jobs/seo/_destination_salary.html' %}{% else %}{% include 'jobs/seo/_salary_summary.html' %}{% endif %}
     {% include 'jobs/seo/_inventory_evidence.html' %}
 
-    {% if category_breakdown %}
+    {% if category_breakdown and not search_destination %}
     <section class="mt-6" aria-labelledby="by-area-heading">
         <h2 id="by-area-heading" class="px-1 text-sm font-medium text-muted-foreground">{{ role_name }} jobs by impact area</h2>
         <ul class="mt-3 flex flex-wrap gap-2">
