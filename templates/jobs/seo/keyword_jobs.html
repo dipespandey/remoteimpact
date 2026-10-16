@@ -77,6 +77,7 @@
         {% if intro %}<p class="page-lede">{{ intro }}</p>{% endif %}
     </header>
 
+    {% include 'jobs/seo/_destination_search.html' %}
     {% if nonprofit_page %}
     <section class="card mb-6 p-5" aria-labelledby="nonprofit-search-heading">
         <h2 id="nonprofit-search-heading" class="section-title">Find the right nonprofit role</h2>
@@ -96,7 +97,7 @@
     </section>
     {% endif %}
 
-    {% include 'jobs/seo/_salary_summary.html' %}
+    {% if search_destination %}{% include 'jobs/seo/_destination_salary.html' %}{% else %}{% include 'jobs/seo/_salary_summary.html' %}{% endif %}
     {% include 'jobs/seo/_inventory_evidence.html' %}
 
     {% if category_breakdown %}
@@ -179,7 +180,7 @@
             <section class="card p-5" aria-labelledby="alerts-heading">
                 <h2 id="alerts-heading" class="text-[15px] font-semibold text-foreground">Get matching jobs by email</h2>
                 <p class="mt-1 text-[13px] leading-relaxed text-muted-foreground">Describe the job you want, including where you can work and your pay floor. We'll email the roles that fit. The first set is free.</p>
-                <a href="{% url 'jobs:job_alerts' %}?source=seo_keyword_sidebar" class="btn btn-primary btn-sm btn-block mt-4" data-track="seo_scout_cta" data-track-category="job_scout_acquisition">Describe the job you want</a>
+                <a href="{% if destination_scout_url %}{{ destination_scout_url }}{% else %}{% url 'jobs:job_alerts' %}?source=seo_keyword_sidebar{% endif %}" class="btn btn-primary btn-sm btn-block mt-4" data-track="seo_scout_cta" data-track-category="job_scout_acquisition">Describe the job you want</a>
             </section>
 
             {% if related_keywords %}

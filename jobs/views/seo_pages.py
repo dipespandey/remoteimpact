@@ -455,3 +455,20 @@ class AllKeywordPagesView(ListView):
         context['low_volume_pages'] = low_volume
         
         return context
+
+
+# Extend the established destinations without changing unrelated role searches.
+from ..services.search_destinations import SearchDestinationRoleMixin, SearchDestinationKeywordMixin
+
+_BaseRoleJobsView = RoleJobsView
+
+
+class RoleJobsView(SearchDestinationRoleMixin, _BaseRoleJobsView):
+    pass
+
+
+_BaseKeywordJobsView = KeywordJobsView
+
+
+class KeywordJobsView(SearchDestinationKeywordMixin, _BaseKeywordJobsView):
+    pass

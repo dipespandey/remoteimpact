@@ -1,6 +1,6 @@
 {% load humanize %}
 <section class="surface mt-6 p-5" aria-labelledby="inventory-evidence-heading">
-    <h2 id="inventory-evidence-heading" class="text-[15px] font-semibold text-foreground">Current hiring in this search</h2>
+    <h2 id="inventory-evidence-heading" class="text-[15px] font-semibold text-foreground">{% if search_destination %}Listings in this search{% else %}Current hiring in this search{% endif %}</h2>
     <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
         {{ job_count|intcomma }} current listing{{ job_count|pluralize }} across {{ inventory_evidence.employers|intcomma }} employer{{ inventory_evidence.employers|pluralize }}.
         {{ inventory_evidence.new_week|intcomma }} listing{{ inventory_evidence.new_week|pluralize }} {{ inventory_evidence.new_week|pluralize:"was,were" }} posted in the past seven days.

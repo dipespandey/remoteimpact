@@ -1,0 +1,20 @@
+{% if search_destination.key == 'education' %}
+<section class="mt-10" aria-labelledby="education-guidance">
+    <h2 id="education-guidance" class="section-title">Choosing a remote education role</h2>
+    <div class="mt-4 space-y-4 text-sm leading-relaxed text-muted-foreground">
+        <p><strong class="text-foreground">Teaching and tutoring:</strong> check required qualifications, student age groups, teaching languages and scheduled lesson times. A remote teaching role may still require a local licence or residence in a specific country.</p>
+        <p><strong class="text-foreground">Curriculum and instructional design:</strong> compare the learning audience, subject knowledge, accessibility requirements and portfolio expectations. These roles can involve writing lessons, designing courses or evaluating learning materials.</p>
+        <p><strong class="text-foreground">Student support and education operations:</strong> read the responsibilities and working-hour requirements. A vacancy for a student is not automatically a job supporting students. Machine-learning engineering and explicitly labelled AI-tutor or model-training roles are outside this education search.</p>
+        <p>For sector context, explore our <a href="{% url 'jobs:pillar_detail' pillar_slug='education-edtech-careers' %}" class="underline">education and edtech career guide</a>. Prefer nonprofit employers? Browse <a href="{% url 'jobs:keyword_jobs' keyword_slug='remote-nonprofit-jobs' %}" class="underline">remote nonprofit jobs</a>.</p>
+    </div>
+</section>
+{% elif search_destination.key == 'sustainability' %}
+<section class="mt-10" aria-labelledby="sustainability-guidance">
+    <h2 id="sustainability-guidance" class="section-title">Choosing a remote sustainability role</h2>
+    <div class="mt-4 space-y-4 text-sm leading-relaxed text-muted-foreground">
+        <p>Compare the actual work: carbon accounting, ESG reporting, environmental programs, clean energy, climate research or policy. These specialties require different skills; a sustainability title alone does not establish fit.</p>
+        <p>Check hiring countries, working hours, site visits and travel. A remote environmental role can still involve fieldwork. Missing salary or location details need confirmation from the employer.</p>
+        <p>For roles across the wider sector, explore <a href="{% url 'jobs:category_landing' slug='climate-environment' %}" class="underline">climate and environment jobs</a> or read the <a href="{% url 'jobs:pillar_detail' pillar_slug='climate-environment-careers' %}" class="underline">climate career guide</a>.</p>
+    </div>
+</section>
+{% endif %}

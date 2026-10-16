@@ -1,0 +1,25 @@
+{% if search_destination %}
+<section class="card mt-6 p-5" aria-labelledby="destination-search-heading">
+    <h2 id="destination-search-heading" class="section-title">Find your next {{ search_destination.label }} role</h2>
+    {% if destination_locations or destination_roles or search_destination.key != 'nonprofit' %}
+    <form method="get" class="mt-4 flex flex-wrap items-end gap-3">
+        <div><label for="destination-role" class="block text-sm font-medium">Role or title</label>
+            <input id="destination-role" name="q" value="{{ destination_query }}" maxlength="100" class="mt-1 rounded-lg border border-border bg-background px-3 py-2 text-sm" placeholder="{% if search_destination.key == 'education' %}e.g. curriculum{% else %}e.g. carbon{% endif %}"></div>
+        <div><label for="destination-country" class="block text-sm font-medium">Location listed</label>
+            <select id="destination-country" name="country" aria-describedby="destination-location-note" class="mt-1 rounded-lg border border-border bg-background px-3 py-2 text-sm">
+                <option value="">All listed locations</option>
+                {% for location in destination_locations %}<option value="{{ location }}"{% if location|lower == destination_country|lower %} selected{% endif %}>{{ location }}</option>{% endfor %}
+            </select></div>
+        <button class="btn btn-primary btn-sm" type="submit">Find roles</button>
+        {% if destination_query or destination_country %}<a href="{% url 'jobs:role_jobs' role_slug=config.slug %}" class="btn btn-outline btn-sm">Clear filters</a>{% endif %}
+    </form>
+    <p id="destination-location-note" class="mt-2 text-[13px] text-muted-foreground">Location labels are not verified applicant eligibility. Remote does not mean worldwide; check the employer’s hiring countries and working hours.</p>
+    {% if destination_roles %}<p class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm">{% for role in destination_roles %}<a href="{{ role.url }}" class="underline underline-offset-4">{{ role.label }} ({{ role.count }})</a>{% endfor %}</p>{% endif %}
+    {% endif %}
+    <div class="mt-4 border-t border-border pt-4">
+        <p class="text-sm text-muted-foreground">Want a more specific shortlist? Add your country, experience and pay preferences before you search.</p>
+        <a href="{{ destination_scout_url }}" class="btn btn-secondary btn-sm mt-3" data-track="seo_scout_cta" data-track-category="job_scout_acquisition">Personalize this {{ search_destination.label }} search</a>
+        <p class="mt-2 text-[13px] text-muted-foreground">Edit the example in Scout. A preview does not subscribe you to emails.</p>
+    </div>
+</section>
+{% endif %}

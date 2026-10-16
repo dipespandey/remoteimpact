@@ -59,7 +59,8 @@
         {% if intro %}<p class="page-lede">{{ intro }}</p>{% endif %}
     </header>
 
-    {% include 'jobs/seo/_salary_summary.html' %}
+    {% include 'jobs/seo/_destination_search.html' %}
+    {% if search_destination %}{% include 'jobs/seo/_destination_salary.html' %}{% else %}{% include 'jobs/seo/_salary_summary.html' %}{% endif %}
     {% include 'jobs/seo/_inventory_evidence.html' %}
 
     {% if category_breakdown %}
@@ -104,8 +105,8 @@
                 </ul>
                 {% else %}
                 <div class="card mt-3 p-6 text-sm">
-                    <p class="font-medium text-foreground">No open {{ role_name }} roles right now.</p>
-                    <p class="mt-1 text-muted-foreground">New listings are added as organisations post them. You can search every open role in the meantime.</p>
+                    <p class="font-medium text-foreground">No matching {{ role_name }} roles right now.</p>
+                    <p class="mt-1 text-muted-foreground">Try clearing a role or location filter, or browse the wider job board. Check availability on the employer’s site.</p>
                     <a href="{% url 'jobs:job_list' %}" class="btn btn-outline btn-sm mt-4">Browse all jobs</a>
                 </div>
                 {% endif %}
@@ -113,22 +114,23 @@
                 {% if page_obj.has_other_pages %}
                 <nav class="mt-6 flex flex-wrap items-center justify-between gap-3" aria-label="Pagination">
                     {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-sm" rel="prev">Previous</a>
+                    <a href="?page={{ page_obj.previous_page_number }}{{ destination_pagination_query }}" class="btn btn-secondary btn-sm" rel="prev">Previous</a>
                     {% else %}<span></span>{% endif %}
                     <span class="text-[13px] tabular-nums text-muted-foreground">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
                     {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-sm" rel="next">Next</a>
+                    <a href="?page={{ page_obj.next_page_number }}{{ destination_pagination_query }}" class="btn btn-secondary btn-sm" rel="next">Next</a>
                     {% else %}<span></span>{% endif %}
                 </nav>
                 {% endif %}
             </section>
+            {% include 'jobs/seo/_destination_guidance.html' %}
         </div>
 
         <aside class="min-w-0 space-y-6">
             <section class="card p-5" aria-labelledby="alerts-heading">
                 <h2 id="alerts-heading" class="text-[15px] font-semibold text-foreground">Get matching jobs by email</h2>
                 <p class="mt-1 text-[13px] leading-relaxed text-muted-foreground">Describe the job you want, including where you can work and your pay floor. We'll email the roles that fit. The first set is free.</p>
-                <a href="{% url 'jobs:job_alerts' %}?source=seo_role_sidebar" class="btn btn-primary btn-sm btn-block mt-4" data-track="seo_scout_cta" data-track-category="job_scout_acquisition">Describe the job you want</a>
+                <a href="{% if destination_scout_url %}{{ destination_scout_url }}{% else %}{% url 'jobs:job_alerts' %}?source=seo_role_sidebar{% endif %}" class="btn btn-primary btn-sm btn-block mt-4" data-track="seo_scout_cta" data-track-category="job_scout_acquisition">Describe the job you want</a>
             </section>
 
             {% if related_roles %}
