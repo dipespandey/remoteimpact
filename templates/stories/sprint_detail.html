@@ -6,7 +6,7 @@
 <div class="container py-8 sm:py-10">
 <div class="mx-auto max-w-2xl">
 
-    <nav aria-label="Breadcrumb" class="text-[13px] text-muted-foreground">
+    <nav aria-label="Breadcrumb" class="text-xs text-muted-foreground">
         <ol class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
             <li><a href="{% url 'jobs:sprints_list' %}" class="hover:text-foreground">Contribute</a></li>
             <li aria-hidden="true">/</li>
@@ -16,7 +16,7 @@
 
     <header class="mt-4">
         <h1 class="page-title">{{ sprint.title }}</h1>
-        <p class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
+        <p class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
             <span class="font-medium text-foreground">{{ sprint.organization.name }}</span>
             {% if sprint.difficulty %}<span aria-hidden="true">&middot;</span><span>{{ sprint.difficulty }}</span>{% endif %}
             <span aria-hidden="true">&middot;</span>
@@ -27,19 +27,19 @@
     <div class="mt-6 max-w-[68ch] space-y-8">
         <section>
             <h2 class="section-title">About this task</h2>
-            <p class="mt-2 text-[15px] leading-7 text-foreground/85">{{ sprint.description }}</p>
+            <p class="mt-2 text-base leading-7 text-foreground/85">{{ sprint.description }}</p>
         </section>
 
         {% if sprint.impact_statement %}
         <section>
             <h2 class="section-title">Why it matters</h2>
-            <p class="mt-2 text-[15px] leading-7 text-foreground/85">{{ sprint.impact_statement }}</p>
+            <p class="mt-2 text-base leading-7 text-foreground/85">{{ sprint.impact_statement }}</p>
         </section>
         {% endif %}
 
         <section>
             <h2 class="section-title">Instructions</h2>
-            <div class="prose prose-neutral mt-2 max-w-none text-[15px] leading-7 prose-p:text-foreground/85 prose-li:text-foreground/85 prose-a:text-foreground prose-a:decoration-border prose-a:underline-offset-4">
+            <div class="prose prose-neutral mt-2 max-w-none text-base leading-7 prose-p:text-foreground/85 prose-li:text-foreground/85 prose-a:text-foreground prose-a:decoration-border prose-a:underline-offset-4">
                 {{ sprint.instructions|linebreaks }}
             </div>
         </section>

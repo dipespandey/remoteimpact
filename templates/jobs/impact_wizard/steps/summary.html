@@ -10,7 +10,7 @@
 
         <!-- Impact Areas -->
         <div class="p-4 sm:p-5">
-            <dt class="text-[13px] font-medium text-muted-foreground">Causes</dt>
+            <dt class="text-xs font-medium text-muted-foreground">Causes</dt>
             <dd class="mt-2 flex flex-wrap gap-1.5">
                 {% for area in selected_areas %}
                 <span class="badge bg-card text-foreground">{{ area.name }}</span>
@@ -22,7 +22,7 @@
 
         <!-- Skills -->
         <div class="p-4 sm:p-5">
-            <dt class="text-[13px] font-medium text-muted-foreground">Skills</dt>
+            <dt class="text-xs font-medium text-muted-foreground">Skills</dt>
             <dd class="mt-2 flex flex-wrap gap-1.5">
                 {% for skill in skill_labels|slice:":8" %}
                 <span class="badge bg-card text-foreground">{{ skill }}</span>
@@ -37,7 +37,7 @@
 
         <!-- Preferences -->
         <div class="p-4 sm:p-5">
-            <dt class="text-[13px] font-medium text-muted-foreground">Looking for</dt>
+            <dt class="text-xs font-medium text-muted-foreground">Looking for</dt>
             <dd class="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-sm text-foreground">
                 {% if profile.remote_preference %}
                 <span>{{ profile.get_remote_preference_display }}</span>
@@ -58,18 +58,18 @@
 
         <!-- Work Style & Experience -->
         <div class="p-4 sm:p-5">
-            <dt class="text-[13px] font-medium text-muted-foreground">Work style</dt>
+            <dt class="text-xs font-medium text-muted-foreground">Work style</dt>
             <dd class="mt-1 text-sm text-foreground">{{ profile.get_work_style_display|default:"Not set" }}</dd>
         </div>
         <div class="p-4 sm:p-5">
-            <dt class="text-[13px] font-medium text-muted-foreground">Experience</dt>
+            <dt class="text-xs font-medium text-muted-foreground">Experience</dt>
             <dd class="mt-1 text-sm text-foreground">{{ profile.get_experience_level_display|default:"Not set" }}</dd>
         </div>
 
         <!-- Story -->
         {% if profile.impact_statement %}
         <div class="p-4 sm:p-5">
-            <dt class="text-[13px] font-medium text-muted-foreground">Bio</dt>
+            <dt class="text-xs font-medium text-muted-foreground">Bio</dt>
             <dd class="mt-2 max-w-prose whitespace-pre-line text-sm leading-6 text-foreground">{{ profile.impact_statement }}</dd>
         </div>
         {% endif %}

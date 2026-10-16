@@ -1,11 +1,11 @@
 {% load humanize %}{# Honest pay summary. salary_stats only counts annual USD salaries (see seo_pages.comparable_salary_jobs). #}
 {% if salary_stats and salary_stats.count %}
 <div class="surface max-w-2xl p-5">
-    <p class="text-[13px] text-muted-foreground">Typical advertised pay (USD, annual)</p>
+    <p class="text-xs text-muted-foreground">Typical advertised pay (USD, annual)</p>
     <p class="mt-1 text-xl font-semibold tabular-nums tracking-tight text-foreground sm:text-2xl">
         {% if salary_stats.avg_max and salary_stats.avg_max > salary_stats.avg_min %}${{ salary_stats.avg_min|intcomma }}&ndash;${{ salary_stats.avg_max|intcomma }}{% else %}from ${{ salary_stats.avg_min|intcomma }}{% endif %}
     </p>
-    <p class="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+    <p class="mt-2 text-xs leading-relaxed text-muted-foreground">
         Average advertised minimum and maximum across {{ salary_stats.count|intcomma }} listing{{ salary_stats.count|pluralize }} that state an annual salary in US dollars. Listings in other currencies or with hourly pay are not included.
     </p>
 </div>

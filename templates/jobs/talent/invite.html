@@ -8,7 +8,7 @@
 <div class="page-narrow">
 
     <nav class="mb-4" aria-label="Breadcrumb">
-        {% if is_public %}<a href="{% url 'jobs:talent_profile' seeker.user_id %}" class="text-[13px] text-muted-foreground hover:text-foreground">← Back to profile</a>{% else %}<a href="{% url 'jobs:account' %}" class="text-[13px] text-muted-foreground hover:text-foreground">← Your job postings</a>{% endif %}
+        {% if is_public %}<a href="{% url 'jobs:talent_profile' seeker.user_id %}" class="text-xs text-muted-foreground hover:text-foreground">← Back to profile</a>{% else %}<a href="{% url 'jobs:account' %}" class="text-xs text-muted-foreground hover:text-foreground">← Your job postings</a>{% endif %}
     </nav>
 
     {% if messages %}
@@ -44,7 +44,7 @@
                                class="mt-1 h-4 w-4 border-input text-foreground focus:ring-ring">
                         <span>
                             <span class="block text-sm font-medium text-foreground">{{ job.title|display_title }}</span>
-                            <span class="block text-[13px] text-muted-foreground">Posted {{ job.posted_at|date:"M d, Y" }}</span>
+                            <span class="block text-xs text-muted-foreground">Posted {{ job.posted_at|date:"M d, Y" }}</span>
                             {% if job.id in existing_invitations %}
                             <span class="badge badge-warning mt-1.5">Already invited</span>
                             {% endif %}

@@ -9,7 +9,7 @@ A table of contents is built from the article's H2s on wide screens.
 
 {% block content %}
 <div class="container py-8 sm:py-10">
-    <nav aria-label="Breadcrumb" class="text-[13px] text-muted-foreground">
+    <nav aria-label="Breadcrumb" class="text-xs text-muted-foreground">
         <ol class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
             <li><a href="{% url 'jobs:home' %}" class="hover:text-foreground">Home</a></li>
             <li aria-hidden="true">/</li>
@@ -28,7 +28,7 @@ A table of contents is built from the article's H2s on wide screens.
 
             {% block guide_summary %}{% endblock %}
 
-            <div class="guide-prose prose prose-neutral mt-8 max-w-[68ch] text-[15px] leading-7 sm:text-base prose-headings:scroll-mt-24 prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-foreground prose-h2:mt-10 prose-h2:text-balance prose-h2:text-lg sm:prose-h2:text-xl prose-h3:text-base prose-p:text-foreground/85 prose-li:text-foreground/85 prose-li:marker:text-muted-foreground prose-a:font-medium prose-a:text-foreground prose-a:decoration-border prose-a:underline-offset-4 hover:prose-a:decoration-foreground prose-strong:font-semibold prose-strong:text-foreground prose-em:text-muted-foreground prose-table:text-sm">
+            <div class="guide-prose prose prose-neutral mt-8 max-w-[68ch] text-base leading-7 sm:text-base prose-headings:scroll-mt-24 prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-foreground prose-h2:mt-10 prose-h2:text-balance prose-h2:text-lg sm:prose-h2:text-xl prose-h3:text-base prose-p:text-foreground/85 prose-li:text-foreground/85 prose-li:marker:text-muted-foreground prose-a:font-medium prose-a:text-foreground prose-a:decoration-border prose-a:underline-offset-4 hover:prose-a:decoration-foreground prose-strong:font-semibold prose-strong:text-foreground prose-em:text-muted-foreground prose-table:text-sm">
                 {% block guide_body %}{% endblock %}
             </div>
 
@@ -62,8 +62,8 @@ A table of contents is built from the article's H2s on wide screens.
 
         <aside class="hidden lg:block" aria-label="On this page">
             <nav id="guide-toc" class="sticky top-24 hidden">
-                <p class="text-[13px] font-medium text-foreground">On this page</p>
-                <ol id="guide-toc-list" class="mt-3 space-y-1.5 text-[13px]"></ol>
+                <p class="text-xs font-medium text-foreground">On this page</p>
+                <ol id="guide-toc-list" class="mt-3 space-y-1.5 text-xs"></ol>
             </nav>
         </aside>
     </div>

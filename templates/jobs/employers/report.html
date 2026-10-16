@@ -29,7 +29,7 @@
           <td>
             <a class="font-medium hover:underline" href="{{ row.job.get_absolute_url }}">{{ row.job.title|display_title }}</a>
             {% if row.job.is_sponsored %}<span class="badge badge-featured ml-2">★ Featured until {{ row.job.featured_until|date:"M j" }}</span>{% endif %}
-            <p class="text-[13px] text-muted-foreground">Posted {{ row.job.posted_at|date:"M j, Y" }}</p>
+            <p class="text-xs text-muted-foreground">Posted {{ row.job.posted_at|date:"M j, Y" }}</p>
           </td>
           <td class="text-right tabular-nums">{{ row.views|intcomma }}</td>
           <td class="text-right tabular-nums">{{ row.apply_clicks|intcomma }}</td>

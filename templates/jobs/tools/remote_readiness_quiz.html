@@ -323,7 +323,7 @@
                   <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-medium transition-colors"
                         :class="answers[q.id] === opt.score ? 'bg-background/15 text-background' : 'bg-card text-muted-foreground'"
                         x-text="String.fromCharCode(65 + oi)"></span>
-                  <span class="min-w-0 text-sm sm:text-[15px]" x-text="opt.text"></span>
+                  <span class="min-w-0 text-sm sm:text-base" x-text="opt.text"></span>
                 </div>
               </button>
             </template>
@@ -395,23 +395,23 @@
       <h2 class="section-title">Questions</h2>
       <div class="surface mt-4 p-1.5">
         <details class="group rounded-xl px-4 py-3.5 open:bg-card">
-          <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>What does the Remote Work Readiness Quiz measure?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+          <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-base font-medium text-foreground"><span>What does the Remote Work Readiness Quiz measure?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
           <p class="mt-2 text-sm leading-6 text-muted-foreground">It covers 12 areas, including self-discipline, home office setup, written and async communication, technical setup, motivation and work-life boundaries. You get a score out of 48 and tips for the areas that scored low.</p>
         </details>
         <details class="group rounded-xl px-4 py-3.5 open:bg-card">
-          <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>How long does the assessment take?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+          <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-base font-medium text-foreground"><span>How long does the assessment take?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
           <p class="mt-2 text-sm leading-6 text-muted-foreground">About 2–3 minutes. There are 12 multiple-choice questions and the result shows as soon as you answer the last one.</p>
         </details>
         <details class="group rounded-xl px-4 py-3.5 open:bg-card">
-          <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>What score do I need to be ready for remote work?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+          <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-base font-medium text-foreground"><span>What score do I need to be ready for remote work?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
           <p class="mt-2 text-sm leading-6 text-muted-foreground">40–48: remote work natural. 30–39: almost ready. 20–29: needs preparation. Below 20: consider hybrid first.</p>
         </details>
         <details class="group rounded-xl px-4 py-3.5 open:bg-card">
-          <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>Is this quiz free and private?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+          <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-base font-medium text-foreground"><span>Is this quiz free and private?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
           <p class="mt-2 text-sm leading-6 text-muted-foreground">Yes. It is free, runs in your browser and does not send your answers to our server. You do not need an account.</p>
         </details>
         <details class="group rounded-xl px-4 py-3.5 open:bg-card">
-          <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>Can I retake the quiz?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+          <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-base font-medium text-foreground"><span>Can I retake the quiz?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
           <p class="mt-2 text-sm leading-6 text-muted-foreground">Yes. Retake it as often as you like to see how your setup and habits change.</p>
         </details>
       </div>

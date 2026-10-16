@@ -18,12 +18,12 @@
             <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div class="min-w-0 flex-1">
                     <div class="flex flex-wrap items-center gap-2">
-                        <h2 class="text-[15px] font-semibold text-foreground">{{ item.title }}</h2>
+                        <h2 class="text-base font-semibold text-foreground">{{ item.title }}</h2>
                         <span class="badge badge-outline">{{ item.get_visibility_display }}</span>
                     </div>
                     <p class="mt-1 max-w-[70ch] text-sm leading-6 text-muted-foreground">{{ item.summary }}</p>
                     {% if item.links %}
-                    <p class="mt-1 break-words text-[13px] text-muted-foreground">Links: {{ item.links|join:", " }}</p>
+                    <p class="mt-1 break-words text-xs text-muted-foreground">Links: {{ item.links|join:", " }}</p>
                     {% endif %}
                 </div>
                 <div class="flex shrink-0 gap-1">

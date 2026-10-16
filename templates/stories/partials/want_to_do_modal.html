@@ -18,7 +18,7 @@
                    class="block rounded-xl bg-muted px-3.5 py-3 transition-colors hover:bg-accent"
                    onclick="document.getElementById('modal-container').classList.add('hidden')">
                     <span class="block text-sm font-medium text-foreground">{{ job.title|display_title }}</span>
-                    <span class="block text-[13px] text-muted-foreground">{{ job.organization.name }}{% if job.location %} &middot; {{ job.location }}{% endif %}</span>
+                    <span class="block text-xs text-muted-foreground">{{ job.organization.name }}{% if job.location %} &middot; {{ job.location }}{% endif %}</span>
                 </a>
             </li>
             {% endfor %}
@@ -37,9 +37,9 @@
                    onclick="document.getElementById('modal-container').classList.add('hidden')">
                     <span class="flex items-baseline justify-between gap-3">
                         <span class="text-sm font-medium text-foreground">{{ sprint.title }}</span>
-                        <span class="shrink-0 text-[13px] tabular-nums text-muted-foreground">{{ sprint.time_estimate_minutes }} min</span>
+                        <span class="shrink-0 text-xs tabular-nums text-muted-foreground">{{ sprint.time_estimate_minutes }} min</span>
                     </span>
-                    <span class="block text-[13px] text-muted-foreground">{{ sprint.organization.name }}</span>
+                    <span class="block text-xs text-muted-foreground">{{ sprint.organization.name }}</span>
                 </a>
             </li>
             {% endfor %}
@@ -57,7 +57,7 @@
                    class="block rounded-xl px-3.5 py-3 transition-colors hover:bg-muted"
                    onclick="document.getElementById('modal-container').classList.add('hidden')">
                     <span class="line-clamp-2 block text-sm text-foreground">&ldquo;{{ s.content|truncatewords:20 }}&rdquo;</span>
-                    <span class="mt-1 block text-[13px] text-muted-foreground">{{ s.author_name }} &middot; {{ s.organization.name }}</span>
+                    <span class="mt-1 block text-xs text-muted-foreground">{{ s.author_name }} &middot; {{ s.organization.name }}</span>
                 </a>
             </li>
             {% endfor %}

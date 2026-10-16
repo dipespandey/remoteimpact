@@ -18,9 +18,9 @@
             <a href="{% url 'jobs:role_jobs' role_slug=role.slug %}" class="block h-full rounded-xl px-3.5 py-3 transition-colors hover:bg-muted">
                 <span class="flex items-baseline justify-between gap-3">
                     <span class="text-sm font-semibold text-foreground">{{ role.role }}</span>
-                    <span class="shrink-0 text-[13px] tabular-nums text-muted-foreground">{{ role.job_count|intcomma }} open</span>
+                    <span class="shrink-0 text-xs tabular-nums text-muted-foreground">{{ role.job_count|intcomma }} open</span>
                 </span>
-                {% if role.intro %}<span class="mt-0.5 line-clamp-2 block text-[13px] leading-relaxed text-muted-foreground">{{ role.intro }}</span>{% endif %}
+                {% if role.intro %}<span class="mt-0.5 line-clamp-2 block text-xs leading-relaxed text-muted-foreground">{{ role.intro }}</span>{% endif %}
             </a>
         </li>
         {% endfor %}

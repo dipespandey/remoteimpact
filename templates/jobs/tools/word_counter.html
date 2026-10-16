@@ -77,7 +77,7 @@
         placeholder="Type or paste your text here"
       ></textarea>
       <div class="mt-3 flex items-center justify-between gap-4">
-        <span class="px-1 text-[13px] tabular-nums text-muted-foreground" x-text="words + ' words'"></span>
+        <span class="px-1 text-xs tabular-nums text-muted-foreground" x-text="words + ' words'"></span>
         <button type="button" x-on:click="text = ''" class="btn btn-ghost btn-sm" :disabled="text.length === 0">Clear text</button>
       </div>
     </div>
@@ -153,19 +153,19 @@
     <h2 class="section-title">Questions</h2>
     <div class="surface mt-4 p-1.5">
       <details class="group rounded-xl px-4 py-3.5 open:bg-card">
-        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>How is reading time calculated?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-base font-medium text-foreground"><span>How is reading time calculated?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
         <p class="mt-2 text-sm leading-6 text-muted-foreground">Reading time assumes 238 words per minute, the average silent reading speed for adults. The word count is divided by 238 and rounded up.</p>
       </details>
       <details class="group rounded-xl px-4 py-3.5 open:bg-card">
-        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>How is speaking time calculated?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-base font-medium text-foreground"><span>How is speaking time calculated?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
         <p class="mt-2 text-sm leading-6 text-muted-foreground">Speaking time uses 150 words per minute, a typical pace for presentations. Use it to plan talks, podcasts and video scripts.</p>
       </details>
       <details class="group rounded-xl px-4 py-3.5 open:bg-card">
-        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>What is the Flesch-Kincaid readability score?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-base font-medium text-foreground"><span>What is the Flesch-Kincaid readability score?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
         <p class="mt-2 text-sm leading-6 text-muted-foreground">The Flesch reading ease score rates text from 0 to 100. Higher is easier: 90–100 is very easy (5th grade), 60–70 is plain English (8th–9th grade), and below 30 is very difficult (college graduate level).</p>
       </details>
       <details class="group rounded-xl px-4 py-3.5 open:bg-card">
-        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>What are stop words?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-base font-medium text-foreground"><span>What are stop words?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
         <p class="mt-2 text-sm leading-6 text-muted-foreground">Stop words are common words like "the", "and" and "is" that carry little meaning. They are left out of keyword density so the words that matter in your text show up.</p>
       </details>
     </div>

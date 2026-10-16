@@ -37,7 +37,7 @@
 {% block content %}
 <div class="container py-6 pb-28 sm:py-8 sm:pb-28 lg:pb-12">
     <nav aria-label="Breadcrumb" class="!border-b-0">
-        <ol class="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] text-muted-foreground">
+        <ol class="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground">
             <li><a href="{% url 'jobs:home' %}" class="hover:text-foreground">Home</a></li>
             <li aria-hidden="true">/</li>
             <li><a href="{% url 'jobs:job_list' %}" class="hover:text-foreground">Jobs</a></li>
@@ -59,59 +59,61 @@
     </div>
     {% endif %}
 
-    <div class="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:grid-rows-[auto_1fr] lg:gap-x-12">
+    <div class="job-detail-layout">
         <!-- Header -->
         <header class="min-w-0 lg:col-start-1 lg:row-start-1">
             {% if job.is_sponsored %}<span class="badge badge-featured mb-3">★ Featured</span>{% endif %}
             <h1 class="page-title break-words">{{ job.title|display_title }}</h1>
-            <p class="mt-1.5 text-[15px] text-muted-foreground">{{ job.organization.name|display_title }}</p>
+            <p class="mt-1.5 text-base text-muted-foreground">{{ job.organization.name|display_title }}</p>
 
-            <dl class="mt-6 grid max-w-2xl grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
+            <dl class="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
                 <div class="min-w-0">
-                    <dt class="text-[13px] text-muted-foreground">Location</dt>
+                    <dt class="text-xs text-muted-foreground">Location</dt>
                     <dd class="break-words font-medium text-foreground">{{ job.location|default:"Remote" }}</dd>
                 </div>
                 <div class="min-w-0">
-                    <dt class="text-[13px] text-muted-foreground">Type</dt>
+                    <dt class="text-xs text-muted-foreground">Type</dt>
                     <dd class="font-medium text-foreground">{{ job.get_job_type_display }}</dd>
                 </div>
                 {% if job|compensation_display %}
                 <div class="min-w-0">
-                    <dt class="text-[13px] text-muted-foreground">Compensation</dt>
+                    <dt class="text-xs text-muted-foreground">Compensation</dt>
                     <dd class="break-words font-medium tabular-nums text-foreground">{{ job|compensation_display }}</dd>
                 </div>
                 {% endif %}
                 {% if job.category %}
                 <div class="min-w-0">
-                    <dt class="text-[13px] text-muted-foreground">Area</dt>
+                    <dt class="text-xs text-muted-foreground">Area</dt>
                     <dd class="break-words font-medium text-foreground"><a href="{% url 'jobs:category_landing' slug=job.category.slug %}" class="hover:underline">{{ job.category.name }}</a></dd>
                 </div>
                 {% endif %}
                 <div class="min-w-0">
-                    <dt class="text-[13px] text-muted-foreground">Posted</dt>
+                    <dt class="text-xs text-muted-foreground">Posted</dt>
                     <dd class="font-medium tabular-nums text-foreground">{{ job.posted_at|date:"M d, Y" }}</dd>
                 </div>
                 {% if job.edited_at %}
                 <div class="min-w-0">
-                    <dt class="text-[13px] text-muted-foreground">Last updated</dt>
+                    <dt class="text-xs text-muted-foreground">Last updated</dt>
                     <dd class="font-medium tabular-nums text-foreground">{{ job.edited_at|date:"M d, Y" }}</dd>
                 </div>
                 {% elif job.last_seen_at and job.source != 'manual' %}
                 <div class="min-w-0">
-                    <dt class="text-[13px] text-muted-foreground">Last checked</dt>
+                    <dt class="text-xs text-muted-foreground">Last checked</dt>
                     <dd class="font-medium tabular-nums text-foreground">{{ job.last_seen_at|date:"M d, Y" }}</dd>
                 </div>
                 {% endif %}
                 {% if job.expires_at %}
                 <div class="min-w-0">
-                    <dt class="text-[13px] text-muted-foreground">Deadline</dt>
+                    <dt class="text-xs text-muted-foreground">Deadline</dt>
                     <dd class="font-medium tabular-nums text-foreground">{{ job.expires_at|date:"M d, Y" }}</dd>
                 </div>
                 {% endif %}
             </dl>
 
             {% if job_available and job.source != 'manual' %}
-            <div class="mt-6 flex max-w-2xl gap-2.5 rounded-xl bg-muted px-4 py-3 text-[13px] leading-relaxed text-muted-foreground">
+            <details class="source-note">
+                <summary>{% if source_verification.method == 'ats_api' and source_verification.status == 'open' %}Confirmed open on the employer’s job board{% else %}Opening status unconfirmed — check the employer’s page{% endif %}</summary>
+                <div class="flex gap-2.5">
                 <svg class="mt-0.5 h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <div class="space-y-1">
                     {% if source_verification.method == 'ats_api' and source_verification.status == 'open' %}
@@ -123,6 +125,7 @@
                     {% endif %}
                 </div>
             </div>
+            </details>
             {% endif %}
         </header>
 
@@ -154,7 +157,7 @@
                 <!-- Score breakdown -->
                 <div class="mt-4 space-y-2">
                     {% for key, value in match_data.breakdown.items %}
-                    <div class="flex items-center justify-between gap-3 text-[13px]">
+                    <div class="flex items-center justify-between gap-3 text-xs">
                         <span class="capitalize text-muted-foreground">{{ key }}</span>
                         <div class="flex items-center gap-2">
                             <div class="h-1.5 w-20 overflow-hidden rounded-full bg-card">
@@ -169,7 +172,7 @@
 
                 {% if match_data.reasons %}
                 <div class="mt-5">
-                    <p class="mb-1.5 text-[13px] font-medium text-muted-foreground">Why you match</p>
+                    <p class="mb-1.5 text-xs font-medium text-muted-foreground">Why you match</p>
                     <ul class="check-list space-y-1 text-sm text-foreground">
                         {% for reason in match_data.reasons %}
                         <li>{{ reason }}</li>
@@ -180,7 +183,7 @@
 
                 {% if match_data.gaps %}
                 <div class="mt-5">
-                    <p class="mb-1.5 text-[13px] font-medium text-muted-foreground">Skills to develop</p>
+                    <p class="mb-1.5 text-xs font-medium text-muted-foreground">Skills to develop</p>
                     <div class="flex flex-wrap gap-1">
                         {% for gap in match_data.gaps %}
                         <span class="badge bg-card text-foreground">{{ gap }}</span>
@@ -193,7 +196,7 @@
             <!-- Prompt to complete profile -->
             <div class="surface order-2 p-5 lg:order-1">
                 <h2 class="text-sm font-semibold text-foreground">See how you match</h2>
-                <p class="mt-1 text-[13px] leading-relaxed text-muted-foreground">Complete your impact profile to see how your skills and preferences compare with this role.</p>
+                <p class="mt-1 text-xs leading-relaxed text-muted-foreground">Complete your impact profile to see how your skills and preferences compare with this role.</p>
                 <a href="{% url 'jobs:impact_wizard' %}" class="btn btn-outline btn-sm mt-3">Complete your profile</a>
             </div>
             {% endif %}
@@ -202,7 +205,7 @@
             <div class="card order-1 p-5 sm:p-6 lg:sticky lg:top-24 lg:order-2">
                 {% if job.poster == user or user in job.organization.members.all %}
                 <h2 class="card-title">Your role</h2>
-                <p class="mt-1 text-[13px] text-muted-foreground">{% if job.is_paid %}Live{% if job.expires_at %} until {{ job.expires_at|date:"M j" }}{% endif %}{% else %}Draft, not published yet{% endif %}</p>
+                <p class="mt-1 text-xs text-muted-foreground">{% if job.is_paid %}Live{% if job.expires_at %} until {{ job.expires_at|date:"M j" }}{% endif %}{% else %}Draft, not published yet{% endif %}</p>
                 <div class="mt-4 grid gap-2">
                     {% if job.is_paid %}
                     <a href="{% url 'jobs:employer_job_applications' job.slug %}" class="btn btn-primary btn-block">Applications</a>
@@ -215,14 +218,14 @@
                 </div>
                 {% else %}
                 <h2 class="card-title">Hiring for a similar role?</h2>
-                <p class="mt-1 text-[13px] leading-relaxed text-muted-foreground">Post it on Remote Impact for $99: featured for 30 days, with applications and matching candidates in your dashboard.</p>
+                <p class="mt-1 text-xs leading-relaxed text-muted-foreground">Post it on Remote Impact for $99: featured for 30 days, with applications and matching candidates in your dashboard.</p>
                 <a href="{% url 'jobs:post_job' %}" class="btn btn-primary btn-block mt-4">Post a job</a>
                 {% endif %}
             </div>
             {% else %}
             <div id="apply-panel" class="card order-1 p-5 sm:p-6 lg:sticky lg:top-24 lg:order-2">
                 <h2 class="card-title">Apply for this role</h2>
-                {% if job.expires_at %}<p class="mt-0.5 text-[13px] text-muted-foreground">Deadline {{ job.expires_at|date:"M d, Y" }}</p>{% endif %}
+                {% if job.expires_at %}<p class="mt-0.5 text-xs text-muted-foreground">Deadline {{ job.expires_at|date:"M d, Y" }}</p>{% endif %}
 
                 <div class="mt-4">
                 {% if apply_inplatform %}
@@ -246,14 +249,14 @@
                 </a>
                 {% endif %}
                 {% if apply_inplatform and safe_application_url %}
-                <p class="mt-2 text-center text-[13px] text-muted-foreground">
+                <p class="mt-2 text-center text-xs text-muted-foreground">
                     or <a href="{{ apply_redirect_url|default:safe_application_url }}" target="_blank" rel="noopener nofollow" class="underline underline-offset-2 hover:text-foreground"
                         data-track="apply_click" data-track-category="job_action" data-track-label="{{ job.slug }}">apply on {{ job.organization.name|display_title }}'s site</a>
                 </p>
                 {% endif %}
                 </div>
 
-                <div class="mt-3 space-y-0.5">
+                <div class="job-apply-links">
                     <!-- Application Guide button -->
                     <a href="{% url 'jobs:application_guide' slug=job.slug %}"
                         class="btn btn-ghost btn-block"
@@ -273,9 +276,9 @@
                 </div>
 
                 {% if job_available and not job.is_sponsored %}
-                <p class="mt-4 text-center text-[13px] text-muted-foreground">Hiring for this role? <a href="{% url 'jobs:feature_job' job.slug %}?source=job_detail" rel="nofollow" class="font-medium text-foreground underline decoration-border hover:decoration-foreground" data-track="feature_from_job" data-track-category="employer">Feature it</a> to reach more candidates{% if job.organization.slug %}, or <a href="{% url 'jobs:claim_organization' job.organization.slug %}" rel="nofollow" class="font-medium text-foreground underline decoration-border hover:decoration-foreground">get monthly stats</a>{% endif %}.</p>
+                <p class="mt-4 text-center text-xs text-muted-foreground">Hiring for this role? <a href="{% url 'jobs:feature_job' job.slug %}?source=job_detail" rel="nofollow" class="font-medium text-foreground underline decoration-border hover:decoration-foreground" data-track="feature_from_job" data-track-category="employer">Feature it</a> to reach more candidates{% if job.organization.slug %}, or <a href="{% url 'jobs:claim_organization' job.organization.slug %}" rel="nofollow" class="font-medium text-foreground underline decoration-border hover:decoration-foreground">get monthly stats</a>{% endif %}.</p>
                 {% elif job.is_sponsored %}
-                <p class="mt-4 text-center text-[13px] text-muted-foreground"><span class="badge badge-featured">★ Featured</span> by the employer</p>
+                <p class="mt-4 text-center text-xs text-muted-foreground"><span class="badge badge-featured">★ Featured</span> by the employer</p>
                 {% endif %}
             </div>
             {% endif %}
@@ -283,8 +286,63 @@
         </aside>
 
         <!-- Body -->
-        <div class="min-w-0 lg:col-start-1 lg:row-start-2">
-            <div class="max-w-[68ch] space-y-10">
+        <div class="job-detail-body lg:col-start-1 lg:row-start-2">
+            <div class="job-detail-content">
+                <section>
+                    <h2 class="section-title">Job description</h2>
+                    <div class="prose prose-zinc reading-copy max-w-none break-words prose-headings:font-semibold prose-headings:tracking-tight prose-a:text-foreground [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto mt-3">
+                        {{ job.description|render_html }}
+                    </div>
+                </section>
+
+                {% if show_impact %}
+                <section>
+                    <h2 class="section-title">The difference you'll make</h2>
+                    <div class="prose prose-zinc reading-copy max-w-none break-words prose-headings:font-semibold prose-headings:tracking-tight prose-a:text-foreground [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto mt-3">
+                        {{ job.impact|render_html }}
+                    </div>
+                </section>
+                {% endif %}
+
+                {% if show_requirements %}
+                <section>
+                    <h2 class="section-title">What makes you a great fit</h2>
+                    <div class="prose prose-zinc reading-copy max-w-none break-words prose-headings:font-semibold prose-headings:tracking-tight prose-a:text-foreground [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto mt-3">
+                        {{ job.requirements|render_html }}
+                    </div>
+                </section>
+                {% endif %}
+
+                {% if show_benefits %}
+                <section>
+                    <h2 class="section-title">Benefits</h2>
+                    <div class="prose prose-zinc reading-copy max-w-none break-words prose-headings:font-semibold prose-headings:tracking-tight prose-a:text-foreground [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto mt-3">
+                        {{ job.benefits|render_html }}
+                    </div>
+                </section>
+                {% endif %}
+
+                {% if job.company_description or job.organization.description %}
+                <section>
+                    <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                        <h2 class="section-title">About {{ job.organization.name|display_title }}</h2>
+                        {% if safe_organization_website %}
+                        <a href="{{ safe_organization_website }}" target="_blank" rel="noopener noreferrer"
+                            class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                            Website
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="prose prose-zinc reading-copy max-w-none break-words prose-headings:font-semibold prose-headings:tracking-tight prose-a:text-foreground [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto mt-3">
+                        {% if job.company_description %}
+                            {{ job.company_description|render_html }}
+                        {% else %}
+                            {{ job.organization.description|render_html }}
+                        {% endif %}
+                    </div>
+                </section>
+                {% endif %}
                 {% if job_available and role_insights %}
                 <section aria-labelledby="glance-heading" class="surface p-5">
                     <h2 id="glance-heading" class="text-sm font-semibold text-foreground">This role at a glance</h2>
@@ -304,67 +362,12 @@
                     </ul>
                 </section>
                 {% endif %}
-                <section>
-                    <h2 class="section-title">Job description</h2>
-                    <div class="prose prose-zinc max-w-none break-words text-[15px] leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto mt-3">
-                        {{ job.description|render_html }}
-                    </div>
-                </section>
-
-                {% if show_impact %}
-                <section>
-                    <h2 class="section-title">The difference you'll make</h2>
-                    <div class="prose prose-zinc max-w-none break-words text-[15px] leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto mt-3">
-                        {{ job.impact|render_html }}
-                    </div>
-                </section>
-                {% endif %}
-
-                {% if show_requirements %}
-                <section>
-                    <h2 class="section-title">What makes you a great fit</h2>
-                    <div class="prose prose-zinc max-w-none break-words text-[15px] leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto mt-3">
-                        {{ job.requirements|render_html }}
-                    </div>
-                </section>
-                {% endif %}
-
-                {% if show_benefits %}
-                <section>
-                    <h2 class="section-title">Benefits</h2>
-                    <div class="prose prose-zinc max-w-none break-words text-[15px] leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto mt-3">
-                        {{ job.benefits|render_html }}
-                    </div>
-                </section>
-                {% endif %}
-
-                {% if job.company_description or job.organization.description %}
-                <section>
-                    <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                        <h2 class="section-title">About {{ job.organization.name|display_title }}</h2>
-                        {% if safe_organization_website %}
-                        <a href="{{ safe_organization_website }}" target="_blank" rel="noopener noreferrer"
-                            class="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground">
-                            Website
-                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
-                        </a>
-                        {% endif %}
-                    </div>
-                    <div class="prose prose-zinc max-w-none break-words text-[15px] leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto mt-3">
-                        {% if job.company_description %}
-                            {{ job.company_description|render_html }}
-                        {% else %}
-                            {{ job.organization.description|render_html }}
-                        {% endif %}
-                    </div>
-                </section>
-                {% endif %}
             </div>
 
             {% if job_available %}
             <!-- Share buttons -->
             <section class="mt-10 flex flex-wrap items-center gap-x-1 gap-y-1">
-                <h2 class="mr-2 text-[13px] font-medium text-muted-foreground">Share</h2>
+                <h2 class="mr-2 text-xs font-medium text-muted-foreground">Share</h2>
                     <a href="https://twitter.com/intent/tweet?text={{ job.title|urlencode }}%20at%20{{ job.organization.name|urlencode }}&url={{ SITE_URL }}{{ job.get_absolute_url|urlencode }}&hashtags=remotejobs,impactjobs"
                        target="_blank" rel="noopener noreferrer"
                        class="btn btn-ghost btn-sm text-muted-foreground hover:text-foreground"
@@ -412,7 +415,7 @@
                 <!-- AI Assistant CTA -->
                 <section class="flex flex-col">
                     <h2 class="text-sm font-semibold text-foreground">Cover letter and interview prep</h2>
-                    <p class="mt-1 flex-1 text-[13px] leading-relaxed text-muted-foreground">Draft a cover letter for this role or practise the questions you are likely to be asked.</p>
+                    <p class="mt-1 flex-1 text-xs leading-relaxed text-muted-foreground">Draft a cover letter for this role or practise the questions you are likely to be asked.</p>
                     <a href="{% url 'jobs:applicant_assistant' %}?job_url={{ request.build_absolute_uri|urlencode }}&job_title={{ job.title|urlencode }}&org={{ job.organization.name|urlencode }}"
                        class="btn btn-outline btn-sm mt-3 self-start"
                        data-track="ai_assistant_cta" data-track-category="job_action" data-track-label="{{ job.slug }}">
@@ -423,7 +426,7 @@
                 <!-- AI Job Scout: continue this search -->
                 <section class="flex flex-col">
                     <h2 class="text-sm font-semibold text-foreground">Want more roles like this?</h2>
-                    <p class="mt-1 flex-1 text-[13px] leading-relaxed text-muted-foreground">Describe what you want and get your strongest matching jobs by email.</p>
+                    <p class="mt-1 flex-1 text-xs leading-relaxed text-muted-foreground">Describe what you want and get your strongest matching jobs by email.</p>
                     <a href="{% url 'jobs:job_alerts' %}?intent=Remote%20{{ job.title|urlencode }}%20roles%20similar%20to%20this%20one&source=job_detail"
                        class="btn btn-outline btn-sm mt-3 self-start"
                        data-track="job_scout_job_detail" data-track-category="job_scout" data-track-label="{{ job.slug }}">
@@ -436,7 +439,7 @@
             {% if related_seo_links %}
             <section class="mt-8">
                 <h2 class="px-1 text-sm font-medium text-muted-foreground">Related searches</h2>
-                <div class="mt-3 flex flex-wrap gap-2 text-[13px]">
+                <div class="mt-3 flex flex-wrap gap-2 text-xs">
                     {% for link in related_seo_links %}
                     <a href="{{ link.url }}"
                        class="inline-block rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent">
@@ -454,7 +457,7 @@
     <section class="job-related-section mt-12 sm:mt-16" aria-labelledby="similar-roles-heading">
         <div class="flex items-baseline justify-between px-1">
             <h2 id="similar-roles-heading" class="section-title">Similar roles</h2>
-            <a href="{% url 'jobs:job_list' %}" class="text-[13px] text-muted-foreground hover:text-foreground">View all roles</a>
+            <a href="{% url 'jobs:job_list' %}" class="text-xs text-muted-foreground hover:text-foreground">View all roles</a>
         </div>
         <ul class="list-surface mt-3 grid gap-0.5 md:grid-cols-2">
             {% for related_job in related_jobs %}
@@ -477,7 +480,7 @@
     <div class="flex items-center gap-3">
         <div class="min-w-0 flex-1">
             <p class="truncate text-sm font-medium text-foreground">{{ job.title|display_title }}</p>
-            <p class="truncate text-[13px] text-muted-foreground">{{ job.organization.name|display_title }}</p>
+            <p class="truncate text-xs text-muted-foreground">{{ job.organization.name|display_title }}</p>
         </div>
         {% if apply_inplatform %}
         <a href="{% url 'jobs:apply_job' slug=job.slug %}"

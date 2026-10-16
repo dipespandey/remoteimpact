@@ -56,8 +56,8 @@
             <div class="flex flex-col gap-3 rounded-xl px-4 py-3.5 transition-colors hover:bg-muted/60 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                 <div class="min-w-0">
                     <p class="truncate text-sm font-medium text-foreground">{{ app.seeker.email }}</p>
-                    <p class="text-[13px] text-muted-foreground">for {{ app.gig.title|display_title }}</p>
-                    <p class="mt-0.5 text-[13px] text-muted-foreground">Status: {{ app.get_status_display }}</p>
+                    <p class="text-xs text-muted-foreground">for {{ app.gig.title|display_title }}</p>
+                    <p class="mt-0.5 text-xs text-muted-foreground">Status: {{ app.get_status_display }}</p>
                 </div>
                 <a href="{% url 'gigs:employer_application' app.id %}" class="btn btn-outline btn-sm self-start sm:self-auto">Review</a>
             </div>

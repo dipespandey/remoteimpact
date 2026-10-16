@@ -21,6 +21,12 @@ module.exports = {
   theme: {
     container: { center: true, padding: { DEFAULT: "1rem", sm: "1.5rem", lg: "2rem" }, screens: { "2xl": "1200px" } },
     extend: {
+      // One readable scale for public pages, tools and staff workspaces.
+      fontSize: {
+        xs: ['0.875rem', { lineHeight: '1.5' }],
+        sm: ['0.9375rem', { lineHeight: '1.6' }],
+        base: ['1rem', { lineHeight: '1.65' }],
+      },
       fontFamily: {
         sans: ["Geist", "Inter", "system-ui", "-apple-system", "sans-serif"],
         display: ["Geist", "Inter", "system-ui", "sans-serif"],

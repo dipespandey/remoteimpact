@@ -11,13 +11,13 @@
 
     <nav class="flex flex-wrap gap-2" aria-label="Filter tasks by category">
         <a href="{% url 'jobs:sprints_list' %}"
-            class="rounded-full px-3 py-1.5 text-[13px] transition-colors {% if not current_category %}bg-foreground text-background{% else %}bg-muted text-foreground hover:bg-accent{% endif %}"
+            class="rounded-full px-3 py-1.5 text-xs transition-colors {% if not current_category %}bg-foreground text-background{% else %}bg-muted text-foreground hover:bg-accent{% endif %}"
             {% if not current_category %}aria-current="page"{% endif %}>
             All
         </a>
         {% for cat in categories %}
         <a href="{% url 'jobs:sprints_list' %}?category={{ cat.slug }}"
-            class="rounded-full px-3 py-1.5 text-[13px] transition-colors {% if current_category == cat.slug %}bg-foreground text-background{% else %}bg-muted text-foreground hover:bg-accent{% endif %}"
+            class="rounded-full px-3 py-1.5 text-xs transition-colors {% if current_category == cat.slug %}bg-foreground text-background{% else %}bg-muted text-foreground hover:bg-accent{% endif %}"
             {% if current_category == cat.slug %}aria-current="page"{% endif %}>
             {{ cat.name }}
         </a>
@@ -27,9 +27,9 @@
     <div class="mt-5 grid gap-3 md:grid-cols-2">
         {% for sprint in sprints %}
         <a href="{% url 'jobs:sprint_detail' sprint.id %}" class="card card-interactive block p-5">
-            <span class="block text-[15px] font-semibold leading-snug text-foreground">{{ sprint.title }}</span>
+            <span class="block text-base font-semibold leading-snug text-foreground">{{ sprint.title }}</span>
             <span class="mt-1 line-clamp-2 block text-sm leading-6 text-muted-foreground">{{ sprint.description }}</span>
-            <span class="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
+            <span class="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground">
                 <span>{{ sprint.organization.name }}</span>
                 <span aria-hidden="true">&middot;</span><span class="tabular-nums">{{ sprint.time_estimate_minutes }} min</span>
                 {% if sprint.difficulty %}<span aria-hidden="true">&middot;</span><span>{{ sprint.difficulty }}</span>{% endif %}

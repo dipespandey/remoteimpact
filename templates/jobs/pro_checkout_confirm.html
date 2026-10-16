@@ -6,7 +6,7 @@
 
 {% block content %}
 <div class="container max-w-4xl py-8 sm:py-10">
-  <a class="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground" href="{% url 'jobs:job_alerts' %}"><span aria-hidden="true">&larr;</span> Back to AI Job Scout</a>
+  <a class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground" href="{% url 'jobs:job_alerts' %}"><span aria-hidden="true">&larr;</span> Back to AI Job Scout</a>
   {% if checkout_cancelled %}<div class="alert alert-warning mt-4" role="status"><p>No payment was made. Your free account and saved Scout are unchanged.</p></div>{% endif %}
 
   <header class="page-header mt-4">
@@ -20,8 +20,8 @@
         <h2 class="text-base font-semibold text-foreground">Pro monthly</h2>
         {% if trial_eligible %}<span class="badge badge-primary">{{ trial_days }} days free</span>{% endif %}
       </div>
-      <p class="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-foreground">$10<span class="text-[15px] font-normal text-muted-foreground"> / month</span></p>
-      <p class="mt-1 text-[13px] leading-relaxed text-muted-foreground">{% if trial_eligible %}Free for {{ trial_days }} days, then $10 a month. Cancel before the trial ends and you pay nothing.{% else %}Billed monthly. Cancel any time from your account.{% endif %}</p>
+      <p class="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-foreground">$10<span class="text-base font-normal text-muted-foreground"> / month</span></p>
+      <p class="mt-1 text-xs leading-relaxed text-muted-foreground">{% if trial_eligible %}Free for {{ trial_days }} days, then $10 a month. Cancel before the trial ends and you pay nothing.{% else %}Billed monthly. Cancel any time from your account.{% endif %}</p>
       <ul class="check-list mt-5 flex-1 space-y-2 text-sm text-foreground">
         <li>Up to five AI Job Scouts running at once</li>
         <li>Emails as soon as a strong new match is published</li>
@@ -38,8 +38,8 @@
 
     <section class="surface flex flex-col p-5 sm:p-6" aria-label="3-month Job Search Pass">
       <h2 class="text-base font-semibold text-foreground">3-month Job Search Pass</h2>
-      <p class="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-foreground">$24<span class="text-[15px] font-normal text-muted-foreground"> once</span></p>
-      <p class="mt-1 text-[13px] leading-relaxed text-muted-foreground">Everything in Pro for 90 days. One payment, no subscription, nothing renews.</p>
+      <p class="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-foreground">$24<span class="text-base font-normal text-muted-foreground"> once</span></p>
+      <p class="mt-1 text-xs leading-relaxed text-muted-foreground">Everything in Pro for 90 days. One payment, no subscription, nothing renews.</p>
       <ul class="check-list mt-5 flex-1 space-y-2 text-sm text-foreground">
         <li>Works out at <span class="tabular-nums">$8</span> a month</li>
         <li>No card kept on file for renewals</li>
@@ -60,7 +60,7 @@
     <h2 class="px-1 text-sm font-medium text-muted-foreground">Your Scout has found <span class="tabular-nums">{{ delivered_count }}</span> match{{ delivered_count|pluralize:"es" }} so far, including:</h2>
     <ul class="list-surface mt-2">
       {% for delivery in recent_matches %}
-      <li><a class="block rounded-xl px-3.5 py-2.5 transition-colors hover:bg-muted" href="{{ delivery.job.get_absolute_url }}"><span class="block text-sm font-medium text-foreground">{{ delivery.job.title|display_title }}</span> <span class="block text-[13px] text-muted-foreground">at {{ delivery.job.organization.name }}</span></a></li>
+      <li><a class="block rounded-xl px-3.5 py-2.5 transition-colors hover:bg-muted" href="{{ delivery.job.get_absolute_url }}"><span class="block text-sm font-medium text-foreground">{{ delivery.job.title|display_title }}</span> <span class="block text-xs text-muted-foreground">at {{ delivery.job.organization.name }}</span></a></li>
       {% endfor %}
     </ul>
   </section>
@@ -72,6 +72,6 @@
   </section>
   {% endif %}
 
-  <p class="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-center text-[13px] text-muted-foreground"><span>Payments handled by Stripe</span><span>Cards, Apple Pay and Google Pay</span><span>Cancel or manage billing from your account</span></p>
+  <p class="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-center text-xs text-muted-foreground"><span>Payments handled by Stripe</span><span>Cards, Apple Pay and Google Pay</span><span>Cancel or manage billing from your account</span></p>
 </div>
 {% endblock %}

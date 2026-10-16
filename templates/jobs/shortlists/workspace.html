@@ -19,7 +19,7 @@
   </div>
   {% if page_obj %}
   <form action="{% url 'jobs:share_shortlist' %}" method="post">{% csrf_token %}
-    <p class="mb-3 px-1 text-[13px] text-muted-foreground">Your progress is private. Tick up to 10 roles to create a public link that shows the job listings only.</p>
+    <p class="mb-3 px-1 text-xs text-muted-foreground">Your progress is private. Tick up to 10 roles to create a public link that shows the job listings only.</p>
     <ul class="list-surface list-divided">
     {% for job in page_obj %}<li class="flex min-w-0 items-start gap-4 rounded-xl px-4 py-4 transition-colors hover:bg-muted/60 sm:px-5">{% if job.is_available %}<input type="checkbox" class="checkbox mt-1.5" name="jobs" value="{{ job.pk }}" aria-label="Share {{ job.title }}">{% endif %}{% if job.organization.logo_src %}<img class="mt-0.5 hidden h-10 w-10 shrink-0 rounded-xl bg-card object-contain ring-1 ring-border/70 sm:block" src="{{ job.organization.logo_src }}" alt="" loading="lazy">{% else %}<span class="avatar mt-0.5 hidden h-10 w-10 sm:inline-grid {{ job.organization.name|org_tone }}" aria-hidden="true">{{ job.organization.name|initials }}</span>{% endif %}{% include "jobs/shortlists/job.html" %}</li>{% endfor %}
     </ul>

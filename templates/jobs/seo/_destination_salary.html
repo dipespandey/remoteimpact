@@ -1,8 +1,8 @@
 {% load humanize %}
 {% if salary_stats and salary_stats.count %}
 <div class="surface max-w-2xl p-5">
-    <p class="text-[13px] text-muted-foreground">Advertised pay sample (USD, annual)</p>
+    <p class="text-xs text-muted-foreground">Advertised pay sample (USD, annual)</p>
     <p class="mt-1 text-xl font-semibold tabular-nums tracking-tight text-foreground sm:text-2xl">${{ salary_stats.avg_min|intcomma }} average stated minimum</p>
-    <p class="mt-2 text-[13px] leading-relaxed text-muted-foreground">Based on {{ salary_stats.count|intcomma }} listing{{ salary_stats.count|pluralize }} with a stated annual USD minimum.{% if salary_stats.max_count %} The average stated maximum is ${{ salary_stats.avg_max|intcomma }} across {{ salary_stats.max_count|intcomma }} listing{{ salary_stats.max_count|pluralize }} that also give a maximum.{% endif %} These are separate samples, not a market salary range. Other currencies, hourly pay and undisclosed salaries are excluded.</p>
+    <p class="mt-2 text-xs leading-relaxed text-muted-foreground">Based on {{ salary_stats.count|intcomma }} listing{{ salary_stats.count|pluralize }} with a stated annual USD minimum.{% if salary_stats.max_count %} The average stated maximum is ${{ salary_stats.avg_max|intcomma }} across {{ salary_stats.max_count|intcomma }} listing{{ salary_stats.max_count|pluralize }} that also give a maximum.{% endif %} These are separate samples, not a market salary range. Other currencies, hourly pay and undisclosed salaries are excluded.</p>
 </div>
 {% endif %}

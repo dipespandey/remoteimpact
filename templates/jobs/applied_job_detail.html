@@ -8,7 +8,7 @@
 
     <!-- Back link and actions -->
     <div class="mb-5 flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <a href="{% url 'jobs:account' %}" class="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground"><span aria-hidden="true">&larr;</span> Back to dashboard</a>
+        <a href="{% url 'jobs:account' %}" class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"><span aria-hidden="true">&larr;</span> Back to dashboard</a>
         <button type="button" onclick="window.print()" class="btn btn-outline btn-sm">
             Save as PDF
         </button>
@@ -21,7 +21,7 @@
             <span class="badge mb-3 bg-red-50 text-red-800">Expired</span>
             {% endif %}
             <h1 class="page-title">{{ job.title|display_title }}</h1>
-            <p class="mt-1.5 text-[15px] text-muted-foreground">{{ job.organization.name }}</p>
+            <p class="mt-1.5 text-base text-muted-foreground">{{ job.organization.name }}</p>
 
             <!-- Applied banner -->
             <div class="alert alert-info mt-5 print:hidden" role="status">
@@ -35,26 +35,26 @@
 
             <dl class="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
                 <div class="min-w-0">
-                    <dt class="text-[13px] text-muted-foreground">Location</dt>
+                    <dt class="text-xs text-muted-foreground">Location</dt>
                     <dd class="break-words font-medium text-foreground">{{ job.location|default:"Remote" }}</dd>
                 </div>
                 <div class="min-w-0">
-                    <dt class="text-[13px] text-muted-foreground">Type</dt>
+                    <dt class="text-xs text-muted-foreground">Type</dt>
                     <dd class="font-medium text-foreground">{{ job.get_job_type_display }}</dd>
                 </div>
                 {% if job.category %}
                 <div class="min-w-0">
-                    <dt class="text-[13px] text-muted-foreground">Area</dt>
+                    <dt class="text-xs text-muted-foreground">Area</dt>
                     <dd class="break-words font-medium text-foreground">{{ job.category.name }}</dd>
                 </div>
                 {% endif %}
                 <div class="min-w-0">
-                    <dt class="text-[13px] text-muted-foreground">Posted</dt>
+                    <dt class="text-xs text-muted-foreground">Posted</dt>
                     <dd class="font-medium tabular-nums text-foreground">{{ job.posted_at|date:"M d, Y" }}</dd>
                 </div>
                 {% if job|compensation_display %}
                 <div class="min-w-0">
-                    <dt class="text-[13px] text-muted-foreground">Compensation</dt>
+                    <dt class="text-xs text-muted-foreground">Compensation</dt>
                     <dd class="break-words font-medium tabular-nums text-foreground">{{ job|compensation_display }}</dd>
                 </div>
                 {% endif %}
@@ -63,14 +63,14 @@
 
         <section>
             <h2 class="section-title">Description</h2>
-            <div class="prose prose-zinc max-w-none break-words text-[15px] leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground mt-3">
+            <div class="prose prose-zinc max-w-none break-words text-base leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground mt-3">
                 {{ job.description|render_html }}
             </div>
         </section>
         {% if job.impact %}
         <section>
             <h2 class="section-title">Impact</h2>
-            <div class="prose prose-zinc max-w-none break-words text-[15px] leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground mt-3">
+            <div class="prose prose-zinc max-w-none break-words text-base leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground mt-3">
                 {{ job.impact|render_html }}
             </div>
         </section>
@@ -78,7 +78,7 @@
         {% if job.requirements %}
         <section>
             <h2 class="section-title">Requirements</h2>
-            <div class="prose prose-zinc max-w-none break-words text-[15px] leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground mt-3">
+            <div class="prose prose-zinc max-w-none break-words text-base leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground mt-3">
                 {{ job.requirements|render_html }}
             </div>
         </section>
@@ -86,7 +86,7 @@
         {% if job.benefits %}
         <section>
             <h2 class="section-title">Benefits</h2>
-            <div class="prose prose-zinc max-w-none break-words text-[15px] leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground mt-3">
+            <div class="prose prose-zinc max-w-none break-words text-base leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground mt-3">
                 {{ job.benefits|render_html }}
             </div>
         </section>
@@ -94,7 +94,7 @@
         {% if job.company_description or job.organization.description %}
         <section>
             <h2 class="section-title">About {{ job.organization.name }}</h2>
-            <div class="prose prose-zinc max-w-none break-words text-[15px] leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground mt-3">
+            <div class="prose prose-zinc max-w-none break-words text-base leading-7 prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-lg prose-h3:text-base prose-a:text-foreground mt-3">
                 {% if job.company_description %}
                     {{ job.company_description|render_html }}
                 {% else %}

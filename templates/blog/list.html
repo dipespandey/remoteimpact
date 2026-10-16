@@ -21,7 +21,7 @@
             <img src="{{ post.featured_image.url }}" alt="{{ post.featured_image_alt }}" loading="lazy" class="aspect-[16/9] w-full bg-muted object-cover">
             {% endif %}
             <div class="flex flex-1 flex-col p-5">
-                <time class="text-[13px] tabular-nums text-muted-foreground" datetime="{{ post.published_at|date:'Y-m-d' }}">{{ post.published_at|date:"j M Y" }}</time>
+                <time class="text-xs tabular-nums text-muted-foreground" datetime="{{ post.published_at|date:'Y-m-d' }}">{{ post.published_at|date:"j M Y" }}</time>
                 <h2 class="mt-1 text-balance text-base font-semibold leading-snug text-foreground">
                     <a href="{{ post.get_absolute_url }}" class="line-clamp-3 after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring">{{ post.title }}</a>
                 </h2>
@@ -41,7 +41,7 @@
         {% if page_obj.has_previous %}
         <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm" rel="prev">Newer posts</a>
         {% else %}<span></span>{% endif %}
-        <span class="text-[13px] tabular-nums text-muted-foreground">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        <span class="text-xs tabular-nums text-muted-foreground">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
         {% if page_obj.has_next %}
         <a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm" rel="next">Older posts</a>
         {% else %}<span></span>{% endif %}

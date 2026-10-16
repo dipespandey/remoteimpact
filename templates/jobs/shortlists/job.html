@@ -2,7 +2,7 @@
 <div class="min-w-0 flex-1 break-words">
   <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
     <h3 class="job-title"><a href="{{ job.get_absolute_url }}" class="hover:underline decoration-border">{{ job.title|display_title }}</a></h3>
-    <span class="shrink-0 text-[13px] tabular-nums text-muted-foreground">{{ job.posted_at|date:"M j, Y" }}</span>
+    <span class="shrink-0 text-xs tabular-nums text-muted-foreground">{{ job.posted_at|date:"M j, Y" }}</span>
   </div>
   <div class="job-meta"><span class="font-medium text-foreground">{{ job.organization.name }}</span><span>{{ job.location|default:"Location not specified" }}</span><span>{{ job.get_job_type_display }}</span>{% if job|compensation_display %}<span class="tabular-nums">{{ job|compensation_display }}</span>{% else %}<span>Salary not disclosed</span>{% endif %}</div>
   {% if not job.is_available %}<p class="mt-2 text-sm text-muted-foreground">This listing is no longer available.</p>{% endif %}

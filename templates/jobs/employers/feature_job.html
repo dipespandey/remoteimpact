@@ -6,7 +6,7 @@
 
 {% block content %}
 <div class="page-narrow">
-  <a href="{{ job.get_absolute_url }}" class="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground"><span aria-hidden="true">&larr;</span> Back to the listing</a>
+  <a href="{{ job.get_absolute_url }}" class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"><span aria-hidden="true">&larr;</span> Back to the listing</a>
   {% if cancelled %}<div class="alert alert-warning mt-4" role="status"><p>No payment was made. You can try again whenever you are ready.</p></div>{% endif %}
 
   <header class="page-header mt-4">
@@ -26,7 +26,7 @@
 
   <section class="card mt-6 p-5 sm:p-6">
     <h2 class="text-base font-semibold text-foreground">What featuring does</h2>
-    <p class="mt-0.5 text-[13px] text-muted-foreground">${{ price }} once, for {{ days }} days. No subscription.</p>
+    <p class="mt-0.5 text-xs text-muted-foreground">${{ price }} once, for {{ days }} days. No subscription.</p>
     <ul class="check-list mt-4 space-y-2 text-sm">
       <li>A <span class="font-medium">Featured</span> label and a pinned slot at the top of matching search and category pages</li>
       <li>Shown in the Featured roles section of the homepage</li>

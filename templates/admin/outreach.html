@@ -8,23 +8,23 @@
 {% include "admin/_ri_head.html" %}
 <style>
   .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
-  .chip { padding: 4px 10px; border-radius: 999px; background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); text-decoration: none; font-size: 13px; }
+  .chip { padding: 4px 10px; border-radius: 999px; background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); text-decoration: none; font-size: 15px; }
   .chip.on { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
   .lead { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; padding: 16px; }
   .lead + .lead { border-top: 1px solid var(--grid); }
-  .lead h3 { margin: 0; font-size: 15px; font-weight: 600; }
-  .meta { margin-top: 2px; color: hsl(var(--muted-foreground)); font-size: 13px; }
-  .nums { display: flex; gap: 16px; margin-top: 8px; font-size: 13px; }
+  .lead h3 { margin: 0; font-size: 16px; font-weight: 600; }
+  .meta { margin-top: 2px; color: hsl(var(--muted-foreground)); font-size: 15px; }
+  .nums { display: flex; gap: 16px; margin-top: 8px; font-size: 15px; }
   .nums b { font-family: "Geist Mono", ui-monospace, monospace; font-weight: 500; }
-  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 14px; background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); }
   .pill.won { background: #e7f6e7; color: #0a7d0a; } .pill.contacted { background: #eaf2fd; color: #1f5fae; } .pill.replied { background: #fff4dc; color: #8a5a00; }
   .actions { display: flex; flex-direction: column; gap: 6px; align-items: stretch; min-width: 220px; }
   .actions form { display: flex; gap: 6px; }
-  input.field, select.field { height: 36px; border: 1px solid transparent; border-radius: 12px; background: hsl(var(--muted)); color: hsl(var(--foreground)); padding: 0 8px; font: inherit; font-size: 13px; min-width: 0; flex: 1; }
+  input.field, select.field { height: 36px; border: 1px solid transparent; border-radius: 12px; background: hsl(var(--muted)); color: hsl(var(--foreground)); padding: 0 8px; font: inherit; font-size: 15px; min-width: 0; flex: 1; }
   details.draft { margin-top: 10px; }
-  details.draft summary { cursor: pointer; font-size: 13px; color: hsl(var(--muted-foreground)); }
+  details.draft summary { cursor: pointer; font-size: 15px; color: hsl(var(--muted-foreground)); }
   textarea.draftbox { width: 100%; min-height: 220px; margin-top: 8px; border: 1px solid hsl(var(--border)); border-radius: var(--radius); background: hsl(var(--muted)); color: hsl(var(--foreground)); padding: 10px; font: 13px/1.5 "Geist Mono", ui-monospace, monospace; }
-  .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; font-size: 13px; }
+  .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; font-size: 15px; }
   .links a { color: hsl(var(--muted-foreground)); }
   .btn.primary { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); border-color: hsl(var(--primary)); }
   @media (max-width: 760px) { .lead { grid-template-columns: 1fr; } .actions { min-width: 0; } }

@@ -22,7 +22,7 @@
 {% block content %}
 <div class="page">
     <header class="page-header">
-        <nav class="text-[13px] text-muted-foreground" aria-label="Breadcrumb">
+        <nav class="text-xs text-muted-foreground" aria-label="Breadcrumb">
             <ol class="flex flex-wrap items-center gap-1.5">
                 <li><a href="{% url 'jobs:home' %}" class="hover:text-foreground">Home</a></li>
                 <li aria-hidden="true">/</li>
@@ -54,14 +54,14 @@
                 <img src="{{ org.logo_src }}" alt="" loading="lazy" class="h-9 w-9 shrink-0 rounded-lg bg-muted object-cover">
                 {% endif %}
                 <div class="min-w-0 flex-1">
-                    <h2 class="truncate text-[15px] font-semibold text-foreground">{{ org.name }}</h2>
+                    <h2 class="truncate text-base font-semibold text-foreground">{{ org.name }}</h2>
                     {% if org.organization_type or org.verified_signals_list %}
-                    <p class="truncate text-[13px] text-muted-foreground">
+                    <p class="truncate text-xs text-muted-foreground">
                         {% if org.organization_type %}{{ org.get_organization_type_display }}{% endif %}{% if org.organization_type and org.verified_signals_list %} · {% endif %}{{ org.verified_signals_list|join:", " }}
                     </p>
                     {% endif %}
                 </div>
-                <span class="shrink-0 text-[13px] tabular-nums text-muted-foreground">{{ org.active_job_count }} open role{{ org.active_job_count|pluralize }}</span>
+                <span class="shrink-0 text-xs tabular-nums text-muted-foreground">{{ org.active_job_count }} open role{{ org.active_job_count|pluralize }}</span>
             </a>
         </li>
         {% endfor %}
@@ -80,7 +80,7 @@
     {% if page_obj.has_other_pages %}
     <nav class="mt-6 flex items-center justify-center gap-2" aria-label="Pagination">
         {% if page_obj.has_previous %}<a href="?{% if search_query %}q={{ search_query }}&{% endif %}page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-sm" rel="prev">Previous</a>{% endif %}
-        <span class="px-2 text-[13px] tabular-nums text-muted-foreground" aria-current="page">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        <span class="px-2 text-xs tabular-nums text-muted-foreground" aria-current="page">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
         {% if page_obj.has_next %}<a href="?{% if search_query %}q={{ search_query }}&{% endif %}page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-sm" rel="next">Next</a>{% endif %}
     </nav>
     {% endif %}

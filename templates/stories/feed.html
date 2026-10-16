@@ -23,7 +23,7 @@
             {% for cat in categories %}
             {% if cat.slug in current_category_slugs %}
             <button type="button" data-slug="{{ cat.slug }}" aria-pressed="true" aria-label="Remove filter: {{ cat.name }}"
-                class="cat-toggle inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] transition-colors bg-foreground text-background">
+                class="cat-toggle inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-colors bg-foreground text-background">
                 {{ cat.name }}
                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18 18 6M6 6l12 12"/></svg>
             </button>
@@ -40,7 +40,7 @@
             {% for cat in categories %}
             {% if cat.slug not in current_category_slugs and forloop.counter0 < 5 %}
             <button type="button" data-slug="{{ cat.slug }}" aria-pressed="false"
-                class="cat-toggle rounded-full px-3 py-1.5 text-[13px] transition-colors bg-muted text-foreground hover:bg-accent">
+                class="cat-toggle rounded-full px-3 py-1.5 text-xs transition-colors bg-muted text-foreground hover:bg-accent">
                 {{ cat.name }}
             </button>
             {% endif %}
@@ -50,7 +50,7 @@
         <div class="flex flex-wrap items-center gap-2">
             {% for cat in categories|slice:":5" %}
             <button type="button" data-slug="{{ cat.slug }}" aria-pressed="false"
-                class="cat-toggle rounded-full px-3 py-1.5 text-[13px] transition-colors bg-muted text-foreground hover:bg-accent">
+                class="cat-toggle rounded-full px-3 py-1.5 text-xs transition-colors bg-muted text-foreground hover:bg-accent">
                 {{ cat.name }}
             </button>
             {% endfor %}
@@ -81,7 +81,7 @@
     {% if stories.has_next %}
     <div hx-get="{% url 'jobs:stories_feed' %}?page={{ stories.next_page_number }}{% if current_category_slugs %}{% for slug in current_category_slugs %}&category={{ slug }}{% endfor %}{% endif %}"
         hx-trigger="revealed" hx-target="#stories-container" hx-swap="beforeend" class="flex justify-center py-8">
-        <span class="animate-pulse text-[13px] text-muted-foreground">Loading more stories</span>
+        <span class="animate-pulse text-xs text-muted-foreground">Loading more stories</span>
     </div>
     {% endif %}
 

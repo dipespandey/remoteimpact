@@ -12,7 +12,7 @@
                 {% if heading == "h3" %}<h3 class="job-title min-w-0">{% else %}<h2 class="job-title min-w-0">{% endif %}
                     <a href="{{ job.get_absolute_url }}{% if featured_slot %}?source=featured_slot{% endif %}" class="line-clamp-2 after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring">{{ job.title|display_title }}</a>
                 {% if heading == "h3" %}</h3>{% else %}</h2>{% endif %}
-                {% if job.posted_at %}<span class="shrink-0 text-right text-[13px] tabular-nums text-muted-foreground" title="Posted {{ job.posted_at|date:'M j, Y' }}{% if job.edited_at %}, updated {{ job.edited_at|date:'M j, Y' }}{% endif %}">{{ job.posted_at|naturalday:"M j" }}{% if job.edited_at and job.edited_at.date > job.posted_at.date %}<span class="block text-[12px]">Updated {{ job.edited_at|naturalday:"M j" }}</span>{% endif %}</span>{% endif %}
+                {% if job.posted_at %}<span class="shrink-0 text-right text-xs tabular-nums text-muted-foreground" title="Posted {{ job.posted_at|date:'M j, Y' }}{% if job.edited_at %}, updated {{ job.edited_at|date:'M j, Y' }}{% endif %}">{{ job.posted_at|naturalday:"M j" }}{% if job.edited_at and job.edited_at.date > job.posted_at.date %}<span class="block text-xs">Updated {{ job.edited_at|naturalday:"M j" }}</span>{% endif %}</span>{% endif %}
             </div>
             <p class="job-meta">
                 {% if show_org is not False and job.organization %}<span class="font-medium text-foreground">{{ job.organization.name|display_title }}</span>{% endif %}

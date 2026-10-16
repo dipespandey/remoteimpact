@@ -10,7 +10,7 @@
 
     <!-- Breadcrumb -->
     <nav class="mb-4" aria-label="Breadcrumb">
-        <a href="{% url 'jobs:talent_directory' %}" class="text-[13px] text-muted-foreground hover:text-foreground">← Back to talent directory</a>
+        <a href="{% url 'jobs:talent_directory' %}" class="text-xs text-muted-foreground hover:text-foreground">← Back to talent directory</a>
     </nav>
 
     <article class="card">
@@ -53,7 +53,7 @@
             <!-- Bio -->
             {% if seeker.bio %}
             <section>
-                <h2 class="text-[13px] font-medium text-muted-foreground">About</h2>
+                <h2 class="text-xs font-medium text-muted-foreground">About</h2>
                 <p class="mt-1.5 max-w-prose whitespace-pre-line leading-7 text-foreground">{{ seeker.bio }}</p>
             </section>
             {% endif %}
@@ -61,7 +61,7 @@
             <!-- Impact Areas -->
             {% if seeker.impact_areas.all %}
             <section>
-                <h2 class="text-[13px] font-medium text-muted-foreground">Impact areas</h2>
+                <h2 class="text-xs font-medium text-muted-foreground">Impact areas</h2>
                 <div class="mt-2 flex flex-wrap gap-1.5">
                     {% for area in seeker.impact_areas.all %}
                     <span class="badge badge-default">{{ area.name }}</span>
@@ -73,7 +73,7 @@
             <!-- Skills -->
             {% if seeker.skills %}
             <section>
-                <h2 class="text-[13px] font-medium text-muted-foreground">Skills</h2>
+                <h2 class="text-xs font-medium text-muted-foreground">Skills</h2>
                 <div class="mt-2 flex flex-wrap gap-1.5">
                     {% for skill in seeker.skills %}
                     <span class="badge badge-primary">{{ skill }}</span>
@@ -86,14 +86,14 @@
             <dl class="grid gap-4 rounded-2xl bg-muted p-4 sm:grid-cols-2 sm:p-5">
                 {% if experience_label %}
                 <div>
-                    <dt class="text-[13px] text-muted-foreground">Experience level</dt>
+                    <dt class="text-xs text-muted-foreground">Experience level</dt>
                     <dd class="mt-0.5 text-sm font-medium text-foreground">{{ experience_label }}</dd>
                 </div>
                 {% endif %}
 
                 {% if work_style_labels %}
                 <div>
-                    <dt class="text-[13px] text-muted-foreground">Work style</dt>
+                    <dt class="text-xs text-muted-foreground">Work style</dt>
                     <dd class="mt-1">
                         <ul class="space-y-0.5 text-sm text-foreground">
                             {% for ws in work_style_labels %}
@@ -106,21 +106,21 @@
 
                 {% if remote_label %}
                 <div>
-                    <dt class="text-[13px] text-muted-foreground">Remote preference</dt>
+                    <dt class="text-xs text-muted-foreground">Remote preference</dt>
                     <dd class="mt-0.5 text-sm font-medium text-foreground">{{ remote_label }}</dd>
                 </div>
                 {% endif %}
 
                 {% if seeker.location_preferences %}
                 <div>
-                    <dt class="text-[13px] text-muted-foreground">Location preferences</dt>
+                    <dt class="text-xs text-muted-foreground">Location preferences</dt>
                     <dd class="mt-0.5 text-sm text-foreground">{{ seeker.location_preferences|join:", " }}</dd>
                 </div>
                 {% endif %}
 
                 {% if seeker.job_types %}
                 <div>
-                    <dt class="text-[13px] text-muted-foreground">Job types</dt>
+                    <dt class="text-xs text-muted-foreground">Job types</dt>
                     <dd class="mt-0.5 text-sm text-foreground">{{ seeker.job_types|join:", "|title }}</dd>
                 </div>
                 {% endif %}

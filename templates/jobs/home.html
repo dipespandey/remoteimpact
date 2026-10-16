@@ -17,7 +17,7 @@
     <div class="container grid gap-10 pb-12 pt-10 sm:pt-16 lg:grid-cols-12 lg:items-center lg:gap-14 lg:pb-20">
         <div class="min-w-0 lg:col-span-6">
             {% if trust.confirmed_open %}
-            <a href="{% url 'jobs:how_we_check' %}" class="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-[13px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+            <a href="{% url 'jobs:how_we_check' %}" class="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
                 <span><span class="tabular-nums">{{ trust.confirmed_open|intcomma }}</span> roles confirmed open at last source check</span>
                 <span aria-hidden="true">&rarr;</span>
@@ -35,16 +35,16 @@
                 <button id="hero-job-scout-launcher" type="button" class="hero-scout-launcher flex w-full items-center gap-3 rounded-[1.4rem] bg-card p-2 pl-4 text-left shadow-lift transition-shadow hover:shadow-[0_0_0_1px_rgb(20_20_25/0.08),0_10px_28px_-10px_rgb(20_20_25/0.18)]" aria-haspopup="dialog" aria-controls="job-scout-composer" aria-expanded="false">
                     <span class="flex min-h-[44px] min-w-0 flex-1 items-center gap-3">
                         <svg class="h-4 w-4 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg>
-                        <span class="hero-scout-launcher-copy block text-[15px] text-muted-foreground">Describe the job you want: role, skills, where you can work, pay</span>
+                        <span class="hero-scout-launcher-copy block text-base text-muted-foreground">Describe the job you want: role, skills, where you can work, pay</span>
                     </span>
                     <span class="hero-scout-submit btn btn-primary shrink-0">Email my matches</span>
                 </button>
-                <div class="hero-scout-examples mt-3 flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground" aria-label="Example searches">
+                <div class="hero-scout-examples mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground" aria-label="Example searches">
                     <button type="button" class="hero-scout-example rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" data-scout-example="Remote software engineering roles using Python in Europe, mid-level, no internships.">Python in Europe</button>
                     <button type="button" class="hero-scout-example rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" data-scout-example="Remote climate policy roles, open to Europe, at least $70k.">Climate policy</button>
                     <button type="button" class="hero-scout-example rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" data-scout-example="Remote communications roles at global health nonprofits, full-time.">Global health communications</button>
                 </div>
-                <p class="hero-scout-meta mt-4 text-[13px] text-muted-foreground">
+                <p class="hero-scout-meta mt-4 text-xs text-muted-foreground">
                     Your first set of matches is free. <a href="{% url 'jobs:job_list' %}" class="font-medium text-foreground underline decoration-border hover:decoration-foreground" data-track="home_hero_browse_jobs" data-track-category="job_scout_acquisition" data-track-label="hero_secondary">Or browse all {{ active_jobs_count|intcomma }} roles</a>
                 </p>
             </div>
@@ -53,7 +53,7 @@
                 <a href="{% url 'jobs:keyword_jobs' keyword_slug='remote-nonprofit-jobs' %}" class="font-medium text-foreground underline underline-offset-4">Remote nonprofit jobs</a>
             </nav>
             {% if has_impact_profile %}
-            <p class="mt-3 text-[13px] text-muted-foreground">Your profile is set up. <a href="{% url 'jobs:my_matches' %}" class="font-medium text-foreground underline decoration-border">See your matches</a></p>
+            <p class="mt-3 text-xs text-muted-foreground">Your profile is set up. <a href="{% url 'jobs:my_matches' %}" class="font-medium text-foreground underline decoration-border">See your matches</a></p>
             {% endif %}
         </div>
 
@@ -75,14 +75,14 @@
                                 {% if job.organization.logo_src %}<img src="{{ job.organization.logo_src }}" alt="" loading="lazy" class="h-9 w-9 shrink-0 rounded-xl bg-muted object-cover">{% else %}<span class="avatar" aria-hidden="true">{{ job.organization.name|initials }}</span>{% endif %}
                                 <span class="min-w-0 flex-1">
                                     <span class="block truncate text-sm font-medium text-foreground">{% if job.id in featured_ids %}<span class="badge badge-featured mr-1.5 align-[1px]">Featured</span>{% endif %}{{ job.title|display_title }}</span>
-                                    <span class="block truncate text-[13px] text-muted-foreground">{{ job.organization.name|display_title }} · {{ job.location|default:"Remote" }}</span>
+                                    <span class="block truncate text-xs text-muted-foreground">{{ job.organization.name|display_title }} · {{ job.location|default:"Remote" }}</span>
                                 </span>
-                                {% if job.posted_at %}<span class="shrink-0 text-[12px] text-muted-foreground">{{ job.posted_at|naturalday:"M j" }}</span>{% endif %}
+                                {% if job.posted_at %}<span class="shrink-0 text-xs text-muted-foreground">{{ job.posted_at|naturalday:"M j" }}</span>{% endif %}
                             </a>
                         </li>
                         {% endfor %}
                     </ul>
-                    <a href="{{ tab.url }}" class="mt-1 flex items-center justify-between rounded-xl px-3 py-2.5 text-[13px] font-medium text-foreground transition-colors hover:bg-muted">
+                    <a href="{{ tab.url }}" class="mt-1 flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium text-foreground transition-colors hover:bg-muted">
                         <span>See all <span class="tabular-nums">{{ tab.count|intcomma }}</span> {% if tab.key == "latest" %}open{% else %}{{ tab.noun }}{% endif %} roles</span>
                         <span aria-hidden="true">&rarr;</span>
                     </a>
@@ -98,7 +98,7 @@
     <div class="container">
         <div class="flex items-baseline justify-between px-1">
             <h2 id="featured-roles-heading" class="section-title">Featured by employers</h2>
-            <a href="{% url 'jobs:employers' %}" class="text-[13px] text-muted-foreground hover:text-foreground">About featured listings</a>
+            <a href="{% url 'jobs:employers' %}" class="text-xs text-muted-foreground hover:text-foreground">About featured listings</a>
         </div>
         <ul class="list-surface mt-3 grid gap-0.5 md:grid-cols-2">
             {% for job in featured_jobs %}
@@ -120,7 +120,7 @@
         <h2 id="sides-heading" class="sr-only">For job seekers and employers</h2>
         <div class="grid gap-4 md:grid-cols-2">
             <div class="surface p-6 sm:p-8">
-                <p class="text-[13px] font-medium text-muted-foreground">For job seekers</p>
+                <p class="text-xs font-medium text-muted-foreground">For job seekers</p>
                 <h3 class="mt-2 text-xl font-semibold tracking-tight text-foreground">Let a Scout watch for you</h3>
                 <p class="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">Describe the role once. Your first matches are free; Pro checks new roles every day for $10 a month after a 7-day trial, or $24 for three months.</p>
                 <div class="mt-5 flex flex-wrap gap-2">
@@ -129,7 +129,7 @@
                 </div>
             </div>
             <div class="surface p-6 sm:p-8">
-                <p class="text-[13px] font-medium text-muted-foreground">For employers</p>
+                <p class="text-xs font-medium text-muted-foreground">For employers</p>
                 <h3 class="mt-2 text-xl font-semibold tracking-tight text-foreground">Reach people who want this work</h3>
                 <p class="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">Post a role for $99 with suggested candidates from our talent pool, or feature one that's already listed for $49. See views and apply clicks for every role.</p>
                 <div class="mt-5 flex flex-wrap gap-2">
@@ -144,10 +144,10 @@
 {% if featured_orgs %}
 <section aria-labelledby="orgs-heading" class="pb-14">
     <div class="container">
-        <h2 id="orgs-heading" class="text-center text-[13px] text-muted-foreground">Hiring now on Remote Impact</h2>
+        <h2 id="orgs-heading" class="text-center text-xs text-muted-foreground">Hiring now on Remote Impact</h2>
         <ul class="mx-auto mt-4 flex max-w-4xl flex-wrap justify-center gap-x-8 gap-y-3">
             {% for org in featured_orgs %}
-            <li><a href="{% url 'jobs:organization_profile' slug=org.slug %}" class="text-[15px] font-semibold tracking-tight text-foreground/55 transition-colors hover:text-foreground">{{ org.name|display_title }}</a></li>
+            <li><a href="{% url 'jobs:organization_profile' slug=org.slug %}" class="text-base font-semibold tracking-tight text-foreground/55 transition-colors hover:text-foreground">{{ org.name|display_title }}</a></li>
             {% endfor %}
         </ul>
     </div>
@@ -159,19 +159,19 @@
     <div class="container">
         <div class="mx-auto grid max-w-4xl gap-6 border-t border-border pt-10 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] sm:items-center">
             <div>
-                <h2 id="activity-heading" class="text-[13px] text-muted-foreground">This week on Remote Impact</h2>
+                <h2 id="activity-heading" class="text-xs text-muted-foreground">This week on Remote Impact</h2>
                 <p class="mt-2 font-display text-2xl font-semibold leading-snug tracking-tight text-foreground"><span class="tabular-nums">{{ activity.clicks|intcomma }}</span> people from <span class="tabular-nums">{{ activity.countries }}</span> countries clicked through to apply.</p>
-                <p class="mt-2 text-[13px] text-muted-foreground">Counted by country only, over the last {{ activity.days }} days.</p>
+                <p class="mt-2 text-xs text-muted-foreground">Counted by country only, over the last {{ activity.days }} days.</p>
             </div>
             <ul class="space-y-2" aria-label="Most active countries">
                 {% for row in activity.top %}
-                <li class="grid grid-cols-[7.5rem_minmax(0,1fr)_2.5rem] items-center gap-3 text-[13px]">
+                <li class="grid grid-cols-[7.5rem_minmax(0,1fr)_2.5rem] items-center gap-3 text-xs">
                     <span class="truncate text-foreground">{{ row.name }}</span>
                     <span class="h-1.5 rounded-full bg-muted"><span class="block h-1.5 rounded-full bg-foreground/70" style="width: {{ row.share }}%"></span></span>
                     <span class="text-right tabular-nums text-muted-foreground">{{ row.clicks|intcomma }}</span>
                 </li>
                 {% endfor %}
-                {% if activity.more %}<li class="pt-1 text-[12px] text-muted-foreground">and {{ activity.more }} more countr{{ activity.more|pluralize:"y,ies" }}</li>{% endif %}
+                {% if activity.more %}<li class="pt-1 text-xs text-muted-foreground">and {{ activity.more }} more countr{{ activity.more|pluralize:"y,ies" }}</li>{% endif %}
             </ul>
         </div>
     </div>
@@ -184,7 +184,7 @@
 <section aria-labelledby="roles-heading" class="pb-8">
     <div class="container">
         <h2 id="roles-heading" class="sr-only">Popular searches</h2>
-        <p class="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-1 text-[13px] text-muted-foreground">
+        <p class="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-1 text-xs text-muted-foreground">
             <span>Popular:</span>
             <a class="hover:text-foreground" href="/remote-program-manager-jobs/">Program manager</a>
             <a class="hover:text-foreground" href="/remote-software-engineer-jobs/">Software engineer</a>

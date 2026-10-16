@@ -2,10 +2,10 @@
 <li x-show="!q || '{{ category.name|lower|escapejs }}'.includes(q.toLowerCase())">
     <a href="{% url 'jobs:category_landing' slug=category.slug %}" class="flex items-start justify-between gap-4 rounded-xl px-3.5 py-3 transition-colors hover:bg-muted sm:px-4">
         <span class="min-w-0">
-            <span class="block text-[15px] font-semibold text-foreground">{{ category.name }}</span>
-            {% if category.description %}<span class="mt-0.5 line-clamp-2 block max-w-prose text-[13px] text-muted-foreground">{{ category.description }}</span>{% endif %}
+            <span class="block text-base font-semibold text-foreground">{{ category.name }}</span>
+            {% if category.description %}<span class="mt-0.5 line-clamp-2 block max-w-prose text-xs text-muted-foreground">{{ category.description }}</span>{% endif %}
         </span>
-        {% if category.job_count is not None %}<span class="shrink-0 text-[13px] tabular-nums text-muted-foreground">{{ category.job_count }} role{{ category.job_count|pluralize }}</span>{% endif %}
+        {% if category.job_count is not None %}<span class="shrink-0 text-xs tabular-nums text-muted-foreground">{{ category.job_count }} role{{ category.job_count|pluralize }}</span>{% endif %}
     </a>
 </li>
 {% empty %}

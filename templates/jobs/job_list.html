@@ -76,10 +76,10 @@
         <div class="min-w-0">
             {% if job_scout_nudge_kind == 'pro' %}
             <p class="text-sm font-medium text-foreground">Keep the right jobs coming</p>
-            <p class="mt-0.5 text-[13px] text-muted-foreground">Your free Scout is complete. Pro keeps watching for newly published roles that fit your brief.</p>
+            <p class="mt-0.5 text-xs text-muted-foreground">Your free Scout is complete. Pro keeps watching for newly published roles that fit your brief.</p>
             {% else %}
             <p class="text-sm font-medium text-foreground">Want a shorter, more relevant list?</p>
-            <p class="mt-0.5 text-[13px] text-muted-foreground">Describe your ideal role once and we will email your strongest current matches. Free, no card required.</p>
+            <p class="mt-0.5 text-xs text-muted-foreground">Describe your ideal role once and we will email your strongest current matches. Free, no card required.</p>
             {% endif %}
         </div>
         <a href="{{ job_scout_nudge_url }}" class="btn btn-primary btn-sm w-full shrink-0 sm:w-auto" data-track="job_scout_job_list_nudge" data-track-category="job_scout_acquisition" data-track-label="{{ job_scout_nudge_tracking_label }}">
@@ -119,14 +119,14 @@
             <div x-data="{ open: false, selected: [] }" x-init="selected = JSON.parse(document.getElementById('job-filter-areas').textContent) || []" class="md:relative">
                 <label for="filter-areas" class="sr-only">Impact area</label>
                 <button id="filter-areas" type="button" :aria-expanded="open.toString()" aria-controls="options-areas" @keydown.escape="open = false" @click="open = !open"
-                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
+                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
                     <span class="truncate" x-text="selected.length ? 'Impact area · ' + selected.length : 'Impact area'">Impact area</span>
                     <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
                 </button>
                 <div id="options-areas" @keydown.escape="open = false; document.getElementById('filter-areas').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-72">
                     <div x-show="selected.length > 0" class="sticky top-0 z-10 flex items-center justify-between bg-popover px-3 py-2">
-                        <span class="text-[13px] text-muted-foreground"><span x-text="selected.length"></span> selected</span>
-                        <button type="button" @click.stop="selected = []" class="text-[13px] font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                        <span class="text-xs text-muted-foreground"><span x-text="selected.length"></span> selected</span>
+                        <button type="button" @click.stop="selected = []" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                     </div>
                     <div class="flex flex-col">
                         {% for category in categories %}
@@ -155,7 +155,7 @@
             }" x-init="selected = JSON.parse(document.getElementById('job-filter-skills').textContent) || []" class="md:relative">
                 <label for="filter-skills" class="sr-only">Skills</label>
                 <button id="filter-skills" type="button" :aria-expanded="open.toString()" aria-controls="options-skills" @keydown.escape="open = false" @click="open = !open"
-                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
+                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
                     <span class="truncate" x-text="selected.length ? 'Skills · ' + selected.length : 'Skills'">Skills</span>
                     <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
                 </button>
@@ -163,8 +163,8 @@
                     <div class="sticky top-0 z-10 space-y-1 bg-popover pb-1">
                         <input id="skill-search" aria-label="Search skills" type="text" x-model="search" placeholder="Search skills" @click.stop class="input h-9 py-1.5 text-sm">
                         <div x-show="selected.length > 0" class="flex items-center justify-between px-3 py-1">
-                            <span class="text-[13px] text-muted-foreground"><span x-text="selected.length"></span> selected</span>
-                            <button type="button" @click.stop="selected = []" class="text-[13px] font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                            <span class="text-xs text-muted-foreground"><span x-text="selected.length"></span> selected</span>
+                            <button type="button" @click.stop="selected = []" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                         </div>
                     </div>
                     <div class="flex flex-col">
@@ -228,7 +228,7 @@
             }" x-init="selected = JSON.parse(document.getElementById('job-filter-countries').textContent) || []" class="md:relative">
                 <label for="filter-countries" class="sr-only">Country / Region</label>
                 <button id="filter-countries" type="button" :aria-expanded="open.toString()" aria-controls="options-countries" @keydown.escape="open = false" @click="open = !open"
-                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
+                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
                     <span class="truncate" x-text="selected.length ? 'Location · ' + selected.length : 'Location'">Location</span>
                     <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
                 </button>
@@ -236,8 +236,8 @@
                     <div class="sticky top-0 z-10 space-y-1 bg-popover pb-1">
                         <input id="country-search" aria-label="Search countries" type="text" x-model="search" @click.stop placeholder="Search countries" class="input h-9 py-1.5 text-sm">
                         <div x-show="selected.length > 0" class="flex items-center justify-between px-3 py-1">
-                            <span class="text-[13px] text-muted-foreground"><span x-text="selected.length"></span> selected</span>
-                            <button type="button" @click.stop="selected = []" class="text-[13px] font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                            <span class="text-xs text-muted-foreground"><span x-text="selected.length"></span> selected</span>
+                            <button type="button" @click.stop="selected = []" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                         </div>
                     </div>
                     <div class="flex flex-col">
@@ -279,14 +279,14 @@
             <div x-data="{ open: false, selected: [] }" x-init="selected = JSON.parse(document.getElementById('job-filter-role-types').textContent) || []" class="md:relative">
                 <label for="filter-role-types" class="sr-only">Role type</label>
                 <button id="filter-role-types" type="button" :aria-expanded="open.toString()" aria-controls="options-role-types" @keydown.escape="open = false" @click="open = !open"
-                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
+                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
                     <span class="truncate" x-text="selected.length ? 'Role type · ' + selected.length : 'Role type'">Role type</span>
                     <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
                 </button>
                 <div id="options-role-types" @keydown.escape="open = false; document.getElementById('filter-role-types').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-60">
                     <div x-show="selected.length > 0" class="sticky top-0 z-10 flex items-center justify-between bg-popover px-3 py-2">
-                        <span class="text-[13px] text-muted-foreground"><span x-text="selected.length"></span> selected</span>
-                        <button type="button" @click.stop="selected = []" class="text-[13px] font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                        <span class="text-xs text-muted-foreground"><span x-text="selected.length"></span> selected</span>
+                        <button type="button" @click.stop="selected = []" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                     </div>
                     <div class="flex flex-col">
                         {% for jt in job_types %}
@@ -306,14 +306,14 @@
             <div x-data="{ open: false, selected: [] }" x-init="selected = JSON.parse(document.getElementById('job-filter-experience').textContent) || []" class="md:relative">
                 <label for="filter-experience" class="sr-only">Experience</label>
                 <button id="filter-experience" type="button" :aria-expanded="open.toString()" aria-controls="options-experience" @keydown.escape="open = false" @click="open = !open"
-                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
+                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
                     <span class="truncate" x-text="selected.length ? 'Experience · ' + selected.length : 'Experience'">Experience</span>
                     <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
                 </button>
                 <div id="options-experience" @keydown.escape="open = false; document.getElementById('filter-experience').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-60">
                     <div x-show="selected.length > 0" class="sticky top-0 z-10 flex items-center justify-between bg-popover px-3 py-2">
-                        <span class="text-[13px] text-muted-foreground"><span x-text="selected.length"></span> selected</span>
-                        <button type="button" @click.stop="selected = []" class="text-[13px] font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                        <span class="text-xs text-muted-foreground"><span x-text="selected.length"></span> selected</span>
+                        <button type="button" @click.stop="selected = []" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                     </div>
                     <div class="flex flex-col">
                         {% for level in knowledge_filters.experience_levels %}
@@ -333,14 +333,14 @@
             <div x-data="{ open: false, selected: [] }" x-init="selected = JSON.parse(document.getElementById('job-filter-education').textContent) || []" class="md:relative">
                 <label for="filter-education" class="sr-only">Education</label>
                 <button id="filter-education" type="button" :aria-expanded="open.toString()" aria-controls="options-education" @keydown.escape="open = false" @click="open = !open"
-                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
+                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
                     <span class="truncate" x-text="selected.length ? 'Education · ' + selected.length : 'Education'">Education</span>
                     <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
                 </button>
                 <div id="options-education" @keydown.escape="open = false; document.getElementById('filter-education').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-60">
                     <div x-show="selected.length > 0" class="sticky top-0 z-10 flex items-center justify-between bg-popover px-3 py-2">
-                        <span class="text-[13px] text-muted-foreground"><span x-text="selected.length"></span> selected</span>
-                        <button type="button" @click.stop="selected = []" class="text-[13px] font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                        <span class="text-xs text-muted-foreground"><span x-text="selected.length"></span> selected</span>
+                        <button type="button" @click.stop="selected = []" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                     </div>
                     <div class="flex flex-col">
                         {% for level in knowledge_filters.education_levels %}
@@ -361,7 +361,7 @@
                 <label for="filter-posted" class="sr-only">Date posted</label>
                 <input type="hidden" name="posted" :value="selected">
                 <button id="filter-posted" type="button" :aria-expanded="open.toString()" aria-controls="options-posted" @keydown.escape="open = false" @click="open = !open"
-                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected }">
+                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected }">
                     <span class="truncate" x-text="selected ? {
                         '7': 'Past week',
                         '14': '1-2 weeks',
@@ -429,7 +429,7 @@
             <div x-data="salarySlider({{ filters.salary_min|default:'0' }}, {{ filters.salary_max|default:'1000000' }})" class="md:relative"
                  @pointerdown.window="pressedInside = $refs.salaryPanel.contains($event.target)">
                 <button id="filter-salary" type="button" :aria-expanded="open.toString()" aria-controls="options-salary" @keydown.escape="open = false" @click="open = !open"
-                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': isActive() }">
+                    class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': isActive() }">
                     <span class="truncate tabular-nums" x-text="isActive() ? rangeLabel() : 'Salary'">Salary</span>
                     <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
                 </button>
@@ -549,7 +549,7 @@
 
             <!-- Apply directly toggle chip (only while some role takes applications here) -->
             {% if has_direct_apply %}
-            <label for="filter-direct-apply" class="col-span-2 inline-flex h-9 cursor-pointer items-center gap-2 rounded-full bg-muted px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent md:col-span-1" title="Roles with applications handled on Remote Impact">
+            <label for="filter-direct-apply" class="col-span-2 inline-flex h-9 cursor-pointer items-center gap-2 rounded-full bg-muted px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-accent md:col-span-1" title="Roles with applications handled on Remote Impact">
                 <input id="filter-direct-apply" type="checkbox" name="direct_apply" value="1"
                        {% if filters.direct_apply %}checked{% endif %}
                        class="checkbox h-3.5 w-3.5">
@@ -558,7 +558,7 @@
             {% endif %}
 
             {% if search_query or current_categories or current_types or filters.skills or filters.educations or filters.experiences or filters.countries or filters.posted or filters.salary_min or filters.salary_max or filters.direct_apply %}
-            <a href="{% url 'jobs:job_list' %}" class="col-span-2 inline-flex h-9 items-center justify-center px-2 text-[13px] text-muted-foreground hover:text-foreground md:col-span-1">Clear all</a>
+            <a href="{% url 'jobs:job_list' %}" class="col-span-2 inline-flex h-9 items-center justify-center px-2 text-xs text-muted-foreground hover:text-foreground md:col-span-1">Clear all</a>
             {% endif %}
         </div>
     </form>
@@ -569,7 +569,7 @@
     </div>
     <div id="job-results-area" data-personalization-pending="{{ personalization_pending|yesno:'true,false' }}" aria-live="polite" aria-busy="false" class="transition-opacity">
     <div class="mt-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-1">
-        <p class="text-[13px] text-muted-foreground">
+        <p class="text-xs text-muted-foreground">
             <span class="tabular-nums text-foreground">{{ page_obj.paginator.count }}</span> open role{{ page_obj.paginator.count|pluralize }}{% if page_obj.paginator.num_pages > 1 %}<span class="hidden sm:inline"> · showing <span class="tabular-nums">{{ page_obj.start_index }}–{{ page_obj.end_index }}</span></span>{% endif %}
         </p>
         <div class="flex items-center gap-2">
@@ -577,7 +577,7 @@
             <a href="{% url 'jobs:my_matches' %}" class="btn btn-ghost btn-sm">My matches</a>
             {% endif %}
             <label for="sort-select" class="sr-only">Sort jobs</label>
-            <select id="sort-select" name="sort" class="select h-8 w-auto rounded-full py-0 pl-3.5 text-[13px] font-medium">
+            <select id="sort-select" name="sort" class="select h-8 w-auto rounded-full py-0 pl-3.5 text-xs font-medium">
                 {% if seeker_profile %}
                 <option value="best-match" {% if sort == 'best-match' %}selected{% endif %}>Best for you</option>
                 {% endif %}
@@ -618,14 +618,14 @@
         <div class="mt-8">
             <div class="px-1">
                 <h3 class="section-title">Organizations to watch</h3>
-                <p class="mt-0.5 text-[13px] text-muted-foreground">Organizations with open roles related to your search.</p>
+                <p class="mt-0.5 text-xs text-muted-foreground">Organizations with open roles related to your search.</p>
             </div>
             <ul class="list-surface mt-3 grid sm:grid-cols-2 lg:grid-cols-3">
                 {% for org in recommended_orgs %}
                 <li>
                     <a href="{% url 'jobs:organization_profile' org.slug %}" class="flex items-baseline justify-between gap-4 rounded-xl px-3.5 py-2.5 text-sm transition-colors hover:bg-muted">
                         <span class="truncate font-medium text-foreground">{{ org.name }}</span>
-                        <span class="shrink-0 tabular-nums text-[13px] text-muted-foreground">{{ org.job_count }} open</span>
+                        <span class="shrink-0 tabular-nums text-xs text-muted-foreground">{{ org.job_count }} open</span>
                     </a>
                 </li>
                 {% endfor %}
@@ -640,7 +640,7 @@
         {% if page_obj.has_previous %}
         <a href="?page={{ page_obj.previous_page_number }}{% if pagination_query %}&amp;{{ pagination_query }}{% endif %}" class="btn btn-secondary btn-sm" rel="prev">Previous</a>
         {% endif %}
-        <span class="px-2 text-[13px] tabular-nums text-muted-foreground" aria-current="page">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        <span class="px-2 text-xs tabular-nums text-muted-foreground" aria-current="page">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
         {% if page_obj.has_next %}
         <a href="?page={{ page_obj.next_page_number }}{% if pagination_query %}&amp;{{ pagination_query }}{% endif %}" class="btn btn-secondary btn-sm" rel="next">Next</a>
         {% endif %}
@@ -651,7 +651,7 @@
     <div class="surface mt-10 flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div>
             <p class="text-sm font-medium text-foreground">Get new matches by email</p>
-            <p class="mt-0.5 text-[13px] text-muted-foreground">Describe the role you want. Job Scout checks new listings and emails you the ones that fit.</p>
+            <p class="mt-0.5 text-xs text-muted-foreground">Describe the role you want. Job Scout checks new listings and emails you the ones that fit.</p>
         </div>
         <a href="{% if show_job_scout_nudge %}{{ job_scout_nudge_url }}{% else %}{% url 'jobs:job_alerts' %}{% endif %}" class="btn btn-outline btn-sm w-full shrink-0 sm:w-auto" data-track="job_scout_job_list_footer" data-track-category="job_scout_acquisition">Set up Job Scout</a>
     </div>

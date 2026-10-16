@@ -30,7 +30,7 @@
             </a>
         </div>
 
-        <div class="my-5 flex items-center gap-3 text-[13px] text-muted-foreground">
+        <div class="my-5 flex items-center gap-3 text-xs text-muted-foreground">
             <div class="separator flex-1"></div>
             <span>or</span>
             <div class="separator flex-1"></div>
@@ -54,7 +54,7 @@
             <div>
                 <div class="flex items-baseline justify-between gap-3">
                     <label class="label" for="{{ form.password.id_for_label }}">Password</label>
-                    <a href="{% url 'account_reset_password' %}" class="text-[13px] text-muted-foreground hover:text-foreground">Forgot password?</a>
+                    <a href="{% url 'account_reset_password' %}" class="text-xs text-muted-foreground hover:text-foreground">Forgot password?</a>
                 </div>
                 {{ form.password|add_class:"input" }}
                 {% if form.password.errors %}
@@ -78,7 +78,7 @@
         <p class="mt-6 text-center text-sm text-muted-foreground">
             New here? <a href="{% url 'account_signup' %}{% if redirect_field_value %}?next={{ redirect_field_value|urlencode }}{% endif %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Create an account</a>
         </p>
-        <p class="mt-2 text-center text-[13px] leading-5 text-muted-foreground">Continue with Google or LinkedIn and an account is created for you.</p>
+        <p class="mt-2 text-center text-xs leading-5 text-muted-foreground">Continue with Google or LinkedIn and an account is created for you.</p>
     </div>
 </section>
 {% endblock %}

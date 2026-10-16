@@ -9,28 +9,28 @@
 
         <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-baseline gap-x-2">
-                <h2 class="truncate text-[15px] font-semibold text-foreground">{{ story.author_name }}</h2>
+                <h2 class="truncate text-base font-semibold text-foreground">{{ story.author_name }}</h2>
                 {% if story.is_verified %}
-                <span class="text-[13px] text-muted-foreground">Verified</span>
+                <span class="text-xs text-muted-foreground">Verified</span>
                 {% endif %}
             </div>
-            <p class="text-[13px] text-muted-foreground">
+            <p class="text-xs text-muted-foreground">
                 {{ story.author_title }}{% if story.organization %} &middot; {{ story.organization.name }}{% endif %}
             </p>
         </div>
 
-        {% if story.published_at %}<span class="shrink-0 text-[13px] text-muted-foreground">{{ story.published_at|timesince }} ago</span>{% endif %}
+        {% if story.published_at %}<span class="shrink-0 text-xs text-muted-foreground">{{ story.published_at|timesince }} ago</span>{% endif %}
     </div>
 
-    <blockquote class="mt-3 text-[15px] leading-7 text-foreground">&ldquo;{{ story.content }}&rdquo;</blockquote>
+    <blockquote class="mt-3 text-base leading-7 text-foreground">&ldquo;{{ story.content }}&rdquo;</blockquote>
 
     {% if story.categories.all or story.skills %}
     <div class="mt-3 flex flex-wrap gap-1.5">
         {% for cat in story.categories.all %}
-        <a href="{% url 'jobs:stories_feed' %}?category={{ cat.slug }}" class="rounded-full bg-muted px-2.5 py-0.5 text-[13px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">{{ cat.name }}</a>
+        <a href="{% url 'jobs:stories_feed' %}?category={{ cat.slug }}" class="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">{{ cat.name }}</a>
         {% endfor %}
         {% for skill in story.skills|slice:":3" %}
-        <span class="rounded-full bg-muted px-2.5 py-0.5 text-[13px] text-muted-foreground">{{ skill }}</span>
+        <span class="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">{{ skill }}</span>
         {% endfor %}
     </div>
     {% endif %}
@@ -44,7 +44,7 @@
                 {% include 'stories/partials/resonate_button.html' with already_resonated=False story=story %}
                 {% endif %}
             </div>
-            <span class="text-[13px] tabular-nums text-muted-foreground">{{ story.view_count }} view{{ story.view_count|pluralize }}</span>
+            <span class="text-xs tabular-nums text-muted-foreground">{{ story.view_count }} view{{ story.view_count|pluralize }}</span>
         </div>
 
         <div class="flex items-center gap-2">

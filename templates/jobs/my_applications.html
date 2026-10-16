@@ -31,7 +31,7 @@
                     </div>
                     <p class="job-meta">{{ app.job.organization.name }}</p>
                 </div>
-                <p class="shrink-0 text-[13px] tabular-nums text-muted-foreground">
+                <p class="shrink-0 text-xs tabular-nums text-muted-foreground">
                     Applied {{ app.applied_at|date:"M d, Y" }}
                 </p>
             </div>
@@ -45,7 +45,7 @@
         {% if page_obj.has_previous %}
         <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm">← Previous</a>
         {% endif %}
-        <span class="px-3 text-[13px] tabular-nums text-muted-foreground">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        <span class="px-3 text-xs tabular-nums text-muted-foreground">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
         {% if page_obj.has_next %}
         <a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm">Next →</a>
         {% endif %}

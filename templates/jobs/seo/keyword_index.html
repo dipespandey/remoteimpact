@@ -19,8 +19,8 @@
             {% for kw in high_volume_pages %}
             <li>
                 <a href="{% url 'jobs:keyword_jobs' keyword_slug=kw.slug %}" class="block h-full rounded-xl px-3.5 py-3 transition-colors hover:bg-muted">
-                    <span class="block text-[15px] font-semibold text-foreground">{{ kw.h1 }}</span>
-                    {% if kw.intro %}<span class="mt-0.5 line-clamp-2 block text-[13px] leading-relaxed text-muted-foreground">{{ kw.intro }}</span>{% endif %}
+                    <span class="block text-base font-semibold text-foreground">{{ kw.h1 }}</span>
+                    {% if kw.intro %}<span class="mt-0.5 line-clamp-2 block text-xs leading-relaxed text-muted-foreground">{{ kw.intro }}</span>{% endif %}
                 </a>
             </li>
             {% endfor %}
@@ -36,7 +36,7 @@
             <li>
                 <a href="{% url 'jobs:keyword_jobs' keyword_slug=kw.slug %}" class="block h-full rounded-xl px-3.5 py-3 transition-colors hover:bg-muted">
                     <span class="block text-sm font-semibold text-foreground">{{ kw.h1 }}</span>
-                    {% if kw.intro %}<span class="mt-0.5 line-clamp-2 block text-[13px] leading-relaxed text-muted-foreground">{{ kw.intro }}</span>{% endif %}
+                    {% if kw.intro %}<span class="mt-0.5 line-clamp-2 block text-xs leading-relaxed text-muted-foreground">{{ kw.intro }}</span>{% endif %}
                 </a>
             </li>
             {% endfor %}

@@ -29,7 +29,7 @@
         <div class="mb-4 max-h-[50vh] space-y-6 overflow-y-auto pr-2 md:max-h-96" id="skills-container">
             {% for category_label, skills in categorized_skills.items %}
             <fieldset class="skill-category" data-category="{{ category_label|slugify }}">
-                <legend class="mb-2 text-[13px] font-medium text-muted-foreground">{{ category_label }}</legend>
+                <legend class="mb-2 text-xs font-medium text-muted-foreground">{{ category_label }}</legend>
                 <div class="flex flex-wrap gap-2">
                     {% for slug, label in skills %}
                     <label class="skill-item relative inline-block cursor-pointer" data-skill="{{ label|lower }}">
@@ -39,7 +39,7 @@
                                {% if slug in selected_skills %}checked{% endif %}
                                class="skill-checkbox peer sr-only"
                                onchange="updateSkillCount()">
-                        <span class="inline-block rounded-full bg-muted px-3 py-1.5 text-[13px] text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
+                        <span class="inline-block rounded-full bg-muted px-3 py-1.5 text-xs text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
                             {{ label }}
                         </span>
                     </label>

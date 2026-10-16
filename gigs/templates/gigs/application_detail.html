@@ -5,7 +5,7 @@
 
 {% block content %}
 <section class="page">
-    <nav aria-label="Breadcrumb" class="flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground">
+    <nav aria-label="Breadcrumb" class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <a href="{% url 'gigs:gig_list' %}" class="hover:text-foreground">Gigs</a>
         <span aria-hidden="true">/</span>
         <a href="{{ gig.get_absolute_url }}" class="line-clamp-1 hover:text-foreground">{{ gig.title|display_title }}</a>
@@ -85,7 +85,7 @@
                     </div>
                     <div>
                         <label class="label" for="{{ form.artifact_files.id_for_label }}">{{ form.artifact_files.label }}</label>
-                        {{ form.artifact_files|add_class:"block w-full text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-muted file:px-3.5 file:py-1.5 file:text-[13px] file:font-medium file:text-foreground hover:file:bg-accent" }}
+                        {{ form.artifact_files|add_class:"block w-full text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-muted file:px-3.5 file:py-1.5 file:text-xs file:font-medium file:text-foreground hover:file:bg-accent" }}
                     </div>
                     <div>
                         <label class="label" for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
@@ -97,15 +97,15 @@
                         <div class="space-y-4">
                             <div>
                                 <label class="text-xs font-medium text-muted-foreground" for="{{ form.geo_photos.id_for_label }}">{{ form.geo_photos.label }}</label>
-                                {{ form.geo_photos|add_class:"mt-1 block w-full text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-muted file:px-3.5 file:py-1.5 file:text-[13px] file:font-medium file:text-foreground hover:file:bg-accent" }}
+                                {{ form.geo_photos|add_class:"mt-1 block w-full text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-muted file:px-3.5 file:py-1.5 file:text-xs file:font-medium file:text-foreground hover:file:bg-accent" }}
                             </div>
                             <div>
                                 <label class="text-xs font-medium text-muted-foreground" for="{{ form.receipts.id_for_label }}">{{ form.receipts.label }}</label>
-                                {{ form.receipts|add_class:"mt-1 block w-full text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-muted file:px-3.5 file:py-1.5 file:text-[13px] file:font-medium file:text-foreground hover:file:bg-accent" }}
+                                {{ form.receipts|add_class:"mt-1 block w-full text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-muted file:px-3.5 file:py-1.5 file:text-xs file:font-medium file:text-foreground hover:file:bg-accent" }}
                             </div>
                             <div>
                                 <label class="text-xs font-medium text-muted-foreground" for="{{ form.call_logs.id_for_label }}">{{ form.call_logs.label }}</label>
-                                {{ form.call_logs|add_class:"mt-1 block w-full text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-muted file:px-3.5 file:py-1.5 file:text-[13px] file:font-medium file:text-foreground hover:file:bg-accent" }}
+                                {{ form.call_logs|add_class:"mt-1 block w-full text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-muted file:px-3.5 file:py-1.5 file:text-xs file:font-medium file:text-foreground hover:file:bg-accent" }}
                             </div>
                             <div>
                                 <label class="text-xs font-medium text-muted-foreground" for="{{ form.witness_contact.id_for_label }}">{{ form.witness_contact.label }}</label>

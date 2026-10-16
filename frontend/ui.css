@@ -21,7 +21,7 @@
     --secondary: 60 5% 95%;            /* soft grey buttons, fills */
     --secondary-foreground: 240 6% 12%;
     --muted: 60 5% 95.5%;              /* #f4f4f2 surfaces */
-    --muted-foreground: 240 3% 42%;
+    --muted-foreground: 240 3% 38%;
     --accent: 60 5% 94%;               /* hover / selected fill */
     --accent-foreground: 240 6% 12%;
     --destructive: 0 72% 51%;
@@ -40,7 +40,7 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "cv11", "ss01";
-    font-size: 15px;
+    font-size: 1rem;
     line-height: 1.6;
   }
   h1, h2, h3, .font-display { font-family: Geist, Inter, system-ui, sans-serif; letter-spacing: -0.012em; }
@@ -74,28 +74,28 @@
   .page-narrow { @apply mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10; }
   .page-header { @apply mb-6 sm:mb-8; }
   .kicker { @apply text-xs font-medium text-muted-foreground; }
-  .page-title { @apply text-balance text-2xl font-semibold tracking-tight text-foreground sm:text-[1.75rem] sm:leading-tight; }
-  .page-lede { @apply mt-2 max-w-2xl text-[15px] leading-relaxed text-muted-foreground; }
-  .section-title { @apply text-base font-semibold tracking-tight text-foreground sm:text-lg; }
+  .page-title { @apply text-balance font-semibold tracking-tight text-foreground; font-size: clamp(1.75rem, 1.3rem + 1.4vw, 2.25rem); line-height: 1.18; }
+  .page-lede { @apply mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg; }
+  .section-title { @apply text-xl font-semibold leading-snug tracking-tight text-foreground; }
   .muted { @apply text-muted-foreground; }
   .section { @apply py-8 sm:py-10; }
 
   /* Button: pill, ink primary, soft secondary */
-  .btn { @apply inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50; }
+  .btn { @apply inline-flex min-h-10 items-center justify-center gap-2 text-center rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50; }
   .btn-primary { @apply bg-primary text-primary-foreground hover:bg-primary/85; }
   .btn-secondary { @apply bg-secondary text-secondary-foreground hover:bg-accent; }
   .btn-outline { @apply border border-input bg-card text-foreground hover:bg-muted; }
   .btn-ghost { @apply text-foreground hover:bg-muted; }
   .btn-link { @apply h-auto rounded-none px-0 font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground; }
   .btn-destructive { @apply bg-destructive text-destructive-foreground hover:bg-destructive/90; }
-  .btn-sm { @apply h-8 px-3 text-[13px]; }
-  .btn-lg { @apply h-11 px-5 text-[15px]; }
+  .btn-sm { @apply min-h-9 px-3 py-1.5 text-xs; }
+  .btn-lg { @apply min-h-11 px-5 py-2.5 text-base; }
   .btn-block { @apply w-full; }
 
   /* Surfaces: fills and soft shadows instead of borders */
   .card { @apply rounded-2xl bg-card text-card-foreground shadow-soft; }
   .card-header { @apply flex flex-col gap-1 p-5 sm:p-6; }
-  .card-title { @apply text-base font-semibold leading-snug tracking-tight; }
+  .card-title { @apply text-lg font-semibold leading-snug tracking-tight; }
   .card-description { @apply text-sm text-muted-foreground; }
   .card-content { @apply p-5 pt-0 sm:p-6 sm:pt-0; }
   .card-footer { @apply flex items-center gap-2 p-5 pt-0 sm:p-6 sm:pt-0; }
@@ -113,12 +113,12 @@
 
   /* Forms: filled, borderless until focus */
   .label { @apply mb-1.5 block text-sm font-medium text-foreground; }
-  .input, .select, .textarea { @apply block w-full rounded-xl border border-transparent bg-muted px-3.5 py-2.5 text-[15px] text-foreground transition-colors placeholder:text-muted-foreground/80 hover:bg-accent focus:border-ring/40 focus:bg-card focus:outline-none focus:ring-4 focus:ring-ring/15; }
+  .input, .select, .textarea { @apply block w-full rounded-xl border border-transparent bg-muted px-3.5 py-2.5 text-base text-foreground transition-colors placeholder:text-muted-foreground/80 hover:bg-accent focus:border-ring/40 focus:bg-card focus:outline-none focus:ring-4 focus:ring-ring/15; }
   select.select { @apply appearance-none bg-no-repeat pr-9; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b6b70'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E"); background-position: right 0.7rem center; background-size: 1.1rem; }
   .textarea { @apply min-h-[120px] leading-6; }
-  .help { @apply mt-1.5 text-[13px] text-muted-foreground; }
+  .help { @apply mt-1.5 text-xs text-muted-foreground; }
   .checkbox { @apply h-4 w-4 rounded border-input text-foreground focus:ring-ring; }
-  .field-error { @apply mt-1.5 text-[13px] text-destructive; }
+  .field-error { @apply mt-1.5 text-xs text-destructive; }
 
   /* Alert: tinted fill, no border */
   .alert { @apply flex gap-3 rounded-xl p-4 text-sm; }
@@ -130,12 +130,12 @@
   /* Stat */
   .stat { @apply rounded-2xl bg-muted p-4; }
   .stat-value { @apply text-xl font-semibold tabular-nums tracking-tight text-foreground sm:text-2xl; }
-  .stat-label { @apply mt-0.5 text-[13px] text-muted-foreground; }
+  .stat-label { @apply mt-0.5 text-xs text-muted-foreground; }
 
   /* Table */
   .table-wrap { @apply w-full overflow-x-auto rounded-2xl bg-card shadow-soft; }
   .table { @apply w-full caption-bottom text-sm; }
-  .table thead th { @apply h-10 whitespace-nowrap px-4 text-left text-[13px] font-medium text-muted-foreground; }
+  .table thead th { @apply h-10 whitespace-nowrap px-4 text-left text-xs font-medium text-muted-foreground; }
   .table tbody td { @apply border-t border-border px-4 py-3 align-top; }
   .table tbody tr:hover { @apply bg-muted/50; }
 
@@ -146,8 +146,8 @@
 
   /* Job lists: rows on a surface, hover fill, no borders */
   .job-row { @apply block rounded-xl px-4 py-3.5 transition-colors hover:bg-muted sm:px-5; }
-  .job-title { @apply text-[15px] font-semibold leading-snug text-foreground sm:text-base; }
-  .job-meta { @apply mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[13px] text-muted-foreground; }
+  .job-title { @apply text-base font-semibold leading-snug text-foreground sm:text-lg; }
+  .job-meta { @apply mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-muted-foreground; }
   .list-surface { @apply rounded-2xl bg-card p-1.5 shadow-soft; }
   /* Rows separated by a hairline (single-column lists; grids keep their own spacing). */
   .list-divided > li + li,
@@ -173,11 +173,41 @@
   .tone-tile { @apply block rounded-2xl p-4 transition-colors; background: var(--tone-50); }
   .tone-tile:hover { background: var(--tone-100); }
   .tone-text { color: var(--tone-700); }
-  .avatar { @apply inline-grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-muted text-[13px] font-semibold text-muted-foreground; }
+  .avatar { @apply inline-grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-muted text-xs font-semibold text-muted-foreground; }
   .avatar-sm { @apply h-7 w-7 rounded-lg text-xs; }
-  .verified { @apply inline-flex items-center gap-1 text-[12px] font-medium text-emerald-700; }
+  .verified { @apply inline-flex items-center gap-1 text-xs font-medium text-emerald-700; }
 
   .separator { @apply h-px w-full bg-border; }
   .check-list > li { @apply relative pl-6; }
   .check-list > li::before { content: ""; @apply absolute left-1 top-[0.6em] h-1.5 w-1.5 rounded-full bg-foreground/40; }
+}
+
+/* Reading rhythm: content stays readable without inflating every surrounding card. */
+@layer components {
+  .prose { font-size: 1rem; line-height: 1.75; overflow-wrap: anywhere; }
+  .prose :where(p, ul, ol):not(:where([class~="not-prose"] *)) { margin-block: 1em; }
+  .prose :where(h2, h3, h4):not(:where([class~="not-prose"] *)) { line-height: 1.3; margin-top: 1.75em; margin-bottom: .65em; }
+  .prose :where(h2):not(:where([class~="not-prose"] *)) { font-size: 1.5em; }
+  .prose :where(h3):not(:where([class~="not-prose"] *)) { font-size: 1.2em; }
+  .prose > :first-child { margin-top: 0; }
+  .prose > :last-child { margin-bottom: 0; }
+  .reading-copy { font-size: 1rem; line-height: 1.75; }
+  .job-detail-layout { display: grid; gap: 1.75rem; margin-top: 1.5rem; }
+  .job-detail-body { min-width: 0; }
+  .job-detail-content { max-width: 74ch; }
+  .job-detail-content > * + * { margin-top: 2rem; }
+  .source-note { margin-top: 1.25rem; border-top: 1px solid hsl(var(--border)); padding-top: .875rem; font-size: .875rem; color: hsl(var(--muted-foreground)); }
+  .source-note summary { cursor: pointer; line-height: 1.6; }
+  .source-note[open] summary { margin-bottom: .75rem; }
+  @screen sm { .reading-copy { font-size: 1.0625rem; } }
+  @screen lg {
+    .job-detail-layout { grid-template-columns: minmax(0, 1fr) 300px; grid-template-rows: auto 1fr; column-gap: 2rem; align-items: start; }
+  }
+}
+
+@layer components {
+  .prose p:empty, .prose p:has(> br:only-child) { display: none; }
+  .job-apply-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .25rem; margin-top: .75rem; }
+  .job-apply-links > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+  @screen lg { .job-apply-links { display: flex; flex-direction: column; } }
 }

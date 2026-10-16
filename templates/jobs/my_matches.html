@@ -19,7 +19,7 @@
     {% if seeker_profile and not is_pro and not has_job_scout %}
     <section class="surface mb-6 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between" aria-label="Job Scout invitation">
         <div class="min-w-0">
-            <h2 class="text-[15px] font-semibold text-foreground">Get one free email of jobs matched to your profile</h2>
+            <h2 class="text-base font-semibold text-foreground">Get one free email of jobs matched to your profile</h2>
             <p class="mt-1 text-sm leading-6 text-muted-foreground">Check the brief we build from your profile, then get your strongest current roles by email. Recurring alerts are part of Pro.</p>
         </div>
         <a href="{{ profile_scout_url }}" class="btn btn-primary w-full shrink-0 sm:w-auto" data-track="my_matches_scout_cta" data-track-category="job_scout_acquisition" data-track-label="completed_profile_no_alert">
@@ -30,7 +30,7 @@
     {% if seeker_profile and not is_pro and has_job_scout %}
     <section class="surface mb-6 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between" aria-label="Remote Impact Pro invitation">
         <div class="min-w-0">
-            <h2 class="text-[15px] font-semibold text-foreground">Keep receiving new matches as they are published</h2>
+            <h2 class="text-base font-semibold text-foreground">Keep receiving new matches as they are published</h2>
             <p class="mt-1 text-sm leading-6 text-muted-foreground">Remote Impact Pro keeps watching for roles that fit your brief, plus unlimited application tools. 7 days free, then $10/month. Cancel anytime.</p>
         </div>
         <a href="{% url 'jobs:job_scout_subscribe' %}?source=my_matches_pro_nudge" class="btn btn-primary w-full shrink-0 sm:w-auto" data-track="my_matches_pro_cta" data-track-category="job_scout_acquisition" data-track-label="free_scout_used">
@@ -54,7 +54,7 @@
             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div class="min-w-0 flex-1">
                     <div class="mb-1.5 flex flex-wrap items-center gap-2">
-                        <span class="text-[13px] tabular-nums text-muted-foreground">{{ forloop.counter }}.</span>
+                        <span class="text-xs tabular-nums text-muted-foreground">{{ forloop.counter }}.</span>
                         <span class="badge {% if match.score >= 80 %}badge-success{% elif match.score >= 60 %}badge-primary{% else %}badge-outline{% endif %} tabular-nums">{{ match.score }}% match</span>
                         {% if match.impact_tier == "exceptional" %}
                         <span class="badge badge-primary">High impact</span>
@@ -75,7 +75,7 @@
                     </p>
 
                     {% if match.reasons %}
-                    <ul class="mt-2 flex flex-col items-start gap-1 text-[13px] leading-5 text-muted-foreground" aria-label="Why this matched">
+                    <ul class="mt-2 flex flex-col items-start gap-1 text-xs leading-5 text-muted-foreground" aria-label="Why this matched">
                         {% for reason in match.reasons|slice:":3" %}
                         {% if reason|slice:":6" == "Check:" %}<li><span class="badge badge-warning whitespace-normal">{{ reason }}</span></li>{% else %}<li>{{ reason }}</li>{% endif %}
                         {% endfor %}
@@ -89,7 +89,7 @@
             </div>
 
             <details class="group mt-3">
-                <summary class="inline-flex cursor-pointer list-none items-center gap-1 text-[13px] font-medium text-muted-foreground hover:text-foreground">
+                <summary class="inline-flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
                     <svg class="h-3.5 w-3.5 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7"/></svg>
                     View score breakdown
                 </summary>
@@ -114,8 +114,8 @@
 
                 {% if match.impact_reasons %}
                 <div class="mt-3 px-1">
-                    <p class="text-[13px] font-medium text-foreground">Impact signals</p>
-                    <ul class="check-list mt-1 space-y-1 text-[13px] text-muted-foreground">
+                    <p class="text-xs font-medium text-foreground">Impact signals</p>
+                    <ul class="check-list mt-1 space-y-1 text-xs text-muted-foreground">
                         {% for reason in match.impact_reasons %}<li>{{ reason }}</li>{% endfor %}
                     </ul>
                 </div>
@@ -123,7 +123,7 @@
 
                 {% if match.gaps %}
                 <div class="mt-3 px-1">
-                    <p class="text-[13px] font-medium text-foreground">Skills to develop</p>
+                    <p class="text-xs font-medium text-foreground">Skills to develop</p>
                     <div class="mt-1.5 flex flex-wrap gap-1.5">
                         {% for gap in match.gaps %}<span class="badge badge-warning">{{ gap }}</span>{% endfor %}
                     </div>

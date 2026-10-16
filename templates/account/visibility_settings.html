@@ -5,7 +5,7 @@
 {% block content %}
 <section class="page-narrow max-w-2xl">
     <header class="page-header">
-        <a href="{% url 'jobs:account' %}" class="text-[13px] text-muted-foreground hover:text-foreground">&larr; Back to dashboard</a>
+        <a href="{% url 'jobs:account' %}" class="text-xs text-muted-foreground hover:text-foreground">&larr; Back to dashboard</a>
         <h1 class="page-title mt-1">Profile visibility</h1>
         <p class="page-lede">Choose which organizations can see your impact profile.</p>
     </header>
@@ -21,7 +21,7 @@
                     {% if seeker_profile.visibility == 'public' %}checked{% endif %}
                     class="mt-1 h-4 w-4 border-input text-foreground focus:ring-ring">
                 <div>
-                    <p class="text-[15px] font-medium text-foreground">Public</p>
+                    <p class="text-base font-medium text-foreground">Public</p>
                     <p class="mt-0.5 text-sm text-muted-foreground">Any organization on Remote Impact can find you in talent search and view your full profile.</p>
                 </div>
             </label>
@@ -31,7 +31,7 @@
                     {% if seeker_profile.visibility == 'matching' %}checked{% endif %}
                     class="mt-1 h-4 w-4 border-input text-foreground focus:ring-ring">
                 <div>
-                    <p class="text-[15px] font-medium text-foreground">Matching only</p>
+                    <p class="text-base font-medium text-foreground">Matching only</p>
                     <p class="mt-0.5 text-sm text-muted-foreground">Only organizations with jobs that match your profile can see you. Your profile stays out of general talent search.</p>
                 </div>
             </label>
@@ -41,7 +41,7 @@
                     {% if seeker_profile.visibility == 'hidden' %}checked{% endif %}
                     class="mt-1 h-4 w-4 border-input text-foreground focus:ring-ring">
                 <div>
-                    <p class="text-[15px] font-medium text-foreground">Hidden</p>
+                    <p class="text-base font-medium text-foreground">Hidden</p>
                     <p class="mt-0.5 text-sm text-muted-foreground">Your profile is hidden from talent search. You can still apply to jobs, but organizations won't find you on their own.</p>
                 </div>
             </label>

@@ -38,7 +38,7 @@
 
             <!-- Impact Areas -->
             <div class="card p-5 sm:p-6">
-                <dt class="text-[15px] font-semibold text-foreground">Causes</dt>
+                <dt class="text-base font-semibold text-foreground">Causes</dt>
                 <dd class="mt-3 flex flex-wrap gap-1.5">
                     {% for area in profile.impact_areas.all %}
                     <span class="badge badge-default">{{ area.name }}</span>
@@ -50,7 +50,7 @@
 
             <!-- Work Style -->
             <div class="card p-5 sm:p-6">
-                <dt class="text-[15px] font-semibold text-foreground">Work style</dt>
+                <dt class="text-base font-semibold text-foreground">Work style</dt>
                 <dd class="mt-2 text-sm text-foreground">
                     {% if profile.work_styles %}
                     <ul class="space-y-1">
@@ -66,13 +66,13 @@
 
             <!-- Experience -->
             <div class="card p-5 sm:p-6">
-                <dt class="text-[15px] font-semibold text-foreground">Experience level</dt>
+                <dt class="text-base font-semibold text-foreground">Experience level</dt>
                 <dd class="mt-2 text-sm text-foreground">{{ profile.get_experience_level_display|default:"Not set" }}</dd>
             </div>
 
             <!-- Skills -->
             <div class="card p-5 sm:p-6">
-                <dt class="text-[15px] font-semibold text-foreground">Skills <span class="text-sm font-normal tabular-nums text-muted-foreground">({{ skill_labels|length }})</span></dt>
+                <dt class="text-base font-semibold text-foreground">Skills <span class="text-sm font-normal tabular-nums text-muted-foreground">({{ skill_labels|length }})</span></dt>
                 <dd class="mt-3 flex flex-wrap gap-1.5">
                     {% for skill in skill_labels %}
                     <span class="badge badge-primary">{{ skill }}</span>
@@ -84,7 +84,7 @@
 
             <!-- Preferences -->
             <div class="card p-5 sm:p-6">
-                <dt class="text-[15px] font-semibold text-foreground">Preferences</dt>
+                <dt class="text-base font-semibold text-foreground">Preferences</dt>
                 <dd class="mt-3">
                     <dl class="grid gap-4 text-sm sm:grid-cols-2">
                         <div>
@@ -130,7 +130,7 @@
             <!-- Bio -->
             {% if profile.impact_statement %}
             <div class="card p-5 sm:p-6">
-                <dt class="text-[15px] font-semibold text-foreground">Bio</dt>
+                <dt class="text-base font-semibold text-foreground">Bio</dt>
                 <dd class="mt-2 max-w-prose whitespace-pre-line text-sm leading-6 text-foreground">{{ profile.impact_statement }}</dd>
             </div>
             {% endif %}
@@ -138,7 +138,7 @@
             <!-- Assessment Answers -->
             {% if profile.assessment_answers %}
             <div class="card p-5 sm:p-6">
-                <dt class="text-[15px] font-semibold text-foreground">Your answers</dt>
+                <dt class="text-base font-semibold text-foreground">Your answers</dt>
                 <dd class="mt-3">
                     <dl class="grid gap-4 text-sm sm:grid-cols-3">
                         {% if profile.assessment_answers.time_horizon %}

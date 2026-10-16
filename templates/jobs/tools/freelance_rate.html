@@ -197,7 +197,7 @@
                 <div class="absolute top-0 h-full w-1 rounded-full bg-foreground transition-all duration-300"
                   :style="'left: min(' + (hourlyRate / 500 * 100) + '%, 99.5%)'"></div>
               </div>
-              <p x-show="rateInRange(range.min, range.max)" class="mt-1 text-[13px] font-medium text-foreground">Your rate is in this range</p>
+              <p x-show="rateInRange(range.min, range.max)" class="mt-1 text-xs font-medium text-foreground">Your rate is in this range</p>
             </div>
           </template>
         </div>
@@ -211,23 +211,23 @@
     <h2 class="section-title">Questions</h2>
     <div class="surface mt-4 p-1.5">
       <details class="group rounded-xl px-4 py-3.5 open:bg-card">
-        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>How do I calculate my freelance hourly rate?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-base font-medium text-foreground"><span>How do I calculate my freelance hourly rate?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
         <p class="mt-2 text-sm leading-6 text-muted-foreground">Add your target take-home income and business expenses, divide by (1 minus your tax rate) to get gross income, then divide by your billable hours per year. The calculator above does this for you.</p>
       </details>
       <details class="group rounded-xl px-4 py-3.5 open:bg-card">
-        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>What are typical billable hours for freelancers?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-base font-medium text-foreground"><span>What are typical billable hours for freelancers?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
         <p class="mt-2 text-sm leading-6 text-muted-foreground">Most freelancers bill 5–7 hours a day. The rest goes to admin, finding clients, learning and breaks. The calculator starts at 6 hours, which is realistic for consulting work you can keep up.</p>
       </details>
       <details class="group rounded-xl px-4 py-3.5 open:bg-card">
-        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>Should I charge hourly or daily rates?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-base font-medium text-foreground"><span>Should I charge hourly or daily rates?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
         <p class="mt-2 text-sm leading-6 text-muted-foreground">Consulting clients often prefer daily or project rates. They cut time-tracking overhead and tie fees to outcomes. Use your hourly rate as a floor, then quote daily or project fees.</p>
       </details>
       <details class="group rounded-xl px-4 py-3.5 open:bg-card">
-        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>How much should I budget for taxes as a freelancer?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-base font-medium text-foreground"><span>How much should I budget for taxes as a freelancer?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
         <p class="mt-2 text-sm leading-6 text-muted-foreground">In many countries freelancers set aside 25–35% of gross income for income tax and self-employment tax. Check your exact situation with a local accountant.</p>
       </details>
       <details class="group rounded-xl px-4 py-3.5 open:bg-card">
-        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-[15px] font-medium text-foreground"><span>What expenses should I include?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-4 text-base font-medium text-foreground"><span>What expenses should I include?</span><svg class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg></summary>
         <p class="mt-2 text-sm leading-6 text-muted-foreground">Software subscriptions, equipment, co-working space, insurance, training, accounting fees, internet and any other cost of running your freelance business.</p>
       </details>
     </div>

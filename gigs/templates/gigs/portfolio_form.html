@@ -5,7 +5,7 @@
 
 {% block content %}
 <section class="page-narrow">
-    <nav aria-label="Breadcrumb" class="flex items-center gap-2 text-[13px] text-muted-foreground">
+    <nav aria-label="Breadcrumb" class="flex items-center gap-2 text-xs text-muted-foreground">
         <a href="{% url 'gigs:portfolio_list' %}" class="hover:text-foreground">Portfolio</a>
         <span aria-hidden="true">/</span>
         <span class="text-foreground">{% if form.instance.id %}Edit{% else %}Add{% endif %} item</span>
@@ -18,7 +18,7 @@
             {% for field in form %}
             <div>
                 <label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {% if field.widget_type == 'select' %}{{ field|add_class:"select" }}{% elif field.widget_type == 'textarea' %}{{ field|add_class:"textarea" }}{% elif field.widget_type == 'clearablefile' or field.widget_type == 'file' %}{{ field|add_class:"block w-full text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-muted file:px-3.5 file:py-1.5 file:text-[13px] file:font-medium file:text-foreground hover:file:bg-accent" }}{% else %}{{ field|add_class:"input" }}{% endif %}
+                {% if field.widget_type == 'select' %}{{ field|add_class:"select" }}{% elif field.widget_type == 'textarea' %}{{ field|add_class:"textarea" }}{% elif field.widget_type == 'clearablefile' or field.widget_type == 'file' %}{{ field|add_class:"block w-full text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-muted file:px-3.5 file:py-1.5 file:text-xs file:font-medium file:text-foreground hover:file:bg-accent" }}{% else %}{{ field|add_class:"input" }}{% endif %}
                 {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
                 {% if field.errors %}<p class="field-error">{{ field.errors.0 }}</p>{% endif %}
             </div>

@@ -21,7 +21,7 @@
     <form method="get" action="{% url 'jobs:talent_directory' %}" class="card p-4 sm:p-5">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-                <label for="filter-impact-area" class="mb-1 block px-1 text-[13px] text-muted-foreground">Impact area</label>
+                <label for="filter-impact-area" class="mb-1 block px-1 text-xs text-muted-foreground">Impact area</label>
                 <select id="filter-impact-area" name="impact_area" class="select">
                     <option value="">All areas</option>
                     {% for cat in categories %}
@@ -30,7 +30,7 @@
                 </select>
             </div>
             <div>
-                <label for="filter-experience" class="mb-1 block px-1 text-[13px] text-muted-foreground">Experience level</label>
+                <label for="filter-experience" class="mb-1 block px-1 text-xs text-muted-foreground">Experience level</label>
                 <select id="filter-experience" name="experience" class="select">
                     <option value="">All levels</option>
                     {% for val, label in experience_choices %}
@@ -39,7 +39,7 @@
                 </select>
             </div>
             <div>
-                <label for="filter-work-style" class="mb-1 block px-1 text-[13px] text-muted-foreground">Work style</label>
+                <label for="filter-work-style" class="mb-1 block px-1 text-xs text-muted-foreground">Work style</label>
                 <select id="filter-work-style" name="work_style" class="select">
                     <option value="">All styles</option>
                     {% for val, label in work_style_choices %}
@@ -48,7 +48,7 @@
                 </select>
             </div>
             <div>
-                <label for="filter-skill" class="mb-1 block px-1 text-[13px] text-muted-foreground">Skill</label>
+                <label for="filter-skill" class="mb-1 block px-1 text-xs text-muted-foreground">Skill</label>
                 <input id="filter-skill" type="text" name="skill" value="{{ current_filters.skill }}" placeholder="e.g. python" class="input">
             </div>
         </div>
@@ -59,7 +59,7 @@
     </form>
 
     <!-- Results count -->
-    <p class="px-1 text-[13px] text-muted-foreground tabular-nums">{{ page_obj.paginator.count }} candidate{{ page_obj.paginator.count|pluralize }}</p>
+    <p class="px-1 text-xs text-muted-foreground tabular-nums">{{ page_obj.paginator.count }} candidate{{ page_obj.paginator.count|pluralize }}</p>
 
     <!-- Talent Cards -->
     {% if seekers %}
@@ -107,7 +107,7 @@
 
                 <!-- Work style -->
                 {% if seeker.work_styles or seeker.work_style %}
-                <p class="mt-2 text-[13px] text-muted-foreground">
+                <p class="mt-2 text-xs text-muted-foreground">
                     {% if seeker.work_styles %}
                         {{ seeker.get_work_style_display }}
                     {% else %}

@@ -46,7 +46,7 @@
 {% block content %}
 <div class="page">
     <header class="page-header">
-        <nav aria-label="Breadcrumb" class="text-[13px] text-muted-foreground">
+        <nav aria-label="Breadcrumb" class="text-xs text-muted-foreground">
             <ol class="flex flex-wrap items-center gap-1.5">
                 <li><a href="{% url 'jobs:home' %}" class="hover:text-foreground">Home</a></li>
                 <li aria-hidden="true">/</li>
@@ -69,7 +69,7 @@
         <ul class="mt-3 flex flex-wrap gap-2">
             {% for cat_name, cat_info in category_breakdown %}
             <li>
-                <a href="{% url 'jobs:category_landing' slug=cat_info.slug %}?q={{ role_name|urlencode }}" class="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[13px] text-foreground transition-colors hover:bg-accent">
+                <a href="{% url 'jobs:category_landing' slug=cat_info.slug %}?q={{ role_name|urlencode }}" class="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-accent">
                     {{ cat_name }} <span class="tabular-nums text-muted-foreground">{{ cat_info.count }}</span>
                 </a>
             </li>
@@ -83,7 +83,7 @@
             {% if featured_jobs %}
             <section aria-labelledby="highest-pay-heading">
                 <h2 id="highest-pay-heading" class="section-title px-1">Highest advertised pay</h2>
-                <p class="mt-0.5 px-1 text-[13px] text-muted-foreground">{{ role_name }} listings with an annual USD salary, highest maximum first.</p>
+                <p class="mt-0.5 px-1 text-xs text-muted-foreground">{{ role_name }} listings with an annual USD salary, highest maximum first.</p>
                 <ul class="list-surface mt-3">
                     {% for job in featured_jobs %}
                     <li>{% include 'jobs/seo/_job_row.html' %}</li>
@@ -95,7 +95,7 @@
             <section class="{% if featured_jobs %}mt-10{% endif %}" aria-labelledby="latest-heading">
                 <div class="flex flex-wrap items-baseline justify-between gap-2 px-1">
                     <h2 id="latest-heading" class="section-title">Latest listings</h2>
-                    <p class="text-[13px] tabular-nums text-muted-foreground">{{ job_count|intcomma }} role{{ job_count|pluralize }}, newest first</p>
+                    <p class="text-xs tabular-nums text-muted-foreground">{{ job_count|intcomma }} role{{ job_count|pluralize }}, newest first</p>
                 </div>
                 {% if jobs %}
                 <ul class="list-surface mt-3">
@@ -116,7 +116,7 @@
                     {% if page_obj.has_previous %}
                     <a href="?page={{ page_obj.previous_page_number }}{{ destination_pagination_query }}" class="btn btn-secondary btn-sm" rel="prev">Previous</a>
                     {% else %}<span></span>{% endif %}
-                    <span class="text-[13px] tabular-nums text-muted-foreground">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    <span class="text-xs tabular-nums text-muted-foreground">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
                     {% if page_obj.has_next %}
                     <a href="?page={{ page_obj.next_page_number }}{{ destination_pagination_query }}" class="btn btn-secondary btn-sm" rel="next">Next</a>
                     {% else %}<span></span>{% endif %}
@@ -128,8 +128,8 @@
 
         <aside class="min-w-0 space-y-6">
             <section class="card p-5" aria-labelledby="alerts-heading">
-                <h2 id="alerts-heading" class="text-[15px] font-semibold text-foreground">Get matching jobs by email</h2>
-                <p class="mt-1 text-[13px] leading-relaxed text-muted-foreground">Describe the job you want, including where you can work and your pay floor. We'll email the roles that fit. The first set is free.</p>
+                <h2 id="alerts-heading" class="text-base font-semibold text-foreground">Get matching jobs by email</h2>
+                <p class="mt-1 text-xs leading-relaxed text-muted-foreground">Describe the job you want, including where you can work and your pay floor. We'll email the roles that fit. The first set is free.</p>
                 <a href="{% if destination_scout_url %}{{ destination_scout_url }}{% else %}{% url 'jobs:job_alerts' %}?source=seo_role_sidebar{% endif %}" class="btn btn-primary btn-sm btn-block mt-4" data-track="seo_scout_cta" data-track-category="job_scout_acquisition">Describe the job you want</a>
             </section>
 
@@ -141,7 +141,7 @@
                     <li><a href="{% url 'jobs:role_jobs' role_slug=role.slug %}" class="block rounded-xl px-3 py-2 text-foreground transition-colors hover:bg-muted">Remote {{ role.role }} jobs</a></li>
                     {% endfor %}
                 </ul>
-                <a href="{% url 'jobs:all_role_pages' %}" class="mt-2 inline-block px-1 text-[13px] text-muted-foreground hover:text-foreground">All roles</a>
+                <a href="{% url 'jobs:all_role_pages' %}" class="mt-2 inline-block px-1 text-xs text-muted-foreground hover:text-foreground">All roles</a>
             </section>
             {% endif %}
         </aside>

@@ -64,20 +64,20 @@
     <section class="card p-5 sm:p-6" aria-labelledby="assistant-heading">
         <div class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
             <h2 id="assistant-heading" class="section-title">Your hiring assistant</h2>
-            <p class="text-[13px] text-muted-foreground">Included with every paid post</p>
+            <p class="text-xs text-muted-foreground">Included with every paid post</p>
         </div>
         <div class="mt-4 grid gap-3 md:grid-cols-3">
             <div class="rounded-xl bg-muted/60 p-4">
                 <p class="text-sm font-medium text-foreground">Reads every application</p>
-                <p class="mt-1 text-[13px] leading-relaxed text-muted-foreground">Checks each one against the role's must-haves and quotes the applicant's own words as evidence. You decide.</p>
+                <p class="mt-1 text-xs leading-relaxed text-muted-foreground">Checks each one against the role's must-haves and quotes the applicant's own words as evidence. You decide.</p>
             </div>
             <div class="rounded-xl bg-muted/60 p-4">
                 <p class="text-sm font-medium text-foreground">Finds people who fit</p>
-                <p class="mt-1 text-[13px] leading-relaxed text-muted-foreground">Looks through new candidate profiles every day and drafts an invitation for each strong match. You review and send.</p>
+                <p class="mt-1 text-xs leading-relaxed text-muted-foreground">Looks through new candidate profiles every day and drafts an invitation for each strong match. You review and send.</p>
             </div>
             <div class="rounded-xl bg-muted/60 p-4">
                 <p class="text-sm font-medium text-foreground">Coaches your listing</p>
-                <p class="mt-1 text-[13px] leading-relaxed text-muted-foreground">Points out what stops good people applying, like missing pay or unclear location rules.</p>
+                <p class="mt-1 text-xs leading-relaxed text-muted-foreground">Points out what stops good people applying, like missing pay or unclear location rules.</p>
             </div>
         </div>
     </section>
@@ -95,12 +95,12 @@
                         {% if job.featured_now %}<span class="badge badge-featured">Featured until {{ job.featured_until|date:"M j" }}</span>{% endif %}
                     </div>
                     <h3 class="mt-2 text-lg font-semibold leading-snug text-foreground"><a href="{{ job.get_absolute_url }}" class="hover:underline">{{ job.title|display_title }}</a></h3>
-                    <p class="mt-1 text-[13px] text-muted-foreground">{{ job.location|default:"Remote" }} · Posted {{ job.posted_at|date:"M j, Y" }}{% if job.edited_at %} · Updated {{ job.edited_at|date:"M j" }}{% endif %}{% if job.expires_at %} · Closes {{ job.expires_at|date:"M j" }}{% endif %}</p>
+                    <p class="mt-1 text-xs text-muted-foreground">{{ job.location|default:"Remote" }} · Posted {{ job.posted_at|date:"M j, Y" }}{% if job.edited_at %} · Updated {{ job.edited_at|date:"M j" }}{% endif %}{% if job.expires_at %} · Closes {{ job.expires_at|date:"M j" }}{% endif %}</p>
                     <dl class="mt-4 grid grid-cols-4 gap-2 text-center">
-                        <div class="rounded-xl bg-muted px-2 py-2.5"><dt class="text-[11px] text-muted-foreground">Views</dt><dd class="text-base font-semibold tabular-nums text-foreground">{{ job.views_30d }}</dd></div>
-                        <div class="rounded-xl bg-muted px-2 py-2.5"><dt class="text-[11px] text-muted-foreground">Apply clicks</dt><dd class="text-base font-semibold tabular-nums text-foreground">{{ job.apply_clicks_30d }}</dd></div>
-                        <div class="rounded-xl bg-muted px-2 py-2.5"><dt class="text-[11px] text-muted-foreground">Applied</dt><dd class="text-base font-semibold tabular-nums text-foreground">{{ job.applicant_count }}</dd></div>
-                        <div class="rounded-xl bg-muted px-2 py-2.5"><dt class="text-[11px] text-muted-foreground">Interested</dt><dd class="text-base font-semibold tabular-nums text-foreground">{{ job.interested_count }}</dd></div>
+                        <div class="rounded-xl bg-muted px-2 py-2.5"><dt class="text-xs text-muted-foreground">Views</dt><dd class="text-base font-semibold tabular-nums text-foreground">{{ job.views_30d }}</dd></div>
+                        <div class="rounded-xl bg-muted px-2 py-2.5"><dt class="text-xs text-muted-foreground">Apply clicks</dt><dd class="text-base font-semibold tabular-nums text-foreground">{{ job.apply_clicks_30d }}</dd></div>
+                        <div class="rounded-xl bg-muted px-2 py-2.5"><dt class="text-xs text-muted-foreground">Applied</dt><dd class="text-base font-semibold tabular-nums text-foreground">{{ job.applicant_count }}</dd></div>
+                        <div class="rounded-xl bg-muted px-2 py-2.5"><dt class="text-xs text-muted-foreground">Interested</dt><dd class="text-base font-semibold tabular-nums text-foreground">{{ job.interested_count }}</dd></div>
                     </dl>
                     <div class="mt-4 flex flex-wrap gap-2">
                         <a href="{% url 'jobs:employer_job_applications' job.slug %}" class="btn btn-primary btn-sm">Applications ({{ job.applicant_count }})</a>
@@ -111,11 +111,11 @@
                     </div>
                     {% if job.tips %}
                     <div class="mt-5 rounded-xl bg-amber-50/70 p-3.5 dark:bg-amber-500/10">
-                        <p class="text-[13px] font-semibold text-foreground">Make this listing stronger</p>
-                        <ul class="mt-1.5 list-disc space-y-1 pl-4 text-[13px] leading-snug text-muted-foreground">
+                        <p class="text-xs font-semibold text-foreground">Make this listing stronger</p>
+                        <ul class="mt-1.5 list-disc space-y-1 pl-4 text-xs leading-snug text-muted-foreground">
                             {% for tip in job.tips|slice:":3" %}<li>{{ tip }}</li>{% endfor %}
                         </ul>
-                        <a href="{% url 'jobs:job_edit' job.slug %}" class="mt-2 inline-block text-[13px] font-medium text-foreground underline decoration-border hover:decoration-foreground">Edit the role</a>
+                        <a href="{% url 'jobs:job_edit' job.slug %}" class="mt-2 inline-block text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Edit the role</a>
                     </div>
                     {% endif %}
                 </div>
@@ -124,7 +124,7 @@
                 <div class="border-t border-border/60 bg-muted/30 p-5 sm:p-6 lg:col-span-3 lg:border-t-0">
                     <div class="flex items-baseline justify-between gap-3">
                         <h4 class="text-sm font-semibold text-foreground">People who fit this role</h4>
-                        {% if job.suggestions %}<a href="{% url 'jobs:employer_shortlist' job.slug %}" class="text-[13px] text-muted-foreground hover:text-foreground">See all &rarr;</a>{% endif %}
+                        {% if job.suggestions %}<a href="{% url 'jobs:employer_shortlist' job.slug %}" class="text-xs text-muted-foreground hover:text-foreground">See all &rarr;</a>{% endif %}
                     </div>
                     {% if job.sourced %}
                     <ul class="mt-3 grid gap-2 sm:grid-cols-2">
@@ -132,9 +132,9 @@
                         <li class="flex flex-col justify-between gap-3 rounded-xl bg-card p-3.5 shadow-card">
                             <div class="min-w-0">
                                 <p class="truncate text-sm font-medium text-foreground">{% if s.seeker.visibility == 'public' %}{{ s.seeker.user.first_name|default:"Candidate" }}{% else %}Candidate (shares details when invited){% endif %}</p>
-                                {% if s.seeker.headline %}<p class="mt-0.5 line-clamp-2 text-[13px] leading-snug text-muted-foreground">{{ s.seeker.headline }}</p>{% endif %}
+                                {% if s.seeker.headline %}<p class="mt-0.5 line-clamp-2 text-xs leading-snug text-muted-foreground">{{ s.seeker.headline }}</p>{% endif %}
                                 <ul class="mt-2 space-y-1">
-                                    {% for r in s.reasons|slice:":3" %}<li class="text-[12px] leading-snug text-foreground"><span class="text-emerald-600" aria-hidden="true">&check;</span> {{ r.label }}</li>{% endfor %}
+                                    {% for r in s.reasons|slice:":3" %}<li class="text-xs leading-snug text-foreground"><span class="text-emerald-600" aria-hidden="true">&check;</span> {{ r.label }}</li>{% endfor %}
                                 </ul>
                             </div>
                             <a href="{% url 'jobs:talent_invite' s.seeker.user_id %}?job={{ job.pk }}&amp;suggestion={{ s.pk }}" class="btn btn-outline btn-sm self-start">Review invitation</a>
@@ -142,33 +142,33 @@
                         {% endfor %}
                     </ul>
                     {% elif job.matching_data_quality < 0.55 %}
-                    <p class="mt-3 text-[13px] leading-relaxed text-muted-foreground">Add a fuller description, requirements and skills to this role and we can suggest people who fit.</p>
+                    <p class="mt-3 text-xs leading-relaxed text-muted-foreground">Add a fuller description, requirements and skills to this role and we can suggest people who fit.</p>
                     {% elif job.suggestions %}
                     <ul class="mt-3 grid gap-2 sm:grid-cols-2">
                         {% for s in job.suggestions %}
                         <li class="flex flex-col justify-between gap-3 rounded-xl bg-card p-3.5 shadow-card">
                             <div class="min-w-0">
                                 <p class="truncate text-sm font-medium text-foreground">{{ s.display_name }}</p>
-                                {% if s.profile.headline %}<p class="mt-0.5 line-clamp-2 text-[13px] leading-snug text-muted-foreground">{{ s.profile.headline }}</p>{% endif %}
+                                {% if s.profile.headline %}<p class="mt-0.5 line-clamp-2 text-xs leading-snug text-muted-foreground">{{ s.profile.headline }}</p>{% endif %}
                                 <div class="mt-2 flex flex-wrap gap-1">
                                     {% if s.shared_area %}<span class="badge badge-outline">{{ s.shared_area }}</span>{% endif %}
                                     {% for skill in s.shared_skills|slice:":3" %}<span class="badge badge-primary">{{ skill|skill_label }}</span>{% endfor %}
                                 </div>
-                                {% if s.experience_note %}<p class="mt-1.5 text-[12px] text-muted-foreground">{{ s.experience_note }}</p>{% endif %}
+                                {% if s.experience_note %}<p class="mt-1.5 text-xs text-muted-foreground">{{ s.experience_note }}</p>{% endif %}
                             </div>
                             <a href="{% url 'jobs:talent_invite' s.profile.user_id %}?job={{ job.pk }}" class="btn btn-outline btn-sm self-start">Invite to apply</a>
                         </li>
                         {% endfor %}
                     </ul>
                     {% else %}
-                    <p class="mt-3 text-[13px] leading-relaxed text-muted-foreground">No strong matches in our candidate pool yet. We check new profiles every day, and people who say they're interested appear under Candidates.</p>
+                    <p class="mt-3 text-xs leading-relaxed text-muted-foreground">No strong matches in our candidate pool yet. We check new profiles every day, and people who say they're interested appear under Candidates.</p>
                     {% endif %}
                 </div>
             </div>
         </article>
         {% empty %}
         <div class="surface p-8 text-center">
-            <h3 class="text-[15px] font-semibold text-foreground">No live roles</h3>
+            <h3 class="text-base font-semibold text-foreground">No live roles</h3>
             <p class="mt-1 text-sm text-muted-foreground">Post a role ($99 for 30 days, featured) and applications and matching candidates will appear here.</p>
             <a href="{% url 'jobs:post_job' %}" class="btn btn-primary btn-sm mt-4">Post a job</a>
         </div>
@@ -185,7 +185,7 @@
                 <li class="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
                     <div class="min-w-0">
                         <p class="truncate text-sm font-medium text-foreground">{{ job.title|display_title }}</p>
-                        <p class="text-[13px] text-muted-foreground">Started {{ job.posted_at|date:"M j, Y" }}{% if job.poster != request.user and job.poster %} by {{ job.poster.email }}{% endif %}</p>
+                        <p class="text-xs text-muted-foreground">Started {{ job.posted_at|date:"M j, Y" }}{% if job.poster != request.user and job.poster %} by {{ job.poster.email }}{% endif %}</p>
                     </div>
                     {% if job.poster == request.user %}<a href="{% url 'jobs:job_checkout' job.slug %}" class="btn btn-primary btn-sm shrink-0">Finish and pay</a>{% endif %}
                 </li>
@@ -201,7 +201,7 @@
                 <li class="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
                     <div class="min-w-0">
                         <p class="truncate text-sm font-medium text-foreground">{{ job.title|display_title }}</p>
-                        <p class="text-[13px] text-muted-foreground">Posted {{ job.posted_at|date:"M j, Y" }}</p>
+                        <p class="text-xs text-muted-foreground">Posted {{ job.posted_at|date:"M j, Y" }}</p>
                     </div>
                     <a href="{% url 'jobs:employer_job_applications' job.slug %}" class="btn btn-ghost btn-sm shrink-0">Applications</a>
                 </li>
@@ -213,7 +213,7 @@
     {% endif %}
 
     {% elif is_seeker %}
-    <a href="{% url 'jobs:shortlist' %}" class="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground">My shortlist &amp; application progress &rarr;</a>
+    <a href="{% url 'jobs:shortlist' %}" class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">My shortlist &amp; application progress &rarr;</a>
     <!-- Job seeker dashboard -->
     <header class="!mt-2 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div class="min-w-0">
@@ -240,7 +240,7 @@
         <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
                 <h2 class="card-title">Your impact profile</h2>
-                <p class="text-[13px] tabular-nums text-muted-foreground">{{ seeker_profile.profile_completeness }}% complete</p>
+                <p class="text-xs tabular-nums text-muted-foreground">{{ seeker_profile.profile_completeness }}% complete</p>
             </div>
             <div class="flex items-center gap-1.5">
                 <a href="{% url 'jobs:impact_wizard' %}?edit=true" class="btn btn-primary btn-sm">Complete profile</a>
@@ -273,7 +273,7 @@
     <section class="card p-5 sm:p-6" aria-labelledby="cv-heading">
         <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div class="min-w-0 max-w-2xl">
-                <h2 id="cv-heading" class="section-title">Your CV{% if seeker_profile.resume %} <a href="{% url 'jobs:my_cv' %}" target="_blank" rel="noopener" class="ml-2 text-[13px] font-normal text-muted-foreground underline decoration-border hover:text-foreground">View file</a>{% endif %}</h2>
+                <h2 id="cv-heading" class="section-title">Your CV{% if seeker_profile.resume %} <a href="{% url 'jobs:my_cv' %}" target="_blank" rel="noopener" class="ml-2 text-xs font-normal text-muted-foreground underline decoration-border hover:text-foreground">View file</a>{% endif %}</h2>
                 {% if seeker_profile.resume %}
                 {% with f=seeker_profile.cv_facts %}
                 {% if f.roles or f.skills %}
@@ -282,7 +282,7 @@
                     {% for r in f.roles|slice:":4" %}<li>{{ r.title }}{% if r.organization %} · {{ r.organization }}{% endif %}{% if r.years %} <span class="text-muted-foreground">({{ r.years }})</span>{% endif %}</li>{% endfor %}
                 </ul>
                 {% if f.skills %}<div class="mt-3 flex flex-wrap gap-1">{% for sk in f.skills|slice:":12" %}<span class="badge badge-outline">{{ sk.name }}</span>{% endfor %}</div>{% endif %}
-                {% if f.languages %}<p class="mt-2 text-[13px] text-muted-foreground">Languages: {% for l in f.languages %}{{ l.language }}{% if l.level %} ({{ l.level }}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+                {% if f.languages %}<p class="mt-2 text-xs text-muted-foreground">Languages: {% for l in f.languages %}{{ l.language }}{% if l.level %} ({{ l.level }}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
                 {% elif seeker_profile.cv_read_at %}
                 <p class="mt-1 text-sm text-muted-foreground">We couldn't read text from this file. A PDF exported from Word or Google Docs works best (scanned images can't be read).</p>
                 {% else %}
@@ -296,7 +296,7 @@
             <div class="flex shrink-0 flex-col gap-2">
                 <form method="post" action="{% url 'jobs:upload_cv' %}" enctype="multipart/form-data" class="flex flex-col gap-2">
                     {% csrf_token %}
-                    <input type="file" name="cv" accept=".pdf,.docx" required class="text-[13px]" aria-label="CV file (PDF or Word, max 5 MB)">
+                    <input type="file" name="cv" accept=".pdf,.docx" required class="text-xs" aria-label="CV file (PDF or Word, max 5 MB)">
                     <button type="submit" class="btn btn-primary btn-sm">{% if seeker_profile.resume %}Replace CV{% else %}Upload CV{% endif %}</button>
                 </form>
                 {% if seeker_profile.resume %}
@@ -334,17 +334,17 @@
                 <h2 class="card-title">Your profile</h2>
                 <dl class="mt-4 space-y-3">
                     <div>
-                        <dt class="text-[13px] text-muted-foreground">Headline</dt>
+                        <dt class="text-xs text-muted-foreground">Headline</dt>
                         <dd class="mt-0.5 text-sm text-foreground">{{ seeker_profile.headline|default:"Not set" }}</dd>
                     </div>
                     <div>
-                        <dt class="text-[13px] text-muted-foreground">Bio</dt>
+                        <dt class="text-xs text-muted-foreground">Bio</dt>
                         <dd class="mt-0.5 text-sm leading-6 text-foreground">{{ seeker_profile.bio|default:"Not set. Add a short bio so employers know what you work on." }}</dd>
                     </div>
                     {% if seeker_profile.linkedin_url %}
                     <div>
-                        <dt class="text-[13px] text-muted-foreground">LinkedIn</dt>
-                        <dd class="mt-0.5"><a href="{{ seeker_profile.linkedin_url }}" target="_blank" rel="noopener" class="text-[13px] font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">View LinkedIn profile</a></dd>
+                        <dt class="text-xs text-muted-foreground">LinkedIn</dt>
+                        <dd class="mt-0.5"><a href="{{ seeker_profile.linkedin_url }}" target="_blank" rel="noopener" class="text-xs font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">View LinkedIn profile</a></dd>
                     </div>
                     {% endif %}
                 </dl>
@@ -357,28 +357,28 @@
                     <li><a href="{% url 'jobs:referral_dashboard' %}" class="flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 transition-colors hover:bg-muted">
                         <div class="min-w-0">
                             <p class="text-sm font-medium text-foreground">Share and invite</p>
-                            <p class="text-[13px] text-muted-foreground">{{ referral_count }} referral{{ referral_count|pluralize }}</p>
+                            <p class="text-xs text-muted-foreground">{{ referral_count }} referral{{ referral_count|pluralize }}</p>
                         </div>
                         <svg class="h-4 w-4 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7"/></svg>
                     </a></li>
                     <li><a href="{% url 'jobs:job_alerts' %}" class="flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 transition-colors hover:bg-muted">
                         <div class="min-w-0">
                             <p class="text-sm font-medium text-foreground">Job Scouts</p>
-                            <p class="text-[13px] text-muted-foreground">{{ alert_count }} active scout{{ alert_count|pluralize }}</p>
+                            <p class="text-xs text-muted-foreground">{{ alert_count }} active scout{{ alert_count|pluralize }}</p>
                         </div>
                         <svg class="h-4 w-4 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7"/></svg>
                     </a></li>
                     <li><a href="{% url 'jobs:invitations' %}" class="flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 transition-colors hover:bg-muted">
                         <div class="min-w-0">
                             <p class="text-sm font-medium text-foreground">Talent invitations</p>
-                            <p class="text-[13px] text-muted-foreground">{{ invitation_count }} invitation{{ invitation_count|pluralize }}</p>
+                            <p class="text-xs text-muted-foreground">{{ invitation_count }} invitation{{ invitation_count|pluralize }}</p>
                         </div>
                         <svg class="h-4 w-4 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7"/></svg>
                     </a></li>
                     <li><a href="{% url 'jobs:visibility_settings' %}" class="flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 transition-colors hover:bg-muted">
                         <div class="min-w-0">
                             <p class="text-sm font-medium text-foreground">Visibility settings</p>
-                            <p class="text-[13px] text-muted-foreground">Currently: {% if seeker_profile %}{{ seeker_profile.get_visibility_display }}{% else %}Not set{% endif %}</p>
+                            <p class="text-xs text-muted-foreground">Currently: {% if seeker_profile %}{{ seeker_profile.get_visibility_display }}{% else %}Not set{% endif %}</p>
                         </div>
                         <svg class="h-4 w-4 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7"/></svg>
                     </a></li>
@@ -408,7 +408,7 @@
                             <span class="badge shrink-0 {% if inv.status == 'viewed' %}badge-warning{% elif inv.status == 'applied' %}badge-success{% elif inv.status == 'sent' %}badge-primary{% else %}badge-outline{% endif %}">{{ inv.get_status_display }}</span>
                         </div>
                         <p class="mt-2 text-sm text-muted-foreground">"{{ inv.message|truncatewords:25 }}"</p>
-                        <a href="{{ inv.job.get_absolute_url }}" class="mt-2 inline-block text-[13px] font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">View job</a>
+                        <a href="{{ inv.job.get_absolute_url }}" class="mt-2 inline-block text-xs font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">View job</a>
                     </li>
                     {% endfor %}
                 </ul>
@@ -428,7 +428,7 @@
                             </div>
                             <span class="badge shrink-0 {% if app.status == 'offer' %}badge-success{% elif app.status == 'rejected' %}bg-red-50 text-red-800{% elif app.status == 'applied' %}badge-primary{% else %}badge-outline{% endif %}">{{ app.get_status_display }}</span>
                         </div>
-                        <a href="{% url 'jobs:applied_job_detail' app.pk %}" class="mt-2 inline-block text-[13px] font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">View job posting</a>
+                        <a href="{% url 'jobs:applied_job_detail' app.pk %}" class="mt-2 inline-block text-xs font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">View job posting</a>
                     </li>
                     {% endfor %}
                 </ul>

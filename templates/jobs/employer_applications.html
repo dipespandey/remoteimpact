@@ -8,7 +8,7 @@
     <!-- Header -->
     <div class="page-header flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div class="min-w-0">
-            <nav class="mb-3 text-[13px] text-muted-foreground" aria-label="Breadcrumb">
+            <nav class="mb-3 text-xs text-muted-foreground" aria-label="Breadcrumb">
                 <a href="{% url 'jobs:account' %}" class="hover:text-foreground">Dashboard</a>
                 <span class="mx-1.5" aria-hidden="true">/</span>
                 <span class="text-foreground">Applications</span>
@@ -30,18 +30,18 @@
                         {{ app.full_name|default:app.applicant.email|slice:":1"|upper }}
                     </div>
                     <div class="min-w-0">
-                        <h2 class="break-words text-[15px] font-semibold text-foreground">
+                        <h2 class="break-words text-base font-semibold text-foreground">
                             {{ app.full_name|default:app.applicant.email }}
                         </h2>
-                        <p class="break-words text-[13px] text-muted-foreground">
+                        <p class="break-words text-xs text-muted-foreground">
                             {{ app.email|default:app.applicant.email }}
                             {% if app.phone %} · {{ app.phone }}{% endif %}
                         </p>
-                        <div class="mt-1 flex flex-wrap gap-3 text-[13px]">
+                        <div class="mt-1 flex flex-wrap gap-3 text-xs">
                             {% if app.linkedin_url %}<a href="{{ app.linkedin_url }}" target="_blank" rel="noopener" class="font-medium text-foreground underline decoration-border hover:decoration-foreground">LinkedIn</a>{% endif %}
                             {% if app.portfolio_url %}<a href="{{ app.portfolio_url }}" target="_blank" rel="noopener" class="font-medium text-foreground underline decoration-border hover:decoration-foreground">Portfolio</a>{% endif %}
                         </div>
-                        <p class="mt-1 text-[13px] tabular-nums text-muted-foreground">Applied {{ app.applied_at|date:"M d, Y" }}</p>
+                        <p class="mt-1 text-xs tabular-nums text-muted-foreground">Applied {{ app.applied_at|date:"M d, Y" }}</p>
                     </div>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
@@ -62,53 +62,53 @@
             {% if s.total %}
             <section class="mt-5 rounded-xl bg-muted/50 p-4" aria-label="Hiring assistant reading">
                 <div class="flex flex-wrap items-baseline justify-between gap-2">
-                    <p class="text-[13px] font-semibold text-foreground">Hiring assistant</p>
-                    <p class="text-[13px] tabular-nums text-muted-foreground">{{ s.met }} of {{ s.total }} must-haves shown{% if s.partly %}, {{ s.partly }} partly{% endif %}</p>
+                    <p class="text-xs font-semibold text-foreground">Hiring assistant</p>
+                    <p class="text-xs tabular-nums text-muted-foreground">{{ s.met }} of {{ s.total }} must-haves shown{% if s.partly %}, {{ s.partly }} partly{% endif %}</p>
                 </div>
                 {% if s.summary %}<p class="mt-2 max-w-prose text-sm text-foreground">{{ s.summary }}</p>{% endif %}
                 <ul class="mt-3 space-y-2">
                     {% for m in s.must_haves %}
                     <li class="flex gap-3 text-sm">
                         <span class="mt-0.5 shrink-0 badge {% if m.status == 'met' %}badge-success{% elif m.status == 'partly' %}badge-warning{% else %}badge-outline{% endif %}">{% if m.status == 'met' %}Shown{% elif m.status == 'partly' %}Partly{% else %}Not mentioned{% endif %}</span>
-                        <span class="min-w-0"><span class="font-medium text-foreground">{{ m.label }}</span>{% if m.quote %}<span class="mt-0.5 block text-[13px] italic text-muted-foreground">&ldquo;{{ m.quote }}&rdquo;</span>{% endif %}</span>
+                        <span class="min-w-0"><span class="font-medium text-foreground">{{ m.label }}</span>{% if m.quote %}<span class="mt-0.5 block text-xs italic text-muted-foreground">&ldquo;{{ m.quote }}&rdquo;</span>{% endif %}</span>
                     </li>
                     {% endfor %}
                 </ul>
-                <p class="mt-3 text-[12px] text-muted-foreground">Based only on what the applicant wrote here and on their profile. "Not mentioned" doesn't mean they lack it. It's a reading aid, not a decision.</p>
+                <p class="mt-3 text-xs text-muted-foreground">Based only on what the applicant wrote here and on their profile. "Not mentioned" doesn't mean they lack it. It's a reading aid, not a decision.</p>
             </section>
             {% elif job.is_paid and not s %}
-            <p class="mt-5 text-[13px] text-muted-foreground">Your hiring assistant is reading this application. Refresh in a minute.</p>
+            <p class="mt-5 text-xs text-muted-foreground">Your hiring assistant is reading this application. Refresh in a minute.</p>
             {% endif %}
             {% endwith %}
             {% if app.years_experience or app.current_location or app.available_from or app.salary_expectation or app.willing_to_relocate %}
             <dl class="surface mt-5 grid grid-cols-2 gap-3 p-4 text-sm md:grid-cols-4">
                 {% if app.years_experience %}
                     <div>
-                        <dt class="text-[13px] text-muted-foreground">Experience</dt>
+                        <dt class="text-xs text-muted-foreground">Experience</dt>
                         <dd class="mt-0.5 text-foreground">{{ app.get_years_experience_display }}</dd>
                     </div>
                 {% endif %}
                 {% if app.current_location %}
                     <div>
-                        <dt class="text-[13px] text-muted-foreground">Location</dt>
+                        <dt class="text-xs text-muted-foreground">Location</dt>
                         <dd class="mt-0.5 text-foreground">{{ app.current_location }}</dd>
                     </div>
                 {% endif %}
                 {% if app.available_from %}
                     <div>
-                        <dt class="text-[13px] text-muted-foreground">Available from</dt>
+                        <dt class="text-xs text-muted-foreground">Available from</dt>
                         <dd class="mt-0.5 text-foreground">{{ app.available_from|date:"M d, Y" }}</dd>
                     </div>
                 {% endif %}
                 {% if app.salary_expectation %}
                     <div>
-                        <dt class="text-[13px] text-muted-foreground">Salary expectation</dt>
+                        <dt class="text-xs text-muted-foreground">Salary expectation</dt>
                         <dd class="mt-0.5 text-foreground">{{ app.salary_expectation }}</dd>
                     </div>
                 {% endif %}
                 {% if app.willing_to_relocate %}
                     <div>
-                        <dt class="text-[13px] text-muted-foreground">Relocation</dt>
+                        <dt class="text-xs text-muted-foreground">Relocation</dt>
                         <dd class="mt-0.5 text-foreground">Open to relocating</dd>
                     </div>
                 {% endif %}
@@ -116,13 +116,13 @@
             {% endif %}
             {% if app.why_great_fit %}
             <div class="mt-5">
-                <p class="mb-2 text-[13px] font-medium text-muted-foreground">Why they fit the role</p>
+                <p class="mb-2 text-xs font-medium text-muted-foreground">Why they fit the role</p>
                 <p class="max-w-prose whitespace-pre-line text-sm text-foreground">{{ app.why_great_fit|truncatewords:80 }}</p>
             </div>
             {% endif %}
             {% if app.custom_question_answers %}
             <div class="mt-5">
-                <p class="mb-3 text-[13px] font-medium text-muted-foreground">Your questions</p>
+                <p class="mb-3 text-xs font-medium text-muted-foreground">Your questions</p>
                 <div class="space-y-3">
                     {% for item in app.custom_question_answers %}
                     <div>
@@ -135,7 +135,7 @@
             {% endif %}
             {% if app.cover_letter %}
             <div class="mt-5">
-                <p class="mb-2 text-[13px] font-medium text-muted-foreground">Cover letter</p>
+                <p class="mb-2 text-xs font-medium text-muted-foreground">Cover letter</p>
                 <p class="max-w-prose whitespace-pre-line text-sm text-foreground">{{ app.cover_letter|truncatewords:100 }}</p>
             </div>
             {% endif %}
@@ -157,7 +157,7 @@
     {% endif %}
 
     <div class="mt-8">
-        <a href="{% url 'jobs:account' %}" class="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground"><span aria-hidden="true">&larr;</span> Back to dashboard</a>
+        <a href="{% url 'jobs:account' %}" class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"><span aria-hidden="true">&larr;</span> Back to dashboard</a>
     </div>
 </section>
 {% endblock %}

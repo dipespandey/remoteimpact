@@ -41,7 +41,7 @@
                            value="{{ value }}"
                            {% if value in profile.job_types %}checked{% endif %}
                            class="peer sr-only">
-                    <span class="inline-block rounded-full bg-muted px-3.5 py-1.5 text-[13px] text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
+                    <span class="inline-block rounded-full bg-muted px-3.5 py-1.5 text-xs text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
                         {{ label }}
                     </span>
                 </label>
@@ -55,7 +55,7 @@
             <legend class="label">Salary range (USD per year)</legend>
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label for="salary_min" class="mb-1 block text-[13px] text-muted-foreground">Minimum</label>
+                    <label for="salary_min" class="mb-1 block text-xs text-muted-foreground">Minimum</label>
                     <div class="relative">
                         <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground" aria-hidden="true">$</span>
                         <input type="text"
@@ -68,7 +68,7 @@
                     </div>
                 </div>
                 <div>
-                    <label for="salary_max" class="mb-1 block text-[13px] text-muted-foreground">Maximum</label>
+                    <label for="salary_max" class="mb-1 block text-xs text-muted-foreground">Maximum</label>
                     <div class="relative">
                         <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground" aria-hidden="true">$</span>
                         <input type="text"
@@ -89,23 +89,23 @@
             <div class="flex flex-wrap gap-2">
                 <label class="relative cursor-pointer">
                     <input type="checkbox" name="locations" value="US" {% if "US" in profile.location_preferences %}checked{% endif %} class="peer sr-only">
-                    <span class="inline-block rounded-full bg-muted px-3.5 py-1.5 text-[13px] text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">United States</span>
+                    <span class="inline-block rounded-full bg-muted px-3.5 py-1.5 text-xs text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">United States</span>
                 </label>
                 <label class="relative cursor-pointer">
                     <input type="checkbox" name="locations" value="GB" {% if "GB" in profile.location_preferences %}checked{% endif %} class="peer sr-only">
-                    <span class="inline-block rounded-full bg-muted px-3.5 py-1.5 text-[13px] text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">United Kingdom</span>
+                    <span class="inline-block rounded-full bg-muted px-3.5 py-1.5 text-xs text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">United Kingdom</span>
                 </label>
                 <label class="relative cursor-pointer">
                     <input type="checkbox" name="locations" value="EU" {% if "EU" in profile.location_preferences %}checked{% endif %} class="peer sr-only">
-                    <span class="inline-block rounded-full bg-muted px-3.5 py-1.5 text-[13px] text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">Europe</span>
+                    <span class="inline-block rounded-full bg-muted px-3.5 py-1.5 text-xs text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">Europe</span>
                 </label>
                 <label class="relative cursor-pointer">
                     <input type="checkbox" name="locations" value="ASIA" {% if "ASIA" in profile.location_preferences %}checked{% endif %} class="peer sr-only">
-                    <span class="inline-block rounded-full bg-muted px-3.5 py-1.5 text-[13px] text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">Asia</span>
+                    <span class="inline-block rounded-full bg-muted px-3.5 py-1.5 text-xs text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">Asia</span>
                 </label>
                 <label class="relative cursor-pointer">
                     <input type="checkbox" name="locations" value="REMOTE" {% if "REMOTE" in profile.location_preferences %}checked{% endif %} class="peer sr-only">
-                    <span class="inline-block rounded-full bg-muted px-3.5 py-1.5 text-[13px] text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">Anywhere (remote)</span>
+                    <span class="inline-block rounded-full bg-muted px-3.5 py-1.5 text-xs text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">Anywhere (remote)</span>
                 </label>
             </div>
         </fieldset>

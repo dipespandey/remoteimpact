@@ -144,14 +144,14 @@
   <!-- Explainer -->
   <section class="mt-12 max-w-3xl">
     <h2 class="section-title">How to use it</h2>
-    <ul class="mt-4 space-y-3 text-[15px] leading-7 text-foreground">
+    <ul class="mt-4 space-y-3 text-base leading-7 text-foreground">
       <li><strong class="font-medium">Pick zones.</strong> Choose two to four time zones where your team or interviewers are.</li>
       <li><strong class="font-medium">Set hours.</strong> Adjust the working day to match your team (the default is 9:00 to 17:00 local time).</li>
       <li><strong class="font-medium">Read the chart.</strong> The bottom row marks hours that fall inside everyone's working day; the box below lists that window in each local time.</li>
     </ul>
 
     <h2 class="section-title mt-10 text-balance">Why shared hours matter</h2>
-    <div class="mt-4 space-y-3 text-[15px] leading-7 text-muted-foreground">
+    <div class="mt-4 space-y-3 text-base leading-7 text-muted-foreground">
       <p>Teams spread across time zones need some shared hours for calls, pairing and quick decisions. Many remote teams aim for three to four hours of overlap and move the rest of their work to written, asynchronous updates.</p>
       <p>The tool runs in your browser, so you can use it to plan meetings, interviews or on-call handoffs without signing in.</p>
     </div>
@@ -165,7 +165,7 @@
         <div class="rounded-xl px-4 py-3.5" :class="openFaq === idx && 'bg-card'">
           <button type="button" x-on:click="openFaq = openFaq === idx ? null : idx"
                   :aria-expanded="openFaq === idx"
-                  class="flex w-full items-center justify-between gap-4 text-left text-[15px] font-medium text-foreground">
+                  class="flex w-full items-center justify-between gap-4 text-left text-base font-medium text-foreground">
             <span x-text="faq.q"></span>
             <svg class="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" :class="openFaq === idx ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
           </button>

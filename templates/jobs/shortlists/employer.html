@@ -16,13 +16,13 @@
   {% if suggestions %}
   <section class="mb-10" aria-labelledby="suggested-heading">
     <h2 id="suggested-heading" class="section-title">Suggested from our talent pool</h2>
-    <p class="mt-1 max-w-2xl text-[13px] leading-relaxed text-muted-foreground">People who are actively looking for remote impact work and whose profiles overlap with this role. They haven't applied. An invitation sends them one email with your message; profiles are self-reported.</p>
+    <p class="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">People who are actively looking for remote impact work and whose profiles overlap with this role. They haven't applied. An invitation sends them one email with your message; profiles are self-reported.</p>
     <ul class="list-surface mt-3">
       {% for s in suggestions %}
       <li class="flex flex-col gap-3 rounded-xl px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div class="min-w-0">
           <p class="text-sm font-medium text-foreground">{{ s.display_name }}{% if s.profile.headline %} <span class="font-normal text-muted-foreground">· {{ s.profile.headline }}</span>{% endif %}</p>
-          <p class="mt-1 flex flex-wrap gap-1.5 text-[13px] text-muted-foreground">
+          <p class="mt-1 flex flex-wrap gap-1.5 text-xs text-muted-foreground">
             {% if s.shared_area %}<span class="badge badge-outline">{{ s.shared_area }}</span>{% endif %}
             {% for skill in s.shared_skills %}<span class="badge badge-primary">{{ skill|skill_label }}</span>{% endfor %}
             {% if s.experience_note %}<span class="self-center">{{ s.experience_note }}</span>{% endif %}
@@ -35,21 +35,21 @@
   </section>
   {% endif %}
   <div class="mb-2 flex flex-wrap items-center justify-between gap-3"><span class="text-sm text-muted-foreground"><span class="tabular-nums">{{ page_obj.paginator.count }}</span> opt-in candidate{{ page_obj.paginator.count|pluralize }} &middot; consent given in the last 90 days</span><a href="{{ job.get_absolute_url }}" class="btn btn-outline btn-sm">View role</a></div>
-  <p class="mb-5 text-[13px] text-muted-foreground">Contact these candidates only about this role. Skills, availability and work eligibility are self-reported, not independently verified.</p>
+  <p class="mb-5 text-xs text-muted-foreground">Contact these candidates only about this role. Skills, availability and work eligibility are self-reported, not independently verified.</p>
   <div class="space-y-3">
   {% for item in page_obj %}
   <article class="card min-w-0 break-words p-5 sm:p-6">
     <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-      <div><h2 class="text-base font-semibold text-foreground">{{ item.full_name }}</h2><p class="text-[13px] text-muted-foreground">{{ item.headline }}</p></div>
+      <div><h2 class="text-base font-semibold text-foreground">{{ item.full_name }}</h2><p class="text-xs text-muted-foreground">{{ item.headline }}</p></div>
       <span class="badge badge-outline self-start">{{ item.get_employer_stage_display }}</span>
     </div>
     <p class="mt-4 whitespace-pre-line text-sm leading-6 text-foreground">{{ item.evidence }}</p>
     <dl class="surface mt-4 grid gap-3 p-4 text-sm sm:grid-cols-2">
-      <div><dt class="text-[13px] text-muted-foreground">Work eligibility</dt><dd class="text-foreground">{{ item.eligibility }}</dd></div>
-      <div><dt class="text-[13px] text-muted-foreground">Availability</dt><dd class="text-foreground">{{ item.availability|default:"Not specified" }}</dd></div>
+      <div><dt class="text-xs text-muted-foreground">Work eligibility</dt><dd class="text-foreground">{{ item.eligibility }}</dd></div>
+      <div><dt class="text-xs text-muted-foreground">Availability</dt><dd class="text-foreground">{{ item.availability|default:"Not specified" }}</dd></div>
     </dl>
     {% if item.portfolio_url %}<p class="mt-3 text-sm"><a class="font-medium text-foreground underline decoration-border hover:decoration-foreground" href="{{ item.portfolio_url }}" target="_blank" rel="noopener noreferrer">Portfolio or profile</a></p>{% endif %}
-    <p class="mt-3 text-[13px] text-muted-foreground">Interested since {{ item.consented_at|date:"M j, Y" }}</p>
+    <p class="mt-3 text-xs text-muted-foreground">Interested since {{ item.consented_at|date:"M j, Y" }}</p>
     <div class="mt-5 flex flex-wrap items-end gap-3">
       <a class="btn btn-primary" href="mailto:{{ item.user.email|urlencode }}?subject={{ job.title|urlencode }}">Contact candidate</a>
       <form action="{% url 'jobs:employer_interest_stage' job.slug item.pk %}" method="post" class="flex flex-wrap items-end gap-2">{% csrf_token %}<div><label class="label" for="stage-{{ item.pk }}">Stage</label><select id="stage-{{ item.pk }}" name="stage" class="select w-auto">{% for value,label in stages %}<option value="{{ value }}" {% if item.employer_stage == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div><button class="btn btn-outline" type="submit">Update</button></form>

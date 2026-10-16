@@ -1,6 +1,6 @@
 <!-- Out-of-band progress updates -->
 <div id="wizard-progress" hx-swap-oob="true" class="mb-6">
-    <div class="mb-2 flex justify-between text-[13px] text-muted-foreground tabular-nums">
+    <div class="mb-2 flex justify-between text-xs text-muted-foreground tabular-nums">
         <span id="wizard-step-text">Step {{ step_index|add:1 }} of {{ steps|length }}</span>
         <span id="wizard-percent-text">{{ current_step.progress }}% complete</span>
     </div>

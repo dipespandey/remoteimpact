@@ -71,7 +71,7 @@
         <p class="page-lede">Paste a job post or link. Add a few lines about you. Get a first draft you can edit.</p>
       </div>
 
-      <div class="shrink-0 text-[13px] sm:text-right">
+      <div class="shrink-0 text-xs sm:text-right">
         {% if subscription %}
           {% if subscription.is_subscribed and can_use %}
             <p id="usage-badge" class="text-muted-foreground">Pro: unlimited drafts</p>
@@ -80,7 +80,7 @@
               <span id="uses-remaining">{{ subscription.free_uses_remaining }}</span> free draft<span id="uses-plural">{{ subscription.free_uses_remaining|pluralize }}</span> left
             </p>
             <p id="upgrade-hint" class="mt-1 {% if subscription.free_uses_remaining >= 3 %}hidden{% endif %}">
-              <a href="{% url 'jobs:job_scout_subscribe' %}?source=cover_letter_tool" class="btn-link text-[13px]">Pro includes unlimited drafts</a>
+              <a href="{% url 'jobs:job_scout_subscribe' %}?source=cover_letter_tool" class="btn-link text-xs">Pro includes unlimited drafts</a>
             </p>
           {% endif %}
         {% else %}
@@ -149,7 +149,7 @@
         </div>
         <div class="relative mt-3">
           <label for="aa-output" class="sr-only">Generated draft</label>
-          <textarea id="aa-output" rows="16" class="block min-h-[320px] w-full resize-y border-0 bg-transparent p-0 text-[15px] leading-7 text-foreground placeholder:text-muted-foreground/80 focus:outline-none focus:ring-0 focus-visible:outline-none lg:min-h-[440px]" placeholder="Your draft appears here. You can edit it before copying."></textarea>
+          <textarea id="aa-output" rows="16" class="block min-h-[320px] w-full resize-y border-0 bg-transparent p-0 text-base leading-7 text-foreground placeholder:text-muted-foreground/80 focus:outline-none focus:ring-0 focus-visible:outline-none lg:min-h-[440px]" placeholder="Your draft appears here. You can edit it before copying."></textarea>
           <div id="aa-spinner" class="absolute inset-0 flex hidden flex-col items-center justify-center gap-3 rounded-xl bg-card/90 px-6 text-center text-sm text-muted-foreground">
             <svg class="h-5 w-5 animate-spin text-foreground" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.2" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
             <span>Reading the job post and writing a draft. This can take 20 to 40 seconds.</span>
@@ -173,7 +173,7 @@
       <section class="mt-10" aria-labelledby="history-title">
         <div class="flex items-baseline justify-between gap-3 px-1">
           <h2 id="history-title" class="section-title">Your recent drafts</h2>
-          <span class="text-[13px] text-muted-foreground">Last 10</span>
+          <span class="text-xs text-muted-foreground">Last 10</span>
         </div>
         <ul class="list-surface mt-3">
           {% for gen in past_generations %}
@@ -186,9 +186,9 @@
                 {% endif %}
                 <span class="min-w-0 flex-1">
                   <span class="block truncate text-sm text-foreground">{% if gen.job_url %}{{ gen.job_url }}{% elif gen.job_description %}{{ gen.job_description|truncatechars:80 }}{% else %}No job details saved{% endif %}</span>
-                  <span class="block text-[13px] text-muted-foreground">{{ gen.created_at|timesince }} ago</span>
+                  <span class="block text-xs text-muted-foreground">{{ gen.created_at|timesince }} ago</span>
                 </span>
-                <span class="shrink-0 text-[13px] text-muted-foreground">View</span>
+                <span class="shrink-0 text-xs text-muted-foreground">View</span>
               </button>
               <div id="gen-content-{{ gen.id }}" class="hidden">{{ gen.generated_content }}</div>
               <div id="gen-type-{{ gen.id }}" class="hidden">{{ gen.generation_type }}</div>
@@ -204,7 +204,7 @@
     <div class="grid gap-10 lg:grid-cols-12">
       <section class="lg:col-span-7" aria-labelledby="tips-title">
         <h2 id="tips-title" class="section-title">What makes a good impact cover letter</h2>
-        <ul class="mt-4 max-w-prose space-y-4 text-[15px] leading-7 text-muted-foreground">
+        <ul class="mt-4 max-w-prose space-y-4 text-base leading-7 text-muted-foreground">
           <li><strong class="font-medium text-foreground">Open with a reason, not a formula.</strong> Skip "I'm writing to express my interest." Start with a piece of their work you know, or a result of yours that matches the role.</li>
           <li><strong class="font-medium text-foreground">Use numbers you can defend.</strong> "Cut donor churn by 23%" or "managed a $1.2M grant portfolio serving 4,000 people" says more than "improved outcomes".</li>
           <li><strong class="font-medium text-foreground">Use the posting's own words.</strong> If they say "program design", don't write "curriculum development". It shows you read the post and helps with screening software.</li>
@@ -262,7 +262,7 @@
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="min-w-0">
             <h2 id="aa-modal-title" class="text-sm font-medium text-foreground"><span id="aa-modal-mode">Cover letter</span> draft</h2>
-            <p id="aa-modal-status" class="text-[13px] text-muted-foreground"></p>
+            <p id="aa-modal-status" class="text-xs text-muted-foreground"></p>
           </div>
           <div class="-mr-2 flex items-center gap-1">
             <button type="button" class="btn btn-ghost btn-sm" onclick="copyOutput(this)">Copy</button>
@@ -271,7 +271,7 @@
         </div>
         <div class="relative">
           <label for="aa-modal-output" class="sr-only">Generated draft, expanded</label>
-          <textarea id="aa-modal-output" class="block h-[65vh] w-full resize-none border-0 bg-transparent p-0 text-[15px] leading-7 text-foreground placeholder:text-muted-foreground/80 focus:outline-none focus:ring-0 focus-visible:outline-none" placeholder="Your draft appears here."></textarea>
+          <textarea id="aa-modal-output" class="block h-[65vh] w-full resize-none border-0 bg-transparent p-0 text-base leading-7 text-foreground placeholder:text-muted-foreground/80 focus:outline-none focus:ring-0 focus-visible:outline-none" placeholder="Your draft appears here."></textarea>
           <div id="aa-modal-spinner" class="absolute inset-0 flex hidden items-center justify-center rounded-xl bg-card/90 text-sm text-muted-foreground">Writing your draft...</div>
         </div>
       </div>
@@ -287,7 +287,7 @@
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="min-w-0">
             <h2 id="history-modal-title" class="text-sm font-medium text-foreground">Past draft</h2>
-            <span id="history-modal-type" class="text-[13px] text-muted-foreground"></span>
+            <span id="history-modal-type" class="text-xs text-muted-foreground"></span>
           </div>
           <div class="-mr-2 flex items-center gap-1">
             <button type="button" class="btn btn-ghost btn-sm" onclick="copyHistoryOutput(this)">Copy</button>
@@ -295,7 +295,7 @@
           </div>
         </div>
         <label for="history-modal-content" class="sr-only">Past draft text</label>
-        <textarea id="history-modal-content" class="block h-[65vh] w-full resize-none border-0 bg-transparent p-0 text-[15px] leading-7 text-foreground focus:outline-none focus:ring-0 focus-visible:outline-none" readonly></textarea>
+        <textarea id="history-modal-content" class="block h-[65vh] w-full resize-none border-0 bg-transparent p-0 text-base leading-7 text-foreground focus:outline-none focus:ring-0 focus-visible:outline-none" readonly></textarea>
       </div>
     </div>
   </div>

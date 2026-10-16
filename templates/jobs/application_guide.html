@@ -57,7 +57,7 @@
 {% block content %}
 <div class="container py-6 sm:py-8">
     <nav aria-label="Breadcrumb" class="!border-b-0">
-        <ol class="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] text-muted-foreground">
+        <ol class="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground">
             <li><a href="{% url 'jobs:home' %}" class="hover:text-foreground">Home</a></li>
             <li aria-hidden="true">/</li>
             <li><a href="{% url 'jobs:job_list' %}" class="hover:text-foreground">Jobs</a></li>
@@ -75,15 +75,15 @@
     </header>
 
     <div class="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-12">
-        <div class="min-w-0 max-w-[68ch] space-y-10 text-[15px] leading-7">
+        <div class="min-w-0 max-w-[68ch] space-y-10 text-base leading-7">
 
             <section>
                 <h2 class="section-title">About {{ job.organization.name }}</h2>
                 <p class="mt-2 text-muted-foreground">{{ guide.company_intro }}</p>
-                <h3 class="mt-6 text-[15px] font-semibold text-foreground">About the role</h3>
+                <h3 class="mt-6 text-base font-semibold text-foreground">About the role</h3>
                 <p class="mt-1 text-muted-foreground">{{ guide.role_overview }}</p>
                 {% if guide.day_in_life %}
-                <h3 class="mt-6 text-[15px] font-semibold text-foreground">A typical day</h3>
+                <h3 class="mt-6 text-base font-semibold text-foreground">A typical day</h3>
                 <p class="mt-1 text-muted-foreground">{{ guide.day_in_life }}</p>
                 {% endif %}
             </section>
@@ -172,7 +172,7 @@
         <aside class="min-w-0">
             <div class="card p-5 sm:p-6 lg:sticky lg:top-24">
                 <h2 class="card-title">Apply</h2>
-                <p class="mt-0.5 text-[13px] text-muted-foreground">{{ job.title|display_title }} at {{ job.organization.name }}</p>
+                <p class="mt-0.5 text-xs text-muted-foreground">{{ job.title|display_title }} at {{ job.organization.name }}</p>
                 <div class="mt-4 space-y-1">
                     {% if safe_application_url %}
                     <a href="{{ apply_redirect_url }}" target="_blank" rel="noopener nofollow" class="btn btn-primary btn-lg btn-block">
@@ -183,20 +183,20 @@
                     <a href="{{ job.get_absolute_url }}" class="btn btn-ghost btn-block">Back to the job listing</a>
                 </div>
 
-                <h3 class="mt-6 px-1 text-[13px] font-medium text-muted-foreground">Application tools</h3>
+                <h3 class="mt-6 px-1 text-xs font-medium text-muted-foreground">Application tools</h3>
                 <ul class="mt-1.5 space-y-0.5">
                     <li>
                         <a href="{% url 'jobs:cover_letter_generator' %}?job_title={{ job.title|urlencode }}&company={{ job.organization.name|urlencode }}&job_url={{ SITE_URL }}{{ job.get_absolute_url|urlencode }}"
                            class="block rounded-xl px-3 py-2.5 transition-colors hover:bg-muted">
                             <span class="block text-sm font-medium text-foreground">Cover letter generator</span>
-                            <span class="block text-[13px] text-muted-foreground">Drafts a letter from this job description and your background</span>
+                            <span class="block text-xs text-muted-foreground">Drafts a letter from this job description and your background</span>
                         </a>
                     </li>
                     <li>
                         <a href="{% url 'jobs:interview_prep' %}?job_title={{ job.title|urlencode }}&company={{ job.organization.name|urlencode }}"
                            class="block rounded-xl px-3 py-2.5 transition-colors hover:bg-muted">
                             <span class="block text-sm font-medium text-foreground">Interview prep</span>
-                            <span class="block text-[13px] text-muted-foreground">Practice questions for this role</span>
+                            <span class="block text-xs text-muted-foreground">Practice questions for this role</span>
                         </a>
                     </li>
                 </ul>

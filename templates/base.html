@@ -137,7 +137,7 @@
                 <div class="flex h-14 items-center justify-between gap-3">
                     <a href="{% if nav_employer %}{% url 'jobs:account' %}{% else %}{% url 'jobs:home' %}{% endif %}" class="flex min-w-0 shrink-0 items-center gap-2.5 rounded-md">
                         <img src="{% static 'favicon.svg' %}" alt="Remote Impact - Purpose-Driven Remote Job Board" class="h-7 w-7 shrink-0" width="28" height="28">
-                        <span class="text-[15px] font-semibold tracking-tight text-foreground">Remote Impact</span>
+                        <span class="text-base font-semibold tracking-tight text-foreground">Remote Impact</span>
                     </a>
 
                     <!-- Desktop Navigation -->
@@ -432,7 +432,7 @@
                 </div>
 
 
-                <div class="mt-8 flex flex-col gap-4 pt-2 text-[13px] text-muted-foreground md:flex-row md:items-center md:justify-between">
+                <div class="mt-8 flex flex-col gap-4 pt-2 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
                     <p>&copy; {% now "Y" %} Remote Impact</p>
                     <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
                         <!-- Social Links -->
