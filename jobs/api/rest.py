@@ -1,4 +1,4 @@
-"""Jobs API v1: open remote impact roles, checked daily, as structured JSON.
+"""Jobs API v1: open remote impact roles with source links and verification details.
 
 GET /api/v1/jobs/            filters: q, area, country, remote_scope, job_type, level, min_salary,
                              posted_since (ISO date or Nd), organization, source=employer_posted, page, limit
@@ -88,7 +88,7 @@ def search(params, caller, *, limit=None, page=None):
 
     filters = QueryDict(mutable=True)
     for api_key, internal in (("q", "q"), ("area", "category"), ("job_type", "type"), ("level", "experience"),
-                              ("organization", "organization"), ("min_salary", "salary_min")):
+                              ("organization", "organization")):
         for value in params.getlist(api_key) if hasattr(params, "getlist") else [params.get(api_key)]:
             if value:
                 filters.appendlist(internal, str(value))
@@ -97,6 +97,12 @@ def search(params, caller, *, limit=None, page=None):
     text_search = bool(params.get("q"))
     if text_search:
         filters["sort"] = "relevance"  # title matches first, then full-text rank; otherwise newest first
+    minimum = params.get("min_salary")
+    currency = (params.get("salary_currency") or "").upper().strip()
+    if minimum is not None and minimum != "":
+        minimum = int(minimum)
+        if minimum <= 0 or not re.fullmatch(r"[A-Z]{3}", currency):
+            raise ValueError("min_salary must be positive and requires salary_currency (e.g. USD); no currency conversion is performed")
     country = params.get("country")
     if country:
         # "Open from this country": roles naming the country, its region (Africa, EMEA...) or worldwide.
@@ -114,6 +120,7 @@ def search(params, caller, *, limit=None, page=None):
         from django.db.models import Q
         jobs = jobs.filter(Q(location__iregex=r"worldwide|anywhere|global") |
                            Q(country__iregex=r"worldwide|anywhere|global"))
+    country_fits = {}
     if country or scope == "worldwide":
         # Broad import labels are candidate retrieval, not eligibility evidence.
         # Reuse Scout's source rules before totals, deduplication and pagination,
@@ -129,10 +136,28 @@ def search(params, caller, *, limit=None, page=None):
         for fields in candidates.iterator(chunk_size=200):
             candidate = SimpleNamespace(**fields)
             country_fit = location_compatibility(candidate, [country]) if country else None
-            worldwide_fit = location_compatibility(candidate, ["worldwide"]) if scope == "worldwide" else None
+            worldwide_fit = (serialize.geography(candidate)[1] == "worldwide") if scope == "worldwide" else None
             if country_fit is not False and (scope != "worldwide" or worldwide_fit is True):
                 eligible_ids.append(fields["pk"])
+                country_fits[fields["pk"]] = country_fit
         jobs = jobs.filter(pk__in=eligible_ids)
+    if minimum or currency:
+        # Filter using the exact pay contract returned to agents, before totals and paging.
+        pay_ids = []
+        if currency:
+            jobs = jobs.filter(salary_currency__iexact=currency)
+        if minimum:
+            jobs = jobs.filter(salary_min__gte=minimum)
+        else:
+            from django.db.models import Q
+            jobs = jobs.filter(Q(salary_min__isnull=False) | Q(salary_max__isnull=False))
+        for job in jobs.select_related("organization", "category").defer("embedding", "search_vector").iterator(chunk_size=200):
+            pay = serialize.salary(job)
+            if pay and (not currency or pay["currency"] == currency) and (
+                not minimum or (pay["min"] is not None and pay["min"] >= minimum)
+            ):
+                pay_ids.append(job.pk)
+        jobs = jobs.filter(pk__in=pay_ids)
     jobs = JobService._collapse_location_variants(jobs)
     if not text_search:
         jobs = jobs.order_by("-posted_at", "-id")
@@ -149,6 +174,10 @@ def search(params, caller, *, limit=None, page=None):
     by_id = {j.pk: j for j in JobService.get_available_jobs().filter(pk__in=ids)
              .select_related("organization", "category").defer("embedding", "search_vector")}
     rows = [by_id[pk] for pk in ids if pk in by_id]
+    if country:
+        for row in rows:
+            row._api_country_fit = country_fits.get(row.pk)
+            row._api_country_requested = country
     return rows, total, page, limit
 
 
@@ -199,13 +228,14 @@ def areas(request, caller):
 
 def openapi(request):
     site = serialize._site()
+    from jobs.api.mcp import _JOB
     spec = {
         "openapi": "3.1.0",
         "info": {"title": "Remote Impact Jobs API", "version": "1.0",
-                 "description": "Open remote roles at impact organizations, checked daily against each employer's own job board. "
+                 "description": "Open remote roles at impact organizations, with source links and recorded verification details. "
                                 + ATTRIBUTION + " Docs: " + site + "/developers/"},
         "servers": [{"url": site}],
-        "components": {"securitySchemes": {"apiKey": {"type": "http", "scheme": "bearer", "description": "Optional; raises limits."}}},
+        "components": {"schemas": {"Job": _JOB}, "securitySchemes": {"apiKey": {"type": "http", "scheme": "bearer", "description": "Optional; raises limits."}}},
         "security": [{"apiKey": []}, {}],
         "paths": {
             "/api/v1/jobs/": {"get": {"summary": "Search open roles", "parameters": [
@@ -216,12 +246,13 @@ def openapi(request):
                     ("remote_scope", "string", "worldwide to keep only roles open anywhere"),
                     ("job_type", "string", "full-time, part-time, contract, freelance, internship"),
                     ("level", "string", "internship, entry, mid, senior, executive"),
-                    ("min_salary", "integer", "Minimum annual pay"),
+                    ("min_salary", "integer", "Minimum supported annual lower bound; requires salary_currency; unknown pay excluded"),
+                    ("salary_currency", "string", "Pay currency such as USD or EUR; no conversion"),
                     ("posted_since", "string", "ISO date or Nd, e.g. 7d"),
                     ("organization", "string", "Organization name contains"),
                     ("source", "string", "employer_posted to keep only roles posted directly on Remote Impact"),
                     ("page", "integer", "Page number"), ("limit", "integer", "Results per page (max depends on tier)")]],
-                "responses": {"200": {"description": "Jobs"}, "429": {"description": "Rate limited"}}}},
+                "responses": {"200": {"description": "Jobs with evidence and uncertainty metadata", "content": {"application/json": {"schema": {"type": "object", "properties": {"total": {"type": "integer"}, "jobs": {"type": "array", "items": {"$ref": "#/components/schemas/Job"}}}}}}}, "429": {"description": "Rate limited"}}}},
             "/api/v1/jobs/{slug}/": {"get": {"summary": "One role by slug or id",
                                              "parameters": [{"name": "slug", "in": "path", "required": True, "schema": {"type": "string"}}],
                                              "responses": {"200": {"description": "Job"}, "404": {"description": "Closed or unknown"}}}},

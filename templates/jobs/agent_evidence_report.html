@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Remote Impact jobs evidence report — 17 October 2026{% endblock %}
+{% block meta_description %}A fixed, reproducible snapshot of Remote Impact’s job catalogue: worldwide eligibility evidence, supported annual pay and data gaps, with downloadable aggregate data.{% endblock %}
+{% block structured_data %}
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Dataset","name":"Remote Impact catalogue evidence — 17 October 2026","description":"A fixed aggregate observation of Remote Impact listing eligibility and salary evidence, with methodology and limitations.","url":"https://remoteimpact.org/insights/remote-impact-jobs/2026-10-17/","datePublished":"2026-10-17","temporalCoverage":"{{ report.captured_at }}","creator":{"@type":"Organization","name":"Remote Impact","url":"https://remoteimpact.org/"},"distribution":{"@type":"DataDownload","encodingFormat":"application/json","contentUrl":"{{ report.data_url }}"}}</script>
+{% endblock %}
+{% block content %}
+<article class="container py-10 sm:py-14">
+  <header class="max-w-3xl">
+    <p class="kicker">Catalogue research · 17 October 2026</p>
+    <h1 class="mt-2">What can a job-search agent safely tell you?</h1>
+    <p class="mt-4 text-lg text-muted-foreground">A remote label and a salary number do not tell the whole story. This fixed snapshot measures what our catalogue supports—and where an applicant should check with the employer.</p>
+    <p class="mt-3 text-sm text-muted-foreground">{{ report.total_listings|intcomma }} available listings · captured {{ report.captured_at }} · one observation, not a market trend.</p>
+  </header>
+  <section class="mt-8 grid gap-4 md:grid-cols-3" aria-label="Catalogue evidence coverage">
+    {% for metric in metrics %}<div class="card p-6"><p class="text-3xl font-semibold">{{ metric.percent }}%</p><h2 class="mt-2 text-lg font-medium">{{ metric.label }}</h2><p class="mt-2 text-muted-foreground">{{ metric.count|intcomma }} of {{ report.total_listings|intcomma }} listings</p></div>{% endfor %}
+  </section>
+  <section class="mt-10 max-w-3xl prose"><h2>What this means for your search</h2><p>Unknown eligibility is not worldwide eligibility. Missing pay is not zero pay. An amount stored without enough evidence for its currency and period should not be compared with an annual salary target.</p><p>These figures describe Remote Impact’s available catalogue at collection time. They do not measure all remote jobs, prove that an employer is still hiring, or establish work authorization. Our API and MCP tools expose uncertainty so assistants can flag it instead of guessing.</p></section>
+  <section class="mt-10 max-w-3xl"><h2 class="section-title">By catalogue category</h2><div class="mt-4 overflow-x-auto"><table class="w-full text-left"><thead><tr><th class="py-3">Category</th><th class="py-3 text-right">Listings</th></tr></thead><tbody>{% for row in report.domains %}<tr class="border-t border-border"><td class="py-3">{{ row.name }}</td><td class="py-3 text-right tabular-nums">{{ row.count|intcomma }}</td></tr>{% endfor %}</tbody></table></div></section>
+  <section class="mt-10 max-w-3xl"><h2 class="section-title">Methodology and limitations</h2><ul class="mt-4 list-disc space-y-3 pl-5 text-muted-foreground">{% for point in report.methodology %}<li>{{ point }}</li>{% endfor %}</ul><p class="mt-4 text-sm text-muted-foreground">Method: {{ report.methodology_version }}. Cite this dated page and the collection timestamp when quoting the figures. Percentages are rounded to one decimal place.</p></section>
+  <nav class="mt-8 flex flex-wrap gap-3" aria-label="Report resources"><a class="btn btn-primary" href="{{ report.data_url }}">Download aggregate JSON</a><a class="btn btn-outline" href="{% url 'jobs:developers' %}">Use the jobs API or MCP</a><a class="btn btn-outline" href="{% url 'jobs:impact_jobs_snapshot' %}">Current catalogue snapshot</a></nav>
+</article>
+{% endblock %}

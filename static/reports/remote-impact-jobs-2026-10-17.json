@@ -1,0 +1,136 @@
+{
+  "title": "Remote impact jobs: what the catalogue actually tells us",
+  "captured_at": "2026-10-17T17:22:30.109728+00:00",
+  "total_listings": 3436,
+  "counts": {
+    "other_or_unknown_scope": 3353,
+    "stored_pay_amounts": 1665,
+    "publishable_annual_pay": 344,
+    "worldwide_source_evidence": 83
+  },
+  "domains": [
+    {
+      "name": "Climate & Environment",
+      "count": 1439
+    },
+    {
+      "name": "AI Safety & Governance",
+      "count": 337
+    },
+    {
+      "name": "Global Health",
+      "count": 222
+    },
+    {
+      "name": "Impact Careers",
+      "count": 183
+    },
+    {
+      "name": "Animal Welfare",
+      "count": 130
+    },
+    {
+      "name": "Policy & Advocacy",
+      "count": 126
+    },
+    {
+      "name": "Technology & Engineering",
+      "count": 116
+    },
+    {
+      "name": "Materials & Manufacturing",
+      "count": 90
+    },
+    {
+      "name": "Education & Research",
+      "count": 90
+    },
+    {
+      "name": "Energy",
+      "count": 90
+    },
+    {
+      "name": "Other Impact Areas",
+      "count": 78
+    },
+    {
+      "name": "Civic Engagement",
+      "count": 60
+    },
+    {
+      "name": "Children Youth",
+      "count": 59
+    },
+    {
+      "name": "Communications & Media",
+      "count": 57
+    },
+    {
+      "name": "Community Development",
+      "count": 50
+    },
+    {
+      "name": "Effective Altruism",
+      "count": 41
+    },
+    {
+      "name": "Food, Agriculture, & Land Use",
+      "count": 40
+    },
+    {
+      "name": "Capital",
+      "count": 39
+    },
+    {
+      "name": "Human Rights & Justice",
+      "count": 37
+    },
+    {
+      "name": "Transportation",
+      "count": 36
+    },
+    {
+      "name": "Biosecurity & Pandemic Preparedness",
+      "count": 34
+    },
+    {
+      "name": "Operations & Administration",
+      "count": 29
+    },
+    {
+      "name": "Poverty & Economic Development",
+      "count": 18
+    },
+    {
+      "name": "Buildings",
+      "count": 13
+    },
+    {
+      "name": "Humanitarian & Disaster Relief",
+      "count": 11
+    },
+    {
+      "name": "Disability",
+      "count": 5
+    },
+    {
+      "name": "Gender Equality and Social Inclusion (GESI)",
+      "count": 5
+    },
+    {
+      "name": "Nuclear Security",
+      "count": 1
+    }
+  ],
+  "methodology_version": "agent-facts-2026-10-17",
+  "methodology": [
+    "One query of Remote Impact listings passing current availability rules; counts are listings, not unique employers or the entire jobs market.",
+    "Worldwide source evidence uses the same conservative geography compatibility rules as the jobs API; country restrictions override broad global labels. It is not a guarantee of legal eligibility.",
+    "Publishable annual pay uses the JobPosting salary evidence gate: supported unit/currency and valid bounds. Unknown or unpublishable pay is excluded, not treated as zero.",
+    "Stored pay amounts count populated numeric fields only; these may be incomplete or inferred and are not necessarily employer salary disclosures.",
+    "Categories are catalogue classifications. No trend or causal claim can be drawn from this single observation.",
+    "Rows can change at the source after collection. Recheck the employer listing before applying. No personal applicant data is included."
+  ],
+  "source_url": "https://remoteimpact.org/insights/remote-impact-jobs/",
+  "data_url": "https://remoteimpact.org/static/reports/remote-impact-jobs-2026-10-17.json"
+}

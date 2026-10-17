@@ -2,17 +2,17 @@
 {% load humanize %}
 
 {% block title %}Jobs API and MCP server | Remote Impact{% endblock %}
-{% block meta_description %}Structured, daily-verified data on {{ active_jobs_count|intcomma }} remote impact jobs: a REST API and an MCP server for AI assistants. Free tier with attribution; commercial access for products.{% endblock %}
+{% block meta_description %}Structured, source-linked data on {{ active_jobs_count|intcomma }} remote impact jobs: a REST API and an MCP server for AI assistants. Free tier with attribution; commercial access for products.{% endblock %}
 {% block og_title %}Remote Impact Jobs API and MCP server{% endblock %}
-{% block og_description %}Verified remote impact jobs as structured data, for apps, research and AI agents.{% endblock %}
+{% block og_description %}Source-linked remote impact jobs as structured data, for apps, research and AI agents.{% endblock %}
 {% block canonical %}{{ SITE_URL }}{% url 'jobs:developers' %}{% endblock %}
 
 {% block content %}
 <div class="container py-8 sm:py-10">
   <header class="page-header max-w-3xl">
     <p class="kicker">For developers, researchers and AI agents</p>
-    <h1 class="page-title mt-1">Verified remote impact jobs, as data.</h1>
-    <p class="page-lede">{{ active_jobs_count|intcomma }} open remote roles at climate, global health, AI safety, education and other impact organizations, each checked daily against the employer's own job board, with eligibility, pay, level and must-haves made structured. Available as a REST API and as an MCP server your AI assistant can call directly. Try it free; licence the full catalogue for your product.</p>
+    <h1 class="page-title mt-1">Remote impact jobs, as structured data.</h1>
+    <p class="page-lede">{{ active_jobs_count|intcomma }} open remote roles at climate, global health, AI safety, education and other impact organizations, with source links plus structured eligibility, pay, level and must-haves. Each record carries its available verification status and last-check time. Available as a REST API and as an MCP server your AI assistant can call directly. Try it free; licence the full catalogue for your product.</p>
     <div class="mt-5 flex flex-wrap gap-2">
       <a href="#get-key" class="btn btn-primary">Request commercial access</a>
       <a href="#get-key" class="btn btn-outline">Get a free trial key</a>
@@ -56,6 +56,19 @@
     </aside>
   </section>
 
+  <section class="card mt-8 p-5 sm:p-6" aria-labelledby="agent-workflow-heading">
+    <h2 id="agent-workflow-heading" class="section-title">A reliable agent workflow</h2>
+    <ol class="mt-4 list-decimal space-y-3 pl-5 text-muted-foreground">
+      <li>Ask where the person lives, their role preferences and any pay target including its currency. Never assume remote means worldwide.</li>
+      <li>Call <code>list_areas</code>, then <code>search_jobs</code> with those constraints. <code>min_salary</code> requires <code>salary_currency</code>; only supported annual lower bounds qualify. No currency conversion is performed.</li>
+      <li>Inspect <code>data_quality</code> and <code>eligibility_match</code>. <code>source_backed</code> means recorded source evidence, <code>label_only</code> means a display label, and <code>unknown</code> needs employer confirmation. Compatibility is not a guarantee of legal eligibility.</li>
+      <li>Call <code>get_job</code> before presenting a shortlist. Cite its listing URL, include uncertainty, and direct the applicant to the employer. A listed role is not necessarily independently verified open.</li>
+      <li>Respect HTTP 429 and <code>Retry-After</code>. Keep browsing and search read-only; never submit an application or send a message without the person’s instruction.</li>
+    </ol>
+    <p class="mt-4 text-sm text-muted-foreground">A missing <code>salary</code> means supported annual pay is unavailable; it does not mean unpaid. <code>last_seen_at</code> records feed presence, while <code>verification.checked_at</code> is a separate source check.</p>
+    <p class="mt-4"><a class="underline" href="{% url 'jobs:agent_evidence_report' %}">Read the 17 October catalogue evidence report and download its data</a></p>
+  </section>
+
   <section class="mt-10" aria-labelledby="rest-heading">
     <h2 id="rest-heading" class="section-title">REST API</h2>
     <p class="mt-1 max-w-[68ch] text-sm leading-6 text-muted-foreground">Base URL <code class="font-mono text-xs">{{ site }}/api/v1/</code>. JSON, CORS enabled, no key needed to start. Full parameter list in the <a href="{{ site }}/api/v1/openapi.json" class="underline decoration-border underline-offset-4 hover:decoration-foreground">OpenAPI spec</a>.</p>
@@ -63,7 +76,7 @@
       <div class="card p-5">
         <p class="text-xs font-medium text-foreground">Search open roles</p>
         <pre class="mt-2 overflow-x-auto rounded-xl bg-muted px-4 py-3 font-mono text-xs text-foreground">GET {{ api_url }}?q=monitoring+evaluation&amp;country=Kenya&amp;level=mid&amp;posted_since=14d</pre>
-        <p class="mt-2 text-xs text-muted-foreground">Filters: <code>q</code>, <code>area</code>, <code>country</code>, <code>remote_scope=worldwide</code>, <code>job_type</code>, <code>level</code>, <code>min_salary</code>, <code>posted_since</code> (ISO date or <code>7d</code>), <code>organization</code>, <code>source=employer_posted</code>, <code>page</code>, <code>limit</code>.</p>
+        <p class="mt-2 text-xs text-muted-foreground">Filters: <code>q</code>, <code>area</code>, <code>country</code>, <code>remote_scope=worldwide</code>, <code>job_type</code>, <code>level</code>, <code>min_salary</code> with <code>salary_currency</code> (e.g. USD), <code>posted_since</code> (ISO date or <code>7d</code>), <code>organization</code>, <code>source=employer_posted</code>, <code>page</code>, <code>limit</code>.</p>
       </div>
       <div class="card p-5">
         <p class="text-xs font-medium text-foreground">One role, an organization, the areas</p>

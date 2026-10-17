@@ -4,16 +4,15 @@ Listings aggregated from other boards keep only an excerpt of the description pl
 served for roles employers posted on Remote Impact. Everything else (eligibility, pay, verification,
 must-haves, organization data) is our own work and is what the API is for.
 """
+import json
 import re
 
 from django.conf import settings
 from django.urls import reverse
-from django.utils.dateparse import parse_datetime
 from django.utils.html import strip_tags
 
 EXCERPT_FREE = 300
 EXCERPT_COMMERCIAL = 600
-GLOBAL = re.compile(r"\b(?:worldwide|anywhere|global(?:ly)?|international)\b", re.I)
 REGION_LABELS = {"europe", "eu", "emea", "africa", "asia", "apac", "latam", "latin america", "americas", "middle east", "mena",
                  "north america", "oceania", "asia pacific", "sub-saharan africa"}
 
@@ -43,17 +42,44 @@ def verification(job):
             "checked_at": check.get("checked_at"),
         }
     return {"status": "listed", "method": "employer_posted" if job.source == "manual" else "source_feed",
-            "checked_at": job.last_seen_at.isoformat() if job.last_seen_at else None}
+            "checked_at": None}
 
 
 def salary(job):
-    if not (job.salary_min or job.salary_max):
+    """Only expose pay whose amount, currency and annual unit pass the public schema policy.
+
+    Legacy model amounts may be estimates and salary_currency defaults to USD.
+    Reuse the source-backed publication gate instead of relabelling them as facts.
+    """
+    if job.salary_min is None and job.salary_max is None:
         return None
-    raw = job.raw_data or {}
-    period = str(raw.get("salary_period") or raw.get("salaryPeriod") or "year").lower()
-    period = {"annual": "year", "annually": "year", "yearly": "year", "hr": "hour", "hourly": "hour", "monthly": "month"}.get(period, period)
-    return {"min": float(job.salary_min) if job.salary_min else None, "max": float(job.salary_max) if job.salary_max else None,
-            "currency": job.salary_currency or "USD", "period": period}
+    from jobs.services.job_quality import job_posting_schema_json
+
+    amount = json.loads(job_posting_schema_json(job, _site())).get("baseSalary")
+    if not amount:
+        return None
+    value = amount["value"]
+    return {"min": value.get("minValue"), "max": value.get("maxValue"),
+            "currency": amount["currency"], "period": "year"}
+
+
+def geography(job):
+    """Expose conservative scope plus the strength of the underlying evidence."""
+    from jobs.services.job_quality import schema_applicant_countries, label_applicant_countries
+    from jobs.services.scout_constraints import location_compatibility
+
+    explicit = schema_applicant_countries(job)
+    labelled = label_applicant_countries(job) if not explicit else []
+    countries = explicit or labelled
+    if countries:
+        return countries, "countries", "source_backed" if explicit else "label_only"
+    from jobs.services.scout_source_profile import profile_for
+    _, profile = profile_for(job, geography=True)
+    if not profile['geography']['denied'] and location_compatibility(job, ["worldwide"]) is True:
+        return [], "worldwide", "source_backed"
+    # A region label is useful context, but does not establish applicant eligibility.
+    region = (job.country or "").strip().lower() in REGION_LABELS
+    return [], "region" if region else "unspecified", "unknown"
 
 
 def organization_record(org, *, with_counts=False):
@@ -75,17 +101,10 @@ def organization_record(org, *, with_counts=False):
 
 def job_record(job, *, enriched=False):
     site = _site()
-    countries = eligible_countries(job)
+    countries, scope, geography_status = geography(job)
     location = job.location or ""
-    listed = (job.country or "").strip()  # normalized label from the listing: "USA", "Worldwide", "Europe"...
-    if countries:
-        scope = "countries"
-    elif GLOBAL.search(location) or GLOBAL.search(listed):
-        scope = "worldwide"
-    elif listed and listed.lower() in REGION_LABELS:
-        scope = "region"
-    else:
-        scope = "unspecified"
+    listed = (job.country or "").strip()
+    pay = salary(job)
     listing_url = site + job.get_absolute_url()
     apply_url = (site + reverse("jobs:job_apply_redirect", kwargs={"slug": job.slug}) if job.application_url
                  else (site + reverse("jobs:apply_job", kwargs={"slug": job.slug}) if job.source == "manual" else listing_url))
@@ -96,7 +115,16 @@ def job_record(job, *, enriched=False):
         "location": location or "Remote", "remote_scope": scope, "eligible_countries": countries,
         "listed_country": listed or None,
         "job_type": job.job_type, "experience_level": job.experience_level or None,
-        "salary": salary(job),
+        "salary": pay,
+        "data_quality": {
+            "eligibility": geography_status,
+            "salary": "source_backed" if pay else "unknown",
+            "notes": [note for condition, note in (
+                (geography_status != "source_backed", "Confirm applicant eligibility with the employer; labels are not proof."),
+                (not pay, "No publishable annual salary with supported currency and period; do not infer pay."),
+            ) if condition],
+        },
+        "last_seen_at": job.last_seen_at.isoformat() if job.last_seen_at else None,
         "posted_at": job.posted_at.isoformat() if job.posted_at else None,
         "content_updated_at": job.edited_at.isoformat() if job.edited_at else None,
         "expires_at": job.expires_at.isoformat() if job.expires_at else None,
@@ -114,6 +142,12 @@ def job_record(job, *, enriched=False):
             "requirements_excerpt": _text(job.requirements, EXCERPT_COMMERCIAL),
             "description": " ".join(strip_tags(job.description or "").split()) if job.source == "manual" else None,
         })
+    if hasattr(job, "_api_country_fit"):
+        record["eligibility_match"] = {
+            "country": job._api_country_requested,
+            "status": "compatible" if job._api_country_fit is True else "unknown",
+            "note": "Compatibility is based on recorded source evidence, not a guarantee of legal eligibility.",
+        }
     return record
 
 
