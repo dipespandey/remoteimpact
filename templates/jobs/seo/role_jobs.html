@@ -59,6 +59,9 @@
         {% if intro %}<p class="page-lede">{{ intro }}</p>{% endif %}
     </header>
 
+    {% if config.slug == 'remote-intern-jobs' or config.slug == 'remote-fellow-jobs' %}
+      {% include 'earlycareers/_discovery.html' with placement='role_directory' %}
+    {% endif %}
     {% include 'jobs/seo/_destination_search.html' %}
     {% if search_destination %}{% include 'jobs/seo/_destination_salary.html' %}{% else %}{% include 'jobs/seo/_salary_summary.html' %}{% endif %}
     {% include 'jobs/seo/_inventory_evidence.html' %}

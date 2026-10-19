@@ -63,6 +63,18 @@
       </aside>
     </div>
 
+    <article id="early-careers-feed" class="card mt-6 scroll-mt-24 p-5 sm:p-6" aria-labelledby="early-feed-heading">
+      <h2 id="early-feed-heading" class="section-title">Fellowships, internships and first career steps</h2>
+      <p class="mt-2 max-w-[68ch] text-sm leading-6 text-muted-foreground">Share our reviewed programme directory with students and newcomers. The free RSS feed includes funding, eligibility, work location, application status and official sources. Upcoming rounds are labelled; closed rounds leave the feed. Programmes are not all remote or currently accepting applications.</p>
+      <label for="early-feed-url" class="label mt-4">Programme RSS feed URL</label>
+      <input id="early-feed-url" class="input mt-1 w-full" type="url" readonly value="{{ SITE_URL }}{% url 'jobs:early_careers_feed' %}">
+      <div class="mt-4 flex flex-wrap gap-2">
+        <a class="btn btn-outline" href="{% url 'jobs:early_careers_feed' %}" data-track="partner_open_early_careers_feed" data-track-category="distribution">Open programme feed</a>
+        <a class="btn btn-outline" href="{% url 'jobs:early_careers' %}?utm_source=partner&amp;utm_medium=referral&amp;utm_campaign=early_careers_distribution" data-track="partner_link_early_careers" data-track-category="distribution">Browse early-career programmes</a>
+      </div>
+      <p class="help mt-3">Please retain the Remote Impact link and official source attribution. A review date is not an application deadline.</p>
+    </article>
+
     <div class="mt-8 grid gap-6 md:grid-cols-3">
       <article>
         <h2 class="text-base font-semibold text-foreground">Career centers</h2>

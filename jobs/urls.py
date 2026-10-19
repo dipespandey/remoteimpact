@@ -6,6 +6,7 @@ from .views import shortlists, tracking, employers, applications, developers
 from .api import mcp as api_mcp, rest as api_rest
 from .views.agent_report import AgentEvidenceReportView
 from .views.early_careers import early_careers, early_careers_join, early_careers_save, early_careers_outbound
+from earlycareers.feeds import EarlyCareersFeed
 from .feeds import LatestJobsFeed, CategoryJobsFeed, IndeedXMLFeed, LinkedInXMLFeed
 
 app_name = "jobs"
@@ -215,6 +216,7 @@ urlpatterns = [
     path("tools/resignation-letter-generator/generate/", views.ResignationLetterGenerateView.as_view(), name="resignation_letter_generate"),
     # RSS Feeds
     path("feed/jobs/", LatestJobsFeed(), name="jobs_feed"),
+    path("feed/early-careers/", EarlyCareersFeed(), name="early_careers_feed"),
     path("feed/jobs.json", tracking.jobs_json_feed, name="jobs_json_feed"),
     # Jobs API and MCP server (see /developers/)
     path("developers/", developers.DevelopersView.as_view(), name="developers"),
