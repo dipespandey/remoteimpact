@@ -18,7 +18,8 @@
     "source_url": "https://www.anthropic.com/claude-corps/fellow",
     "checked_on": "2026-10-19",
     "no_degree_required": true,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "18+ · US work authorization; no degree required"
   },
   {
     "slug": "anthropic-ai-safety",
@@ -39,7 +40,8 @@
     "source_url": "https://job-boards.greenhouse.io/anthropic/jobs/5183044008",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Strong Python and technical preparation"
   },
   {
     "slug": "mats",
@@ -60,14 +62,15 @@
     "source_url": "https://www.matsprogram.org/apply",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Technical background and AI safety research fit"
   },
   {
     "slug": "iaps",
     "name": "AI Policy Fellowship",
     "organization": "Institute for AI Policy and Strategy",
     "kind": "fellowship",
-    "sector": "AI governance",
+    "sector": "AI governance & policy",
     "audience": "career-switcher",
     "funding": "paid",
     "funding_detail": "Stipend; additional support depends on track.",
@@ -81,14 +84,15 @@
     "source_url": "https://www.iaps.ai/fellowship",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Policy skills; mandatory initial DC event"
   },
   {
     "slug": "govai",
     "name": "GovAI Seasonal Fellowships",
     "organization": "Centre for the Governance of AI",
     "kind": "fellowship",
-    "sector": "AI governance",
+    "sector": "AI governance & policy",
     "audience": "career-switcher",
     "funding": "unknown",
     "funding_detail": "Check funding on the specific cohort announcement.",
@@ -102,14 +106,15 @@
     "source_url": "https://www.governance.ai/opportunities",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Research or applied-policy skills"
   },
   {
     "slug": "horizon",
     "name": "Horizon Fellowship: Junior Track",
     "organization": "Horizon Institute for Public Service",
     "kind": "fellowship",
-    "sector": "AI governance",
+    "sector": "AI governance & policy",
     "audience": "first-step",
     "funding": "unknown",
     "funding_detail": "Check compensation and support on the current cohort announcement.",
@@ -123,7 +128,8 @@
     "source_url": "https://horizonpublicservice.org/horizon-fellowship-applicant-faqs/",
     "checked_on": "2026-10-19",
     "no_degree_required": true,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Junior track; existing US work authorization"
   },
   {
     "slug": "era",
@@ -144,14 +150,15 @@
     "source_url": "https://erafellowship.org/faq",
     "checked_on": "2026-10-19",
     "no_degree_required": true,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "18+ · Strong projects or research potential"
   },
   {
     "slug": "unicef",
     "name": "UNICEF Internship Programme",
     "organization": "UNICEF",
     "kind": "internship",
-    "sector": "Humanitarian & health",
+    "sector": "Global health & development",
     "audience": "first-step",
     "funding": "paid",
     "funding_detail": "Monthly stipend; travel and visa support may depend on funding.",
@@ -165,7 +172,8 @@
     "source_url": "https://www.unicef.org/careers/internships",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "18+ · Students or graduates within 2 years"
   },
   {
     "slug": "outreachy",
@@ -186,7 +194,8 @@
     "source_url": "https://www.outreachy.org/docs/applicant/",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Underrepresented applicants; availability rules apply"
   },
   {
     "slug": "google-summer-of-code",
@@ -207,7 +216,8 @@
     "source_url": "https://summerofcode.withgoogle.com/about",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "New open-source contributors; technical skills"
   },
   {
     "slug": "lfx",
@@ -228,14 +238,15 @@
     "source_url": "https://www.linuxfoundation.org/about/mentorship-programs/",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Project-specific technical prerequisites"
   },
   {
     "slug": "terra-learning-for-action",
     "name": "Climate Change: Learning for Action",
     "organization": "Terra.do",
     "kind": "training",
-    "sector": "Climate",
+    "sector": "Climate & conservation",
     "audience": "career-switcher",
     "funding": "fee",
     "funding_detail": "Fee-based education; need-based scholarships available. Not a paid job.",
@@ -249,14 +260,15 @@
     "source_url": "https://www.terra.do/climate-fellowship-learning-for-action/",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Career changers; course fees apply"
   },
   {
     "slug": "climatebase",
     "name": "Climatebase Fellowship",
     "organization": "Climatebase",
     "kind": "training",
-    "sector": "Climate",
+    "sector": "Climate & conservation",
     "audience": "career-switcher",
     "funding": "fee",
     "funding_detail": "Fee-based career programme; financial aid may be available. Not paid employment.",
@@ -270,14 +282,15 @@
     "source_url": "https://climatebase.org/fellowship",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Career changers; course fees apply"
   },
   {
     "slug": "bluedot-governance",
     "name": "Frontier AI Governance",
     "organization": "BlueDot Impact",
     "kind": "training",
-    "sector": "AI governance",
+    "sector": "AI governance & policy",
     "audience": "first-step",
     "funding": "free",
     "funding_detail": "Free course; not a paid fellowship or job.",
@@ -291,7 +304,8 @@
     "source_url": "https://bluedot.org/courses/ai-governance",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Introductory route into AI governance"
   },
   {
     "slug": "bluedot-technical",
@@ -312,14 +326,15 @@
     "source_url": "https://bluedot.org/courses/technical-ai-safety",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Basic ML and mathematical preparation"
   },
   {
     "slug": "undp-internships",
     "name": "UNDP Internships",
     "organization": "UNDP",
     "kind": "internship",
-    "sector": "Global development",
+    "sector": "Global health & development",
     "audience": "first-step",
     "funding": "paid",
     "funding_detail": "Monthly stipend varies by assignment location and remote/in-person format.",
@@ -333,14 +348,15 @@
     "source_url": "https://www.undp.org/careers/people-programmes",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Final-year bachelor’s / master’s; recent graduates ≤1 year"
   },
   {
     "slug": "undp-fellowships",
     "name": "UNDP Fellowships",
     "organization": "UNDP",
     "kind": "fellowship",
-    "sector": "Global development",
+    "sector": "Global health & development",
     "audience": "first-step",
     "funding": "paid",
     "funding_detail": "Monthly stipend; sponsorship and amount depend on the assignment.",
@@ -354,14 +370,15 @@
     "source_url": "https://www.undp.org/careers/people-programmes",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Students / graduates; assignment-specific"
   },
   {
     "slug": "undp-graduates",
     "name": "UNDP Graduate Programme",
     "organization": "UNDP",
     "kind": "graduate",
-    "sector": "Global development",
+    "sector": "Global health & development",
     "audience": "first-step",
     "funding": "unknown",
     "funding_detail": "Confirm salary and benefits in the current recruitment announcement.",
@@ -371,11 +388,12 @@
     "status": "check",
     "timing": "The programme page refers to recruitment in progress; confirm the next published call.",
     "fit": "A structured first professional role in development.",
-    "requirements": "Bachelor’s or master’s graduates from eligible UNDP programme countries; experience thresholds depend on degree and call.",
-    "source_url": "https://www.undp.org/careers/people-programmes",
+    "requirements": "Eligible UNDP programme-country nationality. Relevant master’s with up to one year of experience, or bachelor’s with two to three years. English, relevant skills and readiness to work abroad for two years required.",
+    "source_url": "https://www.undp.org/careers/undp-graduate-programme",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Master’s ≤1 year experience; bachelor’s 2–3 years"
   },
   {
     "slug": "unhcr-internships",
@@ -396,7 +414,8 @@
     "source_url": "https://www.unhcr.org/get-involved/work-us/careers-unhcr/types-contracts-and-appointments/internships",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "2 university years completed; graduates ≤2 years"
   },
   {
     "slug": "wfp-internships",
@@ -417,7 +436,8 @@
     "source_url": "https://www.wfp.org/careers/contract-types",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "2 university years completed; graduates ≤6 months"
   },
   {
     "slug": "fao-internships",
@@ -434,18 +454,19 @@
     "status": "listings",
     "timing": "Apply to published Calls for Expression of Interest; reapply for later calls.",
     "fit": "Entry-level assignments in agriculture, food systems and sustainable development.",
-    "requirements": "University enrolment and nationality/age/language rules must be checked in the relevant call.",
-    "source_url": "https://www.fao.org/employment/young-talent-programme/internship-programme/faqs/",
+    "requirements": "Age 21–30 at internship start; FAO Member State national enrolled in or recently graduated from a relevant university programme. Working knowledge of a FAO official language and appropriate immigration status required.",
+    "source_url": "https://www.fao.org/employment/young-talent-programme/internship-programme/en",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "21–30 · Eligible students / recent graduates"
   },
   {
     "slug": "unfpa-internships",
     "name": "UNFPA Internships",
     "organization": "UNFPA",
     "kind": "internship",
-    "sector": "Global health & gender equality",
+    "sector": "Global health & development",
     "audience": "first-step",
     "funding": "paid",
     "funding_detail": "Living-cost stipend under the current internship policy; external funding can offset payment.",
@@ -459,14 +480,17 @@
     "source_url": "https://www.unfpa.org/sites/default/files/admin-resource/DHR_Internship_Policy.pdf",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "application_url": "https://www.unfpa.org/jobs",
+    "evidence_note": "Current stipend terms follow the linked internship policy, which supersedes older unpaid-programme descriptions.",
+    "eligibility_summary": "Students / recent graduates; vacancy-specific"
   },
   {
     "slug": "sabin-internships",
     "name": "Sabin Vaccine Institute Internships",
     "organization": "Sabin Vaccine Institute",
     "kind": "internship",
-    "sector": "Global health",
+    "sector": "Global health & development",
     "audience": "first-step",
     "funding": "paid",
     "funding_detail": "Paid by Sabin or an academic partner; typical Sabin rate is DC minimum wage.",
@@ -480,14 +504,15 @@
     "source_url": "https://www.sabin.org/about/opportunities/internships/",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Must stay enrolled throughout internship"
   },
   {
     "slug": "odi-fellowship",
     "name": "ODI Fellowship Scheme",
     "organization": "ODI Global",
     "kind": "fellowship",
-    "sector": "Global development",
+    "sector": "Global health & development",
     "audience": "research-ready",
     "funding": "unknown",
     "funding_detail": "Confirm current employment terms and allowances in the applicant guidance.",
@@ -501,7 +526,8 @@
     "source_url": "https://odi.org/en/fellowship-scheme/",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": "2026-03-31"
+    "deadline": "2026-03-31",
+    "eligibility_summary": "Economics / statistics master’s or PhD"
   },
   {
     "slug": "aim-incubation",
@@ -522,7 +548,8 @@
     "source_url": "https://www.ambitiousimpact.com/incubation-program",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "No specific degree; full-time founder commitment"
   },
   {
     "slug": "new-roots",
@@ -543,7 +570,8 @@
     "source_url": "https://www.newrootsinstitute.org/leadership/overview",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Student-focused advocacy programme"
   },
   {
     "slug": "mercy-for-animals-legal",
@@ -564,7 +592,8 @@
     "source_url": "https://mercyforanimals.org/about/careers/",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Law students; check required study year"
   },
   {
     "slug": "humane-league",
@@ -585,7 +614,8 @@
     "source_url": "https://thehumaneleague.org/fellowships",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Animal advocacy interest; posting-specific"
   },
   {
     "slug": "animal-outlook",
@@ -606,7 +636,8 @@
     "source_url": "https://animaloutlook.org/intern/",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Currently enrolled US students; law students for legal track"
   },
   {
     "slug": "seafawf",
@@ -627,7 +658,8 @@
     "source_url": "https://www.welfarematters.org/fellowship",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Final-year university or beyond; eligible Southeast Asian country"
   },
   {
     "slug": "reducetarian",
@@ -648,7 +680,8 @@
     "source_url": "https://www.reducetarian.org/fellowship-overview",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Undergraduate / master’s students in eligible US cities"
   },
   {
     "slug": "lasr",
@@ -669,7 +702,8 @@
     "source_url": "https://www.lasrlabs.org/",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "ML engineering and strong quantitative skills"
   },
   {
     "slug": "lawai",
@@ -690,7 +724,8 @@
     "source_url": "https://law-ai.org/seasonal-fellowships/",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Legal or relevant policy/research preparation"
   },
   {
     "slug": "pibbss",
@@ -711,7 +746,8 @@
     "source_url": "https://princint.ai/programs/fellowship/",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Research experience in a relevant discipline"
   },
   {
     "slug": "talos",
@@ -732,7 +768,8 @@
     "source_url": "https://www.talosnetwork.org/talos-fellowship",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Degree or near graduation; EU citizenship preferred"
   },
   {
     "slug": "spar",
@@ -753,7 +790,8 @@
     "source_url": "https://www.sparai.org/",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Relevant technical / policy skills; no degree required"
   },
   {
     "slug": "arena",
@@ -774,7 +812,8 @@
     "source_url": "https://www.arena.education/",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Python plus linear algebra, calculus and probability"
   },
   {
     "slug": "ecdc-traineeships",
@@ -795,7 +834,8 @@
     "source_url": "https://www.ecdc.europa.eu/en/about-us/work-ecdc/traineeships",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": "2026-10-05"
+    "deadline": "2026-10-05",
+    "eligibility_summary": "Completed degree; eligible EU/EEA citizenship"
   },
   {
     "slug": "wwf-bridge",
@@ -816,7 +856,8 @@
     "source_url": "https://www.worldwildlife.org/about/careers/people-and-culture/bridge-internships/",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Actively enrolled associate’s to eligible doctoral students"
   },
   {
     "slug": "sei-climate-corps",
@@ -837,7 +878,8 @@
     "source_url": "https://www.climatecorps.org/fellow.html",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "US work authorization; no visa sponsorship"
   },
   {
     "slug": "edf-climate-corps",
@@ -846,19 +888,22 @@
     "kind": "fellowship",
     "sector": "Climate & conservation",
     "audience": "research-ready",
-    "funding": "unknown",
-    "funding_detail": "Check current stipend, host compensation and travel arrangements before accepting.",
+    "funding": "paid",
+    "funding_detail": "At least US$1,400/week for 10–12 weeks plus US$1,400 for training week. Housing and relocation are not supplied by EDF.",
     "mode": "mixed",
     "location": "United States; must already be eligible to work there.",
     "duration": "10–12 weeks plus training week",
-    "status": "check",
-    "timing": "Confirm the current US graduate fellowship application cycle.",
+    "status": "open",
+    "timing": "Applications close 20 December 2026 at 11:59pm Pacific. Earlier applications by 30 November receive network-event access.",
     "fit": "Deliver a climate or energy project embedded in a host organisation.",
     "requirements": "Graduate degree or eligible graduate-certificate students; host-specific skills and US work authorization required.",
     "source_url": "https://business.edf.org/climate-corps/fellows/us/",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": "2026-12-20",
+    "deadline_timezone": "America/Los_Angeles",
+    "deadline_timezone_label": "Pacific time",
+    "eligibility_summary": "Graduate students / certificates; US work authorization"
   },
   {
     "slug": "edf-internships",
@@ -879,7 +924,8 @@
     "source_url": "https://www.edf.org/environmental-careers/internships",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Student and work-authorization rules vary by role"
   },
   {
     "slug": "icrc-associates",
@@ -900,7 +946,8 @@
     "source_url": "https://careers.icrc.org/content/students-recent-graduates/",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Recent graduates with limited work experience"
   },
   {
     "slug": "oecd-internships",
@@ -921,7 +968,8 @@
     "source_url": "https://www.oecd.org/en/about/careers/internships.html",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Full-time degree enrolment throughout placement"
   },
   {
     "slug": "imf-fip",
@@ -942,14 +990,15 @@
     "source_url": "https://www.imf.org/en/about/careers/internship-program",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Graduate study in economics or specialist fields"
   },
   {
     "slug": "ifad-internships",
     "name": "IFAD Internship Programmes",
     "organization": "International Fund for Agricultural Development",
     "kind": "internship",
-    "sector": "Global development",
+    "sector": "Global health & development",
     "audience": "first-step",
     "funding": "paid",
     "funding_detail": "Monthly allowance; enhanced internships may add travel and housing support.",
@@ -963,14 +1012,15 @@
     "source_url": "https://www.ifad.org/en/work-with-us/internship-programmes",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Age ≤30 · Students or graduates within 24 months"
   },
   {
     "slug": "wbg-pioneers",
     "name": "WBG Pioneers Internship Programme",
     "organization": "World Bank Group",
     "kind": "internship",
-    "sector": "Global development",
+    "sector": "Global health & development",
     "audience": "first-step",
     "funding": "unknown",
     "funding_detail": "Compensated and unpaid arrangements exist. Check the posting; unpaid internships need university confirmation of academic credit or sufficient university stipend.",
@@ -984,7 +1034,8 @@
     "source_url": "https://www.worldbank.org/ext/en/careers/talent-programs/wbg-pioneers",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Undergraduate / postgraduate students; track-specific"
   },
   {
     "slug": "unesco-internships",
@@ -1005,7 +1056,8 @@
     "source_url": "https://careers.unesco.org/content/Internship-Programme/?locale=en_GB",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "20+ · Eligible students or graduates within 12 months"
   },
   {
     "slug": "epl",
@@ -1026,7 +1078,8 @@
     "source_url": "https://emergingpublicleaders.org/",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Young professionals; country-partner eligibility"
   },
   {
     "slug": "ctbto-internships",
@@ -1047,7 +1100,8 @@
     "source_url": "https://www.ctbto.org/work-with-us/employment/internships",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "18–35 · 2 university years or graduate within 2 years"
   },
   {
     "slug": "opcw-internships",
@@ -1068,7 +1122,8 @@
     "source_url": "https://www.opcw.org/work-us/internships",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Member State national; student / recent graduate"
   },
   {
     "slug": "achs",
@@ -1089,7 +1144,8 @@
     "source_url": "https://asia-chs.org/fellowship-programme/fellowship-programme-achs/",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": "2026-08-31"
+    "deadline": "2026-08-31",
+    "eligibility_summary": "Advanced degree or 3 years experience; Asia-Pacific criteria"
   },
   {
     "slug": "blue-book",
@@ -1110,6 +1166,7 @@
     "source_url": "https://traineeships.ec.europa.eu/about/programme-essentials_en",
     "checked_on": "2026-10-19",
     "no_degree_required": false,
-    "deadline": null
+    "deadline": null,
+    "eligibility_summary": "Completed degree; language and prior-EU-work limits"
   }
 ]

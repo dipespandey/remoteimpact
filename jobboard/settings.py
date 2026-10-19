@@ -97,6 +97,7 @@ INSTALLED_APPS = [
     "django_extensions",
     "django_countries",
     "jobs",
+    "earlycareers.apps.EarlyCareersConfig",
     "gigs",
     "blog",
 ]

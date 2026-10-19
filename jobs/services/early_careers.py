@@ -3,6 +3,7 @@ import json
 from datetime import date, timedelta
 from functools import lru_cache
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from django.utils import timezone
 
@@ -23,14 +24,16 @@ def registry():
 
 
 def opportunities(today=None):
+    supplied_today = today
     today = today or timezone.localdate()
     rows = []
     for raw in registry():
         row = dict(raw)
         checked = date.fromisoformat(row['checked_on'])
         deadline = date.fromisoformat(row['deadline']) if row.get('deadline') else None
+        cutoff_day = supplied_today or (timezone.localtime(timezone.now(), ZoneInfo(row['deadline_timezone'])).date() if row.get('deadline_timezone') else today)
         row['review_due'] = today > checked + timedelta(days=REVIEW_DAYS)
-        if deadline and today > deadline:
+        if deadline and cutoff_day > deadline:
             row['status'] = 'closed'
         elif row['review_due'] and row['status'] in {'open', 'listings'}:
             row['status'] = 'check'
@@ -39,6 +42,6 @@ def opportunities(today=None):
         row['closing_soon'] = row['status'] == 'open' and deadline is not None and today <= deadline <= today + timedelta(days=7)
         for key, choices in FILTERS.items():
             row[key + '_label'] = choices[row[key]]
-        row['action_label'] = 'View application details' if row['status'] == 'open' else 'View official programme'
+        row['action_label'] = 'Official site'
         rows.append(row)
     return rows
