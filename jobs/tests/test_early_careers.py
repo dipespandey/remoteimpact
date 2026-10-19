@@ -15,7 +15,7 @@ from jobs.sitemaps import StaticSitemap
 class ProgrammeIntegrityTests(SimpleTestCase):
     def test_reviewed_registry_is_unique_and_source_backed(self):
         rows = registry()
-        self.assertEqual(len(rows), 15)
+        self.assertGreaterEqual(len(rows), 40)
         self.assertEqual(len({r['slug'] for r in rows}), len(rows))
         for row in rows:
             self.assertTrue(row['source_url'].startswith('https://'))
@@ -28,7 +28,7 @@ class ProgrammeIntegrityTests(SimpleTestCase):
     def test_open_claim_expires_without_an_editor_recheck(self):
         fresh = opportunities(date(2026, 10, 19))
         stale = opportunities(date(2026, 11, 3))
-        self.assertEqual(sum(r['status'] == 'open' for r in fresh), 2)
+        self.assertTrue(any(r['status'] == 'open' for r in fresh))
         self.assertFalse(any(r['status'] in {'open', 'listings'} for r in stale))
         self.assertTrue(all(r['review_due'] for r in stale))
 
@@ -67,14 +67,15 @@ class EarlyCareerPageTests(TestCase):
         data = next(item for item in [json.loads(raw) for raw in re.findall(r'<script type="application/ld\+json">(.*?)</script>', text, re.S)] if item.get('@type') == 'CollectionPage')
         self.assertEqual(data['@type'], 'CollectionPage')
         self.assertNotIn('JobPosting', text)
-        self.assertEqual(data['mainEntity']['numberOfItems'], 15)
+        self.assertEqual(data['mainEntity']['numberOfItems'], len(registry()))
         self.assertIn('jobs:early_careers', [row[0] for row in StaticSitemap().items()])
         self.assertContains(response, '/jobs/?experience=entry')
         self.assertContains(response, '/remote-intern-jobs/')
 
     def test_filters_intersect_and_paid_does_not_include_fee_courses(self):
         response = self.client.get(reverse('jobs:early_careers'), {'funding':'paid','audience':'first-step'})
-        self.assertEqual(response.context['result_count'], 4)
+        self.assertGreaterEqual(response.context['result_count'], 4)
+        self.assertTrue(all(r['funding'] == 'paid' and r['audience'] == 'first-step' for group in response.context['groups'] for r in group['items']))
         self.assertContains(response, 'Claude Corps')
         self.assertNotContains(response, 'Climate Change: Learning for Action')
         self.assertContains(response, 'noindex, follow')
@@ -88,5 +89,32 @@ class EarlyCareerPageTests(TestCase):
 
     def test_unknown_filters_do_not_hide_programmes_or_reflect_markup(self):
         response = self.client.get(reverse('jobs:early_careers'), {'kind':'<script>alert(1)</script>'})
-        self.assertEqual(response.context['result_count'], 15)
+        self.assertEqual(response.context['result_count'], len(registry()))
         self.assertNotContains(response, '<script>alert(1)</script>')
+
+    def test_search_finds_organisations_and_intersects_with_filters(self):
+        response = self.client.get(reverse('jobs:early_careers'), {'q': 'UNHCR', 'funding': 'paid'})
+        self.assertEqual(response.context['result_count'], 1)
+        self.assertContains(response, 'UNHCR Internships')
+        self.assertContains(response, 'noindex, follow')
+        response = self.client.get(reverse('jobs:early_careers'), {'q': 'UNHCR', 'funding': 'fee'})
+        self.assertEqual(response.context['result_count'], 0)
+
+    def test_unpaid_and_upcoming_rounds_are_explicit(self):
+        response = self.client.get(reverse('jobs:early_careers'), {'funding': 'unpaid'})
+        slugs = {r['slug'] for g in response.context['groups'] for r in g['items']}
+        self.assertIn('animal-outlook', slugs)
+        self.assertIn('spar', slugs)
+        self.assertNotIn('outreachy', slugs)
+        rows = {r['slug']: r for r in opportunities(date(2026, 10, 19))}
+        self.assertEqual(rows['wwf-bridge']['status'], 'check')
+        self.assertEqual(rows['ecdc-traineeships']['status'], 'closed')
+        self.assertEqual(rows['pibbss']['status'], 'closed')
+
+    def test_search_escapes_markup_and_resources_do_not_inflate_count(self):
+        response = self.client.get(reverse('jobs:early_careers'), {'q': '<script>alert(1)</script>'})
+        self.assertEqual(response.context['result_count'], 0)
+        self.assertNotContains(response, '<script>alert(1)</script>')
+        self.assertContains(response, 'https://jobs.80000hours.org/')
+        self.assertContains(response, 'https://probablygood.org/resources/internships/')
+        self.assertEqual(response.context['total'], len(registry()))

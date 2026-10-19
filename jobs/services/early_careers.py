@@ -7,9 +7,9 @@ from pathlib import Path
 from django.utils import timezone
 
 FILTERS = {
-    'kind': {'fellowship': 'Fellowships', 'internship': 'Internships', 'mentorship': 'Mentorships', 'training': 'Courses & career programmes'},
+    'kind': {'fellowship': 'Fellowships', 'internship': 'Internships', 'mentorship': 'Mentorships', 'training': 'Courses & career programmes', 'graduate': 'Graduate programmes'},
     'audience': {'first-step': 'First career step', 'research-ready': 'Technical / research preparation', 'career-switcher': 'Changing sectors'},
-    'funding': {'paid': 'Paid / stipend', 'free': 'Free learning', 'fee': 'Fees apply', 'unknown': 'Funding to confirm'},
+    'funding': {'paid': 'Paid / stipend', 'free': 'Free learning / costs covered', 'unpaid': 'Unpaid placement', 'fee': 'Fees apply', 'unknown': 'Funding to confirm'},
     'mode': {'remote': 'Fully online / remote', 'onsite': 'In person', 'hybrid': 'Remote with required travel', 'mixed': 'Varies by placement', 'unknown': 'Format to confirm'},
     'status': {'open': 'Applications open', 'listings': 'Browse vacancies / projects', 'check': 'Check next intake', 'closed': 'Closed round'},
 }

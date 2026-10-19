@@ -13,7 +13,10 @@ def early_careers(request):
     sectors = sorted({row['sector'] for row in rows})
     if sector not in sectors:
         sector = ''
-    results = [row for row in rows if all(not value or row[key] == value for key, value in selected.items()) and (not sector or row['sector'] == sector)]
+    query = request.GET.get('q', '').strip()[:160]
+    terms = query.casefold().split()
+    results = [row for row in rows if all(not value or row[key] == value for key, value in selected.items()) and (not sector or row['sector'] == sector)
+        and all(term in ' '.join(str(row.get(key, '')) for key in ('name', 'organization', 'sector', 'location', 'fit', 'requirements')).casefold() for term in terms)]
     groups = [dict(key=key, title=title, items=[r for r in results if r['status'] == key]) for key, title in (
         ('open', 'Applications open'), ('listings', 'Browse current vacancies and projects'),
         ('check', 'Explore the next intake'), ('closed', 'Closed rounds to keep on your radar'))]
@@ -23,5 +26,5 @@ def early_careers(request):
               'description':'Fellowships, internships, mentorships and learning programmes with reviewed eligibility and funding details.',
               'mainEntity':{'@type':'ItemList', 'numberOfItems':len(results), 'itemListElement':[{'@type':'ListItem','position':i,'name':r['name'],'url':canonical+'#'+r['slug']} for i,r in enumerate(results,1)]}}
     return render(request, 'jobs/early_careers.html', dict(groups=groups, filters=filters, sectors=sectors, sector=sector,
-        total=len(rows), result_count=len(results), filtered=bool(sector or any(selected.values())),
+        total=len(rows), result_count=len(results), query=query, filtered=bool(query or sector or any(selected.values())),
         last_reviewed=max(r['checked_date'] for r in rows), schema_json=json_ld(schema)))
