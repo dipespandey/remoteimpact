@@ -9,31 +9,39 @@
 {% block canonical %}{{ SITE_URL }}{% url 'jobs:early_careers' %}{% endblock %}
 {% block structured_data %}<script type="application/ld+json">{{ schema_json|safe }}</script>{% endblock %}
 {% block extra_head %}<style>
-.early-hero {max-width:48rem; padding:1rem 0 .5rem;}
-.early-grid {display:grid;gap:1rem;grid-template-columns:repeat(2,minmax(0,1fr));}
-.early-card {padding:1.5rem;display:flex;flex-direction:column;min-width:0;scroll-margin-top:6rem;}
-.early-card h3 {font-size:1.25rem;line-height:1.4;letter-spacing:-.025em;}
-.early-card p,.early-card dd {font-size:1rem;line-height:1.65;}
-.early-facts {display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.25rem;}
-.early-facts dt {font-size:.8125rem;line-height:1.5;color:var(--muted-foreground);margin-bottom:.25rem;}
-.early-facts dd {margin:0;}
-.early-filters {display:grid;gap:.875rem;grid-template-columns:repeat(3,minmax(0,1fr));}
-.early-filters label {display:block;margin-bottom:.375rem;font-size:.875rem;font-weight:500;}
-.early-filters select {width:100%;font-size:1rem;min-height:44px;}
-@media(max-width:767px){.early-grid,.early-filters{grid-template-columns:1fr}.early-card{padding:1.25rem}.early-facts{grid-template-columns:1fr}.early-hero{padding-top:0}}
+.early-hero {max-width:48rem;padding:.5rem 0 0;}
+.early-columns,.early-row {display:grid;grid-template-columns:minmax(190px,1.6fr) minmax(100px,.75fr) minmax(180px,1.3fr) minmax(110px,.8fr) 150px;gap:1.25rem;align-items:start;}
+.early-columns {padding:.75rem 1.25rem;font-size:.8125rem;font-weight:500;color:#71717a;}
+.early-grid {border:1px solid #e4e4e7;border-radius:1rem;background:#fff;overflow:hidden;}
+.early-row {padding:1.25rem;min-width:0;scroll-margin-top:6rem;}
+.early-row + .early-row {border-top:1px solid #e4e4e7;}
+.early-row h3 {font-size:1.0625rem;line-height:1.5;letter-spacing:-.02em;}
+.early-row p {font-size:.9375rem;line-height:1.6;}
+.early-row details {margin-top:.625rem;}
+.early-row summary {font-size:.875rem;font-weight:500;cursor:pointer;}
+.early-row details p {margin-top:.625rem;color:#52525b;}
+.early-cell-label {display:none;}
+.early-filters {display:grid;gap:1rem;grid-template-columns:repeat(3,minmax(0,1fr));}
+.early-filters label {display:block;margin-bottom:.5rem;font-size:.875rem;font-weight:500;}
+.early-filters select.select {appearance:none;width:100%;min-height:46px;padding:.625rem 2.5rem .625rem .875rem;border:1px solid #d4d4d8;border-radius:.75rem;background-color:#fff;color:#18181b;font-size:1rem;line-height:1.5;box-shadow:0 1px 2px rgb(0 0 0 / .03);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='1.7'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-position:right .875rem center;background-repeat:no-repeat;}
+.early-filters select.select:hover {border-color:#a1a1aa;}
+.early-filters select.select:focus-visible {outline:2px solid #65a30d;outline-offset:2px;}
+@media(max-width:1100px){.early-columns,.early-row{grid-template-columns:minmax(170px,1.4fr) minmax(90px,.7fr) minmax(160px,1.2fr) minmax(100px,.8fr) 130px;gap:1rem;}.early-row .btn{font-size:.875rem;padding-left:.75rem;padding-right:.75rem;}}
+@media(max-width:899px){.early-columns{display:none}.early-row{grid-template-columns:1fr 1fr;gap:1rem;padding:1.25rem}.early-programme{grid-column:1/-1}.early-cell-label{display:block;font-size:.75rem;color:#71717a;margin-bottom:.25rem}.early-action{align-self:end}.early-action .btn{width:100%}.early-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:479px){.early-filters{grid-template-columns:1fr}.early-row{gap:.875rem}.early-location{grid-column:1/-1;grid-row:3}.early-stage{grid-column:1}.early-action{grid-column:2}}
 </style>{% endblock %}
 {% block content %}
 <div class="page">
   <header class="early-hero page-header">
     <p class="kicker">Your first step into impact</p>
     <h1 class="page-title mt-2">Start your career in impact.</h1>
-    <p class="page-lede">Explore fellowships, internships and supported ways into climate, AI safety, humanitarian work and open source. Find a route that fits where you are now.</p>
+    <p class="page-lede">Fellowships, internships and programmes to help you get started in impact.</p>
     <div class="mt-5 flex flex-wrap gap-2"><a class="btn btn-primary" href="#opportunities">Explore {{ total }} programmes</a><a class="btn btn-outline" href="{% url 'jobs:job_list' %}?experience=entry">Browse entry-level jobs</a></div>
-    <p class="help mt-4">Some programmes require technical skills, charge fees or involve relocation. Those details are shown below. A programme listing is not a guarantee of admission or employment.</p>
+
   </header>
 
   <details class="surface p-5 sm:p-6 mb-8"{% if filtered %} open{% endif %}>
-    <summary class="cursor-pointer"><span class="section-title">Filter programmes</span><span class="block mt-1 text-sm text-muted-foreground">Type, career stage, funding, work format, status and sector</span></summary>
+    <summary class="cursor-pointer"><span class="section-title">Filter programmes</span><span class="block mt-1 text-sm text-muted-foreground">Find the right type, funding and location for you</span></summary>
     <form method="get" class="mt-5" action="{% url 'jobs:early_careers' %}#opportunities">
       <div class="early-filters">{% for filter in filters %}<div><label for="early-{{ filter.name }}">{{ filter.label }}</label><select class="select" name="{{ filter.name }}" id="early-{{ filter.name }}"><option value="">All</option>{% for value,label in filter.choices %}<option value="{{ value }}"{% if filter.value == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>{% endfor %}
       <div><label for="early-sector">Sector</label><select class="select" name="sector" id="early-sector"><option value="">All sectors</option>{% for value in sectors %}<option{% if value == sector %} selected{% endif %}>{{ value }}</option>{% endfor %}</select></div></div>
@@ -43,17 +51,19 @@
 
   <div id="opportunities" class="scroll-mt-24"><div class="flex flex-wrap items-baseline justify-between gap-2 mb-5"><h2 class="section-title">Fellowships and more</h2><p class="text-sm text-muted-foreground">{{ result_count }} programme{{ result_count|pluralize }} · Sources reviewed {{ last_reviewed|date:'j M Y' }}</p></div>
   {% if not result_count %}<div class="card p-6"><h3 class="section-title">No programmes match these filters yet</h3><p class="mt-2 text-base text-muted-foreground">Try another work format or funding option. We keep location and eligibility restrictions visible rather than treating every programme as a match.</p><a class="btn btn-outline mt-4" href="{% url 'jobs:early_careers' %}#opportunities">View all programmes</a></div>{% endif %}
-  {% for group in groups %}{% if group.items %}<section class="mb-10" aria-labelledby="group-{{ group.key }}"><h2 id="group-{{ group.key }}" class="section-title mb-4">{{ group.title }} <span class="text-muted-foreground">· {{ group.items|length }}</span></h2><div class="early-grid">
-  {% for item in group.items %}<article class="card early-card" id="{{ item.slug }}">
-    <div class="flex flex-wrap gap-2 mb-3"><span class="badge badge-outline">{{ item.kind_label }}</span><span class="badge {% if item.funding == 'paid' %}badge-success{% else %}badge-outline{% endif %}">{{ item.funding_label }}</span>{% if item.closing_soon %}<span class="badge badge-warning">Closing soon</span>{% endif %}</div>
-    <p class="text-muted-foreground">{{ item.organization }}</p><h3 class="font-semibold text-foreground mt-1">{{ item.name }}</h3><p class="mt-3 text-muted-foreground">{{ item.fit }}</p>
-    <dl class="early-facts"><div><dt>Who it suits</dt><dd>{{ item.audience_label }}</dd></div><div><dt>Format &amp; duration</dt><dd>{{ item.mode_label }} · {{ item.duration }}</dd></div><div><dt>Funding / cost</dt><dd>{{ item.funding_detail }}</dd></div><div><dt>Location</dt><dd>{{ item.location }}</dd></div></dl>
-    <div class="surface p-4 mt-5"><p class="font-medium text-foreground">Before you apply</p><p class="mt-1 text-muted-foreground">{{ item.requirements }}</p></div>
-    <p class="mt-4"><span class="font-medium">{{ item.status_label }}.</span> {{ item.timing }}</p>
-    {% if item.deadline_date %}<p class="mt-2 text-sm text-muted-foreground">Application deadline: {{ item.deadline_date|date:'j M Y' }}. Confirm the cutoff time with the provider.</p>{% endif %}
-    {% if item.review_due %}<p class="help">Our last review is over two weeks old. Confirm the current round with the provider.</p>{% endif %}
-    <div class="mt-auto pt-5"><a href="{{ item.source_url }}" class="btn btn-outline" rel="noopener" data-track="early_careers_source" data-track-category="early_careers" data-track-label="{{ item.slug }}">{{ item.action_label }} <span aria-hidden="true">↗</span></a><p class="help mt-2">Official source reviewed {{ item.checked_date|date:'j M Y' }}. Dates and eligibility can change.</p></div>
+  {% for group in groups %}{% if group.items %}<section class="mb-8" aria-labelledby="group-{{ group.key }}">
+  <h2 id="group-{{ group.key }}" class="section-title mb-2">{{ group.title }} <span class="text-muted-foreground">· {{ group.items|length }}</span></h2>
+  <div class="early-columns" aria-hidden="true"><span>Programme</span><span>Funding</span><span>Format &amp; location</span><span>Career stage</span><span></span></div>
+  <div class="early-grid">{% for item in group.items %}<article class="early-row" id="{{ item.slug }}">
+    <div class="early-programme"><p class="text-muted-foreground">{{ item.organization }}</p><h3 class="font-semibold text-foreground">{{ item.name }}</h3><p class="text-muted-foreground mt-1">{{ item.kind_label }} · {{ item.duration }}</p>
+      <details><summary>Eligibility &amp; details</summary><p>{{ item.fit }}</p><p><strong>Eligibility:</strong> {{ item.requirements }}</p><p><strong>Funding:</strong> {{ item.funding_detail }}</p><p><strong>Applications:</strong> {{ item.timing }}</p>{% if item.deadline_date %}<p>Deadline: {{ item.deadline_date|date:'j M Y' }}. Confirm the cutoff time with the provider.</p>{% endif %}{% if item.review_due %}<p>Review overdue. Confirm the current intake with the provider.</p>{% endif %}<p>Official source reviewed {{ item.checked_date|date:'j M Y' }}.</p></details>
+    </div>
+    <div><span class="early-cell-label">Funding</span><span class="badge {% if item.funding == 'paid' %}badge-success{% else %}badge-outline{% endif %}">{{ item.funding_label }}</span>{% if item.closing_soon %}<p class="mt-2">Closing soon</p>{% endif %}</div>
+    <div class="early-location"><span class="early-cell-label">Format &amp; location</span><p class="font-medium">{{ item.mode_label }}</p><p class="text-muted-foreground mt-1">{{ item.location }}</p></div>
+    <div class="early-stage"><span class="early-cell-label">Career stage</span><p>{{ item.audience_label }}</p></div>
+    <div class="early-action"><a href="{{ item.source_url }}" class="btn btn-outline" rel="noopener" aria-label="View {{ item.name }} on the official site" data-track="early_careers_source" data-track-category="early_careers" data-track-label="{{ item.slug }}">View details <span aria-hidden="true">↗</span></a></div>
   </article>{% endfor %}</div></section>{% endif %}{% endfor %}</div>
+  <p class="help mb-6">Check the official source before applying. Fees, eligibility and dates can change; remote placement is not guaranteed.</p>
   <section class="surface p-5 sm:p-6" aria-labelledby="early-next"><h2 class="section-title" id="early-next">Ready for a job instead?</h2><p class="mt-2 text-base text-muted-foreground">Browse current listings alongside these programmes. Check each employer’s requirements and hiring location.</p><div class="flex flex-wrap gap-3 mt-4"><a class="btn btn-outline" href="{% url 'jobs:job_list' %}?experience=entry">Entry-level jobs</a><a class="btn btn-outline" href="{% url 'jobs:role_jobs' role_slug='remote-intern-jobs' %}">Internships</a><a class="btn btn-outline" href="{% url 'jobs:role_jobs' role_slug='remote-fellow-jobs' %}">Fellowships</a></div></section>
 </div>
 {% endblock %}
