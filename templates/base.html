@@ -161,6 +161,7 @@
                             data-track="nav_job_scout" data-track-category="navigation">
                             AI Job Scout
                         </a>
+                        <a href="{% url 'jobs:early_careers' %}" class="rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground" data-track="nav_early_careers">Early careers</a>
                         <a href="{{ nav_guides_url }}"
                             class="rounded-full px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted hover:text-foreground {% if request.path == nav_guides_url %}bg-muted text-foreground{% else %}text-muted-foreground{% endif %}"
                             {% if request.path == nav_guides_url %}aria-current="page"{% endif %}>
@@ -296,6 +297,7 @@
                     <div class="space-y-1">
                         <a href="{{ nav_jobs_url }}" class="block rounded-xl px-3 py-2.5 font-medium text-foreground hover:bg-muted">Jobs</a>
                         <a href="{{ nav_scout_url }}" class="block rounded-xl px-3 py-2.5 font-medium text-foreground hover:bg-muted">AI Job Scout</a>
+                        <a href="{% url 'jobs:early_careers' %}" class="block rounded-xl px-3 py-2.5 font-medium text-foreground hover:bg-muted">Early careers</a>
                         <a href="{{ nav_guides_url }}" class="block rounded-xl px-3 py-2.5 font-medium text-foreground hover:bg-muted">Career Guides</a>
                         <a href="{{ nav_gigs_url }}" class="block rounded-xl px-3 py-2.5 font-medium text-foreground hover:bg-muted">Gigs</a>
                         <a href="{% url 'jobs:organization_directory' %}" class="block rounded-xl px-3 py-2.5 font-medium text-foreground hover:bg-muted">Organizations</a>
@@ -371,6 +373,7 @@
                             <li><a href="{% url 'jobs:job_list' %}" class="transition-colors hover:text-foreground">Remote Impact Jobs</a></li>
                             <li><a href="{% url 'jobs:tech_collection' %}" class="transition-colors hover:text-foreground">Software &amp; data job picks</a></li>
 {% if not nav_employer %}                            <li><a href="{% url 'jobs:shortlist' %}" class="transition-colors hover:text-foreground">My shortlist</a></li>{% endif %}
+                            <li><a href="{% url 'jobs:early_careers' %}" class="transition-colors hover:text-foreground">Early careers</a></li>
                             <li><a href="{% url 'gigs:gig_list' %}" class="transition-colors hover:text-foreground">Gigs</a></li>
                             <li><a href="{% url 'jobs:organization_directory' %}" class="transition-colors hover:text-foreground">Organizations</a></li>
 {% if not nav_employer %}                            <li><a href="{% url 'jobs:tools_index' %}" class="transition-colors hover:text-foreground">Career Tools</a></li>{% endif %}

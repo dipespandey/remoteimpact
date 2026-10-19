@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Early Careers: Impact Fellowships &amp; Internships | Remote Impact{% endblock %}
+{% block meta_description %}Find your first step into impact: fellowships, internships and mentorships with clear eligibility, funding, deadlines and remote-work details.{% endblock %}
+{% block og_title %}Early careers in impact — fellowships, internships and more{% endblock %}
+{% block og_description %}Find a supported first step into impact, with clear eligibility, funding and work-location details.{% endblock %}
+{% block twitter_title %}Early careers in impact | Remote Impact{% endblock %}
+{% block twitter_description %}Fellowships, internships and mentorships. Check eligibility, funding and application status before you apply.{% endblock %}
+{% block robots %}{% if filtered %}noindex, follow{% else %}index, follow{% endif %}{% endblock %}
+{% block canonical %}{{ SITE_URL }}{% url 'jobs:early_careers' %}{% endblock %}
+{% block structured_data %}<script type="application/ld+json">{{ schema_json|safe }}</script>{% endblock %}
+{% block extra_head %}<style>
+.early-hero {max-width:48rem; padding:1rem 0 .5rem;}
+.early-grid {display:grid;gap:1rem;grid-template-columns:repeat(2,minmax(0,1fr));}
+.early-card {padding:1.5rem;display:flex;flex-direction:column;min-width:0;scroll-margin-top:6rem;}
+.early-card h3 {font-size:1.25rem;line-height:1.4;letter-spacing:-.025em;}
+.early-card p,.early-card dd {font-size:1rem;line-height:1.65;}
+.early-facts {display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.25rem;}
+.early-facts dt {font-size:.8125rem;line-height:1.5;color:var(--muted-foreground);margin-bottom:.25rem;}
+.early-facts dd {margin:0;}
+.early-filters {display:grid;gap:.875rem;grid-template-columns:repeat(3,minmax(0,1fr));}
+.early-filters label {display:block;margin-bottom:.375rem;font-size:.875rem;font-weight:500;}
+.early-filters select {width:100%;font-size:1rem;min-height:44px;}
+@media(max-width:767px){.early-grid,.early-filters{grid-template-columns:1fr}.early-card{padding:1.25rem}.early-facts{grid-template-columns:1fr}.early-hero{padding-top:0}}
+</style>{% endblock %}
+{% block content %}
+<div class="page">
+  <header class="early-hero page-header">
+    <p class="kicker">Your first step into impact</p>
+    <h1 class="page-title mt-2">Start your career in impact.</h1>
+    <p class="page-lede">Explore fellowships, internships and supported ways into climate, AI safety, humanitarian work and open source. Find a route that fits where you are now.</p>
+    <div class="mt-5 flex flex-wrap gap-2"><a class="btn btn-primary" href="#opportunities">Explore {{ total }} programmes</a><a class="btn btn-outline" href="{% url 'jobs:job_list' %}?experience=entry">Browse entry-level jobs</a></div>
+    <p class="help mt-4">Some programmes require technical skills, charge fees or involve relocation. Those details are shown below. A programme listing is not a guarantee of admission or employment.</p>
+  </header>
+
+  <details class="surface p-5 sm:p-6 mb-8"{% if filtered %} open{% endif %}>
+    <summary class="cursor-pointer"><span class="section-title">Filter programmes</span><span class="block mt-1 text-sm text-muted-foreground">Type, career stage, funding, work format, status and sector</span></summary>
+    <form method="get" class="mt-5" action="{% url 'jobs:early_careers' %}#opportunities">
+      <div class="early-filters">{% for filter in filters %}<div><label for="early-{{ filter.name }}">{{ filter.label }}</label><select class="select" name="{{ filter.name }}" id="early-{{ filter.name }}"><option value="">All</option>{% for value,label in filter.choices %}<option value="{{ value }}"{% if filter.value == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>{% endfor %}
+      <div><label for="early-sector">Sector</label><select class="select" name="sector" id="early-sector"><option value="">All sectors</option>{% for value in sectors %}<option{% if value == sector %} selected{% endif %}>{{ value }}</option>{% endfor %}</select></div></div>
+      <div class="mt-4 flex flex-wrap gap-3 items-center"><button class="btn btn-primary" type="submit" data-track="early_careers_filter" data-track-category="early_careers">Show opportunities</button>{% if filtered %}<a class="btn btn-ghost" href="{% url 'jobs:early_careers' %}#opportunities">Clear filters</a>{% endif %}</div>
+    </form>
+  </details>
+
+  <div id="opportunities" class="scroll-mt-24"><div class="flex flex-wrap items-baseline justify-between gap-2 mb-5"><h2 class="section-title">Fellowships and more</h2><p class="text-sm text-muted-foreground">{{ result_count }} programme{{ result_count|pluralize }} · Sources reviewed {{ last_reviewed|date:'j M Y' }}</p></div>
+  {% if not result_count %}<div class="card p-6"><h3 class="section-title">No programmes match these filters yet</h3><p class="mt-2 text-base text-muted-foreground">Try another work format or funding option. We keep location and eligibility restrictions visible rather than treating every programme as a match.</p><a class="btn btn-outline mt-4" href="{% url 'jobs:early_careers' %}#opportunities">View all programmes</a></div>{% endif %}
+  {% for group in groups %}{% if group.items %}<section class="mb-10" aria-labelledby="group-{{ group.key }}"><h2 id="group-{{ group.key }}" class="section-title mb-4">{{ group.title }} <span class="text-muted-foreground">· {{ group.items|length }}</span></h2><div class="early-grid">
+  {% for item in group.items %}<article class="card early-card" id="{{ item.slug }}">
+    <div class="flex flex-wrap gap-2 mb-3"><span class="badge badge-outline">{{ item.kind_label }}</span><span class="badge {% if item.funding == 'paid' %}badge-success{% else %}badge-outline{% endif %}">{{ item.funding_label }}</span>{% if item.closing_soon %}<span class="badge badge-warning">Closing soon</span>{% endif %}</div>
+    <p class="text-muted-foreground">{{ item.organization }}</p><h3 class="font-semibold text-foreground mt-1">{{ item.name }}</h3><p class="mt-3 text-muted-foreground">{{ item.fit }}</p>
+    <dl class="early-facts"><div><dt>Who it suits</dt><dd>{{ item.audience_label }}</dd></div><div><dt>Format &amp; duration</dt><dd>{{ item.mode_label }} · {{ item.duration }}</dd></div><div><dt>Funding / cost</dt><dd>{{ item.funding_detail }}</dd></div><div><dt>Location</dt><dd>{{ item.location }}</dd></div></dl>
+    <div class="surface p-4 mt-5"><p class="font-medium text-foreground">Before you apply</p><p class="mt-1 text-muted-foreground">{{ item.requirements }}</p></div>
+    <p class="mt-4"><span class="font-medium">{{ item.status_label }}.</span> {{ item.timing }}</p>
+    {% if item.deadline_date %}<p class="mt-2 text-sm text-muted-foreground">Application deadline: {{ item.deadline_date|date:'j M Y' }}. Confirm the cutoff time with the provider.</p>{% endif %}
+    {% if item.review_due %}<p class="help">Our last review is over two weeks old. Confirm the current round with the provider.</p>{% endif %}
+    <div class="mt-auto pt-5"><a href="{{ item.source_url }}" class="btn btn-outline" rel="noopener" data-track="early_careers_source" data-track-category="early_careers" data-track-label="{{ item.slug }}">{{ item.action_label }} <span aria-hidden="true">↗</span></a><p class="help mt-2">Official source reviewed {{ item.checked_date|date:'j M Y' }}. Dates and eligibility can change.</p></div>
+  </article>{% endfor %}</div></section>{% endif %}{% endfor %}</div>
+  <section class="surface p-5 sm:p-6" aria-labelledby="early-next"><h2 class="section-title" id="early-next">Ready for a job instead?</h2><p class="mt-2 text-base text-muted-foreground">Browse current listings alongside these programmes. Check each employer’s requirements and hiring location.</p><div class="flex flex-wrap gap-3 mt-4"><a class="btn btn-outline" href="{% url 'jobs:job_list' %}?experience=entry">Entry-level jobs</a><a class="btn btn-outline" href="{% url 'jobs:role_jobs' role_slug='remote-intern-jobs' %}">Internships</a><a class="btn btn-outline" href="{% url 'jobs:role_jobs' role_slug='remote-fellow-jobs' %}">Fellowships</a></div></section>
+</div>
+{% endblock %}

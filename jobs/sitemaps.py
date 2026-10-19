@@ -194,6 +194,7 @@ class StaticSitemap(Sitemap):
             ('jobs:home', 1.0, 'daily'),
             ('jobs:job_list', 0.9, 'hourly'),
             ('jobs:resources', 0.7, 'weekly'),
+            ('jobs:early_careers', 0.8, 'weekly'),
             ('jobs:partner_resources', 0.8, 'weekly'),
             ('jobs:tech_collection', 0.7, 'daily'),
             ('jobs:employers', 0.7, 'monthly'),

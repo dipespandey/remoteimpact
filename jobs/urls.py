@@ -5,6 +5,7 @@ from .views.resources import home as resources_home
 from .views import shortlists, tracking, employers, applications, developers
 from .api import mcp as api_mcp, rest as api_rest
 from .views.agent_report import AgentEvidenceReportView
+from .views.early_careers import early_careers
 from .feeds import LatestJobsFeed, CategoryJobsFeed, IndeedXMLFeed, LinkedInXMLFeed
 
 app_name = "jobs"
@@ -19,6 +20,7 @@ urlpatterns = [
     path("employers/jobs/<slug:slug>/shortlist/", shortlists.employer_shortlist, name="employer_shortlist"),
     path("employers/jobs/<slug:slug>/shortlist/<int:pk>/stage/", shortlists.employer_stage, name="employer_interest_stage"),
     # Public
+    path("early-careers/", early_careers, name="early_careers"),
     path("insights/remote-impact-jobs/2026-10-17/", AgentEvidenceReportView.as_view(), name="agent_evidence_report"),
     path("", resources_home, name="home"),
     path("resources/", views.ResourcesView.as_view(), name="resources"),
