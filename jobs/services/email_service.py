@@ -236,8 +236,9 @@ class EmailService:
         # account-level newsletter preference link.
         unsubscribe_url = self._get_unsubscribe_url(user.id)
 
-        # Determine if user has personalized recommendations
-        has_profile = hasattr(user, "seeker_profile") and user.seeker_profile.wizard_completed
+        # Describe the digest as personalized only when matched results were
+        # actually supplied; a completed profile can have no current matches.
+        has_profile = bool(match_scores)
 
         # Render templates
         context = {

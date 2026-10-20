@@ -51,17 +51,29 @@ class Command(BaseCommand):
 
         # Get users to send to
         if specific_user:
-            users = User.objects.filter(email=specific_user)
+            users = User.objects.filter(
+                email=specific_user,
+                is_active=True,
+                profile__email_newsletter=True,
+                profile__email_newsletter_unsubscribed_at__isnull=True,
+            ).select_related("seeker_profile", "profile")
             if not users.exists():
-                self.stdout.write(self.style.ERROR(f"User not found: {specific_user}"))
+                self.stdout.write(
+                    self.style.ERROR(
+                        f"No active, newsletter-subscribed account found for: {specific_user}"
+                    )
+                )
                 return
         else:
-            # Get users with completed impact profiles (seeker profiles with embeddings)
+            # A completed profile is not consent. Require the explicit account
+            # newsletter preference and exclude accounts carrying an unsubscribe.
             users = User.objects.filter(
                 seeker_profile__wizard_completed=True,
                 seeker_profile__embedding__isnull=False,
                 is_active=True,
-            ).select_related("seeker_profile")
+                profile__email_newsletter=True,
+                profile__email_newsletter_unsubscribed_at__isnull=True,
+            ).select_related("seeker_profile", "profile")
 
         if limit:
             users = users[:limit]

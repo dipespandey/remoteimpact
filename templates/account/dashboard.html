@@ -330,6 +330,22 @@
     <div class="grid gap-6 lg:grid-cols-3 lg:gap-8">
         <!-- Sidebar: profile + quick links -->
         <div class="min-w-0 space-y-6 lg:col-span-1">
+            <section class="card p-5 sm:p-6" aria-labelledby="digest-preferences-heading">
+                <h2 id="digest-preferences-heading" class="card-title">Weekly job digest</h2>
+                <p class="mt-1 text-sm leading-6 text-muted-foreground">Get a weekly email with fresh remote impact roles, with profile matches when available. You can unsubscribe at any time.</p>
+                <form method="post" action="{% url 'jobs:newsletter_preferences' %}" class="mt-4">
+                    {% csrf_token %}
+                    {% if profile.email_newsletter and not profile.email_newsletter_unsubscribed_at %}
+                    <input type="hidden" name="subscribe" value="false">
+                    <button type="submit" class="btn btn-outline btn-sm">Unsubscribe</button>
+                    <p class="mt-2 text-xs text-muted-foreground" role="status">You’re subscribed.</p>
+                    {% else %}
+                    <input type="hidden" name="subscribe" value="true">
+                    <button type="submit" class="btn btn-primary btn-sm">Subscribe to weekly email</button>
+                    {% endif %}
+                </form>
+            </section>
+
             <section class="card p-5 sm:p-6">
                 <h2 class="card-title">Your profile</h2>
                 <dl class="mt-4 space-y-3">
