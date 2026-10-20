@@ -122,14 +122,21 @@ class SearchIndexingTests(TestCase):
         public = self.job()
         self.job(quality_score=54)
         self.job(is_active=False, source='manual')
-        self.job(location='Remote', country=None)
+        worldwide = self.job(location='Remote', country=None)
         module = 'jobs.management.commands.ping_google_indexing.Command'
         with patch(module+'.load_credentials', return_value={'private_key': 'unused'}), \
              patch(module+'.fetch_access_token', return_value='unused'), patch(module+'.publish', return_value=True) as send:
             call_command('ping_google_indexing', stdout=StringIO())
             call_command('ping_google_indexing', stdout=StringIO())
-            self.assertEqual(send.call_count, 1)
-            self.assertEqual(send.call_args.args[1], 'https://remoteimpact.org'+public.get_absolute_url())
+            self.assertEqual(send.call_count, 2)
+            notified_urls = {call.args[1] for call in send.call_args_list}
+            self.assertEqual(
+                notified_urls,
+                {
+                    'https://remoteimpact.org' + public.get_absolute_url(),
+                    'https://remoteimpact.org' + worldwide.get_absolute_url(),
+                },
+            )
 
     def test_rolled_back_new_job_never_starts_notification_worker(self):
         with patch('jobs.signals.threading.Thread') as thread:
