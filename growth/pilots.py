@@ -32,7 +32,11 @@ def eligible_payment(pilot):
 def transition_pilot(pilot_id, target, *, actor, note):
     if not actor or not actor.is_active or not actor.is_staff or not actor.has_perm("growth.change_employerpilot"):
         raise PermissionDenied
-    pilot = EmployerPilot.objects.select_for_update().select_related("payment__last_run").get(pk=pilot_id)
+    pilot = EmployerPilot.objects.select_for_update().get(pk=pilot_id)
+    if pilot.payment_id:
+        # Lock optional payment evidence separately: PostgreSQL cannot lock
+        # the nullable side of the pilot/payment outer join.
+        pilot.payment = CashMovement.objects.select_for_update().select_related("last_run").get(pk=pilot.payment_id)
     if not note.strip():
         raise ValidationError("Record evidence for this transition.")
     if target == pilot.stage:

@@ -116,7 +116,7 @@ def approve_revision(revision_id, *, actor):
 
 @transaction.atomic
 def publish_revision(revision_id):
-    revision = ArticleRevision.objects.select_for_update().select_related("opportunity", "post", "approved_by").get(pk=revision_id)
+    revision = ArticleRevision.objects.select_for_update(of=("self", "opportunity", "post")).select_related("opportunity", "post", "approved_by").get(pk=revision_id)
     # Lock the post too: two workers/revisions cannot race to overwrite its body.
     post = BlogPost.objects.select_for_update().get(pk=revision.post_id)
     if revision.state == ArticleRevision.State.PUBLISHED:
