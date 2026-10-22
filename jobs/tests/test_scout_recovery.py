@@ -170,10 +170,13 @@ class RecoveryPipelineTests(TestCase):
             description='Responsibilities: Build software services using Python. Qualifications: experience.',
             location='Remote worldwide',country='Worldwide',job_type='full-time',posted_at=timezone.now())
         diag={}
-        prefs,result=JobScoutService.search_intent('Remote software engineering roles using Python from Nepal',limit=3,diagnostics=diag)
+        with patch('jobs.services.scout_close_matches.close_matches',
+                   side_effect=AssertionError('A grounded preview does not need alternative review')):
+            prefs,result=JobScoutService.search_intent('Remote software engineering roles using Python from Nepal',limit=3,diagnostics=diag)
         self.assertEqual(len(result),1)
         self.assertEqual(tier_for_job(result[0]),'consider')
         self.assertEqual(diag['source_rule_recovery'],1)
+        self.assertTrue(diag['fast_preview_result'])
         self.assertLessEqual(api.call_count,2)
 
     @patch('jobs.services.ai.AIClient.generate',return_value='not json')
