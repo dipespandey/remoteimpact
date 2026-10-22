@@ -537,6 +537,10 @@ def _evaluate_job(job, prefs, relaxed=False):
     for group in skill_requirement_groups(prefs):
         if not any(re.search(r'(?<!\w)'+re.escape(skill)+r'(?!\w)',fields,re.I) for skill in group):
             return Eligibility(False,'required_skill')
+    # Once explicit skill gates pass, reject known geography conflicts before
+    # running the remaining expensive body checks.
+    location=location_compatibility(job,prefs.get('locations',[]))
+    if location is False:return Eligibility(False,'location',location)
     from jobs.services.scout_review import remote_requested,dominant_function_conflict
     if dominant_function_conflict(fields,prefs,title):return Eligibility(False,"primary_function")
     if remote_requested(prefs):
@@ -580,9 +584,6 @@ def _evaluate_job(job, prefs, relaxed=False):
     if prefs.get('unresolved_constraints'):
         if not relaxed:return Eligibility(False,'unresolved_constraint')
         caveats.extend(prefs['unresolved_constraints'])
-    location=location_compatibility(job,prefs.get('locations',[]))
-    if location is False:
-        return Eligibility(False,'location',location)
     if location is None and prefs.get('locations') and prefs.get('require_verified_location',True):
         if not relaxed:return Eligibility(False,'location',location)
         caveats.append('location_unconfirmed')

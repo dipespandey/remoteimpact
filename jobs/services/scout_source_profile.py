@@ -154,6 +154,10 @@ def profile_for(job,*,geography=False,workplace=False):
 
 def duties(job,field='description'):
     fields,profile=profile_for(job)
+    return _duties_from_profile(fields, profile, field)
+
+
+def _duties_from_profile(fields, profile, field):
     text=fields[field]
     spans=profile['spans'][field]
     # Unstructured short listings generally start with a role summary; keep
@@ -170,14 +174,14 @@ def request_terms(preferences):
         if w.lower() not in GENERIC))[:24]
 
 
-def function_priority(job,preferences):
-    terms=request_terms(preferences)
+def function_priority(job,preferences,*,terms=None):
+    if terms is None:terms=request_terms(preferences)
     if not terms:return 0
-    fields,_=profile_for(job)
+    fields,profile=profile_for(job)
     title=fields['title'].lower()
-    body=duties(job).lower()
-    if fields['requirements']!=fields['description'] and job._scout_source_profile['spans']['requirements']:
-        body+=' '+duties(job,'requirements').lower()
+    body=_duties_from_profile(fields,profile,'description').lower()
+    if fields['requirements']!=fields['description'] and profile['spans']['requirements']:
+        body+=' '+_duties_from_profile(fields,profile,'requirements').lower()
     title_words={CANONICAL.get(w,w) for w in WORDS.findall(title)}
     body_words={CANONICAL.get(w,w) for w in WORDS.findall(body)}
     return sum(4*(term in title_words)+2*(term in body_words) for term in terms)
@@ -192,7 +196,8 @@ def duty_excerpt(job,preferences,limit=700):
 def shortlist(candidates,preferences,*,limit=12,anchors=()):
     """Order source-backed candidates, keeping distinct requisitions distinct."""
     from jobs.services.scout_evidence import source_value
-    ordered=sorted(candidates,key=lambda j:(-function_priority(j,preferences),
+    terms=request_terms(preferences)
+    ordered=sorted(candidates,key=lambda j:(-function_priority(j,preferences,terms=terms),
         -getattr(j,'scout_score',0),len(getattr(j,'scout_caveats',[])),j.pk))
     # Retain a few strongest original matches while adding duty-led recovery;
     # a new lexical projection must not erase the existing retrieval signal.
