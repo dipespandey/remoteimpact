@@ -100,10 +100,11 @@ class RevenueArithmeticTests(SimpleTestCase):
 class RevenuePersistenceTests(TestCase):
     def test_duplicate_runs_do_not_duplicate_cash_or_mix_modes(self):
         now = timezone.now()
+        movement = row()
         for _ in range(2):
-            persist_run("acct_ri", True, now-timedelta(days=28), now, [row()], True)
+            persist_run("acct_ri", True, now-timedelta(days=28), now, [movement], True)
         self.assertEqual(CashMovement.objects.count(), 1)
-        persist_run("acct_ri", False, now-timedelta(days=28), now, [row()], True)
+        persist_run("acct_ri", False, now-timedelta(days=28), now, [movement], True)
         self.assertEqual(CashMovement.objects.count(), 2)
 
     def test_changed_money_aborts_whole_run(self):
