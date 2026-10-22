@@ -58,9 +58,9 @@ function setup(pending = false) {
     }
     class FormData { constructor(form) { this.fields = form.fields; }
         [Symbol.iterator]() { return this.fields[Symbol.iterator](); } }
-    const location = { pathname: '/jobs/', search: '?sort=best-match&page=2', href: 'unchanged' };
+    const location = { pathname: '/jobs/', search: '?sort=best-match&page=2', href: 'https://remoteimpact.org/jobs/?sort=best-match&page=2' };
     vm.runInNewContext(SCRIPT, { document, window: {fetch, DOMParser}, fetch, DOMParser,
-        FormData, URLSearchParams, AbortController, location,
+        FormData, URL, URLSearchParams, AbortController, location,
         history: {replaceState: (_, __, url) => state.currentUrl = url},
         setTimeout: (fn, delay) => { const id = ++nextTimer; timers.set(id, {fn, delay}); return id; },
         clearTimeout: id => timers.delete(id) });
@@ -98,7 +98,7 @@ function fireTimer(e, delay) {
     assert.equal(e.area.style.opacity, '');
     assert(!e.retry.hidden && !e.status.hidden);
     assert(e.text.textContent.includes('Showing previous results'));
-    assert.equal(e.location.href, 'unchanged');
+    assert.equal(e.location.href, 'https://remoteimpact.org/jobs/?sort=best-match&page=2');
     e.retry.handlers.click();
     complete(e.requests[1], 'retried jobs'); await flush();
     assert.equal(e.area.innerHTML, 'retried jobs');

@@ -2,7 +2,7 @@ import json
 import tempfile
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from django.test import TestCase, SimpleTestCase, override_settings
 from django.core.cache import cache
 from jobs.models import Job, Organization
@@ -105,6 +105,22 @@ class CandidateCacheTests(TestCase):
         self.assertEqual(d['retrieval_cache'],'hit')
         Job.objects.filter(pk=j.pk).update(location='Remote worldwide',country='Worldwide',is_active=False)
         self.assertEqual(retrieve(qs,prefs,[],{}),[])
+
+    def test_postgres_cache_hit_skips_embedding_before_reloading_current_rows(self):
+        qs = MagicMock()
+        qs.annotate.return_value = qs
+        qs.defer.return_value = qs
+        qs.query.sql_with_params.return_value = ('SELECT current_jobs', ())
+        qs.filter.return_value = []
+        diagnostics = {}
+        with patch('jobs.services.scout_retrieval.connection', SimpleNamespace(vendor='postgresql')), \
+             patch('jobs.services.scout_retrieval.query_embedding') as embedding, \
+             patch('jobs.services.scout_retrieval.cache.get', return_value={'ids':[123], 'semantic_used':True}):
+            self.assertEqual(retrieve(qs, {'_scout_preview_cache':True}, [], diagnostics), [])
+        embedding.assert_not_called()
+        qs.filter.assert_called_once_with(pk__in=[123])
+        self.assertEqual(diagnostics['retrieval_cache'], 'hit')
+        self.assertEqual(diagnostics['query_embedding_seconds'], 0.0)
 
     def test_saved_delivery_queries_do_not_use_preview_cache(self):
         org=Organization.objects.create(name='Saved query fixture')

@@ -1,0 +1,14 @@
+{% if search_guidance %}
+<section class="mt-4 mb-4" aria-label="Focused searches and eligibility">
+    <nav class="flex flex-wrap gap-2" aria-label="Focused category searches">
+        {% for link in search_guidance.links %}<a href="{{ link.url }}" class="btn btn-outline btn-sm" data-track="focused_search" data-track-category="job_discovery">{{ link.label }}</a>{% endfor %}
+    </nav>
+    <details class="mt-3 text-sm">
+        <summary class="cursor-pointer font-medium text-foreground">Eligibility and career routes</summary>
+        <h2 class="section-title mt-3">{{ search_guidance.heading }}</h2>
+        <p class="mt-2 leading-6 text-muted-foreground">{{ search_guidance.summary }}</p>
+        <p class="mt-2 leading-6 text-muted-foreground">Location and experience filters use recorded listing information. Confirm eligibility and availability on the original employer posting.</p>
+        <p class="mt-2 leading-6"><a href="{{ search_guidance.snapshot_url }}" class="underline underline-offset-4">See this sector’s hiring snapshot</a> · <a href="{{ search_guidance.early_careers_url }}" class="underline underline-offset-4">Explore fellowships and internships</a></p>
+    </details>
+</section>
+{% endif %}

@@ -1,117 +1,23 @@
-"""
-Multi-provider job description parser with batch processing support.
-
-Uses DeepSeek for consistent, low-cost structured extraction.
-
-This module provides async batch processing of job descriptions to extract
-structured fields for the job detail page display sections:
-- Mission (description)
-- Profile (requirements)
-- Impact
-- Benefits
-- About (company_description)
-"""
+"""Single-call DeepSeek extraction with versioned facts and legacy field adapters."""
 
 from __future__ import annotations
 
 import asyncio
-import json
+import copy
 import logging
 from typing import Any
 
 from django.conf import settings
-from jobs.constants import IMPACT_AREAS_FOR_PROMPT
-from jobs.constants.skills import SKILLS_FOR_PROMPT, normalize_skill_slugs
+from jobs.constants.skills import normalize_skill_slugs
 from jobs.services.experience_classifier import ExperienceClassifier
 from jobs.services.json_utils import parse_json_object
+from jobs.services.job_facts import validate, legacy_fields, source_hash, source_description, reusable_facts, VERSION
+from jobs.services.extraction_contract import FIELDS, messages_for, CONTRACT_HASH
+from jobs.services.extraction_review import review_fields
+from jobs.services.extraction_source import resolve_evidence
+from jobs.services import extraction_cache
 
 logger = logging.getLogger(__name__)
-
-EXTRACTION_PROMPT = """You are extracting structured data from a job posting for an impact-focused job board.
-
-Given the job title, organization name, and raw description below, extract ALL available information:
-
-## REQUIRED SECTIONS (format as clean HTML with <p>, <ul>, <li>):
-
-1. **mission**: Core responsibilities - what the person will accomplish. 2-4 bullet points.
-
-2. **profile**: Required skills, experience, qualifications. 2-4 bullet points.
-
-3. **impact**: How this role creates positive change. 1-2 sentences.
-
-4. **benefits**: Compensation, perks, culture highlights. Include salary if mentioned.
-
-5. **about_org**: Organization's mission and work. 1-2 sentences.
-
-## REQUIRED FIELDS (extract exact values or null):
-
-6. **impact_area**: Map to ONE of these categories (use slug):
-{impact_areas}
-
-Choose the BEST match based on the organization's mission and role focus. Use "other" only if none fit.
-
-7. **location**: Where the job is based. Use "Remote" if fully remote, or "Remote (US)" / "Remote (Europe)" etc. if location-restricted.
-
-8. **job_type**: One of: "full-time", "part-time", "contract", "freelance", "internship"
-
-9. **experience_level**: One of: "internship", "entry", "mid", "senior", "executive", or null
-
-   IMPORTANT: Check BOTH the title AND description for experience indicators:
-   - "internship": intern, internship, working student, stage (French)
-   - "entry": entry-level, junior, 0-2 years experience, recent graduate, new grad, trainee, apprentice, early career, no experience required
-   - "mid": mid-level, 3-6 years experience, intermediate
-   - "senior": senior, 7+ years experience, lead, staff, principal
-   - "executive": director, VP, C-suite, head of, managing director
-
-   If the job is clearly for interns/students OR explicitly targets people with no experience, use "internship" or "entry".
-
-10. **education_level**: One of: "high_school", "associate", "bachelor", "master", "phd", or null
-
-    Extract the MINIMUM education requirement mentioned:
-    - "high_school": high school diploma, GED, no degree required
-    - "associate": associate degree, 2-year degree
-    - "bachelor": bachelor, BA, BS, undergraduate degree, 4-year degree
-    - "master": master, MA, MS, MBA, MSc, graduate degree
-    - "phd": PhD, doctorate, doctoral degree
-
-    If no education requirement is explicitly stated, return null.
-
-11. **country**: If location-restricted, extract the primary country (e.g., "United States", "United Kingdom", "Germany"). Use null for fully global remote roles.
-
-12. **salary_min**: Minimum annual salary as integer in the ORIGINAL currency (do NOT convert to USD), or null
-
-13. **salary_max**: Maximum annual salary as integer in the ORIGINAL currency (do NOT convert to USD), or null
-
-14. **salary_currency**: The ORIGINAL currency code as stated in the posting (e.g. "USD", "EUR", "GBP", "CHF", "CAD", "AUD"), or null if no salary mentioned. Do NOT convert currencies.
-
-15. **skills**: Array of skill slugs required/preferred for this role. Select 3-10 from this list:
-{skills_list}
-
-16. **experience_evidence**: An exact, short quote supporting experience_level, or null.
-
-17. **education_evidence**: An exact, short quote supporting education_level, or null.
-
-18. **salary_evidence**: An exact, short quote supporting the salary fields, or null.
-
-Use exact slugs from the list. Only include skills explicitly mentioned or strongly implied by the requirements.
-
-## GUIDELINES:
-- Format text sections as HTML (<p> for paragraphs, <ul>/<li> for lists)
-- Extract salary even if given as hourly/monthly (convert to annual in the original currency, do NOT convert between currencies)
-- For impact_area, consider the organization's PRIMARY focus, not the job function
-- For skills, focus on technical skills, tools, and domain expertise mentioned in requirements
-- Return valid JSON only
-
-Job Title: {title}
-Organization: {organization}
-
-Raw Description:
-{description}
-
-Never infer experience, education, or salary without an exact supporting quote from the posting.
-
-Return JSON with keys: mission, profile, impact, benefits, about_org, impact_area, location, job_type, experience_level, experience_evidence, education_level, education_evidence, country, salary_min, salary_max, salary_currency, salary_evidence, skills
-"""
 
 # Provider configurations
 PROVIDERS = {
@@ -135,13 +41,21 @@ def get_default_provider() -> str:
 class JobParser:
     """Async job parser with multi-provider support."""
 
-    def __init__(self, provider: str | None = None):
+    def __init__(self, provider: str | None = None, *, optimized: bool | None = None):
         """
         Initialize parser with specified provider.
 
         Args:
             provider: 'deepseek' or None for the production default
         """
+        enabled = getattr(settings, "JOB_EXTRACTION_OPTIMIZED_ENABLED", False) if optimized is None else optimized
+        if not enabled:
+            from jobs.services.legacy_job_parser import JobParser as LegacyParser
+            self._legacy_parser = LegacyParser(provider)
+            self.provider_name = self._legacy_parser.provider_name
+            self.config = self._legacy_parser.config
+            self.client = self._legacy_parser.client
+            return
         self.provider_name = provider or get_default_provider()
         self.config = PROVIDERS[self.provider_name]
 
@@ -155,6 +69,7 @@ class JobParser:
         self.client = AsyncOpenAI(
             api_key=api_key,
             base_url=self.config["base_url"],
+            max_retries=0, timeout=45.0,
         )
         self._parse_fn = self._parse_openai_compat
 
@@ -163,50 +78,102 @@ class JobParser:
     async def _parse_openai_compat(
         self, title: str, organization: str, description: str
     ) -> dict[str, Any]:
-        """Parse using DeepSeek's OpenAI-compatible API."""
-        prompt = EXTRACTION_PROMPT.format(
-            title=title,
-            organization=organization,
-            description=description,
-            impact_areas=IMPACT_AREAS_FOR_PROMPT,
-            skills_list=SKILLS_FOR_PROMPT,
-        )
+        """One extraction plus at most one field-scoped repair; never retry absence."""
+        attempts = []
+
+        async def request(fields=None):
+            messages, spans = messages_for(title, organization, description, fields)
+            response = await self.client.chat.completions.create(
+                model=self.config["model"], messages=messages,
+                response_format={"type": "json_object"}, temperature=0.1,
+                max_tokens=2400, extra_body={"thinking": {"type": "disabled"}},
+            )
+            usage = response.usage
+            attempts.append({
+                "fields": list(fields or FIELDS),
+                "resolved_model": getattr(response, "model", self.config["model"]),
+                "input_tokens": getattr(usage, "prompt_tokens", 0) or 0,
+                "output_tokens": getattr(usage, "completion_tokens", 0) or 0,
+                "cached_input_tokens": getattr(usage, "prompt_cache_hit_tokens", 0) or 0,
+            })
+            extracted = parse_json_object(response.choices[0].message.content)
+            required = set(fields or FIELDS)
+            if not isinstance(extracted, dict) or not required <= extracted.keys():
+                raise ValueError("Incomplete extraction contract")
+            return resolve_evidence({field: extracted[field] for field in required}, spans)
 
         async with self._semaphore:
             try:
-                response = await self.client.chat.completions.create(
-                    model=self.config["model"],
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": "You are a helpful assistant that extracts structured data from job postings. Always respond with valid JSON only.",
-                        },
-                        {"role": "user", "content": prompt},
-                    ],
-                    response_format={"type": "json_object"},
-                    temperature=0.1,
-                    extra_body={"thinking": {"type": "disabled"}},
-                )
-
-                content = response.choices[0].message.content
-                data = parse_json_object(content)
-
-                # Small delay to respect rate limits
-                await asyncio.sleep(0.2)
-                return data
-
-            except ValueError as e:
-                logger.error(f"Failed to parse JSON response for '{title}': {e}")
-                return {}
-            except Exception as e:
-                logger.error(f"Error parsing job '{title}' with {self.provider_name}: {e}")
+                try:
+                    extracted = await request()
+                except ValueError:
+                    # An empty/invalid object is a failed request, not eight unknown facts.
+                    extracted = None
+                facts = validate(extracted, title, organization, description) if extracted is not None else {}
+                repair_fields = review_fields(facts, extracted, "\n".join((title, organization, description))) if facts else list(FIELDS)
+                if repair_fields and getattr(settings, "JOB_EXTRACTION_REVIEW_ENABLED", True):
+                    try:
+                        repaired = await request(repair_fields)
+                        checked = validate(repaired, title, organization, description)
+                        for field in repair_fields:
+                            if field not in checked.get("rejected", []):
+                                if extracted is None:
+                                    extracted = {}
+                                extracted[field] = repaired[field]
+                        if extracted is not None and set(FIELDS) <= extracted.keys():
+                            facts = validate(extracted, title, organization, description)
+                    except Exception:
+                        logger.warning("Extraction repair unavailable or returned an invalid contract")
+                if not facts:
+                    return {}
+                facts["unresolved_fields"] = sorted(set(review_fields(facts, extracted, "\n".join((title, organization, description))) + facts.get("blocked_fields", [])))
+                facts["contract_hash"] = CONTRACT_HASH
+                facts["model"] = self.config["model"]
+                facts["resolved_model"] = attempts[-1]["resolved_model"]
+                facts["usage"] = {
+                    "input_tokens": sum(row["input_tokens"] for row in attempts),
+                    "output_tokens": sum(row["output_tokens"] for row in attempts),
+                    "cached_input_tokens": sum(row["cached_input_tokens"] for row in attempts),
+                    "requests": len(attempts),
+                }
+                facts["reviewed_fields"] = repair_fields if len(attempts) > 1 else []
+                return legacy_fields(facts)
+            except Exception:
+                logger.warning("Structured extraction request failed", exc_info=False)
                 raise
 
     async def parse_single(
         self, title: str, organization: str, description: str
     ) -> dict[str, Any]:
-        """Parse a single job description into structured fields."""
-        return await self._parse_fn(title, organization, description)
+        """Reuse source-identical facts across instances, feeds, and concurrent tasks."""
+        if hasattr(self, "_legacy_parser"):
+            return await self._legacy_parser.parse_single(title, organization, description)
+        digest = source_hash(title, organization, description)
+        key = extraction_cache.cache_key(VERSION + CONTRACT_HASH, self.config["model"], self.config.get("base_url", ""), digest)
+        if not hasattr(self, "_inflight"):
+            self._inflight = {}
+
+        async def work():
+            cached = await extraction_cache.get_facts(key)
+            if reusable_facts(cached, title, organization, description, self.config["model"], CONTRACT_HASH):
+                return legacy_fields(copy.deepcopy(cached))
+            result = await self._parse_fn(title, organization, description)
+            facts = result.get("job_facts") if isinstance(result, dict) else None
+            # Do not cache provider failures or still-rejected interpretations for 30 days.
+            if facts and not facts.get("unresolved_fields", facts.get("rejected")):
+                facts["cache_key"] = key
+                await extraction_cache.set_facts(key, facts)
+            return result
+
+        task = self._inflight.get(key)
+        if task is None:
+            task = asyncio.create_task(work())
+            self._inflight[key] = task
+            def release(done):
+                if self._inflight.get(key) is done:
+                    self._inflight.pop(key, None)
+            task.add_done_callback(release)
+        return copy.deepcopy(await asyncio.shield(task))
 
     async def parse_batch(
         self,
@@ -225,6 +192,8 @@ class JobParser:
         Returns:
             List of payloads enriched with parsed fields
         """
+        if hasattr(self, "_legacy_parser"):
+            return await self._legacy_parser.parse_batch(payloads, batch_size, progress_callback)
         if not payloads:
             return []
 
@@ -241,7 +210,7 @@ class JobParser:
             for payload in batch:
                 title = payload.get("title", "Untitled")
                 org = payload.get("organization_name", "Unknown")
-                desc = payload.get("description", "")
+                desc = source_description(payload)
 
                 if len(desc) < 50:
                     logger.debug(f"Skipping '{title}' - description too short")
@@ -276,20 +245,30 @@ class JobParser:
         self, payload: dict, title: str, org: str, desc: str
     ) -> dict:
         """Parse a single job and merge results into payload."""
-        parsed = await self._parse_with_retry(title, org, desc)
+        if hasattr(self, "_legacy_parser"):
+            return await self._legacy_parser._parse_and_enrich(payload, title, org, payload.get("description", ""))
+        cached = (payload.get("raw_data") or {}).get("job_facts")
+        if reusable_facts(cached, title, org, desc, self.config["model"], CONTRACT_HASH):
+            parsed = legacy_fields(cached)
+        else:
+            parsed = await self._parse_with_retry(title, org, desc)
 
         enriched = payload.copy()
+        # Structured source data outranks generated enrichment, including when
+        # it lives in a feed's raw payload rather than the top-level fields.
+        from jobs.services.raw_data_extractor import RawDataExtractor
+        upstream = RawDataExtractor.extract(str(payload.get("source") or ""), payload.get("raw_data") or {})
+        for field in ("job_type", "location", "country", "experience_level", "education_level",
+                      "salary_min", "salary_max", "salary_currency"):
+            if not enriched.get(field) and upstream.get(field) is not None:
+                enriched[field] = upstream[field]
+        evidence_source = "\n".join((title, org, desc))
         if parsed:
             # Keep the source text authoritative. AI output is enrichment, not a
             # replacement for qualifications, legal terms, or application details.
             raw_data = dict(enriched.get("raw_data") or {})
-            raw_data["ai_enrichment"] = {
-                "mission": parsed.get("mission"),
-                "profile": parsed.get("profile"),
-                "impact": parsed.get("impact"),
-                "benefits": parsed.get("benefits"),
-                "about_org": parsed.get("about_org"),
-            }
+            if parsed.get("job_facts"):
+                raw_data["job_facts"] = parsed["job_facts"]
             enriched["raw_data"] = raw_data
 
             # Structured fields
@@ -299,15 +278,15 @@ class JobParser:
                 enriched["location"] = parsed["location"]
             if parsed.get("job_type") and not enriched.get("job_type"):
                 enriched["job_type"] = parsed["job_type"]
-            if parsed.get("experience_level") and not enriched.get("experience_level") and _evidence_is_present(parsed.get("experience_evidence"), desc):
+            if parsed.get("experience_level") and not enriched.get("experience_level") and _evidence_is_present(parsed.get("experience_evidence"), evidence_source):
                 enriched["experience_level"] = parsed["experience_level"]
-            if parsed.get("education_level") and not enriched.get("education_level") and _evidence_is_present(parsed.get("education_evidence"), desc):
+            if parsed.get("education_level") and not enriched.get("education_level") and _evidence_is_present(parsed.get("education_evidence"), evidence_source):
                 enriched["education_level"] = parsed["education_level"]
             if parsed.get("country") and not enriched.get("country"):
                 enriched["country"] = parsed["country"]
 
             # Salary fields (only if extracted and not already set)
-            salary_supported = _evidence_is_present(parsed.get("salary_evidence"), desc)
+            salary_supported = _evidence_is_present(parsed.get("salary_evidence"), evidence_source)
             if salary_supported and parsed.get("salary_min") and not enriched.get("salary_min"):
                 enriched["salary_min"] = parsed["salary_min"]
             if salary_supported and parsed.get("salary_max") and not enriched.get("salary_max"):
@@ -316,11 +295,14 @@ class JobParser:
                 enriched["salary_currency"] = parsed["salary_currency"]
 
             # Skills (for matching)
-            if parsed.get("skills") and isinstance(parsed["skills"], list):
+            if isinstance(parsed.get("skills"), list):
                 enriched["skills"] = normalize_skill_slugs(parsed["skills"])
 
 
-        # Refine experience_level with rule-based classifier (catches what LLM missed)
+        if parsed.get("job_facts"):
+            return enriched
+
+        # Legacy fallback when extraction failed.
         classified_level, reason = ExperienceClassifier.get_best_classification(
             title=title,
             description=desc,
@@ -364,7 +346,5 @@ MistralJobParser = JobParser
 
 def _evidence_is_present(evidence: Any, source_text: str) -> bool:
     """Require an LLM quote to be traceable to the original posting."""
-    if not isinstance(evidence, str) or len(evidence.strip()) < 4:
-        return False
-    normalize = lambda value: " ".join(value.lower().split())
-    return normalize(evidence) in normalize(source_text)
+    from jobs.services.job_facts import supported
+    return supported(evidence, source_text)

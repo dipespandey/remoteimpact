@@ -7,6 +7,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST, require_safe
+from django.views.decorators.clickjacking import xframe_options_exempt
 
 from earlycareers.models import DirectoryEvent, ProgrammeBookmark
 from earlycareers.services import prepare_account, programme, record
@@ -62,7 +63,47 @@ def early_careers(request):
         filtered=bool(query or sector or saved_only or any(selected.values())),
         signup_url=reverse('jobs:early_careers_join'),
         return_path=request.get_full_path(),
+        open_paid_remote_internships=sum(r['kind'] == 'internship' and r['funding'] == 'paid'
+            and r['mode'] == 'remote' and r['status'] == 'open' for r in rows),
         last_reviewed=max(r['checked_date'] for r in rows), schema_json=json_ld(schema)))
+
+
+@never_cache
+@require_safe
+def early_careers_access_report(request):
+    rows = opportunities()
+    total = len(rows)
+    count = lambda key, value: sum(row[key] == value for row in rows)
+    return render(request, 'jobs/early_careers_access_report.html', {
+        'total': total,
+        'last_reviewed': max(row['checked_date'] for row in rows),
+        'funding_counts': [(label, count('funding', key)) for key, label in (
+            ('paid', 'Paid or stipend listed'), ('free', 'Free learning or costs covered'),
+            ('unpaid', 'Unpaid placement'), ('fee', 'Fees apply'), ('unknown', 'Funding to confirm'))],
+        'format_counts': [(label, count('mode', key)) for key, label in (
+            ('remote', 'Fully remote / online'), ('hybrid', 'Remote with required travel'),
+            ('onsite', 'In person'), ('mixed', 'Varies by placement'), ('unknown', 'Format to confirm'))],
+        'audience_counts': [(label, count('audience', key)) for key, label in (
+            ('first-step', 'First career step'), ('research-ready', 'Technical / research preparation'),
+            ('career-switcher', 'Changing sectors'))],
+        'status_counts': [(label, count('status', key)) for key, label in (
+            ('open', 'Applications open'), ('listings', 'Browse vacancies or projects'),
+            ('check', 'Check next intake / verify status'), ('closed', 'Closed round'))],
+    })
+
+
+@never_cache
+@require_safe
+@xframe_options_exempt
+def early_careers_embed(request):
+    rows = opportunities()
+    status_order = {'open': 0, 'listings': 1, 'check': 2}
+    items = sorted((row for row in rows if row['status'] in status_order),
+                   key=lambda row: (status_order[row['status']], row['deadline'] or '9999-12-31', row['name'].casefold()))[:6]
+    return render(request, 'jobs/early_careers_embed.html', {
+        'items': items,
+        'total': len(rows),
+    })
 
 
 @never_cache

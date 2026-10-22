@@ -44,6 +44,8 @@
     {% if search_query %}<p class="mt-3 text-sm text-muted-foreground">Showing matches for “{{ search_query }}”.</p>{% endif %}
     {% include "jobs/seo/_inventory_evidence.html" %}
 
+    {% include "jobs/seo/_focused_search.html" %}
+
     <!-- Job listings -->
     <section class="relative z-10 mt-3" aria-label="Job results" data-rank-surface="category">
         {% if jobs or sponsored_jobs %}
@@ -147,4 +149,6 @@
     });
 })();
 </script>
+
+<div class="container">{% include "jobs/partials/roundup_invite.html" with roundup_source="category" %}</div>
 {% endblock %}

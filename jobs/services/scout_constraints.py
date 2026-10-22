@@ -24,7 +24,7 @@ REGIONS = {'europe': EUROPE, 'eu': EU, 'eea': EU | {'NO','IS','LI'}, 'africa': A
            'emea': EUROPE | AFRICA | {'AE','SA','IL','QA','BH','OM','KW','JO','LB'}}
 ALIASES = {'usa':'US','us':'US','u.s.':'US','u.s.a.':'US','united states':'US',
            'uk':'GB','united kingdom':'GB','england':'GB','scotland':'GB','wales':'GB',
-           'uae':'AE','united arab emirates':'AE','south korea':'KR','czech republic':'CZ'}
+           'uae':'AE','united arab emirates':'AE','south korea':'KR','czech republic':'CZ','kosovo':'XK'}
 WORLD = {'worldwide','anywhere','global','globally'}
 # Full state names avoid confusing ordinary two-letter words with geography.
 US_STATES = set('alabama|alaska|arizona|arkansas|california|colorado|connecticut|delaware|florida|georgia|hawaii|idaho|illinois|indiana|iowa|kansas|kentucky|louisiana|maine|maryland|massachusetts|michigan|minnesota|mississippi|missouri|montana|nebraska|nevada|new hampshire|new jersey|new mexico|new york|north carolina|north dakota|ohio|oklahoma|oregon|pennsylvania|rhode island|south carolina|south dakota|tennessee|texas|utah|vermont|virginia|washington|west virginia|wisconsin|wyoming'.split('|'))
@@ -163,11 +163,22 @@ def expand(values):
     return result
 
 
+def _meta_exclusion_spans(text):
+    return [m.span() for m in re.finditer(
+        r"\b(?:do not|don't|never)\s+exclude\b[^.!?;\n]*", text, re.I)]
+
+
 def negative_clauses(text):
     result = []
     # Each sentence/semicolon may contain multiple negative clauses. Do not
     # swallow the next positive request or lose a second sentence's exclusions.
-    markers=list(re.finditer(NEGATION,text,re.I))
+    # Meta instructions are not unwanted job attributes. Preserve source offsets
+    # so positive_text can still remove genuine negative clauses correctly.
+    protected = _meta_exclusion_spans(text)
+    nested = [m.span() for m in re.finditer(
+        r"\b(?:country[- ]restricted\s+)?(?:roles?|jobs?|positions?)\s+(?:that|which)\s+exclude\s+[^,.;!?\n]+", text, re.I)]
+    markers=[m for m in re.finditer(NEGATION,text,re.I)
+             if not any(start <= m.start() < end for start,end in protected + nested)]
     for index,match in enumerate(markers):
         end=markers[index+1].start() if index+1<len(markers) else len(text)
         clause=re.split(r"[.!?;\n—–]|\b(?:but|instead|however|rather|looking for|seeking|I(?:'d| would| want| prefer| am|'m| need| hope))\b",text[match.end():end],maxsplit=1,flags=re.I)[0]
@@ -180,7 +191,14 @@ def negative_clauses(text):
 
 
 def positive_text(text):
-    for start,end,_ in reversed(negative_clauses(text)):
+    spans = [(start,end) for start,end,_ in negative_clauses(text)] + _meta_exclusion_spans(text)
+    merged = []
+    for start,end in sorted(spans):
+        if merged and start <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(end, merged[-1][1]))
+        else:
+            merged.append((start,end))
+    for start,end in reversed(merged):
         text = text[:start] + ' ' + text[end:]
     # Non-clinical isn't a request for clinical roles.
     return text
@@ -199,7 +217,7 @@ def extract_constraints(text):
     positive = positive_text(text)
     exclusions, denied_places, denied_auth = [],[],[]
     candidate_years=None
-    count=re.search(r'\b(\d{1,2}|one|two|three|four|five)\s+years?\s+of\s+(?:[a-z]+\s+){0,4}experience\b',positive,re.I)
+    count=re.search(r'\b(\d{1,2}|one|two|three|four|five)\s*\+?\s+years?\s+of\s+(?:[a-z]+\s+){0,4}experience\b',positive,re.I)
     if count and not re.search(r'\b(?:at least|minimum|requiring|required)\b',positive[max(0,count.start()-25):count.start()],re.I):
         candidate_years={'one':1,'two':2,'three':3,'four':4,'five':5}.get(count[1].lower())
         if candidate_years is None:candidate_years=int(count[1])
@@ -207,6 +225,10 @@ def extract_constraints(text):
         for part in re.split(r',|\bor\b|\band\b', clause, flags=re.I):
             part = part.strip(' .')
             if not part:
+                continue
+            # "Exclude jobs that exclude Pakistan" rejects incompatible jobs,
+            # not Pakistan itself. Applicant geography is extracted separately.
+            if re.search(r"\b(?:roles?|jobs?|positions?)\s+(?:that|which)\s+exclude\b", part, re.I):
                 continue
             found = places(part)
             if found and (part.lower() in country_terms() or part.lower() in REGIONS or re.search(r'only|based|work|authoriz|visa|citizen|resid|remote|jobs', part, re.I)):
@@ -268,7 +290,7 @@ def extract_constraints(text):
     domains=[]
     for phrase in ['behavioral health','behavioural health','mental health','public health']:
         if re.search(r'\b'+phrase+r'\b',positive,re.I):domains.append(phrase)
-    return {'constraint_version':4,'intent_text':text,'candidate_years':candidate_years,
+    return {'constraint_version':5,'intent_text':text,'candidate_years':candidate_years,
             'required_employer_type':'nonprofit' if re.search(r'\bnon[- ]?profits?\b',positive,re.I) else None,
             'actual_annual_pay':bool(re.search(r'\bactual\s+annual\s+pay\b',positive,re.I)),
             'part_time_contract':bool(re.search(r'\bpart[- ]time\s+contract\b',positive,re.I)),'exclude_keywords':exclusions[:20],
@@ -354,7 +376,9 @@ def location_compatibility(job, desired):
     if set(facts['denied']) & wanted:return False
     offered=set(facts['offered']);offered_states=set(facts['offered_states'])
     if {str(v).lower() for v in desired}&WORLD:
-        if offered:return False
+        # "Worldwide, including Pakistan" retains Pakistan as the applicant
+        # location. It is not permission to return other country-only roles.
+        if offered:return bool(offered & wanted) if wanted else False
         return True if facts['explicit_global'] else None
     if offered_states and desired_states and not offered_states & desired_states:return False
     if offered:return bool(offered&wanted) if wanted else None
@@ -375,6 +399,7 @@ class Eligibility:
 CAVEAT_TEXT = {
     'source_review_pending': 'Check: possible match from listing evidence; full relevance review unavailable',
     'remote_policy_unconfirmed': 'Check: remote-work eligibility needs employer confirmation',
+    'worldwide_location_fallback': 'Check: Worldwide role; confirm hiring from your country',
     'sector_unconfirmed':'Check: requested environmental sector is not confirmed by the listing',
     'skill_expression':'Check: clarify which tools are required and which are alternatives',
     'review_remote': 'Check: fully remote arrangement not confirmed',

@@ -50,6 +50,16 @@ class PublicPricingView(TemplateView):
     template_name = "jobs/public_pricing.html"
 
 
+class AboutView(TemplateView):
+    """Explain who operates Remote Impact and how the public catalogue works."""
+    template_name = "jobs/about.html"
+
+
+class ContactView(TemplateView):
+    """Give job seekers, employers, and data partners a stable contact point."""
+    template_name = "jobs/contact.html"
+
+
 @method_decorator(cache_page(getattr(settings, 'CACHE_TTL_MEDIUM', 300)), name='dispatch')
 class HomeView(TemplateView):
     template_name = "jobs/home.html"
@@ -265,16 +275,16 @@ class ImpactJobsSnapshotView(TemplateView):
         )
         coverage_queries = [
             ("Salary", Q(salary_min__gt=0) | Q(salary_max__gt=0)),
-            ("Normalized country", ~Q(country="")),
-            ("Experience level", ~Q(experience_level="")),
-            ("Education level", ~Q(education_level="")),
+            ("Normalized country", Q(country__isnull=False) & ~Q(country="")),
+            ("Experience level", Q(experience_level__isnull=False) & ~Q(experience_level="")),
+            ("Education level", Q(education_level__isnull=False) & ~Q(education_level="")),
             ("Extracted skills", ~Q(skills=[])),
         ]
         counts = active_jobs.aggregate(
             total=Count("pk"), explicitly_global=Count("pk", filter=explicitly_global_query),
             named_geography=Count("pk", filter=named_geography_query & ~explicitly_global_query),
-            week=Count("pk", filter=Q(posted_at__gte=now - timedelta(days=7))),
-            month=Count("pk", filter=Q(posted_at__gte=now - timedelta(days=30))),
+            week=Count("pk", filter=Q(posted_at__gte=now - timedelta(days=7), posted_at__lte=now)),
+            month=Count("pk", filter=Q(posted_at__gte=now - timedelta(days=30), posted_at__lte=now)),
             **{f"coverage_{i}": Count("pk", filter=query) for i, (_, query) in enumerate(coverage_queries)})
         active_count = counts["total"]
         explicitly_global_count = counts["explicitly_global"]

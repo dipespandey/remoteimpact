@@ -45,7 +45,7 @@ SEEKER_FUNNEL = [
     (CE.PAYMENT_COMPLETED, "Paid or trial started"),
 ]
 EMPLOYER_FUNNEL = [
-    (EE.POST_JOB_VIEWED, "Post or feature page viewed"),
+    (EE.POST_JOB_VIEWED, "Posting form requested (unverified)"),
     (EE.JOB_DRAFT_CREATED, "Job draft created"),
     (EE.CHECKOUT_STARTED, "Checkout started"),
     (EE.PAYMENT_COMPLETED, "Payment completed"),
@@ -147,7 +147,7 @@ def recent_scout_searches(since):
 
 def build_metrics(days=30, refresh=False):
     days = days if days in RANGES else 30
-    key = f"admin_metrics:v2:{days}"
+    key = f"admin_metrics:v3:{days}"
     cached = None if refresh else cache.get(key)
     if cached:
         return cached
@@ -217,9 +217,9 @@ def build_metrics(days=30, refresh=False):
         "days": days, "ranges": RANGES, "generated_at": now,
         "scout_searches": recent_scout_searches(since),
         "kpis": [
-            _kpi("Revenue", revenue["total"] / 100, revenue_prev["total"] / 100, fmt="money",
-                 note="Postings, features and Pro payments recorded here; trials excluded"),
-            _kpi("Paying Pro", pro_billed, note=f"{active_pro.count()} with Pro access, {trials} in trial now"),
+            _kpi("Local payment estimate", revenue["total"] / 100, revenue_prev["total"] / 100, fmt="money",
+                 note="Local product-price estimate, not reconciled cash or profit; marked trials excluded"),
+            _kpi("Pro subscription records", pro_billed, note=f"{active_pro.count()} with Pro access, {trials} recent trial events; not verified paid accounts"),
             _kpi("New accounts", signups, signups_prev),
             _kpi("Scouts created", scouts_created,
                  ConsumerFunnelEvent.objects.filter(event=CE.SCOUT_CREATED, created_at__gte=prev_since,

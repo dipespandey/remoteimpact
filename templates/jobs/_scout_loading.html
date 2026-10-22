@@ -1,0 +1,48 @@
+<style>
+.scout-loading-spinner { display:inline-block; width:1em; height:1em; flex-shrink:0; margin-right:.5em; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation:scout-loading-spin .8s linear infinite; vertical-align:-.1em; }
+@keyframes scout-loading-spin { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce) { .scout-loading-spinner { animation:none; } }
+[data-scout-loading][aria-busy="true"] { cursor:wait; opacity:.8; }
+</style>
+<script>
+(function () {
+    const originals = new Map();
+    function start(control, label) {
+        if (originals.has(control)) return false;
+        originals.set(control, control.innerHTML);
+        control.setAttribute('aria-busy', 'true');
+        control.setAttribute('aria-disabled', 'true');
+        control.innerHTML = '<span class="scout-loading-spinner" aria-hidden="true"></span>';
+        control.appendChild(document.createTextNode(label));
+        if (control.tagName === 'BUTTON') control.disabled = true;
+        let status = document.getElementById('scout-loading-status');
+        if (!status) {
+            status = document.createElement('p'); status.id = 'scout-loading-status';
+            status.className = 'help'; status.setAttribute('role', 'status');
+            status.setAttribute('aria-live', 'polite');
+            control.closest('form')?.appendChild(status);
+            if (!status.isConnected) control.parentElement.appendChild(status);
+        }
+        status.textContent = 'Matching roles and checking eligibility. Please keep this page open.';
+        return true;
+    }
+    document.addEventListener('submit', function (event) {
+        const form = event.target;
+        if (!form.matches('[data-scout-loading]')) return;
+        const button = event.submitter || form.querySelector('button[type="submit"]');
+        if (button && !start(button, 'Finding matches…')) event.preventDefault();
+    });
+    document.addEventListener('click', function (event) {
+        const link = event.target.closest('a[data-scout-loading]');
+        if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || link.target === '_blank') return;
+        if (!start(link, 'Finding matches…')) event.preventDefault();
+    });
+    window.addEventListener('pageshow', function () {
+        originals.forEach(function (html, control) {
+            control.innerHTML = html; control.removeAttribute('aria-busy'); control.removeAttribute('aria-disabled');
+            if (control.tagName === 'BUTTON') control.disabled = false;
+        });
+        originals.clear(); document.getElementById('scout-loading-status')?.remove();
+    });
+})();
+</script>

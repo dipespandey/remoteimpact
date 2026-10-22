@@ -24,3 +24,7 @@ marketing
 ops/open-seo
 ml/data
 ml/artifacts
+
+**/.audit*
+**/._*
+.claude

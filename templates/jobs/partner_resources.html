@@ -37,17 +37,20 @@
   <section id="feeds" class="scroll-mt-24" aria-labelledby="feeds-heading">
     <div class="grid gap-4 lg:grid-cols-3">
       <article class="card p-5 sm:p-6 lg:col-span-2">
-        <h2 id="feeds-heading" class="section-title">Live RSS feed, updated daily</h2>
+        <h2 id="feeds-heading" class="section-title">RSS feed for current listings</h2>
         <p class="mt-2 max-w-[68ch] text-base leading-7 text-muted-foreground">Use this feed in a newsletter, Slack workflow, career-center page, or community digest. It links back to the original Remote Impact job page so readers can review the source and apply.</p>
         <div class="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
           <code class="min-w-0 flex-1 overflow-x-auto rounded-xl bg-muted px-4 py-2.5 font-mono text-xs text-foreground">{{ jobs_feed_url }}</code>
-          <a href="{% url 'jobs:jobs_feed' %}" data-track="partner_open_jobs_feed" data-track-category="distribution" class="btn btn-outline shrink-0">Open feed
-            <svg class="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
-          </a>
+          <div class="flex shrink-0 gap-2">
+            <button type="button" class="btn btn-outline" data-copy-feed="{{ jobs_feed_url }}" data-track="partner_copy_jobs_feed" data-track-category="distribution">Copy link</button>
+            <a href="{% url 'jobs:jobs_feed' %}" data-track="partner_open_jobs_feed" data-track-category="distribution" class="btn btn-outline">Open feed</a>
+          </div>
         </div>
+        <p id="copy-feed-status" class="mt-2 min-h-[1.25rem] text-xs text-emerald-700" role="status" aria-live="polite"></p>
         <div class="mt-3 flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:gap-2">
           <span class="font-medium text-foreground">Climate feed:</span>
           <a href="{% url 'jobs:category_feed' slug='climate-environment' %}" class="min-w-0 truncate font-mono text-xs text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">{{ category_feed_url }}</a>
+          <button type="button" class="btn btn-ghost btn-sm self-start" data-copy-feed="{{ category_feed_url }}" data-track="partner_copy_climate_feed" data-track-category="distribution">Copy</button>
         </div>
         <p class="help mt-3">Please keep the Remote Impact link and source attribution when republishing.</p>
       </article>
@@ -71,6 +74,17 @@
       <div class="mt-4 flex flex-wrap gap-2">
         <a class="btn btn-outline" href="{% url 'jobs:early_careers_feed' %}" data-track="partner_open_early_careers_feed" data-track-category="distribution">Open programme feed</a>
         <a class="btn btn-outline" href="{% url 'jobs:early_careers' %}?utm_source=partner&amp;utm_medium=referral&amp;utm_campaign=early_careers_distribution" data-track="partner_link_early_careers" data-track-category="distribution">Browse early-career programmes</a>
+        <a class="btn btn-outline" href="{% url 'jobs:early_careers_access_report' %}" data-track="partner_link_early_careers_report" data-track-category="distribution">View the access report</a>
+      </div>
+      <div class="mt-6 grid gap-5 lg:grid-cols-2 lg:items-start">
+        <div>
+          <h3 class="text-base font-semibold text-foreground">Add a live programme widget</h3>
+          <p class="mt-1 text-sm leading-6 text-muted-foreground">Embed a compact list on a university, community or newsletter resource page. The list updates from our reviewed directory and links back to official programme sources.</p>
+          <textarea id="early-careers-embed-code" readonly rows="4" class="textarea mt-3 min-h-0 resize-y font-mono text-xs" aria-label="HTML code to embed the early-career programmes widget">&lt;iframe src="{{ SITE_URL }}{% url 'jobs:early_careers_embed' %}" title="Early-career impact programmes from Remote Impact" width="100%" height="560" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" sandbox="allow-popups allow-popups-to-escape-sandbox" style="border:0;border-radius:16px"&gt;&lt;/iframe&gt;</textarea>
+          <div class="mt-2 flex flex-wrap items-center gap-2"><button type="button" id="copy-early-careers-embed" class="btn btn-outline">Copy embed code</button><a class="btn btn-ghost" href="{% url 'jobs:early_careers_embed' %}" target="_blank" rel="noopener">Preview widget</a></div>
+          <p id="early-careers-embed-status" class="mt-2 min-h-[1.25rem] text-xs text-emerald-700" role="status" aria-live="polite"></p>
+        </div>
+        <div class="overflow-hidden rounded-2xl border border-border bg-white p-2"><iframe src="{% url 'jobs:early_careers_embed' %}" title="Preview of the Remote Impact early-career programmes widget" class="block w-full" height="560" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" sandbox="allow-popups allow-popups-to-escape-sandbox" style="border:0;border-radius:12px"></iframe></div>
       </div>
       <p class="help mt-3">Please retain the Remote Impact link and official source attribution. A review date is not an application deadline.</p>
     </article>
@@ -112,6 +126,7 @@
     <h2 id="share-links-heading" class="section-title">Links to share</h2>
     <p class="mt-1 text-sm text-muted-foreground">Point people to the page that fits what they are looking for.</p>
     <ul class="list-surface mt-4 grid gap-0.5 sm:grid-cols-2 lg:grid-cols-3">
+      <li><a href="{% url 'jobs:roundup' %}?utm_source=partner&amp;utm_medium=referral&amp;utm_campaign=community_distribution" class="list-row"><span>Free weekly job roundup</span><span aria-hidden="true">→</span></a></li>
       <li><a href="{% url 'jobs:job_list' %}" data-track="partner_link_jobs" data-track-category="distribution" class="block rounded-xl px-4 py-3 transition-colors hover:bg-muted"><span class="block text-base font-medium text-foreground">All remote jobs</span><span class="mt-0.5 block text-xs text-muted-foreground">Browse the live catalogue</span></a></li>
       <li><a href="{% url 'jobs:category_landing' slug='climate-environment' %}" data-track="partner_link_climate" data-track-category="distribution" class="block rounded-xl px-4 py-3 transition-colors hover:bg-muted"><span class="block text-base font-medium text-foreground">Climate jobs</span><span class="mt-0.5 block text-xs text-muted-foreground">Climate and environment roles</span></a></li>
       <li><a href="{% url 'jobs:resources' %}" data-track="partner_link_resources" data-track-category="distribution" class="block rounded-xl px-4 py-3 transition-colors hover:bg-muted"><span class="block text-base font-medium text-foreground">Career resources</span><span class="mt-0.5 block text-xs text-muted-foreground">Guides, tools, and communities</span></a></li>
@@ -126,6 +141,32 @@
 {% block extra_js %}
 <script>
   (() => {
+    const feedStatus = document.getElementById('copy-feed-status');
+    document.querySelectorAll('[data-copy-feed]').forEach((copyButton) => {
+      copyButton.addEventListener('click', async () => {
+        const value = copyButton.dataset.copyFeed || '';
+        try {
+          await navigator.clipboard.writeText(value);
+        } catch (error) {
+          const temporary = document.createElement('textarea');
+          temporary.value = value;
+          temporary.setAttribute('readonly', '');
+          temporary.style.position = 'fixed';
+          temporary.style.opacity = '0';
+          document.body.appendChild(temporary);
+          temporary.select();
+          const copied = document.execCommand('copy');
+          temporary.remove();
+          copyButton.focus();
+          if (!copied) {
+            if (feedStatus) feedStatus.textContent = 'Select and copy the feed URL shown on this page.';
+            return;
+          }
+        }
+        if (feedStatus) feedStatus.textContent = 'Feed link copied.';
+      });
+    });
+
     const button = document.getElementById('copy-partner-blurb');
     const textarea = document.getElementById('partner-blurb');
     const status = document.getElementById('copy-partner-blurb-status');
@@ -147,6 +188,23 @@
         button.querySelector('span').textContent = 'Copy blurb';
       }, 2200);
     });
+
+    const embedButton = document.getElementById('copy-early-careers-embed');
+    const embedCode = document.getElementById('early-careers-embed-code');
+    const embedStatus = document.getElementById('early-careers-embed-status');
+    if (embedButton && embedCode && embedStatus) {
+      embedButton.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(embedCode.value);
+        } catch (error) {
+          embedCode.focus();
+          embedCode.select();
+          document.execCommand('copy');
+          embedCode.setSelectionRange(0, 0);
+        }
+        embedStatus.textContent = 'Embed code copied.';
+      });
+    }
   })();
 </script>
 {% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Check your Scout details — Remote Impact{% endblock %}
+{% block content %}
+<section class="container max-w-2xl py-8">
+  <h1 class="page-title">Check your Scout details</h1>
+  <p class="mt-2 text-muted-foreground">Your email is optional. If you provide one, choose how you’d like us to use it.</p>
+  <form method="post" action="{% url 'jobs:job_scout_preview' %}" class="mt-6 space-y-4">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Preview my best matches</button>
+  </form>
+</section>
+{% endblock %}

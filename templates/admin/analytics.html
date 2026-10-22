@@ -49,22 +49,22 @@
   <div class="grid">
     <section class="card panel span-7" aria-labelledby="seeker-h">
       <h2 id="seeker-h">Seeker funnel</h2>
-      <p class="hint">From first Scout preview to payment. Step rate compares with the step above.</p>
+      <p class="hint">Independent event totals, not a cohort or conversion rate. Use Diagnostics for account-cohort activation.</p>
       <div class="funnel">
         {% for s in m.seeker_funnel %}
         <div class="row">
           <span>{{ s.label }}</span>
           <div class="track"><div class="fill" style="width:{{ s.pct }}%;background:var(--rec-1)"></div></div>
           <span class="num right">{{ s.count|intcomma }}</span>
-          <span class="num right muted rate">{% if s.step_rate is not None %}{{ s.step_rate }}%{% endif %}</span>
+          <span class="num right muted rate"></span>
         </div>
         {% endfor %}
       </div>
     </section>
 
     <section class="card panel span-5" aria-labelledby="rev-h">
-      <h2 id="rev-h">Revenue mix</h2>
-      <p class="hint">From payment records in this database. Stripe is the source of truth.</p>
+      <h2 id="rev-h">Local payment estimates</h2>
+      <p class="hint">Uses local product prices and records—not verified cash, MRR or profit. See <a href="{% url 'admin:growth_revenuerun_changelist' %}">reconciled processor records</a> for money evidence.</p>
       {% with r=m.revenue %}
       <div class="num" style="font-size:24px">${{ r.total|floatformat:0|intcomma }}</div>
       <div class="split" role="img" aria-label="Revenue split">
@@ -81,14 +81,14 @@
       </div>
       {% endwith %}
       <h2 style="margin-top:22px">Employer funnel</h2>
-      <p class="hint">Posting and featuring combined.</p>
+      <p class="hint">Event totals, not people or cohort conversion rates. Promotion-page requests are excluded: browser-shaped email scanners can trigger them. A posting-form request is also unverified.</p>
       <div class="funnel">
         {% for s in m.employer_funnel %}
         <div class="row" style="grid-template-columns:150px 1fr 48px 44px">
           <span>{{ s.label }}</span>
           <div class="track"><div class="fill" style="width:{{ s.pct }}%;background:var(--rec-2)"></div></div>
           <span class="num right">{{ s.count|intcomma }}</span>
-          <span class="num right muted rate">{% if s.step_rate is not None %}{{ s.step_rate }}%{% endif %}</span>
+          <span class="num right muted rate"></span>
         </div>
         {% endfor %}
       </div>

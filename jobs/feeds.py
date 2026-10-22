@@ -15,7 +15,21 @@ from django.http import HttpResponse
 from django.views import View
 from django.utils import timezone
 from xml.etree.ElementTree import Element, SubElement, tostring
+from urllib.parse import urlencode, urlsplit, urlunsplit, parse_qsl
 from .models import Job, Category
+from .services.job_service import JobService
+
+
+def _community_feed_item_url(item, *, campaign):
+    """Tag visits from community RSS readers without changing canonical URLs."""
+    parts = urlsplit(item.get_absolute_url())
+    query = dict(parse_qsl(parts.query, keep_blank_values=True))
+    query.update({
+        "utm_source": "community_rss",
+        "utm_medium": "referral",
+        "utm_campaign": campaign,
+    })
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 
 class LatestJobsFeed(Feed):
@@ -25,7 +39,7 @@ class LatestJobsFeed(Feed):
     description = "Latest remote jobs in climate, AI safety, global health & social impact"
 
     def items(self):
-        return Job.objects.filter(is_active=True).order_by('-posted_at')[:50]
+        return JobService.get_available_jobs().select_related('organization').order_by('-posted_at', '-id')[:50]
 
     def item_title(self, item):
         return f"{item.title} at {item.organization.name}"
@@ -34,7 +48,10 @@ class LatestJobsFeed(Feed):
         return item.description[:500] if item.description else ""
 
     def item_link(self, item):
-        return item.get_absolute_url()
+        return _community_feed_item_url(item, campaign="latest_jobs_feed")
+
+    def item_guid(self, item):
+        return settings.SITE_URL.rstrip("/") + item.get_absolute_url()
 
     def item_pubdate(self, item):
         return item.posted_at
@@ -56,10 +73,7 @@ class CategoryJobsFeed(Feed):
         return f"Latest remote {obj.name.lower()} jobs"
 
     def items(self, obj):
-        return Job.objects.filter(
-            is_active=True,
-            category=obj
-        ).order_by('-posted_at')[:50]
+        return JobService.get_available_jobs().filter(category=obj).select_related('organization').order_by('-posted_at', '-id')[:50]
 
     def item_title(self, item):
         return f"{item.title} at {item.organization.name}"
@@ -68,7 +82,12 @@ class CategoryJobsFeed(Feed):
         return item.description[:500] if item.description else ""
 
     def item_link(self, item):
-        return item.get_absolute_url()
+        category = getattr(item, "category", None)
+        campaign = f"category_jobs_feed_{category.slug}" if category else "category_jobs_feed"
+        return _community_feed_item_url(item, campaign=campaign)
+
+    def item_guid(self, item):
+        return settings.SITE_URL.rstrip("/") + item.get_absolute_url()
 
     def item_pubdate(self, item):
         return item.posted_at
@@ -84,9 +103,7 @@ class IndeedXMLFeed(View):
     """
     
     def get(self, request):
-        jobs = Job.objects.filter(
-            is_active=True,
-        ).select_related('organization', 'category').order_by('-posted_at')[:500]
+        jobs = JobService.get_available_jobs().select_related('organization', 'category').order_by('-posted_at', '-id')[:500]
         
         site_url = getattr(settings, 'SITE_URL', 'https://remoteimpact.org')
         
@@ -180,9 +197,7 @@ class LinkedInXMLFeed(View):
     """
     
     def get(self, request):
-        jobs = Job.objects.filter(
-            is_active=True,
-        ).select_related('organization', 'category').order_by('-posted_at')[:500]
+        jobs = JobService.get_available_jobs().select_related('organization', 'category').order_by('-posted_at', '-id')[:500]
         
         site_url = getattr(settings, 'SITE_URL', 'https://remoteimpact.org')
         

@@ -9,6 +9,12 @@ from jobs.signals import _job_embedding_hash
 
 
 class EmbeddingRefreshTests(TestCase):
+    def test_embedding_failure_does_not_block_job_save(self):
+        org = Organization.objects.create(name="Embedding Failure Test")
+        with patch("jobs.services.embedding_service.embed_job", side_effect=RuntimeError("model unavailable")):
+            job = Job.objects.create(title="Offline-safe role", slug="offline-safe-role", organization=org)
+        self.assertIsNone(job.embedding)
+
     def test_stale_refresh_sets_hash_without_embedding_twice(self):
         org = Organization.objects.create(name="Embedding Test")
         job = Job.objects.create(title="Python Engineer", slug="embedding-refresh", organization=org)

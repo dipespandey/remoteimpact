@@ -88,7 +88,7 @@ def jobs_json_feed(request):
         "version": "https://jsonfeed.org/version/1.1",
         "title": "Remote Impact: latest 50 remote jobs at impact organizations (full data: remoteimpact.org/developers/)",
         "home_page_url": site + "/jobs/", "feed_url": site + "/feed/jobs.json",
-        "description": "Remote roles in climate, global health, AI safety and social impact, checked daily against each employer's own job board.",
+        "description": "Remote roles in climate, global health, AI safety and social impact, with source links and recorded verification details.",
         "items": items,
     }, json_dumps_params={"ensure_ascii": False})
     response["Cache-Control"] = "public, max-age=900"

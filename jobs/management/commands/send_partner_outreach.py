@@ -18,7 +18,7 @@ ASKS = {
 SUBJECT = "Featuring {org} in Remote Impact's paid remote work section"
 BODY = """Hi {org} team,
 
-I run Remote Impact (remoteimpact.org), a job board for remote roles at climate, global health, AI safety and other public-interest organizations. Every listing is checked daily against its source, and we only list organizations with a clear mission.
+I run Remote Impact (remoteimpact.org), a job board for remote roles at climate, global health, AI safety and other public-interest organizations. Listings link to their sources and carry recorded verification details when available; we only list organizations with a clear mission.
 
 Next to our full-time listings, we're opening a small section for paid, flexible remote work at mission-driven organizations. We'd like {org} to be one of the first programmes in it: {reason}.
 

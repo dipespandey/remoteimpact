@@ -1,0 +1,12 @@
+    {% if pro_subscription.is_pro_active %}
+    <section class="card p-5 sm:p-6">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <p class="kicker">Remote Impact Pro</p>
+                <h2 class="section-title mt-1">Your Pro subscription is active</h2>
+                <p class="mt-1 text-sm text-muted-foreground">Up to five Job Scouts and unlimited application tools.</p>
+            </div>
+            <a href="{% url 'jobs:pro_billing_portal' %}" class="btn btn-outline btn-sm self-start sm:self-auto">Manage billing</a>
+        </div>
+    </section>
+    {% endif %}

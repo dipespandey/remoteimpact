@@ -8,3 +8,7 @@ Remote Impact uses blue-green releases on the VPS. Read `ops/deploy/README.md` b
 - Scheduled management commands must use `/opt/easyclaw/exec-active`, which selects the active release and protects running jobs during retirement.
 - The VPS currently has substantial uncommitted application changes. Preserve them. Do not run git reset/pull/checkout over them to unblock CI. GitHub commit-based deployment deliberately refuses until that source drift is reconciled.
 - Review migrations for compatibility with both releases before using `--allow-migrations`. Application rollback never reverses database schema or data.
+
+## LinkedIn publishing identity
+
+Always publish Remote Impact LinkedIn content as the **RemoteImpact company page** (company ID `110458208`, author `urn:li:organization:110458208`). Never publish it from a personal profile. Verify the company identity in the composer before submitting. This is the user’s explicit standing preference.

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Early-career impact programmes | Remote Impact</title>
+  <style>
+    :root{color-scheme:light;--ink:#18181b;--muted:#71717a;--line:#e4e4e7;--green:#4d7c0f;--wash:#f7faef;font:15px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}*{box-sizing:border-box}body{margin:0;background:#fff;color:var(--ink)}.widget{padding:18px 20px;border:1px solid var(--line);border-radius:16px}.head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}h1{font-size:18px;line-height:1.3;letter-spacing:-.02em;margin:0;font-weight:650}.sub{font-size:12px;color:var(--muted);margin:4px 0 0}.count{flex:none;border-radius:999px;background:var(--wash);padding:5px 9px;color:var(--green);font-size:12px;font-weight:600}.list{list-style:none;padding:0;margin:0}.item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #f0f0f1}.item:last-child{border-bottom:0}.name{font-size:14px;font-weight:600;line-height:1.35;text-decoration:none;color:var(--ink)}.name:hover{text-decoration:underline;text-decoration-color:#84a946;text-underline-offset:3px}.meta{margin-top:3px;font-size:12px;color:var(--muted)}.state{flex:none;white-space:nowrap;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:#52525b;font-size:11px}.state.open{border-color:#bbf7d0;background:#f0fdf4;color:#166534}.foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}.foot a{color:#365314;font-weight:600;text-decoration:none}.foot a:hover{text-decoration:underline}@media(max-width:440px){.widget{padding:15px}.count{display:none}.foot{align-items:flex-start;flex-direction:column;gap:4px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
+  <main class="widget">
+    <header class="head"><div><h1>Early-career programmes in impact</h1><p class="sub">Reviewed fellowships, internships and first steps</p></div><span class="count">{{ total }} in directory</span></header>
+    <ul class="list">
+      {% for item in items %}<li class="item"><div><a class="name" href="{% url 'jobs:early_careers_outbound' slug=item.slug %}" target="_blank" rel="noopener noreferrer">{{ item.name }}</a><div class="meta">{{ item.organization }} · {{ item.funding_label }} · {{ item.mode_label }}</div></div><span class="state{% if item.status == 'open' %} open{% endif %}">{{ item.status_label }}</span></li>{% endfor %}
+    </ul>
+    <footer class="foot"><span>Check eligibility and details at the official source.</span><a href="{% url 'jobs:early_careers' %}?utm_source=partner&amp;utm_medium=referral&amp;utm_campaign=early_careers_widget#opportunities" target="_blank" rel="noopener noreferrer">Browse all programmes →</a></footer>
+  </main>
+</body>
+</html>

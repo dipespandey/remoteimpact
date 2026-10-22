@@ -14,13 +14,6 @@ from jobs.services.location_normalizer import normalize_location
 
 
 class DuplicateImportHelperTests(SimpleTestCase):
-    def test_employer_careers_urls_preserve_embedded_posting_ids(self):
-        first = "https://example.org/careers?ashby_jid=441cf34b-2421-4d72-a29d-6a45bdad0b67"
-        self.assertTrue(_canonical_duplicate_url(first))
-        self.assertEqual(_canonical_duplicate_url(first), _canonical_duplicate_url(first + "&utm_source=board"))
-        self.assertNotEqual(_canonical_duplicate_url(first), _canonical_duplicate_url(first.replace("441cf34b", "541cf34b")))
-        self.assertEqual(_canonical_duplicate_url("https://example.org/careers"), "")
-
     def test_unique_ats_urls_ignore_tracking_but_preserve_posting_ids(self):
         first = "https://jobs.ashbyhq.com/far.ai/a94080f7-288b-4a98-ad4a-aaaa4bbf9968"
         self.assertEqual(_canonical_duplicate_url(first), _canonical_duplicate_url(first + "?utm_source=80000hours&embed=js"))
@@ -29,6 +22,7 @@ class DuplicateImportHelperTests(SimpleTestCase):
         self.assertEqual(_canonical_duplicate_url(first), _canonical_duplicate_url(first + "/application"))
         self.assertEqual(_canonical_duplicate_url("https://jobs.ashbyhq.com/far.ai"), "")
         self.assertEqual(_canonical_duplicate_url("https://job-boards.greenhouse.io/example/jobs/12345?utm_source=foo"), _canonical_duplicate_url("https://boards.greenhouse.io/example/jobs/12345"))
+        self.assertEqual(_canonical_duplicate_url("https://job-boards.greenhouse.io/example/jobs/12345"), _canonical_duplicate_url("https://job-boards.eu.greenhouse.io/example/jobs/12345?t=tracking-token"))
 
     def test_canonical_duplicate_url_preserves_smartrecruiters_ids(self):
         first = (

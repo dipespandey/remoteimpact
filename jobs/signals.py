@@ -54,9 +54,15 @@ def embed_job_on_save(sender, instance, created, **kwargs):
     current_hash = _job_embedding_hash(instance)
     if instance.is_active and (instance.embedding is None or instance.embedding_content_hash != current_hash):
         from jobs.services.embedding_service import embed_job
-        Job.objects.filter(pk=instance.pk).update(
-            embedding=embed_job(instance), embedding_content_hash=current_hash
-        )
+        try:
+            embedding = embed_job(instance)
+        except Exception:  # noqa: BLE001 - optional semantic search must not block imports or job saves
+            logger.warning("Skipping embedding for job %s; lexical search remains available", instance.pk)
+            return
+        if embedding is not None:
+            Job.objects.filter(pk=instance.pk).update(
+                embedding=embedding, embedding_content_hash=current_hash
+            )
 
 
 @receiver(post_save, sender=Job)
@@ -224,6 +230,11 @@ try:
     @receiver(user_signed_up)
     def track_referral_on_signup(request, user, **kwargs):
         """Record referral and campaign context without storing personal referrers."""
+        try:
+            from jobs.services.scout_funnel import link_signup
+            link_signup(request, user, kwargs.get('sociallogin'))
+        except Exception:
+            logger.warning('Scout signup attribution unavailable')
         attribution = request.session.get("acquisition_attribution", {})
         if attribution:
             try:

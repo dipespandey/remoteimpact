@@ -68,11 +68,49 @@ class AvailabilityPolicyTests(TestCase):
 
     def test_schema_explicit_deadline_country_and_annual_salary(self):
         job = self.job(country='Norway', description='Applicants must be based in Norway. This role is remote in Norway.', expires_at=timezone.now() + timedelta(days=3),
-                       salary_min=Decimal('65000'), salary_max=Decimal('80000'), raw_data={'salaryPeriod':'YEAR','salaryCurrency':'USD'})
+                       salary_min=Decimal('65000'), salary_max=Decimal('80000'), raw_data={'salaryPeriod':'YEAR', 'salaryCurrency':'USD'})
         data = json.loads(job_posting_schema_json(job, 'https://example.org'))
         self.assertEqual(data['validThrough'], job.expires_at.isoformat())
         self.assertEqual(data['applicantLocationRequirements']['name'], 'Norway')
         self.assertEqual(data['baseSalary']['value']['unitText'], 'YEAR')
+
+    def test_explicit_legal_residency_countries_from_idc_listing(self):
+        source = ('Candidates must already have the legal right to reside and work in '
+                  'Albania, Bosnia and Herzegovina, Greece, Kosovo*, Montenegro, '
+                  'North Macedonia or Serbia. IDC cannot sponsor work permits or support relocation.')
+        job = self.job(location='Remote', country='', description=source)
+        data = json.loads(job_posting_schema_json(job, 'https://example.org'))
+        self.assertEqual({c['name'] for c in data['applicantLocationRequirements']},
+                         {'Albania', 'Bosnia and Herzegovina', 'Greece', 'Kosovo',
+                          'Montenegro', 'North Macedonia', 'Serbia'})
+        # Production import retains Greece as the primary country; the legal
+        # eligibility statement still requires all seven countries in markup.
+        job.country = 'Greece'
+        self.assertEqual(json.loads(job_posting_schema_json(job, 'https://example.org'))['applicantLocationRequirements'], data['applicantLocationRequirements'])
+        for conflict in [{'country': 'USA'}, {'location': 'Remote (US)'},
+                         {'description': source + ' Applicants must be based in Canada.'},
+                         {'description': source + ' Except Serbia.'},
+                         {'description': 'Candidates must already have the legal right to reside and work in California.'}]:
+            with self.subTest(conflict=conflict):
+                for key, value in dict(location='Remote', country='', description=source).items():
+                    setattr(job, key, value)
+                for key, value in conflict.items():
+                    setattr(job, key, value)
+                self.assertNotIn('applicantLocationRequirements', json.loads(job_posting_schema_json(job, 'https://example.org')))
+
+    def test_legal_residency_variant_and_non_required_mentions(self):
+        for source, expected in [
+            ('Applicants need to already hold the right to live and work within Norway.', 'Norway'),
+            ('We help people obtain the legal right to reside and work in Norway.', None),
+            ('Candidates must not have the legal right to reside and work in Norway.', None),
+        ]:
+            with self.subTest(source=source):
+                job = self.job(location='Remote', country='', description=source)
+                data = json.loads(job_posting_schema_json(job, 'https://example.org'))
+                if expected:
+                    self.assertEqual(data['applicantLocationRequirements']['name'], expected)
+                else:
+                    self.assertNotIn('applicantLocationRequirements', data)
 
     def test_unknown_or_matching_page_does_not_manufacture_freshness(self):
         for page in [PageFetch('http_403'), PageFetch('ok', 'Policy Manager ' * 20)]:
@@ -190,7 +228,7 @@ class SchemaLabelCountryTests(TestCase):
 
 
 class GoogleJobPostingTests(TestCase):
-    def test_remote_job_without_country_keeps_factual_job_posting(self):
+    def test_remote_job_without_country_omits_unknown_eligibility(self):
         from jobs.services.job_quality import google_job_posting_json
         org = Organization.objects.create(name='Worldwide Org')
         worldwide = Job.objects.create(title='Writer', slug='writer-ww', organization=org, location='Remote',

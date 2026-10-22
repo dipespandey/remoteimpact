@@ -86,7 +86,7 @@
             {% if featured_jobs %}
             <section aria-labelledby="highest-pay-heading">
                 <h2 id="highest-pay-heading" class="section-title px-1">Highest advertised pay</h2>
-                <p class="mt-0.5 px-1 text-xs text-muted-foreground">{{ role_name }} listings with an annual USD salary, highest maximum first.</p>
+                <p class="mt-0.5 px-1 text-xs text-muted-foreground">{{ role_name }} listings with an annual USD salary, sorted by advertised maximum (minimum when no maximum is given).</p>
                 <ul class="list-surface mt-3">
                     {% for job in featured_jobs %}
                     <li>{% include 'jobs/seo/_job_row.html' %}</li>
@@ -126,6 +126,7 @@
                 </nav>
                 {% endif %}
             </section>
+            {% include 'jobs/seo/_role_search_guidance.html' %}
             {% include 'jobs/seo/_destination_guidance.html' %}
         </div>
 

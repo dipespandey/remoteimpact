@@ -182,6 +182,25 @@
   .check-list > li::before { content: ""; @apply absolute left-1 top-[0.6em] h-1.5 w-1.5 rounded-full bg-foreground/40; }
 }
 
+/* Employer workspace: navigation stays separate from the current task. */
+@layer components {
+  .hiring-shell { @apply min-h-screen; }
+  .hiring-sidebar { @apply border-b border-border bg-muted/50 p-4; }
+  .hiring-navigation { display: none; }
+  .hiring-navigation.is-open { display: block; }
+  .hiring-nav-link { @apply flex min-h-11 items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground; }
+  .hiring-nav-link[aria-current="page"] { @apply bg-card font-medium text-foreground shadow-card; }
+  .hiring-sidebar-bottom { @apply mt-6 border-t border-border pt-4; }
+  .hiring-main { @apply min-w-0 px-4 py-7 sm:px-8 sm:py-10; }
+  @screen lg {
+    .hiring-shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); }
+    .hiring-sidebar { @apply sticky top-0 h-screen border-b-0 border-r p-5; overflow-y: auto; }
+    .hiring-navigation, .hiring-navigation.is-open { display: flex; flex-direction: column; min-height: calc(100% - 28px); }
+    .hiring-sidebar-bottom { @apply mt-auto pt-5; }
+    .hiring-main { width: 100%; max-width: 1360px; margin-inline: auto; padding: 40px clamp(24px, 3vw, 56px); }
+  }
+}
+
 /* Reading rhythm: content stays readable without inflating every surrounding card. */
 @layer components {
   .prose { font-size: 1rem; line-height: 1.75; overflow-wrap: anywhere; }

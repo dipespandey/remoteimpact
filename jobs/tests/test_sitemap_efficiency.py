@@ -64,7 +64,10 @@ class SitemapEfficiencyTests(TestCase):
                 item = sitemap.items()[0]
                 self.assertEqual(sitemap.lastmod(item), self.old)
                 self.assertEqual(sitemap.lastmod(item), self.old)
-            self.assertEqual(len(queries), 1)
+            # One bounded role-membership query plus the aggregate; lastmod is cached.
+            self.assertEqual(len(queries), 2)
+            with self.assertNumQueries(0):
+                self.assertEqual(sitemap.lastmod(item), self.old)
 
     def test_keyword_lastmod_uses_its_own_category_and_keeps_sparse_pages_out(self):
         Job.objects.create(title='New unrelated role', slug='unrelated', organization=self.org, source='manual')

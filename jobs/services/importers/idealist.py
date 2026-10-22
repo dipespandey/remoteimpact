@@ -42,6 +42,8 @@ def _build_idealist_payload() -> Dict:
                     "description",
                     "url",
                     "orgName",
+                    "orgID",
+                    "orgType",
                     "orgUrl",
                     "orgDescription",
                     "jobType",

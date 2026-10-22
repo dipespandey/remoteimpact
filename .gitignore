@@ -68,3 +68,14 @@ backups/
 # Local ML datasets and trained weights (release separately with their model card)
 /ml/data/
 /ml/artifacts/
+
+# Private local audit and tooling state
+.audit/
+.seo/
+.agents/
+**/.audit*
+._*
+
+node_modules/
+
+.venv

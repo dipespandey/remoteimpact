@@ -1,4 +1,5 @@
 import re
+import json
 
 from django.db import connection
 import math
@@ -177,7 +178,11 @@ class JobService:
         if skills:
             skill_q = Q()
             for skill in skills:
-                skill_q |= Q(skills__contains=[skill])
+                if connection.features.supports_json_field_contains:
+                    skill_q |= Q(skills__contains=[skill])
+                else:
+                    # Match a complete JSON string, never a substring such as SQL in NoSQL.
+                    skill_q |= Q(skills__regex=re.escape(json.dumps(skill)))
             jobs = jobs.filter(skill_q)
 
         # Skill search (text-based, keep backward compatibility)

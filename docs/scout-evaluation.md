@@ -12,11 +12,11 @@ Run development cases first, then freeze implementation before inspecting holdou
 
 Interpretations are cached for ten minutes using the exact normalized brief, model and category taxonomy, then grounded again against the original request. Invalid provider responses are not cached. Preview retrieval caches ranked IDs for at most 60 seconds, reloads them through current availability filters, and reruns eligibility. It does not cache source texts or apply to saved-delivery retrieval. New jobs and replacements may wait up to 60 seconds to enter a cached candidate pool. Cache failures fall back to retrieval.
 
-Database iteration stops at the existing eligible-candidate limit instead of materializing the entire 2,000-row scan cap. Review outputs retain per-constraint verbatim evidence but omit duplicate quotes. Diagnostics record stage durations, safe failure types and input sizes; they do not record raw prompts or credentials. Retrieval checks the shared deadline before starting and every 25 scanned rows, reserving four seconds for review. Partial pools are not cached. Deadline-truncated empty searches are marked incomplete, not interpreted as no suitable jobs. A database operation or provider timeout can still exceed the deadline; this is not a hard end-to-end latency SLA.
+Database iteration stops at the existing eligible-candidate limit instead of materializing the entire 2,000-row scan cap. Review outputs retain per-constraint verbatim evidence but omit duplicate quotes. Diagnostics record stage durations, safe failure types and input sizes; they do not record raw prompts or credentials. Retrieval checks the shared deadline before starting and every 25 scanned rows, reserving six seconds for review. Partial pools are not cached. Deadline-truncated empty searches are marked incomplete, not interpreted as no suitable jobs. A database operation or provider timeout can still exceed the deadline; this is not a hard end-to-end latency SLA.
 
 ## Primary work and candidate coverage
 
-The combined DeepSeek review retrieves one shared pool of up to 400 eligible
+The combined DeepSeek review retrieves one shared pool of up to 160 eligible
 candidates per branch (within the existing 2,000-row scan and deadline), then
 applies strict and caveated ranking to those same source objects. This replaces
 separate strict/provisional scans. It can change which candidates reach review;
@@ -68,3 +68,13 @@ and ten regions, and tests stale profiles, atomic JSON updates, live source chan
 HTML-separated phrases, domain alternatives, tool aliases and cached-review timeouts
 on SQLite and an isolated PostgreSQL test database. Tests establish implementation
 behavior, not overall recommendation accuracy.
+
+## Empty-result regressions — 21 October 2026
+
+Explicit requested role lists after an introductory sentence are preserved (up to eight functions), including Programme Assistant, Education Support and Content Writing. Listed functions are alternatives. Education Support in a list is not a compulsory education-sector restriction; explicit sector requirements remain. Saved Scouts rederive these constraints from their original brief on every match without rewriting historical results.
+
+Nested exclusions such as “exclude jobs that exclude Pakistan” do not exclude the applicant country. Meta instructions such as “do not exclude jobs because they do not mention Pakistan” are neither exclusions nor additional country requests. Explicit excluded countries remain enforced. Stated candidate experience replaces the default entry-level years ceiling, while known seniority and unmet experience requirements remain hard rejections. Including short-term contracts in an otherwise open search does not narrow all jobs to contracts.
+
+The combined review pool defaults to 160 eligible candidates per branch (`SCOUT_REVIEW_POOL_LIMIT`), rather than 400, preserving time for source review. This trades candidate breadth for latency and is not a recall guarantee. Unfinished preparation with no results, partial reviews, and retrieval deadline exhaustion remain visibly retryable rather than evidence of an empty market. The same-brief retry uses the loading state and does not send email.
+
+Regression fixtures are in `jobs/tests/test_scout_empty_regressions.py`. Browser tests cover 390px/1280px retry, exact brief preservation and no email send. A read-only production replay returned possibilities for all three reported briefs, with unresolved location/seniority warnings retained. Returned possibilities do not establish Pakistan eligibility.

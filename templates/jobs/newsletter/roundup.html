@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Weekly Remote Impact Job Picks | Remote Impact{% endblock %}
+{% block meta_description %}A free weekly roundup of remote jobs in climate, global health, AI safety and social impact. Preview the picks before subscribing.{% endblock %}
+{% block canonical %}{{ SITE_URL }}{% url 'jobs:roundup' %}{% endblock %}
+{% block content %}
+<div class="container py-8 sm:py-12">
+    <div class="mx-auto max-w-3xl">
+        <p class="text-sm font-medium text-muted-foreground">The Remote Impact roundup</p>
+        <h1 class="mt-3 text-3xl sm:text-4xl font-semibold tracking-tight">Meaningful work.<br>A shorter search.</h1>
+        <p class="mt-4 max-w-xl text-base text-muted-foreground">A short weekly email with remote job picks in climate, global health, AI safety and social impact.</p>
+        <p class="mt-2 text-sm text-muted-foreground">Free. No account needed. Separate from your personal Scout.</p>
+        <section class="card mt-6 p-5 sm:p-6" aria-labelledby="roundup-signup">
+            {% if requested %}
+            <h2 id="roundup-signup" class="text-xl font-semibold" role="status">Check your inbox</h2>
+            <p class="mt-2 text-muted-foreground">If confirmation is needed, we've sent you a link. Open it to finish subscribing. Already confirmed? You're all set.</p>
+            <a href="#sample" class="btn btn-secondary mt-4">See the sample picks</a>
+            {% else %}
+            <h2 id="roundup-signup" class="text-xl font-semibold">Get the weekly picks</h2>
+            {% if error %}<p class="mt-3 text-sm text-red-600" role="alert">{{ error }}</p>{% endif %}
+            <form method="post" class="mt-4 space-y-4" data-roundup-form>
+                {% csrf_token %}
+                <input type="hidden" name="source" value="{{ source }}">
+                <input type="hidden" name="campaign" value="{{ campaign }}">
+                <input type="hidden" name="ref" value="{{ ref }}">
+                <div class="hidden" aria-hidden="true"><label>Leave this empty<input name="website" tabindex="-1" autocomplete="off"></label></div>
+                <div><label for="roundup-email" class="label">Email address</label><input id="roundup-email" class="input w-full mt-1" type="email" name="email" autocomplete="email" required maxlength="254" placeholder="you@example.com"></div>
+                <div><label for="roundup-topic" class="label">Your main interest</label><select id="roundup-topic" name="topic" class="input w-full mt-1">{% for value,label in topics %}<option value="{{ value }}" {% if value == topic %}selected{% endif %}>{{ label }}</option>{% endfor %}</select><p class="mt-1 text-xs text-muted-foreground">Helps us understand our readers. The weekly edition covers a mix of impact areas.</p></div>
+                <label class="flex items-start gap-3 text-sm"><input type="checkbox" name="consent" value="yes" required class="mt-1 rounded"><span>{{ consent_copy }}</span></label>
+                <button class="btn btn-primary w-full sm:w-auto" type="submit" data-track="roundup_signup_submit_clicked" data-track-category="newsletter">Send confirmation link</button>
+                <p class="text-xs text-muted-foreground">Confirm your email to join. <a href="{% url 'jobs:privacy' %}" class="underline">Privacy details</a></p>
+            </form>
+            {% endif %}
+        </section>
+        <section id="sample" class="mt-10" aria-labelledby="sample-heading">
+            <div class="flex flex-wrap items-center justify-between gap-2"><h2 id="sample-heading" class="text-xl font-semibold">A taste of the picks</h2><span class="text-xs text-muted-foreground">Live catalogue preview · {% now 'j M Y' %}</span></div>
+            <p class="mt-2 text-sm text-muted-foreground">These roles currently meet our listing rules. Check the original posting for eligible locations, pay and whether applications are still open.</p>
+            <div class="mt-4 divide-y divide-border">
+            {% for job in sample_jobs %}
+                <article class="py-4"><p class="text-xs text-muted-foreground">{{ job.organization.name }}{% if job.category %} · {{ job.category.name }}{% endif %}</p><h3 class="mt-1 font-semibold"><a href="{{ job.get_absolute_url }}?utm_source=newsletter&amp;utm_medium=preview&amp;utm_campaign=weekly_roundup" data-track="roundup_sample_job" data-track-category="newsletter" class="hover:underline">{{ job.title }}</a></h3><p class="mt-1 text-sm text-muted-foreground">{{ job.location }}{% if job.experience_level %} · {{ job.get_experience_level_display }}{% endif %}</p><a class="mt-2 inline-block text-sm underline" href="{{ job.get_absolute_url }}?utm_source=newsletter&amp;utm_medium=preview&amp;utm_campaign=weekly_roundup">Check role details →</a></article>
+            {% empty %}<p class="py-4 text-sm text-muted-foreground">No current sample for this area. <a href="{% url 'jobs:job_list' %}" class="underline">Browse all roles</a>.</p>{% endfor %}
+            </div>
+        </section>
+        <details class="mt-6 border-t border-border pt-4 text-sm"><summary class="cursor-pointer font-medium">How is this different from Scout?</summary><p class="mt-2 text-muted-foreground">The roundup is a shared weekly selection. Scout searches for your specific preferences. <a href="{% url 'jobs:job_alerts' %}" class="underline">Try Scout</a>.</p></details>
+    </div>
+</div>
+<script>
+document.querySelector('[data-roundup-form]')?.addEventListener('submit', function () {
+    const button = this.querySelector('button[type="submit"]');
+    button.disabled = true; button.setAttribute('aria-busy', 'true');
+    button.innerHTML = '<span aria-hidden="true" class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent mr-2"></span>Sending…';
+});
+window.addEventListener('pageshow', function (event) { if(event.persisted) { const b=document.querySelector('[data-roundup-form] button'); if(b) { b.disabled=false; b.removeAttribute('aria-busy'); b.textContent='Send confirmation link'; } } });
+</script>
+{% endblock %}

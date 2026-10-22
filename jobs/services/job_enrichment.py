@@ -114,6 +114,10 @@ def enrich_job_payload(payload: dict[str, Any]) -> dict[str, Any]:
     requirements = str(enriched.get("requirements") or "")
     location = str(enriched.get("location") or "Remote")
 
+    from jobs.services.job_facts import VERSION
+    facts = (enriched.get("raw_data") or {}).get("job_facts")
+    has_facts = isinstance(facts, dict) and facts.get("version") == VERSION
+
     source_values = RawDataExtractor.extract(
         str(enriched.get("source") or ""), enriched.get("raw_data") or {}
     )
@@ -148,6 +152,7 @@ def enrich_job_payload(payload: dict[str, Any]) -> dict[str, Any]:
         not enriched.get("salary_min")
         and not enriched.get("salary_max")
         and salary_method != "rejected_non_annual_v1"
+        and not has_facts
     ):
         salary = extract_annual_salary(" ".join((requirements, description)))
         if salary:
@@ -163,14 +168,14 @@ def enrich_job_payload(payload: dict[str, Any]) -> dict[str, Any]:
             raw_data["quality_enrichment"] = quality
             enriched["raw_data"] = raw_data
 
-    if not enriched.get("country"):
+    if not has_facts and not enriched.get("country"):
         enriched["country"] = infer_country(location)
 
-    if not enriched.get("skills"):
+    if not has_facts and not enriched.get("skills"):
         skill_text = " ".join((title, requirements, description))
         enriched["skills"] = sorted(MatchingService._extract_skills_from_text(skill_text))
 
-    if not enriched.get("experience_level"):
+    if not has_facts and not enriched.get("experience_level"):
         level, reason = ExperienceClassifier.get_best_classification(
             title=title,
             description=description,
@@ -180,7 +185,7 @@ def enrich_job_payload(payload: dict[str, Any]) -> dict[str, Any]:
         if level:
             _record_quality_enrichment(enriched, "experience_level", "deterministic_text_v1", reason)
 
-    if not enriched.get("education_level"):
+    if not has_facts and not enriched.get("education_level"):
         education, reason = EducationClassifier.get_best_classification(
             description=description,
             requirements=requirements,
@@ -189,7 +194,7 @@ def enrich_job_payload(payload: dict[str, Any]) -> dict[str, Any]:
         if education:
             _record_quality_enrichment(enriched, "education_level", "deterministic_text_v1", reason)
 
-    if not enriched.get("category_slug") and not enriched.get("category_name"):
+    if not has_facts and not enriched.get("category_slug") and not enriched.get("category_name"):
         enriched["category_slug"] = infer_category_slug(title, description, requirements)
 
     _sanitize_salary_range(enriched)
@@ -263,6 +268,15 @@ def _normalize_source_salary(payload: dict[str, Any]) -> None:
         return
     multiplier = {"MONTH": 12}.get(period, 1)
     if multiplier == 1:
+        return
+    from jobs.services.job_facts import annual_salary_matches
+    already_annual = annual_salary_matches(
+        raw_data.get("job_facts"), str(payload.get("title") or ""), str(payload.get("organization_name") or ""),
+        "\n".join((str(payload.get("description") or ""), str(payload.get("requirements") or ""))),
+        minimum, maximum, payload.get("salary_currency"),
+    )
+    if already_annual:
+        _record_quality_enrichment(payload, "salary", "source_period_normalization_v1", "validated job facts; monthly pay already annualized")
         return
     if minimum is not None:
         payload["salary_min"] = float(minimum) * multiplier

@@ -103,6 +103,10 @@ def sentences(text):
 def worldwide_permission(clause):
     if re.search(r'\b(?:not|cannot|can\x27t|never)\s+(?:work|hire|hiring)\b', clause, re.I):
         return False
+    # Exact source location labels are explicit policy statements. Generic
+    # "Remote" and organization descriptions such as "global team" are not.
+    if re.fullmatch(r'(?:location\s*:\s*)?remote\s*[,(/:–—-]\s*(?:global|worldwide|anywhere)\s*\)?', clause.strip(' .'), re.I):
+        return True
     return bool(re.search(r'\b(?:work from anywhere|remote worldwide|worldwide remote|anywhere in the world|work from any country|globally remote|worldwide applicants|hire worldwide|hiring worldwide|no matter (?:which|what) country you call home)\b', clause, re.I)) or bool(re.fullmatch(r'(?:location\s*:\s*)?(?:anywhere|worldwide|global)', clause.strip(' .'), re.I))
 
 

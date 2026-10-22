@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block title %}Blog — Remote Impact{% endblock %}
+{% block canonical %}{{ SITE_URL }}{% url 'blog:post_list' %}{% endblock %}
 {% block meta_description %}Articles, guides, and insights on remote impact careers in climate, AI safety, global health, and more.{% endblock %}
 {% block og_title %}Blog — Remote Impact{% endblock %}
 {% block og_description %}Articles, guides, and insights on remote impact careers.{% endblock %}

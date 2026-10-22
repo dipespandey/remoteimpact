@@ -930,7 +930,8 @@ class EmployerFunnelEvent(models.Model):
     """Minimal server-side conversion events for the employer journey."""
 
     class Event(models.TextChoices):
-        POST_JOB_VIEWED = "post_job_viewed", "Post job viewed"
+        POST_JOB_VIEWED = "post_job_viewed", "Posting form requested (unverified)"
+        FEATURE_PAGE_REQUESTED = "feature_page_requested", "Promotion page requested (unverified)"
         JOB_DRAFT_CREATED = "job_draft_created", "Job draft created"
         CHECKOUT_STARTED = "checkout_started", "Checkout started"
         PAYMENT_COMPLETED = "payment_completed", "Payment completed"
@@ -963,6 +964,12 @@ class ConsumerFunnelEvent(models.Model):
         SCOUT_JOB_VIEWED = "scout_job_viewed", "Scout job viewed"
         SCOUT_PREVIEWED = "scout_previewed", "Scout previewed"
         SCOUT_SIGNUP_STARTED = "scout_signup_started", "Scout signup started"
+        SCOUT_PERSONALIZED = "scout_personalized", "Scout search personalized"
+        SCOUT_FORM_VIEWED = "scout_form_viewed", "Scout confirmation viewed"
+        SCOUT_SUBMIT_STARTED = "scout_submit_started", "Scout submit attempted"
+        SCOUT_SUBMIT_RESULT = "scout_submit_result", "Scout submit outcome"
+        SCOUT_CONTACT_CAPTURED = "scout_contact_captured", "Scout contact captured"
+        SCOUT_CONTACT_VERIFIED = "scout_contact_verified", "Scout contact verified"
         SCOUT_CREATED = "scout_created", "Scout created"
         INITIAL_EMAIL_SENT = "initial_email_sent", "Initial email sent"
         INITIAL_EMAIL_FAILED = "initial_email_failed", "Initial email failed"
@@ -1583,6 +1590,74 @@ class NewsletterSubscriber(models.Model):
         if self.unsubscribed:
             status = "unsubscribed"
         return f"{self.email} ({status})"
+
+
+class RoundupSubscriber(models.Model):
+    """Independent, double-opt-in consent for the weekly public roundup."""
+
+    email = models.EmailField(unique=True)
+    confirmation_key = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    referral_code = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    referred_by = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL)
+    topic = models.CharField(max_length=24, default="all")
+    source = models.CharField(max_length=64, default="newsletter")
+    campaign = models.CharField(max_length=64, blank=True)
+    consent_version = models.CharField(max_length=40, default="weekly-roundup-2026-10-21")
+    consent_at = models.DateTimeField(default=timezone.now)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    unsubscribed_at = models.DateTimeField(null=True, blank=True)
+    confirmation_requested_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
+class RoundupDelivery(models.Model):
+    """A durable send claim: ambiguous provider outcomes are never auto-retried."""
+
+    subscriber = models.ForeignKey(RoundupSubscriber, on_delete=models.CASCADE)
+    issue_week = models.CharField(max_length=8)
+    content_sha256 = models.CharField(max_length=64)
+    status = models.CharField(max_length=16, default="claimed")
+    created_at = models.DateTimeField(auto_now_add=True)
+    accepted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["subscriber", "issue_week"], name="roundup_one_issue_per_week")]
+
+
+class ScoutContact(models.Model):
+    """An anonymous Scout visitor who explicitly asks us to follow up."""
+
+    scout_flow_id = models.CharField(max_length=32, db_index=True)
+    email = models.EmailField()
+    source = models.CharField(max_length=80, default="scout_preview")
+    contact_consent = models.BooleanField(default=False)
+    contact_consent_at = models.DateTimeField(null=True, blank=True)
+    marketing_opt_in = models.BooleanField(default=False)
+    marketing_opt_in_at = models.DateTimeField(null=True, blank=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["scout_flow_id", "email"],
+                name="jobs_scoutcontact_flow_email_unique",
+            )
+        ]
+        indexes = [
+            models.Index(
+                fields=["email", "-created_at"],
+                name="jobs_scoutco_email_1c3f3a_idx",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.email} · {self.scout_flow_id}"
 
 
 # =============================================================================

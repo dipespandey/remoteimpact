@@ -1,13 +1,17 @@
 {% extends "base.html" %}
 {% load humanize %}
 
-{% block title %}Hire for impact: post or feature a remote role | Remote Impact{% endblock %}
-{% block meta_description %}Reach people actively looking for remote work in climate, global health, AI safety and social impact. Post a featured role for ${{ post_price }} or feature a listing that's already on Remote Impact for ${{ feature_price }}.{% endblock %}
+{% block title %}Post Remote Nonprofit &amp; Impact Jobs | Remote Impact{% endblock %}
+{% block meta_description %}Post a remote nonprofit or impact job for ${{ post_price }}, or feature an existing listing for ${{ feature_price }}. Reach mission-driven candidates and track views and apply clicks.{% endblock %}
+{% block og_title %}Post Remote Nonprofit &amp; Impact Jobs | Remote Impact{% endblock %}
+{% block og_description %}Post a remote nonprofit or impact job for ${{ post_price }}, or feature an existing listing for ${{ feature_price }}. See views and apply clicks for your roles.{% endblock %}
+{% block twitter_title %}Post Remote Nonprofit &amp; Impact Jobs | Remote Impact{% endblock %}
+{% block twitter_description %}Post a remote nonprofit or impact job for ${{ post_price }}, or feature an existing listing for ${{ feature_price }}. See views and apply clicks for your roles.{% endblock %}
 
 {% block content %}
 <section class="container py-8 sm:py-10">
-  <h1 class="page-title max-w-3xl">Post or feature a remote impact role</h1>
-  <p class="page-lede">People come to Remote Impact to find remote work in climate, global health, AI safety and social impact. Put your role in front of them and see how it performs.</p>
+  <h1 class="page-title max-w-3xl">Post remote nonprofit and impact jobs</h1>
+  <p class="page-lede">Hire for a nonprofit, foundation or mission-driven company. Reach people looking for remote work in climate, global health, AI safety and social impact, and see how your role performs.</p>
   <div class="mt-6 flex flex-wrap gap-2">
     <a href="{% url 'jobs:post_job' %}?source=employers_hero" class="btn btn-primary btn-lg" data-track="employer_post_start" data-track-category="employer">Post a featured role · ${{ post_price }}</a>
     <a href="#feature" class="btn btn-outline btn-lg" data-track="employer_feature_scroll" data-track-category="employer">Feature an existing listing · ${{ feature_price }}</a>
@@ -22,7 +26,7 @@
 <section class="container section pt-0 sm:pt-0" id="pricing">
   <div class="max-w-2xl px-1">
     <h2 class="section-title">Pricing</h2>
-    <p class="mt-1 text-sm text-muted-foreground">Pay per role, no subscription. Every option includes a private stats link you can share with your team.</p>
+    <p class="mt-1 text-sm text-muted-foreground">Individual posts and features are one-time purchases. Each includes a private stats link you can share with your team.</p>
   </div>
 
   <div class="mt-4 grid gap-4 lg:grid-cols-2">
@@ -102,6 +106,8 @@
   <div class="grid gap-6 lg:grid-cols-[1fr_2fr] lg:gap-10">
     <h2 class="section-title px-1">Questions</h2>
     <dl class="space-y-5 text-sm">
+      <div><dt class="font-semibold">How much does it cost to post a remote nonprofit job?</dt><dd class="mt-1 text-muted-foreground">A new featured posting costs ${{ post_price }} for {{ post_days }} days. If the role is already listed on Remote Impact, featuring it costs ${{ feature_price }} for {{ feature_days }} days. These individual purchases are one-time payments; organization plans are separate monthly subscriptions.</dd></div>
+      <div><dt class="font-semibold">What should I include in a remote nonprofit job posting?</dt><dd class="mt-1 text-muted-foreground">Include the role's responsibilities, required experience, compensation, application instructions and deadline if you have one. State where applicants may live, any work-authorization or time-zone requirements, and whether travel is required. A remote label alone does not establish worldwide eligibility.</dd></div>
       <div><dt class="font-semibold">How do I pay?</dt><dd class="mt-1 text-muted-foreground">Individual posts and features are one-time payments. Organization plans renew monthly until cancelled. Pay by card, Apple Pay or Google Pay through Stripe.</dd></div>
       <div><dt class="font-semibold">Does paying change AI Job Scout matches?</dt><dd class="mt-1 text-muted-foreground">No. Featured roles are pinned and labelled where people browse, but Scout matching is based on fit only.</dd></div>
       <div><dt class="font-semibold">How do I see results?</dt><dd class="mt-1 text-muted-foreground">A private link shows views, apply clicks and Scout matches for each live role.</dd></div>

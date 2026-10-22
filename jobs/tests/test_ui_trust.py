@@ -29,13 +29,13 @@ class UITrustTests(SimpleTestCase):
         self.assertIn('aria-label="Minimum annual salary in USD"', listing)
         self.assertIn('aria-label="Maximum annual salary in USD"', listing)
         privacy = render_to_string('jobs/privacy.html', context)
-        self.assertIn('DeepSeek', privacy)
+        self.assertIn('an AI provider', privacy)
         self.assertIn('Server-side account, checkout and job-alert events', privacy)
         home = render_to_string('jobs/home.html', context)
         self.assertIn('Avoid sensitive personal information', home)
         for template in ['jobs/job_alerts.html', 'jobs/job_alert_edit.html', 'jobs/job_scout_preview.html']:
             rendered = render_to_string(template, context)
-            self.assertIn('Your brief may be sent to DeepSeek', rendered)
+            self.assertIn('Your brief may be sent to an AI provider', rendered)
             self.assertNotIn('% match', rendered)
 
     def test_adversarial_filter_queries_remain_json_data(self):

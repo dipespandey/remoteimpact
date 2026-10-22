@@ -2,6 +2,7 @@ from jobs.constants.skills import SKILLS_BY_SLUG
 
 
 _model = None
+_model_unavailable = False
 
 
 WORK_STYLE_LABELS = {
@@ -29,12 +30,26 @@ REMOTE_LABELS = {
 
 
 def get_model():
-    global _model
+    global _model, _model_unavailable
+    if _model_unavailable:
+        return None
     if _model is None:
         from django.conf import settings
+        if getattr(settings, "TESTING", False):
+            _model_unavailable = True
+            return None
         from sentence_transformers import SentenceTransformer
-        _model = SentenceTransformer(getattr(settings, "EMBEDDING_MODEL", "all-MiniLM-L6-v2"), device="cpu")
-        _model.max_seq_length = min(512, _model.max_seq_length or 512)
+        try:
+            _model = SentenceTransformer(getattr(settings, "EMBEDDING_MODEL", "all-MiniLM-L6-v2"), device="cpu")
+            _model.max_seq_length = min(512, _model.max_seq_length or 512)
+        except Exception:  # noqa: BLE001 - lexical matching remains available without the optional model
+            _model_unavailable = True
+            import logging
+            logging.getLogger(__name__).warning(
+                "Embedding model unavailable; continuing with lexical matching until the process restarts",
+                exc_info=True,
+            )
+            return None
     return _model
 
 
@@ -73,7 +88,10 @@ def load_for_batch():
 
 
 def embed(text):
-    return get_model().encode(text, normalize_embeddings=True).tolist()
+    model = get_model()
+    if model is None:
+        return None
+    return model.encode(text, normalize_embeddings=True).tolist()
 
 
 def get_embedding(text):

@@ -1,0 +1,4 @@
+<aside class="card p-5 mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" aria-label="Weekly job picks">
+    <div><h2 class="text-base font-semibold">Keep good opportunities coming</h2><p class="mt-1 text-sm text-muted-foreground">A free weekly roundup of remote impact roles. No account needed.</p></div>
+    <a href="{% url 'jobs:roundup' %}?source={{ roundup_source|default:'site' }}" class="btn btn-secondary shrink-0" data-track="roundup_signup_opened" data-track-category="newsletter">Preview the weekly picks →</a>
+</aside>

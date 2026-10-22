@@ -24,6 +24,8 @@
         <div class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 px-1 text-sm">
             <a href="/?scout=1&amp;source=not_found" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground" data-track="not_found_job_scout" data-track-category="not_found_recovery">Describe the job you want</a>
             <a href="{% url 'jobs:job_list' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground" data-track="not_found_browse_jobs" data-track-category="not_found_recovery">Browse every role</a>
+            <a href="{% url 'jobs:about' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">About Remote Impact</a>
+            <a href="{% url 'jobs:contact' %}" class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">Contact us</a>
         </div>
 
         <nav class="mt-12" aria-label="Popular job areas">
@@ -35,6 +37,12 @@
                 <li><a href="{% url 'jobs:category_landing' slug='social-impact' %}" class="inline-block rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent">Social impact</a></li>
             </ul>
         </nav>
+
+        <p class="mt-10 px-1 text-sm text-muted-foreground">
+            For agents and developers: <a href="/llms.txt" class="underline decoration-border underline-offset-4 hover:decoration-foreground">site guide</a>,
+            <a href="/sitemap.xml" class="underline decoration-border underline-offset-4 hover:decoration-foreground">sitemap</a>, and
+            <a href="/developers/" class="underline decoration-border underline-offset-4 hover:decoration-foreground">API documentation</a>.
+        </p>
     </div>
 </section>
 {% endblock %}

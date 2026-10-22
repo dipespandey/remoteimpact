@@ -41,7 +41,8 @@ class CategorySeoEvidenceTests(TestCase):
         self.assertNotIn('Yes, all jobs on Remote Impact', body)
         self.assertNotIn("checked daily against each employer's own", body)
         self.assertEqual(response.context['job_count'], 4)
-        self.assertContains(response, '4 current listings across 1 employer')
+        self.assertEqual(response.context['inventory_evidence']['employers'], 1)
+        self.assertContains(response, 'Current hiring in this search')
         self.assertContains(response, 'climate-environment-careers')
         self.assertEqual(next(x for x in data if x.get('@type')=='BreadcrumbList')['itemListElement'][-1]['name'],self.category.name)
 

@@ -50,7 +50,7 @@ def source_hash(fields):
     return hashlib.sha256(json.dumps(fields,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
 
 
-def build_profile(fields,*,geography=True,workplace=True):
+def duty_spans(fields):
     spans={}
     for field in ('description','requirements'):
         text=fields[field]
@@ -70,6 +70,11 @@ def build_profile(fields,*,geography=True,workplace=True):
             found.append([start,end])
             if len(found)>=MAX_SPANS:break
         spans[field]=found
+    return spans
+
+
+def build_profile(fields,*,geography=True,workplace=True,spans=True):
+    spans = duty_spans(fields) if spans else None
     from jobs.services.scout_constraints import extract_location_evidence
     from jobs.services.scout_review import workplace_conflict
     return {'version':VERSION,'source_hash':source_hash(fields),'spans':spans,
@@ -78,11 +83,15 @@ def build_profile(fields,*,geography=True,workplace=True):
 
 
 def profile_for(job,*,geography=False,workplace=False):
+    from django.conf import settings
+    needs_spans = not (geography or workplace) or not getattr(settings, 'SCOUT_LAZY_DUTY_SPANS', True)
     fields=source_fields(job)
     local=getattr(job,'_scout_source_profile',None)
     inputs=(VERSION,*fields.values())
     if (isinstance(local,dict) and local.get('version')==VERSION
             and getattr(job,'_scout_source_profile_inputs',None)==inputs):
+        if needs_spans and local.get('spans') is None:
+            local['spans'] = duty_spans(fields)
         if geography and local.get('geography') is None:
             from jobs.services.scout_constraints import extract_location_evidence
             local['geography']=extract_location_evidence(fields)
@@ -114,7 +123,29 @@ def profile_for(job,*,geography=False,workplace=False):
                 if any(not isinstance(v,list) or len(v)!=2 or any(type(n) is not int for n in v)
                        or not 0<=v[0]<v[1]<=len(fields[field]) or v[1]-v[0]>MAX_DUTIES for v in values):
                     valid=False;break
-    profile=stored if valid else build_profile(fields,geography=geography,workplace=workplace)
+    from jobs.services.scout_workflow import source_profile_memo
+    cached = source_profile_memo()
+    memo, diagnostics = cached if cached is not None else (None, None)
+    key = (VERSION, digest)
+    profile = stored if valid else memo.get(key) if memo is not None else None
+    if not valid and profile is not None:
+        diagnostics['source_profile_cache_hits'] = diagnostics.get('source_profile_cache_hits', 0) + 1
+    if profile is None:
+        profile = build_profile(fields, geography=geography, workplace=workplace, spans=needs_spans)
+        if memo is not None:
+            if len(memo) >= 4096:
+                memo.clear()
+            memo[key] = profile
+    else:
+        if needs_spans and profile.get('spans') is None:
+            profile['spans'] = duty_spans(fields)
+        if geography and profile.get('geography') is None:
+            from jobs.services.scout_constraints import extract_location_evidence
+            profile['geography'] = extract_location_evidence(fields)
+        if workplace and profile.get('mandatory_workplace') is None:
+            from jobs.services.scout_review import workplace_conflict
+            profile['mandatory_workplace'] = workplace_conflict(None, {'intent_text':'remote work'}, ' '.join(fields[f] for f in ('title','description','requirements')))
+
     job._scout_source_profile=profile
     job._scout_source_profile_inputs=inputs
     job._scout_source_profile_prepared=valid

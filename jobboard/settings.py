@@ -33,6 +33,9 @@ SECRET_KEY = os.getenv(
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes")
+# Keep optional ML model loading deterministic in the Django test runner. The
+# production image can still warm the configured model at process start.
+TESTING = "test" in sys.argv
 
 ALLOWED_HOSTS = [
     h.strip()
@@ -100,11 +103,13 @@ INSTALLED_APPS = [
     "earlycareers.apps.EarlyCareersConfig",
     "gigs",
     "blog",
+    "growth",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.gzip.GZipMiddleware",
+    "jobs.middleware.MarkdownResponseMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve static files in production
     "django.contrib.sessions.middleware.SessionMiddleware",
     "jobs.middleware.OutboundAttributionMiddleware",
@@ -291,6 +296,8 @@ SOCIALACCOUNT_PROVIDERS = {
 # model with DEEPSEEK_MODEL only when a task needs a different DeepSeek model.
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash")
+# Opt in explicitly after the bounded new-import canary is reviewed.
+JOB_EXTRACTION_OPTIMIZED_ENABLED = os.getenv("JOB_EXTRACTION_OPTIMIZED_ENABLED", "false").lower() == "true"
 
 STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
@@ -378,9 +385,21 @@ else:
         }
     }
 
+# Extraction facts have their own retention/culling budget, separate from pages.
+CACHES["job_extraction"] = (
+    {"BACKEND": "django.core.cache.backends.redis.RedisCache", "LOCATION": REDIS_URL,
+     "KEY_PREFIX": "ri-extraction", "TIMEOUT": 2592000}
+    if REDIS_URL else
+    {"BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+     "LOCATION": os.path.join(os.getenv("CACHE_DIR", "/tmp/remoteimpact-cache"), "job-extraction"),
+     "KEY_PREFIX": "ri-extraction", "TIMEOUT": 2592000,
+     "OPTIONS": {"MAX_ENTRIES": 5000}}
+)
+
 if len(sys.argv) > 1 and sys.argv[1] == "test":
     # Tests must not share cached LLM/matching results across runs.
     CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "KEY_PREFIX": "ri-test"}}
+    CACHES["job_extraction"] = {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "KEY_PREFIX": "ri-extraction-test"}
     INDEXNOW_ENABLED = False
     EMAIL_PROVIDER = "none"
     EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
@@ -400,6 +419,10 @@ CACHE_TTL_DAY = 86400  # 24 hours - for rarely changing content
 SCOUT_MULTISTEP_ENABLED = os.getenv("SCOUT_MULTISTEP_ENABLED", "true").lower() == "true"
 SCOUT_SEMANTIC_ENABLED = os.getenv("SCOUT_SEMANTIC_ENABLED", "true").lower() == "true"
 SCOUT_SOURCE_RANKING_ENABLED = os.getenv("SCOUT_SOURCE_RANKING_ENABLED", "true").lower() == "true"
+# Preserve all matching gates; these only change when source work is done.
+SCOUT_ID_FIRST_RETRIEVAL = os.getenv("SCOUT_ID_FIRST_RETRIEVAL", "true").lower() == "true"
+SCOUT_REQUEST_PROFILE_CACHE = os.getenv("SCOUT_REQUEST_PROFILE_CACHE", "true").lower() == "true"
+SCOUT_LAZY_DUTY_SPANS = os.getenv("SCOUT_LAZY_DUTY_SPANS", "true").lower() == "true"
 SCOUT_REMOTE_POLICY_ENABLED = os.getenv("SCOUT_REMOTE_POLICY_ENABLED", "false").lower() == "true"
 SCOUT_RULE_RECOVERY_ENABLED = os.getenv("SCOUT_RULE_RECOVERY_ENABLED", "true").lower() == "true"
 SCOUT_COMBINED_PLAN_ENABLED = os.getenv("SCOUT_COMBINED_PLAN_ENABLED", "true").lower() == "true"

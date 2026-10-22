@@ -111,7 +111,19 @@ class OrgPlanTests(TestCase):
         UserProfile.objects.create(user=self.owner, account_type="employer")
         self.client.force_login(self.owner)
         dash = self.client.get("/account/")
-        self.assertContains(dash, "Feature all your roles for $299 a month")  # 8 live roles -> Organization plan
+        self.assertNotContains(dash, "Feature all your roles for")
+        self.assertNotContains(dash, "Delete my account")
+        self.assertContains(dash, 'aria-label="Hiring"')
+        self.assertEqual(dash.content.decode().count('> Post a job</a>'), 1)
+        billing = self.client.get("/account/?section=billing")
+        self.assertContains(billing, "Feature all your roles for $299 a month")  # 8 live roles -> Organization plan
+        self.assertNotContains(billing, 'id="live-heading"')
+        settings = self.client.get("/account/?section=settings")
+        self.assertContains(settings, "Delete my account")
+        roles = self.client.get("/account/?section=roles")
+        self.assertContains(roles, 'id="live-heading"')
+        fallback = self.client.get("/account/?section=unknown")
+        self.assertEqual(fallback.context["dashboard_section"], "overview")
 
     def pending_subscription(self):
         return OrgSubscription.objects.create(

@@ -182,5 +182,5 @@ class NewsletterSubscribeView(View):
 
         return JsonResponse({
             "success": True,
-            "message": "You're in! Watch for our quarterly digest."
+            "message": "You're subscribed to occasional product updates, no more than once a month."
         })

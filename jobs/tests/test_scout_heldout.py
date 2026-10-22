@@ -76,8 +76,8 @@ class HeldoutGeography(SimpleTestCase):
 class HeldoutRerank(SimpleTestCase):
     def setUp(self):
         self.p=extract_constraints('Behavioral health program manager in Norway')
-        self.p['locations']=['Norway']
-        self.output=json.dumps({'decisions':[{'id':1,'relevant':True,'evidence':[{'field':'description','quote':'behavioral health grants programs'}], 'checks':{'function':['confirmed','description','behavioral health grants programs'],'location':['unknown','','']}}]})
+        self.p['locations'] = ['Norway']
+        self.output=json.dumps({'decisions':[{'id':1,'relevant':True,'checks':{'function':['confirmed','description','behavioral health grants programs'], 'location':['confirmed','location','Remote worldwide']}}]})
 
     @patch('jobs.services.scout_reranker.cache')
     @patch('jobs.services.ai.AIClient.generate')
@@ -120,7 +120,7 @@ class HeldoutRerank(SimpleTestCase):
     def test_full_shortlist_has_bounded_call_and_exact_schema(self,generate,cache):
         cache.get.return_value=None
         jobs=[candidate(i) for i in range(1,21)]
-        generate.return_value=json.dumps({'decisions':[{'id':i,'relevant':False,'evidence':[], 'checks':{}} for i in range(1,13)]})
+        generate.return_value=json.dumps({'decisions':[{'id':i,'relevant':False,'evidence':[]} for i in range(1,13)]})
         d={};self.assertEqual(rerank(jobs,self.p,jobs,d),[])
         payload=json.loads(generate.call_args.args[0])
         self.assertEqual(len(payload['candidates']),12)

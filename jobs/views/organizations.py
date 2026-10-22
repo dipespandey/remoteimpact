@@ -52,19 +52,38 @@ class OrganizationProfileView(FastJobPaginationMixin, ListView):
 
     @staticmethod
     def _hiring_summary(org, jobs):
-        """Facts about what this employer is hiring for, from its live listings (empty when too little)."""
+        """Describe recorded available listings without inferring applicant eligibility."""
         from collections import Counter
-        rows = list(jobs.values_list("category__name", "job_type", "location", "salary_min", "salary_max", "salary_currency"))
+        rows = list(jobs.values_list("category__name", "job_type", "location", "salary_min", "salary_max", "salary_currency", "raw_data"))
         if not rows:
             return {}
         areas = [a for a, _ in Counter(r[0] for r in rows if r[0]).most_common(3)]
         types = [t.replace("-", " ") for t, _ in Counter(r[1] for r in rows if r[1]).most_common(2)]
-        worldwide = sum(1 for r in rows if (r[2] or "").strip().lower() in {"remote", "remote, global", "remote (global)"})
-        mids = [(float(r[3] or r[4]) + float(r[4] or r[3])) / 2 for r in rows if r[5] == "USD" and (r[3] or r[4])]
-        summary = {"open": len(rows), "areas": areas, "types": types, "worldwide": worldwide}
-        if len(mids) >= 3:
-            summary["pay_low"], summary["pay_high"] = round(min(mids), -3), round(max(mids), -3)
-            summary["pay_count"] = len(mids)
+        global_labels = sum(1 for r in rows if (r[2] or "").strip().lower() in {
+            "global", "worldwide", "remote, global", "remote (global)",
+            "remote, worldwide", "remote (worldwide)",
+        })
+        annual = {"year", "yearly", "annual", "annually"}
+        annual_bounds = []
+        for row in rows:
+            raw = row[6] if isinstance(row[6], dict) else {}
+            periods = [str(raw[key]).strip().lower() for key in ("salaryPeriod", "salary_period")
+                       if raw.get(key) is not None and str(raw[key]).strip()]
+            if (row[5] or "").upper() != "USD" or not periods or any(p not in annual for p in periods):
+                continue
+            low, high = row[3], row[4]
+            if (low is not None and low <= 0) or (high is not None and high <= 0):
+                continue
+            if low is not None and high is not None and low > high:
+                continue
+            bounds = [value for value in (low, high) if value is not None]
+            if bounds:
+                annual_bounds.append(bounds)
+        summary = {"open": len(rows), "areas": areas, "types": types, "global_labels": global_labels}
+        if len(annual_bounds) >= 3:
+            summary["pay_low"] = min(min(bounds) for bounds in annual_bounds)
+            summary["pay_high"] = max(max(bounds) for bounds in annual_bounds)
+            summary["pay_count"] = len(annual_bounds)
         return summary
 
     def get_context_data(self, **kwargs):

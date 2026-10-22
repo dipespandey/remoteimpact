@@ -1,0 +1,5 @@
+Confirm your email to save your Remote Impact Scout follow-up preference:
+
+{{ verify_url }}
+
+This link expires in seven days. If you did not request this, you can ignore this email.

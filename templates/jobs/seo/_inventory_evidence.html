@@ -1,18 +1,18 @@
 {% load humanize %}
 <section class="surface mt-6 p-5" aria-labelledby="inventory-evidence-heading">
     <h2 id="inventory-evidence-heading" class="text-base font-semibold text-foreground">{% if search_destination %}Listings in this search{% else %}Current hiring in this search{% endif %}</h2>
-    <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
-        {{ job_count|intcomma }} current listing{{ job_count|pluralize }} across {{ inventory_evidence.employers|intcomma }} employer{{ inventory_evidence.employers|pluralize }}.
-        {{ inventory_evidence.new_week|intcomma }} listing{{ inventory_evidence.new_week|pluralize }} {{ inventory_evidence.new_week|pluralize:"was,were" }} posted in the past seven days.
-        {% if inventory_evidence.last_source_sighting %}Latest recorded source sighting: {{ inventory_evidence.last_source_sighting|date:"F j, Y" }}.{% endif %}
-    </p>
-    <p class="mt-2 text-xs leading-relaxed text-muted-foreground">
-        These counts follow the same availability rules as our job board. A source sighting records when a listing appeared in a feed or check; it does not guarantee the employer is still accepting applications.
-        <a href="{% url 'jobs:how_we_check' %}" class="font-medium text-foreground underline underline-offset-4">How we check listings</a> ·
-        <a href="{% url 'jobs:impact_jobs_snapshot' %}" class="font-medium text-foreground underline underline-offset-4">Impact hiring snapshot</a>
-    </p>
+    <dl class="mt-4 grid grid-cols-3 gap-3">
+        <div><dd class="text-xl font-semibold text-foreground">{{ job_count|intcomma }}</dd><dt class="text-xs text-muted-foreground">{% if search_destination %}Listed roles{% else %}Open listings{% endif %}</dt></div>
+        <div><dd class="text-xl font-semibold text-foreground">{{ inventory_evidence.employers|intcomma }}</dd><dt class="text-xs text-muted-foreground">Employers</dt></div>
+        <div><dd class="text-xl font-semibold text-foreground">{{ inventory_evidence.new_week|intcomma }}</dd><dt class="text-xs text-muted-foreground">New this week</dt></div>
+    </dl>
+    <p class="mt-3 text-xs text-muted-foreground">Confirm availability on the employer’s site.</p>
+    <details class="mt-2 text-xs text-muted-foreground"><summary class="cursor-pointer">About these counts</summary>
+        <p class="mt-2">Counts use our job board’s availability rules. A source sighting records a listing in a feed or check; it does not guarantee applications are still open.{% if inventory_evidence.last_source_sighting %} Latest source sighting: {{ inventory_evidence.last_source_sighting|date:"F j, Y" }}.{% endif %}</p>
+        <p class="mt-2"><a href="{% url 'jobs:how_we_check' %}" class="underline">How we check listings</a> · <a href="{% url 'jobs:impact_jobs_snapshot' %}" class="underline">Impact hiring snapshot</a></p>
+    </details>
     {% if not nonprofit_page %}
-    <p class="mt-3 text-sm text-muted-foreground">Prefer nonprofit work? <a href="{% url 'jobs:keyword_jobs' keyword_slug='remote-nonprofit-jobs' %}" class="font-medium text-foreground underline underline-offset-4">Explore remote nonprofit jobs</a> and compare location requirements and advertised pay.</p>
+    <p class="mt-3 text-sm text-muted-foreground">Prefer nonprofit work? <a href="{% url 'jobs:keyword_jobs' keyword_slug='remote-nonprofit-jobs' %}" class="font-medium text-foreground underline underline-offset-4">Explore remote nonprofit jobs</a>.</p>
     {% endif %}
     {% if inventory_hubs %}
     <ul class="mt-4 space-y-2 text-sm">

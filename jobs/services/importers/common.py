@@ -174,7 +174,7 @@ def _canonical_duplicate_url(value: Any) -> str:
             if match:
                 return f"{prefix}:{match.group(1)}:{match.group(2)}"
             return ''  # The company board is not an individual posting.
-    if host in {"boards.greenhouse.io", "job-boards.greenhouse.io"}:
+    if re.fullmatch(r"(?:boards|job-boards)(?:\.[a-z]{2,})?\.greenhouse\.io", host):
         match = re.fullmatch(r"/([^/]+)/jobs/(\d+)(?:/application)?", path)
         if match:
             return f"greenhouse:{match.group(1)}:{match.group(2)}"
@@ -328,17 +328,33 @@ def _retired_duplicate_has_available_keeper(job: Job, application_url=None, titl
     )
 
 
-def _mark_job_seen(source: str, external_id: str) -> None:
+@transaction.atomic
+def _mark_job_seen(source: str, external_id: str, raw_data=None) -> None:
     if source and external_id:
         updates = {"last_seen_at": timezone.now()}
         # Greenhouse, Lever, and Ashby URLs come from search results. A result
         # may remain indexed after the posting closes, so only the board API is
         # allowed to reactivate these records.
         if source not in {"greenhouse", "lever", "ashby", "workable", "recruitee", "personio", "bamboohr"}:
-            job = Job.objects.filter(source=source, external_id=external_id).only(
+            job = Job.objects.select_for_update().filter(source=source, external_id=external_id).only(
                 'raw_data', 'is_active', 'slug', 'title', 'application_url', 'organization_id'
             ).first()
-            if job and not verification_blocks_listing(job.raw_data) and not _retired_duplicate_has_available_keeper(job):
+            if (job and source == Job.Source.IDEALIST and isinstance(raw_data, dict)
+                    and str(raw_data.get('objectID') or '') == str(external_id)
+                    and raw_data.get('orgName') == (job.raw_data or {}).get('orgName')):
+                # Incremental imports skip rewriting a job, but source employer
+                # classification must still refresh (including removal/changes).
+                refreshed = dict(job.raw_data or {})
+                for key in ('orgType', 'orgID'):
+                    value = raw_data.get(key)
+                    if isinstance(value, str) and value:
+                        refreshed[key] = value
+                    else:
+                        refreshed.pop(key, None)
+                if refreshed != job.raw_data:
+                    updates['raw_data'] = refreshed
+            staged_canary = job and ((job.raw_data or {}).get("extraction_canary") or {}).get("phase") == "staged"
+            if job and not staged_canary and not verification_blocks_listing(job.raw_data) and not _retired_duplicate_has_available_keeper(job):
                 updates["is_active"] = True
         Job.objects.filter(source=source, external_id=external_id).update(**updates)
 
@@ -617,13 +633,18 @@ def _find_same_source_duplicate_job(payload: Dict, organization: Organization) -
     return None
 
 
-def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
+class ExistingJobError(ValueError):
+    """A create-only canary must never update an existing listing."""
+
+
+def _upsert_job(payload: Dict, *, create_only: bool = False) -> Tuple[Job, bool]:
     """
     Persist a job dict returning (job, created?).
     Expected payload keys: see individual importers.
 
     Note: AI processing should be done via batch_upsert_jobs() before calling this.
     """
+    original_payload = dict(payload)
     source_location = payload.get("location")
     source_country = payload.get("country")
     payload = enrich_job_payload(payload)
@@ -683,8 +704,49 @@ def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
         job = _find_same_source_duplicate_job(payload, organization)
 
     if job:
+        if create_only:
+            raise ExistingJobError("Existing job skipped by create-only import")
+        if not (original_payload.get("raw_data") or {}).get("job_facts"):
+            from jobs.services.extraction_refresh import retained_facts
+            retained = retained_facts(job, original_payload)
+            if retained:
+                from jobs.services.job_facts import legacy_fields
+                from jobs.services.raw_data_extractor import RawDataExtractor
+                trusted = RawDataExtractor.extract(original_payload.get("source", ""), original_payload.get("raw_data") or {})
+                values = legacy_fields(retained)
+                adopted = dict(original_payload)
+                raw = dict(adopted.get("raw_data") or {})
+                raw["job_facts"] = retained
+                canary = (job.raw_data or {}).get("extraction_canary")
+                if canary:
+                    raw["extraction_canary"] = dict(canary)
+                    if canary.get("phase") == "staged":
+                        adopted["is_active"] = False
+                adopted["raw_data"] = raw
+                adopted["skills"] = values["skills"]
+                for field in ("experience_level", "education_level", "job_type", "salary_min", "salary_max", "salary_currency"):
+                    adopted[field] = trusted.get(field) if trusted.get(field) is not None else values.get(field)
+                if not adopted.get("job_type"):
+                    adopted["job_type"] = original_payload.get("job_type") or job.job_type
+                if values.get("impact_area"):
+                    adopted["category_slug"] = values["impact_area"]
+                else:
+                    adopted.pop("category_slug", None)
+                result = _upsert_job(adopted, create_only=create_only)
+                from django.core.cache import caches
+                from jobs.services.extraction_cache import TTL
+                def refresh_cache():
+                    try:
+                        caches['job_extraction'].set(retained['cache_key'], retained, timeout=TTL)
+                    except Exception:
+                        logger.warning('Extraction cache refresh unavailable')
+                transaction.on_commit(refresh_cache)
+                return result
         old_title = job.title
         old_raw = job.raw_data or {}
+        prior_canary = old_raw.get("extraction_canary") or {}
+        if prior_canary.get("phase") == "staged":
+            defaults["is_active"] = False
         if (payload['source'] == Job.Source.BAMBOOHR and ':' in str(payload['external_id'])
                 and _canonical_duplicate_url(job.application_url)
                 == _canonical_duplicate_url(defaults['application_url'])):
@@ -718,6 +780,20 @@ def _upsert_job(payload: Dict) -> Tuple[Job, bool]:
         for key in ("quality_enrichment", "source_page_enrichment", "source_verification", "last_stale_check", "crawl_error", "ats", "ats_check"):
             if key in old_raw and key not in incoming_raw and (same_destination or key == "quality_enrichment"):
                 incoming_raw[key] = old_raw[key]
+        if "job_facts" not in incoming_raw and isinstance(old_raw.get("job_facts"), dict):
+            from jobs.services.job_facts import source_description, source_hash
+            old_facts = old_raw["job_facts"]
+            if old_facts.get("source_hash") == source_hash(
+                payload.get("title", ""), payload.get("organization_name", ""), source_description(payload)
+            ):
+                incoming_raw["job_facts"] = old_facts
+        if prior_canary and "extraction_canary" not in incoming_raw:
+            incoming_raw["extraction_canary"] = dict(prior_canary)
+            if "job_facts" not in incoming_raw:
+                incoming_raw["extraction_canary"].update(
+                    needs_review=True,
+                    phase="staged" if prior_canary.get("phase") == "staged" else "source_changed",
+                )
         defaults["raw_data"] = incoming_raw
         if job.category_id and (category is None or category.slug == "other"):
             category = job.category
@@ -823,7 +899,7 @@ async def batch_upsert_jobs(
             external_id = payload.get("external_id", "")
             if source and external_id and await check_exists(source, external_id):
                 stats["skipped"] += 1
-                await sync_to_async(_mark_job_seen, thread_sensitive=True)(source, external_id)
+                await sync_to_async(_mark_job_seen, thread_sensitive=True)(source, external_id, payload.get("raw_data"))
             else:
                 filtered_payloads.append(payload)
         payloads = filtered_payloads
@@ -892,7 +968,8 @@ async def batch_upsert_jobs(
                 for payload in batch:
                     title = payload.get("title", "Untitled")
                     org = payload.get("organization_name", "Unknown")
-                    desc = payload.get("description", "")
+                    from jobs.services.job_facts import source_description
+                    desc = source_description(payload)
                     if len(desc) >= 50:
                         tasks.append(parser._parse_and_enrich(payload, title, org, desc))
                     else:

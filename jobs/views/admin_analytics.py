@@ -12,6 +12,55 @@ def analytics(request):
     return render(request, "admin/analytics.html", {**admin.site.each_context(request), "m": metrics})
 
 
+def diagnostics(request):
+    """Permission-gated, read-only analytics; never display raw event metadata."""
+    from django.http import HttpResponseBadRequest, HttpResponseForbidden
+    from ..services.product_analytics import RANGES, build_product_analytics, read_scope
+
+    if not request.user.has_perms(('jobs.view_consumerfunnelevent', 'jobs.view_employerfunnelevent')):
+        return HttpResponseForbidden('Analytics event-view permissions are required.')
+    if request.method not in ('GET', 'HEAD'):
+        from django.http import HttpResponseNotAllowed
+        return HttpResponseNotAllowed(['GET', 'HEAD'])
+    raw = request.GET.get('days', '30')
+    days = int(raw) if raw in tuple(str(n) for n in RANGES) else 30
+    token = request.GET.get('scope', '')
+    scope = read_scope(token)
+    if token and scope is None:
+        return HttpResponseBadRequest('This activity link is invalid or expired. Open Diagnostics for a fresh link.')
+    section = request.GET.get('view', 'journeys' if scope else 'overview')
+    if section not in ('overview', 'journeys', 'campaigns', 'errors'):
+        section = 'overview'
+    report = build_product_analytics(days, family=request.GET.get('family', 'all'),
+                                     failures_only=section == 'errors' or request.GET.get('failures') == '1', scope=scope)
+    # Identity is an additional privilege beyond event viewing. Respect the
+    # registered user admin's object-level permissions, including custom models.
+    from django.contrib.auth import get_user_model
+    from django.urls import reverse
+    User = get_user_model()
+    user_admin = admin.site._registry.get(User)
+    ids = {row['user_id'] for row in report['journeys'] if row.get('user_id')}
+    if scope and scope['kind'] == 'account':
+        ids.add(scope['value'])
+    identities = {}
+    if user_admin and user_admin.has_view_or_change_permission(request):
+        for account in User.objects.filter(pk__in=ids):
+            if user_admin.has_view_or_change_permission(request, account):
+                identities[account.pk] = {
+                    'username': account.get_username(),
+                    'admin_url': reverse(f'admin:{User._meta.app_label}_{User._meta.model_name}_change', args=[account.pk]),
+                }
+    for row in report['journeys']:
+        row.update(identities.get(row.get('user_id'), {}))
+    report['selected_user'] = identities.get(scope['value']) if scope and scope['kind'] == 'account' else None
+    response = render(request, 'admin/diagnostics.html', {
+        **admin.site.each_context(request), 'a': report, 'scope_token': token, 'section': section,
+    })
+    response['Cache-Control'] = 'private, no-store'
+    response['Referrer-Policy'] = 'no-referrer'
+    return response
+
+
 def outreach(request):
     """Ranked employer outreach queue with ready-to-send drafts (staff only)."""
     from ..models import EmployerOutreach

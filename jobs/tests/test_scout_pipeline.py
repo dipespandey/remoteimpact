@@ -239,12 +239,12 @@ class PipelineCases(TestCase):
         self.assertGreater(d['retrieval']['lexical']['scanned'],400)
         self.assertFalse(d['semantic_used'])
 
-    def test_retrieval_payload_avoids_unused_vectors_without_extra_queries(self):
+    def test_retrieval_payload_avoids_unused_vectors_with_bounded_hydration(self):
         expected=self.make_job()
         preferences=JobScoutService._fallback_parse('Python software engineer in Norway, salary $90000 or more')
-        # One query for verified matches, one for the caveated fill when
-        # fewer than the limit were verified.
-        with self.assertNumQueries(2):
+        # Lightweight ranked IDs, one source hydration batch, then the empty
+        # caveated-fill ID query. No per-job deferred vector fetches.
+        with self.assertNumQueries(3):
             d={};found=JobScoutService.get_matches_for_preferences(preferences,diagnostics=d)
             self.assertEqual([j.pk for j in found],[expected.pk])
             self.assertIn('embedding',found[0].get_deferred_fields())

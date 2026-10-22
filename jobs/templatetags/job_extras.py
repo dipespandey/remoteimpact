@@ -17,6 +17,16 @@ register = template.Library()
 
 
 @register.filter
+def scout_reason_groups(reasons):
+    """Keep eligibility warnings visible while making supporting copy optional."""
+    values = [str(reason) for reason in (reasons or [])]
+    return {
+        'checks': [value for value in values if value.startswith('Check:')],
+        'details': [value for value in values if not value.startswith(('Check:', 'Worth considering: review the differences above'))],
+    }
+
+
+@register.filter
 def scout_tiers(jobs):
     from jobs.services.scout_tiers import groups
     return groups(jobs)

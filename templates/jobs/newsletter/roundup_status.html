@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block analytics %}{% endblock %}
+{% block title %}Weekly Roundup Subscription | Remote Impact{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block extra_head %}<meta name="referrer" content="no-referrer">{% endblock %}
+{% block content %}
+<div class="container py-10"><section class="card mx-auto max-w-xl p-6">
+{% if invalid %}<h1 class="text-2xl font-semibold">This link has expired</h1><p class="mt-3 text-muted-foreground">Request a fresh confirmation link to finish subscribing.</p><a class="btn btn-primary mt-5" href="{% url 'jobs:roundup' %}">Get a new link</a>
+{% elif confirm %}<h1 class="text-2xl font-semibold">One last step</h1><p class="mt-3 text-muted-foreground">Confirm one free email a week with remote impact job picks. Unsubscribe anytime.</p><form method="post" class="mt-5">{% csrf_token %}<button class="btn btn-primary" data-track="roundup_confirm_submit" data-track-category="newsletter">Confirm my subscription</button></form>
+{% elif confirmed %}<h1 class="text-2xl font-semibold" data-track="roundup_confirmed">You're on the list</h1><p class="mt-3 text-muted-foreground">You'll get the weekly roundup. Know someone looking for meaningful work? Share the signup page.</p><label for="share-url" class="label mt-5 block">Your share link</label><input id="share-url" class="input mt-1 w-full text-sm" value="{{ share_url }}" readonly onclick="this.select()"><button class="btn btn-secondary mt-3" type="button" onclick="navigator.clipboard.writeText(document.getElementById('share-url').value).then(()=>this.textContent='Copied').catch(()=>this.textContent='Select and copy the link above')">Copy share link</button>
+{% elif unsubscribe %}<h1 class="text-2xl font-semibold">Stop the weekly roundup?</h1><p class="mt-3 text-muted-foreground">This changes your weekly roundup only. Your Scout settings stay separate.</p><form method="post" class="mt-5">{% csrf_token %}<button class="btn btn-secondary">Unsubscribe from the roundup</button></form>
+{% elif unsubscribed %}<h1 class="text-2xl font-semibold">You're unsubscribed</h1><p class="mt-3 text-muted-foreground">You won't receive the weekly roundup. Your Scout settings stay separate.</p>
+{% endif %}
+<a href="{% url 'jobs:job_list' %}" class="mt-6 inline-block text-sm underline">Browse remote jobs</a>
+</section></div>
+{% endblock %}

@@ -25,17 +25,18 @@ def draft_email(org_name, role_title, views, clicks, days, report_link, feature_
     # The numbers cover every live role, so only name a single role when there is just one.
     target = f"your {role_title} role" if live_roles == 1 else f"your {live_roles} roles on Remote Impact"
     subject = (
-        f"{clicks} people clicked to apply to {target}"
-        if clicks else f"{views} people viewed {target}"
+        f"{clicks} application-link clicks on {target}"
+        if clicks else f"{views} listing views on {target}"
     )
     body = (
         f"Hi there,\n\n"
         f"I run Remote Impact (remoteimpact.org), a job board for remote roles at climate, global health, "
-        f"AI safety and other public-interest organizations. Your {role_title} role is listed with us: we link "
-        f"straight to your own application page and check every day that it's still open.\n\n"
-        f"In the last {days} days your roles on Remote Impact were viewed {views} times and {clicks} people "
-        f"clicked through to apply. They arrive tagged utm_source=remoteimpact, so you can see them in your "
-        f"own analytics. Here are the numbers for all your live roles:\n{report_link}\n\n"
+        f"AI safety and other public-interest organizations. We list {target}, with a link "
+        f"to the source application page and information about our listing checks.\n\n"
+        f"In the last {days} days we recorded {views} listing views and {clicks} application-link clicks "
+        f"across your currently live roles. These counts can include the same visitor across days or roles; "
+        f"they do not confirm completed applications. Our outbound links include utm_source=remoteimpact "
+        f"for referral attribution. Here is the report:\n{report_link}\n\n"
         f"If you'd like more of the right people to see it, you can feature the role for 30 days for "
         f"${FEATURE_PRICE}:\n{feature_link}\n\n"
         f"Either way the listing stays up for free while it's open. If anything in it is wrong, reply and "
