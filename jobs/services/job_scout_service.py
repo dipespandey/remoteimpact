@@ -1088,13 +1088,14 @@ skills is not a request for invented, exact job titles. JSON only."""
             pool = [*pool[:6], *provisional[:6], *pool[6:]]
             diagnostics["combined_review"] = True
             if getattr(settings,'SCOUT_SOURCE_RANKING_ENABLED',True):
-                from jobs.services.scout_source_profile import shortlist,function_priority
+                from jobs.services.scout_source_profile import shortlist,function_priority,request_terms
                 present={job.pk for job in pool}
                 recovered=[]
+                source_terms=request_terms(preferences)
                 # Heuristic title/score thresholds must not prevent grounded
                 # source review of the same work under an unusual job title.
                 for job in shared_candidates:
-                    if job.pk in present or function_priority(job,preferences)<8:continue
+                    if job.pk in present or function_priority(job,preferences,terms=source_terms)<8:continue
                     eligibility=evaluate_job(job,preferences,relaxed=True)
                     if not eligibility.allowed:continue
                     job.scout_caveats=list(eligibility.caveats)

@@ -172,6 +172,21 @@ class SourceProfileTests(SimpleTestCase):
         result=shortlist([incidental,relevant],{'titles':['Policy Analyst']},limit=1)
         self.assertEqual(result,[relevant])
 
+    def test_priority_reads_source_profile_once_per_candidate(self):
+        from jobs.services import scout_source_profile as profiles
+        candidate=job(description='Responsibilities: Analyze climate policy. Qualifications: Research experience.',
+                      requirements='Responsibilities: Draft regulatory recommendations.')
+        with patch.object(profiles,'profile_for',wraps=profiles.profile_for) as read:
+            self.assertGreater(profiles.function_priority(candidate,{'titles':['Policy Analyst']}),0)
+            self.assertEqual(read.call_count,1)
+
+    def test_known_location_conflict_skips_later_body_checks(self):
+        candidate=job(description='Responsibilities: Analyze policy. '*100,location='Remote Canada',country='Canada')
+        with patch('jobs.services.scout_constraints.role_conflict',side_effect=AssertionError('Unneeded body check')):
+            result=evaluate_job(candidate,{'locations':['Norway']},True)
+        self.assertFalse(result.allowed)
+        self.assertEqual(result.reason,'location')
+
     def test_shortlist_preserves_different_requisitions_and_deduplicates_regional_copies(self):
         a=job(pk=1,scout_requisition='ABC');b=job(pk=2,scout_requisition='ABC');c=job(pk=3,scout_requisition='DEF')
         self.assertEqual([j.pk for j in shortlist([a,b,c],{})],[1,3])
