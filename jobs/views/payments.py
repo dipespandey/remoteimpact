@@ -14,6 +14,7 @@ from django.views.generic import FormView, RedirectView, View
 from ..forms import JobSubmissionForm
 from ..models import Job
 from ..services.job_service import JobService
+from ..services.employer_attribution import request_labels
 from ..services.payment_service import PaymentService
 
 logger = logging.getLogger(__name__)
@@ -101,7 +102,7 @@ class JobCheckoutView(LoginRequiredMixin, FormView):
         )
         try:
             domain_url = self.request.build_absolute_uri("/")[:-1]
-            checkout_url = PaymentService.create_checkout_session(self.job, domain_url)
+            checkout_url = PaymentService.create_checkout_session(self.job, domain_url, attribution=request_labels(self.request))
             record_employer_event(
                 EmployerFunnelEvent.Event.CHECKOUT_STARTED,
                 user=self.request.user,
@@ -132,6 +133,10 @@ class PaymentCancelView(RedirectView):
         messages.warning(
             request, "Payment cancelled. Your job has been saved as a draft."
         )
+        if job and not job.is_paid:
+            return redirect("jobs:job_checkout", slug=job.slug)
+        if job and job.is_paid:
+            return redirect("jobs:job_detail", slug=job.slug)
         return super().get(request, *args, **kwargs)
 
 

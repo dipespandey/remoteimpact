@@ -101,99 +101,67 @@ def extract_salary_from_text(text: str) -> Dict[str, Any]:
     """
     if not text:
         return {}
-    
-    result = {}
-    
-    # Currency patterns and their codes
-    currency_patterns = [
-        (r'\$', 'USD'),
-        (r'£', 'GBP'),
-        (r'€', 'EUR'),
-        (r'USD', 'USD'),
-        (r'GBP', 'GBP'),
-        (r'EUR', 'EUR'),
-        (r'CAD', 'CAD'),
-        (r'AUD', 'AUD'),
-    ]
-    
-    # Salary range patterns (ordered by specificity)
-    # Pattern: currency + number + separator + currency? + number
-    salary_patterns = [
-        # $350,000—$850,000 or $350,000-$850,000 or $350,000 - $850,000
-        r'[\$£€]?\s*([\d,]+(?:\.\d+)?)\s*[kK]?\s*(?:—|–|-|to)\s*[\$£€]?\s*([\d,]+(?:\.\d+)?)\s*[kK]?(?:\s*(?:USD|GBP|EUR|CAD|AUD|per\s+year|annually|/yr|/year))?',
-        # Annual Salary: $200,000—$300,000
-        r'(?:salary|compensation|pay|range)[:\s]*[\$£€]?\s*([\d,]+(?:\.\d+)?)\s*[kK]?\s*(?:—|–|-|to)\s*[\$£€]?\s*([\d,]+(?:\.\d+)?)\s*[kK]?',
-    ]
-    
-    # Find currency first
-    text_lower = text.lower()
-    detected_currency = None
-    for pattern, code in currency_patterns:
-        if re.search(pattern, text, re.IGNORECASE):
-            detected_currency = code
-            break
-    
-    # Try each salary pattern
-    for pattern in salary_patterns:
-        matches = re.findall(pattern, text, re.IGNORECASE)
-        if matches:
-            for match in matches:
-                try:
-                    # Clean and parse numbers
-                    min_str = match[0].replace(',', '').replace(' ', '')
-                    max_str = match[1].replace(',', '').replace(' ', '')
-                    
-                    # Handle 'k' suffix (e.g., $150k)
-                    min_val = float(min_str)
-                    max_val = float(max_str)
-                    
-                    # Check if values are in thousands (e.g., 150 meaning 150k)
-                    # Heuristic: if both values are < 1000, they're probably in thousands
-                    if min_val < 1000 and max_val < 1000:
-                        # Check if 'k' was in the original text near these numbers
-                        if re.search(r'[\d,]+\s*[kK]', text):
-                            min_val *= 1000
-                            max_val *= 1000
-                    
-                    # Sanity check: salary should be reasonable
-                    if 10000 <= min_val <= 10000000 and 10000 <= max_val <= 10000000:
-                        # Take the largest range found (more likely to be the actual salary)
-                        if 'salary_max' not in result or max_val > result.get('salary_max', 0):
-                            result['salary_min'] = min_val
-                            result['salary_max'] = max_val
-                            if detected_currency:
-                                result['salary_currency'] = detected_currency
-                except (ValueError, IndexError):
-                    continue
-    
-    # Also try to find single salary values if no range found
-    if not result:
-        single_salary_pattern = r'[\$£€]\s*([\d,]+(?:\.\d+)?)\s*[kK]?(?:\s*(?:USD|GBP|EUR|CAD|AUD|per\s+year|annually|/yr|/year))?'
-        matches = re.findall(single_salary_pattern, text)
-        salaries = []
-        for match in matches:
-            try:
-                val = float(match.replace(',', ''))
-                if val < 1000 and re.search(r'[\d,]+\s*[kK]', text):
-                    val *= 1000
-                if 10000 <= val <= 10000000:
-                    salaries.append(val)
-            except ValueError:
-                continue
-        
-        if len(salaries) >= 2:
-            result['salary_min'] = min(salaries)
-            result['salary_max'] = max(salaries)
-            if detected_currency:
-                result['salary_currency'] = detected_currency
-        elif len(salaries) == 1:
-            # Single salary value - use as both min and max
-            result['salary_min'] = salaries[0]
-            result['salary_max'] = salaries[0]
-            if detected_currency:
-                result['salary_currency'] = detected_currency
-    
-    return result
+
+    currency = r"(?:US\$|C\$|A\$|\$|£|€|\bUSD\b|\bGBP\b|\bEUR\b|\bCAD\b|\bAUD\b)"
+    number = r"(?:\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*[kK]?"
+    codes = {"$": "USD", "US$": "USD", "£": "GBP", "€": "EUR",
+             "C$": "CAD", "A$": "AUD", "USD": "USD", "GBP": "GBP",
+             "EUR": "EUR", "CAD": "CAD", "AUD": "AUD"}
+    anchor = re.compile(r"\b(?:base\s+salary|salary|compensation|base\s+pay|annual\s+pay|base)\b", re.I)
+    non_salary = re.compile(r"\b(?:investment|invest|funding|raised|capital|budget|allowance|expenses?|commission|bonus|OTE|ACV)\b", re.I)
+
+    def amount(value):
+        value = re.sub(r"[\s,]", "", value)
+        return float(value.rstrip("kK")) * (1000 if value.lower().endswith("k") else 1)
+
+    def supported(match):
+        # A standalone ATS compensation field can begin with its amount. In a
+        # description, require a nearby salary label and reject non-salary uses.
+        before = text[max(0, match.start() - 160):match.start()]
+        labels = list(anchor.finditer(before))
+        if labels:
+            before = before[labels[-1].end():]
+            if non_salary.search(before):
+                return False
+        elif not (not text[:match.start()].strip() and len(text) <= 300):
+            return False
+        after = text[match.end():match.end() + 45]
+        if re.match(r"\s*(?:OTE|commission|bonus|investment|funding|budget)\b", after, re.I) or re.match(r"\s*\+?\s*ACV\b", after, re.I):
+            return False
+        if re.match(r"(?:['’]s|s\b|['’]\d)", after):
+            return False  # imprecise 'high $100,000s' is not an exact bound
+        if re.match(r"\s*(?:/|per\s+)(?:hours?|hrs?|weeks?|months?|days?)\b", after, re.I):
+            return False  # annual fields cannot hold short-term rates or funding
+        return True
+
+    # Keep currencies and k suffixes attached to this range. Never combine
+    # unrelated values, bonuses or company funding into a salary band.
+    pattern = rf"(?P<currency>{currency})\s*(?P<low>{number})\s*(?:—|–|-|to)\s*(?P<c2>{currency})?\s*(?P<high>{number})(?!\w|,\d)"
+    ranges = list(re.finditer(pattern, text, re.IGNORECASE))
+    for match in ranges:
+        low, high = amount(match['low']), amount(match['high'])
+        if not match['low'].strip().lower().endswith('k') and match['high'].strip().lower().endswith('k') and low < 1000:
+            low *= 1000  # $150–200k uses the suffix for both range bounds
+        if match['c2'] and codes[match['c2'].upper()] != codes[match['currency'].upper()]:
+            continue
+        if supported(match) and 10000 <= low <= high <= 10000000:
+            return {'salary_min': low, 'salary_max': high,
+                    'salary_currency': codes[match['currency'].upper()]}
+
+    pattern = rf"(?P<currency>{currency})\s*(?P<value>{number})(?!\w|,\d)"
+    for match in re.finditer(pattern, text, re.IGNORECASE):
+        # An invalid/unsupported range must not become a plausible one-bound salary.
+        if any(r.start() <= match.start() < r.end() for r in ranges):
+            continue
+        value = amount(match['value'])
+        if not (supported(match) and 10000 <= value <= 10000000):
+            continue
+        before = text[max(0, match.start() - 30):match.start()]
+        low = None if re.search(r"\b(?:up to|maximum|at most)\s*$", before, re.I) else value
+        high = None if re.search(r"\b(?:from|starting at|minimum|at least)\s*$", before, re.I) else value
+        return {'salary_min': low, 'salary_max': high,
+                'salary_currency': codes[match['currency'].upper()]}
+    return {}
 
 
 def update_job_from_crawl(

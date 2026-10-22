@@ -11,10 +11,13 @@
 {% block og_type %}article{% endblock %}
 {% block og_title %}{{ job.title }} at {{ job.organization.name|display_title }}{% endblock %}
 {% block og_description %}{% if job_available %}{{ seo_description }}{% else %}This listing is no longer available on Remote Impact. Browse current related remote impact jobs.{% endif %}{% endblock %}
-{% block og_image %}{{ SITE_URL }}{% url "jobs:job_og_image" job.slug %}{% endblock %}
+{% block og_image %}{{ SITE_URL }}{% url "jobs:job_og_image" job.slug %}?v=20261020{% endblock %}
 {% block twitter_title %}{{ job.title }} at {{ job.organization.name|display_title }}{% endblock %}
 {% block twitter_description %}{% if job_available %}{{ seo_description }}{% else %}This listing is no longer available on Remote Impact. Browse current related remote impact jobs.{% endif %}{% endblock %}
-{% block twitter_image %}{{ SITE_URL }}{% url "jobs:job_og_image" job.slug %}{% endblock %}
+{% block twitter_image %}{{ SITE_URL }}{% url "jobs:job_og_image" job.slug %}?v=20261020{% endblock %}
+
+{% block og_image_alt %}{{ job.title|display_title }} at {{ job.organization.name|display_title }} — Remote Impact{% endblock %}
+{% block twitter_image_alt %}{{ job.title|display_title }} at {{ job.organization.name|display_title }} — Remote Impact{% endblock %}
 
 {% block structured_data %}
 <script type="application/ld+json">
@@ -346,20 +349,13 @@
                 {% if job_available and role_insights %}
                 <section aria-labelledby="glance-heading" class="surface p-5">
                     <h2 id="glance-heading" class="text-sm font-semibold text-foreground">This role at a glance</h2>
-                    <ul class="mt-3 space-y-2 text-[14px] leading-6 text-muted-foreground">
-                        {% if source_verification.method == 'ats_api' and source_verification.status == 'open' %}
-                        <li><span class="font-medium text-foreground">Open right now.</span> {{ job.organization.name|display_title }}'s own job board listed it on {{ source_verification.checked_on|date:"F j" }}; we check again every day and take the listing down when they close it.</li>
-                        {% endif %}
-                        {% if role_insights.pay_percentile is not None %}
-                        <li><span class="font-medium text-foreground">Pay.</span> About ${{ role_insights.pay_mid|floatformat:0|intcomma }} a year at the midpoint, more than {{ role_insights.pay_percentile }}% of the {{ role_insights.peer_count }} open {{ job.get_job_type_display|lower }} {{ role_insights.area }} roles here that list pay (median about ${{ role_insights.peer_median|floatformat:0|intcomma }}).</li>
-                        {% endif %}
-                        {% if role_insights.similar_open %}
-                        <li><span class="font-medium text-foreground">Competition for attention.</span> {{ role_insights.similar_open|intcomma }} open {{ job.get_job_type_display|lower }} {{ role_insights.area }} role{{ role_insights.similar_open|pluralize }} on Remote Impact right now, {{ role_insights.similar_new_7d|intcomma }} of them posted in the last week.</li>
-                        {% endif %}
-                        {% if role_insights.org_other_open %}
-                        <li><span class="font-medium text-foreground">{{ job.organization.name|display_title }}</span> has {{ role_insights.org_other_open }} other open remote role{{ role_insights.org_other_open|pluralize }} here{% if job.organization.slug %}: <a class="underline decoration-border underline-offset-4 hover:decoration-foreground" href="{% url 'jobs:organization_profile' slug=job.organization.slug %}">see them all</a>{% endif %}{% if job.organization.careers_url %}{% if job.organization.slug %}, or visit{% else %}; visit{% endif %} their <a class="underline decoration-border underline-offset-4 hover:decoration-foreground" href="{{ job.organization.careers_url }}" rel="noopener" target="_blank">careers page</a>{% endif %}.</li>
-                        {% endif %}
-                    </ul>
+                    <dl class="mt-4 grid gap-4 sm:grid-cols-2">
+                        {% if role_insights.pay_percentile is not None %}<div><dt class="text-xs text-muted-foreground">Yearly pay midpoint</dt><dd class="mt-1 text-xl font-semibold">${{ role_insights.pay_mid|floatformat:0|intcomma }}</dd></div>{% endif %}
+                        {% if role_insights.similar_open %}<div><dt class="text-xs text-muted-foreground">Related openings here</dt><dd class="mt-1 text-xl font-semibold">{{ role_insights.similar_open|intcomma }} <span class="text-sm font-normal text-muted-foreground">· {{ role_insights.similar_new_7d|intcomma }} new this week</span></dd></div>{% endif %}
+                    </dl>
+                    {% if source_verification.method == 'ats_api' and source_verification.status == 'open' %}<p class="mt-3 text-xs text-muted-foreground">Listed on the employer’s board at our {{ source_verification.checked_on|date:"F j" }} check.</p>{% endif %}
+                    {% if role_insights.pay_percentile is not None %}<details class="mt-3 text-xs text-muted-foreground"><summary class="cursor-pointer">How this pay compares</summary><p class="mt-2">The midpoint exceeds {{ role_insights.pay_percentile }}% of {{ role_insights.peer_count }} open {{ job.get_job_type_display|lower }} {{ role_insights.area }} roles here with published pay. Their median midpoint is ${{ role_insights.peer_median|floatformat:0|intcomma }}. This compares listed ranges, not offers or applicant competition.</p></details>{% endif %}
+                    {% if role_insights.org_other_open and job.organization.slug %}<a class="mt-3 inline-block text-sm underline underline-offset-4" href="{% url 'jobs:organization_profile' slug=job.organization.slug %}">{{ role_insights.org_other_open }} more roles at {{ job.organization.name|display_title }}</a>{% endif %}
                 </section>
                 {% endif %}
             </div>
@@ -543,13 +539,8 @@
         btn.addEventListener('click', async () => {
             const url = btn.dataset.url;
             const saved = btn.dataset.saved === 'true';
-            // Track save action
-            if (typeof gtag === 'function') {
-                gtag('event', saved ? 'unsave_job' : 'save_job', {
-                    'event_category': 'job_action',
-                    'event_label': '{{ job.slug }}'
-                });
-            }
+            if (btn.disabled) return;
+            btn.disabled = true;
             try {
                 const res = await fetch(url, {
                     method: 'POST',
@@ -560,10 +551,16 @@
                 });
                 if (!res.ok) return;
                 const data = await res.json();
+                if (typeof data.saved !== 'boolean') return;
+                if (data.saved !== saved && typeof gtag === 'function') {
+                    gtag('event', data.saved ? 'save_job' : 'unsave_job', {event_category: 'job_action'});
+                }
                 btn.dataset.saved = data.saved ? 'true' : 'false';
                 btn.textContent = data.saved ? 'Saved' : 'Save job';
             } catch (e) {
                 console.error('Could not save job', e);
+            } finally {
+                btn.disabled = false;
             }
         });
     })();

@@ -7,17 +7,18 @@ the existing Scout deadline/call budget. This never adds or promotes a match.
 import hashlib
 import json
 import logging
+import re
 
 from django.conf import settings
 from django.core.cache import cache
 
-from ml.remote_policy.core import Candidate, NAMES, clean, rules
+from ml.remote_policy.core import Candidate, NAMES, clean, rules, worldwide_permission, place_codes
 from ml.remote_policy.llm import SYSTEM, PROMPT_VERSION, source_payload, decode_decision
 from ml.remote_policy.pipeline import combine, should_fallback
 from jobs.services.scout_evidence import source_location
 
 logger = logging.getLogger(__name__)
-VERSION = 'scout-policy-v1'
+VERSION = 'scout-policy-v2'
 MAX_BATCH = 6
 MAX_PROMPT_CHARS = 24000
 CAVEAT = 'remote_policy_unconfirmed'
@@ -25,7 +26,8 @@ CAVEAT = 'remote_policy_unconfirmed'
 
 def requested_candidate(preferences):
     """A work-from country is not evidence of authorization, state or hours."""
-    locations = preferences.get('locations') or []
+    locations = [v for v in preferences.get('locations') or []
+                 if str(v).strip().lower() not in {'worldwide','global','globally','anywhere'}]
     if len(locations) != 1:
         return None
     name = str(locations[0]).strip()
@@ -130,6 +132,19 @@ def check_matches(jobs, preferences, diagnostics, *, allow_api=True):
         counts[decision.label] += 1
         if decision.label == 'incompatible':
             continue
+        # Prefer an explicitly compatible home-country policy. Worldwide
+        # openings remain useful possibilities even without naming that country.
+        # Keep authorization, timezone and other unresolved checks visible.
+        country_specific = any(candidate.country in place_codes(e.get('quote',''))
+            and e.get('condition') == 'Stated country or regional restriction.'
+            and not re.search(r'\b(?:except|excluding|not|cannot)\b', e.get('quote',''), re.I)
+            for e in decision.evidence)
+        global_policy = worldwide_permission(clean(source_location(job) or getattr(job,'location','') or '')) or any(
+            worldwide_permission(e.get('quote','')) for e in decision.evidence)
+        job.scout_location_priority = 0 if country_specific and decision.label == 'compatible' else (1 if global_policy else 2)
+        if global_policy and not country_specific:
+            job.scout_caveats = list(dict.fromkeys([*getattr(job,'scout_caveats',[]), 'worldwide_location_fallback']))
+            job.scout_needs_confirmation = True
         if decision.label == 'unknown':
             job.scout_caveats = list(dict.fromkeys([*getattr(job, 'scout_caveats', []), CAVEAT]))
             job.scout_needs_confirmation = True

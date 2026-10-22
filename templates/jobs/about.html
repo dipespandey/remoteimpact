@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}About Remote Impact | Remote Impact{% endblock %}
+{% block meta_description %}How Remote Impact helps people find source-tracked remote work in climate, global health, AI safety, and social impact.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  "name": "About Remote Impact",
+  "url": "{{ SITE_URL }}{{ request.path }}",
+  "isPartOf": {"@type": "WebSite", "name": "Remote Impact", "url": "{{ SITE_URL }}/"},
+  "about": {
+    "@type": "Organization",
+    "name": "Remote Impact",
+    "url": "{{ SITE_URL }}/",
+    "email": "hello@remoteimpact.org",
+    "sameAs": ["https://www.linkedin.com/company/remoteimpact", "https://x.com/Genalize179311"]
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<article class="page-narrow">
+    <header class="page-header">
+        <p class="kicker">About Remote Impact</p>
+        <h1 class="page-title mt-1">Find meaningful work with better evidence.</h1>
+        <p class="page-lede">Remote Impact is an independent job discovery service for people who want their work to improve lives, communities, or the planet.</p>
+    </header>
+
+    <div class="prose prose-neutral max-w-[68ch] text-base leading-7 sm:text-base prose-headings:scroll-mt-24 prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-foreground prose-h2:mt-10 prose-h2:text-lg prose-p:text-foreground/85 prose-li:text-foreground/85 prose-li:marker:text-muted-foreground prose-strong:font-semibold prose-strong:text-foreground prose-a:font-medium prose-a:text-foreground prose-a:decoration-border prose-a:underline-offset-4 hover:prose-a:decoration-foreground">
+        <h2>What we do</h2>
+        <p>We organize remote roles across climate, global health, AI safety, humanitarian work, education, and other social-impact fields. Each listing links back to its source so you can check the employer's requirements and apply in the right place.</p>
+
+        <h2>How the catalogue works</h2>
+        <ul>
+            <li>We collect public listings from employer career pages and selected public feeds.</li>
+            <li>We record source links and checks so a role can be reviewed against the evidence available at that time.</li>
+            <li>We remove or update listings when they no longer meet our availability rules.</li>
+            <li>Counts and availability change as employers update their own sites; a listing is a useful lead, not a hiring guarantee.</li>
+        </ul>
+        <p><a href="{% url 'jobs:how_we_check' %}">Read the full listing-check method</a> or <a href="{% url 'jobs:job_list' %}">browse current roles</a>.</p>
+
+        <h2>Who it is for</h2>
+        <p>Remote Impact is built for job seekers who do not want access to meaningful work to depend on insider networks. It is also a starting point for employers and communities that want their public opportunities to be easier to discover.</p>
+
+        <h2>Data and responsible use</h2>
+        <p>We use public job evidence and the information people choose to submit to provide search, alerts, and career tools. Some tools use AI providers to interpret a brief or generate requested writing. Read our <a href="{% url 'jobs:privacy' %}">privacy policy</a> before submitting personal or sensitive information.</p>
+
+        <h2>Talk to us</h2>
+        <p>For corrections, partnerships, employer questions, or accessibility feedback, <a href="{% url 'jobs:contact' %}">contact Remote Impact</a>.</p>
+    </div>
+</article>
+{% endblock %}

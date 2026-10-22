@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from ..models import Job
+from .employer_attribution import posting_labels, stripe_labels, payment_labels
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -48,7 +49,7 @@ def pro_trial_eligible(subscription) -> bool:
 
 class PaymentService:
     @staticmethod
-    def create_checkout_session(job: Job, domain_url: str):
+    def create_checkout_session(job: Job, domain_url: str, *, attribution=None):
         """Create a Stripe Checkout Session for a job posting and return its URL.
 
         Persists the session id on the Job so the webhook can correlate the
@@ -56,6 +57,8 @@ class PaymentService:
         """
         stripe.api_key = settings.STRIPE_SECRET_KEY
 
+        campaign = posting_labels(job, attribution)
+        metadata = {"job_id": str(job.id), **campaign}
         checkout_session = stripe.checkout.Session.create(
             line_items=[
                 {
@@ -79,7 +82,8 @@ class PaymentService:
             cancel_url=(
                 f"{domain_url}{reverse('jobs:payment_cancel')}?job_id={job.id}"
             ),
-            metadata={"job_id": str(job.id)},
+            metadata=metadata,
+            **({"payment_intent_data": {"metadata": metadata}} if campaign else {}),
             client_reference_id=str(job.id),
             idempotency_key=f"job-checkout-{job.id}",
         )
@@ -127,6 +131,7 @@ class PaymentService:
             job,
             session_id=session.id,
             payment_intent=session.payment_intent or "",
+            checkout_metadata=session.metadata,
         )
         return True, job
 
@@ -198,6 +203,7 @@ class PaymentService:
                 job,
                 session_id=data_object.get("id") or "",
                 payment_intent=data_object.get("payment_intent") or "",
+                checkout_metadata=metadata,
             )
             return
 
@@ -442,7 +448,7 @@ class PaymentService:
         )
 
     @staticmethod
-    def _mark_job_paid(job: Job, *, session_id: str, payment_intent: str):
+    def _mark_job_paid(job: Job, *, session_id: str, payment_intent: str, checkout_metadata=None):
         """Activate the job for paid posting. Idempotent."""
         with transaction.atomic():
             job = Job.objects.select_for_update().get(pk=job.pk)
@@ -474,6 +480,7 @@ class PaymentService:
                 EmployerFunnelEvent.Event.PAYMENT_COMPLETED,
                 user=job.poster,
                 job=job,
+                metadata=payment_labels(checkout_metadata),
             )
 
     # ------------------------------------------------------------------
@@ -481,9 +488,9 @@ class PaymentService:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def create_feature_checkout_session(job: Job, domain_url: str, *, user=None, source=""):
+    def create_feature_checkout_session(job: Job, domain_url: str, *, user=None, source="", attribution=None):
         stripe.api_key = settings.STRIPE_SECRET_KEY
-        metadata = {"product": "feature", "job_id": str(job.id)}
+        metadata = {"product": "feature", "job_id": str(job.id), **stripe_labels(attribution)}
         if user is not None and getattr(user, "is_authenticated", False):
             metadata["user_id"] = str(user.id)
         if source:
@@ -562,7 +569,7 @@ class PaymentService:
             )
         record_employer_event(
             EmployerFunnelEvent.Event.PAYMENT_COMPLETED, job=job,
-            metadata={"product": "feature", "amount_cents": purchase.amount_cents},
+            metadata={"product": "feature", "amount_cents": purchase.amount_cents, **payment_labels(metadata)},
         )
         return purchase
 

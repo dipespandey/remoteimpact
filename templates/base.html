@@ -16,18 +16,25 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:url" content="{% block og_url %}{{ SITE_URL }}{{ request.path }}{% endblock %}">
-    <meta property="og:title" content="{% block og_title %}Remote Impact Jobs - Find Your Purpose{% endblock %}">
-    <meta property="og:description" content="{% filter seo_trim:200 %}{% block og_description %}Remote Impact is a purpose-led remote job board for builders and strategists. Find source-tracked remote roles in climate, AI safety, biosecurity, and social equity.{% endblock %}{% endfilter %}">
-    <meta property="og:image" content="{% block og_image %}{{ SITE_URL }}/static/og-image.png?v=2{% endblock %}">
-    <meta property="og:site_name" content="{{ SITE_NAME }}">
+    <meta property="og:title" content="{% block og_title %}Remote Impact — Remote jobs. Real impact.{% endblock %}">
+    <meta property="og:description" content="{% filter seo_trim:200 %}{% block og_description %}Find remote jobs in climate, global health, AI safety and social impact. Explore current roles and get matches based on the work you want to do.{% endblock %}{% endfilter %}">
+    <meta property="og:image" content="{% block og_image %}{{ SITE_URL }}/static/remote-impact-share-20261016.jpg{% endblock %}">
+    {% block og_image_dimensions %}
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    {% endblock %}
+    <meta property="og:image:alt" content="{% block og_image_alt %}Remote jobs. Real impact. Climate, global health and AI safety — Remote Impact.{% endblock %}">
+    <meta property="og:site_name" content="Remote Impact">
     <meta property="og:locale" content="en_US">
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:site" content="@remoteimpactio">
-    <meta name="twitter:title" content="{% block twitter_title %}Remote Impact Jobs{% endblock %}">
-    <meta name="twitter:description" content="{% filter seo_trim:200 %}{% block twitter_description %}Curated remote jobs in climate, AI safety & social impact. Find your purpose-driven role today.{% endblock %}{% endfilter %}">
-    <meta name="twitter:image" content="{% block twitter_image %}{{ SITE_URL }}/static/og-image.png?v=2{% endblock %}">
+    <meta name="twitter:site" content="@Genalize179311">
+    <meta name="twitter:title" content="{% block twitter_title %}Remote Impact — Remote jobs. Real impact.{% endblock %}">
+    <meta name="twitter:description" content="{% filter seo_trim:200 %}{% block twitter_description %}Find remote jobs in climate, global health, AI safety and social impact. Explore current roles and get matches based on the work you want to do.{% endblock %}{% endfilter %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ SITE_URL }}/static/remote-impact-share-20261016.jpg{% endblock %}">
+
+    <meta name="twitter:image:alt" content="{% block twitter_image_alt %}Remote jobs. Real impact. Climate, global health and AI safety — Remote Impact.{% endblock %}">
 
     <!-- Favicon -->
     {% load static %}
@@ -44,7 +51,8 @@
         "logo": "{{ SITE_URL }}/static/favicon.svg",
         "description": "Remote Impact Jobs connects purpose-driven professionals with impactful remote careers in climate, AI safety, global health, and social good.",
         "sameAs": [
-            "https://www.linkedin.com/company/remoteimpact/"
+            "https://www.linkedin.com/company/remoteimpact/",
+            "https://x.com/Genalize179311"
         ]
     }
     </script>
@@ -74,6 +82,7 @@
     <style>[x-cloak] { display: none !important; }</style>
     <script defer src="{% static 'vendor/alpine-3.17.4.min.js' %}"></script>
 
+    {% block analytics %}
     <!-- Google Analytics (privacy-friendly settings: no Google Signals, no ad personalization,
          no query strings). Click events never carry briefs, searches or emails. -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-H35R4HM1TG"></script>
@@ -99,6 +108,8 @@
             });
         })();
     </script>
+
+    {% endblock %}
 
     <style>
         .skip-link { position: absolute; left: 1rem; top: -6rem; z-index: 100; background: white; padding: 0.75rem 1rem; border-radius: 0.75rem; }
@@ -131,6 +142,7 @@
         {% url 'gigs:gig_list' as nav_gigs_url %}
         {% url 'jobs:tools_index' as nav_tools_url %}
 
+        {% block navigation %}
         <!-- Navigation -->
         <nav class="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur-md" aria-label="Main">
             <div class="container">
@@ -333,11 +345,14 @@
             </div>
         </nav>
 
+        {% endblock %}
+
         <!-- Main Content -->
         <main id="main-content" tabindex="-1" class="relative">
             {% block content %}{% endblock %}
         </main>
 
+        {% block footer %}
         <!-- Footer -->
         <footer class="relative mt-16 bg-muted/50">
             <div class="container py-10 sm:py-12">
@@ -351,7 +366,8 @@
                         <p class="mt-3 max-w-sm text-sm leading-6 text-muted-foreground">Remote jobs in climate, global health, AI safety and social impact, linked to the original postings.</p>
 
                         <div class="mt-6 max-w-sm">
-                            <p class="text-sm font-semibold text-foreground">Email updates</p>
+                            <a href="{% url 'jobs:roundup' %}?source=footer" class="text-sm font-semibold underline" data-track="roundup_signup_opened" data-track-category="newsletter">Get the weekly job picks →</a>
+                            <p class="mt-4 text-sm font-semibold text-foreground">Product updates</p>
                             <p class="mt-1 text-sm text-muted-foreground">Occasional news about new guides and features. No more than once a month.</p>
                             <form id="newsletter-form" class="mt-3 space-y-2">
                                 {% csrf_token %}
@@ -442,6 +458,8 @@
                         <a href="https://www.linkedin.com/company/remoteimpact/" target="_blank" rel="noopener noreferrer" class="transition-colors hover:text-foreground" aria-label="LinkedIn">
                             <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
                         </a>
+                        <a href="{% url 'jobs:about' %}" class="transition-colors hover:text-foreground">About</a>
+                        <a href="{% url 'jobs:contact' %}" class="transition-colors hover:text-foreground">Contact</a>
                         <a href="{% url 'jobs:privacy' %}" class="transition-colors hover:text-foreground">Privacy</a>
                         <a href="{% url 'jobs:terms' %}" class="transition-colors hover:text-foreground">Terms</a>
                         <a href="mailto:hello@remoteimpact.org" class="transition-colors hover:text-foreground">Contact</a>
@@ -449,6 +467,7 @@
                 </div>
             </div>
         </footer>
+        {% endblock %}
     </div>
 
     {% block extra_js %}{% endblock %}

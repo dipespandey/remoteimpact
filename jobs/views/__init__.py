@@ -48,6 +48,8 @@ from .resources import (
     PrivacyPolicyView,
     TermsOfServiceView,
     PublicPricingView,
+    AboutView,
+    ContactView,
 )
 from .stories import (
     StoryFeedView,
@@ -73,8 +75,11 @@ from .referral import ReferralDashboardView, ReferralLandingView
 from .job_alerts import (
     JobAlertListView,
     JobScoutPreviewView,
+    ScoutContactCaptureView,
+    ScoutContactVerifyView,
     JobScoutSignupStartView,
     JobAlertCreateView,
+    JobAlertRetryEmailView,
     JobAlertUpdateView,
     JobAlertDeleteView,
     JobAlertToggleView,

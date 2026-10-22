@@ -21,7 +21,7 @@ View: {{ job.alert_email_url|safe }}
 {% endfor %}{% endif %}{% endfor %}
 {% if jobs %}
 Were these useful matches? Rate them here:
-{{ review_url }}
+{{ review_url|safe }}
 {% endif %}
 {% if more_jobs > 0 %}
 + {{ more_jobs }} more job{{ more_jobs|pluralize }}...
@@ -31,6 +31,7 @@ Were these useful matches? Rate them here:
 {% if is_one_time %}Keep this exact search watching for new jobs with Remote Impact Pro (7 days free, then $10/month):
 {{ upgrade_url }}{% else %}View all jobs: {{ site_url }}/jobs/{% endif %}
 Manage your alerts: {{ alerts_url }}
+{{ schedule_description }}
 Track your progress and share selected job picks: {{ site_url }}/shortlist/
 Unsubscribe: {{ unsubscribe_url }}
 

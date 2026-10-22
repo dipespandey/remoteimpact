@@ -557,8 +557,9 @@ class OutreachQueueTests(TestCase):
         from jobs.services.outreach import outreach_targets
         rows = outreach_targets(days=7, sender="Dipesh")
         self.assertEqual(rows[0]["org"], self.busy)
-        self.assertIn("9 people clicked to apply", rows[0]["subject"])
-        self.assertIn("viewed 40 times", rows[0]["body"])
+        self.assertIn("9 application-link clicks", rows[0]["subject"])
+        self.assertIn("40 listing views and 9 application-link clicks", rows[0]["body"])
+        self.assertIn("do not confirm completed applications", rows[0]["body"])
         self.assertIn("/employers/report/", rows[0]["body"])
         self.assertIn("/feature/?source=outreach", rows[0]["body"])
         self.assertTrue(rows[0]["mailto"].startswith("mailto:jobs%40busy.example?"))
@@ -1069,7 +1070,7 @@ class RoleInsightsTests(TestCase):
             return Job.objects.create(title=f"Insight Role {i}", slug=f"insight-{i}", organization=org, category=cat,
                                       description="A role with a distinct description " * 5, location="Remote (US)",
                                       application_url=f"https://example.org/{i}", salary_min=Decimal(lo), salary_max=Decimal(hi),
-                                      salary_currency="USD", job_type="full-time")
+                                      salary_currency="USD", job_type="full-time", raw_data={"salaryPeriod":"YEAR"})
         jobs = [make(i, 50000 + i * 5000, 60000 + i * 5000) for i in range(10)]
         facts = role_insights(jobs[9], "Test Area")
         self.assertEqual(facts["similar_open"], 10)
@@ -1087,7 +1088,7 @@ class RoleInsightsTests(TestCase):
         # an organization without a page address must not break the page
         Organization.objects.filter(pk=org.pk).update(slug="")
         self.assertEqual(self.client.get(reverse("jobs:job_detail", args=[jobs[9].slug])).status_code, 200)
-        self.assertIn("more than 90%", html)
+        self.assertIn("midpoint exceeds 90%", html)
 
 
 class SeoTextTests(TestCase):
@@ -1100,10 +1101,39 @@ class SeoTextTests(TestCase):
         self.assertTrue(long_title.startswith("Head of Litigation at Legal"))
         huge = job_title_tag("Principal Software Engineer, Infrastructure Security and Reliability", "OpenAI")
         self.assertIn("Principal Software Engineer, Infrastructure Security and Reliability", huge)
+        self.assertIn("OpenAI", huge)
         desc = job_meta_description("Head of Litigation", "LASST", "Remote (US)", "Full-time", "$150,000 – $190,000 per year",
                                     "<p>" + "Lead the organization's litigation strategy. " * 20 + "</p>")
         self.assertLessEqual(len(desc), DESCRIPTION_LIMIT)
         self.assertIn("Remote (US), full-time, $150,000", desc)
+
+    def test_descriptions_prefer_distinct_role_responsibilities_over_shared_company_copy(self):
+        from jobs.services.seo_text import job_meta_description
+
+        shared_intro = "<p>Are you ready to join a company shaping the future of clean energy?</p>"
+        individual = shared_intro + (
+            "<p><b>Principal Duties and Responsibilities:</b></p>"
+            "<ul><li>Prepare and submit generator models for renewable resources.</li>"
+            "<li>Ensure generator model builds meet transmission-planning expectations.</li></ul>"
+        )
+        principal = shared_intro + (
+            "<p>Principal Generator Modeling Engineer to oversee models through interconnection, construction, and operations.</p>"
+            "<p><b>Principal Duties and Responsibilities:</b></p>"
+            "<ul><li>Prepare and submit generator models for renewable resources.</li>"
+            "<li>Oversee consultant work for plant models and coordinate the modelling team.</li></ul>"
+        )
+        first = job_meta_description(
+            "Generator Modeling Engineer", "The AES Corporation", "Remote (US)", "Full-time", "", individual,
+        )
+        second = job_meta_description(
+            "Generator Modeling Engineer", "The AES Corporation", "Remote (US)", "Full-time", "", principal,
+        )
+
+        self.assertNotEqual(first, second)
+        self.assertIn("Ensure generator model builds", first)
+        self.assertIn("Principal Generator Modeling Engineer", second)
+        self.assertNotIn("Are you ready", first)
+        self.assertNotIn("Are you ready", second)
 
 
 class OrgHiringSummaryTests(TestCase):
@@ -1116,13 +1146,13 @@ class OrgHiringSummaryTests(TestCase):
         org = Organization.objects.create(name="Summary Org", slug="summary-org")
         for i in range(3):
             Job.objects.create(title=f"Org Role {i}", slug=f"org-role-{i}", organization=org, category=cat, description="x " * 80,
-                               location="Remote" if i == 0 else "Remote (US)", application_url=f"https://example.org/{i}",
-                               salary_min=Decimal("60000"), salary_max=Decimal("80000"), salary_currency="USD", job_type="full-time")
+                               location="Remote (Worldwide)" if i == 0 else "Remote (US)", application_url=f"https://example.org/{i}",
+                               salary_min=Decimal("60000"), salary_max=Decimal("80000"), salary_currency="USD", job_type="full-time", raw_data={"salaryPeriod":"YEAR"})
         jobs = Job.objects.filter(organization=org)
         summary = OrganizationProfileView._hiring_summary(org, jobs)
         self.assertEqual(summary["open"], 3)
         self.assertEqual(summary["areas"], ["Org Area"])
-        self.assertEqual(summary["worldwide"], 1)
+        self.assertEqual(summary["global_labels"], 1)
         self.assertEqual(summary["pay_count"], 3)
         self.assertIn(org, list(OrganizationSitemap().items()))
         self.assertEqual(OrganizationProfileView._hiring_summary(org, Job.objects.none()), {})

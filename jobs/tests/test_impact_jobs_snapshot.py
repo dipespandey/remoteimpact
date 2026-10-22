@@ -1,13 +1,35 @@
+from datetime import timedelta
+
 from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from allauth.socialaccount.models import SocialApp
 
 from jobs.models import Category, Job, Organization
 
 
 class ImpactJobsSnapshotTests(TestCase):
+    def test_missing_fields_and_future_dates_do_not_inflate_snapshot_counts(self):
+        org = Organization.objects.create(name="Coverage Org", slug="coverage-org")
+        now = timezone.now()
+        for index, fields in enumerate([
+            dict(country=None, experience_level=None, education_level=None),
+            dict(country="", experience_level="", education_level=""),
+            dict(country="Germany", experience_level="senior", education_level="bachelor"),
+        ]):
+            Job.objects.create(title="Researcher", slug=f"coverage-{index}", organization=org,
+                               source="manual", posted_at=now - timedelta(days=1), **fields)
+        Job.objects.create(title="Future role", slug="future-snapshot", organization=org,
+                           source="manual", posted_at=now + timedelta(days=2))
+        response = self.client.get(reverse("jobs:impact_jobs_snapshot"))
+        coverage = dict(response.context["coverage"])
+        for label in ("Normalized country", "Experience level", "Education level"):
+            self.assertEqual(coverage[label]["count"], 1)
+        self.assertEqual(response.context["last_7_days"], 3)
+        self.assertEqual(response.context["last_30_days"], 3)
+
     def setUp(self):
         cache.clear()
         site = Site.objects.get_current()
@@ -69,4 +91,6 @@ class ImpactJobsSnapshotTests(TestCase):
         self.assertEqual(response.context["remote_scope"]["explicitly_global"]["count"], 1)
         self.assertEqual(response.context["remote_scope"]["named_geography"]["count"], 1)
         self.assertEqual(response.context["remote_scope"]["unclear"]["count"], 1)
-        self.assertContains(response, "Find roles open worldwide")
+        self.assertContains(response, "Check worldwide job matches")
+        self.assertContains(response, "Worldwide catalogue label")
+        self.assertContains(response, "not verified worldwide eligibility")

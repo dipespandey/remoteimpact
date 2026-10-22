@@ -6,6 +6,7 @@ import json
 from datetime import datetime
 from time import monotonic
 import re
+from itertools import islice
 
 from django.conf import settings
 from django.db import connection
@@ -43,6 +44,30 @@ def query_embedding(text):
         vector=embedding_service.get_embedding(text)
         if vector is not None:cache.set(key,vector,300)
     return vector
+
+
+def ranked_rows(query, source_query, metrics, *, scan=2000, batch_size=100):
+    """Rank lightweight IDs before fetching batches of source evidence.
+
+    Keep the lexical ranked order and scan cap. Source rows are always fetched
+    through the current filtered queryset. Semantic retrieval keeps its original
+    query shape: changing projection can change PostgreSQL's approximate-vector
+    query plan and therefore its candidate set.
+    """
+    ids = query.values_list('pk', flat=True)[:scan].iterator(chunk_size=batch_size)
+    try:
+        while True:
+            batch = list(islice(ids, batch_size))
+            if not batch:
+                break
+            loaded = {job.pk: job for job in source_query.filter(pk__in=batch)}
+            metrics['source_rows_loaded'] = metrics.get('source_rows_loaded', 0) + len(loaded)
+            for pk in batch:
+                job = loaded.get(pk)
+                if job is not None:
+                    yield job  # Missing rows were removed between reads.
+    finally:
+        ids.close()
 
 
 def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=200):
@@ -131,6 +156,36 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=20
         diagnostics['lexical_evidence_only']=True
     lexical=lexical_qs.annotate(scout_retrieval_score=score).order_by('-scout_retrieval_score','-posted_at','-id')
     branches=[('lexical',lexical)]
+    # Cache ranked IDs only for initial previews, never source text or user
+    # delivery history. Reload through the current availability/filter queryset
+    # and rerun eligibility on every hit. Newly imported jobs may take <=60s.
+    cache_key=None
+    from jobs.services import embedding_service
+    semantic_ready = (connection.vendor == "postgresql" and getattr(settings, "SCOUT_SEMANTIC_ENABLED", True)
+                      and embedding_service._model is not None)
+    if preferences.get('_scout_preview_cache') and getattr(settings,'SCOUT_RETRIEVAL_CACHE_ENABLED',connection.vendor=='postgresql'):
+        try:
+            sql,params=qs.query.sql_with_params()
+            canonical=[p.replace(minute=0,second=0,microsecond=0).isoformat() if isinstance(p,datetime) else p for p in params]
+            payload=[sql,canonical,preferences,terms,relaxed,candidate_limit,connection.vendor,semantic_ready,getattr(settings,'EMBEDDING_MODEL','')]
+            cache_key='scout-candidates-v2:'+hashlib.sha256(json.dumps(payload,sort_keys=True,default=str).encode()).hexdigest()
+            cached=cache.get(cache_key)
+            ids=cached.get('ids') if isinstance(cached,dict) else None
+            if isinstance(ids,list) and len(ids)<=400 and all(type(pk) is int for pk in ids):
+                by_id={job.pk:job for job in qs.filter(pk__in=ids)}
+                result=[]
+                for pk in ids:
+                    job=by_id.get(pk)
+                    if job is None:continue
+                    eligibility=evaluate_job(job,preferences,relaxed=relaxed)
+                    if eligibility.allowed:
+                        job._scout_caveats=eligibility.caveats
+                        result.append(job)
+                diagnostics.update(retrieval_cache='hit',semantic_used=bool(cached.get('semantic_used')),query_embedding_seconds=0.0,
+                    retrieval_seconds=round(monotonic()-retrieval_start,4))
+                return result
+        except Exception:
+            diagnostics['retrieval_cache']='unavailable'
     embedding_start=monotonic()
     if connection.vendor=='postgresql':
         try:
@@ -144,32 +199,6 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=20
             diagnostics['semantic_fallback']=True
             logger.warning('Scout semantic retrieval unavailable',exc_info=False)
     diagnostics['query_embedding_seconds']=round(monotonic()-embedding_start,4)
-    # Cache ranked IDs only for initial previews, never source text or user
-    # delivery history. Reload through the current availability/filter queryset
-    # and rerun eligibility on every hit. Newly imported jobs may take <=60s.
-    cache_key=None
-    if preferences.get('_scout_preview_cache') and getattr(settings,'SCOUT_RETRIEVAL_CACHE_ENABLED',connection.vendor=='postgresql'):
-        try:
-            sql,params=qs.query.sql_with_params()
-            canonical=[p.replace(minute=0,second=0,microsecond=0).isoformat() if isinstance(p,datetime) else p for p in params]
-            payload=[sql,canonical,preferences,terms,relaxed,candidate_limit,len(branches),getattr(settings,'EMBEDDING_MODEL','')]
-            cache_key='scout-candidates-v1:'+hashlib.sha256(json.dumps(payload,sort_keys=True,default=str).encode()).hexdigest()
-            ids=cache.get(cache_key)
-            if isinstance(ids,list) and len(ids)<=400 and all(type(pk) is int for pk in ids):
-                by_id={job.pk:job for job in qs.filter(pk__in=ids)}
-                result=[]
-                for pk in ids:
-                    job=by_id.get(pk)
-                    if job is None:continue
-                    eligibility=evaluate_job(job,preferences,relaxed=relaxed)
-                    if eligibility.allowed:
-                        job._scout_caveats=eligibility.caveats
-                        result.append(job)
-                diagnostics.update(retrieval_cache='hit',semantic_used=len(branches)>1,
-                    retrieval_seconds=round(monotonic()-retrieval_start,4))
-                return result
-        except Exception:
-            diagnostics['retrieval_cache']='unavailable'
     count=min(max(candidate_limit,1),400);scan=2000
     rejected=Counter();rankings=[];eligibility_cache={}
     diagnostics['retrieval']={}
@@ -179,7 +208,10 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=20
         # Keep SQL ordering, scan cap and eligibility semantics unchanged. A
         # server-side cursor avoids materializing 2,000 long listings when the
         # first few hundred already supply the eligible candidate limit.
-        rows=query[:scan].iterator(chunk_size=100)
+        if name == 'lexical' and getattr(settings, 'SCOUT_ID_FIRST_RETRIEVAL', True):
+            rows=ranked_rows(query, qs, diagnostics, scan=scan)
+        else:
+            rows=query[:scan].iterator(chunk_size=100)
         try:
             while len(eligible)<count:
                 if scanned % 25 == 0 and not retrieval_time_available():
@@ -208,7 +240,7 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=20
     diagnostics['semantic_used']=len(branches)>1
     result=reciprocal_rank_fusion(rankings)
     if cache_key and not diagnostics.get('retrieval_deadline_reached'):
-        try:cache.set(cache_key,[job.pk for job in result],60)
+        try:cache.set(cache_key,{'ids':[job.pk for job in result],'semantic_used':len(branches)>1},60)
         except Exception:diagnostics['retrieval_cache']='unavailable'
     diagnostics['retrieval_seconds']=round(monotonic()-retrieval_start,4)
     return result

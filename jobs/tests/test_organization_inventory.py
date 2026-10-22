@@ -83,3 +83,45 @@ class OrganizationProfileMetadataTests(TestCase):
         self.assertNotIn('Apply now', context['meta_description'])
         self.assertNotIn('Internships', context['meta_title'])
         self.assertIsNone(context['date_modified'])
+
+
+class OrganizationHiringSummaryTests(TestCase):
+    def setUp(self):
+        self.org = Organization.objects.create(name='Evidence Team', slug='evidence-team')
+
+    def job(self, slug, **kwargs):
+        return Job.objects.create(organization=self.org, slug=slug, title=slug,
+                                  source=Job.Source.MANUAL, **kwargs)
+
+    def summary(self):
+        from jobs.views.organizations import OrganizationProfileView
+        return OrganizationProfileView._hiring_summary(self.org, self.org.jobs.all())
+
+    def test_plain_remote_is_not_global_eligibility(self):
+        self.job('plain', location='Remote')
+        self.job('global', location='Remote (Global)')
+        self.job('worldwide', location='Worldwide')
+        self.assertEqual(self.summary()['global_labels'], 2)
+        self.assertNotIn('worldwide', self.summary())
+
+    def test_only_explicit_consistent_annual_usd_pay_is_summarized(self):
+        for slug, bounds, currency, raw in [
+            ('annual-a', (70000,90000),'USD',{'salaryPeriod':'YEAR'}),
+            ('annual-b', (80000,100000),'USD',{'salary_period':'year'}),
+            ('annual-c', (None,120000),'USD',{'salaryPeriod':'ANNUAL'}),
+            ('hourly', (40,60),'USD',{'salaryPeriod':'HOUR'}),
+            ('monthly', (8000,10000),'USD',{'salary_period':'month'}),
+            ('eur', (50000,60000),'EUR',{'salaryPeriod':'YEAR'}),
+            ('unknown', (200000,250000),'USD',{}),
+            ('conflict', (500000,600000),'USD',{'salaryPeriod':'YEAR','salary_period':'hour'}),
+            ('reversed', (800000,700000),'USD',{'salaryPeriod':'YEAR'}),
+        ]:
+            self.job(slug,salary_min=bounds[0],salary_max=bounds[1],salary_currency=currency,raw_data=raw)
+        summary=self.summary()
+        self.assertEqual(summary['pay_count'],3)
+        self.assertEqual(summary['pay_low'],70000)
+        self.assertEqual(summary['pay_high'],120000)
+
+    def test_too_few_comparable_figures_omit_pay_summary(self):
+        self.job('one',salary_min=75000,salary_currency='USD',raw_data={'salary_period':'year'})
+        self.assertNotIn('pay_count',self.summary())

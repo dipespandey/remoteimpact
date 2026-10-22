@@ -1,6 +1,6 @@
 Hi,
 
-We list {{ count }} of {{ org.name }}'s open remote role{{ count|pluralize }} at {{ org_url }}, checked daily against your careers page.
+We list {{ count }} of {{ org.name }}'s open remote role{{ count|pluralize }} at {{ org_url }}, with source links and recorded verification details.
 
 You can claim the page for free to correct details and get a monthly report on views and applies: {{ claim_url }}
 

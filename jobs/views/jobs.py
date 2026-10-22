@@ -15,6 +15,7 @@ from django.db.models import Q, Count
 from ..models import AssistantSubscription, ConsumerFunnelEvent, Job, Category, SeekerProfile, Application
 from ..forms import JobSubmissionForm
 from ..services.job_service import JobService
+from ..services.employer_attribution import request_labels
 from ..services.payment_service import PaymentService
 from ..services.funnel import record_consumer_event
 from ..services.unified_matching_service import UnifiedMatchingService
@@ -485,7 +486,41 @@ class JobDetailView(DetailView):
         context["related_seo_links"] = self._get_related_seo_links()
         from ..services.seo_text import job_meta_description, job_title_tag
         from ..templatetags.job_extras import compensation_display_filter as compensation_display
-        context["seo_title"] = job_title_tag(self.object.title, self.object.organization.name, location=self.object.location)
+        # Avoid duplicate title tags when the source has multiple live
+        # requisitions with the same role, employer, and location. The
+        # qualifier is factual and short, so it preserves the role and
+        # employer while making each public URL distinct in search results.
+        title_siblings = self._available_queryset().filter(
+            organization_id=self.object.organization_id,
+            title__iexact=self.object.title,
+            location=self.object.location,
+        ).exclude(pk=self.object.pk)
+        disambiguator = ""
+        if title_siblings.exists():
+            experience_labels = dict(Job.EXPERIENCE_LEVEL_CHOICES)
+            candidate = experience_labels.get(self.object.experience_level, "")
+            candidate = candidate.replace(" Level", "")
+            sibling_rows = list(title_siblings.values("experience_level", "posted_at"))
+            sibling_labels = {
+                experience_labels.get(value, "").replace(" Level", "")
+                for value in (row["experience_level"] for row in sibling_rows)
+            }
+            if not candidate or candidate in sibling_labels:
+                candidate = self.object.posted_at.strftime("%b %d, %Y") if self.object.posted_at else ""
+                if candidate and any(
+                    row["posted_at"] and row["posted_at"].strftime("%b %d, %Y") == candidate
+                    for row in sibling_rows
+                ):
+                    candidate = ""
+            if not candidate:
+                candidate = f"Listing {self.object.pk}"
+            disambiguator = candidate
+        context["seo_title"] = job_title_tag(
+            self.object.title,
+            self.object.organization.name,
+            location=self.object.location,
+            disambiguator=disambiguator,
+        )
         context["seo_description"] = job_meta_description(
             self.object.title, self.object.organization.name, self.object.location,
             self.object.get_job_type_display(), compensation_display(self.object) or "", self.object.description)
@@ -536,8 +571,6 @@ class JobDetailView(DetailView):
 
         keyword_lookup = {page["slug"]: page for page in KEYWORD_SEO_PAGES}
         keyword_slugs = ["remote-social-impact-jobs", "impact-jobs-remote", "remote-jobs-with-purpose"]
-        if job.category and job.category.slug == "climate-environment":
-            keyword_slugs.insert(0, "remote-climate-jobs")
         if job.job_type == "part-time":
             keyword_slugs.insert(0, "remote-part-time-jobs")
         org_text = f"{job.organization.name} {job.organization.organization_type}".lower()
@@ -600,19 +633,8 @@ class PostJobView(LoginRequiredMixin, FormView):
     form_class = JobSubmissionForm
 
     def get(self, request, *args, **kwargs):
-        from ..models import EmployerFunnelEvent
-        from ..services import job_stats
-        from ..services.funnel import record_employer_event
-
-        # Count people, not crawlers or reloads: bots are skipped and a visitor counts once a day.
-        if not job_stats.is_probably_bot(request):
-            try:
-                first_today = cache.add(f"post-job-view:{job_stats.visitor_key(request)}", 1, 60 * 60 * 20)
-            except Exception:  # noqa: BLE001 - analytics must never break the page
-                first_today = True
-            if first_today:
-                record_employer_event(EmployerFunnelEvent.Event.POST_JOB_VIEWED, user=request.user,
-                                      metadata={"page": "post", "source": request.GET.get("source", "")[:80]})
+        from ..services.funnel import record_employer_page_request
+        record_employer_page_request(request, page="post")
         return super().get(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -623,7 +645,7 @@ class PostJobView(LoginRequiredMixin, FormView):
 
         try:
             domain_url = self.request.build_absolute_uri("/")[:-1]
-            checkout_url = PaymentService.create_checkout_session(job, domain_url)
+            checkout_url = PaymentService.create_checkout_session(job, domain_url, attribution=request_labels(self.request))
             record_employer_event(EmployerFunnelEvent.Event.CHECKOUT_STARTED, user=self.request.user, job=job)
             return redirect(checkout_url)
         except Exception as e:
@@ -805,6 +827,13 @@ class CategoryLandingView(FastJobPaginationMixin, ListView):
             {"question": "How are these listings checked?",
              "answer": "We aggregate employer and job-board sources and show recorded source sightings and verification results on job pages. A recent source sighting is not confirmation that applications are still open."},
         ]
+        from ..services.search_guidance import category_search_guidance
+        context["search_guidance"] = category_search_guidance(cat.slug)
+        if context["search_guidance"]:
+            context["category_faqs"].append({
+                "question": context["search_guidance"]["question"],
+                "answer": context["search_guidance"]["answer"],
+            })
         from ..services.seo_text import json_ld
         page_url = settings.SITE_URL.rstrip("/") + reverse("jobs:category_landing", args=[cat.slug])
         context["category_structured_data"] = json_ld([

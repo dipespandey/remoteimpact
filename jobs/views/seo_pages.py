@@ -42,8 +42,50 @@ def comparable_salary_jobs(jobs_qs):
         .filter(Q(salary_max__isnull=True) | Q(salary_max__lte=800000))
     )
 
+def highest_advertised_jobs(jobs_qs):
+    from jobs.services.job_service import JobService
+    return JobService._order_jobs(comparable_salary_jobs(jobs_qs), 'salary-high')[:6]
+
+
+def salary_summary(jobs_qs):
+    """Compute the visible salary summary with one aggregate query.
+
+    The count is part of the same aggregate, so role and keyword pages do not
+    separately issue an existence query and a count over the same filtered set.
+    """
+    from django.db.models import Avg, Min, Max
+    stats = comparable_salary_jobs(jobs_qs).aggregate(
+        avg_min=Avg('salary_min'),
+        avg_max=Avg('salary_max'),
+        lowest=Min('salary_min'),
+        highest=Max('salary_max'),
+        count=Count('pk'),
+    )
+    if not stats['count']:
+        return None
+    return {
+        'avg_min': int(stats['avg_min'] or 0),
+        'avg_max': int(stats['avg_max'] or 0),
+        'lowest': int(stats['lowest'] or 0),
+        'highest': int(stats['highest'] or 0),
+        'count': stats['count'],
+    }
+
+
 def visible_jobs():
     return Job.objects.filter(Job.availability_filter())
+
+
+def nonprofit_inventory(base_qs):
+    unclassified = Q(organization__organization_type='')
+    source_nonprofit = Q(source=Job.Source.IDEALIST, raw_data__orgType='NONPROFIT')
+    source_unknown = (~Q(source=Job.Source.IDEALIST) | Q(raw_data__orgType__isnull=True)
+                      | Q(raw_data__orgType=None) | Q(raw_data__orgType=''))
+    named_candidate = source_unknown & Q(
+        organization__name__iregex=r'(^|[^a-z0-9_])(non[ -]?profit|ngo|charit(y|ies)|foundation)([^a-z0-9_]|$)')
+    return base_qs.filter(
+        Q(organization__organization_type__in=['nonprofit', 'foundation'])
+        | (unclassified & (source_nonprofit | named_candidate)))
 
 
 GUIDES_BY_CATEGORY = {
@@ -96,16 +138,36 @@ class RoleJobsView(FastJobPaginationMixin, ListView):
         
         return super().dispatch(request, *args, **kwargs)
 
-    def get_queryset(self):
-        """Filter jobs matching the role patterns."""
+    def _role_queryset(self):
+        """Return this request's role membership while retaining live availability.
+
+        The page uses the same role set for its paginator, category breakdown,
+        inventory facts, salary summary and featured listings.  Holding only IDs
+        avoids re-running the expensive title-pattern search for each section;
+        every subsequent query still applies ``visible_jobs()`` so a listing
+        that closes during the request cannot be displayed.
+        """
+        if not hasattr(self, "_role_job_ids"):
+            self._role_job_ids = list(
+                visible_jobs().filter(self._role_query()).order_by()
+                .values_list("pk", flat=True)
+            )
+        return visible_jobs().filter(pk__in=self._role_job_ids)
+
+    def _role_query(self):
+        """Build the configured title-matching query once for this request."""
+        if hasattr(self, "_role_query_filter"):
+            return self._role_query_filter
         patterns = self.config['patterns']
-        
-        # Build Q objects for case-insensitive title matching
         q_objects = Q()
         for pattern in patterns:
             q_objects |= Q(title__icontains=pattern)
-        
-        return visible_jobs().filter(q_objects).select_related(
+        self._role_query_filter = q_objects
+        return q_objects
+
+    def get_queryset(self):
+        """Filter live jobs matching the role patterns."""
+        return self._role_queryset().select_related(
             'organization', 'category'
         ).order_by('-posted_at')
 
@@ -142,25 +204,12 @@ class RoleJobsView(FastJobPaginationMixin, ListView):
         context.update(inventory_evidence(jobs_qs, context['category_breakdown']))
         
         # Salary stats
-        jobs_with_salary = comparable_salary_jobs(jobs_qs)
-        if jobs_with_salary.exists():
-            from django.db.models import Avg, Min, Max
-            salary_stats = jobs_with_salary.aggregate(
-                avg_min=Avg('salary_min'),
-                avg_max=Avg('salary_max'),
-                lowest=Min('salary_min'),
-                highest=Max('salary_max'),
-            )
-            context['salary_stats'] = {
-                'avg_min': int(salary_stats['avg_min'] or 0),
-                'avg_max': int(salary_stats['avg_max'] or 0),
-                'lowest': int(salary_stats['lowest'] or 0),
-                'highest': int(salary_stats['highest'] or 0),
-                'count': jobs_with_salary.count(),
-            }
+        salary_stats = salary_summary(jobs_qs)
+        if salary_stats:
+            context['salary_stats'] = salary_stats
         
         # Featured jobs (with salary, recent)
-        context['featured_jobs'] = comparable_salary_jobs(jobs_qs).order_by('-salary_max', '-posted_at')[:6]
+        context['featured_jobs'] = highest_advertised_jobs(jobs_qs)
         
         # Related role pages
         context['related_roles'] = [
@@ -170,7 +219,6 @@ class RoleJobsView(FastJobPaginationMixin, ListView):
         
         # Categories for filter
         context['categories'] = Category.objects.all()
-        
         return context
 
 
@@ -244,6 +292,10 @@ class KeywordJobsView(FastJobPaginationMixin, ListView):
             destination = reverse('jobs:keyword_jobs', args=[IMPACT_CANONICAL_SLUG])
             query = request.GET.urlencode()
             return HttpResponsePermanentRedirect(destination + ('?' + query if query else ''))
+        if self.keyword_slug == 'remote-climate-jobs':
+            destination = reverse('jobs:category_landing', args=['climate-environment'])
+            query = request.GET.urlencode()
+            return HttpResponsePermanentRedirect(destination + ('?' + query if query else ''))
         if self.keyword_slug == 'remote-positions-in-nonprofits':
             destination = reverse('jobs:keyword_jobs', args=['remote-nonprofit-jobs'])
             query = request.GET.urlencode()
@@ -254,6 +306,16 @@ class KeywordJobsView(FastJobPaginationMixin, ListView):
             raise Http404("Keyword page not found")
         
         return super().dispatch(request, *args, **kwargs)
+
+    def _nonprofit_queryset(self, base_qs):
+        # Keep one request-local membership snapshot. Re-running the raw JSON /
+        # employer-name classifier for every aggregate repeatedly scans source
+        # records; availability and user filters still apply to every query.
+        if not hasattr(self, '_nonprofit_job_ids'):
+            self._nonprofit_job_ids = list(
+                nonprofit_inventory(base_qs).order_by().values_list('pk', flat=True)
+            )
+        return base_qs.filter(pk__in=self._nonprofit_job_ids)
 
     def get_queryset(self):
         """Filter jobs based on keyword page configuration."""
@@ -284,13 +346,16 @@ class KeywordJobsView(FastJobPaginationMixin, ListView):
             # Employer identity is stronger evidence than words in a job title.
             # Unclassified employers with nonprofit-related names remain candidates,
             # explicitly explained on the page; known other types never qualify by name.
-            named_candidate = Q(organization__organization_type='') & Q(
-                organization__name__iregex=r'(^|[^a-z0-9_])(non[ -]?profit|ngo|charit(y|ies)|foundation)([^a-z0-9_]|$)')
-            queryset = base_qs.filter(
-                Q(organization__organization_type__in=['nonprofit', 'foundation']) | named_candidate)
+            queryset = self._nonprofit_queryset(base_qs)
             query = self.request.GET.get('q', '').strip()[:100] if hasattr(self, 'request') else ''
             if query:
                 queryset = queryset.filter(title__icontains=query)
+            country = self.request.GET.get('country', '').strip()[:100] if hasattr(self, 'request') else ''
+            if country:
+                queryset = queryset.filter(country__iexact=country)
+            experience = self.request.GET.get('experience', '') if hasattr(self, 'request') else ''
+            if experience in {'entry', 'internship'}:
+                queryset = queryset.filter(experience_level=experience)
             return queryset.order_by('-posted_at')
 
         elif filter_type == 'keyword':
@@ -321,6 +386,17 @@ class KeywordJobsView(FastJobPaginationMixin, ListView):
         context['keyword'] = self.config['keyword']
         context['nonprofit_page'] = self.config.get('filter_type') == 'nonprofit'
         context['role_query'] = self.request.GET.get('q', '').strip()[:100]
+        context['location_query'] = self.request.GET.get('country', '').strip()[:100]
+        experience = self.request.GET.get('experience', '')
+        context['experience_query'] = experience if experience in {'entry', 'internship'} else ''
+        if context['nonprofit_page']:
+            context['nonprofit_locations'] = list(
+                self._nonprofit_queryset(visible_jobs()).exclude(country__isnull=True).exclude(country='')
+                .order_by('country').values_list('country', flat=True).distinct()
+            )
+            if context['location_query'] and context['location_query'].casefold() not in {
+                    value.casefold() for value in context['nonprofit_locations']}:
+                context['nonprofit_locations'].append(context['location_query'])
         
         # Get category breakdown
         jobs_qs = self.get_queryset()
@@ -349,25 +425,12 @@ class KeywordJobsView(FastJobPaginationMixin, ListView):
                                          for term, label in choices if counts[term]]
         
         # Salary stats
-        jobs_with_salary = comparable_salary_jobs(jobs_qs)
-        if jobs_with_salary.exists():
-            from django.db.models import Avg, Min, Max
-            salary_stats = jobs_with_salary.aggregate(
-                avg_min=Avg('salary_min'),
-                avg_max=Avg('salary_max'),
-                lowest=Min('salary_min'),
-                highest=Max('salary_max'),
-            )
-            context['salary_stats'] = {
-                'avg_min': int(salary_stats['avg_min'] or 0),
-                'avg_max': int(salary_stats['avg_max'] or 0),
-                'lowest': int(salary_stats['lowest'] or 0),
-                'highest': int(salary_stats['highest'] or 0),
-                'count': jobs_with_salary.count(),
-            }
+        salary_stats = salary_summary(jobs_qs)
+        if salary_stats:
+            context['salary_stats'] = salary_stats
         
         # Featured jobs (with salary, recent)
-        context['featured_jobs'] = comparable_salary_jobs(jobs_qs).order_by('-salary_max', '-posted_at')[:6]
+        context['featured_jobs'] = highest_advertised_jobs(jobs_qs)
         
         # Related keyword pages
         context['related_keywords'] = [
@@ -386,11 +449,13 @@ class KeywordJobsView(FastJobPaginationMixin, ListView):
         if context['nonprofit_page']:
             context['faqs'] = [
                 {'question': 'Which employers appear in this nonprofit jobs search?',
-                 'answer': 'We include employers recorded as nonprofit or foundation, plus unclassified employers whose names explicitly mention nonprofit, NGO, charity or foundation. A name match is a discovery clue, not verification of legal nonprofit status. A job title alone does not qualify an employer.'},
+                 'answer': 'We include employers recorded as nonprofit or foundation, employers classified as nonprofit in their Idealist source listing, and unclassified employers whose names explicitly mention nonprofit, NGO, charity or foundation. Source classifications and name matches do not independently verify legal nonprofit status. Known other employer types are excluded from the source/name fallback. A job title alone does not qualify an employer.'},
                 {'question': 'Can I apply from any country?',
                  'answer': 'Remote does not mean worldwide. Some employers hire only in specified countries or time zones, and some roles require travel. Read the location and original employer posting before applying.'},
                 {'question': 'How should I compare nonprofit salaries?',
                  'answer': 'The salary summary covers only listings with comparable annual USD pay. Missing pay is unknown, not unpaid; hourly and other-currency figures are excluded from that summary.'},
+                {'question': 'How can I find entry-level remote nonprofit jobs?',
+                 'answer': 'Choose Entry-level in the experience filter to see listings recorded at that level within this nonprofit search. Entry-level does not necessarily mean no experience or no degree; check the employer requirements. For supported first steps, explore our separate fellowships and internships directory.'},
                 {'question': 'How do I apply for a remote nonprofit job?',
                  'answer': 'Open a listing to review its requirements and follow the application link to the employer or its recruiting platform. Check that the role is still open on the original posting.'},
             ]

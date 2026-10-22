@@ -3,10 +3,10 @@ from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.utils import timezone
 
-from jobs.models import AssistantSubscription, ConsumerFunnelEvent, JobAlert, UserProfile, SeekerProfile
+from jobs.models import AssistantSubscription, ConsumerFunnelEvent, JobAlert, SeekerProfile
 
 
 class Command(BaseCommand):
@@ -22,21 +22,39 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         days = max(1, options["days"])
-        since = timezone.now() - timedelta(days=days)
+        now = timezone.now()
+        since = now - timedelta(days=days)
+        period_events = ConsumerFunnelEvent.objects.filter(created_at__gte=since, created_at__lt=now)
         events = dict(
-            ConsumerFunnelEvent.objects.filter(created_at__gte=since)
+            period_events
             .values_list("event")
             .annotate(total=Count("id"))
         )
-        users = get_user_model().objects.filter(date_joined__gte=since).count()
-        profiles = UserProfile.objects.filter(user__date_joined__gte=since).count()
-        completed_profiles = SeekerProfile.objects.filter(
-            user__date_joined__gte=since, wizard_completed=True
-        ).count()
-        scouts = JobAlert.objects.filter(created_at__gte=since).count()
+        new_accounts = get_user_model().objects.filter(date_joined__gte=since, date_joined__lt=now)
+        users = new_accounts.count()
+        cohort_profiles = SeekerProfile.objects.filter(user__in=new_accounts)
+        profiles = cohort_profiles.count()
+        completed_profiles = cohort_profiles.filter(wizard_completed=True).count()
+        period_scouts = JobAlert.objects.filter(created_at__gte=since, created_at__lt=now)
+        scouts = period_scouts.count()
+        cohort_scout_users = period_scouts.filter(user__in=new_accounts).values('user_id').distinct().count()
         landings = events.get(ConsumerFunnelEvent.Event.SCOUT_LANDED, 0)
         job_views = events.get(ConsumerFunnelEvent.Event.SCOUT_JOB_VIEWED, 0)
-        paid = events.get(ConsumerFunnelEvent.Event.PAYMENT_COMPLETED, 0)
+        completions = period_events.filter(event=ConsumerFunnelEvent.Event.PAYMENT_COMPLETED)
+        trial_starts = 0
+        nontrial_events = 0
+        cohort_pro_users = set()
+        # The legacy event also records trial starts. Neither event type is a
+        # payment ledger, so never turn these counts into cash revenue.
+        cohort_ids = set(new_accounts.values_list('pk', flat=True))
+        for user_id, metadata in completions.values_list('user_id', 'metadata'):
+            metadata = metadata if isinstance(metadata, dict) else {}
+            if metadata.get('trial') is True:
+                trial_starts += 1
+            else:
+                nontrial_events += 1
+            if user_id in cohort_ids:
+                cohort_pro_users.add(user_id)
         checkout_created = (
             events.get(ConsumerFunnelEvent.Event.CHECKOUT_CREATED, 0)
             + events.get(ConsumerFunnelEvent.Event.CHECKOUT_STARTED, 0)
@@ -44,7 +62,7 @@ class Command(BaseCommand):
 
         rows = [
             ("New accounts", users),
-            ("Accounts with profile", profiles),
+            ("Accounts with seeker profile", profiles),
             ("Completed seeker profiles", completed_profiles),
             ("Scout landings", landings),
             ("Scout job views", job_views),
@@ -61,8 +79,11 @@ class Command(BaseCommand):
             ("Stripe checkouts created", checkout_created),
             ("Checkouts expired", events.get(ConsumerFunnelEvent.Event.CHECKOUT_EXPIRED, 0)),
             ("Checkout failures", events.get(ConsumerFunnelEvent.Event.CHECKOUT_FAILED, 0)),
-            ("Payments completed", paid),
-            ("Currently Pro", AssistantSubscription.objects.filter(is_subscribed=True).count()),
+            ("Recorded trial starts", trial_starts),
+            ("Non-trial completion events", nontrial_events),
+            ("Active Pro entitlements (all accounts)", AssistantSubscription.objects.filter(
+                is_subscribed=True
+            ).filter(Q(expires_at__isnull=True) | Q(expires_at__gte=now)).count()),
         ]
 
         self.stdout.write(self.style.MIGRATE_HEADING(f"Consumer funnel: last {days} days"))
@@ -71,10 +92,7 @@ class Command(BaseCommand):
 
         if options["by_source"]:
             source_counts = Counter()
-            for event in ConsumerFunnelEvent.objects.filter(
-                created_at__gte=since,
-                event=ConsumerFunnelEvent.Event.ACCOUNT_CREATED,
-            ).only("metadata"):
+            for event in period_events.filter(event=ConsumerFunnelEvent.Event.ACCOUNT_CREATED).only("metadata"):
                 metadata = event.metadata or {}
                 source = (
                     metadata.get("utm_source")
@@ -83,23 +101,18 @@ class Command(BaseCommand):
                 )
                 source_counts[str(source)] += 1
             self.stdout.write("")
-            self.stdout.write("Signup attribution")
+            self.stdout.write("Recorded signup event sources (not organic attribution)")
             for source, total in source_counts.most_common():
                 self.stdout.write(f"{source:<24} {total:>7}")
 
         def rate(numerator, denominator):
-            return 100 * numerator / denominator if denominator else 0
+            return f"{100 * numerator / denominator:.2f}%" if denominator else "n/a"
 
-        previews = events.get(ConsumerFunnelEvent.Event.SCOUT_PREVIEWED, 0)
-        created = events.get(ConsumerFunnelEvent.Event.SCOUT_CREATED, scouts)
-        checkout = checkout_created
         self.stdout.write("")
-        self.stdout.write(f"Preview -> scout          {rate(created, previews):6.2f}%")
-        self.stdout.write(f"Account -> scout          {rate(created, users):6.2f}%")
-        self.stdout.write(f"Account -> profile        {rate(profiles, users):6.2f}%")
-        self.stdout.write(f"Profile -> completed      {rate(completed_profiles, profiles):6.2f}%")
-        self.stdout.write(f"Scout landing -> created  {rate(created, landings):6.2f}%")
-        self.stdout.write(f"Scout job view -> paid     {rate(paid, job_views):6.2f}%")
-        self.stdout.write(f"Scout -> checkout created {rate(checkout, created):6.2f}%")
-        self.stdout.write(f"Checkout -> paid          {rate(paid, checkout):6.2f}%")
-        self.stdout.write(f"Account -> paid           {rate(paid, users):6.2f}%")
+        self.stdout.write("New-account cohort outcomes observed by report time")
+        self.stdout.write(f"Accounts with a new Scout: {cohort_scout_users} / {users} ({rate(cohort_scout_users, users)})")
+        self.stdout.write(f"Accounts with seeker profile: {profiles} / {users} ({rate(profiles, users)})")
+        self.stdout.write(f"Seeker profiles completed: {completed_profiles} / {profiles} ({rate(completed_profiles, profiles)})")
+        self.stdout.write(f"Accounts with Pro start event (includes trials): {len(cohort_pro_users)} / {users} ({rate(len(cohort_pro_users), users)})")
+        self.stdout.write("Event totals above can include older accounts and repeated actions; they are not a sequential conversion funnel.")
+        self.stdout.write("Trial and non-trial completion events are not verified cash receipts. Organic acquisition and collected revenue require separate attribution/payment evidence.")

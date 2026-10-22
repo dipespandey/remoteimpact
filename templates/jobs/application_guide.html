@@ -160,11 +160,11 @@
             {% endif %}
 
             <section class="surface p-5 sm:p-6">
-                <h2 class="section-title">Deadline</h2>
+                <h2 class="section-title">Application timing</h2>
                 {% if job.expires_at %}
-                <p class="mt-2 text-sm leading-6 text-foreground">Applications close on <span class="font-medium tabular-nums">{{ job.expires_at|date:"F j, Y" }}</span>. Apply a few days early in case the employer's form has problems.</p>
+                <p class="mt-2 text-sm leading-6 text-foreground">This listing expires on <span class="font-medium tabular-nums">{{ job.expires_at|date:"F j, Y" }}</span>. Check the original posting for the employer's application deadline and whether applications are still open.</p>
                 {% else %}
-                <p class="mt-2 text-sm leading-6 text-muted-foreground">No deadline is listed. Roles without a deadline usually close once the employer has enough candidates, so apply soon if you are interested.</p>
+                <p class="mt-2 text-sm leading-6 text-muted-foreground">We do not have a confirmed application deadline for this listing. Check the original posting before preparing your application.</p>
                 {% endif %}
             </section>
         </div>

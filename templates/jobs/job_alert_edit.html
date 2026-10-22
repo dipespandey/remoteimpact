@@ -21,7 +21,7 @@
             <div><label class="label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>{% if form %}{{ form.name|add_class:"input" }}{% endif %}</div>
             <div><label class="label" for="{{ form.frequency.id_for_label }}">{{ form.frequency.label }}</label>{% if form %}{{ form.frequency|add_class:"select" }}{% endif %}{% if not is_pro %}<p class="help">Recurring alerts are included with Pro.</p>{% endif %}</div>
         </div>
-        <p class="help">Your brief may be sent to DeepSeek to interpret preferences. If AI matching is enabled, your brief, preferences and public job evidence may also be processed for matching. Avoid sensitive personal information. <a href="{% url 'jobs:privacy' %}" class="underline underline-offset-2 hover:text-foreground">Privacy details</a>.</p>
+        <p class="help">Your brief may be sent to an AI provider to interpret preferences. If AI matching is enabled, your brief, preferences and public job evidence may also be processed for matching. Avoid sensitive personal information. <a href="{% url 'jobs:privacy' %}" class="underline underline-offset-2 hover:text-foreground">Privacy details</a>.</p>
         <div class="flex flex-wrap gap-2">
             <button type="submit" class="btn btn-primary">Save changes</button>
             <a href="{% url 'jobs:job_alerts' %}" class="btn btn-ghost">Cancel</a>

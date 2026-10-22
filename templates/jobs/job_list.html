@@ -4,7 +4,7 @@
 {% block title %}Impact Jobs: Browse Remote Roles | Remote Impact{% endblock %}
 {% block robots %}{% if request.GET %}noindex, follow{% else %}index, follow{% endif %}{% endblock %}
 
-{% block meta_description %}Browse {{ page_obj.paginator.count|default:"8,000+" }} remote impact jobs in climate, AI safety, nonprofit, global health, education, and social good. Find purpose-driven remote roles updated daily.{% endblock %}
+{% block meta_description %}Browse {{ page_obj.paginator.count|default:"8,000+" }} remote impact jobs in climate, AI safety, nonprofit, global health, education, and social good. Find purpose-driven roles with source links and clear remote details.{% endblock %}
 
 {% block og_title %}Impact Jobs: Browse Remote Roles | Remote Impact{% endblock %}
 {% block og_description %}Browse {{ page_obj.paginator.count|default:"8,000+" }} remote impact jobs in climate, AI safety, nonprofit, global health, education, and social good.{% endblock %}
@@ -98,6 +98,9 @@
 
     <form method="get" action="{% url 'jobs:job_list' %}" class="relative z-20" role="search">
         {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
+        {% for organization in filters.organizations %}<input type="hidden" name="organization" value="{{ organization }}">{% endfor %}
+        {% if request.GET.has_salary %}<input type="hidden" name="has_salary" value="{{ request.GET.has_salary }}">{% endif %}
+        {% if request.GET.skillset %}<input type="hidden" name="skillset" value="{{ request.GET.skillset }}">{% endif %}
         <!-- Keyword search + submit -->
         <div class="flex items-center gap-2">
             <label for="job-search" class="sr-only">Search jobs</label>
@@ -126,7 +129,7 @@
                 <div id="options-areas" @keydown.escape="open = false; document.getElementById('filter-areas').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-72">
                     <div x-show="selected.length > 0" class="sticky top-0 z-10 flex items-center justify-between bg-popover px-3 py-2">
                         <span class="text-xs text-muted-foreground"><span x-text="selected.length"></span> selected</span>
-                        <button type="button" @click.stop="selected = []" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                        <button type="button" @click.stop="selected = []; $dispatch('change')" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                     </div>
                     <div class="flex flex-col">
                         {% for category in categories %}
@@ -150,7 +153,7 @@
                 skills: JSON.parse(document.getElementById('job-filter-skill-options').textContent) || [],
                 get filteredSkills() {
                     if (!this.search) return this.skills;
-                    return this.skills.filter(s => s.display.toLowerCase().includes(this.search.toLowerCase()));
+                    return this.skills.filter(s => this.selected.includes(s.slug) || s.display.toLowerCase().includes(this.search.toLowerCase()));
                 }
             }" x-init="selected = JSON.parse(document.getElementById('job-filter-skills').textContent) || []" class="md:relative">
                 <label for="filter-skills" class="sr-only">Skills</label>
@@ -164,7 +167,7 @@
                         <input id="skill-search" aria-label="Search skills" type="text" x-model="search" placeholder="Search skills" @click.stop class="input h-9 py-1.5 text-sm">
                         <div x-show="selected.length > 0" class="flex items-center justify-between px-3 py-1">
                             <span class="text-xs text-muted-foreground"><span x-text="selected.length"></span> selected</span>
-                            <button type="button" @click.stop="selected = []" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                            <button type="button" @click.stop="selected = []; $dispatch('change')" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                         </div>
                     </div>
                     <div class="flex flex-col">
@@ -237,7 +240,7 @@
                         <input id="country-search" aria-label="Search countries" type="text" x-model="search" @click.stop placeholder="Search countries" class="input h-9 py-1.5 text-sm">
                         <div x-show="selected.length > 0" class="flex items-center justify-between px-3 py-1">
                             <span class="text-xs text-muted-foreground"><span x-text="selected.length"></span> selected</span>
-                            <button type="button" @click.stop="selected = []" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                            <button type="button" @click.stop="selected = []; $dispatch('change')" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                         </div>
                     </div>
                     <div class="flex flex-col">
@@ -286,7 +289,7 @@
                 <div id="options-role-types" @keydown.escape="open = false; document.getElementById('filter-role-types').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-60">
                     <div x-show="selected.length > 0" class="sticky top-0 z-10 flex items-center justify-between bg-popover px-3 py-2">
                         <span class="text-xs text-muted-foreground"><span x-text="selected.length"></span> selected</span>
-                        <button type="button" @click.stop="selected = []" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                        <button type="button" @click.stop="selected = []; $dispatch('change')" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                     </div>
                     <div class="flex flex-col">
                         {% for jt in job_types %}
@@ -313,7 +316,7 @@
                 <div id="options-experience" @keydown.escape="open = false; document.getElementById('filter-experience').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-60">
                     <div x-show="selected.length > 0" class="sticky top-0 z-10 flex items-center justify-between bg-popover px-3 py-2">
                         <span class="text-xs text-muted-foreground"><span x-text="selected.length"></span> selected</span>
-                        <button type="button" @click.stop="selected = []" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                        <button type="button" @click.stop="selected = []; $dispatch('change')" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                     </div>
                     <div class="flex flex-col">
                         {% for level in knowledge_filters.experience_levels %}
@@ -340,7 +343,7 @@
                 <div id="options-education" @keydown.escape="open = false; document.getElementById('filter-education').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-60">
                     <div x-show="selected.length > 0" class="sticky top-0 z-10 flex items-center justify-between bg-popover px-3 py-2">
                         <span class="text-xs text-muted-foreground"><span x-text="selected.length"></span> selected</span>
-                        <button type="button" @click.stop="selected = []" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                        <button type="button" @click.stop="selected = []; $dispatch('change')" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                     </div>
                     <div class="flex flex-col">
                         {% for level in knowledge_filters.education_levels %}
@@ -372,11 +375,11 @@
                 </button>
                 <div id="options-posted" @keydown.escape="open = false; document.getElementById('filter-posted').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-56">
                     <div class="flex flex-col">
-                        <button type="button" @click="selected = ''; open = false" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': !selected }">Any time</button>
-                        <button type="button" @click="selected = '7'; open = false" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '7' }">Less than 1 week</button>
-                        <button type="button" @click="selected = '14'; open = false" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '14' }">1-2 weeks</button>
-                        <button type="button" @click="selected = '28'; open = false" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '28' }">2-4 weeks</button>
-                        <button type="button" @click="selected = '29'; open = false" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '29' }">More than 4 weeks</button>
+                        <button type="button" @click="selected = ''; open = false; $dispatch('change')" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': !selected }">Any time</button>
+                        <button type="button" @click="selected = '7'; open = false; $dispatch('change')" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '7' }">Less than 1 week</button>
+                        <button type="button" @click="selected = '14'; open = false; $dispatch('change')" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '14' }">1-2 weeks</button>
+                        <button type="button" @click="selected = '28'; open = false; $dispatch('change')" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '28' }">2-4 weeks</button>
+                        <button type="button" @click="selected = '29'; open = false; $dispatch('change')" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '29' }">More than 4 weeks</button>
                     </div>
                 </div>
             </div>
@@ -557,9 +560,7 @@
             </label>
             {% endif %}
 
-            {% if search_query or current_categories or current_types or filters.skills or filters.educations or filters.experiences or filters.countries or filters.posted or filters.salary_min or filters.salary_max or filters.direct_apply %}
-            <a href="{% url 'jobs:job_list' %}" class="col-span-2 inline-flex h-9 items-center justify-center px-2 text-xs text-muted-foreground hover:text-foreground md:col-span-1">Clear all</a>
-            {% endif %}
+            <a id="job-clear-all" href="{% url 'jobs:job_list' %}" {% if not search_query and not current_categories and not current_types and not filters.skills and not filters.educations and not filters.experiences and not filters.countries and not filters.posted and not filters.salary_min and not filters.salary_max and not filters.direct_apply and not filters.organizations and not request.GET.has_salary and not request.GET.skillset %}style="display:none"{% endif %} class="col-span-2 inline-flex h-9 items-center justify-center px-2 text-xs text-muted-foreground hover:text-foreground md:col-span-1">Clear all</a>
         </div>
     </form>
 
@@ -683,6 +684,8 @@
     });
 })();
 </script>
+
+<div class="container">{% include "jobs/partials/roundup_invite.html" with roundup_source="job_search" %}</div>
 {% endblock %}
 
 
@@ -766,6 +769,9 @@
                 if (heading && freshHeading) heading.textContent = freshHeading.textContent;
                 if (doc.title) document.title = doc.title;
                 history.replaceState(null, '', url);
+                const clearAll = document.getElementById('job-clear-all');
+                const hasFilters = [...new URL(url, location.href).searchParams.entries()].some(([key, value]) => key !== 'sort' && key !== 'page' && value);
+                if (clearAll) clearAll.style.display = hasFilters ? '' : 'none';
                 if (window.Alpine && Alpine.initTree) Alpine.initTree(area);
                 status.hidden = true;
             } catch (error) {

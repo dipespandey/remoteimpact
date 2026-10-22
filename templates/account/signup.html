@@ -16,9 +16,9 @@
         <p class="mt-2 text-sm text-muted-foreground">No card required.</p>
         <a class="mt-3 block text-sm underline" href="{% url 'jobs:early_careers' %}">Continue browsing without an account</a>
         {% elif '/alerts/' in redirect_field_value %}
-        <p class="kicker">Your matches are ready</p>
-        <h1 class="mt-1 text-xl font-semibold tracking-tight text-foreground">Where should we send them?</h1>
-        <p class="mt-1.5 text-sm leading-6 text-muted-foreground">Create a free account and we will send one complete Job Scout result to your inbox. No card required.</p>
+        <p class="kicker">Finish your Scout</p>
+        <h1 class="mt-1 text-xl font-semibold tracking-tight text-foreground">Create an account to finish your Scout</h1>
+        <p class="mt-1.5 text-sm leading-6 text-muted-foreground">Next, review your search and run your free one-time matching email. No card required.</p>
         <ul class="check-list mt-3 space-y-1 text-xs text-muted-foreground" aria-label="What happens next">
             <li>Up to five strong current matches by email</li>
             <li>No card and no recurring alert</li>
@@ -70,7 +70,7 @@
             {% endif %}
 
             <button type="submit" class="btn btn-primary btn-lg btn-block" data-track="{% if '/early-careers/' in redirect_field_value %}early_careers_signup_submit{% else %}scout_signup_submit{% endif %}" data-track-category="{% if '/early-careers/' in redirect_field_value %}early_careers{% else %}job_scout_conversion{% endif %}">
-                {% if '/early-careers/' in redirect_field_value %}Create my free account{% elif '/alerts/' in redirect_field_value %}Email my matches{% else %}Create account{% endif %}
+                {% if '/early-careers/' in redirect_field_value %}Create my free account{% elif '/alerts/' in redirect_field_value %}Continue to my Scout{% else %}Create account{% endif %}
             </button>
         </form>
 

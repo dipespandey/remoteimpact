@@ -31,6 +31,7 @@ jobs:
       DEBUG: 'True'
       INDEXNOW_ENABLED: 'False'
       EMAIL_PROVIDER: none
+      PLAYWRIGHT_CHROMIUM_EXECUTABLE: /usr/bin/google-chrome
       HF_HUB_OFFLINE: '1'
       TRANSFORMERS_OFFLINE: '1'
     steps:

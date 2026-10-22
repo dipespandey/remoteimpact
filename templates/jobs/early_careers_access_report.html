@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Early-career opportunity access report | Remote Impact{% endblock %}
+{% block meta_description %}A transparent snapshot of funding, work format, career stage and application status across Remote Impact’s reviewed early-career opportunity directory.{% endblock %}
+{% block og_title %}What access looks like across early-career impact programmes{% endblock %}
+{% block og_description %}A dated, transparent breakdown of reviewed fellowships, internships and career programmes.{% endblock %}
+{% block canonical %}{{ SITE_URL }}{% url 'jobs:early_careers_access_report' %}{% endblock %}
+{% block content %}
+<main class="container py-8 sm:py-12">
+  <header class="page-header max-w-3xl">
+    <p class="kicker">A transparent directory snapshot</p>
+    <h1 class="page-title mt-2">What access looks like across early-career impact programmes</h1>
+    <p class="page-lede mt-3">A practical look at funding, work format and entry routes in the programmes we have reviewed—not a census of every opportunity in the sector.</p>
+    <p class="mt-4 text-sm text-muted-foreground">{{ total }} programmes · Directory reviewed through {{ last_reviewed|date:"M j, Y" }}</p>
+  </header>
+
+  <div class="mt-8 grid gap-5 lg:grid-cols-2">
+    <section class="card p-5 sm:p-6" aria-labelledby="funding-heading">
+      <h2 id="funding-heading" class="section-title">Funding information</h2>
+      <p class="mt-1 text-sm text-muted-foreground">How each programme describes participant costs or support.</p>
+      <dl class="mt-5 space-y-3">
+        {% for label, value in funding_counts %}<div class="flex items-baseline justify-between gap-4 border-b border-border/70 pb-2"><dt class="text-sm text-muted-foreground">{{ label }}</dt><dd class="text-lg font-semibold tabular-nums text-foreground">{{ value }} <span class="text-sm font-normal text-muted-foreground">of {{ total }}</span></dd></div>{% endfor %}
+      </dl>
+    </section>
+    <section class="card p-5 sm:p-6" aria-labelledby="format-heading">
+      <h2 id="format-heading" class="section-title">Work format and location</h2>
+      <p class="mt-1 text-sm text-muted-foreground">Remote descriptions can still include location, work authorization or travel limits.</p>
+      <dl class="mt-5 space-y-3">
+        {% for label, value in format_counts %}<div class="flex items-baseline justify-between gap-4 border-b border-border/70 pb-2"><dt class="text-sm text-muted-foreground">{{ label }}</dt><dd class="text-lg font-semibold tabular-nums text-foreground">{{ value }} <span class="text-sm font-normal text-muted-foreground">of {{ total }}</span></dd></div>{% endfor %}
+      </dl>
+    </section>
+    <section class="card p-5 sm:p-6" aria-labelledby="stage-heading">
+      <h2 id="stage-heading" class="section-title">Who the directory is for</h2>
+      <p class="mt-1 text-sm text-muted-foreground">Our editorial classification of the stated experience and preparation level.</p>
+      <dl class="mt-5 space-y-3">
+        {% for label, value in audience_counts %}<div class="flex items-baseline justify-between gap-4 border-b border-border/70 pb-2"><dt class="text-sm text-muted-foreground">{{ label }}</dt><dd class="text-lg font-semibold tabular-nums text-foreground">{{ value }} <span class="text-sm font-normal text-muted-foreground">of {{ total }}</span></dd></div>{% endfor %}
+      </dl>
+    </section>
+    <section class="card p-5 sm:p-6" aria-labelledby="status-heading">
+      <h2 id="status-heading" class="section-title">Application status</h2>
+      <p class="mt-1 text-sm text-muted-foreground">Status labels follow what the programme or opportunity page currently says.</p>
+      <dl class="mt-5 space-y-3">
+        {% for label, value in status_counts %}<div class="flex items-baseline justify-between gap-4 border-b border-border/70 pb-2"><dt class="text-sm text-muted-foreground">{{ label }}</dt><dd class="text-lg font-semibold tabular-nums text-foreground">{{ value }} <span class="text-sm font-normal text-muted-foreground">of {{ total }}</span></dd></div>{% endfor %}
+      </dl>
+    </section>
+  </div>
+
+  <section class="surface mt-6 p-5 sm:p-6" aria-labelledby="method-heading">
+    <h2 id="method-heading" class="section-title">How to read this snapshot</h2>
+    <ul class="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-muted-foreground">
+      <li>The counts cover the {{ total }} entries in our reviewed early-career directory as of {{ last_reviewed|date:"M j, Y" }}. They do not represent the whole impact-career market.</li>
+      <li>Categories reflect the information providers publish and our editorial classification. “Varies” and “to confirm” mean the listing does not establish a single arrangement.</li>
+      <li>“Applications open” can change at any time. Check the official programme page for current availability, deadlines, eligibility, location and work authorization before applying.</li>
+      <li>We include both application rounds and programmes that direct people to current vacancies or future intakes; a directory entry is not a promise of a live opening.</li>
+    </ul>
+    <div class="mt-5 flex flex-wrap gap-2"><a class="btn btn-primary" href="{% url 'jobs:early_careers' %}">Explore the programmes</a><a class="btn btn-outline" href="{% url 'jobs:partner_resources' %}#early-careers-feed">Share the directory</a></div>
+  </section>
+</main>
+{% endblock %}

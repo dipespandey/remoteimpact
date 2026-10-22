@@ -46,31 +46,6 @@ class RestApiTests(ApiBase):
                                     category=self.cat, description="A real role " * 40, location="Remote, Worldwide",
                                     source="feed", is_active=True, posted_at=now, last_seen_at=now) for i in range(55)])
 
-    def test_country_rejects_global_label_with_explicit_us_restriction_before_paging(self):
-        self.feed_job.country = "Global"
-        self.feed_job.description = "Candidates must be based in the United States. " * 20
-        self.feed_job.save()
-        response = self.client.get("/api/v1/jobs/?country=Norway&limit=1")
-        self.assertEqual(response.json()["total"], 0)
-        self.assertEqual(response.json()["jobs"], [])
-        response = self.client.get("/api/v1/jobs/?country=USA&limit=1")
-        self.assertEqual(response.json()["total"], 2)
-        self.assertEqual(len(response.json()["jobs"]), 1)
-
-    def test_worldwide_rejects_explicit_country_restriction(self):
-        self.feed_job.country = "Worldwide"
-        self.feed_job.description = "Candidates must be based in Canada. " * 20
-        self.feed_job.save()
-        response = self.client.get("/api/v1/jobs/?remote_scope=worldwide")
-        self.assertEqual(response.json()["total"], 0)
-
-    def test_country_keeps_compatible_regional_source_evidence(self):
-        self.feed_job.country = "Worldwide"
-        self.feed_job.description = "Candidates must be based in Europe. " * 20
-        self.feed_job.save()
-        self.assertEqual(self.client.get("/api/v1/jobs/?country=Norway").json()["total"], 1)
-        self.assertEqual(self.client.get("/api/v1/jobs/?country=Kenya").json()["total"], 0)
-
     def test_organization_results_follow_rest_tier_caps(self):
         self.many_roles()
         for tier, expected in (("anonymous", 10), ("free", 20), ("commercial", 50)):

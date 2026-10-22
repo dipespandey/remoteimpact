@@ -21,16 +21,23 @@ from .models import (
     JobAlertDelivery,
     ConsumerFunnelEvent,
     EmployerFunnelEvent,
+    ScoutContact,
 )
 
 
 @admin.register(EmployerFunnelEvent)
 class EmployerFunnelEventAdmin(admin.ModelAdmin):
-    list_display = ["event", "user", "job", "created_at"]
+    list_display = ["event", "user", "job", "request_signal", "created_at"]
     list_filter = ["event", "created_at"]
     search_fields = ["user__email", "job__title"]
     readonly_fields = ["event", "user", "job", "metadata", "created_at"]
     date_hierarchy = "created_at"
+
+    @admin.display(description="Evidence")
+    def request_signal(self, obj):
+        if obj.event in ("post_job_viewed", "feature_page_requested"):
+            return (obj.metadata or {}).get("signal", "Legacy request; human unverified")
+        return "Recorded action (not inferred from a page load)"
 
 
 @admin.register(ConsumerFunnelEvent)
@@ -577,6 +584,47 @@ class NewsletterSubscriberAdmin(admin.ModelAdmin):
     ordering = ["-created_at"]
 
 
+@admin.register(ScoutContact)
+class ScoutContactAdmin(admin.ModelAdmin):
+    list_display = [
+        "email",
+        "search_brief",
+        "contact_consent",
+        "marketing_opt_in",
+        "verified_at",
+        "source",
+        "created_at",
+    ]
+    list_filter = ["contact_consent", "marketing_opt_in", "verified_at", "source", "created_at"]
+    search_fields = ["email", "scout_flow_id"]
+    readonly_fields = [
+        "scout_flow_id",
+        "email",
+        "source",
+        "contact_consent",
+        "contact_consent_at",
+        "marketing_opt_in",
+        "marketing_opt_in_at",
+        "verified_at",
+        "created_at",
+        "updated_at",
+    ]
+    date_hierarchy = "created_at"
+    ordering = ["-created_at"]
+
+    @admin.display(description="Search brief")
+    def search_brief(self, obj):
+        event = (
+            ConsumerFunnelEvent.objects.filter(
+                event=ConsumerFunnelEvent.Event.SCOUT_PREVIEWED,
+                metadata__scout_flow_id=obj.scout_flow_id,
+            )
+            .order_by("-created_at")
+            .first()
+        )
+        return ((event.metadata or {}).get("intent_text") or "—")[:160] if event else "—"
+
+
 @admin.register(Referral)
 class ReferralAdmin(admin.ModelAdmin):
     list_display = ["referrer", "code", "referral_count", "created_at"]
@@ -629,3 +677,20 @@ class ApiKeyAdmin(admin.ModelAdmin):
     list_filter = ("tier", "is_active")
     search_fields = ("name", "email", "organization", "prefix")
     readonly_fields = ("key_hash", "prefix", "requests_today", "requests_date", "last_used_at", "created_at")
+
+
+from jobs.models import RoundupSubscriber
+
+
+@admin.register(RoundupSubscriber)
+class RoundupSubscriberAdmin(admin.ModelAdmin):
+    list_display = ("email", "topic", "source", "confirmed_at", "unsubscribed_at", "created_at")
+    list_filter = ("topic", "source", "confirmed_at", "unsubscribed_at")
+    search_fields = ("email",)
+    readonly_fields = tuple(field.name for field in RoundupSubscriber._meta.fields)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False

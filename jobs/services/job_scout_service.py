@@ -53,7 +53,7 @@ class JobScoutService:
     ROLE_NOUNS = {
         "advisor", "analyst", "architect", "consultant", "coordinator", "designer",
         "developer", "director", "engineer", "manager", "officer", "researcher",
-        "scientist", "specialist", "strategist", "writer", "assistant", "lecturer",
+        "scientist", "specialist", "strategist", "writer", "assistant", "lecturer", "support", "writing",
         "fundraiser", "recruiter", "counsel", "attorney", "paralegal",
         "therapist", "psychotherapist", "psychologist", "counselor", "worker",
     }
@@ -70,7 +70,8 @@ class JobScoutService:
         "customer", "data", "design", "devops", "engineering", "finance", "front",
         "frontend", "full", "fullstack", "legal", "machine", "marketing", "mobile",
         "operations", "platform", "policy", "product", "program", "project", "quality",
-        "research", "sales", "security", "senior", "software", "stack", "technical",
+        "research", "sales", "security", "senior", "junior", "software", "stack", "technical",
+        "programme", "education", "administrative", "documentation", "support",
         "web", "partner", "partnership", "partnerships", "fundraising",
         "clinical", "social", "licensed", "behavioral", "health",
     }
@@ -95,6 +96,8 @@ class JobScoutService:
         "nonprofit": "nonprofit-charity",
         "non-profit": "nonprofit-charity",
         "charity": "nonprofit-charity",
+        "ngo": "nonprofit-charity",
+        "ngos": "nonprofit-charity",
         "animal welfare": "animal-welfare",
         "human rights": "human-rights",
         "global health": "global-health",
@@ -246,7 +249,7 @@ skills is not a request for invented, exact job titles. JSON only."""
                 exclusions.append(canonical)
 
         preferences = {
-            "titles": cls._clean_title_candidates(clean_list("titles", 5)),
+            "titles": cls._clean_title_candidates(clean_list("titles", 8)),
             "skills": clean_list("skills", 12),
             "include_keywords": clean_list("include_keywords", 10),
             "exclude_keywords": exclusions,
@@ -288,7 +291,7 @@ skills is not a request for invented, exact job titles. JSON only."""
         ])
         preferences = cls._normalize_preferences(
             {
-                "titles": grounded_titles[:5] or fallback["titles"],
+                "titles": fallback.get("requested_role_phrases") or grounded_titles[:5] or fallback["titles"],
                 "skills": merge(grounded(normalized["skills"]), fallback["skills"], 12),
                 "include_keywords": merge(
                     grounded(normalized["include_keywords"]),
@@ -321,7 +324,7 @@ skills is not a request for invented, exact job titles. JSON only."""
         )
 
         model_exclusions = preferences["exclude_keywords"]
-        preferences.update({key: fallback[key] for key in ("constraint_version", "intent_text", "candidate_years", "required_employer_type", "actual_annual_pay", "part_time_contract", "exclude_keywords", "locations", "excluded_locations", "excluded_work_authorization", "salary_requirement", "min_salary", "required_domains", "required_skills", "required_skill_groups", "unresolved_constraints", "require_verified_location", "experience_levels") if key in fallback})
+        preferences.update({key: fallback[key] for key in ("constraint_version", "intent_text", "candidate_years", "required_employer_type", "actual_annual_pay", "part_time_contract", "exclude_keywords", "locations", "excluded_locations", "excluded_work_authorization", "salary_requirement", "min_salary", "required_domains", "required_skills", "required_skill_groups", "unresolved_constraints", "require_verified_location", "experience_levels", "requested_role_phrases", "required_category_slugs", "required_category_options") if key in fallback})
         preferences["exclude_keywords"] = list(dict.fromkeys([*preferences.get("exclude_keywords", []), *model_exclusions]))[:20]
         terms=parsed.get('retrieval_terms')
         if (getattr(settings,'SCOUT_COMBINED_PLAN_ENABLED',True) and isinstance(terms,list) and len(terms)<=6
@@ -333,12 +336,16 @@ skills is not a request for invented, exact job titles. JSON only."""
     @classmethod
     def _grounded_exclusions(cls, values, intent_text):
         """Model-found exclusions are kept only if the seeker said them in a negative clause."""
-        from jobs.services.scout_constraints import canonical_exclusion, negative_clauses
+        from jobs.services.scout_constraints import canonical_exclusion, negative_clauses, places
         negative = " ".join(clause for _, _, clause in negative_clauses(intent_text))
+        negative = re.sub(r"\b(?:country[- ]restricted\s+)?(?:roles?|jobs?|positions?)\s+(?:that|which)\s+exclude\s+[^,.;!?]+", " ", negative, flags=re.I)
         result = []
         for value in values or []:
             value = canonical_exclusion(str(value))
-            if value and len(value.split()) <= 4 and negative and cls._phrase_is_grounded(value, negative):
+            # Geography has its own rules. A model keyword must not turn
+            # "US-only" into a rejection of the ordinary word "us", or revive
+            # the country inside "jobs that exclude Pakistan".
+            if value and not places(value) and len(value.split()) <= 4 and negative and cls._phrase_is_grounded(value, negative):
                 result.append(value)
         return result
 
@@ -402,7 +409,26 @@ skills is not a request for invented, exact job titles. JSON only."""
             titles = [title for title in ("devops engineer", "software engineer")
                       if title in lowered]
 
+        from jobs.services.scout_intent import explicit_role_lists, role_list_parts, sector_request_text
+        requested_roles = []
+        for _, value in explicit_role_lists(lowered):
+            parts = role_list_parts(value)
+            # Only accept concrete role signals, not introductory "paid remote".
+            concrete = cls._clean_title_candidates(parts)
+            if concrete:
+                requested_roles = concrete
+                titles = concrete
+                break
+
         job_types = cls._explicit_job_types(lowered)
+        include = re.search(r"\binclude\b", lowered)
+        if (include and job_types == ['contract']
+                and not cls._explicit_job_types(lowered[:include.start()])
+                and re.search(r"\b(?:jobs?|roles?|positions?)\b", lowered[:include.start()])
+                and not re.search(r"\b(?:only|exclusively)\b", lowered[include.start():])):
+            # "Find paid jobs. Include short-term contracts" adds an option;
+            # it does not remove permanent roles from a previously open search.
+            job_types = []
 
         levels = []
         for terms, value in [
@@ -482,6 +508,22 @@ skills is not a request for invented, exact job titles. JSON only."""
             "category_match_mode": "any" if alternative_cause else None,
         })
 
+        # Sector hints in alternative job functions (e.g. Education Support)
+        # are useful ranking terms, not a compulsory employer sector.
+        sector_text = sector_request_text(lowered) if requested_roles else lowered
+        required_categories = [slug for slug in category_slugs if slug in cls.HARD_CATEGORY_SLUGS
+            and any(re.search(rf"\b{re.escape(phrase)}\b", sector_text)
+                    for phrase in [slug.replace('-', ' '), *[p for p,s in cls.CATEGORY_ALIASES.items() if s == slug]])]
+        sector_list = re.search(r"\b(?:jobs?|roles?|work|positions?)\s+in\s+([^.!?]+)", sector_text)
+        sector_options = [slug for slug in category_slugs if sector_list and any(
+            re.search(rf"\b{re.escape(phrase)}\b", sector_list[1]) for phrase in
+            [slug.replace('-', ' '), *[p for p,s in cls.CATEGORY_ALIASES.items() if s == slug]])]
+        if sector_list and re.search(r",|\bor\b", sector_list[1]) and len(sector_options) > 1:
+            preferences['category_match_mode'] = 'any'
+            preferences['required_category_options'] = sector_options
+        preferences['required_category_slugs'] = required_categories
+        if requested_roles:
+            preferences['requested_role_phrases'] = requested_roles
         preferences.update(constraints)
         # Explicit conjunctions of technologies require supporting evidence for both.
         if "skills in" not in lowered:
@@ -555,7 +597,7 @@ skills is not a request for invented, exact job titles. JSON only."""
                     and part.lower() not in {value.lower() for value in result}
                 ):
                     result.append(part)
-        return result[:5]
+        return result[:8]
 
     @classmethod
     def _extract_role_title_candidates(cls, title_text: str) -> list[str]:
@@ -574,7 +616,8 @@ skills is not a request for invented, exact job titles. JSON only."""
             # engineer"). Canonicalize only multi-word phrases so standalone
             # domains such as "development" remain useful search terms.
             if len(tokens) > 1:
-                tokens = [cls.ROLE_NOUN_VARIANTS.get(token, token) for token in tokens]
+                tokens = [cls.ROLE_NOUN_VARIANTS.get(token, token) if index == len(tokens)-1 else token
+                          for index, token in enumerate(tokens)]
             for index, token in enumerate(tokens):
                 if token not in cls.ROLE_NOUNS:
                     continue
@@ -613,6 +656,7 @@ skills is not a request for invented, exact job titles. JSON only."""
                 r"|\b(?:job|jobs|role|roles|position|positions|work|employment)\s+(?:on\s+)?(?:a\s+)?contract(?:\s+basis)?\b"
                 r"|\bwork(?:ing)?\s+as\s+(?:a\s+)?contractor\b"
                 r"|\b(?:part|full)[ -]?time\s+contract\b"
+                r"|\b(?:short[- ]term|paid|temporary)\s+(?:paid\s+)?contracts?\b"
                 r"|(?:^|[,;])\s*contract(?:\s+only)?\s*(?=[,;.!?]|$)",
                 "contract",
             ),
@@ -856,6 +900,8 @@ skills is not a request for invented, exact job titles. JSON only."""
     @staticmethod
     def empty_advice(diagnostics, preferences):
         """One plain-language suggestion for a Scout that found nothing."""
+        if diagnostics.get("review_incomplete"):
+            return "We could not finish checking the current roles. Please try again with the same requirements."
         rejections = dict(diagnostics.get("hard_rejections") or {})
         for key in ("title_rejected", "location_rejected", "skill_evidence_rejected", "score_rejected"):
             if diagnostics.get(key):
@@ -865,7 +911,7 @@ skills is not a request for invented, exact job titles. JSON only."""
         reason = max(rejections, key=rejections.get)
         places = ", ".join(preferences.get("locations") or [])
         if reason in ("location", "location_rejected", "excluded_location"):
-            return (f"Most current roles aren't open to people in {places}. " if places else "Most current roles have location limits that don't fit. ") +                 "Adding nearby regions or \"worldwide\" to your brief usually helps."
+            return (f"Many checked roles have hiring limits that do not fit {places}. " if places else "Many checked roles have location limits that don't fit. ") + "Keep your actual working location in the brief. Only add other locations if you can legally work from them."
         if reason == "salary":
             return "Few listings publish a salary at or above your minimum. Try removing the salary floor; we'll flag pay that isn't listed."
         if reason in ("role_evidence", "title_rejected", "score_rejected"):
@@ -902,8 +948,10 @@ skills is not a request for invented, exact job titles. JSON only."""
 
         if alert.intent_text:
             grounded = cls._fallback_parse(alert.intent_text)
-            for key in ("constraint_version", "intent_text", "candidate_years", "required_employer_type", "actual_annual_pay", "part_time_contract", "exclude_keywords", "locations", "excluded_locations", "excluded_work_authorization", "salary_requirement", "min_salary", "required_domains", "required_skills", "required_skill_groups", "unresolved_constraints", "require_verified_location", "experience_levels", "job_types"):
+            for key in ("constraint_version", "intent_text", "candidate_years", "required_employer_type", "actual_annual_pay", "part_time_contract", "exclude_keywords", "locations", "excluded_locations", "excluded_work_authorization", "salary_requirement", "min_salary", "required_domains", "required_skills", "required_skill_groups", "unresolved_constraints", "require_verified_location", "experience_levels", "job_types", "required_category_slugs", "requested_role_phrases", "category_match_mode", "required_category_options"):
                 preferences[key] = grounded.get(key, [] if key == "required_skills" else None)
+            if grounded.get('requested_role_phrases'):
+                preferences['titles'] = grounded['requested_role_phrases']
             stored_exclusions = cls._grounded_exclusions(
                 (alert.parsed_preferences or {}).get("exclude_keywords", []), alert.intent_text
             )
@@ -958,12 +1006,12 @@ skills is not a request for invented, exact job titles. JSON only."""
             qs = qs.filter(job_type__in=preferences["job_types"])
         hard_categories = [
             slug
-            for slug in preferences.get("category_slugs", [])
+            for slug in preferences.get("required_category_slugs", preferences.get("category_slugs", []))
             if slug in cls.HARD_CATEGORY_SLUGS
         ]
         if hard_categories:
             qs = qs.filter(category__slug__in=(
-                preferences["category_slugs"]
+                (preferences.get("required_category_options") or preferences["category_slugs"])
                 if preferences.get("category_match_mode") == "any" else hard_categories
             ))
         minimum_salary = preferences.get("min_salary")
@@ -975,7 +1023,7 @@ skills is not a request for invented, exact job titles. JSON only."""
         terms = cls._search_terms(preferences)
         diagnostics = diagnostics if diagnostics is not None else {}
         diagnostics.update({
-            "matcher_version": 6, "candidate_count": 0,
+            "matcher_version": 7, "candidate_count": 0,
             "location_rejected": 0, "experience_rejected": 0, "title_rejected": 0,
             "skill_evidence_rejected": 0, "score_rejected": 0,
         })
@@ -988,7 +1036,7 @@ skills is not a request for invented, exact job titles. JSON only."""
         shared_candidates = None
         if combined_review:
             from jobs.services.scout_retrieval import retrieve
-            shared_candidates = retrieve(qs, preferences, terms, diagnostics, relaxed=True, candidate_limit=400)
+            shared_candidates = retrieve(qs, preferences, terms, diagnostics, relaxed=True, candidate_limit=getattr(settings, 'SCOUT_REVIEW_POOL_LIMIT', 160))
             diagnostics['shared_candidate_pool'] = True
         candidates, scored = cls._rank_candidates(qs, preferences, terms, diagnostics, now, candidates=shared_candidates)
         if not combined_review and len(scored) < min(limit, 3):
@@ -1131,7 +1179,8 @@ skills is not a request for invented, exact job titles. JSON only."""
             job.scout_reasons = list(dict.fromkeys([*getattr(job, "scout_reasons", []), *checks]))
             job.scout_needs_confirmation = bool(getattr(job, "scout_needs_confirmation", False) or caveats or getattr(job, "scout_close_match", False))
         from jobs.services.scout_tiers import tier_for_job
-        selected.sort(key=lambda job: (tier_for_job(job) != 'good',
+        selected.sort(key=lambda job: (getattr(job, 'scout_location_priority', 1),
+                                       tier_for_job(job) != 'good',
                                        len(getattr(job, 'scout_caveats', [])),
                                        -getattr(job, 'scout_score', 0)))
         selected = selected[:limit]
@@ -1144,7 +1193,8 @@ skills is not a request for invented, exact job titles. JSON only."""
         diagnostics["review_incomplete"] = bool(any('source_review_pending' in getattr(job, 'scout_caveats', []) for job in selected) or len(selected)<limit and (
             diagnostics.get("reranker") == "review_unavailable" or
             diagnostics.get("reranker") == "review_partial" or
-            diagnostics.get("relaxed_review") == "review_unavailable" or
+            diagnostics.get("relaxed_review") in {"review_unavailable", "review_partial"} or
+            (not selected and diagnostics.get("preparation_failed")) or
             diagnostics.get("close_matches") == "unavailable" or diagnostics.get("llm_budget_exhausted") or
             diagnostics.get("retrieval_deadline_reached")))
         if not selected:

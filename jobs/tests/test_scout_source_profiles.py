@@ -71,6 +71,36 @@ class QueryConstraintParsingTests(TestCase):
 
 
 class SourceProfileTests(SimpleTestCase):
+    def test_eligibility_defers_duty_spans_but_duties_match_eager_profile(self):
+        from jobs.services import scout_source_profile as profiles
+        j = job(description='Responsibilities: Build onboarding workflows for our partners. Qualifications: Three years of experience.')
+        expected = profiles.build_profile(profiles.source_fields(j))['spans']
+        with patch.object(profiles, 'duty_spans', wraps=profiles.duty_spans) as spans:
+            profiles.profile_for(j, geography=True, workplace=True)
+            spans.assert_not_called()
+            self.assertEqual(profiles.profile_for(j)[1]['spans'], expected)
+            self.assertEqual(spans.call_count, 1)
+            self.assertIn('Build onboarding', profiles.duties(j))
+            self.assertEqual(spans.call_count, 1)
+
+    def test_reloaded_source_profile_reuses_analysis_within_workflow_only(self):
+        from jobs.services import scout_source_profile as profiles
+        with patch.object(profiles, 'build_profile', wraps=profiles.build_profile) as build:
+            diagnostics = {}
+            with bounded_workflow(diagnostics):
+                first = profiles.profile_for(job(), geography=True)[1]
+                second = profiles.profile_for(job(), workplace=True, geography=True)[1]
+                self.assertEqual(first['source_hash'], second['source_hash'])
+                self.assertIsNotNone(second['mandatory_workplace'])
+                self.assertEqual(build.call_count, 1)
+                changed = job(description='Candidates must be based in Canada.')
+                self.assertFalse(evaluate_job(changed, {'locations':['Norway']}).allowed)
+                self.assertEqual(build.call_count, 2)
+            with bounded_workflow({}):
+                profiles.profile_for(job(), geography=True)
+                self.assertEqual(build.call_count, 3)
+        self.assertEqual(diagnostics['source_profile_cache_hits'], 1)
+
     def test_labelled_remote_country_does_not_become_worldwide_after_lossy_import(self):
         from jobs.services.scout_constraints import location_compatibility
         for region in ['Canada','Europe']:
@@ -118,7 +148,10 @@ class SourceProfileTests(SimpleTestCase):
                        {**expected,'spans':{'description':'bad','requirements':[]}},
                        {**expected,'spans':{'description':[[False,12]],'requirements':[]}}]:
             j.raw_data={KEY:stored};j.__dict__.pop('_scout_source_profile',None)
-            self.assertEqual(profile_for(j,geography=True,workplace=True)[1],expected)
+            actual = profile_for(j,geography=True,workplace=True)[1]
+            self.assertEqual(actual['geography'], expected['geography'])
+            self.assertEqual(actual['mandatory_workplace'], expected['mandatory_workplace'])
+            self.assertEqual(profile_for(j)[1], expected)
 
     def test_source_edit_invalidates_profile_and_plain_text(self):
         j=job(description='<h2>Responsibilities</h2><p>Build Python services.</p>')

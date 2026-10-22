@@ -17,6 +17,7 @@ from ..models import ConsumerFunnelEvent, EmployerFunnelEvent, Job, JobDailyStat
 from ..services import job_stats
 from ..services.funnel import record_employer_event
 from ..services.job_service import JobService
+from ..services.employer_attribution import request_labels
 from ..services.payment_service import (
     FEATURE_DURATION_DAYS,
     FEATURE_PRICE_USD_CENTS,
@@ -103,14 +104,8 @@ class FeatureJobView(TemplateView):
         if not JobService.get_available_jobs().filter(pk=self.job.pk).exists():
             messages.error(request, "This listing is no longer open, so it can't be featured.")
             return redirect(self.job.get_absolute_url())
-        # Crawlers follow the "Feature it" link on every job page; don't count them as employers.
-        if not job_stats.is_probably_bot(request) and (
-            request.GET.get("source") in ("outreach", "employer_report", "employers") or job_stats.viewed_today(self.job.pk, request)
-        ):
-            record_employer_event(
-                EmployerFunnelEvent.Event.POST_JOB_VIEWED, user=request.user, job=self.job,
-                metadata={"page": "feature", "source": request.GET.get("source", "")[:80]},
-            )
+        from ..services.funnel import record_employer_page_request
+        record_employer_page_request(request, page="feature", job=self.job)
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -132,7 +127,8 @@ class FeatureJobView(TemplateView):
         domain_url = request.build_absolute_uri("/").rstrip("/")
         try:
             session = PaymentService.create_feature_checkout_session(
-                self.job, domain_url, user=request.user, source=request.POST.get("source", "")
+                self.job, domain_url, user=request.user, source=request.POST.get("source", ""),
+                attribution=request_labels(request)
             )
         except Exception:  # noqa: BLE001 - show a friendly error, keep details in logs
             logger.exception("Could not start feature checkout for job %s", self.job.pk)

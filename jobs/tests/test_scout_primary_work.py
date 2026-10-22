@@ -111,7 +111,7 @@ class SharedCandidatePoolTests(TestCase):
         with patch('jobs.services.scout_retrieval.retrieve',return_value=[known,unknown]) as retrieve,patch('jobs.services.scout_reranker.rerank',return_value=[]),patch('jobs.services.scout_close_matches.close_matches',return_value=[]):
             d={};Scout.get_matches_for_preferences(prefs,diagnostics=d,limit=3)
         self.assertEqual(retrieve.call_count,1)
-        self.assertEqual(retrieve.call_args.kwargs['candidate_limit'],400)
+        self.assertEqual(retrieve.call_args.kwargs['candidate_limit'],160)
         self.assertTrue(d['shared_candidate_pool'])
         self.assertGreater(d['provisional']['candidate_count'],0)
 

@@ -1,3 +1,4 @@
+from .views.roundup import RoundupView, RoundupConfirmView, RoundupUnsubscribeView
 from django.urls import path
 from django.views.generic import RedirectView
 from . import views
@@ -5,7 +6,8 @@ from .views.resources import home as resources_home
 from .views import shortlists, tracking, employers, applications, developers
 from .api import mcp as api_mcp, rest as api_rest
 from .views.agent_report import AgentEvidenceReportView
-from .views.early_careers import early_careers, early_careers_join, early_careers_save, early_careers_outbound
+from .views.hiring_evidence import HiringEvidenceView
+from .views.early_careers import early_careers, early_careers_join, early_careers_save, early_careers_outbound, early_careers_access_report, early_careers_embed
 from earlycareers.feeds import EarlyCareersFeed
 from .feeds import LatestJobsFeed, CategoryJobsFeed, IndeedXMLFeed, LinkedInXMLFeed
 
@@ -22,6 +24,8 @@ urlpatterns = [
     path("employers/jobs/<slug:slug>/shortlist/<int:pk>/stage/", shortlists.employer_stage, name="employer_interest_stage"),
     # Public
     path("early-careers/", early_careers, name="early_careers"),
+    path("early-careers/access-report/", early_careers_access_report, name="early_careers_access_report"),
+    path("early-careers/embed/", early_careers_embed, name="early_careers_embed"),
     path("early-careers/join/", early_careers_join, name="early_careers_join"),
     path("early-careers/<slug:slug>/save/", early_careers_save, name="early_careers_save"),
     path("early-careers/<slug:slug>/visit/", early_careers_outbound, name="early_careers_outbound"),
@@ -30,9 +34,12 @@ urlpatterns = [
     path("resources/", views.ResourcesView.as_view(), name="resources"),
     path("resources/remote-impact-jobs/", views.PartnerResourcesView.as_view(), name="partner_resources"),
     path("insights/remote-impact-jobs/", views.ImpactJobsSnapshotView.as_view(), name="impact_jobs_snapshot"),
+    path("insights/<slug:topic>/", HiringEvidenceView.as_view(), name="hiring_evidence"),
     path("how-we-check/", views.HowWeCheckView.as_view(), name="how_we_check"),
     path("domains/", views.AllDomainsView.as_view(), name="all_domains"),
     path("salaries/", views.SalaryBenchmarksView.as_view(), name="salary_benchmarks"),
+    path("about/", views.AboutView.as_view(), name="about"),
+    path("contact/", views.ContactView.as_view(), name="contact"),
     path("privacy/", views.PrivacyPolicyView.as_view(), name="privacy"),
     path("terms/", views.TermsOfServiceView.as_view(), name="terms"),
     path("pricing/", views.PublicPricingView.as_view(), name="public_pricing"),
@@ -188,6 +195,10 @@ urlpatterns = [
         views.SprintDetailView.as_view(),
         name="sprint_detail",
     ),
+    # Weekly roundup has separate explicit consent from legacy product updates.
+    path("newsletter/", RoundupView.as_view(), name="roundup"),
+    path("newsletter/confirm/<str:token>/", RoundupConfirmView.as_view(), name="roundup_confirm"),
+    path("newsletter/stop/<str:token>/", RoundupUnsubscribeView.as_view(), name="roundup_unsubscribe"),
     # Newsletter
     path(
         "newsletter/unsubscribe/<str:token>/",
@@ -235,9 +246,12 @@ urlpatterns = [
     path("referral/", views.ReferralDashboardView.as_view(), name="referral_dashboard"),
     # Job Alerts
     path("alerts/preview/", views.JobScoutPreviewView.as_view(), name="job_scout_preview"),
+    path("alerts/contact/", views.ScoutContactCaptureView.as_view(), name="scout_contact_capture"),
+    path("alerts/contact/verify/<str:token>/", views.ScoutContactVerifyView.as_view(), name="scout_contact_verify"),
     path("alerts/signup/", views.JobScoutSignupStartView.as_view(), name="job_scout_signup_start"),
     path("alerts/", views.JobAlertListView.as_view(), name="job_alerts"),
     path("alerts/create/", views.JobAlertCreateView.as_view(), name="job_alert_create"),
+    path("alerts/<int:pk>/retry-email/", views.JobAlertRetryEmailView.as_view(), name="job_alert_retry_email"),
     path(
         "alerts/unsubscribe/<str:token>/",
         views.JobAlertUnsubscribeView.as_view(),

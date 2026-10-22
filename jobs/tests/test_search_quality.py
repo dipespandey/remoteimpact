@@ -68,7 +68,7 @@ class EmptyScoutAdviceTests(TestCase):
         from jobs.services.job_scout_service import JobScoutService
         advice = JobScoutService.empty_advice({"hard_rejections": {"location": 900, "salary": 12}}, {"locations": ["Kenya"]})
         self.assertIn("Kenya", advice)
-        self.assertIn("worldwide", advice)
+        self.assertIn("legally work", advice)
         self.assertIn("salary floor", JobScoutService.empty_advice({"hard_rejections": {"salary": 50}}, {}))
         self.assertIn("related job titles", JobScoutService.empty_advice({"title_rejected": 40}, {}))
         self.assertTrue(JobScoutService.empty_advice({}, {}))

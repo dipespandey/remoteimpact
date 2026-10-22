@@ -81,18 +81,32 @@
     {% if nonprofit_page %}
     <section class="card mb-6 p-5" aria-labelledby="nonprofit-search-heading">
         <h2 id="nonprofit-search-heading" class="section-title">Find the right nonprofit role</h2>
-        <p class="mt-2 text-sm leading-relaxed text-muted-foreground">This search includes recorded nonprofits and foundations, and unclassified employers with nonprofit-related names. Name matches are discovery clues; legal nonprofit status is not verified for every employer. Remote roles may have country, time-zone or travel requirements.</p>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground">This search includes recorded nonprofits and foundations, employers classified as nonprofit by Idealist, and unclassified employers with nonprofit-related names. Name matches are discovery clues; legal nonprofit status is not verified for every employer. Remote roles may have country, time-zone or travel requirements.</p>
         <form method="get" class="mt-4 flex flex-wrap items-end gap-3">
             <div><label for="nonprofit-role" class="block text-sm font-medium">Search role titles</label>
             <input id="nonprofit-role" name="q" value="{{ role_query }}" maxlength="100" placeholder="e.g. fundraising" class="mt-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"></div>
+            <div><label for="nonprofit-location" class="block text-sm font-medium">Location listed</label>
+            <select id="nonprofit-location" name="country" aria-describedby="nonprofit-location-note" class="mt-1 rounded-lg border border-border bg-background px-3 py-2 text-sm">
+                <option value="">All location labels</option>
+                {% for location in nonprofit_locations %}<option value="{{ location }}"{% if location|lower == location_query|lower %} selected{% endif %}>{{ location }}</option>{% endfor %}
+            </select></div>
+
+            <div><label for="nonprofit-experience" class="block text-sm font-medium">Experience</label>
+            <select id="nonprofit-experience" name="experience" class="mt-1 rounded-lg border border-border bg-background px-3 py-2 text-sm">
+                <option value="">All experience levels</option>
+                <option value="entry"{% if experience_query == 'entry' %} selected{% endif %}>Entry-level</option>
+                <option value="internship"{% if experience_query == 'internship' %} selected{% endif %}>Internship</option>
+            </select></div>
             <button class="btn btn-primary btn-sm" type="submit">Find roles</button>
-            {% if role_query %}<a href="{% url 'jobs:keyword_jobs' keyword_slug='remote-nonprofit-jobs' %}" class="btn btn-outline btn-sm">Clear search</a>{% endif %}
+            {% if role_query or location_query or experience_query %}<a href="{% url 'jobs:keyword_jobs' keyword_slug='remote-nonprofit-jobs' %}" class="btn btn-outline btn-sm">Clear search</a>{% endif %}
         </form>
+        <p id="nonprofit-location-note" class="mt-2 text-xs text-muted-foreground">This filter matches the catalogue's location label, not verified applicant eligibility. Worldwide-labelled roles may still have restrictions. Check the employer's posting before applying.</p>
         {% if nonprofit_roles %}
         <nav aria-label="Nonprofit role searches" class="mt-4 flex flex-wrap gap-3 text-sm">
-            {% for role in nonprofit_roles %}<a href="?q={{ role.query|urlencode }}" class="underline underline-offset-4">{{ role.label }} ({{ role.count }})</a>{% endfor %}
+            {% for role in nonprofit_roles %}<a href="?q={{ role.query|urlencode }}{% if location_query %}&amp;country={{ location_query|urlencode }}{% endif %}{% if experience_query %}&amp;experience={{ experience_query }}{% endif %}" class="underline underline-offset-4">{{ role.label }} ({{ role.count }})</a>{% endfor %}
         </nav>
         {% endif %}
+        <p class="mt-3 text-sm text-muted-foreground">Starting out? <a href="{% url 'jobs:early_careers' %}" class="underline underline-offset-4">Compare fellowships and internships</a> by funding, work format and application status.</p>
         <p class="mt-4 text-sm text-muted-foreground">Looking beyond nonprofits? <a href="{% url 'jobs:job_list' %}" class="font-medium text-foreground underline underline-offset-4">Browse all impact jobs</a> at mission-driven companies, research groups and public-interest organizations.</p>
     </section>
     {% endif %}
@@ -120,7 +134,7 @@
             {% if featured_jobs %}
             <section aria-labelledby="highest-pay-heading">
                 <h2 id="highest-pay-heading" class="section-title px-1">Highest advertised pay</h2>
-                <p class="mt-0.5 px-1 text-xs text-muted-foreground">Listings on this page with an annual USD salary, highest maximum first.</p>
+                <p class="mt-0.5 px-1 text-xs text-muted-foreground">Listings on this page with an annual USD salary, sorted by advertised maximum (minimum when no maximum is given).</p>
                 <ul class="list-surface mt-3">
                     {% for job in featured_jobs %}
                     <li>{% include 'jobs/seo/_job_row.html' %}</li>
@@ -151,11 +165,11 @@
                 {% if page_obj.has_other_pages %}
                 <nav class="mt-6 flex flex-wrap items-center justify-between gap-3" aria-label="Pagination">
                     {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}{% if nonprofit_page and role_query %}&amp;q={{ role_query|urlencode }}{% endif %}" class="btn btn-secondary btn-sm" rel="prev">Previous</a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if nonprofit_page and role_query %}&amp;q={{ role_query|urlencode }}{% endif %}{% if nonprofit_page and location_query %}&amp;country={{ location_query|urlencode }}{% endif %}{% if nonprofit_page and experience_query %}&amp;experience={{ experience_query }}{% endif %}" class="btn btn-secondary btn-sm" rel="prev">Previous</a>
                     {% else %}<span></span>{% endif %}
                     <span class="text-xs tabular-nums text-muted-foreground">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
                     {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% if nonprofit_page and role_query %}&amp;q={{ role_query|urlencode }}{% endif %}" class="btn btn-secondary btn-sm" rel="next">Next</a>
+                    <a href="?page={{ page_obj.next_page_number }}{% if nonprofit_page and role_query %}&amp;q={{ role_query|urlencode }}{% endif %}{% if nonprofit_page and location_query %}&amp;country={{ location_query|urlencode }}{% endif %}{% if nonprofit_page and experience_query %}&amp;experience={{ experience_query }}{% endif %}" class="btn btn-secondary btn-sm" rel="next">Next</a>
                     {% else %}<span></span>{% endif %}
                 </nav>
                 {% endif %}
@@ -209,4 +223,6 @@
         </aside>
     </div>
 </div>
+
+<div class="container">{% include "jobs/partials/roundup_invite.html" with roundup_source="nonprofit" %}</div>
 {% endblock %}

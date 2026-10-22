@@ -25,6 +25,7 @@
     {% endif %}
 })();
 </script>
+{% include 'jobs/_scout_loading.html' %}
 {% endblock %}
 
 {% block content %}
@@ -47,7 +48,7 @@
                 <svg class="mt-1 h-4 w-4 shrink-0 text-emerald-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                 <div class="min-w-0 flex-1">
                     <h2 id="created-scout-heading" class="card-title">Your Scout is set up</h2>
-                    <p class="card-description mt-0.5">This is how we read your brief. Edit it if anything is wrong or your search changes.</p>
+                    <p class="card-description mt-0.5">This is how we read your brief.</p>
                     <p class="mt-4 break-words text-base leading-relaxed text-foreground">{{ created_alert.intent_text }}</p>
                     {% if created_alert.parsed_preferences.unresolved_constraints %}<div class="alert alert-warning mt-4" role="status"><p>Please edit this Scout to clarify the full location name or working hours. Time-zone overlap is not yet verified.</p></div>{% endif %}
                     <div class="mt-3 flex flex-wrap gap-1.5">
@@ -62,6 +63,22 @@
                 </div>
             </div>
         </div>
+
+        {% if initial_email_failed %}
+        <div class="alert alert-warning mt-4" role="status">
+            <div class="w-full">
+            <p>We found matches, but the email could not be sent. Your recorded results are shown below when still available.{% if not free_scout_used and not is_pro %} Your free one-time Scout is still available.{% endif %}</p>
+            {% if preview_jobs %}
+            <form method="post" action="{% url 'jobs:job_alert_retry_email' created_alert.pk %}" class="mt-3">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline btn-sm" aria-label="Retry email with these saved matches">Retry email</button>
+            </form>
+            {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% if initial_review_incomplete %}<div class="alert alert-warning mt-4" role="status"><p><strong>Match review is temporarily incomplete.</strong> We have not finished checking this search, so this does not establish whether suitable jobs are available.{% if not free_scout_used and not is_pro %} Your free one-time Scout is still available.{% endif %}</p></div>{% endif %}
+        {% if initial_results_changed and preview_jobs %}<p class="mt-4 text-sm text-muted-foreground">Some roles from this result are no longer available and have been hidden.</p>{% endif %}
 
         {% if preview_jobs %}
         {% for tier in preview_jobs|scout_tiers %}
@@ -101,14 +118,20 @@
             {% endfor %}
         </ul>{% else %}<p class="mt-3 text-sm text-muted-foreground">No {{ tier.heading|lower }} for this brief yet.</p>{% endif %}
         {% endfor %}
+        {% elif initial_review_incomplete %}
+        <p class="mt-4 text-sm text-muted-foreground">You can <a href="{% url 'jobs:job_scout_preview' %}?intent={{ created_alert.intent_text|urlencode }}&amp;source=scout_review_retry" class="underline">retry this search without sending an email</a> or <a href="{% url 'jobs:job_list' %}" class="underline">browse current jobs</a>.</p>
+        {% elif initial_result_state == 'expired' %}
+        <p class="mt-4 text-sm text-muted-foreground"><strong>The roles from this result are no longer available.</strong> <a href="{% url 'jobs:job_list' %}" class="underline">Browse current jobs</a>.</p>
+        {% elif initial_result_state == 'unavailable' %}
+        <p class="mt-4 text-sm text-muted-foreground"><strong>This saved result is unavailable.</strong> We have not run another search. <a href="{% url 'jobs:job_list' %}" class="underline">Browse current jobs</a>.</p>
         {% elif location_blocked %}
         <div class="mt-4 px-1 text-sm leading-6 text-muted-foreground">
             <p><strong class="font-medium text-foreground">Most current roles like this are limited to other countries.</strong> Many remote employers can only hire in the US or Europe, so we'd rather tell you now than charge you to wait.</p>
-            <p class="mt-2">Two things that help: add "worldwide" or nearby regions to your description, or join our waitlist for <a class="font-medium text-foreground underline decoration-border hover:decoration-foreground" href="{% url 'gigs:ai_evaluation' %}?source=empty_scout">paid AI evaluation work, open to every country</a>.</p>
+            <p class="mt-2">Review the hiring restrictions in job descriptions and keep your actual location in your brief. You can also join our waitlist for <a class="font-medium text-foreground underline decoration-border hover:decoration-foreground" href="{% url 'gigs:ai_evaluation' %}?source=empty_scout">paid AI evaluation work, open to every country</a>.</p>
         </div>
-        {% else %}<p class="mt-4 px-1 text-sm leading-6 text-muted-foreground"><strong class="font-medium text-foreground">No strong match among current listings.</strong>{% if is_pro %} Your scout will email you when a suitable new job appears.{% else %} Upgrade to Pro to keep watching for new jobs.{% endif %}</p>{% endif %}
+        {% else %}<p class="mt-4 px-1 text-sm leading-6 text-muted-foreground"><strong class="font-medium text-foreground">This Scout returned no strong matches.</strong>{% if is_pro %} Your scout will email you when a suitable new job appears.{% else %} Upgrade to Pro to keep watching for new jobs.{% endif %}</p>{% endif %}
 
-        {% if not is_pro and created_alert.frequency == 'once' and not location_blocked %}
+        {% if not is_pro and created_alert.frequency == 'once' and preview_jobs and not initial_email_failed and not initial_review_incomplete %}
         <div class="surface mt-4 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <p class="text-sm font-medium text-foreground">Keep this exact search running</p>
@@ -123,8 +146,8 @@
     <div class="{% if created_alert %}mt-10{% endif %}">
         {% if free_scout_used %}
         <section class="card p-5 sm:p-6">
-            <h2 class="section-title">Your free search is complete</h2>
-            <p class="mt-1.5 max-w-xl text-sm leading-6 text-muted-foreground">You received the one-time Job Scout included with the free plan. Upgrade to Pro to create recurring searches that watch new jobs and email you automatically.</p>
+            <h2 class="section-title">{% if initial_email_failed %}Your free search has run{% else %}Your free search is complete{% endif %}</h2>
+            <p class="mt-1.5 max-w-xl text-sm leading-6 text-muted-foreground">{% if initial_email_failed %}Your search found matches, but the email could not be sent.{% else %}Your one-time Job Scout has run.{% endif %} Upgrade to Pro to create recurring searches that watch new jobs and email you automatically.</p>
             <div class="mt-5 flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                 <a href="{% url 'jobs:job_scout_subscribe' %}?source=free_scout_used" class="btn btn-primary" data-track="job_scout_upgrade" data-track-category="job_scout">Try Pro free for 7 days</a>
                 <a href="{% url 'jobs:job_list' %}" class="btn btn-outline">Browse all jobs</a>
@@ -134,12 +157,13 @@
         {% else %}
         <section aria-labelledby="new-scout-heading">
             <div class="px-1">
-                <h2 id="new-scout-heading" class="section-title">Create a new scout</h2>
-                <p class="mt-1 text-sm text-muted-foreground">Mention the role, skills, location, salary and anything you want to exclude. Specific briefs get better matches.</p>
+                <h2 id="new-scout-heading" class="section-title">{% if scout_prefilled %}Confirm your search{% else %}Create your free Scout{% endif %}</h2>
+                <p class="mt-1 text-sm text-muted-foreground">{% if scout_prefilled %}Review your brief, then confirm to find and email your matches. No email has been sent yet.{% else %}Describe the role, location and preferences you want. Confirm below to request your matching email.{% endif %}</p>
             </div>
-            <form method="post" action="{% url 'jobs:job_alert_create' %}" class="mt-4">
+            <form method="post" data-scout-loading action="{% url 'jobs:job_alert_create' %}" class="mt-4">
                 {% csrf_token %}
-                <input type="hidden" name="source" value="{{ request.GET.source|default:'' }}">
+                <input type="hidden" name="source" value="{{ scout_source|default:'' }}">
+                <input type="hidden" name="scout_flow" value="{{ scout_flow_id }}">
                 {% if form.non_field_errors %}<div class="alert alert-destructive mb-4" role="alert">{{ form.non_field_errors }}</div>{% endif %}
                 <div class="rounded-[1.25rem] bg-card p-4 shadow-lift transition-shadow focus-within:shadow-[0_0_0_1px_rgb(20_20_25/0.08),0_10px_28px_-10px_rgb(20_20_25/0.18)] sm:p-5">
                     <label class="sr-only" for="{{ form.intent_text.id_for_label }}">{{ form.intent_text.label }}</label>
@@ -155,11 +179,11 @@
                                 {% if is_pro %}{% if form %}{{ form.frequency|add_class:"select py-2 text-sm" }}{% endif %}{% else %}{{ form.frequency.as_hidden }}<div class="flex min-h-[38px] items-center rounded-xl bg-muted px-3.5 text-sm text-muted-foreground">One-time matching email</div>{% endif %}
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary shrink-0" data-track="job_scout_create" data-track-category="job_scout">Find my best matches</button>
+                        <button type="submit" class="btn btn-primary shrink-0" data-track="job_scout_create" data-track-category="job_scout">{% if is_pro %}Start my Scout{% else %}Find and email my matches{% endif %}</button>
                     </div>
                 </div>
                 {% if form.intent_text.errors %}<p class="field-error px-1">{{ form.intent_text.errors|striptags }}</p>{% endif %}
-                <p class="help px-1">Your brief may be sent to DeepSeek to interpret preferences. If AI matching is enabled, your brief, preferences and public job evidence may also be processed for matching. Avoid sensitive personal information. <a href="{% url 'jobs:privacy' %}" class="underline underline-offset-2 hover:text-foreground">Privacy details</a>.</p>
+                <p class="help px-1">Your brief may be sent to an AI provider to interpret preferences. If AI matching is enabled, your brief, preferences and public job evidence may also be processed for matching. Avoid sensitive personal information. <a href="{% url 'jobs:privacy' %}" class="underline underline-offset-2 hover:text-foreground">Privacy details</a>.</p>
             </form>
         </section>
         {% endif %}
@@ -177,9 +201,9 @@
                 {% for alert in alerts %}
                 <li class="flex flex-col gap-3 rounded-xl px-4 py-3.5 transition-colors hover:bg-muted/60 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                     <div class="min-w-0">
-                        <h3 class="flex flex-wrap items-center gap-2 text-base font-semibold text-foreground"><span class="break-words">{{ alert.name|default:"Job Scout" }}</span> {% if alert.frequency == 'once' %}<span class="badge badge-outline">Completed</span>{% elif alert.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-outline">Paused</span>{% endif %}</h3>
+                        <h3 class="flex flex-wrap items-center gap-2 text-base font-semibold text-foreground"><span class="break-words">{{ alert.name|default:"Job Scout" }}</span> {% if alert.pk == created_alert.pk and initial_review_incomplete %}<span class="badge badge-outline">Review incomplete</span>{% elif alert.frequency == 'once' %}<span class="badge badge-outline">Completed</span>{% elif alert.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-outline">Paused</span>{% endif %}</h3>
                         {% if alert.intent_text %}<p class="mt-0.5 break-words text-sm text-muted-foreground sm:truncate">{{ alert.intent_text }}</p>{% elif alert.keywords %}<p class="mt-0.5 break-words text-sm text-muted-foreground sm:truncate">Keywords: {{ alert.keywords }}</p>{% endif %}
-                        <p class="job-meta"><span>{{ alert.get_frequency_display }}</span>{% if alert.last_sent_at %}<span>Last email {{ alert.last_sent_at|timesince }} ago</span>{% else %}<span>Watching for first match</span>{% endif %}<span class="tabular-nums">{{ alert.delivery_count }} delivered</span></p>
+                        <p class="job-meta"><span>{{ alert.get_frequency_display }}</span>{% if alert.last_sent_at %}<span>Last email {{ alert.last_sent_at|timesince }} ago</span>{% elif alert.frequency == 'once' %}<span>No email sent</span>{% else %}<span>Watching for first match</span>{% endif %}<span class="tabular-nums">{{ alert.delivery_count }} delivered</span></p>
                     </div>
                     <div class="flex shrink-0 items-center gap-1 self-end sm:self-auto">
                         {% if is_pro or alert.frequency != 'once' %}<a href="{% url 'jobs:job_alert_edit' alert.pk %}" class="btn btn-ghost btn-sm w-8 px-0" title="Edit scout" aria-label="Edit scout"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.4-9.4a2 2 0 112.8 2.8L11.8 15H9v-2.8l8.6-8.6z"/></svg></a>{% endif %}

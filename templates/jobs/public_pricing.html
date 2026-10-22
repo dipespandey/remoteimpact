@@ -45,7 +45,7 @@
         <li>One AI Job Scout with one match email</li>
         <li>Three cover-letter or interview-prep generations</li>
       </ul>
-      <a href="{% url 'jobs:job_scout_preview' %}?intent=Remote%20impact%20jobs%20that%20fit%20my%20skills&amp;source=pricing_free" data-track="pricing_free_scout" data-track-category="pricing" class="btn btn-outline btn-lg btn-block mt-6">Try the free Scout</a>
+      <button type="button" id="pricing-scout-launcher" aria-haspopup="dialog" aria-controls="pricing-scout-dialog" data-track="pricing_free_scout" data-track-category="pricing" class="btn btn-outline btn-lg btn-block mt-6">Try the free Scout</button>
     </article>
 
     <article class="card flex flex-col p-5 sm:p-6">
@@ -92,4 +92,48 @@
 
   <p class="mt-12 text-xs text-muted-foreground">Hiring? See <a class="font-medium text-foreground underline decoration-border hover:decoration-foreground" href="{% url 'jobs:employers' %}">employer pricing</a>. Other questions: <a class="font-medium text-foreground underline decoration-border hover:decoration-foreground" href="mailto:hello@remoteimpact.org">hello@remoteimpact.org</a>.</p>
 </div>
+<dialog id="pricing-scout-dialog" aria-labelledby="pricing-scout-title" class="card w-full max-w-[680px] max-h-[90vh] overflow-auto p-5 sm:p-8">
+  <form method="dialog" class="flex justify-end">
+    <button class="btn btn-ghost btn-sm" aria-label="Close job brief editor">Close</button>
+  </form>
+  <h2 id="pricing-scout-title" class="text-2xl font-semibold tracking-tight text-foreground">Tell us what a good next role looks like.</h2>
+  <p class="mt-2 text-muted-foreground">Include the role, skills, location, seniority, salary, mission, or anything you want excluded.</p>
+  <form method="post" action="{% url 'jobs:job_scout_preview' %}" data-scout-loading class="mt-6">
+    {% csrf_token %}
+    <input type="hidden" name="source" value="pricing_free">
+    <label for="pricing-scout-intent" class="label">Your job brief</label>
+    <textarea id="pricing-scout-intent" name="intent" required minlength="20" maxlength="2000" autocomplete="off" autofocus class="textarea min-h-[158px] resize-y text-base" placeholder="For example: Remote Python engineering roles at climate organizations. I am mid-level, based in Europe. Please exclude sales and internships."></textarea>
+    <p class="help">Specific details help us return better matches.</p>
+    {% include 'jobs/_scout_composer_contact.html' with contact_prefix='pricing-scout' %}
+    <button type="submit" class="btn btn-primary btn-lg btn-block mt-6">Preview my best matches</button>
+    <p class="help mt-3">Your brief may be sent to an AI provider to interpret preferences; job evidence may also be processed for matching. Avoid sensitive personal information. <a href="{% url 'jobs:privacy' %}" class="underline">Privacy details</a>.</p>
+  </form>
+</dialog>
+<style>#pricing-scout-dialog::backdrop { background: rgb(0 0 0 / .5); backdrop-filter: blur(4px); } #pricing-scout-dialog { margin: auto; width: min(680px, calc(100% - 2rem)); }</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const launcher = document.getElementById('pricing-scout-launcher');
+  const dialog = document.getElementById('pricing-scout-dialog');
+  const input = document.getElementById('pricing-scout-intent');
+  let previousOverflow;
+  launcher.addEventListener('click', function () {
+    previousOverflow = document.body.style.overflow;
+    dialog.showModal();
+    document.body.style.overflow = 'hidden';
+    input.focus();
+  });
+  dialog.addEventListener('close', function () {
+    document.body.style.overflow = previousOverflow;
+    launcher.focus();
+  });
+  dialog.addEventListener('click', function (event) {
+    const bounds = dialog.getBoundingClientRect();
+    if (event.target === dialog && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) dialog.close();
+  });
+})();
+</script>
+{% include 'jobs/_scout_loading.html' %}
 {% endblock %}

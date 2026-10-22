@@ -8,6 +8,7 @@ import logging
 from datetime import timedelta
 
 from django.core.management.base import BaseCommand
+from django.db import transaction
 from django.utils import timezone
 
 from jobs.models import AssistantSubscription, JobAlert, JobAlertDelivery
@@ -34,7 +35,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--force",
             action="store_true",
-            help="Send even if already sent today",
+            help="Ignore the send interval, but never resend already delivered jobs",
         )
 
     def handle(self, *args, **options):
@@ -75,81 +76,88 @@ class Command(BaseCommand):
         skipped_count = 0
         error_count = 0
 
-        for alert in alerts:
-            subscription = AssistantSubscription.get_or_create_for_user(alert.user)
-            if not subscription.is_pro_active():
-                skipped_count += 1
-                if options["verbosity"] >= 2:
-                    self.stdout.write(
-                        f"  Skipped {alert.user.email}: recurring alerts require Pro"
-                    )
-                continue
-
-            # Get matching jobs since last send
-            jobs = list(alert.get_matching_jobs()[:10])
-            
-            if not jobs:
-                skipped_count += 1
-                if options["verbosity"] >= 2:
-                    self.stdout.write(f"  Skipped {alert.user.email}: no matching jobs")
-                continue
-
-            if dry_run:
-                self.stdout.write(
-                    f"[DRY RUN] Would send to {alert.user.email}: "
-                    f"{len(jobs)} jobs for alert '{alert.name or 'Unnamed'}'"
-                )
-                sent_count += 1
-                continue
-
-            # Send the email
+        # Snapshot IDs only. Every worker rechecks eligibility under the row lock.
+        for alert_id in list(alerts.values_list("pk", flat=True)):
             try:
-                success = email_service.send_job_alert(alert, jobs)
-                
-                if success:
-                    JobAlertDelivery.objects.bulk_create(
-                        [
-                            JobAlertDelivery(
-                                alert=alert,
-                                job=job,
-                                match_score=getattr(job, "scout_score", 0),
-                                match_reasons=getattr(job, "scout_reasons", []),
-                            )
-                            for job in jobs
-                        ],
-                        ignore_conflicts=True,
-                    )
-                    from jobs.services import job_stats
-                    for delivered_job in jobs:
-                        job_stats.record(delivered_job.pk, "scout_deliveries", dedupe=False)
-                    alert.last_sent_at = timezone.now()
-                    alert.save(update_fields=["last_sent_at"])
-                    sent_count += 1
-                    
-                    if options["verbosity"] >= 2:
-                        self.stdout.write(
-                            self.style.SUCCESS(f"  Sent to {alert.user.email}: {len(jobs)} jobs")
-                        )
-                else:
-                    error_count += 1
-                    self.stdout.write(
-                        self.style.WARNING(f"  Failed to send to {alert.user.email}")
-                    )
-            except Exception as e:
-                error_count += 1
-                logger.error(f"Error sending alert to {alert.user.email}: {e}")
-                self.stdout.write(
-                    self.style.ERROR(f"  Error sending to {alert.user.email}: {e}")
+                outcome, delivered = self._process_alert(
+                    alert_id, frequencies, dry_run=dry_run, force=force,
                 )
+                if outcome == "sent":
+                    sent_count += 1
+                    if not dry_run:
+                        # Optional metrics must not undo accepted-mail bookkeeping.
+                        from jobs.services import job_stats
+                        for job in delivered:
+                            try:
+                                job_stats.record(job.pk, "scout_deliveries", dedupe=False)
+                            except Exception:
+                                logger.exception("Could not record Scout delivery metric for alert %s", alert_id)
+                elif outcome == "error":
+                    error_count += 1
+                    self.stdout.write(self.style.WARNING(f"  Failed to send Scout #{alert_id}"))
+                else:
+                    skipped_count += 1
+            except Exception:
+                error_count += 1
+                logger.exception("Error processing Scout #%s", alert_id)
+                self.stdout.write(self.style.ERROR(f"  Error processing Scout #{alert_id}"))
 
         # Summary
         self.stdout.write("")
         status = "[DRY RUN] " if dry_run else ""
         self.stdout.write(
             self.style.SUCCESS(
-                f"{status}Done: Sent {sent_count}, Skipped {skipped_count} (no jobs), Errors {error_count}"
+                f"{status}Done: Sent {sent_count}, Skipped {skipped_count}, Errors {error_count}"
             )
         )
+
+
+    def _process_alert(self, alert_id, frequencies, *, dry_run, force):
+        """Serialize overlapping runs and persist receipts before optional metrics.
+
+        The row lock covers the final due check, matching, provider submission and
+        receipt writes. A second worker skips a busy alert, or sees its updated
+        timestamp and delivery ledger on its next pass. Provider acceptance is
+        still not proof of inbox delivery.
+        """
+        with transaction.atomic():
+            alert = (JobAlert.objects.select_for_update(skip_locked=True)
+                     .filter(pk=alert_id, is_active=True, frequency__in=frequencies).first())
+            if alert is None:
+                return "skipped", []
+            wait = timedelta(minutes=4) if alert.frequency == "instant" else timedelta(hours=20)
+            if not force and alert.last_sent_at and alert.last_sent_at >= timezone.now() - wait:
+                return "skipped", []
+            subscription = AssistantSubscription.get_or_create_for_user(alert.user)
+            if not subscription.is_pro_active():
+                return "skipped", []
+
+            jobs = list(alert.get_matching_jobs()[:10])
+            # Defense in depth if a stale candidate list bypasses matcher dedup.
+            delivered_ids = set(alert.deliveries.filter(job_id__in=[job.pk for job in jobs])
+                                .values_list("job_id", flat=True))
+            seen = set(delivered_ids)
+            pending = []
+            for job in jobs:
+                if job.pk not in seen:
+                    seen.add(job.pk)
+                    pending.append(job)
+            if not pending:
+                return "skipped", []
+            if dry_run:
+                self.stdout.write(f"[DRY RUN] Would send Scout #{alert.pk}: {len(pending)} new jobs")
+                return "sent", pending
+            if not email_service.send_job_alert(alert, pending):
+                return "error", []
+            JobAlertDelivery.objects.bulk_create([
+                JobAlertDelivery(alert=alert, job=job,
+                                 match_score=getattr(job, "scout_score", 0),
+                                 match_reasons=getattr(job, "scout_reasons", []))
+                for job in pending
+            ])
+            alert.last_sent_at = timezone.now()
+            alert.save(update_fields=["last_sent_at"])
+            return "sent", pending
 
 
 # Need this import for the Q filter

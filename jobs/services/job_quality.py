@@ -26,12 +26,19 @@ def normalize_salary(job) -> list[str]:
         multiplier = {"MONTH": 12}.get(period)
         quality = (raw.get("quality_enrichment") or {}).get("salary", {})
         if multiplier and quality.get("method") != "source_period_normalization_v1":
-            if minimum is not None:
-                job.salary_min = minimum * multiplier
-                changed.append("salary_min")
-            if maximum is not None:
-                job.salary_max = maximum * multiplier
-                changed.append("salary_max")
+            from jobs.services.job_facts import annual_salary_matches
+            already_annual = annual_salary_matches(
+                raw.get("job_facts"), job.title, job.organization.name,
+                "\n".join((job.description or "", job.requirements or "")),
+                minimum, maximum, job.salary_currency,
+            )
+            if not already_annual:
+                if minimum is not None:
+                    job.salary_min = minimum * multiplier
+                    changed.append("salary_min")
+                if maximum is not None:
+                    job.salary_max = maximum * multiplier
+                    changed.append("salary_max")
             quality_data = dict(raw.get("quality_enrichment") or {})
             quality_data["salary"] = {
                 "method": "source_period_normalization_v1",
@@ -187,6 +194,14 @@ def safe_application_destination(value: str) -> str:
     return ""
 
 
+# Explicit legal residency and work eligibility, not an employer's operating area.
+LEGAL_RESIDENCY_CLAUSE = (
+    r"\b(?:must|need to)\s+(?:already\s+)?(?:have|hold)\s+"
+    r"(?:the\s+)?(?:legal\s+)?right\s+to\s+(?:reside|live)\s+and\s+"
+    r"(?:to\s+)?work\s+(?:in|within)\b"
+)
+
+
 def schema_applicant_countries(job) -> list[str]:
     """Return only explicit, unambiguous source eligibility countries.
 
@@ -200,10 +215,12 @@ def schema_applicant_countries(job) -> list[str]:
     body = " ".join(plain_job_field(job, field) for field in ("description", "requirements"))
     body = re.sub(r"\bU\.S\.(?:A\.)?", "United States", body, flags=re.I)
     positive = []
+    legal_residency = False
     for clause in re.split(r"[.!?;\n]", body):
         if not re.search(
             r"remote\s+(?:within|from|in)|(?:must|need to|only)\s+(?:be\s+)?(?:based|reside|located)|"
-            r"(?:candidates|applicants)\s+(?:must\s+)?(?:be\s+)?(?:based|reside|located)",
+            r"(?:candidates|applicants)\s+(?:must\s+)?(?:be\s+)?(?:based|reside|located)|"
+            + LEGAL_RESIDENCY_CLAUSE,
             clause, re.I,
         ):
             continue
@@ -215,6 +232,7 @@ def schema_applicant_countries(job) -> list[str]:
         codes = set().union(*found.values()) if found else set()
         if codes:
             positive.append(codes)
+            legal_residency |= bool(re.search(LEGAL_RESIDENCY_CLAUSE, clause, re.I))
     if not positive or any(codes != positive[0] for codes in positive[1:]):
         return []
     selected = positive[0]
@@ -224,11 +242,15 @@ def schema_applicant_countries(job) -> list[str]:
             return []
         offered = set().union(*metadata.values()) if metadata else set()
         if offered and offered != selected:
-            return []
+            # The imported country is a single primary country, not a complete
+            # legal eligibility list. An explicit legal list may include it.
+            # A location label, or any country outside the list, still conflicts.
+            if not (field == "country" and legal_residency and offered <= selected):
+                return []
     # Exclusions elsewhere in the source may narrow the positive scope.
     if re.search(r"\b(?:not eligible|cannot hire|unable to hire|excluding|except)\b", body, re.I):
         return []
-    return [str(countries.name(code)) for code in sorted(selected)]
+    return ["Kosovo" if code == "XK" else str(countries.name(code)) for code in sorted(selected)]
 
 
 EU_COUNTRY_CODES = "AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE".split()
@@ -236,7 +258,8 @@ LABEL_COUNTRY_CODES = {"US": ["US"], "USA": ["US"], "UK": ["GB"], "EU": EU_COUNT
 RESIDENCY_CLAUSE = (
     r"remote\s+(?:within|from|in)|(?:must|need to|only)\s+(?:be\s+)?(?:based|reside|located)|"
     r"(?:candidates|applicants)\s+(?:must\s+)?(?:be\s+)?(?:based|reside|located)|work\s+authori[sz]ation|"
-    r"eligible\s+to\s+work|right\s+to\s+work"
+    r"eligible\s+to\s+work|right\s+to\s+work|"
+    + LEGAL_RESIDENCY_CLAUSE
 )
 
 
@@ -373,8 +396,14 @@ def job_posting_schema_json(job, site_url: str) -> str:
     elif location := _schema_physical_location(raw):
         data["jobLocation"] = location
     salary_meta = (raw.get("quality_enrichment") or {}).get("salary") or {}
+    from jobs.services.job_facts import annual_salary_matches
+    fact_annual = annual_salary_matches(
+        raw.get("job_facts"), job.title, job.organization.name,
+        "\n".join((job.description or "", job.requirements or "")),
+        job.salary_min, job.salary_max, job.salary_currency,
+    )
     annual_evidence = (
-        job.source == job.Source.MANUAL
+        fact_annual or job.source == job.Source.MANUAL
         or str(raw.get("salaryPeriod") or "").upper() == "YEAR"
         or salary_meta.get("method") == "source_period_normalization_v1"
     )
@@ -385,7 +414,7 @@ def job_posting_schema_json(job, site_url: str) -> str:
         annual_evidence = False
     salary_values = [value for value in (job.salary_min, job.salary_max) if value is not None]
     currency = str(job.salary_currency or "")
-    currency_evidence = job.source == job.Source.MANUAL or any(
+    currency_evidence = fact_annual or job.source == job.Source.MANUAL or any(
         str(raw.get(field) or "").upper() == currency for field in ("salaryCurrency", "salary_currency", "currency")
     ) or bool(currency and re.search(r"\b" + re.escape(currency) + r"\b", " ".join((job.description or "", job.requirements or ""))))
     if currency_evidence and annual_evidence and salary_values and all(0 < value <= 10_000_000 for value in salary_values) and re.fullmatch(r"[A-Z]{3}", currency) and not str(salary_meta.get("method", "")).startswith("rejected"):

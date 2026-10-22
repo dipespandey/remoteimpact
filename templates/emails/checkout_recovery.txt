@@ -1,6 +1,6 @@
 Hi {{ user.first_name|default:"there" }},
 
-You started setting up Remote Impact Pro yesterday but didn't finish. No problem, nothing was charged.
+{% if reached_checkout %}You started setting up Remote Impact Pro yesterday but didn't finish. No problem, nothing was charged.{% else %}You had a look at Remote Impact Pro yesterday. Your Scout has already found roles for you, and Pro keeps it checking every new one.{% endif %}
 
 {% if trial %}Pro is free for 7 days, then $10 a month, and you can cancel any time before the trial ends.{% else %}Pro is $10 a month, or $24 once for three months with no renewal.{% endif %} It keeps your Scouts checking every new role and emails you the ones that fit.
 

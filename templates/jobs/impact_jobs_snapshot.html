@@ -2,11 +2,11 @@
 {% load humanize %}
 
 {% block title %}Does Remote Mean Worldwide? Remote Impact Jobs Data{% endblock %}
-{% block meta_description %}A dated analysis of current remote impact jobs, including how many explicitly accept worldwide applicants, recent posting volume, sources, domains, and data coverage.{% endblock %}
+{% block meta_description %}A dated analysis of remote impact job location labels, posting volume, sources and data coverage. Check employer requirements to confirm applicant eligibility.{% endblock %}
 {% block og_title %}Remote does not always mean worldwide{% endblock %}
-{% block og_description %}See how many current remote impact jobs explicitly advertise worldwide eligibility, based on a transparent, dated catalogue snapshot.{% endblock %}
+{% block og_description %}Explore worldwide location labels, named geographies and missing eligibility data across Remote Impact's current catalogue. Confirm restrictions on the employer's posting.{% endblock %}
 {% block twitter_title %}Remote does not always mean worldwide{% endblock %}
-{% block twitter_description %}A transparent, dated look at worldwide eligibility across current remote impact jobs.{% endblock %}
+{% block twitter_description %}A dated look at location labels across current remote impact jobs. Catalogue labels do not independently verify applicant eligibility.{% endblock %}
 {% block canonical %}{{ SITE_URL }}{% url 'jobs:impact_jobs_snapshot' %}{% endblock %}
 
 {% block structured_data %}
@@ -44,12 +44,12 @@
     <div class="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] lg:items-start">
       <div class="max-w-[68ch]">
         <h2 id="remote-scope-heading" class="section-title">Remote does not always mean worldwide</h2>
-        <p class="mt-2 text-base leading-7 text-foreground/85">Only <strong class="font-semibold tabular-nums text-foreground">{{ remote_scope.explicitly_global.percent }}%</strong> of current listings explicitly use worldwide, anywhere, global, or equivalent language. Most carry a named geography that applicants should check before applying.</p>
+        <p class="mt-2 text-base leading-7 text-foreground/85"><strong class="font-semibold tabular-nums text-foreground">{{ remote_scope.explicitly_global.percent }}%</strong> of current listings carry a worldwide, anywhere or global catalogue label. This measures stored location labels, not verified worldwide eligibility: the employer's description may contain country or residency requirements that narrow the label.</p>
         <p class="mt-3 text-sm leading-6 text-muted-foreground">A named geography is a structured catalogue signal, not proof that applicants elsewhere are ineligible. Employers may use it for payroll, time-zone, residency, travel, or team-location requirements. Always confirm the restriction on the original application page.</p>
-        <a href="{{ worldwide_scout_url }}" data-track="snapshot_worldwide_scout" data-track-category="job_scout_conversion" class="btn btn-primary mt-5">Find roles open worldwide <span aria-hidden="true">&rarr;</span></a>
+        <a href="{{ worldwide_scout_url }}" data-track="snapshot_worldwide_scout" data-track-category="job_scout_conversion" class="btn btn-primary mt-5">Check worldwide job matches <span aria-hidden="true">&rarr;</span></a>
       </div>
       <dl class="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-        <div class="stat"><dd class="stat-value">{{ remote_scope.explicitly_global.percent }}%</dd><dt class="mt-0.5 text-sm font-medium text-foreground">Explicitly worldwide</dt><dd class="text-xs tabular-nums text-muted-foreground">{{ remote_scope.explicitly_global.count|intcomma }} current listings</dd></div>
+        <div class="stat"><dd class="stat-value">{{ remote_scope.explicitly_global.percent }}%</dd><dt class="mt-0.5 text-sm font-medium text-foreground">Worldwide catalogue label</dt><dd class="text-xs tabular-nums text-muted-foreground">{{ remote_scope.explicitly_global.count|intcomma }} current listings</dd></div>
         <div class="stat"><dd class="stat-value">{{ remote_scope.named_geography.percent }}%</dd><dt class="mt-0.5 text-sm font-medium text-foreground">Named geography</dt><dd class="text-xs tabular-nums text-muted-foreground">{{ remote_scope.named_geography.count|intcomma }} current listings</dd></div>
         <div class="stat"><dd class="stat-value">{{ remote_scope.unclear.percent }}%</dd><dt class="mt-0.5 text-sm font-medium text-foreground">Unclear in structured data</dt><dd class="text-xs tabular-nums text-muted-foreground">{{ remote_scope.unclear.count|intcomma }} current listings</dd></div>
       </dl>
@@ -96,6 +96,16 @@
     <div class="flex flex-wrap gap-2"><a href="{% url 'jobs:job_list' %}" data-track="snapshot_browse_jobs" data-track-category="distribution" class="btn btn-primary">Browse jobs</a><a href="{% url 'jobs:partner_resources' %}" data-track="snapshot_partner_page" data-track-category="distribution" class="btn btn-outline">Share the feed</a></div>
   </section>
 
-  <p class="mt-8 max-w-[68ch] text-xs leading-6 text-muted-foreground">Methodology: this page uses the public catalogue returned by Remote Impact’s availability rules at the update time shown above. “Explicitly worldwide” requires worldwide, anywhere, global, or equivalent wording in the normalized country or displayed location. “Named geography” means a normalized country or region is present after excluding explicitly worldwide roles. These labels describe listing data and do not independently verify legal eligibility. Roles can be aggregated from public sources, normalized, deduplicated, or deactivated as source pages change. Percentages are rounded to the nearest whole number and may not add to exactly 100%.</p>
+  <nav class="section" aria-label="Sector hiring evidence">
+    <h2 class="section-title">Explore hiring by sector and experience</h2>
+    <ul class="mt-4 space-y-2">
+      <li><a class="underline underline-offset-4" href="/insights/climate-hiring/">Climate hiring snapshot</a></li>
+      <li><a class="underline underline-offset-4" href="/insights/ai-safety-hiring/">AI safety hiring snapshot</a></li>
+      <li><a class="underline underline-offset-4" href="/insights/global-health-hiring/">Global health hiring snapshot</a></li>
+      <li><a class="underline underline-offset-4" href="/insights/early-career-hiring/">Entry-level hiring snapshot</a></li>
+    </ul>
+  </nav>
+
+  <p class="mt-8 max-w-[68ch] text-xs leading-6 text-muted-foreground">Methodology: this page uses the public catalogue returned by Remote Impact’s availability rules at the update time shown above. “Worldwide catalogue label” counts worldwide, anywhere or global wording in the normalized country or displayed location. “Named geography” means a normalized country or region is present after excluding worldwide-labelled records. These groups describe stored fields and do not resolve contradictions with the job description or independently verify legal eligibility. Roles can be aggregated from public sources, normalized, deduplicated, or deactivated as source pages change. Percentages are rounded to the nearest whole number and may not add to exactly 100%.</p>
 </div>
 {% endblock %}

@@ -371,6 +371,53 @@ class JobAlertForm(forms.ModelForm):
             field.widget.attrs.update({"class": base_class})
 
 
+class ScoutContactForm(forms.Form):
+    """Optional, purpose-limited contact details for an anonymous Scout flow."""
+
+    scout_flow = forms.CharField(
+        max_length=32,
+        widget=forms.HiddenInput,
+    )
+    email = forms.EmailField(
+        required=False,
+        label="Email (optional)",
+        widget=forms.EmailInput(
+            attrs={
+                "class": "input",
+                "autocomplete": "email",
+                "placeholder": "you@example.org",
+            }
+        ),
+    )
+    contact_consent = forms.BooleanField(required=False, label="Contact me about this search.")
+    marketing_opt_in = forms.BooleanField(required=False, label="Send me occasional Remote Impact job updates.")
+
+    def clean(self):
+        cleaned = super().clean()
+        email = cleaned.get("email")
+        contact_consent = cleaned.get("contact_consent")
+        marketing_opt_in = cleaned.get("marketing_opt_in")
+        if not email:
+            if contact_consent or marketing_opt_in:
+                self.add_error("email", "Enter an email address for this preference.")
+            else:
+                raise forms.ValidationError("Enter an email address and choose a follow-up preference.")
+        elif not contact_consent and not marketing_opt_in:
+            raise forms.ValidationError("Choose how you would like us to use your email.")
+        return cleaned
+
+
+class ScoutComposerForm(ScoutContactForm):
+    scout_flow = forms.CharField(required=False, widget=forms.HiddenInput)
+    intent = forms.CharField(min_length=20, max_length=2000, widget=forms.Textarea(attrs={"class": "textarea"}), label="Your job brief")
+    source = forms.CharField(max_length=80, required=False, widget=forms.HiddenInput)
+
+    def clean(self):
+        if not any(self.data.get(field) for field in ("email", "contact_consent", "marketing_opt_in")):
+            return forms.Form.clean(self)
+        return super().clean()
+
+
 # ---------------------------------------------------------------------------
 # Application Form
 # ---------------------------------------------------------------------------

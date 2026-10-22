@@ -1,10 +1,12 @@
 import logging
 import hashlib
 from datetime import timedelta
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit, parse_qs
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.cache import cache
 from django.core.signing import BadSignature, TimestampSigner
 from django.db import transaction
 from django.db.models import Count
@@ -16,17 +18,21 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView, ListView, TemplateView, UpdateView, View
 
-from ..forms import JobAlertForm
+from ..forms import JobAlertForm, ScoutContactForm, ScoutComposerForm
 from ..models import (
     AssistantSubscription,
     ConsumerFunnelEvent,
     JobAlert,
     JobAlertDelivery,
+    NewsletterSubscriber,
+    ScoutContact,
 )
 from ..services.email_service import email_service
 from ..services.funnel import record_consumer_event
+from ..services import scout_funnel
 from ..services.job_service import JobService
 from ..services.job_scout_service import JobScoutService
+from ..services.scout_results import initial_result_context, snapshot_matches
 from ..services.payment_service import (
     PRO_PLANS,
     PRO_TRIAL_DAYS,
@@ -37,10 +43,52 @@ from ..services.payment_service import (
 
 logger = logging.getLogger(__name__)
 INITIAL_SCOUT_LOOKBACK_DAYS = 30
+SCOUT_CONTACT_VERIFY_MAX_AGE = 7 * 24 * 60 * 60
 
 
 def _subscription_for(user):
     return AssistantSubscription.get_or_create_for_user(user)
+
+
+def _scout_preview_path(flow):
+    """Return the latest safe preview URL for a session-bound Scout flow."""
+    event = (
+        ConsumerFunnelEvent.objects.filter(
+            event=ConsumerFunnelEvent.Event.SCOUT_PREVIEWED,
+            metadata__scout_flow_id=flow["id"],
+        )
+        .order_by("-created_at")
+        .first()
+    )
+    if not event:
+        return reverse("jobs:home")
+    metadata = event.metadata or {}
+    intent = str(metadata.get("intent_text") or "").strip()
+    if not intent:
+        return reverse("jobs:home")
+    return f"{reverse('jobs:job_scout_preview')}?{urlencode({'intent': intent, 'source': metadata.get('source') or flow.get('source') or 'scout_preview'})}"
+
+
+def _contact_verify_url(contact):
+    token = TimestampSigner(salt="scout-contact-verify").sign(str(contact.pk))
+    path = reverse("jobs:scout_contact_verify", kwargs={"token": token})
+    return f"{settings.SITE_URL.rstrip('/')}{path}"
+
+
+def _confirm_contact_marketing(contact):
+    """Promote an explicitly opted-in, verified contact to the newsletter list."""
+    if not contact.marketing_opt_in or not contact.verified_at:
+        return
+    subscriber, _ = NewsletterSubscriber.objects.get_or_create(
+        email=contact.email,
+        defaults={"source": "scout_contact"},
+    )
+    subscriber.confirmed = True
+    subscriber.confirmed_at = subscriber.confirmed_at or contact.verified_at
+    subscriber.unsubscribed = False
+    subscriber.unsubscribed_at = None
+    subscriber.source = "scout_contact"
+    subscriber.save(update_fields=["confirmed", "confirmed_at", "unsubscribed", "unsubscribed_at", "source"])
 
 
 def _save_interpretation(alert, preferences):
@@ -58,20 +106,7 @@ def _save_interpretation(alert, preferences):
     )
 
 
-def _empty_because_of_location(alert):
-    """True when a Scout's first run found nothing mainly because roles were limited to other countries."""
-    event = (
-        ConsumerFunnelEvent.objects.filter(alert=alert, event=ConsumerFunnelEvent.Event.INITIAL_MATCHES_EMPTY)
-        .order_by("-created_at").first()
-    )
-    rejections = ((event.metadata or {}).get("matching") or {}).get("hard_rejections") or {} if event else {}
-    if not rejections:
-        return False
-    top = max(rejections, key=rejections.get)
-    return top in ("location", "location_rejected", "excluded_location")
-
-
-def _send_initial_matches(alert, *, source=""):
+def _send_initial_matches(alert, *, source="", flow=None):
     diagnostics = {}
     matches = JobScoutService.get_matches(
         alert,
@@ -84,11 +119,15 @@ def _send_initial_matches(alert, *, source=""):
             ConsumerFunnelEvent.Event.INITIAL_MATCHES_EMPTY,
             user=alert.user,
             alert=alert,
-            metadata={"frequency": alert.frequency, "source": source, "matching": diagnostics},
+            metadata={
+                "frequency": alert.frequency, "source": source, "matching": diagnostics,
+                "results_version": 1, "results": [], **scout_funnel.metadata(flow),
+            },
         )
         alert._empty_advice = JobScoutService.empty_advice(diagnostics, JobScoutService.preferences_for_alert(alert))
         return matches, False
 
+    results = snapshot_matches(matches)
     sent = email_service.send_job_alert(alert, matches, is_initial=True)
     if sent:
         JobAlertDelivery.objects.bulk_create(
@@ -119,6 +158,8 @@ def _send_initial_matches(alert, *, source=""):
             "frequency": alert.frequency,
             "source": source,
             "matching": diagnostics,
+            "results_version": 1,
+            "results": results, **scout_funnel.metadata(flow),
         },
     )
     return matches, sent
@@ -145,13 +186,21 @@ class JobAlertListView(LoginRequiredMixin, ListView):
         )
         initial_intent = " ".join(self.request.GET.get("intent", "").split())[:2000]
         landing_source = " ".join(self.request.GET.get("source", "").split())[:80]
+        flow = None
+        if not context['free_scout_used']:
+            flow, _ = scout_funnel.start_flow(self.request, initial_intent, landing_source or 'direct')
+            scout_funnel.record_stage(self.request, ConsumerFunnelEvent.Event.SCOUT_FORM_VIEWED, flow,
+                                     extra={'intent_prefilled': bool(initial_intent)}, once=True)
+        context['scout_flow_id'] = flow['id'] if flow else ''
+        context['scout_source'] = landing_source
+        context['scout_prefilled'] = bool(initial_intent)
         if landing_source:
             record_consumer_event(
                 ConsumerFunnelEvent.Event.SCOUT_LANDED,
                 user=self.request.user,
                 metadata={
                     "source": landing_source,
-                    "intent_prefilled": bool(initial_intent),
+                    "intent_prefilled": bool(initial_intent), **scout_funnel.metadata(flow),
                 },
                 dedupe_key=f"scout-landing:{self.request.user.pk}:{landing_source}",
             )
@@ -167,31 +216,30 @@ class JobAlertListView(LoginRequiredMixin, ListView):
             ).first()
             if created:
                 context["created_alert"] = created
-                deliveries = created.deliveries.select_related(
-                    "job__organization", "job__category"
-                ).order_by("-sent_at")[:10]
-                preview_jobs = []
-                for delivery in deliveries:
-                    delivery.job.scout_score = delivery.match_score
-                    delivery.job.scout_reasons = delivery.match_reasons
-                    delivery.job.scout_delivery_id = delivery.pk
-                    delivery.job.scout_feedback = delivery.feedback
-                    preview_jobs.append(delivery.job)
-                if not preview_jobs:
-                    preview_jobs = JobScoutService.get_matches(
-                        created,
-                        since=timezone.now()
-                        - timedelta(days=INITIAL_SCOUT_LOOKBACK_DAYS),
-                        limit=5,
-                    )
-                context["preview_jobs"] = preview_jobs
-                if not preview_jobs:
-                    context["location_blocked"] = _empty_because_of_location(created)
+                context.update(initial_result_context(created))
+                if not context["free_scout_used"]:
+                    context["form"].initial["intent_text"] = created.intent_text
         return context
 
 
 class JobScoutPreviewView(TemplateView):
     template_name = "jobs/job_scout_preview.html"
+
+    def post(self, request, *args, **kwargs):
+        form = ScoutComposerForm(request.POST)
+        if not form.is_valid():
+            from django.template.response import TemplateResponse
+            return TemplateResponse(request, "jobs/scout_composer_error.html", {"form": form}, status=400)
+        intent = " ".join(form.cleaned_data["intent"].split())
+        if len(intent) < 20:
+            form.add_error("intent", "Describe the job you want in a little more detail.")
+            from django.template.response import TemplateResponse
+            return TemplateResponse(request, "jobs/scout_composer_error.html", {"form": form}, status=400)
+        source = form.cleaned_data.get("source") or "scout_preview"
+        flow, _ = scout_funnel.start_flow(request, intent, source)
+        if form.cleaned_data.get("email"):
+            ScoutContactCaptureView().capture(request, flow, form)
+        return redirect(f"{reverse('jobs:job_scout_preview')}?{urlencode({'intent': intent, 'source': source, 'scout_flow': flow['id']})}")
 
     def get(self, request, *args, **kwargs):
         intent = " ".join(request.GET.get("intent", "").split())[:2000]
@@ -199,6 +247,12 @@ class JobScoutPreviewView(TemplateView):
             messages.info(request, "Describe the job you want in a little more detail.")
             return redirect("jobs:home")
         self.intent = intent
+        source = " ".join(request.GET.get('source', '').split())[:80] or 'scout_preview'
+        self.scout_flow, changed = scout_funnel.start_flow(request, intent, source,
+                                                    personalized=source == 'scout_personalized')
+        if source == 'scout_personalized' and changed:
+            scout_funnel.record_stage(request, ConsumerFunnelEvent.Event.SCOUT_PERSONALIZED, self.scout_flow,
+                                     extra={'brief_changed': changed})
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -211,14 +265,23 @@ class JobScoutPreviewView(TemplateView):
             limit=3,
         )
         source = " ".join(self.request.GET.get("source", "").split())[:80] or "scout_preview"
-        next_path = f"{reverse('jobs:job_alerts')}?{urlencode({'intent': self.intent, 'source': source})}"
+        next_path = f"{reverse('jobs:job_alerts')}?{urlencode({'intent': self.intent, 'source': source, 'scout_flow': self.scout_flow['id']})}"
+        older_jobs = []
+        if not matches and not workflow_diagnostics.get('review_incomplete'):
+            from jobs.services.scout_alternatives import older_openings
+            older_jobs = older_openings(preferences)
         context.update(
             intent=self.intent,
             preferences=preferences,
             preview_jobs=matches,
+            older_jobs=older_jobs,
+            empty_advice=JobScoutService.empty_advice(workflow_diagnostics, preferences),
             review_incomplete=workflow_diagnostics.get("review_incomplete", False),
             provisional=any(getattr(job, "scout_needs_confirmation", False) for job in matches),
             next_path=next_path,
+            scout_flow_id=self.scout_flow['id'],
+            sample_preview=self.scout_flow['sample'] and not self.scout_flow['personalized'],
+            contact_form=ScoutContactForm(initial={"scout_flow": self.scout_flow["id"]}),
         )
         if not self.request.session.session_key:
             self.request.session.create()
@@ -231,11 +294,114 @@ class JobScoutPreviewView(TemplateView):
                 "intent_text": self.intent[:2000],
                 "workflow": workflow_diagnostics,
                 "source": source,
-                "authenticated": self.request.user.is_authenticated,
+                "authenticated": self.request.user.is_authenticated, **scout_funnel.metadata(self.scout_flow),
             },
-            dedupe_key=f"scout-preview:{self.request.session.session_key}:{intent_digest}",
+            dedupe_key=f"scout-preview-flow:{self.scout_flow['id']}:{intent_digest}",
         )
         return context
+
+
+class ScoutContactCaptureView(View):
+    """Capture an optional, purpose-limited follow-up preference for a Scout."""
+
+    def post(self, request, *args, **kwargs):
+        flow_id = (request.POST.get("scout_flow") or "").strip()
+        flow = scout_funnel.get_flow(request, flow_id) if flow_id else None
+        if not flow:
+            messages.error(request, "This Scout session has expired. Run the search again to leave a contact preference.")
+            return redirect("jobs:home")
+
+        form = ScoutContactForm(request.POST)
+        if not form.is_valid():
+            messages.error(request, "Enter an email and choose how you would like us to use it.")
+            return redirect(_scout_preview_path(flow) + "#scout-contact")
+
+        return self.capture(request, flow, form)
+
+    def capture(self, request, flow, form):
+        email = form.cleaned_data["email"].lower()
+        now = timezone.now()
+        contact_consent = bool(form.cleaned_data.get("contact_consent"))
+        marketing_opt_in = bool(form.cleaned_data.get("marketing_opt_in"))
+        contact, created = ScoutContact.objects.get_or_create(
+            scout_flow_id=flow["id"],
+            email=email,
+            defaults={
+                "source": flow.get("source") or "scout_preview",
+                "contact_consent": contact_consent,
+                "contact_consent_at": now if contact_consent else None,
+                "marketing_opt_in": marketing_opt_in,
+                "marketing_opt_in_at": now if marketing_opt_in else None,
+            },
+        )
+        if not created:
+            updates = []
+            if contact.source != (flow.get("source") or "scout_preview"):
+                contact.source = flow.get("source") or "scout_preview"
+                updates.append("source")
+            if contact_consent and not contact.contact_consent:
+                contact.contact_consent = True
+                contact.contact_consent_at = now
+                updates.extend(["contact_consent", "contact_consent_at"])
+            if marketing_opt_in and not contact.marketing_opt_in:
+                contact.marketing_opt_in = True
+                contact.marketing_opt_in_at = now
+                updates.extend(["marketing_opt_in", "marketing_opt_in_at"])
+            if updates:
+                contact.save(update_fields=updates + ["updated_at"])
+
+        verification_sent = bool(contact.verified_at)
+        if not contact.verified_at:
+            verification_sent = email_service.send_scout_contact_verification(
+                contact, _contact_verify_url(contact)
+            )
+        else:
+            _confirm_contact_marketing(contact)
+
+        record_consumer_event(
+            ConsumerFunnelEvent.Event.SCOUT_CONTACT_CAPTURED,
+            user=request.user,
+            metadata={
+                "scout_flow_id": flow["id"],
+                "scout_source": flow.get("source") or "scout_preview",
+                "contact_consent": contact_consent,
+                "marketing_opt_in": marketing_opt_in,
+                "verification_sent": verification_sent,
+            },
+        )
+        if contact.verified_at:
+            messages.success(request, "Your follow-up preference is saved.")
+        elif verification_sent:
+            messages.success(request, "Check your inbox to confirm your email and follow-up preference.")
+        else:
+            messages.success(request, "Your follow-up preference is saved. Email confirmation is temporarily unavailable.")
+        return redirect(_scout_preview_path(flow) + "#scout-contact")
+
+
+class ScoutContactVerifyView(View):
+    """Verify an anonymous Scout contact and activate any opted-in marketing."""
+
+    def get(self, request, token, *args, **kwargs):
+        try:
+            contact_id = TimestampSigner(salt="scout-contact-verify").unsign(
+                token, max_age=SCOUT_CONTACT_VERIFY_MAX_AGE
+            )
+            contact = get_object_or_404(ScoutContact, pk=contact_id)
+        except BadSignature:
+            messages.error(request, "This email confirmation link is invalid or expired.")
+            return redirect("jobs:home")
+
+        if not contact.verified_at:
+            contact.verified_at = timezone.now()
+            contact.save(update_fields=["verified_at", "updated_at"])
+            _confirm_contact_marketing(contact)
+            record_consumer_event(
+                ConsumerFunnelEvent.Event.SCOUT_CONTACT_VERIFIED,
+                metadata={"scout_flow_id": contact.scout_flow_id, "source": contact.source},
+                dedupe_key=f"scout-contact-verified:{contact.pk}",
+            )
+        messages.success(request, "Your email is confirmed. We’ll use it only for the preferences you selected.")
+        return redirect("jobs:home")
 
 
 class JobScoutSignupStartView(View):
@@ -245,16 +411,20 @@ class JobScoutSignupStartView(View):
         next_path = request.GET.get("next", "").strip()
         # The preview only hands off to the alert flow. Keep this redirect
         # internal so the tracking URL cannot become an open redirect.
-        if not next_path.startswith("/alerts/") or next_path.startswith("//"):
+        parsed_next = urlsplit(next_path)
+        if parsed_next.scheme or parsed_next.netloc or parsed_next.path != reverse("jobs:job_alerts"):
             next_path = reverse("jobs:job_alerts")
         source = " ".join(request.GET.get("source", "scout_preview").split())[:80]
+        token = parse_qs(urlsplit(next_path).query).get('scout_flow', [''])[0]
+        flow = scout_funnel.get_flow(request, token) if token else None
+        scout_funnel.prepare_signup(request, flow)
         if not request.session.session_key:
             request.session.create()
         handoff_digest = hashlib.sha256(next_path.encode("utf-8")).hexdigest()[:16]
         record_consumer_event(
             ConsumerFunnelEvent.Event.SCOUT_SIGNUP_STARTED,
-            metadata={"source": source},
-            dedupe_key=f"scout-signup-start:{request.session.session_key}:{handoff_digest}",
+            metadata={"source": source, **scout_funnel.metadata(flow)},
+            dedupe_key=f"scout-signup-flow:{flow['id']}" if flow else f"scout-signup-start:{request.session.session_key}:{handoff_digest}",
         )
         return redirect(
             f"{reverse('account_signup')}?{urlencode({'next': next_path})}"
@@ -270,6 +440,45 @@ class JobAlertCreateView(LoginRequiredMixin, CreateView):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         return kwargs
+
+    def post(self, request, *args, **kwargs):
+        intent = ' '.join(request.POST.get('intent_text', '').split())[:2000]
+        source = ' '.join(request.POST.get('source', '').split())[:80] or 'direct'
+        self.scout_flow, _ = scout_funnel.start_flow(request, intent, source, reuse_completed=True)
+        scout_funnel.record_stage(request, ConsumerFunnelEvent.Event.SCOUT_SUBMIT_STARTED, self.scout_flow)
+        try:
+            return super().post(request, *args, **kwargs)
+        except Exception as exc:
+            self._submit_result('error', error_type=type(exc).__name__)
+            raise
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        subscription = _subscription_for(self.request.user)
+        context['is_pro'] = subscription.is_pro_active()
+        context['free_scout_used'] = not context['is_pro'] and subscription.free_job_scout_used_at is not None
+        if self.request.method == 'GET' and not context['free_scout_used']:
+            intent = ' '.join(self.request.GET.get('intent', '').split())[:2000]
+            source = ' '.join(self.request.GET.get('source', '').split())[:80] or 'direct'
+            self.scout_flow, _ = scout_funnel.start_flow(self.request, intent, source)
+            if intent:
+                context['form'].initial['intent_text'] = intent
+            scout_funnel.record_stage(self.request, ConsumerFunnelEvent.Event.SCOUT_FORM_VIEWED, self.scout_flow,
+                                     extra={'intent_prefilled': bool(intent)}, once=True)
+        context['scout_flow_id'] = getattr(self, 'scout_flow', {}).get('id', '')
+        context['scout_source'] = (self.request.POST.get('source') or self.request.GET.get('source', ''))[:80]
+        context['scout_prefilled'] = bool(self.request.POST.get('intent_text') or self.request.GET.get('intent'))
+        return context
+
+    def _submit_result(self, outcome, **extra):
+        scout_funnel.record_stage(self.request, ConsumerFunnelEvent.Event.SCOUT_SUBMIT_RESULT,
+                                 self.scout_flow, extra={'outcome': outcome, **extra})
+
+    def form_invalid(self, form):
+        self._submit_result('invalid', invalid_fields=sorted(form.errors))
+        response = super().form_invalid(form)
+        response.context_data['scout_flow_id'] = self.scout_flow['id']
+        return response
 
     def form_valid(self, form):
         source = " ".join(self.request.POST.get("source", "").split())[:80]
@@ -287,12 +496,14 @@ class JobAlertCreateView(LoginRequiredMixin, CreateView):
                 created_at__gte=timezone.now() - timedelta(minutes=10),
             ).first()
             if existing:
+                self._submit_result('duplicate')
                 return redirect(f"{reverse('jobs:job_alerts')}?created={existing.pk}")
             limit_reached = (
                 JobAlert.objects.filter(user=self.request.user, is_active=True).count() >= 5
                 if is_pro else subscription.free_job_scout_used_at is not None
             )
             if limit_reached:
+                self._submit_result('blocked', reason='active_limit' if is_pro else 'free_credit_used')
                 messages.info(
                     self.request,
                     "The free plan includes one one-time matching email. Upgrade to Pro for recurring alerts and five active scouts."
@@ -307,8 +518,8 @@ class JobAlertCreateView(LoginRequiredMixin, CreateView):
         response = redirect(self.get_success_url())
         preferences = JobScoutService.parse_intent(form.instance.intent_text)
         _save_interpretation(self.object, preferences)
-        matches, sent = _send_initial_matches(self.object, source=source)
-        if not is_pro and matches:
+        matches, sent = _send_initial_matches(self.object, source=source, flow=self.scout_flow)
+        if not is_pro and matches and sent:
             subscription.free_job_scout_used_at = timezone.now()
             subscription.save(update_fields=["free_job_scout_used_at"])
         record_consumer_event(
@@ -320,9 +531,11 @@ class JobAlertCreateView(LoginRequiredMixin, CreateView):
                 "is_pro": is_pro,
                 "match_count": len(matches),
                 "email_sent": sent,
-                "source": source,
+                "source": source, **scout_funnel.metadata(self.scout_flow),
             },
         )
+        self._submit_result('created', match_count=len(matches), email_sent=sent)
+        scout_funnel.complete_flow(self.request, self.scout_flow)
         if not is_pro:
             self.object.is_active = False
             self.object.save(update_fields=["is_active"])
@@ -337,7 +550,7 @@ class JobAlertCreateView(LoginRequiredMixin, CreateView):
         elif matches:
             messages.warning(
                 self.request,
-                "We found matches, but the email could not be sent. You can see them below."
+                "We found matches, but the email could not be sent. You can see them below. Your free one-time Scout is still available."
                 if not is_pro
                 else "Your scout is active and found matches, but the first email could not be sent. You can see them below.",
             )
@@ -353,6 +566,60 @@ class JobAlertCreateView(LoginRequiredMixin, CreateView):
 
     def get_success_url(self):
         return f"{reverse('jobs:job_alerts')}?created={self.object.pk}"
+
+
+class JobAlertRetryEmailView(LoginRequiredMixin, View):
+    """Explicit owner POST: resend available saved results, never rerun matching."""
+
+    def post(self, request, pk):
+        with transaction.atomic():
+            # Serialize retries on PostgreSQL. Cache also bounds repeated failures.
+            alert = get_object_or_404(JobAlert.objects.select_for_update(), pk=pk, user=request.user)
+            target = f"{reverse('jobs:job_alerts')}?created={alert.pk}"
+            event = alert.funnel_events.filter(event__in=[
+                ConsumerFunnelEvent.Event.INITIAL_EMAIL_FAILED,
+                ConsumerFunnelEvent.Event.INITIAL_EMAIL_SENT,
+                ConsumerFunnelEvent.Event.INITIAL_MATCHES_EMPTY,
+            ]).order_by("-created_at", "-pk").first()
+            if not event or event.event != ConsumerFunnelEvent.Event.INITIAL_EMAIL_FAILED:
+                messages.info(request, "There is no failed initial email to retry.")
+                return redirect(target)
+            subscription = AssistantSubscription.objects.select_for_update().get(pk=_subscription_for(request.user).pk)
+            if (not subscription.is_pro_active() and subscription.free_job_scout_used_at
+                    and ConsumerFunnelEvent.objects.filter(user=request.user,
+                        event=ConsumerFunnelEvent.Event.INITIAL_EMAIL_SENT).exclude(alert=alert).exists()):
+                messages.info(request, "Your one-time matching email has already been sent for another Scout. These saved matches are still available on this page.")
+                return redirect(target)
+            matches = initial_result_context(alert)["preview_jobs"]
+            if not matches:
+                messages.info(request, "Those saved matches are no longer available. Browse current jobs or start an eligible new search.")
+                return redirect(target)
+            if not cache.add(f"scout-email-retry:{alert.pk}", True, timeout=60):
+                messages.info(request, "Please wait a minute before retrying this email.")
+                return redirect(target)
+            sent = email_service.send_job_alert(alert, matches, is_initial=True)
+            if sent:
+                JobAlertDelivery.objects.bulk_create([
+                    JobAlertDelivery(alert=alert, job=job, match_score=getattr(job, "scout_score", 0),
+                                     match_reasons=getattr(job, "scout_reasons", [])) for job in matches
+                ], ignore_conflicts=True)
+                from jobs.services import job_stats
+                for job in matches:
+                    job_stats.record(job.pk, "scout_deliveries", dedupe=False)
+                alert.last_sent_at = timezone.now()
+                alert.save(update_fields=["last_sent_at"])
+                if not subscription.is_pro_active() and not subscription.free_job_scout_used_at:
+                    subscription.free_job_scout_used_at = timezone.now()
+                    subscription.save(update_fields=["free_job_scout_used_at"])
+            record_consumer_event(
+                ConsumerFunnelEvent.Event.INITIAL_EMAIL_SENT if sent else ConsumerFunnelEvent.Event.INITIAL_EMAIL_FAILED,
+                user=request.user, alert=alert,
+                metadata={**(event.metadata or {}), "retry": True, "match_count": len(matches),
+                          "results_version": 1, "results": snapshot_matches(matches)},
+            )
+            messages.success(request, "We emailed your saved matches.") if sent else messages.warning(
+                request, "The email still could not be sent. Your saved matches remain available below.")
+        return redirect(target)
 
 
 class JobAlertUpdateView(LoginRequiredMixin, UpdateView):
@@ -523,6 +790,8 @@ class JobScoutSubscribeView(LoginRequiredMixin, TemplateView):
                 "source": self._source(self.request),
                 "scout_count": alerts.count(),
                 "delivered_count": deliveries.count(),
+                # Selling "keep watching" before a Scout has found anything rarely works; fix the brief first.
+                "needs_brief_fix": not deliveries.exists(),
                 "recent_matches": deliveries.select_related("job", "job__organization")[:3],
                 "fresh_jobs_count": JobService.get_available_jobs().filter(
                     posted_at__gte=timezone.now() - timedelta(days=7)

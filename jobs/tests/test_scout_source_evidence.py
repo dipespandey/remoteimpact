@@ -168,7 +168,7 @@ class MatchingSourceTests(TestCase):
   template=engines['django'].get_template('jobs/job_scout_preview.html')
   context={'preview_jobs':[j],'preferences':{},'intent':'Entry level nonprofit operations coordinator.','next_path':'/alerts/','user':request.user}
   html=template.render(context,request)
-  self.assertIn('Worth considering',html);self.assertIn('Review the details',html);self.assertNotIn('fit score',html);self.assertNotIn('Strong current matches',html)
+  self.assertIn('Worth considering',html);self.assertIn('Check the details',html);self.assertNotIn('fit score',html);self.assertNotIn('Strong current matches',html)
   context['preview_jobs']=[]
   self.assertIn('No eligible matches in this preview',template.render(context,request))
   context['review_incomplete']=True

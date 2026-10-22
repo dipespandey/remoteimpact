@@ -63,6 +63,14 @@ def eligibility_memo():
     return state.setdefault('eligibility_memo', {}), state['diagnostics']
 
 
+def source_profile_memo():
+    """Query-independent source analyses, bounded to the current workflow."""
+    state = _budget.get()
+    if state is None or not getattr(settings, 'SCOUT_REQUEST_PROFILE_CACHE', True):
+        return None
+    return state.setdefault('source_profiles', {}), state['diagnostics']
+
+
 def generate(prompt, **kwargs):
     """At most four provider calls and 18 seconds of total model time per search."""
     from jobs.services.ai import AIClient

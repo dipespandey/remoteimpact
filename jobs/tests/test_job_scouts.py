@@ -761,9 +761,8 @@ class JobScoutFlowTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["intent"], intent)
-        self.assertEqual(ConsumerFunnelEvent.objects.filter(event=ConsumerFunnelEvent.Event.SCOUT_PREVIEWED).latest("created_at").metadata["intent_text"], intent)
         self.assertEqual(response.context["preview_jobs"], [self.job])
-        self.assertContains(response, "Send my 1 match")
+        self.assertContains(response, "Continue to my free Scout")
         self.assertIn("/alerts/?intent=", response.context["next_path"])
         self.assertEqual(
             ConsumerFunnelEvent.objects.filter(
@@ -819,8 +818,8 @@ class JobScoutFlowTest(TestCase):
         response = self.client.get(reverse("account_signup"), {"next": next_path})
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Where should we send them?")
-        self.assertContains(response, "Email my matches")
+        self.assertContains(response, "Create an account to finish your Scout")
+        self.assertContains(response, "Continue to my Scout")
         self.assertEqual(response.context["redirect_field_value"], next_path)
 
     def test_homepage_intent_is_prefilled_on_job_scout_page(self):

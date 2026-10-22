@@ -145,6 +145,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
         if profile.account_type == UserProfile.AccountType.EMPLOYER:
             context["is_employer"] = True
+            section = self.request.GET.get("section", "overview")
+            context["dashboard_section"] = section if section in {"overview", "roles", "billing", "settings"} else "overview"
             # Their own posts and drafts, plus roles colleagues at their organization paid for.
             from ..services.employer_access import hiring_jobs
 

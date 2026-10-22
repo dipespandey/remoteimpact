@@ -1,5 +1,6 @@
 from django.views.generic import ListView, DetailView
 from .models import BlogPost
+from django.utils import timezone
 
 
 class BlogListView(ListView):
@@ -9,7 +10,7 @@ class BlogListView(ListView):
     paginate_by = 12
 
     def get_queryset(self):
-        return BlogPost.objects.filter(status=BlogPost.Status.PUBLISHED).defer("body")
+        return BlogPost.objects.filter(status=BlogPost.Status.PUBLISHED, published_at__lte=timezone.now()).defer("body")
 
 
 class BlogDetailView(DetailView):
@@ -19,4 +20,4 @@ class BlogDetailView(DetailView):
     slug_url_kwarg = "slug"
 
     def get_queryset(self):
-        return BlogPost.objects.filter(status=BlogPost.Status.PUBLISHED)
+        return BlogPost.objects.filter(status=BlogPost.Status.PUBLISHED, published_at__lte=timezone.now())

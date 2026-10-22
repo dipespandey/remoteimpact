@@ -14,6 +14,20 @@
     <p class="page-lede">Pro checks every new remote impact role as it is published{% if fresh_jobs_count %} (<span class="tabular-nums">{{ fresh_jobs_count }}</span> added in the last 7 days){% endif %} and emails you only the ones that fit your brief.</p>
   </header>
 
+  {% if needs_brief_fix %}
+  <section class="card mb-8 p-5 sm:p-6" aria-label="Get your first matches">
+    {% if latest_scout %}
+    <h2 class="text-base font-semibold text-foreground">Your Scout hasn't found a match yet, so fix the brief first</h2>
+    <p class="mt-1.5 max-w-prose text-sm leading-6 text-muted-foreground">Pro only helps once your brief finds roles you'd apply to. Most empty Scouts have a brief that is too narrow: try a broader job title, fewer must-haves, or more impact areas. Changing it is free.</p>
+    <a class="btn btn-primary btn-sm mt-4" href="{% url 'jobs:job_alerts' %}" data-track="pro_fix_brief" data-track-category="checkout">Fix my brief for free</a>
+    {% else %}
+    <h2 class="text-base font-semibold text-foreground">Start with a free Scout</h2>
+    <p class="mt-1.5 max-w-prose text-sm leading-6 text-muted-foreground">Describe the role you want and your first matches are free. Upgrade only if they're useful.</p>
+    <a class="btn btn-primary btn-sm mt-4" href="{% url 'jobs:job_alerts' %}" data-track="pro_create_scout" data-track-category="checkout">Create my free Scout</a>
+    {% endif %}
+  </section>
+  <h2 class="mb-3 px-1 text-sm font-medium text-muted-foreground">Or start Pro now</h2>
+  {% endif %}
   <div class="grid gap-4 md:grid-cols-2">
     <section class="card flex flex-col p-5 sm:p-6" aria-label="Pro monthly">
       <div class="flex flex-wrap items-center justify-between gap-2">
@@ -63,12 +77,6 @@
       <li><a class="block rounded-xl px-3.5 py-2.5 transition-colors hover:bg-muted" href="{{ delivery.job.get_absolute_url }}"><span class="block text-sm font-medium text-foreground">{{ delivery.job.title|display_title }}</span> <span class="block text-xs text-muted-foreground">at {{ delivery.job.organization.name }}</span></a></li>
       {% endfor %}
     </ul>
-  </section>
-  {% elif latest_scout %}
-  <section class="surface mt-10 p-5 sm:p-6" aria-label="Your Scout">
-    <h2 class="text-base font-semibold text-foreground">Your first Scout has not found a strong match yet</h2>
-    <p class="mt-1.5 max-w-prose text-sm leading-6 text-muted-foreground">Usually the brief is very narrow, or the right role has not been published yet. Pro keeps checking every new job, and you can run up to five briefs with different angles. You can also adjust your brief for free first.</p>
-    <a class="btn btn-outline btn-sm mt-4" href="{% url 'jobs:job_alerts' %}">Adjust my brief</a>
   </section>
   {% endif %}
 

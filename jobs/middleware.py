@@ -1,12 +1,161 @@
 import logging
 import re
+from urllib.parse import urljoin
 
 import requests
+from bs4 import BeautifulSoup
+from bs4.element import NavigableString, Tag
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.utils.cache import patch_vary_headers
 
 logger = logging.getLogger(__name__)
+
+
+def _accepts_markdown(value: str) -> bool:
+    """Return whether the client explicitly requested a usable Markdown variant."""
+    for item in value.lower().split(","):
+        media_type, *parameters = item.strip().split(";")
+        if media_type.strip() != "text/markdown":
+            continue
+        for parameter in parameters:
+            name, separator, raw_value = parameter.strip().partition("=")
+            if name == "q" and separator:
+                try:
+                    if float(raw_value) <= 0:
+                        break
+                except ValueError:
+                    break
+        else:
+            return True
+    return False
+
+
+def _markdown_from_html(html: str, source_url: str) -> str:
+    """Make a compact, readable Markdown representation of a public HTML page."""
+    soup = BeautifulSoup(html, "html.parser")
+    title = soup.title.get_text(" ", strip=True) if soup.title else ""
+    content = soup.find("main") or soup.body or soup
+    tab_labels = {
+        element.get("id"): element.get_text(" ", strip=True)
+        for element in content.find_all(attrs={"role": "tab"})
+        if element.get("id") and element.get_text(" ", strip=True)
+    }
+    for element in content.find_all(["script", "style", "noscript", "template", "svg", "form", "button", "input", "select", "textarea"]):
+        element.decompose()
+
+    def render(node):
+        if isinstance(node, NavigableString):
+            return str(node)
+        if not isinstance(node, Tag):
+            return ""
+        name = node.name.lower()
+        if name in {"script", "style", "noscript", "template", "svg", "form", "button", "input", "select", "textarea"}:
+            return ""
+        if name == "br":
+            return "\n"
+        if name in {"h1", "h2", "h3", "h4", "h5", "h6"}:
+            return "\n\n" + ("#" * int(name[1])) + " " + "".join(render(child) for child in node.children).strip() + "\n\n"
+        if name == "a":
+            text = "".join(render(child) for child in node.children).strip()
+            href = (node.get("href") or "").strip()
+            if not text or not href or href.startswith(("#", "javascript:", "mailto:", "tel:")):
+                return text
+            return f"[{text}]({urljoin(source_url, href)})"
+        if name in {"strong", "b"}:
+            return "**" + "".join(render(child) for child in node.children).strip() + "**"
+        if name in {"em", "i"}:
+            return "*" + "".join(render(child) for child in node.children).strip() + "*"
+        if name == "code":
+            return "`" + node.get_text(" ", strip=True) + "`"
+        if name == "pre":
+            return "\n\n```\n" + node.get_text("\n", strip=True) + "\n```\n\n"
+        if node.get("role") == "tabpanel":
+            label_id = node.get("aria-labelledby")
+            label = tab_labels.get(label_id, "")
+            heading = f"## {label}\n\n" if label else ""
+            return "\n\n" + heading + "".join(render(child) for child in node.children).strip() + "\n\n"
+        if name in {"ul", "ol"}:
+            rows = []
+            for position, child in enumerate(node.find_all("li", recursive=False), start=1):
+                nested = child.find(["ul", "ol"], recursive=False)
+                nested_text = render(nested) if nested else ""
+                if nested:
+                    nested.extract()
+                marker = f"{position}." if name == "ol" else "-"
+                text = "".join(render(grandchild) for grandchild in child.children).strip()
+                if text:
+                    rows.append(f"{marker} {text}")
+                if nested_text:
+                    rows.append(nested_text.strip())
+            return "\n" + "\n".join(rows) + "\n"
+        if name == "li":
+            return "\n- " + "".join(render(child) for child in node.children).strip()
+        if name == "blockquote":
+            text = "".join(render(child) for child in node.children).strip()
+            return "\n\n" + "\n".join("> " + line for line in text.splitlines() if line.strip()) + "\n\n"
+        if name == "tr":
+            cells = [cell.get_text(" ", strip=True) for cell in node.find_all(["th", "td"], recursive=False)]
+            return (" | ".join(cells) + "\n") if cells else ""
+        if name in {"p", "div", "section", "article", "header", "footer", "main", "aside", "figure", "figcaption", "dl", "dt", "dd", "table"}:
+            return "\n\n" + "".join(render(child) for child in node.children).strip() + "\n\n"
+        return "".join(render(child) for child in node.children)
+
+    lines = [re.sub(r"[ \t]+", " ", line).strip() for line in render(content).splitlines()]
+    output = "\n".join(lines)
+    output = re.sub(r"\n{3,}", "\n\n", output).strip()
+    if title and not re.search(r"^#\s+", output, re.MULTILINE):
+        output = f"# {title}\n\n{output}"
+    safe_title = (title or "Remote Impact").replace('"', "'")
+    return f'---\ntitle: "{safe_title}"\nsource: {source_url}\n---\n\n{output}\n'
+
+
+class MarkdownResponseMiddleware:
+    """Serve a public HTML page as Markdown only when a client explicitly asks.
+
+    This sits inside GZipMiddleware, so the Markdown variant is compressed as
+    needed.  It runs outside page-view caching: Django keeps its cached HTML,
+    then this middleware derives the requested variant and marks ``Vary:
+    Accept`` for HTTP caches.
+    """
+
+    PRIVATE_PATH_PREFIXES = (
+        "/admin/", "/accounts/", "/account/", "/dashboard/", "/onboarding/",
+        "/api/", "/mcp/", "/checkout/", "/webhook/", "/applications/",
+        "/my-matches/", "/impact-profile/", "/talent/",
+    )
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        wants_markdown = (
+            request.method in {"GET", "HEAD"}
+            and _accepts_markdown(request.headers.get("Accept", ""))
+            and not request.path.startswith(self.PRIVATE_PATH_PREFIXES)
+            and not getattr(getattr(request, "user", None), "is_authenticated", False)
+        )
+        response = self.get_response(request)
+        if not wants_markdown:
+            return response
+        if (
+            response.status_code not in {200, 404}
+            or response.streaming
+            or response.get("Content-Encoding")
+            or not response.get("Content-Type", "").lower().startswith("text/html")
+        ):
+            return response
+
+        markdown = _markdown_from_html(
+            response.content.decode(response.charset or "utf-8"), request.build_absolute_uri()
+        )
+        response.content = markdown.encode("utf-8")
+        response["Content-Type"] = "text/markdown; charset=utf-8"
+        response["Content-Length"] = str(len(response.content))
+        if response.has_header("ETag"):
+            del response["ETag"]
+        patch_vary_headers(response, ("Accept",))
+        return response
 
 
 class OutboundAttributionMiddleware:
@@ -43,6 +192,10 @@ class SecurityHeadersMiddleware:
 
     def __call__(self, request):
         response = self.get_response(request)
+        # The early-career embed is a public, read-only directory preview. It is
+        # intentionally embeddable by partner sites; all other pages remain
+        # protected from framing.
+        frame_ancestors = "*" if request.path == "/early-careers/embed/" else "'none'"
 
         response.setdefault(
             "Content-Security-Policy",
@@ -59,7 +212,7 @@ class SecurityHeadersMiddleware:
                 "frame-src 'self' https://js.stripe.com https://hooks.stripe.com; "
                 "base-uri 'self'; "
                 "form-action 'self' https://checkout.stripe.com; "
-                "frame-ancestors 'none'; "
+                f"frame-ancestors {frame_ancestors}; "
                 "upgrade-insecure-requests"
             ),
         )
@@ -125,13 +278,22 @@ class AcquisitionAttributionMiddleware:
         if request.method == "GET":
             stored = request.session.get(self.SESSION_KEY, {})
             attribution = dict(stored) if isinstance(stored, dict) else {}
-            changed = False
-            for param in self.PARAMS:
-                value = " ".join(request.GET.get(param, "").split())[:100]
-                if value and attribution.get(param) != value:
-                    attribution[param] = value
-                    changed = True
-            if changed:
+            incoming = {
+                param: " ".join(request.GET.get(param, "").split())[:100]
+                for param in self.PARAMS
+            }
+            incoming = {key: value for key, value in incoming.items() if value}
+            # A source-bearing campaign URL is one coherent touch. Omitted
+            # labels must not survive from a previous campaign, even when the
+            # source happens to be the same. Internal source-only navigation
+            # can still update the entry point without erasing the campaign.
+            if incoming.get("utm_source"):
+                attribution = incoming
+            elif not any(key.startswith("utm_") for key in incoming):
+                attribution.update(incoming)
+            # Partial UTM URLs without a source cannot identify a new campaign;
+            # do not splice them into the previously recorded one.
+            if attribution != stored:
                 request.session[self.SESSION_KEY] = attribution
         return self.get_response(request)
 

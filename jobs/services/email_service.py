@@ -164,6 +164,16 @@ class EmailService:
             text=render_to_string("emails/claim_verify.txt", context),
         )
 
+    def send_scout_contact_verification(self, contact, verify_url: str) -> bool:
+        """Confirm an anonymous visitor's explicitly requested Scout follow-up."""
+        context = {"contact": contact, "verify_url": verify_url, "site_url": self.site_url}
+        return self.send_email(
+            to=contact.email,
+            subject="Confirm your Remote Impact follow-up",
+            html=render_to_string("emails/scout_contact_verify.html", context),
+            text=render_to_string("emails/scout_contact_verify.txt", context),
+        )
+
     def send_employer_monthly_report(self, claim, stats: dict, report_link: str) -> bool:
         """Monthly 'applicants we sent you' summary for a verified employer contact."""
         context = {"claim": claim, "stats": stats, "report_link": report_link}
@@ -174,13 +184,14 @@ class EmailService:
             text=render_to_string("emails/employer_monthly.txt", context),
         )
 
-    def send_checkout_recovery(self, user, *, trial: bool, resume_url: str, sender: str = "Dipesh") -> bool:
-        """One follow-up to someone who opened Pro checkout and left without paying."""
+    def send_checkout_recovery(self, user, *, trial: bool, resume_url: str, sender: str = "Dipesh",
+                               reached_checkout: bool = True) -> bool:
+        """One follow-up to someone who looked at Pro (plan page or checkout) and left without paying."""
         if not user.email:
             return False
         unsubscribe_url = self._get_unsubscribe_url(user.id)
         context = {"user": user, "trial": trial, "resume_url": resume_url, "sender": sender,
-                   "unsubscribe_url": unsubscribe_url}
+                   "unsubscribe_url": unsubscribe_url, "reached_checkout": reached_checkout}
         subject = "Your 7-day Pro trial is one click away" if trial else "Finish setting up Remote Impact Pro"
         return self.send_email(
             to=user.email,
@@ -295,6 +306,8 @@ class EmailService:
             return False
 
         user = alert.user
+        from jobs.services.scout_email_identity import scout_email_label, scout_email_schedule
+        alert_label = scout_email_label(alert)
         job_count = len(jobs)
         display_jobs = list(jobs[:10])  # Show max 10 jobs
         more_jobs = max(0, job_count - 10)
@@ -322,7 +335,8 @@ class EmailService:
             "jobs": display_jobs,
             "job_count": job_count,
             "more_jobs": more_jobs,
-            "alert_name": alert.name,
+            "alert_name": alert_label,
+            "schedule_description": scout_email_schedule(alert),
             "keywords": alert.keywords.strip() if alert.keywords else "",
             "frequency": alert.get_frequency_display().lower(),
             "site_url": self.site_url,
@@ -343,8 +357,10 @@ class EmailService:
             if job_count
             else "No strong current job matches"
         )
-        if alert.name:
-            subject += f' for "{alert.name}"'
+        subject += f' for "{alert_label}"'
+        if display_jobs and not is_initial:
+            from django.utils.text import Truncator
+            subject += f" — {Truncator(display_jobs[0].title).chars(75)}"
 
         return self.send_email(
             to=user.email,

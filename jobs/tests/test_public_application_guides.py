@@ -53,3 +53,26 @@ class PublicApplicationGuideTests(TestCase):
             guide, personalized = public_application_guide(self.job)
             self.assertFalse(personalized)
             self.assertIn('application_tips', guide)
+
+    def test_missing_catalogue_deadline_does_not_claim_source_has_none(self):
+        response = self.client.get(reverse('jobs:application_guide', args=[self.job.slug]))
+        self.assertContains(response, 'We do not have a confirmed application deadline')
+        self.assertNotContains(response, 'No deadline is listed')
+        self.assertNotContains(response, 'so apply soon')
+
+    def test_listing_expiration_is_not_presented_as_employer_application_deadline(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        self.job.expires_at = timezone.now() + timedelta(days=7)
+        self.job.save(update_fields=['expires_at'])
+        response = self.client.get(reverse('jobs:application_guide', args=[self.job.slug]))
+        self.assertContains(response, 'This listing expires on')
+        self.assertContains(response, "employer's application deadline")
+        self.assertNotContains(response, 'Applications close on')
+
+    def test_retired_source_guide_redirects_to_unavailable_detail(self):
+        self.job.is_active = False
+        self.job.save(update_fields=['is_active'])
+        response = self.client.get(reverse('jobs:application_guide', args=[self.job.slug]))
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response['Location'], reverse('jobs:job_detail', args=[self.job.slug]))

@@ -176,6 +176,8 @@ def _record_attempt(job: Job, *, status: str, page_text: str = "", fields: list[
 def apply_source_page_enrichment(job: Job, parsed: dict[str, Any], page_text: str) -> list[str]:
     """Merge only supported, currently missing values and return changed fields."""
     changed: list[str] = []
+    if parsed.get("job_facts"):
+        job.raw_data = dict(job.raw_data or {}, job_facts=parsed["job_facts"])
     evidence: dict[str, str] = {}
     categories = Category.objects.in_bulk(field_name="slug")
 

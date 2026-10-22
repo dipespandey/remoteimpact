@@ -22,15 +22,11 @@ class Command(BaseCommand):
             .order_by("event")
         )
         totals = {row["event"]: row["total"] for row in rows}
-        viewed = totals.get(EmployerFunnelEvent.Event.POST_JOB_VIEWED, 0)
-        paid = totals.get(EmployerFunnelEvent.Event.PAYMENT_COMPLETED, 0)
         self.stdout.write(f"Employer funnel, last {options['days']} days")
         for event in EmployerFunnelEvent.Event:
             row = next((item for item in rows if item["event"] == event.value), None)
             total = row["total"] if row else 0
             users = row["users"] if row else 0
             self.stdout.write(f"  {event.label}: {total} events, {users} users")
-        if viewed:
-            self.stdout.write(f"  View-to-paid rate: {paid / viewed:.1%}")
-        else:
-            self.stdout.write("  View-to-paid rate: n/a")
+        self.stdout.write("Page requests are unverified, not unique people or employer interest. "
+                          "Event totals are not a cohort conversion rate; promotion requests are separate.")

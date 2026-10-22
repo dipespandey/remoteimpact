@@ -59,7 +59,7 @@ def experience_conflict(job, prefs, text):
     years = prefs.get('candidate_years')
     if not entry and years is None:return False
     if entry and re.search(r'\b(?:senior|principal|staff|director|head of|chief)\b',job.title,re.I):return True
-    ceiling=min(2,years) if entry and years is not None else (2 if entry else years)
+    ceiling=years if years is not None else 2
     for m in YEAR_REQUIREMENT.finditer(text):
         clause=text[max(0,m.start()-40):m.end()+35]
         if re.search(r'\b(?:our company|our organization|we have|founded|over the last)\b',text[max(0,m.start()-40):m.start()],re.I):continue
@@ -69,11 +69,21 @@ def experience_conflict(job, prefs, text):
         if value>ceiling:return True
         # "2+ years" or "at least 2 years" is a floor, so it is already beyond an entry-level brief.
         floor=bool(re.match(r'\s*\+',text[m.end(1):m.end(1)+3])) or re.search(r'\b(?:at least|minimum(?: of)?|min\.?)\s*$',text[max(0,m.start()-20):m.start()],re.I)
-        if entry and value==ceiling and value>=2 and floor:return True
+        if entry and years is None and value==ceiling and value>=2 and floor:return True
     return False
 
 
 def role_conflict(job, prefs, text):
+    alternatives = prefs.get('requested_role_phrases') or []
+    if len(alternatives) > 1:
+        # Requested functions are alternatives. Each branch retains the shared
+        # employment rules; a communications branch cannot veto research work.
+        return all(_role_conflict(job, {**prefs, 'titles':[role], 'intent_text':''}, text)
+                   for role in alternatives)
+    return _role_conflict(job, prefs, text)
+
+
+def _role_conflict(job, prefs, text):
     wanted = ' '.join(prefs.get('titles') or [])
     # Function-only requests such as "communications roles" have no role noun.
     headline = re.split(r'[.!?]|\b(?:with|using|background|experience)\b', prefs.get('intent_text', ''), maxsplit=1, flags=re.I)[0]
@@ -86,7 +96,7 @@ def role_conflict(job, prefs, text):
     if re.search(r'\bpolicy\s+(?:roles?|jobs?|positions?|work|analysts?|advisors?|officers?)\b', wanted, re.I):
         if re.search(r'\b(?:scientist|engineer|developer|technician)\b', job.title, re.I) and not re.search(r'\b(?:policy|advocacy|regulatory)\b', job.title, re.I):
             return True
-    if 'full-time' in (prefs.get('job_types') or []) and re.search(r'\bconsultants?\b', job.title, re.I) and not re.search(r'\bfull[- ]time\b',text,re.I):
+    if set(prefs.get('job_types') or []) == {'full-time'} and re.search(r'\bconsultants?\b', job.title, re.I) and not re.search(r'\bfull[- ]time\b',text,re.I):
         return True
     from jobs.services.scout_constraints import positive_text
     product_wanted=positive_text(wanted)

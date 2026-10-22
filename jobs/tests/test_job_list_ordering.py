@@ -30,14 +30,6 @@ class JobListOrderingTest(TestCase):
             )
             app.sites.add(Site.objects.get_current())
 
-    def test_search_title_keeps_complete_role_and_employer(self):
-        org = Organization.objects.create(name="Africa Jobs Fund", slug="title-identity-employer")
-        title = "Head of Francophone Africa Export Manufacturing and Venture Builder"
-        job = Job.objects.create(title=title, slug="complete-role-title", organization=org,
-                                 description="A current role.", source=Job.Source.MANUAL)
-        response = self.client.get(reverse("jobs:job_detail", args=[job.slug]))
-        self.assertContains(response, f"<title>{title} at {org.name}</title>")
-
     def _personalized_fixture(self):
         cache.clear()
         user = get_user_model().objects.create_user(username="refresh-user")

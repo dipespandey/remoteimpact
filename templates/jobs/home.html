@@ -24,10 +24,10 @@
             </a>
             {% endif %}
             <h1 class="mt-5 text-balance text-3xl font-semibold leading-[1.12] tracking-tight text-foreground sm:text-[2.5rem]">
-                Remote jobs in climate, global health, AI safety and social impact
+                Remote jobs in climate, global health and social impact
             </h1>
             <p class="mt-4 max-w-lg text-base leading-relaxed text-muted-foreground">
-                {{ active_jobs_count|intcomma }} roles at {{ organizations_count|intcomma }}+ organizations, checked daily on the employer's own site. Tell us what you want and we'll email the ones that fit.
+                Find purpose-driven work in climate, AI safety, global health and social impact. {{ active_jobs_count|intcomma }} roles at {{ organizations_count|intcomma }}+ organizations.
             </p>
 
             <div id="hero-job-scout" class="hero-scout mt-8 max-w-xl" data-user-state="{% if user.is_authenticated %}authenticated{% else %}guest{% endif %}">
@@ -35,21 +35,22 @@
                 <button id="hero-job-scout-launcher" type="button" class="hero-scout-launcher flex w-full items-center gap-3 rounded-[1.4rem] bg-card p-2 pl-4 text-left shadow-lift transition-shadow hover:shadow-[0_0_0_1px_rgb(20_20_25/0.08),0_10px_28px_-10px_rgb(20_20_25/0.18)]" aria-haspopup="dialog" aria-controls="job-scout-composer" aria-expanded="false">
                     <span class="flex min-h-[44px] min-w-0 flex-1 items-center gap-3">
                         <svg class="h-4 w-4 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg>
-                        <span class="hero-scout-launcher-copy block text-base text-muted-foreground">Describe the job you want: role, skills, where you can work, pay</span>
+                        <span class="hero-scout-launcher-copy block text-base text-muted-foreground">Your role, skills and location</span>
                     </span>
-                    <span class="hero-scout-submit btn btn-primary shrink-0">Email my matches</span>
+                    <span class="hero-scout-submit btn btn-primary shrink-0">Find matches</span>
                 </button>
-                <div class="hero-scout-examples mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground" aria-label="Example searches">
-                    <button type="button" class="hero-scout-example rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" data-scout-example="Remote software engineering roles using Python in Europe, mid-level, no internships.">Python in Europe</button>
-                    <button type="button" class="hero-scout-example rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" data-scout-example="Remote climate policy roles, open to Europe, at least $70k.">Climate policy</button>
-                    <button type="button" class="hero-scout-example rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" data-scout-example="Remote communications roles at global health nonprofits, full-time.">Global health communications</button>
+                <div class="hero-scout-examples mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground" aria-label="Try a sample Scout">
+                    <span class="text-muted-foreground">Try a sample:</span>
+                    <a href="{% url 'jobs:job_scout_preview' %}?intent=Remote%20software%20engineering%20roles%20using%20Python%20in%20Europe%2C%20mid-level%2C%20no%20internships.&amp;source=home_hero_example_python" data-scout-loading class="hero-scout-example rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" data-track="home_scout_example_python" data-track-category="job_scout_acquisition">Python in Europe</a>
+                    <a href="{% url 'jobs:job_scout_preview' %}?intent=Remote%20climate%20policy%20roles%2C%20open%20to%20Europe%2C%20at%20least%20%2470k.&amp;source=home_hero_example_climate" data-scout-loading class="hero-scout-example rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" data-track="home_scout_example_climate" data-track-category="job_scout_acquisition">Climate policy</a>
+                    <a href="{% url 'jobs:job_scout_preview' %}?intent=Remote%20communications%20roles%20at%20global%20health%20nonprofits%2C%20full-time.&amp;source=home_hero_example_health" data-scout-loading class="hero-scout-example rounded-full bg-muted px-3 py-1.5 text-foreground transition-colors hover:bg-accent" data-track="home_scout_example_health" data-track-category="job_scout_acquisition">Global health communications</a>
                 </div>
                 <p class="hero-scout-meta mt-4 text-xs text-muted-foreground">
-                    Your first set of matches is free. <a href="{% url 'jobs:job_list' %}" class="font-medium text-foreground underline decoration-border hover:decoration-foreground" data-track="home_hero_browse_jobs" data-track-category="job_scout_acquisition" data-track-label="hero_secondary">Or browse all {{ active_jobs_count|intcomma }} roles</a>
+                    Preview free. Get one matching email when you sign up. <a href="{% url 'jobs:job_list' %}" class="font-medium text-foreground underline decoration-border hover:decoration-foreground" data-track="home_hero_browse_jobs" data-track-category="job_scout_acquisition" data-track-label="hero_secondary">Or browse all {{ active_jobs_count|intcomma }} roles</a>
                 </p>
             </div>
             <nav aria-label="Browse impact jobs" class="mt-4 flex flex-wrap gap-4 text-sm">
-                <a href="{% url 'jobs:job_list' %}" class="font-medium text-foreground underline underline-offset-4">Browse impact jobs</a>
+                <a href="{% url 'jobs:job_list' %}" class="font-medium text-foreground underline underline-offset-4">Browse remote impact jobs</a>
                 <a href="{% url 'jobs:keyword_jobs' keyword_slug='remote-nonprofit-jobs' %}" class="font-medium text-foreground underline underline-offset-4">Remote nonprofit jobs</a>
             </nav>
             {% if has_impact_profile %}
@@ -147,7 +148,7 @@
         <h2 id="orgs-heading" class="text-center text-xs text-muted-foreground">Hiring now on Remote Impact</h2>
         <ul class="mx-auto mt-4 flex max-w-4xl flex-wrap justify-center gap-x-8 gap-y-3">
             {% for org in featured_orgs %}
-            <li><a href="{% url 'jobs:organization_profile' slug=org.slug %}" class="text-base font-semibold tracking-tight text-foreground/55 transition-colors hover:text-foreground">{{ org.name|display_title }}</a></li>
+            <li><a href="{% url 'jobs:organization_profile' slug=org.slug %}" class="text-base font-semibold tracking-tight text-muted-foreground transition-colors hover:text-foreground">{{ org.name|display_title }}</a></li>
             {% endfor %}
         </ul>
     </div>
@@ -226,7 +227,8 @@
         </div>
         <h2 id="scout-composer-title" class="mt-3 font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">Tell us what a good next role looks like.</h2>
         <p class="scout-composer-intro mt-2 text-muted-foreground">Write naturally. Include the role, skills, location, seniority, salary, mission, or anything you want excluded.</p>
-        <form id="job-scout-composer-form" method="get" action="{% url 'jobs:job_scout_preview' %}">
+        <form data-scout-loading id="job-scout-composer-form" method="post" action="{% url 'jobs:job_scout_preview' %}">
+            {% csrf_token %}
             <input id="job-scout-composer-source" type="hidden" name="source" value="home_hero_modal">
             <div class="scout-composer-field mt-6">
                 <label for="job-scout-composer-intent" class="label">Your job brief</label>
@@ -241,12 +243,15 @@
                 <button type="button" class="scout-composer-example badge badge-primary cursor-pointer text-left transition-colors hover:border-ring" data-scout-example="Remote Python or data engineering roles at mission-driven organizations. Open to Europe or worldwide, no sales roles.">Python for social impact</button>
                 <button type="button" class="scout-composer-example badge badge-primary cursor-pointer text-left transition-colors hover:border-ring" data-scout-example="Remote communications or content roles at global health nonprofits. I have five years of experience and prefer full-time work.">Global health communications</button>
             </div>
+            {% include 'jobs/_scout_composer_contact.html' with contact_prefix='home-scout' %}
             <button type="submit" class="scout-composer-submit btn btn-primary btn-lg btn-block mt-6">Preview my best matches <span aria-hidden="true">&rarr;</span></button>
-            <p class="scout-composer-note help mt-3 text-center">Your brief may be sent to DeepSeek to interpret preferences; job evidence may also be processed for matching. Avoid sensitive personal information. <a href="{% url 'jobs:privacy' %}" class="underline">Privacy details</a>.</p>
+            <p class="scout-composer-note help mt-3 text-center">Your brief may be sent to an AI provider to interpret preferences; job evidence may also be processed for matching. Avoid sensitive personal information. <a href="{% url 'jobs:privacy' %}" class="underline">Privacy details</a>.</p>
             <p class="scout-composer-note help mt-1 text-center">Free: one matching email, no card required. Pro adds recurring alerts.</p>
         </form>
     </section>
 </div>
+
+<div class="container">{% include "jobs/partials/roundup_invite.html" with roundup_source="home" %}</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -311,7 +316,7 @@
         if (modal.hidden) return;
         if (event.key === 'Escape') closeComposer();
         if (event.key === 'Tab') {
-            const controls = Array.from(modal.querySelectorAll('button, textarea, a[href]')).filter(function (control) { return !control.disabled && control.getClientRects().length; });
+            const controls = Array.from(modal.querySelectorAll('button, input:not([type="hidden"]), textarea, a[href]')).filter(function (control) { return !control.disabled && control.getClientRects().length; });
             const first = controls[0];
             const last = controls[controls.length - 1];
             if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
@@ -357,4 +362,5 @@
     }
 })();
 </script>
+{% include 'jobs/_scout_loading.html' %}
 {% endblock %}

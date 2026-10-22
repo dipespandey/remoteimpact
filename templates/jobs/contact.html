@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Contact Remote Impact{% endblock %}
+{% block meta_description %}Contact Remote Impact about a listing correction, partnership, employer support, accessibility, or privacy question.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ContactPage",
+  "name": "Contact Remote Impact",
+  "url": "{{ SITE_URL }}{{ request.path }}",
+  "mainEntity": {
+    "@type": "Organization",
+    "name": "Remote Impact",
+    "url": "{{ SITE_URL }}/",
+    "email": "hello@remoteimpact.org",
+    "contactPoint": {"@type": "ContactPoint", "email": "hello@remoteimpact.org", "contactType": "customer support"}
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<article class="page-narrow">
+    <header class="page-header">
+        <p class="kicker">Contact Remote Impact</p>
+        <h1 class="page-title mt-1">Tell us what you need.</h1>
+        <p class="page-lede">The fastest way to reach the Remote Impact team is by email.</p>
+    </header>
+
+    <div class="prose prose-neutral max-w-[68ch] text-base leading-7 sm:text-base prose-headings:scroll-mt-24 prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-foreground prose-h2:mt-10 prose-h2:text-lg prose-p:text-foreground/85 prose-li:text-foreground/85 prose-li:marker:text-muted-foreground prose-strong:font-semibold prose-strong:text-foreground prose-a:font-medium prose-a:text-foreground prose-a:decoration-border prose-a:underline-offset-4 hover:prose-a:decoration-foreground">
+        <p class="text-xl"><a href="mailto:hello@remoteimpact.org">hello@remoteimpact.org</a></p>
+
+        <h2>Good reasons to write</h2>
+        <ul>
+            <li>Report a job that is closed, inaccurate, or missing important location details.</li>
+            <li>Ask about employer listings, partnerships, feeds, or attribution.</li>
+            <li>Share accessibility feedback or a problem using the site.</li>
+            <li>Ask a privacy or data-handling question.</li>
+        </ul>
+
+        <p>For listing methodology, see <a href="{% url 'jobs:how_we_check' %}">how we check jobs</a>. For data choices and AI-assisted tools, see our <a href="{% url 'jobs:privacy' %}">privacy policy</a>.</p>
+        <p>Please do not send passwords, payment details, or sensitive personal information by email.</p>
+    </div>
+</article>
+{% endblock %}

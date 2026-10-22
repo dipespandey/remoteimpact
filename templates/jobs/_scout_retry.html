@@ -1,0 +1,6 @@
+<form data-scout-loading method="get" action="{% url 'jobs:job_scout_preview' %}" class="mt-3">
+    <input type="hidden" name="intent" value="{{ intent }}">
+    <input type="hidden" name="source" value="{{ request.GET.source|default:'scout_retry' }}">
+    <input type="hidden" name="scout_flow" value="{{ scout_flow_id }}">
+    <button type="submit" class="btn btn-outline btn-sm" data-track="scout_review_retry">Retry this search</button>
+</form>
