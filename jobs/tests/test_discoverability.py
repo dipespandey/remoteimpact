@@ -22,7 +22,7 @@ class DiscoverabilityMetadataTests(TestCase):
         self.assertIn('https://remoteimpact.org/resources/remote-impact-jobs/', body)
         self.assertIn('https://remoteimpact.org/insights/remote-impact-jobs/', body)
         self.assertIn('https://remoteimpact.org/pricing/', body)
-        self.assertIn('Pro ongoing alerts at $10/month (7-day free trial)', body)
+        self.assertIn('optional paid alerts and employer products', body)
         self.assertNotIn('/jobs/feed/', body)
         self.assertNotIn('/salary-calculator/', body)
 
