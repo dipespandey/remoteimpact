@@ -1144,21 +1144,44 @@ skills is not a request for invented, exact job titles. JSON only."""
             diagnostics["relaxed_fill"] = added
             diagnostics["relaxed_review"] = relaxed_diagnostics.get("reranker")
             diagnostics["relaxed_hard_rejections"] = relaxed_diagnostics.get("hard_rejections", {})
-        if len(selected) < min(limit, cls.CLOSE_MATCH_BELOW):
-            from jobs.services.scout_close_matches import close_matches
-            for job in close_matches(qs.exclude(pk__in=[job.pk for job in selected]), preferences, terms,
-                                     diagnostics, limit=min(limit - len(selected), 5),
-                                     exclude_titles=[job.title or "" for job in selected],
-                                     candidates=[job for job in shared_candidates if job.pk not in {j.pk for j in selected}]
-                                         if shared_candidates else None):
-                selected.append(job)
+        # Previews should show a grounded opening as soon as one is available.
+        # A close-match model call can add seconds even when it picks nothing.
+        # Saved alerts keep the fuller fill behavior below.
+        fast_preview = bool(preferences.get('_scout_preview_cache'))
         from jobs.services.scout_remote_policy import check_matches
-        selected = check_matches(selected, preferences, diagnostics)
+        if fast_preview:
+            selected = check_matches(selected, preferences, diagnostics)
+            if not selected:
+                from jobs.services.scout_recovery import recover
+                recovery_pool = list({job.pk: job for job in [*(shared_candidates or candidates), *pool]}.values())
+                rejected = [*diagnostics.get('review_rejected_ids', []),
+                            *relaxed_diagnostics.get('review_rejected_ids', [])]
+                recovered = recover(recovery_pool, preferences, selected, diagnostics,
+                                    limit=1, rejected_ids=rejected)
+                if recovered:
+                    policy_diagnostics = {}
+                    selected.extend(check_matches(recovered, preferences, policy_diagnostics, allow_api=False))
+                    diagnostics['recovery_policy'] = policy_diagnostics
+                    diagnostics['source_rule_recovery'] = len(selected)
+            diagnostics['fast_preview_result'] = bool(selected)
+        if len(selected) < min(limit, cls.CLOSE_MATCH_BELOW) and (not fast_preview or not selected):
+            from jobs.services.scout_close_matches import close_matches
+            close = close_matches(qs.exclude(pk__in=[job.pk for job in selected]), preferences, terms,
+                                  diagnostics, limit=min(limit - len(selected), 5),
+                                  exclude_titles=[job.title or "" for job in selected],
+                                  candidates=[job for job in shared_candidates if job.pk not in {j.pk for j in selected}]
+                                      if shared_candidates else None)
+            if fast_preview:
+                close = check_matches(close, preferences, diagnostics)
+            selected.extend(close)
+        if not fast_preview:
+            selected = check_matches(selected, preferences, diagnostics)
         # Reuse the first retrieval pool when review failed or the policy gate
         # removed matches. Never spend the fallback budget scanning SQL again.
         target = min(limit, cls.CLOSE_MATCH_BELOW)
-        if len(selected) < target:
+        if len(selected) < target and (not fast_preview or not selected):
             from jobs.services.scout_recovery import recover
+            prior_recovery_count = diagnostics.get('source_rule_recovery', 0)
             recovery_pool = list({job.pk: job for job in [*(shared_candidates or candidates), *pool]}.values())
             rejected = [*diagnostics.get('review_rejected_ids', []),
                         *relaxed_diagnostics.get('review_rejected_ids', [])]
@@ -1170,7 +1193,7 @@ skills is not a request for invented, exact job titles. JSON only."""
             recovered = recovered[:target - len(selected)]
             diagnostics['recovery_policy'] = policy_diagnostics
             selected.extend(recovered)
-            diagnostics['source_rule_recovery'] = len(recovered)
+            diagnostics['source_rule_recovery'] = prior_recovery_count + len(recovered)
         # Model evidence must never hide a constraint that remains unverified.
         from jobs.services.scout_review import listing_caveats,sector_caveats
         for job in selected:
