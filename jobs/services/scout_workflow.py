@@ -3,7 +3,7 @@ import hashlib
 import json
 from contextlib import contextmanager
 from contextvars import ContextVar
-from time import monotonic
+from time import monotonic, perf_counter
 
 from django.conf import settings
 from django.core.cache import cache
@@ -18,14 +18,29 @@ def bounded_workflow(diagnostics):
         yield
         return
     started = monotonic()
+    perf_started = perf_counter()
     state = {'deadline': started + 18, 'preparation_deadline': started + 3,
              'calls': 0, 'diagnostics': diagnostics}
     token = _budget.set(state)
     diagnostics['workflow_version'] = 4
+    outcome = 'ok'
     try:
         yield
+    except Exception:
+        outcome = 'error'
+        raise
     finally:
         diagnostics['llm_calls'] = state['calls']
+        elapsed = max(0, perf_counter() - perf_started)
+        try:
+            from jobs.services.performance import scout_event, emit_event
+            event = scout_event(diagnostics, seconds=elapsed, calls=state['calls'], call_budget=4)
+            if outcome == 'error':
+                event['outcome'] = 'error'
+            emit_event(event)
+        except Exception:
+            # Metrics must never affect a Scout response.
+            pass
         _budget.reset(token)
 
 
@@ -46,6 +61,20 @@ def record_stage(stage, status, **metrics):
     state = _budget.get()
     if state is not None:
         state['diagnostics'].setdefault('stages', []).append({'stage': stage, 'status': status, **metrics})
+
+
+@contextmanager
+def timed_stage(stage):
+    """Record elapsed time for a fixed workflow stage, including failures."""
+    started = perf_counter()
+    status = 'ok'
+    try:
+        yield
+    except Exception:
+        status = 'error'
+        raise
+    finally:
+        record_stage(stage, status, seconds=round(max(0, perf_counter() - started), 4))
 
 
 def preparation_unavailable():
@@ -88,7 +117,7 @@ def generate(prompt, **kwargs):
         kwargs['timeout'] = min(kwargs.get('timeout', 6), remaining)
         state['calls'] += 1
     kwargs['max_retries'] = 0
-    started = monotonic()
+    started = perf_counter()
     status = 'ok'
     try:
         return AIClient().generate(prompt, **kwargs)
@@ -129,6 +158,7 @@ def plan_terms(preferences, diagnostics, *, retry=False):
     key = 'scout-plan-v1:' + hashlib.sha256((body + system + settings.DEEPSEEK_MODEL).encode()).hexdigest()
     try:
         output = cache.get(key)
+        cache_status = 'cache' if output is not None else 'ok'
         if output is None:
             # Leave two calls for exact evidence and useful alternatives.
             if not can_call(reserve=2):
@@ -142,6 +172,7 @@ def plan_terms(preferences, diagnostics, *, retry=False):
         if any(not isinstance(term, str) or not 2 <= len(term.strip()) <= 80 for term in terms):
             raise ValueError('Invalid search term')
         cache.set(key, output, 3600)
+        record_stage('plan_cache', cache_status)
         diagnostics['refinement' if retry else 'planning'] = 'ready'
         return list(dict.fromkeys(term.strip().lower() for term in terms))
     except Exception:

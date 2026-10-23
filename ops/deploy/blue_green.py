@@ -134,7 +134,7 @@ class Release:
             if running != 'true':
                 return True
             processes = run('docker', 'top', target['id'], '-eo', 'pid,args', capture=True)
-            if any('manage.py' in line for line in processes.splitlines()):
+            if any('manage.py' in line and 'run_scout_preview_worker' not in line for line in processes.splitlines()):
                 return False
             run('docker', 'stop', '--timeout', '65', target['id'])
             print('Stopped idle previous release; rollback image and container retained.', flush=True)
@@ -152,7 +152,7 @@ class Release:
             running = run('docker', 'inspect', '-f', '{{.State.Running}}', target['id'], capture=True).strip()
             if running == 'true':
                 processes = run('docker', 'top', target['id'], '-eo', 'pid,args', capture=True)
-                if any('manage.py' in line for line in processes.splitlines()):
+                if any('manage.py' in line and 'run_scout_preview_worker' not in line for line in processes.splitlines()):
                     raise RuntimeError('Retained release has a management command running; retry later')
                 run('docker', 'stop', '--time', '65', target['id'])
             run('docker', 'rm', target['id'])
@@ -224,6 +224,20 @@ class Release:
             'COPY .release-static/ /app/staticfiles/\n'
             'RUN chmod +x /app/entrypoint-release.sh && /app/.venv/bin/python manage.py collectstatic --noinput\n'
             'ENTRYPOINT ["/app/entrypoint-release.sh"]\nCMD []\n')
+        # Infrastructure is source-versioned and provisioned only from a checked release.
+        performance_env = None
+        shared_setup = source / 'ops/deploy/shared_services.py'
+        if shared_setup.exists():
+            provisioned_env = self.root / 'secrets/performance.env'
+            if check_only:
+                # A check-only candidate may use already provisioned shared
+                # services, but must never create credentials, data dirs or
+                # containers as a side effect of validation.
+                if provisioned_env.exists():
+                    performance_env = provisioned_env
+            else:
+                run(sys.executable, str(shared_setup), str(self.root))
+                performance_env = provisioned_env
         image = 'ri-release:' + release_id.lower()
         run('docker', 'build', '--build-arg', 'RUNTIME_IMAGE=' + runtime, '-f', str(source / 'Dockerfile.release'), '-t', image, str(source))
         port = 8103 if check_only else (8102 if state['active']['port'] == 8101 else 8101)
@@ -235,6 +249,12 @@ class Release:
         switched = False
         safe_to_remove = True
         succeeded = False
+        runtime_args = []
+        if performance_env:
+            runtime_args = ['--env-file', str(performance_env),
+                '-v', str(self.root / 'cache') + ':/var/cache/remoteimpact',
+                '-v', str(self.root / 'performance-logs') + ':/var/log/remoteimpact',
+                '-v', str(self.state) + ':/run/remoteimpact-releases:ro']
         try:
             cid = run('docker', 'create', '--name', 'ri-candidate-' + release_id.lower(),
                 '--label', 'org.remoteimpact.release=' + release_id,
@@ -243,12 +263,13 @@ class Release:
                 '-p', f'127.0.0.1:{port}:8000',
                 '-v', str(self.root / 'media') + ':/app/media',
                 '-v', str(self.root / 'secrets/google-indexing.json') + ':/run/secrets/google-indexing.json:ro',
+                *runtime_args, '--log-opt', 'max-size=10m', '--log-opt', 'max-file=3',
                 image, capture=True).strip()
             target = {'id': cid, 'port': port, 'release': release_id, 'image': image, 'ref': ref}
             # One-off commands use the same immutable image, network, environment and shared media.
             def command(*args):
                 return run('docker', 'run', '--rm', '--network', 'easyclaw_default', '--env-file', str(self.root / '.env'),
-                    '-e', 'PGOPTIONS=-c lock_timeout=5s -c statement_timeout=60s',
+                    *runtime_args, '-e', 'PGOPTIONS=-c lock_timeout=5s -c statement_timeout=60s',
                     '--entrypoint', '/app/.venv/bin/python', image, '/app/manage.py', *args)
             command('check')
             command('makemigrations', '--check', '--dry-run')
@@ -260,6 +281,8 @@ class Release:
                     raise RuntimeError('Pending migrations. Review backward compatibility, then use --allow-migrations; live traffic unchanged.')
                 command('migrate', '--noinput')
                 command('migrate', '--check')
+            if performance_env:
+                command('run_scout_preview_worker', '--check')
             run('docker', 'start', cid)
             deadline = time.monotonic() + 90
             while True:

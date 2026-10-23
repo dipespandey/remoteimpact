@@ -248,6 +248,7 @@ urlpatterns = [
     path("referral/", views.ReferralDashboardView.as_view(), name="referral_dashboard"),
     # Job Alerts
     path("alerts/preview/", views.JobScoutPreviewView.as_view(), name="job_scout_preview"),
+    path("alerts/preview/status/<uuid:task_id>/", views.ScoutPreviewStatusView.as_view(), name="scout_preview_status"),
     path("alerts/contact/", views.ScoutContactCaptureView.as_view(), name="scout_contact_capture"),
     path("alerts/contact/verify/<str:token>/", views.ScoutContactVerifyView.as_view(), name="scout_contact_verify"),
     path("alerts/signup/", views.JobScoutSignupStartView.as_view(), name="job_scout_signup_start"),

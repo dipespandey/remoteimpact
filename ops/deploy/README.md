@@ -56,3 +56,50 @@ The host keeps a separate bare source cache at `/opt/easyclaw/github-source.git`
 Normal pushes never opt in to production schema changes. Pending migrations stop before traffic switches. After reviewing the printed production migration plan for backward compatibility, run this workflow manually on `main` with `allow_migrations` enabled; all CI checks run again before deployment. Never approve destructive or long-locking changes without a separate reviewed rollout. Check-only never applies migrations.
 
 After cutover, the previous release stops automatically when idle. Commands already in progress keep their drain lock; the last command to finish requests cleanup. Rollback starts it and verifies readiness before changing traffic. Retirement handles already-stopped containers and still refuses running management commands or scheduled-job locks. Staging remains independent.
+
+
+## Scout performance services
+
+A checked release provisions a private, digest-pinned Redis cache (`ri-cache`),
+limited to 256 MiB of keys / a 512 MiB container, with LRU eviction and persistent
+AOF storage under `/opt/easyclaw/redis-data`. No host port is published. Credentials
+and generated runtime configuration stay in root-only files under `secrets/`.
+Application containers share the cache and bounded performance logs across releases;
+file-cache fallback has separate page/extraction/Scout budgets. Redis client network
+operations have one-second connect/read timeouts; Redis is a runtime dependency,
+not a durable store of user accounts or queue ownership.
+
+`release_supervisor.py` runs web and one Scout preview worker in the same immutable
+application container. Worker inference threads are limited to preserve web CPU.
+The worker claims new tasks only while its release is active in the shared read-only
+state file. Shutdown forwards TERM and allows 55 seconds for bounded work to drain.
+An unexpected child exit stops both children so Docker can restart a coherent pair.
+Scheduled commands remain protected by `exec-active` locks. The persistent Scout
+worker is excluded from the old unwrapped-management-command check because it has
+its own bounded task lease, token fencing and graceful shutdown.
+
+Migration 0085 is additive: three new Scout queue/access/guard tables and a seed
+singleton. It does not rewrite existing tables or data. Old releases ignore the new
+tables and remain valid for application rollback; leave the migration applied when
+rolling back. Review its SQL and both database checks before the explicit migration
+workflow dispatch. The worker readiness check runs after migrations and before
+candidate startup. No queue worker or Redis is created during check-only inspection.
+
+Completed preview results are refreshed after 180 seconds, current listing availability
+and source fingerprints are checked before display, and durable tasks/grants expire
+after 24 hours. At most 20 tasks can be queued/running; each session has five enqueues
+per ten minutes. A task has at most two attempts, a 40-second deadline and a 45-second
+lease. Status and result responses are session-bound and private/no-store.
+
+Read observed performance through the active release:
+
+```sh
+/opt/easyclaw/exec-active /app/.venv/bin/python /app/manage.py perf_report /var/log/remoteimpact/performance.jsonl --since-hours 24
+```
+
+The report gives route and Scout-stage p50/p95 and separates cached/fresh request
+timings. It reads a bounded recent tail; counts are samples, not unique users or a
+sequential funnel. The JSONL writer locks rotation across processes and limits logs
+to one 10 MiB active file plus three backups, with 0600 permissions. It records UTC
+timestamps, route templates, fixed stage names, numeric timings and outcomes; never
+raw URLs, briefs, prompts, emails, user identifiers or provider payloads.

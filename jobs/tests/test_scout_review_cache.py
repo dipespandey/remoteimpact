@@ -1,9 +1,11 @@
 import json
 from unittest.mock import patch
-from django.core.cache import cache
+from django.core.cache import caches
 from django.test import SimpleTestCase,override_settings
 from jobs.tests.test_scout_pipeline import job
 from jobs.services.scout_reranker import rerank
+
+cache = caches['scout_decisions']
 
 
 @override_settings(SCOUT_RERANK_ENABLED=True,SCOUT_RERANK_BACKEND='deepseek',DEEPSEEK_API_KEY='test',DEEPSEEK_MODEL='cache-test')
@@ -53,6 +55,19 @@ class IndividualReviewCacheTests(SimpleTestCase):
                 rerank([self.a],self.prefs,[self.a],{})
         self.assertEqual(model.call_count,3)
 
+    def test_prompt_change_and_expiry_require_a_fresh_decision(self):
+        from jobs.services.scout_review import CHECK_INSTRUCTIONS
+        with override_settings(SCOUT_DECISION_CACHE_TTL=1):
+            with patch('jobs.services.scout_workflow.generate',side_effect=self.model) as model:
+                rerank([self.a],self.prefs,[self.a],{})
+                with patch('jobs.services.scout_review.CHECK_INSTRUCTIONS',CHECK_INSTRUCTIONS+' Recheck changed prompt.'):
+                    rerank([self.a],self.prefs,[self.a],{})
+                self.assertEqual(model.call_count,2)
+                import time
+                time.sleep(1.1)
+                rerank([self.a],self.prefs,[self.a],{})
+        self.assertEqual(model.call_count,3)
+
     def test_live_country_conflict_is_rechecked_before_cached_decision(self):
         prefs={**self.prefs,'locations':['Norway']}
         def model(prompt,**kwargs):
@@ -70,6 +85,15 @@ class IndividualReviewCacheTests(SimpleTestCase):
         with patch('jobs.services.scout_reranker.cache.get_many',side_effect=RuntimeError), \
              patch('jobs.services.scout_workflow.generate',side_effect=self.model):
             self.assertEqual(rerank([self.a],self.prefs,[self.a],{}),[self.a])
+
+    def test_full_cache_read_outage_uses_fresh_review(self):
+        diagnostics={}
+        with patch('jobs.services.scout_reranker.cache.get',side_effect=RuntimeError), \
+             patch('jobs.services.scout_workflow.generate',side_effect=self.model) as model:
+            self.assertEqual(rerank([self.a],self.prefs,[self.a],diagnostics),[])
+        model.assert_not_called()
+        self.assertTrue(diagnostics['rerank_cache_unavailable'])
+        self.assertEqual(diagnostics['reranker'],'review_unavailable')
 
     def test_synthetic_excerpt_quote_is_never_cached_as_a_valid_positive(self):
         bad='Build Python software services. […] Maintain software integrations.'
