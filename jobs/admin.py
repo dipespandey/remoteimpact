@@ -374,7 +374,12 @@ class UserProfileAdmin(admin.ModelAdmin):
     ]
     list_filter = ["account_type", "email_newsletter", "created_at"]
     search_fields = ["user__email", "headline"]
-    readonly_fields = ["created_at", "updated_at"]
+    readonly_fields = ["created_at", "updated_at", "email_newsletter", "weekly_newsletter_status"]
+
+    @admin.display(description="Weekly newsletter status")
+    def weekly_newsletter_status(self, obj):
+        from jobs.services.newsletter_audience import weekly_subscription
+        return "Subscribed" if weekly_subscription(obj.user.email) else "Not subscribed — see Newsletter audience"
 
 
 # ============================================================================
@@ -682,10 +687,36 @@ class ApiKeyAdmin(admin.ModelAdmin):
 from jobs.models import RoundupSubscriber
 
 
+class NewsletterAudienceStatusFilter(admin.SimpleListFilter):
+    title = "Audience status"
+    parameter_name = "audience_status"
+
+    def lookups(self, request, model_admin):
+        return (("weekly", "Weekly subscribed"), ("legacy", "Needs weekly consent"),
+                ("monthly", "Monthly list only"), ("pending", "Awaiting email confirmation"),
+                ("unsubscribed", "Unsubscribed"))
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value == "unsubscribed":
+            return queryset.filter(unsubscribed_at__isnull=False)
+        if value:
+            queryset = queryset.filter(unsubscribed_at__isnull=True)
+        if value == "weekly":
+            return queryset.filter(confirmed_at__isnull=False, consent_basis__in=["weekly_request", "account_explicit"])
+        if value == "legacy":
+            return queryset.filter(consent_basis__in=["legacy_account", "legacy_unknown"])
+        if value == "monthly":
+            return queryset.filter(consent_basis="monthly_only")
+        if value == "pending":
+            return queryset.filter(confirmed_at__isnull=True, consent_basis="weekly_request")
+        return queryset
+
+
 @admin.register(RoundupSubscriber)
 class RoundupSubscriberAdmin(admin.ModelAdmin):
-    list_display = ("email", "topic", "source", "confirmed_at", "unsubscribed_at", "created_at")
-    list_filter = ("topic", "source", "confirmed_at", "unsubscribed_at")
+    list_display = ("email", "audience_status", "consent_basis", "topic", "confirmed_at", "unsubscribed_at")
+    list_filter = (NewsletterAudienceStatusFilter, "consent_basis", "topic", "source")
     search_fields = ("email",)
     readonly_fields = tuple(field.name for field in RoundupSubscriber._meta.fields)
 

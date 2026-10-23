@@ -74,6 +74,8 @@ class RoundupView(View):
                 sub.confirmation_key = uuid.uuid4()  # Old links cannot renew consent.
             sub.topic, sub.source, sub.campaign = context["topic"], context["source"], context["campaign"]
             sub.consent_at, sub.confirmation_requested_at = now, now
+            sub.consent_basis = "weekly_request"
+            sub.consent_version = "weekly-roundup-2026-10-23"
             try:
                 ref = active_subscribers().filter(referral_code=uuid.UUID(context["ref"])).exclude(pk=sub.pk).first()
             except (ValueError, AttributeError):
@@ -112,15 +114,18 @@ class RoundupConfirmView(PrivateLinkView):
         # GET is scanner-safe: only a deliberate POST confirms consent.
         return render(request, "jobs/newsletter/roundup_status.html", {"confirm": True})
 
+    @transaction.atomic
     def post(self, request, token):
         try:
             sub = subscriber_for(token, "confirm")
         except (BadSignature, RoundupSubscriber.DoesNotExist, ValidationError, ValueError):
             return render(request, "jobs/newsletter/roundup_status.html", {"invalid": True}, status=400)
         confirmed_at = sub.confirmed_at if sub.confirmed_at and not sub.unsubscribed_at else timezone.now()
-        changed = RoundupSubscriber.objects.filter(pk=sub.pk, confirmation_key=sub.confirmation_key).update(confirmed_at=confirmed_at, unsubscribed_at=None)
+        changed = RoundupSubscriber.objects.filter(pk=sub.pk, confirmation_key=sub.confirmation_key).update(confirmed_at=confirmed_at, unsubscribed_at=None, consent_basis="weekly_request")
         if not changed:
             return render(request, "jobs/newsletter/roundup_status.html", {"invalid": True}, status=400)
+        from jobs.services.newsletter_audience import mirror_weekly_preference
+        mirror_weekly_preference(sub.email)
         return render(request, "jobs/newsletter/roundup_status.html", {"confirmed": True, "share_url": share_url(sub)})
 
 
@@ -135,6 +140,6 @@ class RoundupUnsubscribeView(PrivateLinkView):
             sub = subscriber_for(token, "unsubscribe")
         except (BadSignature, RoundupSubscriber.DoesNotExist, ValidationError, ValueError):
             return HttpResponse("Invalid unsubscribe link", status=400)
-        RoundupSubscriber.objects.filter(pk=sub.pk).update(
-            unsubscribed_at=timezone.now(), confirmation_key=uuid.uuid4())
+        from jobs.services.newsletter_audience import unsubscribe_newsletters
+        unsubscribe_newsletters(sub.email)
         return render(request, "jobs/newsletter/roundup_status.html", {"unsubscribed": True})

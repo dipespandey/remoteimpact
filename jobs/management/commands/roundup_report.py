@@ -22,11 +22,15 @@ class Command(BaseCommand):
         active = active_subscribers()
         week = timezone.now() - timedelta(days=7)
         report = {"as_of": timezone.now().isoformat(), "weekly_roundup": {
-            "requested": qs.count(), "confirmed_active": active.count(),
-            "pending": qs.filter(confirmed_at__isnull=True, unsubscribed_at__isnull=True).count(),
+            "audience_records": qs.count(),
+            "requested": qs.filter(consent_basis__in=["weekly_request", "account_explicit"]).count(), "confirmed_active": active.count(),
+            "pending": qs.filter(confirmed_at__isnull=True, unsubscribed_at__isnull=True, consent_basis="weekly_request").count(),
+            "needs_weekly_consent": qs.filter(consent_basis__in=["legacy_account", "legacy_unknown"], unsubscribed_at__isnull=True).count(),
+            "monthly_only": qs.filter(consent_basis="monthly_only", unsubscribed_at__isnull=True).count(),
             "unsubscribed": qs.filter(unsubscribed_at__isnull=False).count(),
             "confirmed_last_7_days": active.filter(confirmed_at__gte=week).count(),
             "confirmed_referred": active.filter(referred_by__isnull=False).count(),
+            "by_consent_basis": list(qs.values("consent_basis").annotate(count=Count("pk"))),
             "by_source": list(active.values("source", "campaign").annotate(count=Count("pk")).order_by("-count")),
             "by_interest": list(active.values("topic").annotate(count=Count("pk")))},
             "send_claims_by_status": list(RoundupDelivery.objects.values("issue_week", "status").annotate(count=Count("pk"))),
@@ -35,7 +39,7 @@ class Command(BaseCommand):
             "limits": ["Lists overlap. Do not sum them or treat legacy consent as weekly roundup permission.",
                 "Confirmation is not delivery, a return visit or a job application.",
                 "Source labels are self-reported attribution, not proof of incremental growth.",
-                "No broadcasts are scheduled. Provider imports require unsubscribe/suppression sync before activation."]}
+                "Weekly sends require a current source-reviewed manifest and exact approval hash. Legacy defaults and monthly-only lists are excluded."]}
         if options["export"]:
             try:
                 fd = os.open(options["export"], os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)

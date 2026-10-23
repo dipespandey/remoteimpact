@@ -21,7 +21,8 @@ def safe_label(value, fallback=""):
 
 
 def active_subscribers():
-    return RoundupSubscriber.objects.filter(confirmed_at__isnull=False, unsubscribed_at__isnull=True)
+    return RoundupSubscriber.objects.filter(confirmed_at__isnull=False, unsubscribed_at__isnull=True,
+        consent_basis__in=["weekly_request", "account_explicit"])
 
 
 def token_for(subscriber, purpose):

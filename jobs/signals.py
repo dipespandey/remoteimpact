@@ -349,3 +349,12 @@ def notify_consumer_payment(sender, instance, created, **kwargs):
     lines = [f"Payment: Pro ({plan}){' trial start' if meta.get('trial') else ''}",
              f"Account: {getattr(instance.user, 'email', '') or 'unknown'}"]
     _send_payment_notices(f"New payment: Pro {plan} on Remote Impact", lines)
+
+
+@receiver(post_save, sender='jobs.NewsletterSubscriber')
+def link_monthly_newsletter_audience(sender, instance, **kwargs):
+    """Monthly legacy signup is provenance, never permission for weekly mail."""
+    if kwargs.get('raw'):
+        return
+    from .services.newsletter_audience import link_monthly_record
+    link_monthly_record(instance)
