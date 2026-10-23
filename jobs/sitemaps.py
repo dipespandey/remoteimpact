@@ -36,6 +36,27 @@ class JobSitemap(Sitemap):
         return obj.updated_at
 
 
+class ApplicationGuidesSitemap(Sitemap):
+    """Index only current, personalized application guides with self canonicals."""
+    changefreq = "weekly"
+    priority = 0.6
+
+    def items(self):
+        from .services.guide_generator import cached_application_guide
+
+        candidates = visible_jobs().filter(raw_data__has_key='application_guide').select_related('organization').only(
+            'id', 'slug', 'title', 'description', 'raw_data', 'updated_at',
+            'organization__id', 'organization__name',
+        ).order_by('slug')
+        return [job for job in candidates if cached_application_guide(job)]
+
+    def location(self, obj):
+        return reverse('jobs:application_guide', args=[obj.slug])
+
+    def lastmod(self, obj):
+        return obj.updated_at
+
+
 class CategorySitemap(Sitemap):
     """Sitemap for category landing pages."""
     changefreq = "weekly"
