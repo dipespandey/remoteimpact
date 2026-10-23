@@ -213,5 +213,32 @@ class ReleaseTests(unittest.TestCase):
             self.assertLess(drift, plan)
             self.assertLess(plan, start)
 
+    def test_idle_previous_stops_without_removing_rollback(self):
+        with tempfile.TemporaryDirectory() as folder:
+            release = bg.Release(folder)
+            release.save({'active': {'id': 'new'}, 'previous': {'id': 'old'}})
+            with patch.object(bg, 'run', side_effect=['true\n', 'PID ARGS\n1 gunicorn\n', '']) as run:
+                self.assertTrue(release.stop_previous_if_idle())
+            self.assertEqual(run.call_args.args, ('docker', 'stop', '--timeout', '65', 'old'))
+            self.assertFalse(any(c.args[:2] == ('docker', 'rm') for c in run.call_args_list))
+
+    def test_job_lock_defers_idle_stop(self):
+        with tempfile.TemporaryDirectory() as folder:
+            release = bg.Release(folder)
+            release.save({'active': {'id': 'new'}, 'previous': {'id': 'old'}})
+            with (release.state / 'old.jobs.lock').open('a') as lock:
+                fcntl.flock(lock, fcntl.LOCK_SH)
+                with patch.object(bg, 'run') as run:
+                    self.assertFalse(release.stop_previous_if_idle())
+                    run.assert_not_called()
+
+    def test_active_release_is_never_stopped_as_previous(self):
+        with tempfile.TemporaryDirectory() as folder:
+            release = bg.Release(folder)
+            release.save({'active': {'id': 'same'}, 'previous': {'id': 'same'}})
+            with patch.object(bg, 'run') as run:
+                self.assertFalse(release.stop_previous_if_idle())
+                run.assert_not_called()
+
 if __name__ == '__main__':
     unittest.main()

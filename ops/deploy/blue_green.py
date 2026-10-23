@@ -119,6 +119,27 @@ class Release:
         (self.state / 'pending.json').unlink(missing_ok=True)
         print('Rolled back application traffic; database schema was NOT reversed.', flush=True)
 
+    def stop_previous_if_idle(self):
+        state = self.load()
+        target = state.get('previous')
+        if not target or target['id'] == state['active']['id']:
+            return False
+        with open(self.state / (target['id'] + '.jobs.lock'), 'a') as lock:
+            try:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                print('Previous release is draining scheduled jobs; it will stop when they finish.', flush=True)
+                return False
+            running = run('docker', 'inspect', '-f', '{{.State.Running}}', target['id'], capture=True).strip()
+            if running != 'true':
+                return True
+            processes = run('docker', 'top', target['id'], '-eo', 'pid,args', capture=True)
+            if any('manage.py' in line for line in processes.splitlines()):
+                return False
+            run('docker', 'stop', '--timeout', '65', target['id'])
+            print('Stopped idle previous release; rollback image and container retained.', flush=True)
+            return True
+
     def retire(self, target):
         if not target:
             return
@@ -278,6 +299,10 @@ class Release:
                 shutil.copy2(source / 'ops/deploy' / name, self.root / name)
                 os.chmod(self.root / name, 0o755)
             print(f'Deployed {release_id} on {port}; previous release retained for rollback.', flush=True)
+            try:
+                self.stop_previous_if_idle()
+            except Exception as exc:
+                print(f'Previous release cleanup deferred: {exc}', file=sys.stderr, flush=True)
         except BaseException:
             if switched and not succeeded:
                 self.switch(state['active'])
@@ -294,7 +319,7 @@ class Release:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('mode', nargs='?', default='deploy', choices=('deploy', 'fast', 'build', 'migrate', 'rollback', 'status'))
+    parser.add_argument('mode', nargs='?', default='deploy', choices=('deploy', 'fast', 'build', 'migrate', 'rollback', 'status', 'stop-previous'))
     parser.add_argument('--root', default='/opt/easyclaw')
     parser.add_argument('--ref')
     parser.add_argument('--allow-migrations', action='store_true')
@@ -310,6 +335,8 @@ def main():
             parser.exit(1, 'Interrupted cutover found: inspect pending.json and Caddy upstream before continuing.\n')
         if args.mode == 'status':
             print(json.dumps(release.load(), indent=2))
+        elif args.mode == 'stop-previous':
+            release.stop_previous_if_idle()
         elif args.mode == 'rollback':
             release.rollback()
         else:

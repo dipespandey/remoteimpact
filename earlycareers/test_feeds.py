@@ -27,7 +27,7 @@ class ProgrammeFeedTests(TestCase):
         self.assertNotIn('pibbss', by_guid)
         self.assertIn('wwf-bridge', by_guid)
         claude = by_guid['claude-corps']
-        self.assertIn('US authorization must not require employer sponsorship', claude.findtext('description'))
+        self.assertIn('without employer sponsorship or support', claude.findtext('description'))
         self.assertIn('Varies by placement', claude.findtext('description'))
         self.assertNotIn('utm_', claude.findtext('guid'))
         self.assertEqual(urlsplit(claude.findtext('link')).fragment, 'claude-corps')
@@ -37,7 +37,9 @@ class ProgrammeFeedTests(TestCase):
         raw = dict(registry()[0], deadline='2026-10-20')
         with patch('jobs.services.early_careers.registry', return_value=[raw]):
             self.assertEqual(len(self.render_feed(opportunities(date(2026, 10, 21))).findall('./channel/item')), 0)
-        rows = opportunities(date(2026, 11, 3))
+        programme = dict(next(row for row in registry() if row['slug'] == 'claude-corps'), checked_on='2026-10-19', status='open')
+        with patch('jobs.services.early_careers.registry', return_value=[programme]):
+            rows = opportunities(date(2026, 11, 3))
         root = self.render_feed(rows)
         claude = next(i for i in root.findall('./channel/item') if i.findtext('guid').endswith('#claude-corps'))
         description = claude.findtext('description')

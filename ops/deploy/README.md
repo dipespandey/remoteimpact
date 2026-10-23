@@ -55,4 +55,4 @@ The host keeps a separate bare source cache at `/opt/easyclaw/github-source.git`
 
 Normal pushes never opt in to production schema changes. Pending migrations stop before traffic switches. After reviewing the printed production migration plan for backward compatibility, run this workflow manually on `main` with `allow_migrations` enabled; all CI checks run again before deployment. Never approve destructive or long-locking changes without a separate reviewed rollout. Check-only never applies migrations.
 
-The previous release may be kept stopped to save RAM. Rollback starts it and verifies readiness before changing traffic. Retirement handles already-stopped containers and still refuses running management commands or scheduled-job locks. Staging remains independent.
+After cutover, the previous release stops automatically when idle. Commands already in progress keep their drain lock; the last command to finish requests cleanup. Rollback starts it and verifies readiness before changing traffic. Retirement handles already-stopped containers and still refuses running management commands or scheduled-job locks. Staging remains independent.
