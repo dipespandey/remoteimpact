@@ -67,8 +67,13 @@ class Command(BaseCommand):
             from jobs.services.newsletter_audience import reconcile_audience
             reconcile_audience(apply=True)
         eligible = active_subscribers().exclude(roundupdelivery__issue_week=week).order_by('pk')
+        no_topic = 0
+        if options['send']:
+            supported_topics = {'all'}.union(*topics_by_job.values())
+            no_topic = eligible.exclude(topic__in=supported_topics).count()
+            eligible = eligible.filter(topic__in=supported_topics)
         result = {'issue_week':week,'content_sha256':digest,'eligible':eligible.count(),'batch_limit':options['limit'],
-            'accepted_by_provider':0,'unknown_or_rejected':0,'already_claimed':0,'no_matching_topic':0,'mode':'send' if options['send'] else 'preview'}
+            'accepted_by_provider':0,'unknown_or_rejected':0,'already_claimed':0,'no_matching_topic':no_topic,'mode':'send' if options['send'] else 'preview'}
         if not options['send']:
             self.stdout.write(json.dumps(result,indent=2)); return
         for sub in list(eligible[:options['limit']]):

@@ -170,8 +170,8 @@ class NewsletterAudienceTests(TestCase):
             path = Path(folder)/'issue.json'; path.write_text(json.dumps(data))
             digest = hashlib.sha256(path.read_bytes()).hexdigest()
             with patch('jobs.management.commands.send_roundup.email_service._send_resend', return_value=True) as send:
-                call_command('send_roundup', manifest=str(path), approve_sha256=digest, send=True, stdout=io.StringIO())
-                call_command('send_roundup', manifest=str(path), approve_sha256=digest, send=True, stdout=io.StringIO())
+                call_command('send_roundup', manifest=str(path), approve_sha256=digest, send=True, limit=1, stdout=io.StringIO())
+                call_command('send_roundup', manifest=str(path), approve_sha256=digest, send=True, limit=1, stdout=io.StringIO())
             self.assertEqual(send.call_count, 1)
             self.assertEqual(send.call_args.args[0], 'all@example.org')
             self.assertEqual(RoundupDelivery.objects.count(), 1)
