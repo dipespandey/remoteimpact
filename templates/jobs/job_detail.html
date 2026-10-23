@@ -575,7 +575,7 @@
     function send() {
       if (sent || document.visibilityState !== 'visible') return;
       sent = true;
-      var url = "{% url 'jobs:job_view_beacon' job.slug %}";
+      var url = "{% url 'jobs:job_view_beacon' job.slug %}{% if scout_delivery_id %}?scout_delivery={{ scout_delivery_id }}{% endif %}";
       if (navigator.sendBeacon) { navigator.sendBeacon(url); }
       else { fetch(url, { method: 'POST', keepalive: true, credentials: 'same-origin' }); }
     }

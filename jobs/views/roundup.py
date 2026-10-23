@@ -97,7 +97,7 @@ class RoundupView(View):
 class PrivateLinkView(View):
     def dispatch(self, request, *args, **kwargs):
         response = super().dispatch(request, *args, **kwargs)
-        response["Referrer-Policy"] = "no-referrer"
+        response["Referrer-Policy"] = "same-origin"
         response["X-Robots-Tag"] = "noindex, nofollow"
         return response
 

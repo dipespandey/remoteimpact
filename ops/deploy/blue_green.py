@@ -128,13 +128,17 @@ class Release:
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
                 raise RuntimeError('Previous release still has a running scheduled job; retry later')
-            processes = run('docker', 'top', target['id'], '-eo', 'pid,args', capture=True)
-            if any('manage.py' in line for line in processes.splitlines()):
-                raise RuntimeError('Retained release has a management command running; retry later')
-            run('docker', 'stop', '--time', '65', target['id'])
+            running = run('docker', 'inspect', '-f', '{{.State.Running}}', target['id'], capture=True).strip()
+            if running == 'true':
+                processes = run('docker', 'top', target['id'], '-eo', 'pid,args', capture=True)
+                if any('manage.py' in line for line in processes.splitlines()):
+                    raise RuntimeError('Retained release has a management command running; retry later')
+                run('docker', 'stop', '--time', '65', target['id'])
             run('docker', 'rm', target['id'])
 
     def deploy(self, ref=None, allow_migrations=False, check_only=False):
+        if not ref and (self.root / 'require-github-deploy').exists():
+            raise RuntimeError('Production requires an exact GitHub-tested commit SHA; snapshot deployment is disabled.')
         state = self.load()
         self.ready(state['active'])
         if check_only and allow_migrations:
@@ -148,15 +152,16 @@ class Release:
         if ref:
             if not re.fullmatch(r'[0-9a-f]{40}', ref):
                 raise RuntimeError('--ref must be a full Git commit SHA')
-            # The existing host has manually deployed application edits. Never silently
-            # replace those with an older Git tree during adoption of CI releases.
-            paths = ('jobs', 'jobboard', 'blog', 'gigs', 'templates', 'static', 'ml', 'manage.py', 'pyproject.toml', 'uv.lock')
-            drift = run('git', '-C', str(self.root / 'repo'), 'status', '--porcelain', '--untracked-files=all', '--', *paths, capture=True)
-            if drift.strip():
-                raise RuntimeError('Host application source has uncommitted changes. Reconcile it with Git before a --ref deployment; manual snapshot deploy remains available.')
+            git_source = self.root / 'github-source.git'
+            if not git_source.exists():
+                git_source = self.root / 'repo'
+                paths = ('jobs', 'jobboard', 'blog', 'gigs', 'templates', 'static', 'ml', 'manage.py', 'pyproject.toml', 'uv.lock')
+                drift = run('git', '-C', str(git_source), 'status', '--porcelain', '--untracked-files=all', '--', *paths, capture=True)
+                if drift.strip():
+                    raise RuntimeError('Host application source has uncommitted changes; configure the GitHub source mirror before SHA deployment.')
             archive = folder / 'source.tar'
             with archive.open('wb') as out:
-                subprocess.run(['git', '-C', str(self.root / 'repo'), 'archive', ref], stdout=out, check=True)
+                subprocess.run(['git', '-C', str(git_source), 'archive', ref], stdout=out, check=True)
             with tarfile.open(archive) as contents:
                 contents.extractall(source, filter='data')
             archive.unlink()
@@ -170,7 +175,8 @@ class Release:
                 str(self.root / 'repo') + '/', str(source) + '/', capture=True)
             if changed.strip():
                 raise RuntimeError('Source changed while copying; retry the deployment to obtain a consistent snapshot')
-        shutil.copy2(self.root / 'Dockerfile.prod', folder / 'Dockerfile.prod')
+        recipe = source / 'ops/deploy/Dockerfile.runtime' if ref else self.root / 'Dockerfile.prod'
+        shutil.copy2(recipe, folder / 'Dockerfile.prod')
         dep_bytes = b''.join(p.read_bytes() for p in (folder / 'Dockerfile.prod', source / 'pyproject.toml', source / 'uv.lock'))
         dep_hash = hashlib.sha256(dep_bytes).hexdigest()
         runtime = 'ri-runtime:' + dep_hash[:20]
@@ -224,6 +230,8 @@ class Release:
                     '-e', 'PGOPTIONS=-c lock_timeout=5s -c statement_timeout=60s',
                     '--entrypoint', '/app/.venv/bin/python', image, '/app/manage.py', *args)
             command('check')
+            command('makemigrations', '--check', '--dry-run')
+            command('migrate', '--plan')
             try:
                 command('migrate', '--check')
             except subprocess.CalledProcessError:

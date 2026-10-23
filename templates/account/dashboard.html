@@ -10,7 +10,7 @@
 {% if is_employer %}
 {% include "account/_employer_dashboard.html" %}
 {% else %}
-<div class="page-narrow max-w-5xl space-y-8">
+<div class="page-narrow space-y-8">
     {% if is_seeker %}
     <a href="{% url 'jobs:shortlist' %}" class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">My shortlist &amp; application progress &rarr;</a>
     <!-- Job seeker dashboard -->

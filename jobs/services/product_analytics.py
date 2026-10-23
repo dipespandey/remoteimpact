@@ -95,7 +95,7 @@ STAGES = (
     ('Account', {'account_created'}),
     ('Scout', {'scout_created'}),
     ('Matches', {'initial_email_sent'}),
-    ('Engage', {'scout_job_viewed', 'match_relevant', 'match_not_relevant', 'interest_saved',
+    ('Engage', {'scout_job_viewed', 'scout_apply_clicked', 'match_relevant', 'match_not_relevant', 'interest_saved',
                 'shortlist_viewed', 'candidate_reviewed', 'employer_opt_in'}),
     ('Checkout', {'upgrade_clicked', 'checkout_started', 'checkout_created', 'job_draft_created'}),
     ('Complete', {'payment_completed'}),

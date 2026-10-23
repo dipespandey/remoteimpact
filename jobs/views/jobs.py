@@ -434,21 +434,11 @@ class JobDetailView(DetailView):
         verification["checked_on"] = checked
         context["source_verification"] = verification
 
-        if self.request.GET.get("source") == "scout_email":
-            alert = None
-            alert_id = self.request.GET.get("alert_id", "")
-            if self.request.user.is_authenticated and alert_id.isdigit():
-                alert = self.request.user.job_alerts.filter(pk=int(alert_id)).first()
-            record_consumer_event(
-                ConsumerFunnelEvent.Event.SCOUT_JOB_VIEWED,
-                user=self.request.user,
-                alert=alert,
-                metadata={
-                    "source": "scout_email",
-                    "alert_id": alert.pk if alert else None,
-                    "job_id": self.object.pk,
-                },
-            )
+        from jobs.services.scout_engagement import delivery_for_request
+        delivery = delivery_for_request(self.request, self.object.pk)
+        context['scout_delivery_id'] = delivery.pk if delivery else None
+        if delivery and context.get('apply_redirect_url'):
+            context['apply_redirect_url'] += f'?scout_delivery={delivery.pk}'
 
         # Match score for authenticated users with seeker profiles
         context["match_data"] = None

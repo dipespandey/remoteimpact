@@ -74,9 +74,15 @@ def early_careers_access_report(request):
     rows = opportunities()
     total = len(rows)
     count = lambda key, value: sum(row[key] == value for row in rows)
+    newest_reviewed = max(row['checked_date'] for row in rows)
     return render(request, 'jobs/early_careers_access_report.html', {
         'total': total,
-        'last_reviewed': max(row['checked_date'] for row in rows),
+        'last_reviewed': newest_reviewed,
+        'oldest_reviewed': min(row['checked_date'] for row in rows),
+        'latest_reviewed_count': sum(row['checked_date'] == newest_reviewed for row in rows),
+        'review_due_count': sum(row['review_due'] for row in rows),
+        'open_paid_remote_internships': sum(row['kind'] == 'internship' and row['funding'] == 'paid'
+            and row['mode'] == 'remote' and row['status'] == 'open' for row in rows),
         'funding_counts': [(label, count('funding', key)) for key, label in (
             ('paid', 'Paid or stipend listed'), ('free', 'Free learning or costs covered'),
             ('unpaid', 'Unpaid placement'), ('fee', 'Fees apply'), ('unknown', 'Funding to confirm'))],

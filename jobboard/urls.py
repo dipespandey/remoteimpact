@@ -31,7 +31,7 @@ from jobs.views import admin_analytics, admin_backlinks, impersonate
 from jobs.sitemaps import (
     StaticSitemap, CategorySitemap,
     OrganizationSitemap, ToolsSitemap, TalentSitemap, RegionSitemap,
-    GuidesSitemap, RolePagesSitemap, KeywordPagesSitemap,
+    GuidesSitemap, RolePagesSitemap, KeywordPagesSitemap, RoundupIssueSitemap,
     visible_jobs,
 )
 from blog.sitemaps import BlogSitemap
@@ -397,6 +397,7 @@ Preferred-Languages: en
 
 
 sitemaps = {
+    'roundup-issues': RoundupIssueSitemap,
     'hiring-evidence': HiringEvidenceSitemap,
     'static': StaticSitemap,
     'categories': CategorySitemap,

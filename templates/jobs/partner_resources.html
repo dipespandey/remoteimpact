@@ -34,6 +34,16 @@
     </div>
   </header>
 
+  <section class="card my-6 p-5 sm:p-6" aria-labelledby="reviewed-picks-heading">
+    <h2 id="reviewed-picks-heading" class="section-title">A ready-to-share selection</h2>
+    <p class="mt-2 text-sm text-muted-foreground">Eight roles checked against employer sources on 22 October 2026, with hiring locations, experience and pay. This dated selection includes source-check limits. Recheck before later republication.</p>
+    <div class="mt-4 flex flex-wrap gap-2">
+      <a class="btn btn-outline" href="{% url 'jobs:roundup_issue' issue_slug='2026-10-22' %}#climate">Climate picks</a>
+      <a class="btn btn-outline" href="{% url 'jobs:roundup_issue' issue_slug='2026-10-22' %}#research-software">Software and data picks</a>
+      <a class="btn btn-outline" href="{% url 'jobs:roundup_issue' issue_slug='2026-10-22' %}#early-career">Early-career picks</a>
+    </div>
+  </section>
+
   <section id="feeds" class="scroll-mt-24" aria-labelledby="feeds-heading">
     <div class="grid gap-4 lg:grid-cols-3">
       <article class="card p-5 sm:p-6 lg:col-span-2">

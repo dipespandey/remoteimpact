@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}{{ issue.title }} | Remote Impact{% endblock %}
+{% block meta_description %}{{ issue.introduction }}{% endblock %}
+{% block canonical %}{{ canonical }}{% endblock %}
+{% block og_title %}{{ issue.title }}{% endblock %}
+{% block og_description %}{{ issue.introduction }}{% endblock %}
+{% block twitter_title %}{{ issue.title }}{% endblock %}
+{% block twitter_description %}{{ issue.introduction }}{% endblock %}
+{% block structured_data %}<script type="application/ld+json">{{ schema_json|safe }}</script>{% endblock %}
+{% block content %}
+<main class="container py-8 sm:py-12">
+  <div class="w-full">
+    <header class="page-header">
+      <p class="kicker">The Remote Impact roundup · {{ issue.published_date|date:"j F Y" }}</p>
+      <h1 class="page-title mt-2">A shorter search for meaningful work</h1>
+      <p class="page-lede mt-3">{{ issue.introduction }}</p>
+      <p class="mt-3 text-sm text-muted-foreground">{{ issue.pick_count }} distinct roles. No account needed to read or open a role.</p>
+      <nav aria-label="Job pick topics" class="mt-5 flex flex-wrap gap-2">
+        {% for section in issue.sections %}<a class="btn btn-outline" href="#{{ section.slug }}">{{ section.title }}</a>{% endfor %}
+      </nav>
+    </header>
+    <aside class="surface p-4 sm:p-5 mt-6" aria-label="Source check limitations">
+      {% if issue.review_due %}<p class="font-semibold">Historical selection. Source checks are due for review.</p>{% else %}<p class="font-semibold">A dated selection, checked {{ issue.published_date|date:"j F Y" }}.</p>{% endif %}
+      <p class="mt-2 text-sm text-muted-foreground">Employer pages were checked on the dates below. They are not checked again when you open this page. We flag checks older than {{ issue.review_days }} days. Confirm current availability, hiring country and work authorization with the employer.</p>
+      <p class="mt-2 text-sm text-muted-foreground">A current role link appears only while the same reviewed listing meets our catalogue availability rules. Roles may close sooner. <a class="underline" href="{% url 'jobs:how_we_check' %}">How we check listings</a>.</p>
+    </aside>
+    {% for section in issue.sections %}
+    <section id="{{ section.slug }}" class="mt-10 scroll-mt-24" aria-labelledby="heading-{{ section.slug }}">
+      <h2 id="heading-{{ section.slug }}" class="section-title">{{ section.title }}</h2>
+      <p class="mt-2 text-sm leading-6 text-muted-foreground">{{ section.description }}</p>
+      <div class="mt-4 space-y-4">
+        {% for card in section.cards %}
+        <article class="card p-5 sm:p-6" data-pick="{{ card.key }}">
+          <p class="text-sm text-muted-foreground">{{ card.organization }}</p>
+          <h3 class="mt-1 text-lg font-semibold">{{ card.title }}</h3>
+          <p class="mt-2 text-sm text-muted-foreground">{{ card.editorial_note }}</p>
+          <dl class="mt-4 space-y-3 text-sm leading-6">
+            <div><dt class="font-medium">Where you can work</dt><dd class="text-muted-foreground">{{ card.location_summary }}</dd></div>
+            <div><dt class="font-medium">Experience</dt><dd class="text-muted-foreground">{{ card.experience_summary }}</dd></div>
+            <div><dt class="font-medium">Advertised pay</dt><dd class="text-muted-foreground">{{ card.pay_summary }}</dd></div>
+          </dl>
+          <p class="mt-4 text-xs text-muted-foreground">Employer source checked {{ card.checked_date|date:"j F Y" }}{% if card.review_due %} · Review due{% endif %}</p>
+          {% if not card.available %}<p class="mt-2 text-sm font-medium">Historical snapshot. This reviewed listing is no longer available in our current catalogue.</p>{% endif %}
+          <div class="mt-4 flex flex-wrap gap-2">
+            {% if card.available %}<a class="btn btn-primary" href="{{ card.job_url }}?utm_source=roundup&amp;utm_medium=web&amp;utm_campaign=issue_{{ issue.slug }}" data-track="roundup_issue_job_open" data-track-category="newsletter">View role details</a>{% endif %}
+            <a class="btn btn-outline" href="{{ card.source_url }}" target="_blank" rel="noopener noreferrer">{% if card.available %}Check employer source{% else %}Original source{% endif %}</a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      <a class="mt-4 inline-block text-sm underline" href="{{ section.search_path }}">Browse more roles</a>
+    </section>
+    {% endfor %}
+    <section class="surface mt-10 p-5 sm:p-6" aria-labelledby="next-picks-heading">
+      <h2 id="next-picks-heading" class="section-title">Get the next weekly picks</h2>
+      <p class="mt-2 text-sm text-muted-foreground">Free, with email confirmation. The weekly roundup is separate from your personal Scout.</p>
+      <a class="btn btn-primary mt-4" href="{% url 'jobs:roundup' %}?source=roundup_issue&amp;utm_campaign=issue_{{ issue.slug }}" data-track="roundup_issue_subscribe" data-track-category="newsletter">Get the weekly picks</a>
+      <p class="mt-4 text-sm text-muted-foreground">Starting your career? <a class="underline" href="{% url 'jobs:early_careers_access_report' %}">Compare programme funding and access limits</a>.</p>
+    </section>
+  </div>
+</main>
+{% endblock %}

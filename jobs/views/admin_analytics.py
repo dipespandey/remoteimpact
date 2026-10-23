@@ -33,6 +33,9 @@ def diagnostics(request):
         section = 'overview'
     report = build_product_analytics(days, family=request.GET.get('family', 'all'),
                                      failures_only=section == 'errors' or request.GET.get('failures') == '1', scope=scope)
+    if section == 'overview':
+        from ..services.scout_usefulness import build_scout_usefulness
+        report['usefulness'] = build_scout_usefulness(report['since'], report['until'])
     # Identity is an additional privilege beyond event viewing. Respect the
     # registered user admin's object-level permissions, including custom models.
     from django.contrib.auth import get_user_model

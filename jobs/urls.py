@@ -1,3 +1,4 @@
+from .views.roundup_issue import roundup_issue
 from .views.roundup import RoundupView, RoundupConfirmView, RoundupUnsubscribeView
 from django.urls import path
 from django.views.generic import RedirectView
@@ -196,6 +197,7 @@ urlpatterns = [
         name="sprint_detail",
     ),
     # Weekly roundup has separate explicit consent from legacy product updates.
+    path("newsletter/issues/<slug:issue_slug>/", roundup_issue, name="roundup_issue"),
     path("newsletter/", RoundupView.as_view(), name="roundup"),
     path("newsletter/confirm/<str:token>/", RoundupConfirmView.as_view(), name="roundup_confirm"),
     path("newsletter/stop/<str:token>/", RoundupUnsubscribeView.as_view(), name="roundup_unsubscribe"),

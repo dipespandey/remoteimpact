@@ -174,5 +174,44 @@ class ReleaseTests(unittest.TestCase):
             self.assertEqual(target.stat().st_mode & 0o777, 0o600)
             self.assertFalse(target.with_name('state.json.tmp').exists())
 
+    def test_stopped_previous_can_be_retired_without_docker_top(self):
+        with tempfile.TemporaryDirectory() as folder:
+            release = bg.Release(folder)
+            with patch.object(bg, 'run', side_effect=['false\n', '']) as run:
+                release.retire({'id': 'old'})
+            self.assertEqual([call.args for call in run.call_args_list], [
+                ('docker', 'inspect', '-f', '{{.State.Running}}', 'old'),
+                ('docker', 'rm', 'old'),
+            ])
+
+    def test_unwrapped_management_command_still_blocks_retirement(self):
+        with tempfile.TemporaryDirectory() as folder:
+            release = bg.Release(folder)
+            with patch.object(bg, 'run', side_effect=['true\n', 'PID ARGS\n2 python manage.py import_remote_jobs\n']) as run:
+                with self.assertRaisesRegex(RuntimeError, 'management command running'):
+                    release.retire({'id': 'old'})
+            self.assertEqual(run.call_count, 2)
+
+    def test_github_only_marker_blocks_manual_snapshots_before_any_work(self):
+        with tempfile.TemporaryDirectory() as folder:
+            release = bg.Release(folder)
+            (Path(folder) / 'require-github-deploy').touch()
+            with patch.object(bg, 'run') as command:
+                with self.assertRaisesRegex(RuntimeError, 'GitHub-tested commit'):
+                    release.deploy()
+                command.assert_not_called()
+
+    def test_schema_drift_and_plan_are_checked_before_candidate_start(self):
+        with tempfile.TemporaryDirectory() as folder:
+            release, source = self.pipeline_fixture(folder)
+            calls = []
+            with patch.object(bg, 'run', side_effect=self.pipeline_run(source, calls)), patch.object(release, 'ready'), patch.object(release, 'switch'):
+                release.deploy(check_only=True)
+            drift = next(i for i,c in enumerate(calls) if c[-3:] == ('makemigrations', '--check', '--dry-run'))
+            plan = next(i for i,c in enumerate(calls) if c[-2:] == ('migrate', '--plan'))
+            start = calls.index(('docker', 'start', 'candidate'))
+            self.assertLess(drift, plan)
+            self.assertLess(plan, start)
+
 if __name__ == '__main__':
     unittest.main()
