@@ -2,11 +2,13 @@ import json
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from django.core.cache import cache
+from django.core.cache import caches
 from django.test import SimpleTestCase, TestCase, override_settings
 
 from jobs.services.scout_remote_policy import check_matches, requested_candidate, CAVEAT
 from jobs.services.scout_workflow import bounded_workflow
+
+cache = caches['scout_decisions']
 
 
 def job(pk=1, text='Build services.', location='Remote'):
@@ -92,6 +94,15 @@ class RemotePolicyTests(SimpleTestCase):
         self.assertEqual(kwargs['stage'], 'remote_policy')
         # Never send the user's free-form brief or identifying profile data.
         self.assertNotIn('intent_text', model.call_args.args[0])
+
+    @patch('jobs.services.scout_workflow.generate', return_value='{"decisions":[{"id":0,"label":"compatible","evidence_ids":[1]}]}')
+    def test_cache_read_outage_runs_a_fresh_policy_review(self, model):
+        item = job(text='Candidates can work wherever their home happens to be.')
+        with patch('jobs.services.scout_remote_policy.cache.get', side_effect=RuntimeError):
+            result, diagnostics = self.review([item])
+        self.assertEqual(result, [item])
+        self.assertEqual(diagnostics['remote_policy_api'], 'reviewed')
+        model.assert_called_once()
 
     @patch('jobs.services.scout_workflow.generate', return_value='{"decisions":[{"id":0,"label":"incompatible","evidence_ids":[1]}]}')
     def test_grounded_fallback_can_remove_match(self, model):

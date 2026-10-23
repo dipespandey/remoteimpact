@@ -11,9 +11,11 @@ from django.core.signing import BadSignature, TimestampSigner
 from django.db import transaction
 from django.db.models import Count
 from django.http import HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.cache import patch_vary_headers
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView, ListView, TemplateView, UpdateView, View
@@ -253,23 +255,102 @@ class JobScoutPreviewView(TemplateView):
         if source == 'scout_personalized' and changed:
             scout_funnel.record_stage(request, ConsumerFunnelEvent.Event.SCOUT_PERSONALIZED, self.scout_flow,
                                      extra={'brief_changed': changed})
-        return super().get(request, *args, **kwargs)
+        self.scout_task = None
+        self.preview_pending = False
+        self.async_preview = bool(getattr(settings, "SCOUT_PREVIEW_ASYNC_ENABLED", False))
+        if self.async_preview:
+            if not request.session.session_key:
+                request.session.create()
+            from jobs.services.scout_tasks import PreviewQueueLimited, enqueue_preview, accessible_task, semantic_key
+
+            task_id = request.GET.get("scout_task", "").strip()
+            task = accessible_task(task_id, request.session.session_key) if task_id else None
+            if task and (task.intent_text != intent or task.semantic_key != semantic_key(intent)):
+                task = None
+            explicit_retry = request.GET.get("retry") == "1"
+            try:
+                task, _ = enqueue_preview(
+                    intent,
+                    request.session.session_key,
+                    force_refresh=explicit_retry,
+                    retry_failed=explicit_retry,
+                )
+            except PreviewQueueLimited:
+                self.queue_limited = True
+                task = None
+            if explicit_retry and task is not None:
+                # Consume the one-shot retry flag before loading the page. A
+                # browser reload or the polling redirect must not enqueue a
+                # second attempt.
+                clean_query = request.GET.copy()
+                clean_query.pop("retry", None)
+                return redirect(f"{request.path}?{clean_query.urlencode()}")
+            self.preview_pending = bool(task and task.state in (task.State.QUEUED, task.State.RUNNING))
+            self.scout_task = task
+        response = super().get(request, *args, **kwargs)
+        if self.async_preview:
+            response["Cache-Control"] = "private, no-store"
+            patch_vary_headers(response, ["Cookie"])
+        return response
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         workflow_diagnostics = {}
-        preferences, matches = JobScoutService.search_intent(
-            self.intent,
-            diagnostics=workflow_diagnostics,
-            since=timezone.now() - timedelta(days=30),
-            limit=3,
-        )
+        stale_result = False
+        if self.async_preview:
+            preferences = {}
+            matches = []
+            older_jobs = []
+            if self.scout_task and self.scout_task.state == self.scout_task.State.SUCCEEDED:
+                from jobs.services.scout_tasks import hydrate_result
+
+                result = self.scout_task.result or {}
+                preferences = result.get("preferences", {})
+                matches, older_jobs, stale = hydrate_result(result)
+                if stale:
+                    stale_result = True
+                    from jobs.services.scout_tasks import PreviewQueueLimited, enqueue_preview
+
+                    try:
+                        self.scout_task, _ = enqueue_preview(
+                            self.intent, self.request.session.session_key, force_refresh=True
+                        )
+                        self.preview_pending = self.scout_task.state in (
+                            self.scout_task.State.QUEUED, self.scout_task.State.RUNNING
+                        )
+                    except PreviewQueueLimited:
+                        self.queue_limited = True
+                        self.scout_task = None
+                    preferences, matches, older_jobs = {}, [], []
+                    workflow_diagnostics = {}
+                    result = None
+                if result is not None:
+                    workflow_diagnostics = result.get("diagnostics", {})
+            elif self.scout_task and self.scout_task.state == self.scout_task.State.FAILED:
+                workflow_diagnostics = {"review_incomplete": True}
+            if getattr(self, "queue_limited", False):
+                workflow_diagnostics = {"review_incomplete": True}
+        else:
+            preferences, matches = JobScoutService.search_intent(
+                self.intent,
+                diagnostics=workflow_diagnostics,
+                since=timezone.now() - timedelta(days=30),
+                limit=3,
+            )
+            older_jobs = []
+            if not matches and not workflow_diagnostics.get('review_incomplete'):
+                from jobs.services.scout_alternatives import older_openings
+                older_jobs = older_openings(preferences)
         source = " ".join(self.request.GET.get("source", "").split())[:80] or "scout_preview"
         next_path = f"{reverse('jobs:job_alerts')}?{urlencode({'intent': self.intent, 'source': source, 'scout_flow': self.scout_flow['id']})}"
-        older_jobs = []
-        if not matches and not workflow_diagnostics.get('review_incomplete'):
-            from jobs.services.scout_alternatives import older_openings
-            older_jobs = older_openings(preferences)
+        if self.async_preview and self.preview_pending:
+            context["preview_pending"] = True
+            context["preview_status_url"] = reverse(
+                "jobs:scout_preview_status", kwargs={"task_id": self.scout_task.pk}
+            )
+        else:
+            context["preview_pending"] = False
+        context["preview_queue_limited"] = bool(getattr(self, "queue_limited", False))
         context.update(
             intent=self.intent,
             preferences=preferences,
@@ -286,19 +367,45 @@ class JobScoutPreviewView(TemplateView):
         if not self.request.session.session_key:
             self.request.session.create()
         intent_digest = hashlib.sha256(self.intent.lower().encode("utf-8")).hexdigest()[:16]
-        record_consumer_event(
-            ConsumerFunnelEvent.Event.SCOUT_PREVIEWED,
-            user=self.request.user,
-            metadata={
-                "match_count": len(matches),
-                "intent_text": self.intent[:2000],
-                "workflow": workflow_diagnostics,
-                "source": source,
-                "authenticated": self.request.user.is_authenticated, **scout_funnel.metadata(self.scout_flow),
-            },
-            dedupe_key=f"scout-preview-flow:{self.scout_flow['id']}:{intent_digest}",
-        )
+        result_ready = (
+            not self.async_preview
+            or (self.scout_task and self.scout_task.state in (self.scout_task.State.SUCCEEDED, self.scout_task.State.FAILED))
+        ) and not stale_result
+        if result_ready:
+            record_consumer_event(
+                ConsumerFunnelEvent.Event.SCOUT_PREVIEWED,
+                user=self.request.user,
+                metadata={
+                    "match_count": len(matches),
+                    "intent_text": self.intent[:2000],
+                    "workflow": workflow_diagnostics,
+                    "source": source,
+                    "authenticated": self.request.user.is_authenticated, **scout_funnel.metadata(self.scout_flow),
+                },
+                dedupe_key=f"scout-preview-flow:{self.scout_flow['id']}:{intent_digest}",
+            )
         return context
+
+
+class ScoutPreviewStatusView(View):
+    """Session-bound polling endpoint that reveals only coarse task progress."""
+
+    def get(self, request, task_id, *args, **kwargs):
+        from jobs.services.scout_tasks import accessible_task
+
+        task = accessible_task(task_id, request.session.session_key)
+        if task is None:
+            response = JsonResponse({"status": "expired"}, status=404)
+            response["Cache-Control"] = "private, no-store"
+            patch_vary_headers(response, ["Cookie"])
+            return response
+        if task.state in (task.State.QUEUED, task.State.RUNNING):
+            response = JsonResponse({"status": "processing"}, status=202)
+        else:
+            response = JsonResponse({"status": "ready" if task.state == task.State.SUCCEEDED else "retry"})
+        response["Cache-Control"] = "private, no-store"
+        patch_vary_headers(response, ["Cookie"])
+        return response
 
 
 class ScoutContactCaptureView(View):

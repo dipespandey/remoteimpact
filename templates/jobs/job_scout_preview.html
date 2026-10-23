@@ -36,13 +36,14 @@
 <div class="page scout-preview-page">
     <header class="page-header">
         <a href="{% url 'jobs:job_alerts' %}" class="text-xs text-muted-foreground hover:text-foreground">AI Job Scout</a>
-        {% if sample_preview %}<h1 class="page-title mt-1">Try this search</h1><p class="page-lede">An example to start from. Edit it to fit you.</p>{% elif preview_jobs %}<h1 class="page-title mt-1">Your job matches</h1>
+        {% if preview_pending %}<h1 class="page-title mt-1">Finding your matches</h1><p class="page-lede">We’re checking current openings against your brief. This page will update when the preview is ready.</p>{% elif sample_preview %}<h1 class="page-title mt-1">Try this search</h1><p class="page-lede">An example to start from. Edit it to fit you.</p>{% elif preview_jobs %}<h1 class="page-title mt-1">Your job matches</h1>
         <p class="page-lede">{{ preview_jobs|length }} result{{ preview_jobs|length|pluralize }}. Check the details before applying.</p>{% elif review_incomplete %}<h1 class="page-title mt-1">Match review is temporarily incomplete</h1><p class="page-lede">Try again shortly; this does not mean there are no suitable jobs.</p>{% else %}<h1 class="page-title mt-1">No eligible matches in this preview</h1>
         <p class="page-lede">We did not find a strong current match in the available catalogue. You can edit your brief or create an account to save a Scout; this does not guarantee additional matches.</p>{% endif %}
     </header>
 
     <section class="scout-mobile-next mb-5 lg:hidden" aria-label="Next step for your search">
-        {% if sample_preview %}
+        {% if preview_pending %}<p class="help" role="status">Your preview is in progress. This page updates automatically.</p>
+        {% elif sample_preview %}
         <a href="#personalize-brief" class="btn btn-primary btn-block" data-track="scout_sample_personalize_mobile">Make this search yours</a>
         <p class="help">Edit the example to fit your role and location. No account needed.</p>
         {% elif preview_jobs %}
@@ -87,7 +88,8 @@
                 </div>
             </details>
 
-            {% if preview_jobs %}{% for tier in preview_jobs|scout_tiers %}{% if tier.jobs %}<section aria-labelledby="preview-{{ tier.key }}-heading">
+            {% if preview_pending %}<section class="card p-5 sm:p-6" aria-live="polite" aria-busy="true"><h2 class="section-title">Checking the current catalogue</h2><p class="mt-2 text-sm text-muted-foreground">Matching your brief and checking listing evidence. Keep this page open for your results.</p><p id="preview-poll-limit" class="mt-3 text-sm text-muted-foreground" hidden>This search is taking longer than expected. Refresh to check its progress.</p><button id="preview-check-again" type="button" class="btn btn-outline btn-sm mt-3" hidden onclick="window.location.reload()">Check again</button><div class="mt-4 space-y-3" aria-hidden="true"><div class="h-16 animate-pulse rounded-lg bg-muted"></div><div class="h-16 animate-pulse rounded-lg bg-muted"></div><div class="h-16 animate-pulse rounded-lg bg-muted"></div></div></section>
+            {% elif preview_jobs %}{% for tier in preview_jobs|scout_tiers %}{% if tier.jobs %}<section aria-labelledby="preview-{{ tier.key }}-heading">
                 <div class="flex items-baseline justify-between gap-4 px-1">
                     <h2 id="preview-{{ tier.key }}-heading" class="section-title">{{ tier.heading }} · {{ tier.jobs|length }}</h2>
                     <span class="hidden text-xs text-muted-foreground sm:inline">Ranked by relevance and freshness</span>
@@ -181,6 +183,34 @@
     });
     if (window.location.hash === '#personalize-brief') openEditor();
 })();
+{% if preview_pending %}(function () {
+    const statusUrl = "{{ preview_status_url|escapejs }}";
+    let attempts = 0;
+    function poll() {
+        attempts += 1;
+        fetch(statusUrl, {headers: {'Accept': 'application/json'}, credentials: 'same-origin'})
+            .then(function (response) {
+                if (response.status === 202) return null;
+                if (!response.ok) throw new Error('Preview status unavailable');
+                return response.json();
+            })
+            .then(function (data) {
+                if (data && (data.status === 'ready' || data.status === 'retry')) {
+                    window.location.reload();
+                    return;
+                }
+                if (attempts < 60) window.setTimeout(poll, 1500);
+                else document.getElementById('preview-poll-limit').hidden = false,
+                     document.getElementById('preview-check-again').hidden = false;
+            })
+            .catch(function () {
+                if (attempts < 60) window.setTimeout(poll, 3000);
+                else document.getElementById('preview-poll-limit').hidden = false,
+                     document.getElementById('preview-check-again').hidden = false;
+            });
+    }
+    window.setTimeout(poll, 1000);
+})();{% endif %}
 if (typeof gtag === 'function') { gtag('event', 'job_scout_preview_view', { event_category: 'job_scout_conversion', match_count: {{ preview_jobs|length }}, user_state: '{% if user.is_authenticated %}authenticated{% else %}anonymous{% endif %}' }); }
 </script>{% include 'jobs/_scout_loading.html' %}
 {% endblock %}
