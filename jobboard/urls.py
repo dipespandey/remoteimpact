@@ -29,7 +29,7 @@ from django.views.generic import RedirectView
 
 from jobs.views import admin_analytics, admin_backlinks, impersonate
 from jobs.sitemaps import (
-    StaticSitemap, CategorySitemap,
+    StaticSitemap, ApplicationGuidesSitemap, CategorySitemap,
     OrganizationSitemap, ToolsSitemap, TalentSitemap, RegionSitemap,
     GuidesSitemap, RolePagesSitemap, KeywordPagesSitemap, RoundupIssueSitemap,
     visible_jobs,
@@ -399,6 +399,7 @@ Preferred-Languages: en
 sitemaps = {
     'roundup-issues': RoundupIssueSitemap,
     'hiring-evidence': HiringEvidenceSitemap,
+    'application-guides': ApplicationGuidesSitemap,
     'static': StaticSitemap,
     'categories': CategorySitemap,
     'organizations': OrganizationSitemap,
