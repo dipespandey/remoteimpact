@@ -44,7 +44,7 @@ class ApplicationGuidesSitemap(Sitemap):
     def items(self):
         from .services.guide_generator import cached_application_guide
 
-        candidates = visible_jobs().select_related('organization').only(
+        candidates = visible_jobs().filter(raw_data__has_key='application_guide').select_related('organization').only(
             'id', 'slug', 'title', 'description', 'raw_data', 'updated_at',
             'organization__id', 'organization__name',
         ).order_by('slug')
