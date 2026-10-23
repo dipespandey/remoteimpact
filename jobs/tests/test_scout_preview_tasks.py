@@ -17,7 +17,7 @@ from django.utils import timezone
 
 from jobs.models import ScoutPreviewAccess, ScoutPreviewQueueGuard, ScoutPreviewTask
 from jobs.management.commands.run_scout_preview_worker import release_is_active
-from jobs.services.scout_tasks import PreviewQueueLimited, claim_task, enqueue_preview, execute_claimed_task, semantic_key
+from jobs.services.scout_tasks import PreviewQueueLimited, claim_task, enqueue_preview, execute_claimed_task, prune_tasks, semantic_key, session_digest
 from jobs.services.scout_tasks import hydrate_result, job_fingerprint
 from jobs.tests.test_scout_results import setup_scout_fixture
 
@@ -36,6 +36,12 @@ class ScoutPreviewQueueTests(TestCase):
         self.assertEqual(first.semantic_key, semantic_key(INTENT))
         self.assertEqual(ScoutPreviewTask.objects.count(), 1)
         self.assertEqual(ScoutPreviewAccess.objects.filter(task=first).count(), 2)
+        self.assertEqual(
+            ScoutPreviewAccess.objects.get(
+                task=first, session_digest=session_digest("session-two")
+            ).enqueue_count,
+            0,
+        )
 
     def test_case_and_punctuation_remain_part_of_semantic_identity(self):
         original, _ = enqueue_preview(INTENT, "session-one")
@@ -123,6 +129,38 @@ class ScoutPreviewQueueTests(TestCase):
         task.refresh_from_db()
         self.assertEqual(task.state, ScoutPreviewTask.State.FAILED)
 
+    @override_settings(SCOUT_PREVIEW_SESSION_LIMIT=5)
+    def test_new_work_and_retries_share_one_session_enqueue_budget(self):
+        first, _ = enqueue_preview("First distinct session task", "bounded-session")
+        second, _ = enqueue_preview("Second distinct session task", "bounded-session")
+        for task in (first, second):
+            task.state = ScoutPreviewTask.State.FAILED
+            task.completed_at = timezone.now()
+            task.save(update_fields=["state", "completed_at"])
+
+        enqueue_preview("First distinct session task", "bounded-session", retry_failed=True)
+        enqueue_preview("Second distinct session task", "bounded-session", retry_failed=True)
+        first.refresh_from_db()
+        first.state = ScoutPreviewTask.State.FAILED
+        first.completed_at = timezone.now()
+        first.save(update_fields=["state", "completed_at"])
+        enqueue_preview("First distinct session task", "bounded-session", retry_failed=True)
+
+        second.refresh_from_db()
+        second.state = ScoutPreviewTask.State.FAILED
+        second.completed_at = timezone.now()
+        second.save(update_fields=["state", "completed_at"])
+        with self.assertRaises(PreviewQueueLimited) as error:
+            enqueue_preview("Second distinct session task", "bounded-session", retry_failed=True)
+
+        self.assertEqual(error.exception.reason, "session_limit")
+        self.assertEqual(
+            sum(ScoutPreviewAccess.objects.filter(
+                session_digest=session_digest("bounded-session")
+            ).values_list("enqueue_count", flat=True)),
+            5,
+        )
+
     @override_settings(SCOUT_PREVIEW_LEASE_SECONDS=6, SCOUT_PREVIEW_HARD_TIMEOUT_SECONDS=1)
     def test_worker_enforces_hard_deadline_and_requeues_retry(self):
         task, _ = enqueue_preview(INTENT, "session-one")
@@ -175,6 +213,56 @@ class ScoutPreviewFingerprintTests(TestCase):
         self.assertTrue(stale)
         self.assertEqual(jobs, [])
         self.assertEqual(older_jobs, [])
+
+    def test_unavailable_saved_match_invalidates_snapshot(self):
+        setup_scout_fixture(self)
+        row = {
+            "job_id": self.job.pk,
+            "fingerprint": job_fingerprint(self.job),
+            "score": 88,
+            "reasons": ["Python role"],
+            "needs_confirmation": False,
+            "close_match": False,
+            "caveats": [],
+        }
+        type(self.job).objects.filter(pk=self.job.pk).update(is_active=False)
+
+        jobs, older_jobs, stale = hydrate_result({"matches": [row], "older_jobs": []})
+
+        self.assertTrue(stale)
+        self.assertEqual(jobs, [])
+        self.assertEqual(older_jobs, [])
+
+
+class ScoutPreviewPruneTests(TestCase):
+    def test_prune_keeps_recently_refreshed_queue_and_removes_abandoned_and_old_terminal(self):
+        now = timezone.now()
+        old = now - timedelta(hours=25)
+        refreshed, _ = enqueue_preview("Recently refreshed queued task", "prune-session")
+        ScoutPreviewTask.objects.filter(pk=refreshed.pk).update(
+            created_at=old, updated_at=now, available_at=now
+        )
+        abandoned = ScoutPreviewTask.objects.create(
+            semantic_key=semantic_key("Abandoned old queued task"),
+            intent_text="Abandoned old queued task",
+            available_at=old,
+        )
+        ScoutPreviewTask.objects.filter(pk=abandoned.pk).update(created_at=old, updated_at=old)
+        terminal = ScoutPreviewTask.objects.create(
+            semantic_key=semantic_key("Old completed task"),
+            intent_text="Old completed task",
+            state=ScoutPreviewTask.State.SUCCEEDED,
+            available_at=old,
+            completed_at=old,
+        )
+        ScoutPreviewTask.objects.filter(pk=terminal.pk).update(created_at=old, updated_at=now)
+
+        deleted = prune_tasks()
+
+        self.assertEqual(deleted, 2)
+        self.assertTrue(ScoutPreviewTask.objects.filter(pk=refreshed.pk).exists())
+        self.assertFalse(ScoutPreviewTask.objects.filter(pk=abandoned.pk).exists())
+        self.assertFalse(ScoutPreviewTask.objects.filter(pk=terminal.pk).exists())
 
 
 @skipUnlessDBFeature("has_select_for_update")
@@ -264,6 +352,15 @@ class ScoutPreviewAsyncViewTests(TestCase):
         status_url = reverse("jobs:scout_preview_status", kwargs={"task_id": task.pk})
         self.assertEqual(first_client.get(status_url).status_code, 202)
         self.assertEqual(other_client.get(status_url).status_code, 404)
+
+    def test_malformed_task_hint_does_not_break_preview_request(self):
+        response = Client().get(
+            reverse("jobs:job_scout_preview"),
+            {"intent": INTENT, "scout_task": "not-a-uuid"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["preview_pending"])
 
     def test_completed_result_is_reused_by_the_same_session(self):
         client = Client()
