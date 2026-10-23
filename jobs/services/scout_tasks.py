@@ -10,9 +10,10 @@ import uuid
 from datetime import timedelta
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import IntegrityError, connection, transaction
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.utils import timezone
 
 from jobs.models import ScoutPreviewAccess, ScoutPreviewQueueGuard, ScoutPreviewTask
@@ -72,13 +73,10 @@ def enqueue_preview(intent, session_key, *, force_refresh=False, retry_failed=Fa
                 # an explicit retry action may put it back on the queue.
                 needs_refresh = (task.state == ScoutPreviewTask.State.FAILED and retry_failed) or fresh
                 new_access = access is None
-                if new_access:
-                    recent_count = ScoutPreviewAccess.objects.filter(
-                        session_digest=scope, last_enqueued_at__gte=cutoff
-                    ).count()
-                    if recent_count >= limit:
-                        raise PreviewQueueLimited("session_limit")
-                elif needs_refresh and access.last_enqueued_at >= cutoff and access.enqueue_count >= limit:
+                recent_enqueues = ScoutPreviewAccess.objects.filter(
+                    session_digest=scope, last_enqueued_at__gte=cutoff
+                ).aggregate(total=Sum("enqueue_count"))["total"] or 0
+                if needs_refresh and recent_enqueues >= limit:
                     raise PreviewQueueLimited("session_limit")
 
                 if needs_refresh:
@@ -91,7 +89,10 @@ def enqueue_preview(intent, session_key, *, force_refresh=False, retry_failed=Fa
 
                 if new_access:
                     access = ScoutPreviewAccess.objects.create(
-                        task=task, session_digest=scope, enqueue_count=1,
+                        task=task, session_digest=scope,
+                        # Viewing an already queued or cached semantic result is
+                        # free; only an actual enqueue consumes the budget.
+                        enqueue_count=1 if needs_refresh else 0,
                         window_started_at=now, last_enqueued_at=now,
                     )
                 if needs_refresh:
@@ -117,10 +118,10 @@ def enqueue_preview(intent, session_key, *, force_refresh=False, retry_failed=Fa
 
             window = timedelta(seconds=int(_setting("SCOUT_PREVIEW_SESSION_WINDOW_SECONDS", DEFAULT_SESSION_WINDOW_SECONDS)))
             limit = int(_setting("SCOUT_PREVIEW_SESSION_LIMIT", DEFAULT_SESSION_LIMIT))
-            recent_count = ScoutPreviewAccess.objects.filter(
+            recent_enqueues = ScoutPreviewAccess.objects.filter(
                 session_digest=scope, last_enqueued_at__gte=now - window
-            ).values("task_id").distinct().count()
-            if recent_count >= limit:
+            ).aggregate(total=Sum("enqueue_count"))["total"] or 0
+            if recent_enqueues >= limit:
                 raise PreviewQueueLimited("session_limit")
 
             queue_limit = int(_setting("SCOUT_PREVIEW_QUEUE_LIMIT", DEFAULT_QUEUE_LIMIT))
@@ -156,7 +157,7 @@ def accessible_task(task_id, session_key):
         return ScoutPreviewTask.objects.filter(
             pk=task_id, access_grants__session_digest=session_digest(session_key)
         ).first()
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, ValidationError):
         return None
 
 
@@ -399,6 +400,7 @@ def hydrate_result(result):
     for row in match_rows:
         job = by_id.get(row.get("job_id"))
         if job is None:
+            stale = True
             continue
         if row.get("fingerprint") != job_fingerprint(job):
             stale = True
@@ -416,12 +418,14 @@ def hydrate_result(result):
     older_jobs = []
     for row in older_rows:
         job = older_by_id.get(row.get("job_id"))
-        if job:
-            if row.get("fingerprint") != job_fingerprint(job):
-                stale = True
-                continue
-            job.alternative_evidence = row.get("evidence", "")
-            older_jobs.append(job)
+        if job is None:
+            stale = True
+            continue
+        if row.get("fingerprint") != job_fingerprint(job):
+            stale = True
+            continue
+        job.alternative_evidence = row.get("evidence", "")
+        older_jobs.append(job)
     return jobs, older_jobs, stale
 
 
@@ -429,5 +433,5 @@ def prune_tasks():
     cutoff = timezone.now() - timedelta(hours=int(_setting("SCOUT_PREVIEW_RETENTION_HOURS", DEFAULT_RETENTION_HOURS)))
     return ScoutPreviewTask.objects.filter(
         Q(state__in=[ScoutPreviewTask.State.SUCCEEDED, ScoutPreviewTask.State.FAILED], completed_at__lt=cutoff)
-        | Q(state=ScoutPreviewTask.State.QUEUED, created_at__lt=cutoff)
+        | Q(state=ScoutPreviewTask.State.QUEUED, updated_at__lt=cutoff)
     ).delete()[0]
