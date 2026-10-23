@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
+from jobboard.cache_urls import redis_url_for_database
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -362,7 +363,7 @@ PERFORMANCE_METRICS_ENABLED = os.getenv("PERFORMANCE_METRICS_ENABLED", "True").l
 PERFORMANCE_SAMPLE_RATE = float(os.getenv("PERFORMANCE_SAMPLE_RATE", "1.0"))
 PERFORMANCE_LOG_PATH = os.getenv("PERFORMANCE_LOG_PATH", "")
 LOGGING["handlers"]["performance"] = (
-    {"class": "jobs.services.performance.ConcurrentJSONLHandler",
+    {"class": "jobboard.performance_logging.ConcurrentJSONLHandler",
      "filename": PERFORMANCE_LOG_PATH, "max_bytes": 10485760, "backup_count": 3}
     if PERFORMANCE_LOG_PATH else {"class": "logging.NullHandler"}
 )
@@ -379,7 +380,7 @@ if REDIS_URL:
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
-            "LOCATION": REDIS_URL,
+            "LOCATION": redis_url_for_database(REDIS_URL, 0),
             "OPTIONS": {"socket_connect_timeout": 1, "socket_timeout": 1},
             "KEY_PREFIX": "ri",
             "TIMEOUT": 300,
@@ -401,7 +402,8 @@ else:
 
 # Extraction facts have their own retention/culling budget, separate from pages.
 CACHES["job_extraction"] = (
-    {"BACKEND": "django.core.cache.backends.redis.RedisCache", "LOCATION": REDIS_URL,
+    {"BACKEND": "django.core.cache.backends.redis.RedisCache",
+     "LOCATION": redis_url_for_database(REDIS_URL, 1),
      "OPTIONS": {"socket_connect_timeout": 1, "socket_timeout": 1},
      "KEY_PREFIX": "ri-extraction", "TIMEOUT": 2592000}
     if REDIS_URL else
@@ -417,7 +419,8 @@ CACHES["job_extraction"] = (
 SCOUT_DECISION_CACHE_TTL = int(os.getenv("SCOUT_DECISION_CACHE_TTL", "604800"))
 SCOUT_DECISION_CACHE_MAX_ENTRIES = int(os.getenv("SCOUT_DECISION_CACHE_MAX_ENTRIES", "20000"))
 CACHES["scout_decisions"] = (
-    {"BACKEND": "django.core.cache.backends.redis.RedisCache", "LOCATION": REDIS_URL,
+    {"BACKEND": "django.core.cache.backends.redis.RedisCache",
+     "LOCATION": redis_url_for_database(REDIS_URL, 2),
      "OPTIONS": {"socket_connect_timeout": 1, "socket_timeout": 1},
      "KEY_PREFIX": "ri-scout-decisions", "TIMEOUT": SCOUT_DECISION_CACHE_TTL}
     if REDIS_URL else

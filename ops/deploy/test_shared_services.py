@@ -60,15 +60,17 @@ class SharedServiceProvisioningTests(unittest.TestCase):
 
             def run(args, **kwargs):
                 calls.append(args)
-                status = 1 if args[:3] == ['docker', 'inspect', 'ri-cache'] else 0
-                return shared.subprocess.CompletedProcess(args, status)
+                if args[:2] == ['docker', 'inspect']:
+                    return shared.subprocess.CompletedProcess(args, 1, stdout='', stderr='No such object')
+                output = 'PONG\n' if args[:3] == ['docker', 'exec', '-i'] else ''
+                return shared.subprocess.CompletedProcess(args, 0, stdout=output)
 
             digest = 'a' * 64
             stdout, stderr = io.StringIO(), io.StringIO()
+            check_output = [json.dumps([{'RepoDigests': [f'redis@sha256:{digest}']}]), '999\n999\n']
             with patch.object(shared.subprocess, 'run', side_effect=run), \
-                 patch.object(shared.subprocess, 'check_output', return_value=json.dumps([
-                     {'RepoDigests': [f'redis@sha256:{digest}']}
-                 ])), redirect_stdout(stdout), redirect_stderr(stderr):
+                 patch.object(shared.subprocess, 'check_output', side_effect=check_output), \
+                 patch.object(shared.os, 'chown') as chown, redirect_stdout(stdout), redirect_stderr(stderr):
                 env_path = shared.ensure(folder)
 
             password = (Path(folder) / 'secrets/cache-password').read_text().strip()
@@ -80,6 +82,7 @@ class SharedServiceProvisioningTests(unittest.TestCase):
             self.assertIn('maxmemory 256mb\n', config)
             self.assertIn('maxmemory-policy allkeys-lru\n', config)
             self.assertIn('appendonly yes\n', config)
+            chown.assert_called_once_with(Path(folder) / 'secrets/redis.conf', 999, 999)
             self.assertIn(password, env)
             self.assertIn(f'redis@sha256:{digest}', container)
             self.assertEqual(container[container.index('--memory') + 1], '512m')
@@ -104,14 +107,58 @@ class SharedServiceProvisioningTests(unittest.TestCase):
 
             def run(args, **kwargs):
                 calls.append(args)
-                return shared.subprocess.CompletedProcess(args, 1 if args[:3] == ['docker', 'inspect', 'ri-cache'] else 0)
+                return shared.subprocess.CompletedProcess(args, 1 if args[:2] == ['docker', 'inspect'] else 0)
 
-            with patch.object(shared.subprocess, 'run', side_effect=run):
+            with patch.object(shared.subprocess, 'run', side_effect=run), \
+                 patch.object(shared.subprocess, 'check_output', return_value='999\n999\n'), \
+                 patch.object(shared.os, 'chown'):
                 with self.assertRaisesRegex(RuntimeError, 'pinned by digest'):
                     shared.ensure(folder)
             self.assertFalse(any(call[:2] == ['docker', 'run'] for call in calls))
             self.assertEqual(secrets.stat().st_mode & 0o777, 0o700)
             self.assertEqual((secrets / 'cache-password').stat().st_mode & 0o777, 0o600)
+
+    def test_restarting_existing_container_is_restarted_with_private_data_preserved(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            secrets = root / 'secrets'
+            secrets.mkdir(mode=0o700)
+            (secrets / 'cache-password').write_text('a' * 64)
+            digest = 'b' * 64
+            (secrets / 'redis-image').write_text(f'redis@sha256:{digest}')
+            info = {
+                'Config': {'Image': f'redis@sha256:{digest}'},
+                'HostConfig': {'Memory': 512 * 1024 * 1024, 'NanoCpus': 500_000_000,
+                               'PortBindings': {}},
+                'Mounts': [
+                    {'Source': str((secrets / 'redis.conf').resolve()),
+                     'Destination': shared.REDIS_CONFIG_PATH, 'RW': False},
+                    {'Source': str((root / 'redis-data').resolve()),
+                     'Destination': '/data', 'RW': True},
+                ],
+                'NetworkSettings': {'Networks': {'easyclaw_default': {}}},
+                'State': {'Status': 'restarting'},
+            }
+            calls = []
+
+            def run(args, **kwargs):
+                calls.append(args)
+                if args[:2] == ['docker', 'inspect']:
+                    return shared.subprocess.CompletedProcess(args, 0, stdout=json.dumps([info]))
+                if args[:3] == ['docker', 'exec', '-i']:
+                    return shared.subprocess.CompletedProcess(args, 0, stdout='PONG\n')
+                return shared.subprocess.CompletedProcess(args, 0, stdout='')
+
+            with patch.object(shared.subprocess, 'run', side_effect=run), \
+                 patch.object(shared.subprocess, 'check_output', return_value='999\n999\n'), \
+                 patch.object(shared.os, 'chown'):
+                shared.ensure(root)
+
+            self.assertIn(['docker', 'stop', '--time', '10', 'ri-cache'], calls)
+            self.assertIn(['docker', 'start', 'ri-cache'], calls)
+            self.assertFalse(any(call[:3] == ['docker', 'run', '-d'] for call in calls))
+            self.assertIn((str((root / 'redis-data').resolve()), '/data', True),
+                          {(m['Source'], m['Destination'], m['RW']) for m in info['Mounts']})
 
 
 if __name__ == '__main__':

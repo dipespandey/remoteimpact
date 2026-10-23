@@ -15,72 +15,8 @@ from django.conf import settings
 logger = logging.getLogger("performance")
 
 
-class ConcurrentJSONLHandler(logging.Handler):
-    """Small bounded JSONL handler safe for multiple web/worker processes.
+from jobboard.performance_logging import ConcurrentJSONLHandler, PerformanceJSONFormatter
 
-    Uses an OS advisory lock around both rotation and append. Files are created
-    with owner-only permissions; deployments should mount the parent directory.
-    """
-
-    def __init__(self, filename, max_bytes=10 * 1024 * 1024, backup_count=3):
-        super().__init__()
-        self.filename = os.fspath(filename)
-        self.max_bytes = max(1024, int(max_bytes))
-        self.backup_count = max(0, int(backup_count))
-        self.lock_filename = self.filename + ".lock"
-
-    def emit(self, record):
-        try:
-            payload = getattr(record, "performance", None)
-            if not isinstance(payload, dict):
-                return
-            line = (json.dumps(payload, separators=(",", ":"), sort_keys=True) + "\n").encode("utf-8")
-            lock_fd = os.open(self.lock_filename, os.O_CREAT | os.O_RDWR, 0o600)
-            try:
-                os.chmod(self.lock_filename, 0o600)
-                import fcntl
-                fcntl.flock(lock_fd, fcntl.LOCK_EX)
-                try:
-                    self._rotate_if_needed(len(line))
-                    fd = os.open(self.filename, os.O_CREAT | os.O_APPEND | os.O_WRONLY, 0o600)
-                    try:
-                        os.fchmod(fd, 0o600)
-                        with os.fdopen(fd, "ab", closefd=False) as stream:
-                            stream.write(line)
-                    finally:
-                        os.close(fd)
-                finally:
-                    fcntl.flock(lock_fd, fcntl.LOCK_UN)
-            finally:
-                os.close(lock_fd)
-        except Exception:
-            self.handleError(record)
-
-    def _rotate_if_needed(self, incoming):
-        try:
-            size = os.stat(self.filename).st_size
-        except FileNotFoundError:
-            return
-        if size + incoming <= self.max_bytes:
-            return
-        if self.backup_count:
-            oldest = "{}.{}".format(self.filename, self.backup_count)
-            try:
-                os.unlink(oldest)
-            except FileNotFoundError:
-                pass
-            for index in range(self.backup_count - 1, 0, -1):
-                source, target = "{}.{}".format(self.filename, index), "{}.{}".format(self.filename, index + 1)
-                try:
-                    os.replace(source, target)
-                except FileNotFoundError:
-                    pass
-            os.replace(self.filename, self.filename + ".1")
-        else:
-            os.unlink(self.filename)
-
-    def close(self):
-        super().close()
 
 _ALLOWED_OUTCOMES = {"ok", "error", "cache", "fallback", "timeout", "partial", "unknown"}
 _ALLOWED_STAGES = {
@@ -135,16 +71,6 @@ def emit_event(event):
         if clean.get("kind") == "request":
             clean["route"] = safe_route(clean.get("route"))
         logger.info("performance", extra={"performance": clean})
-
-
-class PerformanceJSONFormatter(logging.Formatter):
-    """JSON formatter for the dedicated rotating performance log handler."""
-
-    def format(self, record):
-        payload = getattr(record, "performance", None)
-        if not isinstance(payload, dict):
-            return "{}"
-        return json.dumps(payload, separators=(",", ":"), sort_keys=True)
 
 
 def scout_event(diagnostics, *, seconds, calls, call_budget=4):
