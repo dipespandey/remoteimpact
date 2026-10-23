@@ -26,16 +26,9 @@ def unsubscribe_user(user):
     Some accounts never got a profile row; creating it here is what makes the opt-out
     stick (the drip sender filters on the profile).
     """
-    from jobs.models import NewsletterSubscriber, UserProfile
-
-    profile, _ = UserProfile.objects.get_or_create(user=user)
-    profile.email_newsletter = False
-    profile.email_newsletter_unsubscribed_at = timezone.now()
-    profile.save(update_fields=["email_newsletter", "email_newsletter_unsubscribed_at"])
+    from jobs.services.newsletter_audience import unsubscribe_newsletters
     if user.email:
-        NewsletterSubscriber.objects.filter(email__iexact=user.email, unsubscribed=False).update(
-            unsubscribed=True, unsubscribed_at=timezone.now()
-        )
+        unsubscribe_newsletters(user.email)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -59,9 +52,8 @@ class NewsletterUnsubscribeView(TemplateView):
     def _unsubscribe_subscriber(self, token):
         """Newsletter subscribers without an account carry a signed email instead of a user id."""
         email = TimestampSigner(salt="subscriber-unsubscribe").unsign(token)
-        NewsletterSubscriber.objects.filter(email__iexact=email, unsubscribed=False).update(
-            unsubscribed=True, unsubscribed_at=timezone.now()
-        )
+        from jobs.services.newsletter_audience import unsubscribe_newsletters
+        unsubscribe_newsletters(email)
         return email
 
     def get(self, request, token):
@@ -99,22 +91,27 @@ class NewsletterPreferencesView(LoginRequiredMixin, View):
 
     def post(self, request):
         """Toggle newsletter subscription."""
-        from jobs.models import UserProfile
-
-        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        from django.core.exceptions import ValidationError
+        from jobs.services.newsletter_audience import subscribe_account, unsubscribe_newsletters
         subscribe = request.POST.get("subscribe") == "true"
-
-        profile.email_newsletter = subscribe
-        if not subscribe:
-            profile.email_newsletter_unsubscribed_at = timezone.now()
-        else:
-            profile.email_newsletter_unsubscribed_at = None
-        profile.save()
-
-        if subscribe:
-            messages.success(request, "You've been subscribed to our weekly job digest.")
-        else:
-            messages.success(request, "You've been unsubscribed from our weekly job digest.")
+        try:
+            if subscribe:
+                from allauth.account.models import EmailAddress
+                if not EmailAddress.objects.filter(user=request.user, email__iexact=request.user.email, verified=True).exists():
+                    # Reuse the rate-limited double-opt-in flow. An account alone
+                    # does not establish control of an unverified address.
+                    from .roundup import RoundupView
+                    payload = request.POST.copy()
+                    payload.update({"email":request.user.email, "consent":"yes", "source":"account_preferences", "topic":"all"})
+                    request.POST = payload
+                    return RoundupView().post(request)
+                subscribe_account(request.user)
+                messages.success(request, "You're subscribed to the weekly job roundup. No completed profile is needed.")
+            else:
+                unsubscribe_newsletters(request.user.email)
+                messages.success(request, "You've been unsubscribed from newsletter emails.")
+        except ValidationError:
+            messages.error(request, "Add a valid email address to your account before subscribing.")
 
         return redirect("jobs:account")
 

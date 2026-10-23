@@ -27,7 +27,12 @@ class Command(BaseCommand):
             raise CommandError(str(exc)) from exc
         os.chmod(path, 0o700)
         picks = []
-        for job in sample_jobs():
+        candidates = []
+        for topic in ("climate", "health", "ai", "early"):
+            candidates.extend(sample_jobs(topic, limit=2))
+        candidates.extend(sample_jobs(limit=6))
+        unique = {job.pk: job for job in candidates}
+        for job in list(unique.values())[:10]:
             picks.append({"title": job.title, "employer": job.organization.name,
                 "location_label": job.location, "experience": job.get_experience_level_display(),
                 "url": settings.SITE_URL.rstrip("/") + job.get_absolute_url() + "?" + urlencode({"utm_source": "newsletter", "utm_medium": "email", "utm_campaign": "roundup_" + timezone.now().strftime("%Y%m%d")}),

@@ -125,6 +125,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        from ..services.newsletter_audience import weekly_subscription
+        context["weekly_newsletter_subscribed"] = weekly_subscription(self.request.user.email)
         user = self.request.user
         context["delete_account_identifier"] = user.email or user.username
 
@@ -238,6 +240,8 @@ class AccountDeleteView(LoginRequiredMixin, View):
         with transaction.atomic():
             if user_email:
                 NewsletterSubscriber.objects.filter(email__iexact=user_email).delete()
+                from ..models import RoundupSubscriber
+                RoundupSubscriber.objects.filter(email__iexact=user_email).delete()
             UserPath.objects.filter(converted_user_id=user_id).delete()
             user.delete()
             if signup_org_ids:

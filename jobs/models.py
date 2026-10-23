@@ -224,7 +224,8 @@ class UserProfile(models.Model):
 
     # Email preferences
     email_newsletter = models.BooleanField(
-        default=False, help_text="Receive weekly job digest emails"
+        default=False, verbose_name="Newsletter preference (legacy)",
+        help_text="Historical checkbox; weekly delivery requires confirmed consent in Newsletter audience."
     )
     email_newsletter_unsubscribed_at = models.DateTimeField(null=True, blank=True)
 
@@ -1597,6 +1598,16 @@ class RoundupSubscriber(models.Model):
     """Independent, double-opt-in consent for the weekly public roundup."""
 
     email = models.EmailField(unique=True)
+    class ConsentBasis(models.TextChoices):
+        WEEKLY_REQUEST = "weekly_request", "Weekly signup + email confirmation"
+        ACCOUNT_EXPLICIT = "account_explicit", "Explicit account preference"
+        LEGACY_ACCOUNT = "legacy_account", "Legacy account checkbox — unverified"
+        MONTHLY_ONLY = "monthly_only", "Monthly product updates only"
+        LEGACY_UNKNOWN = "legacy_unknown", "Legacy record — unverified"
+
+    consent_basis = models.CharField(max_length=24, choices=ConsentBasis.choices,
+                                    default=ConsentBasis.WEEKLY_REQUEST, db_default="weekly_request")
+    legacy_sources = models.JSONField(default=list, blank=True, db_default=[])
     confirmation_key = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     referral_code = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     referred_by = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL)
@@ -1610,7 +1621,21 @@ class RoundupSubscriber(models.Model):
     confirmation_requested_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def audience_status(self):
+        if self.unsubscribed_at:
+            return "Unsubscribed"
+        if self.confirmed_at and self.consent_basis in {"weekly_request", "account_explicit"}:
+            return "Weekly subscribed"
+        if self.consent_basis == "monthly_only":
+            return "Monthly updates only"
+        if self.consent_basis in {"legacy_account", "legacy_unknown"}:
+            return "Needs weekly consent"
+        return "Awaiting email confirmation"
+
     class Meta:
+        verbose_name = "Newsletter audience member"
+        verbose_name_plural = "Newsletter audience"
         ordering = ["-created_at"]
 
 
