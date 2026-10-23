@@ -61,6 +61,13 @@ jobs:
         run: uv run python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2', device='cpu')"
       - name: Test deployment safety
         run: python -m unittest discover -s ops/deploy -p 'test_*.py'
+      - name: Smoke test private Redis provisioning and cache database isolation
+        if: matrix.database == 'sqlite'
+        env:
+          RUN_REDIS_DOCKER_SMOKE: '1'
+          DJANGO_SETTINGS_MODULE: jobboard.settings
+        run: |
+          sudo env "PATH=$PATH" DJANGO_SETTINGS_MODULE=jobboard.settings RUN_REDIS_DOCKER_SMOKE=1 "$GITHUB_WORKSPACE/.venv/bin/python" -m unittest discover -s ops/deploy -p 'test_redis_cache_isolation.py'
       - name: Check migrations on a fresh database
         run: |
           uv run python manage.py makemigrations --check --dry-run
@@ -76,6 +83,17 @@ jobs:
         env:
           DEBUG: 'False'
         run: uv run python manage.py check --deploy --fail-level WARNING
+      - name: Smoke test production performance logging bootstrap
+        env:
+          DEBUG: 'False'
+          DJANGO_SETTINGS_MODULE: jobboard.settings
+          PERFORMANCE_METRICS_ENABLED: 'True'
+          PERFORMANCE_LOG_PATH: ${{ runner.temp }}/performance.jsonl
+        run: |
+          rm -f "$PERFORMANCE_LOG_PATH" "$PERFORMANCE_LOG_PATH.lock"
+          uv run python manage.py check --deploy --fail-level WARNING
+          uv run python -c "import django; django.setup(); from jobs.services.performance import emit_event; emit_event({'kind':'bootstrap_smoke','route':'safe/','seconds':0.012})"
+          uv run python -c "import json, os, stat; p=os.environ['PERFORMANCE_LOG_PATH']; rows=[json.loads(line) for line in open(p)]; assert rows and rows[-1]['kind']=='bootstrap_smoke'; assert stat.S_IMODE(os.stat(p).st_mode)==0o600"
       - uses: actions/setup-node@v4
         with:
           node-version: '22.23.4'
