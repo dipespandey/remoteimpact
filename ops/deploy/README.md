@@ -12,7 +12,7 @@ The production host is `/opt/easyclaw` on the existing VPS. Caddy serves one act
 /opt/easyclaw/exec-active /app/.venv/bin/python /app/manage.py check
 ```
 
-Legacy `fast`, `build` and `migrate` mode names are accepted, but all now use isolated releases. Editing the server repo or sending Gunicorn HUP does **not** update the frozen serving code. Frozen releases ignore HUP; each candidate is tested to ensure its workers stay running when it receives that signal. Finish the file update, then use `deploy.sh`. Never run `docker compose up web` as a production deployment: the original Compose definition belongs to the legacy setup, not release orchestration. Keep using Compose for the database only when needed.
+Legacy `fast`, `build` and `migrate` mode names are accepted, but all now use isolated releases. Editing the server repo or sending Gunicorn HUP does **not** update the frozen serving code. Frozen releases ignore HUP; each candidate is tested to ensure its workers stay running when it receives that signal. Commit changes through a pull request and let the GitHub workflow deploy them. Never run `docker compose up web` as a production deployment: the original Compose definition belongs to the legacy setup, not release orchestration. Keep using Compose for the database only when needed.
 
 A deployment lock rejects overlapping manual/CI deploys. GitHub also queues production jobs without cancelling a running release. GitHub fetches and deploys the exact tested commit with `--ref SHA`; it does not `git pull` the live source. The historical host checkout contains manually deployed changes and is preserved for recovery. GitHub releases archive their exact SHA from a separate bare source cache. Ordinary snapshot deployments are disabled after adoption; never discard or reset the historical checkout to make CI green.
 
@@ -23,9 +23,9 @@ The host tools are installed with `python3 /opt/easyclaw/repo/ops/deploy/install
 1. Freeze the exact checked Git SHA from the source cache, excluding credentials, media and caches. Production does not deploy the mutable checkout.
 2. Build an immutable release image, reusing a dependency image keyed by the production Dockerfile and dependency files. Rebuild dependencies when that key changes. Remove old app source from the base before copying the new snapshot.
 3. Preserve old hashed static assets, collect new assets at build time, and mount only persistent media plus the existing indexing credential file at runtime. Never mount mutable application code into releases.
-4. Run Django checks and `migrate --check`. Start the candidate on loopback 8101/8102. Probe `/healthz/` (database and cache), `/`, `/jobs/` and static files. These GET probes send no messages and create no payments.
+4. Run Django checks, migration drift detection, the migration plan and `migrate --check`. Start the candidate on loopback 8101/8102. Probe `/healthz/` (database and cache), `/`, `/jobs/` and static files. These GET probes send no messages and create no payments.
 5. Run the existing organization-plan synchronization, validate Caddy, atomically update its config and gracefully reload. Verify the local TLS route and expected release response header, bypassing CDN ambiguity.
-6. On a failed post-cutover probe, restore the previous route. Keep the previous container running for in-flight requests and rollback. Before the next deployment starts another candidate, require no running scheduled jobs in the older retained container and gracefully stop it. No automatic volume or image pruning.
+6. On a failed post-cutover probe, restore the previous route. After successful cutover, gracefully stop the previous container when its scheduled jobs finish; retain it for rollback. No automatic volume or image pruning.
 
 The release header is `X-RemoteImpact-Release`. State lives in `releases/state.json`; each release has its own source snapshot and `release.json`. Caddy changes affect only the `remoteimpact.org` upstream and release header. Other sites and staging are preserved.
 
@@ -34,7 +34,7 @@ The release header is `X-RemoteImpact-Release`. State lives in `releases/state.j
 By default any pending migration blocks the deployment **before traffic changes**. After reviewing the plan and compatibility with both app versions:
 
 ```sh
-/opt/easyclaw/deploy.sh --allow-migrations
+gh workflow run deploy.yml --ref main -f allow_migrations=true
 ```
 
 Use expand/contract migrations: add nullable/default-compatible columns or new tables first; deploy code; backfill separately; remove old columns in a later release after rollback compatibility is no longer needed. Review `RunPython`, data rewrites, constraint changes, indexes and table locks individually. The flag is an operator assertion of compatibility, not an automatic proof. Deployment sets PostgreSQL lock timeout to 5 seconds and statement timeout to 60 seconds for one-off management commands; large backfills/index changes need a separate plan. An applied migration is not undone if the app release fails. Check-only refuses migration execution.
