@@ -298,9 +298,45 @@ class ScoutPreviewAsyncViewTests(TestCase):
         task.refresh_from_db()
         self.assertEqual(task.state, ScoutPreviewTask.State.FAILED)
 
-        retried = client.get(url, {"intent": INTENT, "retry": "1"})
+        retried = client.get(url, {"intent": INTENT, "retry": "1"}, follow=True)
 
         self.assertEqual(retried.status_code, 200)
+        self.assertEqual(len(retried.redirect_chain), 1)
+        self.assertNotIn("retry=1", retried.redirect_chain[0][0])
         self.assertTrue(retried.context["preview_pending"])
         task.refresh_from_db()
         self.assertEqual(task.state, ScoutPreviewTask.State.QUEUED)
+        self.assertEqual(ScoutPreviewAccess.objects.get(task=task).enqueue_count, 2)
+
+        client.get(url, {"intent": INTENT})
+        task.refresh_from_db()
+        self.assertEqual(task.state, ScoutPreviewTask.State.QUEUED)
+        self.assertEqual(ScoutPreviewAccess.objects.get(task=task).enqueue_count, 2)
+
+    def test_explicit_retry_refreshes_completed_incomplete_result_once(self):
+        client = Client()
+        url = reverse("jobs:job_scout_preview")
+        client.get(url, {"intent": INTENT})
+        task = ScoutPreviewTask.objects.get()
+        task.state = ScoutPreviewTask.State.SUCCEEDED
+        task.result = {
+            "preferences": {}, "matches": [], "older_jobs": [],
+            "diagnostics": {"review_incomplete": True},
+        }
+        task.completed_at = timezone.now()
+        task.save(update_fields=["state", "result", "completed_at"])
+
+        retried = client.get(url, {"intent": INTENT, "retry": "1"}, follow=True)
+
+        self.assertEqual(retried.status_code, 200)
+        self.assertEqual(len(retried.redirect_chain), 1)
+        self.assertNotIn("retry=1", retried.redirect_chain[0][0])
+        self.assertTrue(retried.context["preview_pending"])
+        task.refresh_from_db()
+        self.assertEqual(task.state, ScoutPreviewTask.State.QUEUED)
+        self.assertEqual(ScoutPreviewAccess.objects.get(task=task).enqueue_count, 2)
+
+        client.get(url, {"intent": INTENT})
+        task.refresh_from_db()
+        self.assertEqual(task.state, ScoutPreviewTask.State.QUEUED)
+        self.assertEqual(ScoutPreviewAccess.objects.get(task=task).enqueue_count, 2)

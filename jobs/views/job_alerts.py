@@ -267,15 +267,24 @@ class JobScoutPreviewView(TemplateView):
             task = accessible_task(task_id, request.session.session_key) if task_id else None
             if task and (task.intent_text != intent or task.semantic_key != semantic_key(intent)):
                 task = None
+            explicit_retry = request.GET.get("retry") == "1"
             try:
                 task, _ = enqueue_preview(
                     intent,
                     request.session.session_key,
-                    retry_failed=request.GET.get("retry") == "1",
+                    force_refresh=explicit_retry,
+                    retry_failed=explicit_retry,
                 )
             except PreviewQueueLimited:
                 self.queue_limited = True
                 task = None
+            if explicit_retry and task is not None:
+                # Consume the one-shot retry flag before loading the page. A
+                # browser reload or the polling redirect must not enqueue a
+                # second attempt.
+                clean_query = request.GET.copy()
+                clean_query.pop("retry", None)
+                return redirect(f"{request.path}?{clean_query.urlencode()}")
             self.preview_pending = bool(task and task.state in (task.State.QUEUED, task.State.RUNNING))
             self.scout_task = task
         response = super().get(request, *args, **kwargs)
