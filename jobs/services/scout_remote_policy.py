@@ -4,20 +4,21 @@ Only a single explicit requested country is supported. Missing applicant facts
 stay unknown. Rules run for every selected opening; one optional API batch uses
 the existing Scout deadline/call budget. This never adds or promotes a match.
 """
-import hashlib
 import json
 import logging
 import re
 
 from django.conf import settings
-from django.core.cache import cache
+from django.core.cache import caches
 
 from ml.remote_policy.core import Candidate, NAMES, clean, rules, worldwide_permission, place_codes
 from ml.remote_policy.llm import SYSTEM, PROMPT_VERSION, source_payload, decode_decision
 from ml.remote_policy.pipeline import combine, should_fallback
 from jobs.services.scout_evidence import source_location
+from jobs.services.scout_decision_cache import decision_key, decision_ttl
 
 logger = logging.getLogger(__name__)
+cache = caches['scout_decisions']
 VERSION = 'scout-policy-v2'
 MAX_BATCH = 6
 MAX_PROMPT_CHARS = 24000
@@ -74,8 +75,7 @@ def check_matches(jobs, preferences, diagnostics, *, allow_api=True):
         if not should_fallback(decision, candidate, text) or len(text) + len(location) > 16000:
             continue
         segments, payload = source_payload(text, candidate, location)
-        key = 'scout-policy:' + hashlib.sha256(json.dumps(
-            [VERSION, PROMPT_VERSION, SYSTEM, model, payload], sort_keys=True).encode()).hexdigest()
+        key = decision_key('scout-policy-v3', VERSION, PROMPT_VERSION, SYSTEM, model, payload)
         cached = _cached(key, segments)
         if cached is not None:
             record['decision'] = combine(decision, cached, candidate, text)
@@ -114,7 +114,7 @@ def check_matches(jobs, preferences, diagnostics, *, allow_api=True):
                     if result.reasons:
                         continue
                     try:
-                        cache.set(item['key'], content, 86400)
+                        cache.set(item['key'], content, decision_ttl())
                     except Exception:
                         pass
                 diagnostics['remote_policy_api'] = 'reviewed'

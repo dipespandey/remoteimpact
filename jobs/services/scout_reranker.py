@@ -1,14 +1,15 @@
 """Evidence-grounded reranking; the model may only select pre-eligible job IDs."""
-import hashlib
 import json
 import logging
 
 from django.conf import settings
-from django.core.cache import cache
+from django.core.cache import caches
+from jobs.services.scout_decision_cache import decision_key, decision_ttl
 
 from jobs.services.scout_constraints import evaluate_job,plain_job_field
 
 logger=logging.getLogger(__name__)
+cache=caches['scout_decisions']
 FIELDS=('title','description','requirements')
 MAX_CANDIDATES=12
 MAX_PROMPT_CHARS=44000
@@ -145,25 +146,30 @@ def rerank(candidates,preferences,fallback,diagnostics,relaxed=False):
             'Return only id and relevant:false when function is uncertain. No confidence percentages. '
             + CHECK_INSTRUCTIONS.format(checks=', '.join(requested_checks(preferences))))
     model=str(getattr(settings,'DEEPSEEK_MODEL',''))
-    key='scout-rerank-v6:'+hashlib.sha256((body+system+model).encode()).hexdigest()
+    key=decision_key('scout-rerank-v7',body,system,model)
     jobs={job.pk:job for job in candidates}
     known={}
     try:
-        cached=cache.get(key)
+        try:
+            cached=cache.get(key)
+        except Exception:
+            diagnostics['rerank_cache_unavailable']=True
+            # A cache outage must not trigger a paid model call. The outer
+            # guard records review_unavailable and withholds unreviewed jobs.
+            raise
         if cached is not None:
             from jobs.services.json_utils import parse_json_object
             accepted=validate_decisions(cached,evidence,preferences);output=json.dumps(parse_json_object(cached));diagnostics['reranker']='cache'
         else:
             from jobs.services.scout_workflow import generate, can_call
             from jobs.services.scout_review import source_checks_grounded
-            decision_keys={row['id']:'scout-decision-v1:'+hashlib.sha256(json.dumps(
-                [preferences['intent_text'],row,system,model],sort_keys=True,ensure_ascii=False).encode()).hexdigest() for row in rows}
+            decision_keys={row['id']:decision_key('scout-decision-v2',preferences['intent_text'],row,system,model) for row in rows}
             try:
                 records=cache.get_many(list(decision_keys.values()))
                 if not isinstance(records,dict):records={}
             except Exception:records={}
-            for pk,decision_key in decision_keys.items():
-                item=records.get(decision_key)
+            for pk,decision_cache_key in decision_keys.items():
+                item=records.get(decision_cache_key)
                 if not isinstance(item,dict):continue
                 try:
                     validate_decisions(json.dumps({'decisions':[item]}),{pk:evidence[pk]},preferences)
@@ -215,9 +221,10 @@ def rerank(candidates,preferences,fallback,diagnostics,relaxed=False):
             output=json.dumps({'decisions':list(known.values())})
             accepted=validate_decisions(output,{pk:evidence[pk] for pk in known},preferences)
             try:
+                ttl=decision_ttl()
                 cache.set_many({decision_keys[pk]:item for pk,item in known.items()
-                    if not item['relevant'] or source_checks_grounded(jobs[pk],item)},300)
-                if not pending_failed:cache.set(key,output,300)
+                    if not item['relevant'] or source_checks_grounded(jobs[pk],item)},ttl)
+                if not pending_failed:cache.set(key,output,ttl)
             except Exception:
                 diagnostics['rerank_cache_unavailable']=True
             diagnostics['reranker']='review_partial' if pending_failed else ('decision_cache' if not pending else 'model')

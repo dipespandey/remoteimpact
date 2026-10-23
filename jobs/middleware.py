@@ -1,5 +1,7 @@
 import logging
+import random
 import re
+from time import monotonic
 from urllib.parse import urljoin
 
 import requests
@@ -8,6 +10,10 @@ from bs4.element import NavigableString, Tag
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.utils.cache import patch_vary_headers
+from django.conf import settings
+from django.utils.deprecation import MiddlewareMixin
+
+from jobs.services.performance import emit_event, safe_route
 
 logger = logging.getLogger(__name__)
 
@@ -443,4 +449,34 @@ class ImpersonationReadOnlyMiddleware:
         response = self.get_response(request)
         if impersonating:
             response["Cache-Control"] = "private, no-store"
+        return response
+class PerformanceMiddleware(MiddlewareMixin):
+    """Record route-template timings without logging request paths or parameters."""
+
+    def process_request(self, request):
+        if getattr(settings, "PERFORMANCE_METRICS_ENABLED", True):
+            request._performance_started = monotonic()
+
+    def process_response(self, request, response):
+        started = getattr(request, "_performance_started", None)
+        if started is None:
+            return response
+        seconds = max(0, monotonic() - started)
+        route = safe_route(getattr(getattr(request, "resolver_match", None), "route", None))
+        cache = getattr(request, "_performance_cache_status", None) or getattr(response, "_performance_cache_status", None)
+        if cache not in {"hit", "fresh", "stale"}:
+            cache = "unknown"
+        response["Server-Timing"] = "app;dur={:.1f}".format(seconds * 1000)
+        sample_rate = getattr(settings, "PERFORMANCE_SAMPLE_RATE", 1.0)
+        try:
+            sample_rate = min(1.0, max(0.0, float(sample_rate)))
+        except (TypeError, ValueError):
+            sample_rate = 1.0
+        if sample_rate >= 1 or random.random() < sample_rate:
+            code = getattr(response, "status_code", 0)
+            outcome = "ok" if 200 <= code < 400 else "error"
+            emit_event({"kind": "request", "route": route, "seconds": round(seconds, 6),
+                        "status": "{}xx".format(int(code) // 100) if code else "unknown",
+                        "cache": cache, "outcome": outcome,
+                        "sample_rate": sample_rate})
         return response

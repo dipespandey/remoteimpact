@@ -965,7 +965,9 @@ skills is not a request for invented, exact job titles. JSON only."""
         from jobs.services.scout_workflow import bounded_workflow
         diagnostics = diagnostics if diagnostics is not None else {}
         with bounded_workflow(diagnostics):
-            preferences = cls.parse_intent(intent)
+            from jobs.services.scout_workflow import timed_stage
+            with timed_stage('parse'):
+                preferences = cls.parse_intent(intent)
             preferences['_scout_current_inventory'] = True
             preferences['_scout_preview_cache'] = True
             return preferences, cls.get_matches_for_preferences(preferences, since=since, limit=limit, diagnostics=diagnostics)
@@ -975,7 +977,9 @@ skills is not a request for invented, exact job titles. JSON only."""
         from jobs.services.scout_workflow import bounded_workflow
         diagnostics = diagnostics if diagnostics is not None else {}
         with bounded_workflow(diagnostics):
-            return cls._match_preferences(preferences, since=since, limit=limit, alert=alert, diagnostics=diagnostics)
+            from jobs.services.scout_workflow import timed_stage
+            with timed_stage('match'):
+                return cls._match_preferences(preferences, since=since, limit=limit, alert=alert, diagnostics=diagnostics)
 
     @classmethod
     def _match_preferences(cls, preferences, *, since=None, limit=None, alert=None, diagnostics=None):

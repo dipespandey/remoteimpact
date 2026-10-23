@@ -2069,3 +2069,6 @@ class PublicStatisticSnapshot(models.Model):
     key = models.CharField(max_length=50, primary_key=True)
     payload = models.JSONField(default=dict)
     computed_at = models.DateTimeField()
+
+
+from .scout_task_models import ScoutPreviewAccess, ScoutPreviewQueueGuard, ScoutPreviewTask  # noqa: E402,F401

@@ -114,6 +114,7 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "jobs.middleware.OutboundAttributionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "jobs.middleware.PerformanceMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "allauth.account.middleware.AccountMiddleware",
@@ -356,6 +357,17 @@ LOGGING = {
     },
 }
 
+# Timings contain route templates and stage names, never raw paths or briefs.
+PERFORMANCE_METRICS_ENABLED = os.getenv("PERFORMANCE_METRICS_ENABLED", "True").lower() in ("true", "1", "yes")
+PERFORMANCE_SAMPLE_RATE = float(os.getenv("PERFORMANCE_SAMPLE_RATE", "1.0"))
+PERFORMANCE_LOG_PATH = os.getenv("PERFORMANCE_LOG_PATH", "")
+LOGGING["handlers"]["performance"] = (
+    {"class": "jobs.services.performance.ConcurrentJSONLHandler",
+     "filename": PERFORMANCE_LOG_PATH, "max_bytes": 10485760, "backup_count": 3}
+    if PERFORMANCE_LOG_PATH else {"class": "logging.NullHandler"}
+)
+LOGGING["loggers"]["performance"] = {"handlers": ["performance"], "level": "INFO", "propagate": False}
+
 # =============================================================================
 # CACHING - Redis for faster page loads globally
 # =============================================================================
@@ -368,6 +380,7 @@ if REDIS_URL:
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
             "LOCATION": REDIS_URL,
+            "OPTIONS": {"socket_connect_timeout": 1, "socket_timeout": 1},
             "KEY_PREFIX": "ri",
             "TIMEOUT": 300,
         }
@@ -382,12 +395,14 @@ else:
             "LOCATION": os.getenv("CACHE_DIR", "/tmp/remoteimpact-cache"),
             "KEY_PREFIX": "ri",
             "TIMEOUT": 300,
+            "OPTIONS": {"MAX_ENTRIES": 300},
         }
     }
 
 # Extraction facts have their own retention/culling budget, separate from pages.
 CACHES["job_extraction"] = (
     {"BACKEND": "django.core.cache.backends.redis.RedisCache", "LOCATION": REDIS_URL,
+     "OPTIONS": {"socket_connect_timeout": 1, "socket_timeout": 1},
      "KEY_PREFIX": "ri-extraction", "TIMEOUT": 2592000}
     if REDIS_URL else
     {"BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
@@ -396,10 +411,27 @@ CACHES["job_extraction"] = (
      "OPTIONS": {"MAX_ENTRIES": 5000}}
 )
 
+# Expensive Scout decisions have a separate namespace, expiry and local-file
+# culling budget from short-lived page fragments and responses. Production can
+# share REDIS_URL; deployments without Redis use the persistent cache mount.
+SCOUT_DECISION_CACHE_TTL = int(os.getenv("SCOUT_DECISION_CACHE_TTL", "604800"))
+SCOUT_DECISION_CACHE_MAX_ENTRIES = int(os.getenv("SCOUT_DECISION_CACHE_MAX_ENTRIES", "20000"))
+CACHES["scout_decisions"] = (
+    {"BACKEND": "django.core.cache.backends.redis.RedisCache", "LOCATION": REDIS_URL,
+     "OPTIONS": {"socket_connect_timeout": 1, "socket_timeout": 1},
+     "KEY_PREFIX": "ri-scout-decisions", "TIMEOUT": SCOUT_DECISION_CACHE_TTL}
+    if REDIS_URL else
+    {"BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+     "LOCATION": os.path.join(os.getenv("CACHE_DIR", "/tmp/remoteimpact-cache"), "scout-decisions"),
+     "KEY_PREFIX": "ri-scout-decisions", "TIMEOUT": SCOUT_DECISION_CACHE_TTL,
+     "OPTIONS": {"MAX_ENTRIES": SCOUT_DECISION_CACHE_MAX_ENTRIES}}
+)
+
 if len(sys.argv) > 1 and sys.argv[1] == "test":
     # Tests must not share cached LLM/matching results across runs.
     CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "KEY_PREFIX": "ri-test"}}
     CACHES["job_extraction"] = {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "KEY_PREFIX": "ri-extraction-test"}
+    CACHES["scout_decisions"] = {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "KEY_PREFIX": "ri-scout-decisions-test"}
     INDEXNOW_ENABLED = False
     EMAIL_PROVIDER = "none"
     EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
@@ -431,6 +463,7 @@ EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
 # Explicit opt-in until provider latency/cost and relevance are validated.
 # Evaluated 2026-10-09 on 167 real briefs: irrelevant matches -60%, relevant +10%.
 SCOUT_RERANK_ENABLED = os.getenv("SCOUT_RERANK_ENABLED", "true").lower() == "true"
+SCOUT_PREVIEW_ASYNC_ENABLED = os.getenv("SCOUT_PREVIEW_ASYNC_ENABLED", "false").lower() == "true"
 # Small local relevance models are opt-in; existing vectors/provider remain the default.
 SCOUT_RERANK_BACKEND = os.getenv("SCOUT_RERANK_BACKEND", "deepseek")
 SCOUT_LOCAL_MODEL_PATH = os.getenv("SCOUT_LOCAL_MODEL_PATH", "")
