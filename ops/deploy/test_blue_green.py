@@ -63,7 +63,7 @@ class ReleaseTests(unittest.TestCase):
         release = bg.Release(folder)
         source = Path(folder) / 'repo'
         (source / 'ops/deploy').mkdir(parents=True)
-        for file in ('pyproject.toml', 'uv.lock', '.dockerignore', 'ops/deploy/entrypoint-release.sh'):
+        for file in ('pyproject.toml', 'uv.lock', '.dockerignore', 'ops/deploy/entrypoint-release.sh', 'ops/deploy/github-deploy'):
             (source / file).write_text('fixture')
         (Path(folder) / 'Dockerfile.prod').write_text('fixture')
         release.save({'active': {'id': 'old', 'port': 8100, 'release': 'old'}, 'previous': None})

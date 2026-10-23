@@ -101,6 +101,7 @@ jobs:
           DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
           ALLOW_MIGRATIONS: ${{ inputs.allow_migrations == true && 'true' || 'false' }}
         run: |
+          umask 077
           printf '%s\n' "$DEPLOY_KEY" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > /tmp/deploy_known_hosts
@@ -108,7 +109,7 @@ jobs:
           trap 'rm -f /tmp/deploy_key /tmp/deploy_known_hosts' EXIT
           migration_flag=""
           if [ "$ALLOW_MIGRATIONS" = true ]; then migration_flag=" --allow-migrations"; fi
-          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/deploy_known_hosts -i /tmp/deploy_key "root@$DEPLOY_HOST" "
+          ssh -o ConnectTimeout=20 -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/deploy_known_hosts -i /tmp/deploy_key "root@$DEPLOY_HOST" "
             cd /opt/easyclaw &&
             git -C repo fetch origin ${{ github.sha }} &&
             /opt/easyclaw/deploy.sh --ref ${{ github.sha }}$migration_flag

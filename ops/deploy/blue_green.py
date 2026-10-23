@@ -295,7 +295,7 @@ class Release:
             self.canonical_name(target)
             (self.state / 'pending.json').unlink(missing_ok=True)
             # Only promote deploy tooling from a release which actually passed checks.
-            for name in ('blue_green.py', 'exec-active'):
+            for name in ('blue_green.py', 'exec-active', 'github-deploy'):
                 shutil.copy2(source / 'ops/deploy' / name, self.root / name)
                 os.chmod(self.root / name, 0o755)
             print(f'Deployed {release_id} on {port}; previous release retained for rollback.', flush=True)

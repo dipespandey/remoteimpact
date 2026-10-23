@@ -10,7 +10,7 @@ root = Path('/opt/easyclaw')
 source = root / 'repo/ops/deploy'
 backup = root / 'backups' / ('blue-green-tools-' + time.strftime('%Y%m%dT%H%M%SZ', time.gmtime()))
 backup.mkdir(mode=0o700)
-for name in ('blue_green.py', 'exec-active', 'deploy.sh'):
+for name in ('blue_green.py', 'exec-active', 'deploy.sh', 'github-deploy'):
     target = root / name
     if target.exists():
         shutil.copy2(target, backup / name)
