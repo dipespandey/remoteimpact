@@ -5,7 +5,7 @@
 {% block robots %}noindex, nofollow{% endblock %}
 
 {% block content %}
-<div class="container max-w-4xl py-8 sm:py-10">
+<div class="container py-8 sm:py-10">
   <a class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground" href="{% url 'jobs:job_alerts' %}"><span aria-hidden="true">&larr;</span> Back to AI Job Scout</a>
   {% if checkout_cancelled %}<div class="alert alert-warning mt-4" role="status"><p>No payment was made. Your free account and saved Scout are unchanged.</p></div>{% endif %}
 

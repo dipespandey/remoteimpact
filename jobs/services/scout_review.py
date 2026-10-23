@@ -126,7 +126,7 @@ def requested_checks(prefs):
 CHECK_INSTRUCTIONS = (
     'For each selected job include checks for exactly these requested dimensions: {checks}. '
     'Each checks value is [status, field, verbatim_quote], where status is confirmed, conflicting, or unknown. '
-    'Confirmed/conflicting needs an exact 8-180 character quote (short location labels are allowed) from title, description, requirements, location or salary. '
+    'Confirmed/conflicting needs a short exact 8-180 character contiguous quote (short location labels are allowed) copied from its named field: title, description, requirements, location or salary. Never paraphrase, combine spans, or include the […] excerpt separator. '
     'Unknown must use ["unknown", "", ""]. Function must be confirmed by actual duties in description/requirements, '
     'never a title, a qualification, or company mission. The description starts with the role overview and explicit workload shares. Compare those first: minor or incidental responsibilities cannot establish the requested profession. Same sector with a different profession is conflicting, not adjacent. '
     'Preserve functional qualifiers: partner operations means onboarding/workflows, not sales, fundraising or relationship development. '
@@ -182,6 +182,44 @@ def review_checks(item, row, prefs):
         if name == 'location' and not re.search(r'\b(?:remote|located|based|reside|residents|hiring|eligible|work from|work in|anywhere)\b', quote, re.I):
             unknown.append('review_location')
     return unknown
+
+
+def review_issue(item, row, prefs):
+    checks = item.get('checks')
+    if not isinstance(checks, dict):
+        return 'invalid_checks_schema'
+    if set(checks) != set(requested_checks(prefs)):
+        return 'missing_or_extra_checks'
+    from jobs.services.scout_reranker import _normalized
+    for name, value in checks.items():
+        if not isinstance(value, list) or len(value) != 3:
+            return 'invalid_check_value'
+        status, field, quote = value
+        if status == 'conflicting':
+            return 'unverified_conflict'
+        if status == 'unknown' and field == quote == '':
+            if name == 'function':
+                return 'unknown_function'
+            continue
+        if status != 'confirmed' or field not in ('title', 'description', 'requirements', 'location', 'salary'):
+            return 'invalid_check_value'
+        if not isinstance(quote, str) or not (2 if field == 'location' else 8) <= len(quote) <= 360:
+            return 'invalid_quote_length'
+        if _normalized(quote) not in _normalized(row.get(field, '')):
+            return 'prompt_quote_ungrounded'
+    return 'unsupported_constraint_check'
+
+
+def grounded_conflict(job, item, row, prefs):
+    checks = item.get('checks')
+    if not isinstance(checks, dict) or not any(
+            isinstance(value, list) and len(value) == 3 and value[0] == 'conflicting'
+            for value in checks.values()):
+        return False
+    verified = {**item, 'checks': {
+        name: ['confirmed', *value[1:]] if isinstance(value, list) and len(value) == 3 and value[0] == 'conflicting' else value
+        for name, value in checks.items()}}
+    return review_checks(verified, row, prefs) is not None and source_checks_grounded(job, verified)
 
 
 def source_checks_grounded(job,item):

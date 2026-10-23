@@ -91,11 +91,14 @@
             const measurement = 'G-H35R4HM1TG';
             window.dataLayer = window.dataLayer || [];
             const send = function () { window.dataLayer.push(arguments); };
+            let referrerOrigin = '';
+            try { referrerOrigin = document.referrer ? new URL(document.referrer).origin : ''; } catch (_) {}
             send('js', new Date());
             send('config', measurement, {
                 allow_google_signals: false,
                 allow_ad_personalization_signals: false,
-                page_location: window.location.origin + window.location.pathname
+                page_location: window.location.origin + window.location.pathname,
+                page_referrer: referrerOrigin
             });
             window.gtag = function (command, name, details) {
                 if (command !== 'event') return;

@@ -63,7 +63,7 @@ class ReleaseTests(unittest.TestCase):
         release = bg.Release(folder)
         source = Path(folder) / 'repo'
         (source / 'ops/deploy').mkdir(parents=True)
-        for file in ('pyproject.toml', 'uv.lock', '.dockerignore', 'ops/deploy/entrypoint-release.sh'):
+        for file in ('pyproject.toml', 'uv.lock', '.dockerignore', 'ops/deploy/entrypoint-release.sh', 'ops/deploy/github-deploy'):
             (source / file).write_text('fixture')
         (Path(folder) / 'Dockerfile.prod').write_text('fixture')
         release.save({'active': {'id': 'old', 'port': 8100, 'release': 'old'}, 'previous': None})
@@ -173,6 +173,72 @@ class ReleaseTests(unittest.TestCase):
             self.assertEqual(json.loads(target.read_text())['active']['id'], 'abc')
             self.assertEqual(target.stat().st_mode & 0o777, 0o600)
             self.assertFalse(target.with_name('state.json.tmp').exists())
+
+    def test_stopped_previous_can_be_retired_without_docker_top(self):
+        with tempfile.TemporaryDirectory() as folder:
+            release = bg.Release(folder)
+            with patch.object(bg, 'run', side_effect=['false\n', '']) as run:
+                release.retire({'id': 'old'})
+            self.assertEqual([call.args for call in run.call_args_list], [
+                ('docker', 'inspect', '-f', '{{.State.Running}}', 'old'),
+                ('docker', 'rm', 'old'),
+            ])
+
+    def test_unwrapped_management_command_still_blocks_retirement(self):
+        with tempfile.TemporaryDirectory() as folder:
+            release = bg.Release(folder)
+            with patch.object(bg, 'run', side_effect=['true\n', 'PID ARGS\n2 python manage.py import_remote_jobs\n']) as run:
+                with self.assertRaisesRegex(RuntimeError, 'management command running'):
+                    release.retire({'id': 'old'})
+            self.assertEqual(run.call_count, 2)
+
+    def test_github_only_marker_blocks_manual_snapshots_before_any_work(self):
+        with tempfile.TemporaryDirectory() as folder:
+            release = bg.Release(folder)
+            (Path(folder) / 'require-github-deploy').touch()
+            with patch.object(bg, 'run') as command:
+                with self.assertRaisesRegex(RuntimeError, 'GitHub-tested commit'):
+                    release.deploy()
+                command.assert_not_called()
+
+    def test_schema_drift_and_plan_are_checked_before_candidate_start(self):
+        with tempfile.TemporaryDirectory() as folder:
+            release, source = self.pipeline_fixture(folder)
+            calls = []
+            with patch.object(bg, 'run', side_effect=self.pipeline_run(source, calls)), patch.object(release, 'ready'), patch.object(release, 'switch'):
+                release.deploy(check_only=True)
+            drift = next(i for i,c in enumerate(calls) if c[-3:] == ('makemigrations', '--check', '--dry-run'))
+            plan = next(i for i,c in enumerate(calls) if c[-2:] == ('migrate', '--plan'))
+            start = calls.index(('docker', 'start', 'candidate'))
+            self.assertLess(drift, plan)
+            self.assertLess(plan, start)
+
+    def test_idle_previous_stops_without_removing_rollback(self):
+        with tempfile.TemporaryDirectory() as folder:
+            release = bg.Release(folder)
+            release.save({'active': {'id': 'new'}, 'previous': {'id': 'old'}})
+            with patch.object(bg, 'run', side_effect=['true\n', 'PID ARGS\n1 gunicorn\n', '']) as run:
+                self.assertTrue(release.stop_previous_if_idle())
+            self.assertEqual(run.call_args.args, ('docker', 'stop', '--timeout', '65', 'old'))
+            self.assertFalse(any(c.args[:2] == ('docker', 'rm') for c in run.call_args_list))
+
+    def test_job_lock_defers_idle_stop(self):
+        with tempfile.TemporaryDirectory() as folder:
+            release = bg.Release(folder)
+            release.save({'active': {'id': 'new'}, 'previous': {'id': 'old'}})
+            with (release.state / 'old.jobs.lock').open('a') as lock:
+                fcntl.flock(lock, fcntl.LOCK_SH)
+                with patch.object(bg, 'run') as run:
+                    self.assertFalse(release.stop_previous_if_idle())
+                    run.assert_not_called()
+
+    def test_active_release_is_never_stopped_as_previous(self):
+        with tempfile.TemporaryDirectory() as folder:
+            release = bg.Release(folder)
+            release.save({'active': {'id': 'same'}, 'previous': {'id': 'same'}})
+            with patch.object(bg, 'run') as run:
+                self.assertFalse(release.stop_previous_if_idle())
+                run.assert_not_called()
 
 if __name__ == '__main__':
     unittest.main()

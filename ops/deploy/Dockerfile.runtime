@@ -1,0 +1,40 @@
+FROM python:3.12-slim
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+RUN apt-get update && apt-get install -y \
+    cron fonts-dejavu-core \
+    libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
+    libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
+    libxrandr2 libgbm1 libasound2 libpango-1.0-0 libcairo2 \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 UV_SYSTEM_PYTHON=1
+WORKDIR /app
+
+COPY repo/pyproject.toml repo/uv.lock ./
+RUN uv sync --frozen --no-dev \
+    --no-install-package torch \
+    --no-install-package sentence-transformers
+# CPU-only torch (the default wheel pulls CUDA), then sentence-transformers on top of it.
+RUN uv pip install --python /app/.venv/bin/python --index-url https://download.pytorch.org/whl/cpu "torch==2.9.1" \
+ && uv pip install --python /app/.venv/bin/python "sentence-transformers==5.2.0"
+
+RUN uv run playwright install chromium
+
+COPY repo/ .
+RUN mkdir -p /data
+RUN uv run python manage.py collectstatic --noinput
+# Bake the embedding models in, so a new container never downloads them at request time.
+RUN /app/.venv/bin/python -c "from sentence_transformers import SentenceTransformer as S; S('thenlper/gte-small'); S('all-MiniLM-L6-v2')"
+
+RUN printf "#!/bin/bash\nset -e\nuv run python manage.py migrate --noinput\nexec uv run gunicorn jobboard.wsgi:application --bind 0.0.0.0:8000 --workers 2\n" > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+
+EXPOSE 8000
+CMD ["/app/entrypoint.sh"]
+
+# Pin the patched Node runtime, including Playwright's otherwise bundled copy.
+COPY --from=node:22.23.4-bookworm-slim /usr/local/bin/node /usr/local/bin/node
+RUN ln -sf /usr/local/bin/node /app/.venv/lib/python3.12/site-packages/playwright/driver/node \
+ && test "$(node --version)" = "v22.23.4" \
+ && /app/.venv/lib/python3.12/site-packages/playwright/driver/node --version

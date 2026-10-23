@@ -1171,12 +1171,17 @@ class JobScoutFlowTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
+        self.assertFalse(ConsumerFunnelEvent.objects.filter(
+            event=ConsumerFunnelEvent.Event.SCOUT_JOB_VIEWED).exists())
+        delivery = JobAlertDelivery.objects.create(alert=alert, job=self.job)
+        self.client.post(reverse('jobs:job_view_beacon', args=[self.job.slug]) +
+            f'?scout_delivery={delivery.pk}', HTTP_USER_AGENT='Mozilla/5.0 Safari/605.1.15')
         event = ConsumerFunnelEvent.objects.filter(
             user=self.user,
             alert=alert,
             event=ConsumerFunnelEvent.Event.SCOUT_JOB_VIEWED,
         ).latest("created_at")
-        self.assertEqual(event.metadata["source"], "scout_email")
+        self.assertEqual(event.metadata["signal"], "owner_delivery_beacon")
         self.assertEqual(event.metadata["job_id"], self.job.pk)
 
 

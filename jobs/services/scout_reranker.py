@@ -65,7 +65,7 @@ def validate_decisions(output,evidence,preferences=None):
     return accepted
 
 
-def validated_subset(output,evidence,preferences):
+def validated_subset(output,evidence,preferences,*,jobs=None,diagnostics=None):
     """Missing decisions are unknown; retain only independently valid records.
 
     Invented/duplicated IDs, wrong types or schema errors still fail closed.
@@ -83,8 +83,28 @@ def validated_subset(output,evidence,preferences):
         if pk not in evidence or pk in subset:raise ValueError('Unknown or duplicated job')
         subset[pk]=evidence[pk]
     validate_decisions(output,subset,preferences)
-    from jobs.services.scout_review import review_checks
-    valid=[item for item in records if not item['relevant'] or review_checks(item,subset[item['id']],preferences) is not None]
+    from jobs.services.scout_review import review_checks, review_issue, grounded_conflict, source_checks_grounded
+    valid=[]
+    issues={}
+    for item in records:
+        pk=item['id'];row=subset[pk]
+        if not item['relevant']:
+            valid.append(item)
+        elif jobs is not None and grounded_conflict(jobs[pk],item,row,preferences):
+            valid.append({'id':pk,'relevant':False})
+            issues['verified_conflict']=issues.get('verified_conflict',0)+1
+        elif review_checks(item,row,preferences) is None:
+            reason=review_issue(item,row,preferences)
+            issues[reason]=issues.get(reason,0)+1
+        elif jobs is not None and not source_checks_grounded(jobs[pk],item):
+            issues['source_quote_ungrounded']=issues.get('source_quote_ungrounded',0)+1
+        else:
+            valid.append(item)
+    omitted=len(evidence)-len(subset)
+    if omitted:issues['omitted_decision']=omitted
+    if diagnostics is not None:
+        counts=diagnostics.setdefault('review_decision_issues',{})
+        for reason,count in issues.items():counts[reason]=counts.get(reason,0)+count
     return valid,len(valid)<len(evidence)
 
 
@@ -165,15 +185,33 @@ def rerank(candidates,preferences,fallback,diagnostics,relaxed=False):
                     output=generate(json.dumps({'request':payload['request'],'candidates':pending},ensure_ascii=False),
                         stage='review',max_tokens=MAX_OUTPUT_TOKENS,temperature=0.0,
                         timeout=TIMEOUT_SECONDS,max_retries=0,system_message=system)
-                    records,partial=validated_subset(output,{row['id']:row for row in pending},preferences)
-                    records=[item for item in records if not item['relevant'] or source_checks_grounded(jobs[item['id']],item)]
-                    pending_failed=partial or len(records)<len(pending)
-                    if pending_failed:diagnostics['review_missing_decisions']=len(pending)-len(records)
+                    records,_=validated_subset(output,{row['id']:row for row in pending},preferences,
+                        jobs=jobs,diagnostics=diagnostics)
                     known.update({item['id']:item for item in records})
+                    unresolved=[row for row in pending if row['id'] not in known]
+                    if unresolved and can_call(reserve=1 if relaxed and getattr(settings,'SCOUT_CLOSE_MATCHES',False) else 0):
+                        diagnostics['review_repair_attempted']=True
+                        diagnostics['review_repair_candidates']=len(unresolved)
+                        try:
+                            repaired=generate(json.dumps({'request':payload['request'],'candidates':unresolved},ensure_ascii=False),
+                                stage='review_repair',max_tokens=MAX_OUTPUT_TOKENS,temperature=0.0,
+                                timeout=TIMEOUT_SECONDS,max_retries=0,system_message=system)
+                            records,_=validated_subset(repaired,{row['id']:row for row in unresolved},preferences,
+                                jobs=jobs,diagnostics=diagnostics)
+                            known.update({item['id']:item for item in records})
+                            diagnostics['review_repair_resolved']=len(records)
+                        except Exception as exc:
+                            diagnostics['review_repair_failure_type']=type(exc).__name__
+                    pending_failed=any(row['id'] not in known for row in pending)
+                    if pending_failed:diagnostics['review_missing_decisions']=sum(row['id'] not in known for row in pending)
                 except Exception as exc:
+                    issues=diagnostics.setdefault('review_decision_issues',{})
+                    reason='invalid_response' if isinstance(exc,(ValueError,TypeError,KeyError)) else 'review_call_failed'
+                    issues[reason]=issues.get(reason,0)+1
                     if not known:raise
                     pending_failed=True
                     diagnostics['review_failure_type']=type(exc).__name__
+            diagnostics['review_unresolved_count']=sum(row['id'] not in known for row in pending)
             output=json.dumps({'decisions':list(known.values())})
             accepted=validate_decisions(output,{pk:evidence[pk] for pk in known},preferences)
             try:

@@ -119,6 +119,27 @@ class Release:
         (self.state / 'pending.json').unlink(missing_ok=True)
         print('Rolled back application traffic; database schema was NOT reversed.', flush=True)
 
+    def stop_previous_if_idle(self):
+        state = self.load()
+        target = state.get('previous')
+        if not target or target['id'] == state['active']['id']:
+            return False
+        with open(self.state / (target['id'] + '.jobs.lock'), 'a') as lock:
+            try:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                print('Previous release is draining scheduled jobs; it will stop when they finish.', flush=True)
+                return False
+            running = run('docker', 'inspect', '-f', '{{.State.Running}}', target['id'], capture=True).strip()
+            if running != 'true':
+                return True
+            processes = run('docker', 'top', target['id'], '-eo', 'pid,args', capture=True)
+            if any('manage.py' in line for line in processes.splitlines()):
+                return False
+            run('docker', 'stop', '--timeout', '65', target['id'])
+            print('Stopped idle previous release; rollback image and container retained.', flush=True)
+            return True
+
     def retire(self, target):
         if not target:
             return
@@ -128,13 +149,17 @@ class Release:
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
                 raise RuntimeError('Previous release still has a running scheduled job; retry later')
-            processes = run('docker', 'top', target['id'], '-eo', 'pid,args', capture=True)
-            if any('manage.py' in line for line in processes.splitlines()):
-                raise RuntimeError('Retained release has a management command running; retry later')
-            run('docker', 'stop', '--time', '65', target['id'])
+            running = run('docker', 'inspect', '-f', '{{.State.Running}}', target['id'], capture=True).strip()
+            if running == 'true':
+                processes = run('docker', 'top', target['id'], '-eo', 'pid,args', capture=True)
+                if any('manage.py' in line for line in processes.splitlines()):
+                    raise RuntimeError('Retained release has a management command running; retry later')
+                run('docker', 'stop', '--time', '65', target['id'])
             run('docker', 'rm', target['id'])
 
     def deploy(self, ref=None, allow_migrations=False, check_only=False):
+        if not ref and (self.root / 'require-github-deploy').exists():
+            raise RuntimeError('Production requires an exact GitHub-tested commit SHA; snapshot deployment is disabled.')
         state = self.load()
         self.ready(state['active'])
         if check_only and allow_migrations:
@@ -148,15 +173,16 @@ class Release:
         if ref:
             if not re.fullmatch(r'[0-9a-f]{40}', ref):
                 raise RuntimeError('--ref must be a full Git commit SHA')
-            # The existing host has manually deployed application edits. Never silently
-            # replace those with an older Git tree during adoption of CI releases.
-            paths = ('jobs', 'jobboard', 'blog', 'gigs', 'templates', 'static', 'ml', 'manage.py', 'pyproject.toml', 'uv.lock')
-            drift = run('git', '-C', str(self.root / 'repo'), 'status', '--porcelain', '--untracked-files=all', '--', *paths, capture=True)
-            if drift.strip():
-                raise RuntimeError('Host application source has uncommitted changes. Reconcile it with Git before a --ref deployment; manual snapshot deploy remains available.')
+            git_source = self.root / 'github-source.git'
+            if not git_source.exists():
+                git_source = self.root / 'repo'
+                paths = ('jobs', 'jobboard', 'blog', 'gigs', 'templates', 'static', 'ml', 'manage.py', 'pyproject.toml', 'uv.lock')
+                drift = run('git', '-C', str(git_source), 'status', '--porcelain', '--untracked-files=all', '--', *paths, capture=True)
+                if drift.strip():
+                    raise RuntimeError('Host application source has uncommitted changes; configure the GitHub source mirror before SHA deployment.')
             archive = folder / 'source.tar'
             with archive.open('wb') as out:
-                subprocess.run(['git', '-C', str(self.root / 'repo'), 'archive', ref], stdout=out, check=True)
+                subprocess.run(['git', '-C', str(git_source), 'archive', ref], stdout=out, check=True)
             with tarfile.open(archive) as contents:
                 contents.extractall(source, filter='data')
             archive.unlink()
@@ -170,7 +196,8 @@ class Release:
                 str(self.root / 'repo') + '/', str(source) + '/', capture=True)
             if changed.strip():
                 raise RuntimeError('Source changed while copying; retry the deployment to obtain a consistent snapshot')
-        shutil.copy2(self.root / 'Dockerfile.prod', folder / 'Dockerfile.prod')
+        recipe = source / 'ops/deploy/Dockerfile.runtime' if ref else self.root / 'Dockerfile.prod'
+        shutil.copy2(recipe, folder / 'Dockerfile.prod')
         dep_bytes = b''.join(p.read_bytes() for p in (folder / 'Dockerfile.prod', source / 'pyproject.toml', source / 'uv.lock'))
         dep_hash = hashlib.sha256(dep_bytes).hexdigest()
         runtime = 'ri-runtime:' + dep_hash[:20]
@@ -224,6 +251,8 @@ class Release:
                     '-e', 'PGOPTIONS=-c lock_timeout=5s -c statement_timeout=60s',
                     '--entrypoint', '/app/.venv/bin/python', image, '/app/manage.py', *args)
             command('check')
+            command('makemigrations', '--check', '--dry-run')
+            command('migrate', '--plan')
             try:
                 command('migrate', '--check')
             except subprocess.CalledProcessError:
@@ -266,10 +295,14 @@ class Release:
             self.canonical_name(target)
             (self.state / 'pending.json').unlink(missing_ok=True)
             # Only promote deploy tooling from a release which actually passed checks.
-            for name in ('blue_green.py', 'exec-active'):
+            for name in ('blue_green.py', 'exec-active', 'github-deploy'):
                 shutil.copy2(source / 'ops/deploy' / name, self.root / name)
                 os.chmod(self.root / name, 0o755)
             print(f'Deployed {release_id} on {port}; previous release retained for rollback.', flush=True)
+            try:
+                self.stop_previous_if_idle()
+            except Exception as exc:
+                print(f'Previous release cleanup deferred: {exc}', file=sys.stderr, flush=True)
         except BaseException:
             if switched and not succeeded:
                 self.switch(state['active'])
@@ -286,7 +319,7 @@ class Release:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('mode', nargs='?', default='deploy', choices=('deploy', 'fast', 'build', 'migrate', 'rollback', 'status'))
+    parser.add_argument('mode', nargs='?', default='deploy', choices=('deploy', 'fast', 'build', 'migrate', 'rollback', 'status', 'stop-previous'))
     parser.add_argument('--root', default='/opt/easyclaw')
     parser.add_argument('--ref')
     parser.add_argument('--allow-migrations', action='store_true')
@@ -302,6 +335,8 @@ def main():
             parser.exit(1, 'Interrupted cutover found: inspect pending.json and Caddy upstream before continuing.\n')
         if args.mode == 'status':
             print(json.dumps(release.load(), indent=2))
+        elif args.mode == 'stop-previous':
+            release.stop_previous_if_idle()
         elif args.mode == 'rollback':
             release.rollback()
         else:

@@ -257,3 +257,20 @@ class RegionSitemap(Sitemap):
 
     def location(self, slug):
         return reverse('jobs:region_jobs', args=[slug])
+
+
+class RoundupIssueSitemap(Sitemap):
+    changefreq = 'weekly'
+    priority = 0.6
+
+    def items(self):
+        from jobs.services.roundup_issue import registry, validate_issues
+        from django.utils import timezone
+        return validate_issues(registry(), timezone.localdate())
+
+    def location(self, item):
+        return reverse('jobs:roundup_issue', args=[item['slug']])
+
+    def lastmod(self, item):
+        from datetime import date
+        return date.fromisoformat(item['published_on'])

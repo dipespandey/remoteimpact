@@ -1,0 +1,161 @@
+[
+  {
+    "slug": "2026-10-22",
+    "published_on": "2026-10-22",
+    "title": "Remote impact job picks for 22 October 2026",
+    "introduction": "Eight employer-source-checked roles in climate, software and early-career impact work. Compare hiring locations and experience before applying.",
+    "picks": {
+      "senior-software-engineer-energyhub-3": {
+        "job_id": 31903,
+        "job_slug": "senior-software-engineer-energyhub-3",
+        "organization_id": 222,
+        "title": "Senior Software Engineer",
+        "organization": "EnergyHub",
+        "expected_catalogue_application_url": "https://job-boards.greenhouse.io/energyhub/jobs/8877373002",
+        "source_url": "https://job-boards.greenhouse.io/energyhub/jobs/8877373002",
+        "checked_on": "2026-10-22",
+        "location_summary": "Remote United States. Eligible states only. No new employment sponsorship.",
+        "experience_summary": "7+ years professional software engineering. React, Java, TypeScript.",
+        "pay_summary": "USD 130,000 to 170,000 base annually.",
+        "editorial_note": "Build grid-flexibility software. Eligible US states only. No new employment sponsorship."
+      },
+      "customer-success-associate-voltus-1": {
+        "job_id": 31670,
+        "job_slug": "customer-success-associate-voltus-1",
+        "organization_id": 407,
+        "title": "Customer Success Associate",
+        "organization": "Voltus",
+        "expected_catalogue_application_url": "https://jobs.lever.co/voltus/2f36396f-05fe-4bb5-9c53-35d844acd021/apply?lever-origin=applied&lever-source%5B%5D=Climatebase",
+        "source_url": "https://jobs.lever.co/voltus/2f36396f-05fe-4bb5-9c53-35d844acd021",
+        "checked_on": "2026-10-22",
+        "location_summary": "Remote US or Canada. Must have home-location work authorization. No visa sponsorship or transfers.",
+        "experience_summary": "2+ years customer-facing customer success, onboarding, account or project management.",
+        "pay_summary": "USD 70,000 to 74,000 base annually, plus 10% annual bonus and equity.",
+        "editorial_note": "Help customers participate in energy demand-response programmes. Requires prior customer-facing experience."
+      },
+      "data-scientist-syso": {
+        "job_id": 32483,
+        "job_slug": "data-scientist-syso",
+        "organization_id": 2139,
+        "title": "Data Scientist",
+        "organization": "SYSO",
+        "expected_catalogue_application_url": "https://jobs.gusto.com/postings/syso-inc-data-scientist-a1986c0c-3b99-4f2e-8c46-b05433e4841d",
+        "source_url": "https://jobs.gusto.com/postings/syso-inc-data-scientist-a1986c0c-3b99-4f2e-8c46-b05433e4841d",
+        "checked_on": "2026-10-22",
+        "location_summary": "Employer labels Boston, MA and Remote. Hiring-country eligibility and work authorization are not specified in the visible description.",
+        "experience_summary": "Early-career through senior considered. Technical degree, Python and relevant professional experience.",
+        "pay_summary": "No numerical salary published on employer page.",
+        "editorial_note": "Renewable-energy and storage forecasting. Hiring-country eligibility needs confirmation."
+      },
+      "software-engineer-early-career-constructive-dialogue-institute": {
+        "job_id": 31964,
+        "job_slug": "software-engineer-early-career-constructive-dialogue-institute",
+        "organization_id": 866,
+        "title": "Software Engineer (Early Career)",
+        "organization": "Constructive Dialogue Institute",
+        "expected_catalogue_application_url": "https://www.idealist.org/en/nonprofit-job/6965cacf0cf845ffaaae044a336111ec-software-engineer-early-career-constructive-dialogue-institute-new-york",
+        "source_url": "https://constructivedialogue.recruitee.com/o/software-engineer-early-career",
+        "checked_on": "2026-10-22",
+        "location_summary": "Remote United States. Must be US-based with work authorization without current or future sponsorship. Flexible within US time zones.",
+        "experience_summary": "Early-career. Degree or equivalent practical experience and at least one reviewed engineering project beyond coursework, including internship, freelance or sustained open source.",
+        "pay_summary": "USD 72,000 to 82,000 annually.",
+        "editorial_note": "Mentored education-software work. A project beyond coursework is required."
+      },
+      "recruitment-associate-impact-ops": {
+        "job_id": 30790,
+        "job_slug": "recruitment-associate-impact-ops",
+        "organization_id": 1956,
+        "title": "Recruitment Associate",
+        "organization": "Impact Ops",
+        "expected_catalogue_application_url": "https://impact-ops.org/jobs/recruitment-associate-us/",
+        "source_url": "https://impact-ops.org/jobs/recruitment-associate-us/",
+        "checked_on": "2026-10-22",
+        "location_summary": "Remote-first. US East or West Coast preferred. Employer says exceptional candidates elsewhere may be considered. Country eligibility is not globally guaranteed.",
+        "experience_summary": "1 to 3 years recruitment, talent acquisition or related experience.",
+        "pay_summary": "USD 60,000 to 80,000 starting salary, location and experience dependent.",
+        "editorial_note": "Recruitment for impact organisations. Deadline 31 October 2026; rolling review may close earlier."
+      },
+      "human-resources-associate-centre-for-effective-altruism": {
+        "job_id": 32233,
+        "job_slug": "human-resources-associate-centre-for-effective-altruism",
+        "organization_id": 778,
+        "title": "Human Resources Associate",
+        "organization": "Centre for Effective Altruism",
+        "expected_catalogue_application_url": "https://www.centreforeffectivealtruism.org/careers?ashby_jid=ea55bcbe-d1f4-412d-95e7-41ef29802c38&utm_source=80000hours&utm_medium=job-board",
+        "source_url": "https://jobs.ashbyhq.com/centreforeffectivealtruism/ea55bcbe-d1f4-412d-95e7-41ef29802c38",
+        "checked_on": "2026-10-22",
+        "location_summary": "Employer labels Remote - Global. Prefers US Pacific Time to GMT. Likely 2 to 3 trips per year. Local employment feasibility still must be checked.",
+        "experience_summary": "2+ years operations, HR operations, people operations or similar.",
+        "pay_summary": "US base USD 79,200 to 90,000 plus 10% unconditional 401k contribution. Other locations adjusted to local employment and benefit costs.",
+        "editorial_note": "People operations for an impact organisation. Deadline 30 October 2026. Prior experience and travel required."
+      },
+      "full-stack-software-engineer-cfs-platform-climate-finance-solutions": {
+        "job_id": 31238,
+        "job_slug": "full-stack-software-engineer-cfs-platform-climate-finance-solutions",
+        "organization_id": 2297,
+        "title": "Full Stack Software Engineer (CFS Platform)",
+        "organization": "Climate Finance Solutions",
+        "expected_catalogue_application_url": "https://jobs.ashbyhq.com/climate-finance-solutions/367d7853-6cb7-43b7-811c-2740bd0d5720",
+        "source_url": "https://jobs.ashbyhq.com/climate-finance-solutions/367d7853-6cb7-43b7-811c-2740bd0d5720",
+        "checked_on": "2026-10-22",
+        "location_summary": "US/Canada compensation scope, United States department. Do not imply worldwide eligibility. Confirm location with employer.",
+        "experience_summary": "Solid production web application experience, TypeScript and React. First dedicated platform engineer, independent ownership. Not presented as junior.",
+        "pay_summary": "USD 110,000 to 145,000 US/Canada range, commensurate with experience, plus equity.",
+        "editorial_note": "Build climate-funding software. Independent platform ownership; not presented as a junior role."
+      },
+      "staff-data-engineer-overstory-1": {
+        "job_id": 32460,
+        "job_slug": "staff-data-engineer-overstory-1",
+        "organization_id": 309,
+        "title": "Staff Data Engineer",
+        "organization": "Overstory",
+        "expected_catalogue_application_url": "https://jobs.ashbyhq.com/overstory/968e336f-de7d-4262-8f77-34ce3d9f15b5/application?utm_source=climatebase",
+        "source_url": "https://jobs.ashbyhq.com/overstory/968e336f-de7d-4262-8f77-34ce3d9f15b5",
+        "checked_on": "2026-10-22",
+        "location_summary": "Remote in the United States, Canada, Denmark, France, Ireland, Netherlands, Portugal, Sweden, Switzerland or United Kingdom. Employer lists time zones in Europe (GMT/WET, CET, EET) and Eastern North America (NST, AST, EST). This is not Europe-wide or worldwide eligibility.",
+        "experience_summary": "10+ years designing and building production-grade data pipelines and systems. Senior staff role; Python, Google Cloud and production data orchestration.",
+        "pay_summary": "No numerical salary published on the current employer overview. Compensation varies by location.",
+        "editorial_note": "Lead satellite-based vegetation data systems for wildfire risk reduction and grid resilience. The employer lists named UK and European hiring locations."
+      }
+    },
+    "sections": [
+      {
+        "slug": "climate",
+        "title": "Climate and energy",
+        "description": "Five roles in grid flexibility, customer success, data science, climate-funding software and wildfire-risk data systems.",
+        "search_path": "/jobs/?category=climate-environment",
+        "pick_keys": [
+          "senior-software-engineer-energyhub-3",
+          "customer-success-associate-voltus-1",
+          "data-scientist-syso",
+          "full-stack-software-engineer-cfs-platform-climate-finance-solutions",
+          "staff-data-engineer-overstory-1"
+        ]
+      },
+      {
+        "slug": "research-software",
+        "title": "Software and data for impact",
+        "description": "These roles support energy, education and climate work. They are not all academic research-software positions.",
+        "search_path": "/remote-software-engineer-jobs/",
+        "pick_keys": [
+          "senior-software-engineer-energyhub-3",
+          "data-scientist-syso",
+          "software-engineer-early-career-constructive-dialogue-institute",
+          "full-stack-software-engineer-cfs-platform-climate-finance-solutions",
+          "staff-data-engineer-overstory-1"
+        ]
+      },
+      {
+        "slug": "early-career",
+        "title": "Early-career routes with clear requirements",
+        "description": "CDI explicitly offers an early-career engineering role. Impact Ops requires 1 to 3 years; CEA requires 2+ years. None is verified as a worldwide, no-experience job.",
+        "search_path": "/jobs/?experience=entry",
+        "pick_keys": [
+          "software-engineer-early-career-constructive-dialogue-institute",
+          "recruitment-associate-impact-ops",
+          "human-resources-associate-centre-for-effective-altruism"
+        ]
+      }
+    ]
+  }
+]

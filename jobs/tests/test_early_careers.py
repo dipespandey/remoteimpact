@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 import json
 import re
 from unittest.mock import patch
@@ -27,7 +27,7 @@ class ProgrammeIntegrityTests(SimpleTestCase):
 
     def test_open_claim_expires_without_an_editor_recheck(self):
         fresh = opportunities(date(2026, 10, 19))
-        stale = opportunities(date(2026, 11, 3))
+        stale = opportunities(max(date.fromisoformat(row['checked_on']) for row in registry()) + timedelta(days=15))
         self.assertTrue(any(r['status'] == 'open' for r in fresh))
         self.assertFalse(any(r['status'] in {'open', 'listings'} for r in stale))
         self.assertTrue(all(r['review_due'] for r in stale))

@@ -2,7 +2,7 @@
 {% block analytics %}{% endblock %}
 {% block title %}Weekly Roundup Subscription | Remote Impact{% endblock %}
 {% block robots %}noindex, nofollow{% endblock %}
-{% block extra_head %}<meta name="referrer" content="no-referrer">{% endblock %}
+{% block extra_head %}<meta name="referrer" content="same-origin">{% endblock %}
 {% block content %}
 <div class="container py-10"><section class="card mx-auto max-w-xl p-6">
 {% if invalid %}<h1 class="text-2xl font-semibold">This link has expired</h1><p class="mt-3 text-muted-foreground">Request a fresh confirmation link to finish subscribing.</p><a class="btn btn-primary mt-5" href="{% url 'jobs:roundup' %}">Get a new link</a>

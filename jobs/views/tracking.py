@@ -19,6 +19,9 @@ class JobViewBeaconView(View):
         job_id = Job.objects.filter(slug=slug).values_list("pk", flat=True).first()
         if job_id and not job_stats.is_probably_bot(request):
             job_stats.record(job_id, "views", request=request)
+            from jobs.models import ConsumerFunnelEvent
+            from jobs.services.scout_engagement import record_engagement
+            record_engagement(request, job_id, ConsumerFunnelEvent.Event.SCOUT_JOB_VIEWED)
         return HttpResponse(status=204)
 
 
@@ -32,6 +35,9 @@ class JobApplyRedirectView(View):
             raise Http404("This job has no external application link.")
         if not job_stats.is_probably_bot(request) and job_stats.viewed_today(job.pk, request):
             job_stats.record(job.pk, "apply_clicks", request=request)
+            from jobs.models import ConsumerFunnelEvent
+            from jobs.services.scout_engagement import record_engagement
+            record_engagement(request, job.pk, ConsumerFunnelEvent.Event.SCOUT_APPLY_CLICKED)
             from jobs.services.ranking_log import log_outcome
             log_outcome(request, "apply", job.pk)
         response = HttpResponseRedirect(job_stats.with_referral(destination))
