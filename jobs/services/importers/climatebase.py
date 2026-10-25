@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import logging
+import re
+from html import unescape
 from datetime import datetime, timezone as dt_timezone
 from typing import Callable, Dict, List, Optional
 
@@ -12,6 +14,39 @@ from jobs.models import Job
 from .common import _algolia_headers, _map_job_type, batch_upsert_jobs
 
 logger = logging.getLogger(__name__)
+
+
+def employer_identity(source_name: str, description: str) -> str:
+    """Use an explicit employer identity when a group ATS contains several companies.
+
+    Climatebase labels the shared Hitachi Workday board as Hitachi Energy. Only
+    reassign a role when its own posting names a different Hitachi company.
+    """
+    if source_name.strip().casefold() != "hitachi energy":
+        return source_name
+    text = unescape(re.sub(r"<[^>]+>", "\n", description or ""))
+    label = re.search(r"Company Name:\s*([^\n]+)", text, re.I)
+    if label:
+        company = label.group(1).strip().upper()
+        if company.startswith("HITACHI ENERGY"):
+            return source_name
+        for marker, name in (
+            ("HITACHI HIGH-TECH", "Hitachi High-Tech"),
+            ("HITACHI GLOBAL AIR POWER", "Hitachi Global Air Power"),
+            ("J.R. AUTOMATION", "JR Automation"),
+            ("HITACHI AMERICA", "Hitachi America"),
+        ):
+            if company.startswith(marker):
+                return name
+    introduction = text[:2500]
+    for marker, name in (
+        (r"\b(?:we(?:'|’)re|we are)\s+Hitachi Vantara\b", "Hitachi Vantara"),
+        (r"\b(?:we(?:'|’)re|we are)\s+Hitachi Digital Services\b", "Hitachi Digital Services"),
+        (r"\b(?:we(?:'|’)re|we are)\s+Hitachi Digital\b", "Hitachi Digital"),
+    ):
+        if re.search(marker, introduction, re.I):
+            return name
+    return source_name
 
 
 def _build_climatebase_payload() -> Dict:
@@ -165,6 +200,12 @@ def _transform_climatebase_hit(hit: Dict) -> Optional[Dict]:
         or hit.get("description_plain_text")
         or ""
     )
+    source_organization_name = organization_name
+    organization_name = employer_identity(organization_name, description)
+    if organization_name != source_organization_name:
+        # The feed's employer blurb belongs to its group label, not necessarily
+        # to the separately named company in this particular posting.
+        organization_description = ""
 
     # Extract application email from how_to_apply if it's an email
     how_to_apply = hit.get("how_to_apply", "")
