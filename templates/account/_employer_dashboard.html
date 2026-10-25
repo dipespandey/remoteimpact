@@ -67,6 +67,7 @@
 {% include "account/_subscription.html" %}
 {% if not organization and not pro_subscription.is_pro_active %}<p class="surface p-6 text-sm text-muted-foreground">No active subscriptions. Add your company profile to explore hiring plans.</p>{% endif %}
 {% elif dashboard_section == "settings" %}
+{% include "account/_security.html" %}
 {% include "account/_delete_account.html" %}
 {% else %}
 {% if dashboard_section == "overview" %}

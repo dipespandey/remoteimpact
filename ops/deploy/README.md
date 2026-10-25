@@ -125,9 +125,17 @@ Origin requests must pass the Caddy Cloudflare source-address check. Caddy repla
 Docker host gateway, not arbitrary private networks. Allauth and API throttling use
 the resulting validated transport identity.
 
-Staff must enroll TOTP and retain recovery codes. An existing password-only staff
+When enforcement is enabled, staff must enroll TOTP and retain recovery codes. An existing password-only staff
 session cannot enter admin until it completes MFA, and MFA is required again after
 eight hours. `MFA_ENCRYPTION_KEY` is a separate root-provisioned encryption key and
 must be included in encrypted configuration backups. Enrollment secrets must never
 be generated or confirmed on behalf of a staff member. Tests use explicit synthetic
-sessions; production enforcement remains on.
+sessions.
+
+`ADMIN_REQUIRE_MFA=False` explicitly disables mandatory staff enrollment and the
+eight-hour admin MFA gate. The owner requested this setting on 25 October 2026.
+The TOTP and recovery-code functionality remains installed, encrypted and available
+from account settings; users who choose to enroll still authenticate with their
+factor through allauth. Set `ADMIN_REQUIRE_MFA=True` and deploy a checked release
+to restore mandatory staff enforcement. Changing the environment file alone does
+not change the frozen running container.
