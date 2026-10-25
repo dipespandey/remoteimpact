@@ -7,7 +7,7 @@
 
 {% block title %}Remote INGO & Humanitarian Jobs: Career Guide{% endblock %}
 
-{% block meta_description %}Land a remote job at an INGO or humanitarian org. Roles in disaster relief, refugee support, and development — no field experience required.{% endblock %}
+{% block meta_description %}Explore remote INGO and humanitarian jobs, common career paths and hiring restrictions. Compare current openings and verify requirements with each employer.{% endblock %}
 
 {% block canonical %}{{ SITE_URL }}{% url 'jobs:pillar_detail' pillar_slug='humanitarian-ingo-careers' %}{% endblock %}
 
@@ -42,48 +42,8 @@
         "logo": {"@type": "ImageObject", "url": "{{ SITE_URL }}/static/favicon.svg"}
     },
     "datePublished": "2026-02-10",
-    "dateModified": "2026-02-10",
+    "dateModified": "2026-10-25",
     "mainEntityOfPage": {"@type": "WebPage", "@id": "{{ SITE_URL }}/resources/humanitarian-ingo-careers/"}
-}
-</script>
-<script type="application/ld+json">
-{
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-        {
-            "@type": "Question",
-            "name": "Can I get a remote INGO job without field experience?",
-            "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Yes. Many INGO roles are headquarters-based and fully remote: grant management, donor reporting, communications, data analysis, HR, and IT. Field experience is a plus for programme roles, but it is not required for the majority of support functions. Volunteering domestically with refugee resettlement agencies or disaster-preparedness organisations can provide relevant experience without an international posting."
-            }
-        },
-        {
-            "@type": "Question",
-            "name": "What are the largest INGOs that hire remotely?",
-            "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "The largest remote-friendly INGOs include the International Rescue Committee (IRC), Save the Children, Mercy Corps, CARE International, World Vision, the International Committee of the Red Cross (ICRC), Oxfam, and MSF (Doctors Without Borders). UN agencies like UNHCR, UNICEF, WFP, and OCHA also list remote consultancies and staff positions."
-            }
-        },
-        {
-            "@type": "Question",
-            "name": "What skills do humanitarian employers value most?",
-            "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Core skills include programme management, monitoring and evaluation (M&E), grant and proposal writing, logistics and supply-chain coordination, protection and safeguarding knowledge, and fluency in multiple languages (French, Arabic, and Spanish are especially valued). Technical skills like GIS mapping, data visualisation, and mobile data collection tools (KoboToolbox, ODK) are increasingly in demand."
-            }
-        },
-        {
-            "@type": "Question",
-            "name": "How much do remote humanitarian jobs pay?",
-            "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "INGO salaries vary by organisation size and location. Entry-level coordinator roles start around $40,000 to $55,000 USD. Mid-career programme managers earn $65,000 to $100,000. Senior advisors and directors can earn $100,000 to $150,000+. UN consultancies are billed at daily rates typically ranging from $300 to $700 per day depending on seniority."
-            }
-        }
-    ]
 }
 </script>
 {% endblock %}
@@ -95,7 +55,7 @@
 
 {% block guide_title %}Remote humanitarian and INGO jobs: a career guide{% endblock %}
 
-{% block guide_lede %}International NGOs and humanitarian agencies hire for many roles that do not need field deployment: grant management, monitoring and evaluation, communications, data and IT. This guide covers the skills they ask for, how to get a first role, and typical pay.{% endblock %}
+{% block guide_lede %}International NGOs and humanitarian agencies hire for grant management, monitoring and evaluation, communications, data and IT. Some roles can be remote, often within specified countries or time zones. Compare current openings and check each employer's requirements.{% endblock %}
 
 {% block guide_body %}
 <h2>What are humanitarian and INGO careers?</h2>
@@ -103,8 +63,9 @@
     Humanitarian careers encompass any work that responds to, prepares for, or helps communities recover from crises — armed conflict, natural disasters, famine, displacement. INGO careers more broadly include development work aimed at long-term poverty reduction, governance strengthening, and capacity building.
 </p>
 <p>
-    Remote roles in this sector tend to cluster in headquarters functions: grant management, donor relations, monitoring and evaluation, communications, data analysis, information management, and technology. Programme design and technical advisory roles are also increasingly remote, with experts providing guidance to field teams via video calls and shared platforms.
+    Roles that may permit remote work include grant management, donor relations, monitoring and evaluation, communications, data analysis, information management and technology. Programme and advisory roles can involve travel or a required duty station. A remote label alone does not establish that applicants can work from any country.
 </p>
+<p>Start with <a href="{% url 'jobs:category_landing' slug='humanitarian' %}">current humanitarian listings</a> or the broader <a href="{% url 'jobs:keyword_jobs' keyword_slug='remote-nonprofit-jobs' %}">remote nonprofit jobs search</a>. Check the original posting for application status, location, travel and work authorization. The job board's counts use its availability rules; they are not a guarantee that applications remain open.</p>
 
 <h2>Key skills employers look for</h2>
 <ul>
@@ -118,29 +79,29 @@
 
 <h2>How to get started</h2>
 <p>
-    If you lack field experience, start with domestic volunteer work: refugee resettlement agencies, disaster-preparedness organisations, or local Red Cross chapters. Apply for remote internships at smaller INGOs (they are less competitive than the UN). Build MEL or grant-writing skills through free courses on DisasterReady.org or Kaya (Humanitarian Leadership Academy). Consider a short-term consultancy listed on ReliefWeb to get your first INGO credential on your CV.
+    If you lack field experience, look for roles where your existing skills apply, such as communications, finance, operations or data. Domestic volunteering with refugee or disaster-response organizations can provide relevant experience. Compare <a href="{% url 'jobs:early_careers' %}">current internships and fellowships</a>, and check whether an employer requires a degree, language skills, field experience or a particular work location before applying.
 </p>
 
 <h2>Frequently asked questions</h2>
 
 <h3>Can I get a remote INGO job without field experience?</h3>
 <p>
-    Yes. Many INGO roles are headquarters-based and fully remote: grant management, donor reporting, communications, data analysis, HR, and IT. Field experience is valuable but not required for most support functions.
+    Some support functions, including grant administration, communications, data, HR and IT, may accept applicants without field experience. Requirements vary by employer and role. Read the original posting before assuming a role is fully remote or open in your country.
 </p>
 
-<h3>What are the largest INGOs that hire remotely?</h3>
+<h3>Where can I find current INGO jobs?</h3>
 <p>
-    The largest remote-friendly INGOs include IRC, Save the Children, Mercy Corps, CARE International, World Vision, ICRC, Oxfam, and MSF. UN agencies like UNHCR, UNICEF, WFP, and OCHA also list remote consultancies.
+    Browse <a href="{% url 'jobs:category_landing' slug='humanitarian' %}">humanitarian jobs on Remote Impact</a>, then confirm each opening on the employer's own careers page. International organizations use different labels for remote, home-based, consultancy and duty-station roles; check the actual contract and location terms.
 </p>
 
 <h3>What skills do humanitarian employers value most?</h3>
 <p>
-    Programme management, M&E, grant writing, logistics, protection knowledge, and language skills (French, Arabic, Spanish). Technical skills like GIS and mobile data collection are increasingly in demand.
+    Skills depend on the role. Programme management, monitoring and evaluation, grant writing, logistics, protection, languages, GIS and data collection can be relevant. Match the specific requirements in each vacancy rather than treating this as a universal checklist.
 </p>
 
 <h3>How much do remote humanitarian jobs pay?</h3>
 <p>
-    Entry-level: $40,000-$55,000. Mid-career: $65,000-$100,000. Senior: $100,000-$150,000+. UN consultancies bill at $300-$700/day. Browse current openings in our <a href="/jobs/?category=humanitarian">humanitarian category</a>.
+    Pay varies by employer, contract, duty station and seniority. We show advertised compensation when a source provides it; a missing figure is unknown, not unpaid. Compare the figures on <a href="{% url 'jobs:category_landing' slug='humanitarian' %}">current humanitarian listings</a> and confirm the terms on the original posting.
 </p>
 {% endblock %}
 

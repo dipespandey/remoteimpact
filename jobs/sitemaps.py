@@ -67,7 +67,7 @@ class CategorySitemap(Sitemap):
         return Category.objects.annotate(
             live=Count('jobs', filter=Q(jobs__in=visible_jobs())),
             public_lastmod=Max('jobs__updated_at', filter=Q(jobs__in=visible_jobs())),
-        ).filter(live__gte=MIN_INDEXABLE_JOBS).order_by('name')
+        ).filter(live__gte=MIN_INDEXABLE_JOBS).exclude(slug='nonprofit-charity').order_by('name')
 
     def location(self, obj):
         return reverse('jobs:category_landing', args=[obj.slug])

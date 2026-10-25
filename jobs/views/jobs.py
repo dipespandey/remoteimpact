@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
-from django.http import JsonResponse, Http404
+from django.http import JsonResponse, Http404, HttpResponsePermanentRedirect
 from django.core.cache import cache
 from django.contrib import messages
 from django.utils.decorators import method_decorator
@@ -743,6 +743,16 @@ class CategoryLandingView(FastJobPaginationMixin, ListView):
     template_name = "jobs/category_landing.html"
     context_object_name = "jobs"
     paginate_by = 20
+
+    def get(self, request, *args, **kwargs):
+        # The nonprofit employer search spans several impact categories. The
+        # narrow taxonomy category is often empty and is not a useful public
+        # landing page for an unfiltered nonprofit jobs search.
+        if kwargs.get("slug") == "nonprofit-charity" and not request.GET:
+            return HttpResponsePermanentRedirect(
+                reverse("jobs:keyword_jobs", args=["remote-nonprofit-jobs"])
+            )
+        return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         if hasattr(self, '_category_queryset'):
