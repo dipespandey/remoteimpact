@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 
 {% block title %}Remote Impact Jobs Feed for Communities &amp; Career Centers{% endblock %}
 {% block meta_description %}Share source-tracked remote jobs in climate, AI safety, global health, nonprofits, and social impact with your community using Remote Impact's free RSS feeds.{% endblock %}
@@ -149,7 +151,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+{% csp_script %}<script>
   (() => {
     const feedStatus = document.getElementById('copy-feed-status');
     document.querySelectorAll('[data-copy-feed]').forEach((copyButton) => {
@@ -216,5 +218,5 @@
       });
     }
   })();
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

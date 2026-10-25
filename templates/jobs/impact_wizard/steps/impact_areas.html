@@ -1,3 +1,5 @@
+
+{% load csp %}
 <!-- Step 2: Impact Areas -->
 <div>
     <div class="mb-6">
@@ -27,7 +29,7 @@
                            value="{{ category.id }}"
                            {% if category.id in selected_areas %}checked{% endif %}
                            class="peer sr-only impact-checkbox"
-                           onchange="updateSelectionCount()">
+                           {% csp_handler "onchange" %}updateSelectionCount(){% endcsp_handler %}>
                     <span class="flex h-full items-center rounded-xl bg-muted px-4 py-3 text-sm font-medium text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
                         {{ category.name }}
                     </span>
@@ -55,9 +57,9 @@
     </form>
 </div>
 
-<script>
+{% csp_script %}<script>
 function updateSelectionCount() {
     const checked = document.querySelectorAll('.impact-checkbox:checked').length;
     document.getElementById('selection-count').textContent = checked;
 }
-</script>
+</script>{% endcsp_script %}

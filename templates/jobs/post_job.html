@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 {% load static %}
 
 {% block title %}{% if is_paid_edit %}Edit role{% elif is_edit %}Finish &amp; Pay{% else %}Post a Job{% endif %} - Remote Impact Jobs{% endblock %}
@@ -255,7 +257,7 @@
         </form>
     </div>
 </div>
-<script>
+{% csp_script %}<script>
     (function () {
         const root = document.querySelector("[data-custom-questions]");
         if (!root) return;
@@ -328,5 +330,5 @@
 
         render();
     })();
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

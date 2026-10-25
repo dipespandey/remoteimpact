@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load csp %}
+
 {% load form_tags %}
 
 {% block title %}Complete Your Impact Profile - Remote Impact{% endblock %}
@@ -109,7 +111,7 @@
     </div>
 </div>
 
-<script>
+{% csp_script %}<script>
     // Toggle URL fields based on checkbox state
     document.getElementById('{{ form.has_public_impact_report.id_for_label }}').addEventListener('change', function() {
         document.getElementById('impact-report-url-container').classList.toggle('hidden', !this.checked);
@@ -117,5 +119,5 @@
     document.getElementById('{{ form.has_public_financials.id_for_label }}').addEventListener('change', function() {
         document.getElementById('financials-url-container').classList.toggle('hidden', !this.checked);
     });
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

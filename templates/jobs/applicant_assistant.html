@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 
 {% block title %}Free AI Cover Letter Generator for Remote & Impact Jobs | Remote Impact{% endblock %}
 
@@ -143,8 +145,8 @@
         <div class="flex items-center justify-between gap-3">
           <h2 id="aa-output-title" class="text-sm font-medium text-muted-foreground"><span id="aa-output-label">Cover letter</span> draft</h2>
           <div class="-mr-2 flex items-center gap-1">
-            <button type="button" class="btn btn-ghost btn-sm" onclick="copyOutput(this)">Copy</button>
-            <button type="button" class="btn btn-ghost btn-sm" onclick="openModal()">Expand</button>
+            <button type="button" class="btn btn-ghost btn-sm" {% csp_handler "onclick" %}copyOutput(this){% endcsp_handler %}>Copy</button>
+            <button type="button" class="btn btn-ghost btn-sm" {% csp_handler "onclick" %}openModal(){% endcsp_handler %}>Expand</button>
           </div>
         </div>
         <div class="relative mt-3">
@@ -178,7 +180,7 @@
         <ul class="list-surface mt-3">
           {% for gen in past_generations %}
             <li>
-              <button type="button" class="flex w-full items-start gap-3 rounded-xl px-3.5 py-3 text-left transition-colors hover:bg-muted" onclick="showGenerationModal({{ gen.id }})">
+              <button type="button" class="flex w-full items-start gap-3 rounded-xl px-3.5 py-3 text-left transition-colors hover:bg-muted" {% csp_handler "onclick" %}showGenerationModal({{ gen.id }}){% endcsp_handler %}>
                 {% if gen.generation_type == 'cover_letter' %}
                   <span class="badge badge-primary mt-0.5 shrink-0">Cover letter</span>
                 {% else %}
@@ -256,7 +258,7 @@
 
   <!-- Expanded output -->
   <div id="aa-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="aa-modal-title">
-    <div class="absolute inset-0 bg-foreground/25 backdrop-blur-sm" onclick="closeModal()"></div>
+    <div class="absolute inset-0 bg-foreground/25 backdrop-blur-sm" {% csp_handler "onclick" %}closeModal(){% endcsp_handler %}></div>
     <div class="relative mx-auto mt-6 max-w-3xl px-4 sm:mt-16 sm:px-6">
       <div class="card space-y-4 p-5 shadow-lift sm:p-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
@@ -265,8 +267,8 @@
             <p id="aa-modal-status" class="text-xs text-muted-foreground"></p>
           </div>
           <div class="-mr-2 flex items-center gap-1">
-            <button type="button" class="btn btn-ghost btn-sm" onclick="copyOutput(this)">Copy</button>
-            <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal()">Close</button>
+            <button type="button" class="btn btn-ghost btn-sm" {% csp_handler "onclick" %}copyOutput(this){% endcsp_handler %}>Copy</button>
+            <button type="button" class="btn btn-ghost btn-sm" {% csp_handler "onclick" %}closeModal(){% endcsp_handler %}>Close</button>
           </div>
         </div>
         <div class="relative">
@@ -281,7 +283,7 @@
   {% if user.is_authenticated %}
   <!-- Past draft viewer -->
   <div id="history-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
-    <div class="absolute inset-0 bg-foreground/25 backdrop-blur-sm" onclick="closeHistoryModal()"></div>
+    <div class="absolute inset-0 bg-foreground/25 backdrop-blur-sm" {% csp_handler "onclick" %}closeHistoryModal(){% endcsp_handler %}></div>
     <div class="relative mx-auto mt-6 max-w-3xl px-4 sm:mt-16 sm:px-6">
       <div class="card space-y-4 p-5 shadow-lift sm:p-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
@@ -290,8 +292,8 @@
             <span id="history-modal-type" class="text-xs text-muted-foreground"></span>
           </div>
           <div class="-mr-2 flex items-center gap-1">
-            <button type="button" class="btn btn-ghost btn-sm" onclick="copyHistoryOutput(this)">Copy</button>
-            <button type="button" class="btn btn-ghost btn-sm" onclick="closeHistoryModal()">Close</button>
+            <button type="button" class="btn btn-ghost btn-sm" {% csp_handler "onclick" %}copyHistoryOutput(this){% endcsp_handler %}>Copy</button>
+            <button type="button" class="btn btn-ghost btn-sm" {% csp_handler "onclick" %}closeHistoryModal(){% endcsp_handler %}>Close</button>
           </div>
         </div>
         <label for="history-modal-content" class="sr-only">Past draft text</label>
@@ -303,7 +305,7 @@
 {% endblock %}
 
 {% block extra_js %}
-  <script>
+  {% csp_script %}<script>
     (function () {
       var ENDPOINT = "{% url 'jobs:applicant_assistant_generate' %}"
       var DRAFT_KEY = 'ri_tool_draft'
@@ -578,5 +580,5 @@
         }
       }
     })()
-  </script>
+  </script>{% endcsp_script %}
 {% endblock %}

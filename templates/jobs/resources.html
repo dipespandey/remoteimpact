@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 
 {% block title %}Career Resources - Remote Impact{% endblock %}
 
@@ -289,7 +291,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+{% csp_script %}<script>
   // Smooth scroll for anchor links
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function(e) {
@@ -428,5 +430,5 @@
     // Initial render
     renderBoards();
   })();
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

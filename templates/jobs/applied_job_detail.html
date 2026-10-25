@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 {% load job_extras %}
 
 {% block title %}{{ job.title }} at {{ job.organization.name }} - Applied Job{% endblock %}
@@ -9,7 +11,7 @@
     <!-- Back link and actions -->
     <div class="mb-5 flex flex-wrap items-center justify-between gap-3 print:hidden">
         <a href="{% url 'jobs:account' %}" class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"><span aria-hidden="true">&larr;</span> Back to dashboard</a>
-        <button type="button" onclick="window.print()" class="btn btn-outline btn-sm">
+        <button type="button" {% csp_handler "onclick" %}window.print(){% endcsp_handler %} class="btn btn-outline btn-sm">
             Save as PDF
         </button>
     </div>

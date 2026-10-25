@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 
 {% block title %}Salary to Hourly Calculator – Convert Annual Salary to Hourly Rate | Remote Impact{% endblock %}
 
@@ -24,27 +26,27 @@
   <div class="mt-8 grid max-w-5xl grid-cols-1 gap-6 lg:grid-cols-5 lg:items-start">
    <div class="min-w-0 lg:col-span-2">
     <div class="tabs" role="tablist" aria-label="Conversion direction">
-      <button type="button" id="tab-salary" onclick="setMode('salary')" class="tab tab-active">Annual to hourly</button>
-      <button type="button" id="tab-hourly" onclick="setMode('hourly')" class="tab">Hourly to annual</button>
+      <button type="button" id="tab-salary" {% csp_handler "onclick" %}setMode('salary'){% endcsp_handler %} class="tab tab-active">Annual to hourly</button>
+      <button type="button" id="tab-hourly" {% csp_handler "onclick" %}setMode('hourly'){% endcsp_handler %} class="tab">Hourly to annual</button>
     </div>
 
     <div class="surface mt-3 grid grid-cols-1 gap-5 p-5 sm:grid-cols-2 sm:p-6 lg:grid-cols-1">
       <div class="min-w-0">
         <label id="primary-label" for="primary-input" class="label">Annual salary ($)</label>
-        <input type="number" id="primary-input" class="input bg-card tabular-nums" placeholder="65,000" min="0" step="any" inputmode="decimal" oninput="calculate()">
+        <input type="number" id="primary-input" class="input bg-card tabular-nums" placeholder="65,000" min="0" step="any" inputmode="decimal" {% csp_handler "oninput" %}calculate(){% endcsp_handler %}>
       </div>
       <div class="min-w-0">
         <label for="hours-week" class="label">Hours per week</label>
-        <input type="number" id="hours-week" class="input bg-card tabular-nums" value="40" min="1" max="168" inputmode="decimal" oninput="calculate()">
+        <input type="number" id="hours-week" class="input bg-card tabular-nums" value="40" min="1" max="168" inputmode="decimal" {% csp_handler "oninput" %}calculate(){% endcsp_handler %}>
       </div>
       <div class="min-w-0">
         <label for="weeks-year" class="label">Weeks per year</label>
-        <input type="number" id="weeks-year" class="input bg-card tabular-nums" value="52" min="1" max="52" inputmode="decimal" oninput="calculate()">
+        <input type="number" id="weeks-year" class="input bg-card tabular-nums" value="52" min="1" max="52" inputmode="decimal" {% csp_handler "oninput" %}calculate(){% endcsp_handler %}>
         <p class="help">Use 50 if you take two weeks unpaid.</p>
       </div>
       <div class="min-w-0">
         <label for="tax-rate" class="label">Tax rate % <span class="font-normal text-muted-foreground">(optional)</span></label>
-        <input type="number" id="tax-rate" class="input bg-card tabular-nums" placeholder="0" min="0" max="100" step="0.1" inputmode="decimal" oninput="calculate()">
+        <input type="number" id="tax-rate" class="input bg-card tabular-nums" placeholder="0" min="0" max="100" step="0.1" inputmode="decimal" {% csp_handler "oninput" %}calculate(){% endcsp_handler %}>
       </div>
     </div>
 
@@ -210,7 +212,7 @@
 }
 </script>
 
-<script>
+{% csp_script %}<script>
 let mode = 'salary';
 
 function fmt(n) {
@@ -291,5 +293,5 @@ function calculate() {
     tbody.appendChild(tr);
   });
 })();
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

@@ -203,13 +203,18 @@ class SecurityHeadersMiddleware:
         # protected from framing.
         frame_ancestors = "*" if request.path == "/early-careers/embed/" else "'none'"
 
-        response.setdefault(
-            "Content-Security-Policy",
-            (
+        from jobs.csp import policy_hashes
+        scripts, handlers = [], []
+        if not response.streaming and not response.get("Content-Encoding") and response.get("Content-Type", "").startswith("text/html"):
+            scripts, handlers = policy_hashes(response.content.decode(response.charset or "utf-8"))
+        script_policy = " ".join(scripts)
+        handler_policy = " ".join(handlers)
+        response["Content-Security-Policy"] = (
                 "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+                f"script-src 'self' {script_policy} "
                 "https://www.googletagmanager.com https://www.google-analytics.com "
                 "https://js.stripe.com https://www.gstatic.com; "
+                f"script-src-attr 'unsafe-hashes' {handler_policy}; "
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
                 "font-src 'self' https://fonts.gstatic.com data:; "
                 "img-src 'self' data: https:; "
@@ -219,7 +224,6 @@ class SecurityHeadersMiddleware:
                 "form-action 'self' https://checkout.stripe.com; "
                 f"frame-ancestors {frame_ancestors}; "
                 "upgrade-insecure-requests"
-            ),
         )
         response.setdefault(
             "Permissions-Policy",

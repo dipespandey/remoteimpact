@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load csp %}
+
 {% load job_extras %}
 
 {% block title %}Applications for {{ job.title }} - Remote Impact{% endblock %}
@@ -148,7 +150,7 @@
         <p class="mx-auto mb-5 mt-1.5 max-w-md text-sm text-muted-foreground">Applications appear here as soon as someone applies. Sharing the job link in your own networks usually brings the first ones in.</p>
         <div class="flex flex-wrap justify-center gap-2">
             <a href="{{ job.get_absolute_url }}" class="btn btn-outline">View job</a>
-            <button type="button" onclick="navigator.share ? navigator.share({title: '{{ job.title|escapejs }}', url: '{{ job.get_absolute_url }}'}) : navigator.clipboard.writeText(window.location.origin + '{{ job.get_absolute_url }}')"
+            <button type="button" {% csp_handler "onclick" %}navigator.share ? navigator.share({title: '{{ job.title|escapejs }}', url: '{{ job.get_absolute_url }}'}) : navigator.clipboard.writeText(window.location.origin + '{{ job.get_absolute_url }}'){% endcsp_handler %}
                     class="btn btn-primary">
                 Share link
             </button>

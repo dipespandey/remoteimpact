@@ -1,10 +1,12 @@
+
+{% load csp %}
 <style>
 .scout-loading-spinner { display:inline-block; width:1em; height:1em; flex-shrink:0; margin-right:.5em; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation:scout-loading-spin .8s linear infinite; vertical-align:-.1em; }
 @keyframes scout-loading-spin { to { transform:rotate(360deg); } }
 @media (prefers-reduced-motion:reduce) { .scout-loading-spinner { animation:none; } }
 [data-scout-loading][aria-busy="true"] { cursor:wait; opacity:.8; }
 </style>
-<script>
+{% csp_script %}<script>
 (function () {
     const originals = new Map();
     function start(control, label) {
@@ -45,4 +47,4 @@
         originals.clear(); document.getElementById('scout-loading-status')?.remove();
     });
 })();
-</script>
+</script>{% endcsp_script %}

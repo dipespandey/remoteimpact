@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 {% load static %}
 
 {% block title %}Free Pomodoro Timer Online | Remote Workers{% endblock %}
@@ -177,7 +179,7 @@
 }
 </script>
 
-<script>
+{% csp_script %}<script>
 document.addEventListener('alpine:init', () => {
   Alpine.data('pomodoroTimer', () => ({
     modes: [
@@ -318,5 +320,5 @@ document.addEventListener('alpine:init', () => {
     }
   }));
 });
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

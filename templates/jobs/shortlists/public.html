@@ -1,4 +1,6 @@
 {% extends "jobs/shortlists/base.html" %}
+{% load csp %}
+
 {% load job_extras %}
 {% block title %}{{ collection_title }} | Remote Impact{% endblock %}
 {% block robots %}{% if private_collection %}noindex, nofollow{% else %}index, follow{% endif %}{% endblock %}
@@ -22,6 +24,6 @@
   <section class="surface mt-10 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"><div class="max-w-2xl"><h2 class="section-title">Hiring?</h2><p class="mt-1 text-sm text-muted-foreground">Publish your role and receive opt-in candidate introductions. $99 for a featured 30-day posting.</p></div><a class="btn btn-outline shrink-0" href="{% url 'jobs:employers' %}?source=job_collection" data-track="collection_employer_start">Employer posting</a></section>
 </div>
 {% endblock %}
-{% block extra_js %}<script>
+{% block extra_js %}{% csp_script %}<script>
 document.getElementById('copy-collection').addEventListener('click',async()=>{const input=document.getElementById('collection-link');const status=document.getElementById('copy-status');try{await navigator.clipboard.writeText(input.value);status.textContent='Link copied.';if(typeof gtag==='function')gtag('event','collection_link_copied');}catch(e){input.focus();input.select();status.textContent='Select and copy the link above.';}});
-</script>{% endblock %}
+</script>{% endcsp_script %}{% endblock %}

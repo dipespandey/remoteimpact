@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 {% block title %}Weekly Remote Impact Job Picks | Remote Impact{% endblock %}
 {% block meta_description %}A free weekly roundup of remote jobs in climate, global health, AI safety and social impact. Preview the picks before subscribing.{% endblock %}
 {% block canonical %}{{ SITE_URL }}{% url 'jobs:roundup' %}{% endblock %}
@@ -44,12 +46,12 @@
         <details class="mt-6 border-t border-border pt-4 text-sm"><summary class="cursor-pointer font-medium">How is this different from Scout?</summary><p class="mt-2 text-muted-foreground">The roundup is a shared weekly selection. Scout searches for your specific preferences. <a href="{% url 'jobs:job_alerts' %}" class="underline">Try Scout</a>.</p></details>
     </div>
 </div>
-<script>
+{% csp_script %}<script>
 document.querySelector('[data-roundup-form]')?.addEventListener('submit', function () {
     const button = this.querySelector('button[type="submit"]');
     button.disabled = true; button.setAttribute('aria-busy', 'true');
     button.innerHTML = '<span aria-hidden="true" class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent mr-2"></span>Sending…';
 });
 window.addEventListener('pageshow', function (event) { if(event.persisted) { const b=document.querySelector('[data-roundup-form] button'); if(b) { b.disabled=false; b.removeAttribute('aria-busy'); b.textContent='Send confirmation link'; } } });
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

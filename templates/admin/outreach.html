@@ -1,3 +1,5 @@
+
+{% load csp %}
 {% load humanize job_extras %}<!doctype html>
 <html lang="en">
 <head>
@@ -91,7 +93,7 @@
     {% endfor %}
   </section>
 </main>
-<script>
+{% csp_script %}<script>
   document.querySelectorAll('[data-copy]').forEach(function (button) {
     button.addEventListener('click', function () {
       const box = document.getElementById(button.dataset.copy);
@@ -106,6 +108,6 @@
     const initial = input.value;
     input.addEventListener('change', function () { if (input.value !== initial) input.form.submit(); });
   });
-</script>
+</script>{% endcsp_script %}
 </body>
 </html>

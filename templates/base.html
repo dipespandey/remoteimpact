@@ -1,3 +1,5 @@
+
+{% load csp %}
 {% load job_extras %}<!DOCTYPE html>
 <html lang="en">
 
@@ -77,16 +79,16 @@
     <!-- Local variable fonts and scripts share the site's connection and asset cache. -->
     <link rel="preload" href="{% static 'fonts/geist-latin-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{% static "tailwind.min.css" %}?v={{ CSS_VERSION }}">
-    <script defer src="{% static 'vendor/htmx-1.9.10.min.js' %}"></script>
+    {% csp_script %}<script defer src="{% static 'vendor/htmx-1.9.10.min.js' %}"></script>{% endcsp_script %}
     <!-- Alpine.js for interactive components -->
     <style>[x-cloak] { display: none !important; }</style>
-    <script defer src="{% static 'vendor/alpine-3.17.4.min.js' %}"></script>
+    {% csp_script %}<script defer src="{% static 'vendor/alpine-3.17.4.min.js' %}"></script>{% endcsp_script %}
 
     {% block analytics %}
     <!-- Google Analytics (privacy-friendly settings: no Google Signals, no ad personalization,
          no query strings). Click events never carry briefs, searches or emails. -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-H35R4HM1TG"></script>
-    <script id="analytics-script">
+    {% csp_script %}<script async src="https://www.googletagmanager.com/gtag/js?id=G-H35R4HM1TG"></script>{% endcsp_script %}
+    {% csp_script %}<script id="analytics-script">
         (function () {
             const measurement = 'G-H35R4HM1TG';
             window.dataLayer = window.dataLayer || [];
@@ -110,7 +112,7 @@
                 if (element) window.gtag('event', element.dataset.track, {event_category: element.dataset.trackCategory});
             });
         })();
-    </script>
+    </script>{% endcsp_script %}
 
     {% endblock %}
 
@@ -183,7 +185,7 @@
                             Career Guides
                         </a>
                         <!-- Tools Mega Menu -->
-                        <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
+                        {% csp_component %}<div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">{% endcsp_component %}
                             <button type="button" :aria-expanded="open.toString()" aria-controls="tools-menu" @keydown.escape="open = false" @click="open = !open"
                                 class="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                 data-track="nav_tools" data-track-category="navigation">
@@ -482,7 +484,7 @@
             <div class="toast-notification pointer-events-auto flex w-full max-w-sm translate-y-2 items-start gap-3 rounded-2xl bg-card px-4 py-3 opacity-0 shadow-lift transition-all duration-200 ease-out" role="{% if message.level >= DEFAULT_MESSAGE_LEVELS.WARNING %}alert{% else %}status{% endif %}">
                 <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full {% if message.level >= DEFAULT_MESSAGE_LEVELS.ERROR %}bg-destructive{% elif message.level >= DEFAULT_MESSAGE_LEVELS.WARNING or message.level == DEFAULT_MESSAGE_LEVELS.INFO %}bg-warning{% else %}bg-success{% endif %}" aria-hidden="true"></span>
                 <p class="min-w-0 flex-1 text-sm leading-relaxed text-foreground">{{ message }}</p>
-                <button type="button" aria-label="Dismiss notification" onclick="dismissToast(this)" class="-mr-1 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                <button type="button" aria-label="Dismiss notification" {% csp_handler "onclick" %}dismissToast(this){% endcsp_handler %} class="-mr-1 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
             </div>
@@ -492,17 +494,17 @@
 
     <!-- Modal Container for HTMX -->
     <div id="modal-container" class="fixed inset-0 z-50 hidden">
-        <div class="absolute inset-0 bg-secondary/40 backdrop-blur-sm" onclick="this.parentElement.classList.add('hidden')">
+        <div class="absolute inset-0 bg-secondary/40 backdrop-blur-sm" {% csp_handler "onclick" %}this.parentElement.classList.add('hidden'){% endcsp_handler %}>
         </div>
         <div class="absolute inset-0 flex items-center justify-center p-4">
             <div id="modal-content"
                 class="relative w-full max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl bg-card text-card-foreground shadow-lift"
-                onclick="event.stopPropagation()">
+                {% csp_handler "onclick" %}event.stopPropagation(){% endcsp_handler %}>
                 <!-- Injected via HTMX -->
             </div>
         </div>
     </div>
-    <script>
+    {% csp_script %}<script>
         document.body.addEventListener('htmx:afterSwap', function (evt) {
             if (evt.detail.target.id === 'modal-content') {
                 document.getElementById('modal-container').classList.remove('hidden');
@@ -615,7 +617,7 @@
                 });
             }
         })();
-    </script>
+    </script>{% endcsp_script %}
 
     {% if not user.is_authenticated %}
     <!-- Login popup template -->

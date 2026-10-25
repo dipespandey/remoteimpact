@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load csp %}
+
 {% load static %}
 
 {% block title %}{{ post.title }} — Remote Impact Blog{% endblock %}
@@ -141,7 +143,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+{% csp_script %}<script>
 document.addEventListener('DOMContentLoaded', function() {
     // Calculate reading time
     const articleBody = document.getElementById('article-body');
@@ -214,5 +216,5 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.textContent = 'Subscribe';
     });
 });
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

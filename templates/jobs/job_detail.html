@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 {% load humanize job_extras %}
 
 {% block title %}{% if not job_available %}Unavailable: {% endif %}{{ seo_title }}{% endblock %}
@@ -378,7 +380,7 @@
                         <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
                         <span>Share</span>
                     </a>
-                    <button type="button" onclick="copyJobLink()"
+                    <button type="button" {% csp_handler "onclick" %}copyJobLink(){% endcsp_handler %}
                             class="btn btn-ghost btn-sm text-muted-foreground hover:text-foreground"
                             data-track="share_copy" data-track-category="share" data-track-label="{{ job.slug }}">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
@@ -499,7 +501,7 @@
         {% endif %}
     </div>
 </div>
-<script>
+{% csp_script %}<script>
     // Hide the mobile apply bar while the in-page apply panel or the footer is on screen.
     (function () {
         var bar = document.getElementById('mobile-apply-bar');
@@ -516,9 +518,9 @@
         });
         targets.forEach(function (target) { observer.observe(target); });
     })();
-</script>
+</script>{% endcsp_script %}
 {% endif %}{% endif %}
-<script>
+{% csp_script %}<script>
     function copyJobLink() {
         const url = window.location.href;
         navigator.clipboard.writeText(url).then(() => {
@@ -527,9 +529,9 @@
             setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
         });
     }
-</script>
+</script>{% endcsp_script %}
 {% if user.is_authenticated %}
-<script>
+{% csp_script %}<script>
     (function () {
         const btn = document.getElementById('save-job-btn');
         if (!btn) return;
@@ -564,11 +566,11 @@
             }
         });
     })();
-</script>
+</script>{% endcsp_script %}
 {% endif %}
 
 {% if job_available %}
-<script>
+{% csp_script %}<script>
   // Counts a real view for the employer's stats. Bots rarely run this.
   (function () {
     var sent = false;
@@ -582,6 +584,6 @@
     setTimeout(send, 1500);
     document.addEventListener('visibilitychange', function () { setTimeout(send, 1500); });
   })();
-</script>
+</script>{% endcsp_script %}
 {% endif %}
 {% endblock %}

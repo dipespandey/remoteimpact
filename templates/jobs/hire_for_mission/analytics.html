@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load csp %}
+
 {% load static %}
 
 {% block title %}Analytics - {{ session.job.title }}{% endblock %}
@@ -255,7 +257,7 @@
 
 <!-- Custom filters for template -->
 {% load static %}
-<script>
+{% csp_script %}<script>
 // Add custom template filter functions if needed
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

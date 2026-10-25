@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 {% comment %}
 Shared reading layout for career guides (pillars and clusters).
 Child templates keep their own title/meta/canonical/og/structured_data blocks
@@ -71,7 +73,7 @@ A table of contents is built from the article's H2s on wide screens.
     </div>
 </div>
 
-<script>
+{% csp_script %}<script>
 (function () {
     var body = document.querySelector('#guide-article .guide-prose');
     var toc = document.getElementById('guide-toc');
@@ -94,5 +96,5 @@ A table of contents is built from the article's H2s on wide screens.
     });
     toc.classList.remove('hidden');
 })();
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

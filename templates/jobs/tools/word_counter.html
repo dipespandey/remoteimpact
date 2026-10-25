@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 
 {% block title %}Free Word Counter & Reading Time Calculator | Remote Impact{% endblock %}
 
@@ -50,7 +52,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="container py-8 sm:py-10" x-data="wordCounter()">
+{% csp_component %}<div class="container py-8 sm:py-10" x-data="wordCounter()">{% endcsp_component %}
 
   <nav aria-label="Breadcrumb" class="!border-b-0">
     <ol class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
@@ -137,7 +139,7 @@
           </div>
         </div>
         <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-          <div class="h-1.5 rounded-full bg-foreground transition-all duration-300" :style="'width:' + Math.min(Math.max(readability, 0), 100) + '%'"></div>
+          <div class="h-1.5 rounded-full bg-foreground transition-all duration-300" :style="'width:' + _clampPercent(readability) + '%'"></div>
         </div>
         <div class="mt-1 flex justify-between text-xs text-muted-foreground">
           <span>Very difficult</span>
@@ -173,7 +175,7 @@
 
 </div>
 
-<script>
+{% csp_script %}<script>
 function wordCounter() {
   const STOP_WORDS = new Set(['the','be','to','of','and','a','in','that','have','i','it','for','not','on','with','he','as','you','do','at','this','but','his','by','from','they','we','her','she','or','an','will','my','one','all','would','there','their','what','so','up','out','if','about','who','get','which','go','me','when','make','can','like','time','no','just','him','know','take','people','into','year','your','good','some','could','them','see','other','than','then','now','look','only','come','its','over','think','also','back','after','use','two','how','our','work','first','well','way','even','new','want','because','any','these','give','day','most','us','been','is','are','was','were','has','had','did','does','am','being','having','doing','will','shall','should','may','might','must','can','could','need','ought','dare','used','did','done','said','got','went','made','came','took','gave','found','put','ran','set','let','began','kept','held','told','called','asked','tried','left','turned']);
   return {
@@ -271,5 +273,5 @@ function wordCounter() {
     },
   };
 }
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

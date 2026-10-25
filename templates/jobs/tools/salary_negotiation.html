@@ -1,11 +1,13 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 
 {% block title %}Free Salary Negotiation Script Generator | Remote Impact{% endblock %}
 
 {% block meta_description %}Learn how to negotiate salary with a personalized script: talking points, responses to common objections and a closing ask. Free salary negotiation script generator for remote workers.{% endblock %}
 
 {% block content %}
-<div class="container py-8 sm:py-10"
+{% csp_component %}<div class="container py-8 sm:py-10"
      x-data="{
        jobTitle: '',
        company: '',
@@ -70,7 +72,7 @@
            setTimeout(() => this.copied = false, 1500);
          });
        }
-     }">
+     }">{% endcsp_component %}
 
   <header class="max-w-3xl">
     <h1 class="page-title">Salary negotiation script generator</h1>

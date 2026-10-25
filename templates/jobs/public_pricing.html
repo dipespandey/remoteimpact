@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 
 {% block title %}Remote Impact Pricing | AI Job Scout and Career Tools{% endblock %}
 {% block meta_description %}Use Remote Impact's job search and one free AI Job Scout result at no cost. Upgrade to Pro for $10/month to keep watching for new matching remote impact jobs.{% endblock %}
@@ -113,7 +115,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+{% csp_script %}<script>
 (function () {
   const launcher = document.getElementById('pricing-scout-launcher');
   const dialog = document.getElementById('pricing-scout-dialog');
@@ -134,6 +136,6 @@
     if (event.target === dialog && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) dialog.close();
   });
 })();
-</script>
+</script>{% endcsp_script %}
 {% include 'jobs/_scout_loading.html' %}
 {% endblock %}

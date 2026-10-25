@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load csp %}
+
 {% block robots %}{% if index_page %}index, follow{% else %}noindex, follow{% endif %}{% endblock %}
 {% load humanize job_extras %}
 

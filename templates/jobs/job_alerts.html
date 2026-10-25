@@ -1,11 +1,13 @@
 {% extends "base.html" %}
+{% load csp %}
+
 {% load form_tags job_extras %}
 
 {% block title %}AI Job Scout - Remote Impact{% endblock %}
 {% block meta_description %}Describe your ideal remote impact job and let Remote Impact find and email strong matches.{% endblock %}
 
 {% block extra_js %}
-<script>
+{% csp_script %}<script>
 (function () {
     if (typeof gtag !== 'function') return;
     {% if request.GET.source %}
@@ -24,7 +26,7 @@
     });
     {% endif %}
 })();
-</script>
+</script>{% endcsp_script %}
 {% include 'jobs/_scout_loading.html' %}
 {% endblock %}
 
@@ -208,7 +210,7 @@
                     <div class="flex shrink-0 items-center gap-1 self-end sm:self-auto">
                         {% if is_pro or alert.frequency != 'once' %}<a href="{% url 'jobs:job_alert_edit' alert.pk %}" class="btn btn-ghost btn-sm w-8 px-0" title="Edit scout" aria-label="Edit scout"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.4-9.4a2 2 0 112.8 2.8L11.8 15H9v-2.8l8.6-8.6z"/></svg></a>{% endif %}
                         {% if alert.frequency != 'once' %}<form method="post" action="{% url 'jobs:job_alert_toggle' alert.pk %}">{% csrf_token %}<button type="submit" class="btn btn-ghost btn-sm w-8 px-0" title="{% if alert.is_active %}Pause scout{% else %}Resume scout{% endif %}" aria-label="{% if alert.is_active %}Pause scout{% else %}Resume scout{% endif %}">{% if alert.is_active %}<svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M9 7v10m6-10v10"/></svg>{% else %}<svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5v14l11-7L8 5z"/></svg>{% endif %}</button></form>{% endif %}
-                        <form method="post" action="{% url 'jobs:job_alert_delete' alert.pk %}" onsubmit="return confirm('Delete this Job Scout?')">{% csrf_token %}<button type="submit" class="btn btn-ghost btn-sm w-8 px-0 hover:bg-red-50 hover:text-destructive" title="Delete scout" aria-label="Delete scout"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.9 12.1A2 2 0 0116.1 21H7.9a2 2 0 01-2-1.9L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></form>
+                        <form method="post" action="{% url 'jobs:job_alert_delete' alert.pk %}" {% csp_handler "onsubmit" %}return confirm('Delete this Job Scout?'){% endcsp_handler %}>{% csrf_token %}<button type="submit" class="btn btn-ghost btn-sm w-8 px-0 hover:bg-red-50 hover:text-destructive" title="Delete scout" aria-label="Delete scout"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.9 12.1A2 2 0 0116.1 21H7.9a2 2 0 01-2-1.9L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></form>
                     </div>
                 </li>
                 {% endfor %}

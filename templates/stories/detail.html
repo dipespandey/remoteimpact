@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 
 {% block title %}{{ story.author_name }}'s Story - {{ story.author_title }} @ {{ story.organization.name }}{% endblock %}
 

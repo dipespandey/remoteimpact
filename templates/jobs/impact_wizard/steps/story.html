@@ -1,3 +1,5 @@
+
+{% load csp %}
 <!-- Step 7: Your Profile -->
 <div>
     <div class="mb-6">
@@ -37,7 +39,7 @@
                    aria-describedby="headline-help"
                    placeholder="e.g. Climate policy analyst, 8 years in public sector research"
                    class="input"
-                   oninput="updateHeadlineCount()">
+                   {% csp_handler "oninput" %}updateHeadlineCount(){% endcsp_handler %}>
             <div class="help flex justify-between gap-4" id="headline-help">
                 <span>One line on what you do.</span>
                 <span id="headline-count" class="tabular-nums text-muted-foreground">{{ profile.headline|length|default:0 }}/150</span>
@@ -73,7 +75,7 @@
     </form>
 </div>
 
-<script>
+{% csp_script %}<script>
 function updateHeadlineCount() {
     const input = document.getElementById('headline');
     const count = input.value.length;
@@ -81,4 +83,4 @@ function updateHeadlineCount() {
     countEl.textContent = count + '/150';
     countEl.className = count > 130 ? 'tabular-nums font-medium text-amber-800' : 'tabular-nums text-muted-foreground';
 }
-</script>
+</script>{% endcsp_script %}

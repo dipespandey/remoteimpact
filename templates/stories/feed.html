@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 
 {% block title %}Impact Stories - Remote Impact{% endblock %}
 
@@ -91,7 +93,7 @@
 
 {% block extra_js %}
 {{ current_category_slugs|json_script:"currentCats" }}
-<script>
+{% csp_script %}<script>
     const categoriesToggleBtn = document.getElementById('toggle-categories');
     const dropdown = document.getElementById('category-dropdown');
     const input = document.getElementById('category-filter');
@@ -176,5 +178,5 @@
     });
 
     syncClasses();
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

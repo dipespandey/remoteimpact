@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 {% block title %}{{ issue.title }} | Remote Impact{% endblock %}
 {% block meta_description %}{{ issue.introduction }}{% endblock %}
 {% block canonical %}{{ canonical }}{% endblock %}

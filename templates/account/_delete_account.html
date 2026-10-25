@@ -1,3 +1,5 @@
+
+{% load csp %}
     <section class="card p-5 sm:p-6">
         <div class="grid gap-6 lg:grid-cols-[1fr_380px] lg:items-start">
             <div>
@@ -10,7 +12,7 @@
                 </p>
             </div>
             <form method="post" action="{% url 'jobs:account_delete' %}" class="space-y-3"
-                  onsubmit="return confirm('This permanently deletes your account and related data. Continue?')">
+                  {% csp_handler "onsubmit" %}return confirm('This permanently deletes your account and related data. Continue?'){% endcsp_handler %}>
                 {% csrf_token %}
                 <label for="delete-account-confirmation" class="label break-words">
                     Type <span class="font-mono text-destructive">{{ delete_account_identifier }}</span> to confirm

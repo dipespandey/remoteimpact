@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 {% load humanize job_extras %}
 
 {% block title %}Remote Impact | Remote Jobs with Social Impact{% endblock %}
@@ -200,7 +202,7 @@
     </div>
 </section>
 
-<script>
+{% csp_script %}<script>
     document.querySelectorAll('[data-preview-tabs]').forEach((box) => {
         const tabs = box.querySelectorAll('[data-tab]');
         tabs.forEach((tab) => tab.addEventListener('click', () => {
@@ -214,7 +216,7 @@
             });
         }));
     });
-</script>
+</script>{% endcsp_script %}
 
 <div id="job-scout-composer" class="scout-composer-modal fixed inset-0 z-[70] grid place-items-center p-4 sm:p-5" hidden>
     <div class="scout-composer-backdrop absolute inset-0 bg-secondary/50 backdrop-blur-sm" data-scout-composer-close></div>
@@ -255,7 +257,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+{% csp_script %}<script>
 (function () {
     const hero = document.getElementById('hero-job-scout');
     const launcher = document.getElementById('hero-job-scout-launcher');
@@ -361,6 +363,6 @@
         openComposer(params.get('source') || 'homepage_query');
     }
 })();
-</script>
+</script>{% endcsp_script %}
 {% include 'jobs/_scout_loading.html' %}
 {% endblock %}
