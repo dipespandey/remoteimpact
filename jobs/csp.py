@@ -16,7 +16,7 @@ from django.conf import settings
 
 def signature(kind, code):
     return hmac.new(settings.SECRET_KEY.encode(),
-                    ('remoteimpact-csp-v1:' + kind + ':' + code).encode(), hashlib.sha256).hexdigest()
+                    ('remoteimpact-csp-v2:' + settings.CSP_RELEASE_SCOPE + ':' + kind + ':' + code).encode(), hashlib.sha256).hexdigest()
 
 
 def digest(code):

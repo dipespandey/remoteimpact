@@ -44,7 +44,9 @@ Public JavaScript uses Alpine's CSP build. Executable template blocks and native
 event handlers are explicitly marked with `csp_script` and `csp_handler`; component
 factories use `csp_component` and register through Alpine.data. Middleware verifies
 server signatures before adding content hashes. Cached HTML authorization is bound
-to exact script contents. Repository-authored static fragment handlers are included
+to exact script contents and the immutable release ID. Public HTML cache keys are
+also scoped to that release, so previously cached or signed code cannot survive a
+security fix in a new release. Repository-authored static fragment handlers are included
 in the initial policy for HTMX. JSON data blocks are not executable script blocks.
 New dynamic fragment code must be loaded through an allowed first-party script or
 included in the initial document policy. Do not authorize arbitrary rendered HTML
