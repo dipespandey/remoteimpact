@@ -1,3 +1,6 @@
+import re
+from html import unescape
+
 from django.views.generic import ListView
 from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Q, Count, Max
@@ -31,6 +34,13 @@ class OrganizationProfileView(FastJobPaginationMixin, ListView):
     template_name = "jobs/organization_profile.html"
     context_object_name = "jobs"
     paginate_by = 20
+
+    @staticmethod
+    def _plain_description(value):
+        """Imported descriptions can contain HTML and source-site editorial copy."""
+        text = unescape(re.sub(r"<[^>]+>", " ", value or ""))
+        text = re.sub(r"\s+", " ", text).strip()
+        return re.split(r"\b(?:We post specific opportunities|You can read concerns)\b", text, maxsplit=1)[0].strip()
 
     def get(self, request, *args, **kwargs):
         slug = self.kwargs.get("slug")
@@ -98,19 +108,24 @@ class OrganizationProfileView(FastJobPaginationMixin, ListView):
         job_count = context["page_obj"].paginator.count
         context["job_count"] = job_count
         context["index_page"] = job_count > 0 and not self.request.GET
+        context["organization_summary"] = self._plain_description(org.description)
         
         context["hiring_summary"] = self._hiring_summary(org, context["page_obj"].paginator.object_list)
         # Describe the current inventory, without promising unverified locations,
         # internship cycles, eligibility or a daily source-verification cadence.
         roles = f"{job_count} open remote role{'' if job_count == 1 else 's'}"
-        context["meta_title"] = f"{org.name} careers: {roles}" if job_count else f"{org.name} careers and jobs"
+        context["meta_title"] = (
+            f"{org.name} Remote Jobs & Careers | {job_count} Open Roles"
+            if job_count else f"{org.name} Remote Jobs & Careers"
+        )
         areas = ", ".join(context["hiring_summary"].get("areas", [])[:2])
         context["meta_description"] = (
             f"Browse {roles} at {org.name}{' in ' + areas if areas else ''} on Remote Impact. "
             "See listing details, location requirements and how to apply."
             if job_count else f"{org.name} has no open remote roles on Remote Impact right now. See similar impact jobs."
         )
-        context["h1_title"] = org.name
+        context["h1_title"] = f"{org.name} remote jobs"
+        context["scout_intent"] = f"Find remote jobs similar to roles at {org.name} in the impact sector"
         context["is_seo_optimized"] = False
         # Listing edits, including closures, are evidence of an inventory change.
         # Request time is not a content modification date.

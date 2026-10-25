@@ -27,7 +27,7 @@
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "{{ organization.name|escapejs }}",
-    {% if organization.description %}"description": "{{ organization.description|escapejs|truncatewords:50 }}",{% endif %}
+    {% if organization_summary %}"description": "{{ organization_summary|escapejs|truncatewords:50 }}",{% endif %}
     {% if organization.homepage_url %}"url": "{{ organization.homepage_url|escapejs }}",{% endif %}
     {% if organization.logo_src %}"logo": "{{ SITE_URL }}{{ organization.logo_src }}",{% endif %}
     {% if organization.founded_year %}"foundingDate": "{{ organization.founded_year }}",{% endif %}
@@ -73,6 +73,7 @@
                 <li class="min-w-0 truncate text-foreground" aria-current="page">{{ organization.name }}</li>
             </ol>
         </nav>
+        <p class="mt-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Jobs and careers</p>
         <div class="mt-3 flex items-start gap-4">
             {% if organization.logo_src %}
             <img src="{{ organization.logo_src }}" alt="{{ organization.name }}" class="h-12 w-12 shrink-0 rounded-xl bg-muted object-cover sm:h-14 sm:w-14" fetchpriority="high">
@@ -89,12 +90,17 @@
                     </span>
                     {% endif %}
                 </div>
-                {% if organization.description %}
-                <p class="page-lede">{{ organization.description }}</p>
+                {% if organization_summary %}
+                <p class="page-lede">{{ organization_summary }}</p>
                 {% endif %}
                 {% if hiring_summary.open %}
-                <p class="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">{{ organization.name }} has <strong class="font-semibold text-foreground">{{ hiring_summary.open }} current remote role listing{{ hiring_summary.open|pluralize }}</strong> on Remote Impact{% if hiring_summary.areas %}, mostly in {{ hiring_summary.areas|join:", " }}{% endif %}{% if hiring_summary.types %} ({{ hiring_summary.types|join:" and " }}){% endif %}. {% if hiring_summary.global_labels %}{{ hiring_summary.global_labels }} listing{{ hiring_summary.global_labels|pluralize }} {{ hiring_summary.global_labels|pluralize:"carries,carry" }} a global location label; check the employer's eligibility requirements. {% endif %}{% if hiring_summary.pay_count %}Known annual USD pay figures across {{ hiring_summary.pay_count }} listings range from ${{ hiring_summary.pay_low|floatformat:0|intcomma }} to ${{ hiring_summary.pay_high|floatformat:0|intcomma }}. {% endif %}See each listing's source links and recorded checks. {% if organization.careers_url %}<a class="underline decoration-border underline-offset-4 hover:decoration-foreground" href="{{ organization.careers_url }}" rel="noopener" target="_blank">Employer careers page</a>. {% endif %}</p>
+                <p class="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">We list <strong class="font-semibold text-foreground">{{ hiring_summary.open }} current remote role{{ hiring_summary.open|pluralize }}</strong> at {{ organization.name }}{% if hiring_summary.areas %}, including {{ hiring_summary.areas|join:", " }}{% endif %}. Check each role for where you may work and apply. {% if organization.careers_url %}<a class="underline decoration-border underline-offset-4 hover:decoration-foreground" href="{{ organization.careers_url }}" rel="noopener" target="_blank">Official careers page</a>. {% endif %}</p>
                 {% endif %}
+                <div class="mt-5 flex flex-wrap gap-2">
+                    <a href="#open-roles-heading" class="btn btn-primary btn-sm">See open roles</a>
+                    <a href="{% url 'jobs:job_alerts' %}?intent={{ scout_intent|urlencode }}&amp;source=company_profile" class="btn btn-outline btn-sm" data-track="org_profile_scout" data-track-category="consumer">Find related jobs with Scout</a>
+                </div>
+                <p class="mt-2 text-xs text-muted-foreground">Scout searches the wider directory for roles matching your preferences.</p>
             </div>
         </div>
     </header>
@@ -103,7 +109,7 @@
         <!-- Job listings -->
         <section class="relative z-10 min-w-0 lg:col-span-8" aria-labelledby="open-roles-heading">
             <div class="flex items-baseline justify-between gap-4 px-1">
-                <h2 id="open-roles-heading" class="section-title">Open roles</h2>
+                <h2 id="open-roles-heading" class="section-title">Open remote jobs at {{ organization.name }}</h2>
                 <span class="text-xs tabular-nums text-muted-foreground">{{ job_count }}</span>
             </div>
             {% if jobs %}
@@ -115,10 +121,10 @@
             {% else %}
             <div class="card mt-3 p-6 sm:p-8">
                 <h3 class="section-title">No open roles right now</h3>
-                <p class="mt-1.5 text-sm text-muted-foreground">{{ organization.name }} has no live listings on Remote Impact. Browse other roles in the meantime, or set up a job alert to hear about new ones.</p>
+                <p class="mt-1.5 text-sm text-muted-foreground">{{ organization.name }} has no live listings on Remote Impact. Browse other roles or use Scout to find similar work.</p>
                 <div class="mt-5 flex flex-wrap gap-2">
                     <a href="{% url 'jobs:job_list' %}" class="btn btn-primary btn-sm">Browse all jobs</a>
-                    <a href="{% url 'jobs:job_alerts' %}?source=org_profile_empty" class="btn btn-outline btn-sm">Set up a job alert</a>
+                    <a href="{% url 'jobs:job_alerts' %}?intent={{ scout_intent|urlencode }}&amp;source=company_profile_empty" class="btn btn-outline btn-sm">Find similar jobs</a>
                 </div>
             </div>
             {% endif %}

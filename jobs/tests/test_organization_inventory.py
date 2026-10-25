@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.test import RequestFactory, TestCase
+from django.urls import reverse
 from django.utils import timezone
 
 from jobs.models import Job, Organization
@@ -50,6 +51,17 @@ class OrganizationDirectoryInventoryTests(TestCase):
 
 
 class OrganizationProfileMetadataTests(TestCase):
+    def setUp(self):
+        from allauth.socialaccount.models import SocialApp
+        from django.contrib.sites.models import Site
+        for provider, provider_id in (('google', ''), ('openid_connect', 'linkedin')):
+            app = SocialApp.objects.create(
+                provider=provider, provider_id=provider_id, name=provider,
+                client_id='test-client', secret='test-secret',
+                settings={'server_url': 'https://www.linkedin.com/oauth'} if provider_id else {},
+            )
+            app.sites.add(Site.objects.get_current())
+
     def context(self, org):
         from jobs.views.organizations import OrganizationProfileView
         view = OrganizationProfileView()
@@ -83,6 +95,32 @@ class OrganizationProfileMetadataTests(TestCase):
         self.assertNotIn('Apply now', context['meta_description'])
         self.assertNotIn('Internships', context['meta_title'])
         self.assertIsNone(context['date_modified'])
+
+    def test_company_page_has_plain_description_jobs_title_and_related_scout_link(self):
+        org = Organization.objects.create(
+            name='Anthropic', slug='anthropic',
+            description='<p>Anthropic is an AI research company.</p><p>We post specific opportunities here.</p>',
+        )
+        Job.objects.create(organization=org, title='Researcher', slug='researcher-anthropic',
+                           source=Job.Source.MANUAL)
+        response = self.client.get(reverse('jobs:organization_profile', args=[org.slug]))
+        content = response.content.decode()
+        self.assertContains(response, 'Anthropic Remote Jobs &amp; Careers')
+        self.assertContains(response, 'Anthropic remote jobs')
+        self.assertContains(response, 'Anthropic is an AI research company.')
+        self.assertNotIn('&lt;p&gt;', content)
+        self.assertNotIn('We post specific opportunities', content)
+        self.assertContains(response, 'source=company_profile')
+        self.assertContains(response, 'Find related jobs with Scout')
+
+    def test_company_page_remains_single_indexable_url(self):
+        org = Organization.objects.create(name='Research Team', slug='research-team')
+        Job.objects.create(organization=org, title='Analyst', slug='analyst-research-team',
+                           source=Job.Source.MANUAL)
+        response = self.client.get(reverse('jobs:organization_profile', args=[org.slug]))
+        content = response.content.decode()
+        self.assertIn('index, follow', content)
+        self.assertIn('/org/research-team/', content)
 
 
 class OrganizationHiringSummaryTests(TestCase):
