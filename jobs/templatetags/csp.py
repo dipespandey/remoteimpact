@@ -39,8 +39,9 @@ class SignedNode(template.Node):
                 self.attrs = dict(attrs)
         parser = Element(); parser.feed(value)
         attrs = parser.attrs
-        expression = unescape(attrs.get('x-data', '')).strip() or '{}'
-        init = unescape(attrs.get('x-init', ''))
+        # HTMLParser already decodes attribute references, like the browser.
+        expression = attrs.get('x-data', '').strip() or '{}'
+        init = attrs.get('x-init', '')
         init = re.sub(r'^\s*selected\s*=', 'this.selected =', init)
         init = re.sub(r'^\s*([A-Za-z_$][\w$]*)\(\)\s*$', r'this.\1()', init)
         name = 'ri_' + signature('component', expression + '\n' + init)[:20]

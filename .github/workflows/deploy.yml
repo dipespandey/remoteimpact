@@ -78,7 +78,10 @@ jobs:
         run: |
           uv run python manage.py check
           uv run python manage.py makemigrations --check --dry-run
-          uv run python manage.py test --noinput
+          # Isolated DB clones per worker; keep both complete database suites.
+          # tblib preserves failure tracebacks across worker processes. The
+          # pinned test-only overlay does not change the production lock/image.
+          uv run --frozen --with tblib==3.2.2 python manage.py test --parallel 2 --noinput
       - name: Check production settings
         env:
           DEBUG: 'False'

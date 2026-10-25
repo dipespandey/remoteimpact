@@ -56,6 +56,10 @@ class AuthoredScriptPolicyTests(SimpleTestCase):
         parser = ScriptHashes(); parser.feed(html)
         self.assertEqual(len(parser.scripts), 1)
 
+    def test_component_attributes_are_not_entity_decoded_twice(self):
+        html = self.render('{% csp_component %}<div x-data="{label: \'&amp;quot;\'}">{% endcsp_component %}')
+        self.assertIn("label: '&quot;'", html)
+
     def test_enforced_script_policy_contains_neither_unsafe_flag(self):
         html = self.render('{% csp_script %}<script>window.cspPolicy=1;</script>{% endcsp_script %}')
         response = SecurityHeadersMiddleware(lambda request: HttpResponse(html))(RequestFactory().get('/'))
@@ -71,6 +75,28 @@ class StrictPolicyBrowserTests(StaticLiveServerTestCase):
     def setUp(self):
         from jobs.tests.test_scout_results import setup_scout_fixture
         setup_scout_fixture(self)
+
+    def test_search_filter_values_cannot_become_executable_component_code(self):
+        from playwright.sync_api import sync_playwright
+        from urllib.parse import urlencode
+        payloads = {
+            'posted': "'+(document.body.dataset.auditInjected='yes')+'",
+            'salary_min': "(document.body.dataset.auditInjected='yes',100000)",
+            'salary_max': "(document.body.dataset.auditInjected='yes',100000)",
+        }
+        with sync_playwright() as p:
+            args = {'executable_path':os.environ['PLAYWRIGHT_CHROMIUM_EXECUTABLE']} if os.environ.get('PLAYWRIGHT_CHROMIUM_EXECUTABLE') else {}
+            browser = p.chromium.launch(headless=True, **args)
+            ctx = browser.new_context()
+            ctx.route('**/*', lambda route: route.continue_() if route.request.url.startswith(self.live_server_url) else route.abort())
+            page = ctx.new_page()
+            for field, payload in payloads.items():
+                with self.subTest(field=field):
+                    response = page.goto(self.live_server_url + '/jobs/?' + urlencode({field: payload}))
+                    page.wait_for_load_state('networkidle')
+                    self.assertEqual(response.status, 200)
+                    self.assertIsNone(page.locator('body').get_attribute('data-audit-injected'))
+            browser.close()
 
     def test_parser_enforces_signed_script_boundary(self):
         from playwright.sync_api import sync_playwright, expect
