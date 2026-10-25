@@ -57,7 +57,7 @@ class Release:
         return {'active': {'id': cid, 'port': 8100, 'release': 'legacy'}, 'previous': None}
 
     def save(self, data):
-        atomic(self.state / 'state.json', json.dumps(data, indent=2) + '\n')
+        atomic(self.state / 'state.json', json.dumps(data, indent=2) + '\n', mode=0o644)
 
     def ready(self, target, paths=('/healthz/',), release_header=False):
         for path in paths:
@@ -223,7 +223,7 @@ class Release:
             'COPY . /app/\n'
             'COPY .release-static/ /app/staticfiles/\n'
             'RUN chmod +x /app/entrypoint-release.sh && /app/.venv/bin/python manage.py collectstatic --noinput\n'
-            'ENTRYPOINT ["/app/entrypoint-release.sh"]\nCMD []\n')
+            'USER 10001:10001\nENTRYPOINT ["/app/entrypoint-release.sh"]\nCMD []\n')
         # Infrastructure is source-versioned and provisioned only from a checked release.
         performance_env = None
         shared_setup = source / 'ops/deploy/shared_services.py'
@@ -249,9 +249,12 @@ class Release:
         switched = False
         safe_to_remove = True
         succeeded = False
-        runtime_args = []
+        runtime_args = ['--read-only', '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges:true',
+            '--memory', '3g', '--memory-swap', '3g', '--pids-limit', '256',
+            '--tmpfs', '/tmp:rw,nosuid,nodev,size=256m,mode=1777',
+            '--tmpfs', '/home/remoteimpact:rw,nosuid,nodev,size=32m,uid=10001,gid=10001']
         if performance_env:
-            runtime_args = ['--env-file', str(performance_env),
+            runtime_args += ['--env-file', str(performance_env),
                 '-v', str(self.root / 'cache') + ':/var/cache/remoteimpact',
                 '-v', str(self.root / 'performance-logs') + ':/var/log/remoteimpact',
                 '-v', str(self.state) + ':/run/remoteimpact-releases:ro']
@@ -266,10 +269,12 @@ class Release:
                 *runtime_args, '--log-opt', 'max-size=10m', '--log-opt', 'max-file=3',
                 image, capture=True).strip()
             target = {'id': cid, 'port': port, 'release': release_id, 'image': image, 'ref': ref}
-            # One-off commands use the same immutable image, network, environment and shared media.
+            # DDL credentials are root-only on the host and never enter the web container.
             def command(*args):
+                migration_env = self.root / 'secrets/migrations.env'
+                extra = ['--env-file', str(migration_env)] if args[0] == 'migrate' and migration_env.exists() else []
                 return run('docker', 'run', '--rm', '--network', 'easyclaw_default', '--env-file', str(self.root / '.env'),
-                    *runtime_args, '-e', 'PGOPTIONS=-c lock_timeout=5s -c statement_timeout=60s',
+                    *runtime_args, *extra, '-e', 'PGOPTIONS=-c lock_timeout=5s -c statement_timeout=60s',
                     '--entrypoint', '/app/.venv/bin/python', image, '/app/manage.py', *args)
             command('check')
             command('makemigrations', '--check', '--dry-run')

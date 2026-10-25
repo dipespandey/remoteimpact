@@ -50,7 +50,8 @@ def _raw_key(request) -> str:
 
 
 def _client_ip(request) -> str:
-    return request.META.get("HTTP_CF_CONNECTING_IP") or request.META.get("REMOTE_ADDR", "0.0.0.0")
+    from jobs.security import client_ip
+    return client_ip(request)
 
 
 def identify(request) -> Caller:

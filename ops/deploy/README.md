@@ -103,3 +103,31 @@ sequential funnel. The JSONL writer locks rotation across processes and limits l
 to one 10 MiB active file plus three backups, with 0600 permissions. It records UTC
 timestamps, route templates, fixed stage names, numeric timings and outcomes; never
 raw URLs, briefs, prompts, emails, user identifiers or provider payloads.
+
+
+## Security boundaries
+
+The serving image runs as UID/GID 10001 with a read-only root filesystem, dropped
+Linux capabilities, no-new-privileges, bounded memory/PIDs and writable temporary
+filesystems. Only media, application cache and performance logs are writable host
+mounts. The host must provision these three directories for UID 10001 and make the
+indexing credential bind mount readable by this user without exposing its parent.
+Release state contains no credentials and is readable by the queue worker.
+
+The web environment uses a restricted PostgreSQL runtime role. The root-only
+`/opt/easyclaw/secrets/migrations.env` supplies DDL credentials only to one-off
+`migrate` commands; it is never passed into the serving container. Migration
+changes still require explicit reviewed `allow_migrations` dispatch. Runtime and
+staging credentials and databases must differ.
+
+Origin requests must pass the Caddy Cloudflare source-address check. Caddy replaces
+`X-RemoteImpact-Client-IP`; `TRUSTED_PROXY_CIDRS` names only loopback and the exact
+Docker host gateway, not arbitrary private networks. Allauth and API throttling use
+the resulting validated transport identity.
+
+Staff must enroll TOTP and retain recovery codes. An existing password-only staff
+session cannot enter admin until it completes MFA, and MFA is required again after
+eight hours. `MFA_ENCRYPTION_KEY` is a separate root-provisioned encryption key and
+must be included in encrypted configuration backups. Enrollment secrets must never
+be generated or confirmed on behalf of a staff member. Tests use explicit synthetic
+sessions; production enforcement remains on.

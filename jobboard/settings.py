@@ -95,6 +95,7 @@ INSTALLED_APPS = [
     "django.contrib.humanize",
     "allauth",
     "allauth.account",
+    "allauth.mfa",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.openid_connect",
@@ -109,6 +110,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "jobs.security.TrustedProxyMiddleware",
     "django.middleware.gzip.GZipMiddleware",
     "jobs.middleware.MarkdownResponseMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve static files in production
@@ -119,6 +121,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "jobs.security.StaffMFAMiddleware",
     "jobs.middleware.ImpersonationReadOnlyMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "jobs.middleware.SocialLoginNetworkErrorMiddleware",
@@ -260,7 +263,7 @@ SERPER_API_KEY = os.getenv("SERPER_API_KEY", "")
 # Google Custom Search API (100 free queries/day)
 # Get your API key at: https://console.cloud.google.com/apis/credentials
 # Create a Custom Search Engine at: https://cse.google.com/cse/
-GOOGLE_CSE_API_KEY = os.getenv("GOOGLE_CSE_API_KEY", "AIzaSyB80R9QJjZLxw_tQqxUj82f49Rn4JQBQo")
+GOOGLE_CSE_API_KEY = os.getenv("GOOGLE_CSE_API_KEY", "")
 GOOGLE_CSE_CX = os.getenv("GOOGLE_CSE_CX", "d29e1be4453804e08")
 
 SOCIALACCOUNT_PROVIDERS = {
@@ -474,3 +477,16 @@ SCOUT_LOCAL_ALLOW_EXPERIMENTAL = os.getenv("SCOUT_LOCAL_ALLOW_EXPERIMENTAL", "fa
 SCOUT_CLOSE_MATCHES = os.getenv("SCOUT_CLOSE_MATCHES", "true").lower() == "true"
 # Experimental: let the reranker judge rule-passing jobs that miss the keyword title check.
 SCOUT_RERANK_WIDE = os.getenv("SCOUT_RERANK_WIDE", "false").lower() == "true"
+
+# Origin identity is rewritten by Caddy after its Cloudflare transport check.
+TRUSTED_PROXY_CIDRS = [n.strip() for n in os.getenv("TRUSTED_PROXY_CIDRS", "127.0.0.1/32,::1/128").split(",") if n.strip()]
+ALLAUTH_TRUSTED_PROXY_COUNT = 0
+ALLAUTH_TRUSTED_CLIENT_IP_HEADER = None
+ADMIN_REQUIRE_MFA = not TESTING
+ADMIN_MFA_MAX_AGE = 8 * 60 * 60
+MFA_SUPPORTED_TYPES = ["totp", "recovery_codes"]
+MFA_TRUST_ENABLED = False
+MFA_ADAPTER = "jobs.mfa_adapter.StaffMFAAdapter"
+MFA_TOTP_ISSUER = "RemoteImpact admin"
+MFA_ENCRYPTION_KEY = os.getenv("MFA_ENCRYPTION_KEY", "")
+ACCOUNT_RATE_LIMITS = {"login": "20/m/ip", "login_failed": "5/5m/key,20/5m/ip"}
