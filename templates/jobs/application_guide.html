@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 {% load job_extras %}
 
 {% block title %}How to Apply for {{ job.title }} at {{ job.organization.name }} - Application Guide{% endblock %}

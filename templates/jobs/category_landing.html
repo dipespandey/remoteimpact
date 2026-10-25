@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load csp %}
+
 {% load job_extras %}
 
 {% block title %}{{ meta_title }}{% endblock %}
@@ -122,7 +124,7 @@
         </dl>
     </section>
 </div>
-<script>
+{% csp_script %}<script>
 (function () {
     // What each results list showed and which result was clicked, for measuring ranking. No personal data.
     if (!navigator.sendBeacon || window.__rankBeacon) return;
@@ -148,7 +150,7 @@
         send({t: 'click', k: area.dataset.rankKey, j: +row.dataset.rankJob, p: rows.indexOf(row) + 1});
     });
 })();
-</script>
+</script>{% endcsp_script %}
 
 <div class="container">{% include "jobs/partials/roundup_invite.html" with roundup_source="category" %}</div>
 {% endblock %}

@@ -1,11 +1,13 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 
 {% block title %}Free Thank You Email After Interview Generator | Remote Impact{% endblock %}
 
 {% block meta_description %}Free thank you email generator for after an interview. Add the interviewer, role and topics you discussed, choose a tone, and copy a polished post-interview thank you email.{% endblock %}
 
 {% block content %}
-<div class="container py-8 sm:py-10" x-data="thankYouApp()">
+{% csp_component %}<div class="container py-8 sm:py-10" x-data="thankYouApp()">{% endcsp_component %}
 
   <header class="max-w-3xl">
     <h1 class="page-title">Thank-you email after an interview</h1>
@@ -153,7 +155,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+{% csp_script %}<script>
 function thankYouApp() {
   const GENERATE_URL = "{% url 'jobs:thank_you_email_generate' %}";
   const RATE_KEY = 'ty_gen_count';
@@ -229,5 +231,5 @@ function thankYouApp() {
     }
   };
 }
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

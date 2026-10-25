@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 {% load static %}
 
 {% block title %}Free Remote Job Interview Prep | AI Interview Questions Generator{% endblock %}
@@ -218,7 +220,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+{% csp_script %}<script>
     (function () {
         var ENDPOINT = "{% url 'jobs:interview_prep_generate' %}"
         var DRAFT_KEY = 'ri_tool_draft'
@@ -401,5 +403,5 @@
             }
         }
     })()
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

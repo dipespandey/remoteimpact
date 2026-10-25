@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 {% load job_extras %}
 
 {% block title %}Impact Jobs: Browse Remote Roles | Remote Impact{% endblock %}
@@ -119,24 +121,24 @@
         <div id="filters-section" class="relative mt-3 hidden grid-cols-2 gap-2 md:flex md:flex-wrap md:items-center">
 
             <!-- Impact area -->
-            <div x-data="{ open: false, selected: [] }" x-init="selected = JSON.parse(document.getElementById('job-filter-areas').textContent) || []" class="md:relative">
+            {% csp_component %}<div x-data="{ open: false, selected: [] }" x-init="selected = JSON.parse(document.getElementById('job-filter-areas').textContent) || []" class="md:relative">{% endcsp_component %}
                 <label for="filter-areas" class="sr-only">Impact area</label>
                 <button id="filter-areas" type="button" :aria-expanded="open.toString()" aria-controls="options-areas" @keydown.escape="open = false" @click="open = !open"
                     class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
                     <span class="truncate" x-text="selected.length ? 'Impact area · ' + selected.length : 'Impact area'">Impact area</span>
                     <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
                 </button>
-                <div id="options-areas" @keydown.escape="open = false; document.getElementById('filter-areas').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-72">
+                <div id="options-areas" @keydown.escape="_close('filter-areas')" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-72">
                     <div x-show="selected.length > 0" class="sticky top-0 z-10 flex items-center justify-between bg-popover px-3 py-2">
                         <span class="text-xs text-muted-foreground"><span x-text="selected.length"></span> selected</span>
-                        <button type="button" @click.stop="selected = []; $dispatch('change')" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                        <button type="button" @click.stop="_clear()" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                     </div>
                     <div class="flex flex-col">
                         {% for category in categories %}
                         <label class="flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-muted" :class="{ 'order-first bg-muted': selected.includes('{{ category.slug|escapejs }}') }" @click.stop>
                             <input type="checkbox" name="category" value="{{ category.slug }}"
                                 :checked="selected.includes('{{ category.slug|escapejs }}')"
-                                @change="selected.includes('{{ category.slug|escapejs }}') ? selected = selected.filter(x => x !== '{{ category.slug|escapejs }}') : selected.push('{{ category.slug|escapejs }}')"
+                                @change="_toggle('{{ category.slug|escapejs }}')"
                                 class="checkbox">
                             <span class="text-sm text-foreground">{{ category.name }}</span>
                         </label>
@@ -146,7 +148,7 @@
             </div>
 
             <!-- Skills (searchable) -->
-            <div x-data="{
+            {% csp_component %}<div x-data="{
                 open: false,
                 selected: [],
                 search: '',
@@ -155,19 +157,19 @@
                     if (!this.search) return this.skills;
                     return this.skills.filter(s => this.selected.includes(s.slug) || s.display.toLowerCase().includes(this.search.toLowerCase()));
                 }
-            }" x-init="selected = JSON.parse(document.getElementById('job-filter-skills').textContent) || []" class="md:relative">
+            }" x-init="selected = JSON.parse(document.getElementById('job-filter-skills').textContent) || []" class="md:relative">{% endcsp_component %}
                 <label for="filter-skills" class="sr-only">Skills</label>
                 <button id="filter-skills" type="button" :aria-expanded="open.toString()" aria-controls="options-skills" @keydown.escape="open = false" @click="open = !open"
                     class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
                     <span class="truncate" x-text="selected.length ? 'Skills · ' + selected.length : 'Skills'">Skills</span>
                     <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
                 </button>
-                <div id="options-skills" @keydown.escape="open = false; document.getElementById('filter-skills').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-80">
+                <div id="options-skills" @keydown.escape="_close('filter-skills')" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-80">
                     <div class="sticky top-0 z-10 space-y-1 bg-popover pb-1">
                         <input id="skill-search" aria-label="Search skills" type="text" x-model="search" placeholder="Search skills" @click.stop class="input h-9 py-1.5 text-sm">
                         <div x-show="selected.length > 0" class="flex items-center justify-between px-3 py-1">
                             <span class="text-xs text-muted-foreground"><span x-text="selected.length"></span> selected</span>
-                            <button type="button" @click.stop="selected = []; $dispatch('change')" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                            <button type="button" @click.stop="_clear()" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                         </div>
                     </div>
                     <div class="flex flex-col">
@@ -177,7 +179,7 @@
                                 <span class="flex min-w-0 items-center gap-2.5">
                                     <input type="checkbox" name="skill" :value="skill.slug"
                                         :checked="selected.includes(skill.slug)"
-                                        @change="selected.includes(skill.slug) ? selected = selected.filter(x => x !== skill.slug) : selected.push(skill.slug)"
+                                        @change="_toggle(skill.slug)"
                                         class="checkbox">
                                     <span class="truncate text-sm text-foreground" x-text="skill.display"></span>
                                 </span>
@@ -189,7 +191,7 @@
             </div>
 
             <!-- Country / region (searchable, with region shortcuts) -->
-            <div x-data="{
+            {% csp_component %}<div x-data="{
                 open: false,
                 selected: [],
                 search: '',
@@ -228,19 +230,19 @@
                     if (!this.search) return this.allCountries;
                     return this.allCountries.filter(c => c.toLowerCase().includes(this.search.toLowerCase()));
                 }
-            }" x-init="selected = JSON.parse(document.getElementById('job-filter-countries').textContent) || []" class="md:relative">
+            }" x-init="selected = JSON.parse(document.getElementById('job-filter-countries').textContent) || []" class="md:relative">{% endcsp_component %}
                 <label for="filter-countries" class="sr-only">Country / Region</label>
                 <button id="filter-countries" type="button" :aria-expanded="open.toString()" aria-controls="options-countries" @keydown.escape="open = false" @click="open = !open"
                     class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
                     <span class="truncate" x-text="selected.length ? 'Location · ' + selected.length : 'Location'">Location</span>
                     <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
                 </button>
-                <div id="options-countries" @keydown.escape="open = false; document.getElementById('filter-countries').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-80">
+                <div id="options-countries" @keydown.escape="_close('filter-countries')" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-80">
                     <div class="sticky top-0 z-10 space-y-1 bg-popover pb-1">
                         <input id="country-search" aria-label="Search countries" type="text" x-model="search" @click.stop placeholder="Search countries" class="input h-9 py-1.5 text-sm">
                         <div x-show="selected.length > 0" class="flex items-center justify-between px-3 py-1">
                             <span class="text-xs text-muted-foreground"><span x-text="selected.length"></span> selected</span>
-                            <button type="button" @click.stop="selected = []; $dispatch('change')" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                            <button type="button" @click.stop="_clear()" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                         </div>
                     </div>
                     <div class="flex flex-col">
@@ -260,13 +262,13 @@
                         <template x-for="country in selected" :key="'sel-'+country">
                             <label class="flex cursor-pointer items-center gap-2.5 rounded-xl bg-muted px-3 py-2" @click.stop>
                                 <input type="checkbox" name="country" :value="country" checked
-                                    @change="selected = selected.filter(x => x !== country)"
+                                    @change="_remove(country)"
                                     class="checkbox">
                                 <span class="text-sm text-foreground" x-text="country"></span>
                             </label>
                         </template>
                         <!-- Filtered countries (not selected) -->
-                        <template x-for="country in filteredCountries.filter(c => !selected.includes(c))" :key="country">
+                        <template x-for="country in unselectedCountries" :key="country">
                             <label class="flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-muted" @click.stop>
                                 <input type="checkbox" name="country" :value="country"
                                     @change="selected.push(country)"
@@ -279,24 +281,24 @@
             </div>
 
             <!-- Role type -->
-            <div x-data="{ open: false, selected: [] }" x-init="selected = JSON.parse(document.getElementById('job-filter-role-types').textContent) || []" class="md:relative">
+            {% csp_component %}<div x-data="{ open: false, selected: [] }" x-init="selected = JSON.parse(document.getElementById('job-filter-role-types').textContent) || []" class="md:relative">{% endcsp_component %}
                 <label for="filter-role-types" class="sr-only">Role type</label>
                 <button id="filter-role-types" type="button" :aria-expanded="open.toString()" aria-controls="options-role-types" @keydown.escape="open = false" @click="open = !open"
                     class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
                     <span class="truncate" x-text="selected.length ? 'Role type · ' + selected.length : 'Role type'">Role type</span>
                     <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
                 </button>
-                <div id="options-role-types" @keydown.escape="open = false; document.getElementById('filter-role-types').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-60">
+                <div id="options-role-types" @keydown.escape="_close('filter-role-types')" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-60">
                     <div x-show="selected.length > 0" class="sticky top-0 z-10 flex items-center justify-between bg-popover px-3 py-2">
                         <span class="text-xs text-muted-foreground"><span x-text="selected.length"></span> selected</span>
-                        <button type="button" @click.stop="selected = []; $dispatch('change')" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                        <button type="button" @click.stop="_clear()" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                     </div>
                     <div class="flex flex-col">
                         {% for jt in job_types %}
                         <label class="flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-muted" :class="{ 'order-first bg-muted': selected.includes('{{ jt.value|escapejs }}') }" @click.stop>
                             <input type="checkbox" name="type" value="{{ jt.value }}"
                                 :checked="selected.includes('{{ jt.value|escapejs }}')"
-                                @change="selected.includes('{{ jt.value|escapejs }}') ? selected = selected.filter(x => x !== '{{ jt.value|escapejs }}') : selected.push('{{ jt.value|escapejs }}')"
+                                @change="_toggle('{{ jt.value|escapejs }}')"
                                 class="checkbox">
                             <span class="text-sm text-foreground">{{ jt.display }}</span>
                         </label>
@@ -306,24 +308,24 @@
             </div>
 
             <!-- Experience -->
-            <div x-data="{ open: false, selected: [] }" x-init="selected = JSON.parse(document.getElementById('job-filter-experience').textContent) || []" class="md:relative">
+            {% csp_component %}<div x-data="{ open: false, selected: [] }" x-init="selected = JSON.parse(document.getElementById('job-filter-experience').textContent) || []" class="md:relative">{% endcsp_component %}
                 <label for="filter-experience" class="sr-only">Experience</label>
                 <button id="filter-experience" type="button" :aria-expanded="open.toString()" aria-controls="options-experience" @keydown.escape="open = false" @click="open = !open"
                     class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
                     <span class="truncate" x-text="selected.length ? 'Experience · ' + selected.length : 'Experience'">Experience</span>
                     <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
                 </button>
-                <div id="options-experience" @keydown.escape="open = false; document.getElementById('filter-experience').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-60">
+                <div id="options-experience" @keydown.escape="_close('filter-experience')" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-60">
                     <div x-show="selected.length > 0" class="sticky top-0 z-10 flex items-center justify-between bg-popover px-3 py-2">
                         <span class="text-xs text-muted-foreground"><span x-text="selected.length"></span> selected</span>
-                        <button type="button" @click.stop="selected = []; $dispatch('change')" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                        <button type="button" @click.stop="_clear()" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                     </div>
                     <div class="flex flex-col">
                         {% for level in knowledge_filters.experience_levels %}
                         <label class="flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-muted" :class="{ 'order-first bg-muted': selected.includes('{{ level.display|escapejs }}') }" @click.stop>
                             <input type="checkbox" name="experience" value="{{ level.display }}"
                                 :checked="selected.includes('{{ level.display|escapejs }}')"
-                                @change="selected.includes('{{ level.display|escapejs }}') ? selected = selected.filter(x => x !== '{{ level.display|escapejs }}') : selected.push('{{ level.display|escapejs }}')"
+                                @change="_toggle('{{ level.display|escapejs }}')"
                                 class="checkbox">
                             <span class="text-sm text-foreground">{{ level.display }}</span>
                         </label>
@@ -333,24 +335,24 @@
             </div>
 
             <!-- Education -->
-            <div x-data="{ open: false, selected: [] }" x-init="selected = JSON.parse(document.getElementById('job-filter-education').textContent) || []" class="md:relative">
+            {% csp_component %}<div x-data="{ open: false, selected: [] }" x-init="selected = JSON.parse(document.getElementById('job-filter-education').textContent) || []" class="md:relative">{% endcsp_component %}
                 <label for="filter-education" class="sr-only">Education</label>
                 <button id="filter-education" type="button" :aria-expanded="open.toString()" aria-controls="options-education" @keydown.escape="open = false" @click="open = !open"
                     class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': selected.length }">
                     <span class="truncate" x-text="selected.length ? 'Education · ' + selected.length : 'Education'">Education</span>
                     <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
                 </button>
-                <div id="options-education" @keydown.escape="open = false; document.getElementById('filter-education').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-60">
+                <div id="options-education" @keydown.escape="_close('filter-education')" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 max-h-80 overflow-y-auto overscroll-contain rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-60">
                     <div x-show="selected.length > 0" class="sticky top-0 z-10 flex items-center justify-between bg-popover px-3 py-2">
                         <span class="text-xs text-muted-foreground"><span x-text="selected.length"></span> selected</span>
-                        <button type="button" @click.stop="selected = []; $dispatch('change')" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
+                        <button type="button" @click.stop="_clear()" class="text-xs font-medium text-foreground underline decoration-border hover:decoration-foreground">Clear</button>
                     </div>
                     <div class="flex flex-col">
                         {% for level in knowledge_filters.education_levels %}
                         <label class="flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-muted" :class="{ 'order-first bg-muted': selected.includes('{{ level.display|escapejs }}') }" @click.stop>
                             <input type="checkbox" name="education" value="{{ level.display }}"
                                 :checked="selected.includes('{{ level.display|escapejs }}')"
-                                @change="selected.includes('{{ level.display|escapejs }}') ? selected = selected.filter(x => x !== '{{ level.display|escapejs }}') : selected.push('{{ level.display|escapejs }}')"
+                                @change="_toggle('{{ level.display|escapejs }}')"
                                 class="checkbox">
                             <span class="text-sm text-foreground">{{ level.display }}</span>
                         </label>
@@ -360,7 +362,7 @@
             </div>
 
             <!-- Date posted -->
-            <div x-data="{ open: false, selected: '{{ filters.posted|default:'' }}' }" class="md:relative">
+            {% csp_component %}<div x-data="{ open: false, selected: '{{ filters.posted|default:'' }}' }" class="md:relative">{% endcsp_component %}
                 <label for="filter-posted" class="sr-only">Date posted</label>
                 <input type="hidden" name="posted" :value="selected">
                 <button id="filter-posted" type="button" :aria-expanded="open.toString()" aria-controls="options-posted" @keydown.escape="open = false" @click="open = !open"
@@ -373,13 +375,13 @@
                     }[selected] || 'Date posted' : 'Date posted'">Date posted</span>
                     <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
                 </button>
-                <div id="options-posted" @keydown.escape="open = false; document.getElementById('filter-posted').focus()" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-56">
+                <div id="options-posted" @keydown.escape="_close('filter-posted')" x-cloak x-show="open" @click.outside="open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-56">
                     <div class="flex flex-col">
-                        <button type="button" @click="selected = ''; open = false; $dispatch('change')" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': !selected }">Any time</button>
-                        <button type="button" @click="selected = '7'; open = false; $dispatch('change')" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '7' }">Less than 1 week</button>
-                        <button type="button" @click="selected = '14'; open = false; $dispatch('change')" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '14' }">1-2 weeks</button>
-                        <button type="button" @click="selected = '28'; open = false; $dispatch('change')" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '28' }">2-4 weeks</button>
-                        <button type="button" @click="selected = '29'; open = false; $dispatch('change')" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '29' }">More than 4 weeks</button>
+                        <button type="button" @click="_posted('')" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': !selected }">Any time</button>
+                        <button type="button" @click="_posted('7')" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '7' }">Less than 1 week</button>
+                        <button type="button" @click="_posted('14')" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '14' }">1-2 weeks</button>
+                        <button type="button" @click="_posted('28')" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '28' }">2-4 weeks</button>
+                        <button type="button" @click="_posted('29')" class="rounded-xl px-3 py-2 text-left text-sm text-foreground hover:bg-muted" :class="{ 'bg-muted font-medium': selected === '29' }">More than 4 weeks</button>
                     </div>
                 </div>
             </div>
@@ -429,14 +431,14 @@
                     border: none;
                 }
             </style>
-            <div x-data="salarySlider({{ filters.salary_min|default:'0' }}, {{ filters.salary_max|default:'1000000' }})" class="md:relative"
-                 @pointerdown.window="pressedInside = $refs.salaryPanel.contains($event.target)">
+            {% csp_component %}<div x-data="salarySlider({{ filters.salary_min|default:'0' }}, {{ filters.salary_max|default:'1000000' }})" class="md:relative"
+                 @pointerdown.window="pressedInside = $refs.salaryPanel.contains($event.target)">{% endcsp_component %}
                 <button id="filter-salary" type="button" :aria-expanded="open.toString()" aria-controls="options-salary" @keydown.escape="open = false" @click="open = !open"
                     class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': isActive() }">
                     <span class="truncate tabular-nums" x-text="isActive() ? rangeLabel() : 'Salary'">Salary</span>
                     <svg class="h-3.5 w-3.5 shrink-0 opacity-60 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7"/></svg>
                 </button>
-                <div id="options-salary" x-ref="salaryPanel" @keydown.escape="open = false; document.getElementById('filter-salary').focus()" x-cloak x-show="open" @click.outside="if (!pressedInside) open = false" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 rounded-2xl bg-popover p-4 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-80">
+                <div id="options-salary" x-ref="salaryPanel" @keydown.escape="_close('filter-salary')" x-cloak x-show="open" @click.outside="_outside()" x-transition.opacity class="absolute inset-x-0 z-[100] mt-2 rounded-2xl bg-popover p-4 text-popover-foreground shadow-lift md:inset-x-auto md:left-0 md:w-80">
                     <div class="salary-slider px-2.5">
                         <div class="mb-1 flex items-center justify-between gap-2">
                             <span class="text-sm font-medium text-foreground">Salary range</span>
@@ -455,9 +457,9 @@
 
                             <!-- Hidden native range inputs that drive the values -->
                             <input aria-label="Minimum annual salary in USD" :aria-valuetext="formatLabel(loVal)" class="range-input" type="range" min="0" max="1000" :value="loPos" style="z-index: 31;"
-                                   @input="loPos = +$event.target.value; if(loPos > hiPos) loPos = hiPos; updateVals()">
+                                   @input="_setLo($event)">
                             <input aria-label="Maximum annual salary in USD" :aria-valuetext="formatLabel(hiVal)" class="range-input" type="range" min="0" max="1000" :value="hiPos" style="z-index: 32;"
-                                   @input="hiPos = +$event.target.value; if(hiPos < loPos) hiPos = loPos; updateVals()">
+                                   @input="_setHi($event)">
                             <!-- Click/drag overlay -->
                             <div class="absolute inset-0 cursor-pointer" @pointerdown.prevent="startDrag($event)"></div>
                         </div>
@@ -470,7 +472,7 @@
                     </div>
                 </div>
             </div>
-            <script>
+            {% csp_script %}<script>
             function salarySlider(initLo, initHi) {
                 var MAX = 1000000;
                 function valToPos(v) {
@@ -548,7 +550,7 @@
                     }
                 };
             }
-            </script>
+            </script>{% endcsp_script %}
 
             <!-- Apply directly toggle chip (only while some role takes applications here) -->
             {% if has_direct_apply %}
@@ -657,7 +659,7 @@
         <a href="{% if show_job_scout_nudge %}{{ job_scout_nudge_url }}{% else %}{% url 'jobs:job_alerts' %}{% endif %}" class="btn btn-outline btn-sm w-full shrink-0 sm:w-auto" data-track="job_scout_job_list_footer" data-track-category="job_scout_acquisition">Set up Job Scout</a>
     </div>
 </div>
-<script>
+{% csp_script %}<script>
 (function () {
     // What each results list showed and which result was clicked, for measuring ranking. No personal data.
     if (!navigator.sendBeacon || window.__rankBeacon) return;
@@ -683,14 +685,14 @@
         send({t: 'click', k: area.dataset.rankKey, j: +row.dataset.rankJob, p: rows.indexOf(row) + 1});
     });
 })();
-</script>
+</script>{% endcsp_script %}
 
 <div class="container">{% include "jobs/partials/roundup_invite.html" with roundup_source="job_search" %}</div>
 {% endblock %}
 
 
 {% block extra_js %}
-<script id="job-list-live-script">
+{% csp_script %}<script id="job-list-live-script">
     // Filter toggle for mobile
     const filterToggleBtn = document.getElementById('filter-toggle-btn');
     const filtersSection = document.getElementById('filters-section');
@@ -831,5 +833,5 @@
         });
         if (area.dataset.personalizationPending === 'true') refresh({ initial: true });
     })();
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

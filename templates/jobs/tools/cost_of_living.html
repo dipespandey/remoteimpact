@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 
 {% block title %}Cost of Living Comparison Calculator | Remote Workers{% endblock %}
 
@@ -181,7 +183,7 @@
 
 </div>
 
-<script>
+{% csp_script %}<script>
 (function(){
   // City data: [name, overall, rent, groceries, restaurants, transport, utilities]
   // Index 100 = New York City baseline
@@ -366,5 +368,5 @@
     results.scrollIntoView({behavior:"smooth",block:"start"});
   }
 })();
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

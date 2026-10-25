@@ -8,9 +8,9 @@ const copy = (source, target) => {
   copyFileSync(resolve('node_modules', source), dest);
 };
 
-for (const [pkg, source] of [['alpinejs', 'dist/cdn.min.js'], ['htmx.org', 'dist/htmx.min.js']]) {
+for (const [pkg, source] of [['@alpinejs/csp', 'dist/cdn.min.js'], ['htmx.org', 'dist/htmx.min.js']]) {
   const metadata = JSON.parse(readFileSync(resolve('node_modules', pkg, 'package.json')));
-  const name = pkg === 'alpinejs' ? 'alpine' : 'htmx';
+  const name = pkg === '@alpinejs/csp' ? 'alpine' : 'htmx';
   copy(`${pkg}/${source}`, `vendor/${name}-${metadata.version}.min.js`);
 }
 copy('htmx.org/LICENSE', 'vendor/htmx-LICENSE.txt');

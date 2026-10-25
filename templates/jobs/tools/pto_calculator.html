@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 {% load static %}
 
 {% block title %}Free PTO Calculator &amp; Work Days Counter | How Many Work Days Left?{% endblock %}
@@ -50,7 +52,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="container py-8 sm:py-10"
+{% csp_component %}<div class="container py-8 sm:py-10"
   x-data="{
     tab: 'workdays',
 
@@ -174,7 +176,7 @@
       return Math.max(0, wd - 1);
     },
     get du_weeks() { return (this.du_calendarDays / 7).toFixed(1); }
-  }">
+  }">{% endcsp_component %}
 
   <header class="max-w-3xl">
     <h1 class="page-title">PTO and work days calculator</h1>

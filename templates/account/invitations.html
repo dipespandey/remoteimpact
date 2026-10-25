@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load csp %}
+
 {% load job_extras %}
 
 {% block title %}Talent Invitations - Remote Impact{% endblock %}
@@ -47,7 +49,7 @@
                         {% csrf_token %}
                         <button type="submit"
                                 class="btn btn-ghost btn-sm text-muted-foreground hover:bg-red-50 hover:text-destructive"
-                                onclick="return confirm('Decline this invitation?')">
+                                {% csp_handler "onclick" %}return confirm('Decline this invitation?'){% endcsp_handler %}>
                             Decline
                         </button>
                     </form>

@@ -1,3 +1,5 @@
+
+{% load csp %}
 <!-- Step 5: Skills -->
 <div>
     <div class="mb-6">
@@ -38,7 +40,7 @@
                                value="{{ slug }}"
                                {% if slug in selected_skills %}checked{% endif %}
                                class="skill-checkbox peer sr-only"
-                               onchange="updateSkillCount()">
+                               {% csp_handler "onchange" %}updateSkillCount(){% endcsp_handler %}>
                         <span class="inline-block rounded-full bg-muted px-3 py-1.5 text-xs text-foreground transition hover:bg-accent peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
                             {{ label }}
                         </span>
@@ -71,7 +73,7 @@
     </form>
 </div>
 
-<script>
+{% csp_script %}<script>
 function updateSkillCount() {
     var count = document.querySelectorAll('.skill-checkbox:checked').length;
     var countNum = document.getElementById('count-number');
@@ -100,4 +102,4 @@ function updateSkillCount() {
     }
     updateSkillCount();
 })();
-</script>
+</script>{% endcsp_script %}

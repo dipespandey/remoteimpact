@@ -33,3 +33,19 @@ owner's explicit approval. Their services must remain disabled until they have a
 separate host and a reviewed privilege boundary. A missing
 `/etc/remoteimpact/genpilot-isolated-approved` marker prevents accidental starts;
 do not create it merely to bypass this isolation requirement.
+
+`ensure_active.py` is installed as `/usr/local/sbin/ri-ensure-active` and called
+after Docker starts by a systemd drop-in. It only starts the recorded database,
+cache and active immutable release when stopped, then checks backend health. It
+never rebuilds containers, changes the proxy, runs migrations or selects a release
+while a pending cutover exists. Retained rollback containers remain stopped.
+
+Public JavaScript uses Alpine's CSP build. Executable template blocks and native
+event handlers are explicitly marked with `csp_script` and `csp_handler`; component
+factories use `csp_component` and register through Alpine.data. Middleware verifies
+server signatures before adding content hashes. Cached HTML authorization is bound
+to exact script contents. Repository-authored static fragment handlers are included
+in the initial policy for HTMX. JSON data blocks are not executable script blocks.
+New dynamic fragment code must be loaded through an allowed first-party script or
+included in the initial document policy. Do not authorize arbitrary rendered HTML
+or restore unsafe-inline/unsafe-eval to fix a missing template annotation.

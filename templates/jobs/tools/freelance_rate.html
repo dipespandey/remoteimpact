@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 {% load static %}
 
 {% block title %}Free Freelance Rate Calculator | Set Your Remote Consulting Rate{% endblock %}
@@ -6,7 +8,7 @@
 {% block meta_description %}Free freelance rate calculator. Work out the hourly, daily and monthly rate you need from your target income, business expenses, days off and tax rate. For remote consultants and independent professionals.{% endblock %}
 
 {% block content %}
-<div class="container py-8 sm:py-10"
+{% csp_component %}<div class="container py-8 sm:py-10"
   x-data="{
     income: 80000,
     expenses: 10000,
@@ -40,7 +42,7 @@
     rateInRange(min, max) {
       return this.hourlyRate >= min && this.hourlyRate <= max;
     }
-  }">
+  }">{% endcsp_component %}
 
   <nav aria-label="Breadcrumb" class="!border-b-0">
     <ol class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
@@ -165,17 +167,17 @@
           <li class="flex items-center gap-2">
             <span class="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-foreground" aria-hidden="true"></span>
             <span class="text-muted-foreground">Take-home</span>
-            <span class="ml-auto font-semibold tabular-nums text-foreground"><span x-text="fmt(income)"></span> <span class="font-normal text-muted-foreground">(<span x-text="Math.round(incomePercent)"></span>%)</span></span>
+            <span class="ml-auto font-semibold tabular-nums text-foreground"><span x-text="fmt(income)"></span> <span class="font-normal text-muted-foreground">(<span x-text="_round(incomePercent)"></span>%)</span></span>
           </li>
           <li class="flex items-center gap-2">
             <span class="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-foreground/45" aria-hidden="true"></span>
             <span class="text-muted-foreground">Taxes</span>
-            <span class="ml-auto font-semibold tabular-nums text-foreground"><span x-text="fmt(taxAmount)"></span> <span class="font-normal text-muted-foreground">(<span x-text="Math.round(taxPercent)"></span>%)</span></span>
+            <span class="ml-auto font-semibold tabular-nums text-foreground"><span x-text="fmt(taxAmount)"></span> <span class="font-normal text-muted-foreground">(<span x-text="_round(taxPercent)"></span>%)</span></span>
           </li>
           <li class="flex items-center gap-2">
             <span class="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-foreground/20" aria-hidden="true"></span>
             <span class="text-muted-foreground">Expenses</span>
-            <span class="ml-auto font-semibold tabular-nums text-foreground"><span x-text="fmt(expenses)"></span> <span class="font-normal text-muted-foreground">(<span x-text="Math.round(expensePercent)"></span>%)</span></span>
+            <span class="ml-auto font-semibold tabular-nums text-foreground"><span x-text="fmt(expenses)"></span> <span class="font-normal text-muted-foreground">(<span x-text="_round(expensePercent)"></span>%)</span></span>
           </li>
         </ul>
       </div>

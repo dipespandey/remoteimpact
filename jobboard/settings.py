@@ -112,6 +112,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "jobs.security.TrustedProxyMiddleware",
     "django.middleware.gzip.GZipMiddleware",
+    "jobs.middleware.SecurityHeadersMiddleware",
     "jobs.middleware.MarkdownResponseMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve static files in production
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -126,7 +127,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "jobs.middleware.SocialLoginNetworkErrorMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "jobs.middleware.SecurityHeadersMiddleware",
     "jobs.middleware.ReferralMiddleware",
     "jobs.middleware.AcquisitionAttributionMiddleware",
     "jobs.middleware.CloudflareEdgeCacheMiddleware",  # Edge caching for global perf

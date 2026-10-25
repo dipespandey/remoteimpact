@@ -1,5 +1,7 @@
+
+{% load csp %}
 {% load static job_extras %}
-<div class="hiring-shell" x-data="{ menuOpen: false }">
+{% csp_component %}<div class="hiring-shell" x-data="{ menuOpen: false }">{% endcsp_component %}
     <aside class="hiring-sidebar" aria-label="Hiring workspace">
         <div class="flex items-center justify-between gap-3">
             <a href="{% url 'jobs:account' %}" class="flex items-center gap-2.5 font-semibold tracking-tight">

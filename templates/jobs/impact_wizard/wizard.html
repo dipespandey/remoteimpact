@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load csp %}
+
 
 {% block title %}Build Your Impact Profile - Remote Impact{% endblock %}
 
@@ -41,11 +43,11 @@
 
 </div>
 
-<script>
+{% csp_script %}<script>
 document.addEventListener('htmx:afterSwap', function(event) {
     if (event.detail.target.id === 'wizard-content') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 });
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

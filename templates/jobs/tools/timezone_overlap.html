@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 
 {% block title %}Time Zone Overlap Finder – Free Tool for Remote Teams | Remote Impact{% endblock %}
 {% block meta_description %}Find overlapping working hours across 2–4 time zones. Free visual tool for remote teams to pick meeting times that fall inside everyone's working day.{% endblock %}
@@ -19,7 +21,7 @@
       <template x-for="(tz, i) in selected" :key="i">
         <div class="min-w-0">
           <label class="label flex items-center gap-2" :for="'tz-select-' + i">
-            <span class="inline-block h-2.5 w-2.5 shrink-0 rounded-full" :style="`background:${colors[i]}`" aria-hidden="true"></span>
+            <span class="inline-block h-2.5 w-2.5 shrink-0 rounded-full" :style="'background:' + colors[i]" aria-hidden="true"></span>
             <span x-text="'Time zone ' + (i + 1)"></span>
           </label>
           <select x-model="selected[i]" :id="'tz-select-' + i" class="select bg-card">
@@ -77,7 +79,7 @@
           <template x-for="(tz, i) in activeZones()" :key="'row-'+i">
             <div class="grid border-t border-border" style="grid-template-columns: 140px repeat(24, 1fr);">
               <div class="flex min-w-0 items-center gap-1.5 px-2 text-xs text-foreground">
-                <span class="inline-block h-2.5 w-2.5 shrink-0 rounded-full" :style="`background:${tz.color}`" aria-hidden="true"></span>
+                <span class="inline-block h-2.5 w-2.5 shrink-0 rounded-full" :style="'background:' + tz.color" aria-hidden="true"></span>
                 <span x-text="zoneName(tz.value)" class="truncate"></span>
               </div>
               <template x-for="h in 24" :key="'c-'+i+'-'+(h-1)">
@@ -131,7 +133,7 @@
         <template x-for="tz in activeZones()" :key="'ct-'+tz.value">
           <li class="min-w-0 rounded-xl bg-muted px-3 py-2 text-sm">
             <span class="flex items-center gap-1.5">
-              <span class="inline-block h-2.5 w-2.5 shrink-0 rounded-full" :style="`background:${tz.color}`" aria-hidden="true"></span>
+              <span class="inline-block h-2.5 w-2.5 shrink-0 rounded-full" :style="'background:' + tz.color" aria-hidden="true"></span>
               <span class="truncate font-medium text-foreground" x-text="zoneName(tz.value)"></span>
             </span>
             <span class="block tabular-nums text-muted-foreground" x-text="liveTime(tz.value)"></span>
@@ -158,7 +160,7 @@
   </section>
 
   <!-- FAQ -->
-  <section class="mt-12 max-w-3xl" x-data="{ openFaq: null }">
+  {% csp_component %}<section class="mt-12 max-w-3xl" x-data="{ openFaq: null }">{% endcsp_component %}
     <h2 class="section-title">Questions</h2>
     <div class="surface mt-4 p-1.5">
       <template x-for="(faq, idx) in faqs" :key="idx">
@@ -228,7 +230,7 @@
 }
 </script>
 
-<script>
+{% csp_script %}<script>
 document.addEventListener('alpine:init', () => {
   Alpine.data('tzOverlap', () => ({
     tick: Date.now(),
@@ -344,5 +346,5 @@ document.addEventListener('alpine:init', () => {
     },
   }));
 });
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

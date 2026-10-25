@@ -1,17 +1,19 @@
 {% extends "base.html" %}
+{% load csp %}
+
 
 {% block title %}All Impact Domains | Remote Impact{% endblock %}
 
 {% block meta_description %}Explore 30+ impact domains from climate action to AI safety. Find remote jobs aligned with causes you care about — sustainability, social equity, public health, and more.{% endblock %}
 
 {% block content %}
-<div class="page" x-data="{ q: '{{ search_query|default:''|escapejs }}' }">
+{% csp_component %}<div class="page" x-data="{ q: '{{ search_query|default:''|escapejs }}' }">{% endcsp_component %}
     <header class="page-header">
         <h1 class="page-title">Impact areas</h1>
         <p class="page-lede">Every cause area we list remote jobs for, from climate to global health. Pick one to see its open roles.</p>
     </header>
 
-    <form class="max-w-2xl" role="search" onsubmit="event.preventDefault()">
+    <form class="max-w-2xl" role="search" {% csp_handler "onsubmit" %}event.preventDefault(){% endcsp_handler %}>
         <label for="domain-search" class="sr-only">Filter impact areas</label>
         <div class="relative">
             <svg class="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg>

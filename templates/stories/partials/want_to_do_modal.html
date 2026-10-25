@@ -1,8 +1,10 @@
+
+{% load csp %}
 {% load job_extras %}
 <div class="p-6">
     <div class="flex items-start justify-between gap-4">
         <h2 class="section-title">Ways to move toward this work</h2>
-        <button type="button" onclick="document.getElementById('modal-container').classList.add('hidden')"
+        <button type="button" {% csp_handler "onclick" %}document.getElementById('modal-container').classList.add('hidden'){% endcsp_handler %}
                 class="-mr-2 -mt-1 inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Close">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18 18 6M6 6l12 12"/></svg>
         </button>
@@ -16,7 +18,7 @@
             <li>
                 <a href="{{ job.get_absolute_url }}"
                    class="block rounded-xl bg-muted px-3.5 py-3 transition-colors hover:bg-accent"
-                   onclick="document.getElementById('modal-container').classList.add('hidden')">
+                   {% csp_handler "onclick" %}document.getElementById('modal-container').classList.add('hidden'){% endcsp_handler %}>
                     <span class="block text-sm font-medium text-foreground">{{ job.title|display_title }}</span>
                     <span class="block text-xs text-muted-foreground">{{ job.organization.name }}{% if job.location %} &middot; {{ job.location }}{% endif %}</span>
                 </a>
@@ -34,7 +36,7 @@
             <li>
                 <a href="{% url 'jobs:sprint_detail' sprint.id %}"
                    class="block rounded-xl bg-muted px-3.5 py-3 transition-colors hover:bg-accent"
-                   onclick="document.getElementById('modal-container').classList.add('hidden')">
+                   {% csp_handler "onclick" %}document.getElementById('modal-container').classList.add('hidden'){% endcsp_handler %}>
                     <span class="flex items-baseline justify-between gap-3">
                         <span class="text-sm font-medium text-foreground">{{ sprint.title }}</span>
                         <span class="shrink-0 text-xs tabular-nums text-muted-foreground">{{ sprint.time_estimate_minutes }} min</span>
@@ -55,7 +57,7 @@
             <li>
                 <a href="{% url 'jobs:story_detail' s.id %}"
                    class="block rounded-xl px-3.5 py-3 transition-colors hover:bg-muted"
-                   onclick="document.getElementById('modal-container').classList.add('hidden')">
+                   {% csp_handler "onclick" %}document.getElementById('modal-container').classList.add('hidden'){% endcsp_handler %}>
                     <span class="line-clamp-2 block text-sm text-foreground">&ldquo;{{ s.content|truncatewords:20 }}&rdquo;</span>
                     <span class="mt-1 block text-xs text-muted-foreground">{{ s.author_name }} &middot; {{ s.organization.name }}</span>
                 </a>

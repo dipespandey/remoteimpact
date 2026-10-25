@@ -1,6 +1,8 @@
+
+{% load csp %}
 <!-- Login Popup Content -->
 <div class="p-6 text-left sm:p-8">
-    <button type="button" onclick="dismissLoginPopup()"
+    <button type="button" {% csp_handler "onclick" %}dismissLoginPopup(){% endcsp_handler %}
             class="btn btn-ghost btn-sm absolute right-3 top-3 px-2 text-muted-foreground"
             aria-label="Close popup">
         <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
@@ -50,6 +52,6 @@
                class="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground"
                data-track="login_popup_signin_click" data-track-category="conversion">Sign in</a>
         </p>
-        <button type="button" onclick="dismissLoginPopup()" class="btn btn-ghost btn-sm">Not now</button>
+        <button type="button" {% csp_handler "onclick" %}dismissLoginPopup(){% endcsp_handler %} class="btn btn-ghost btn-sm">Not now</button>
     </div>
 </div>

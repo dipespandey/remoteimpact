@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 
 {% block title %}Free Resignation Letter Generator | Remote Impact{% endblock %}
 
@@ -66,7 +68,7 @@
       </div>
 
       <div class="mt-6 flex flex-row-reverse flex-wrap items-center justify-between gap-3">
-        <button type="button" onclick="generateLetter()" class="btn btn-primary group" id="generate-btn">
+        <button type="button" {% csp_handler "onclick" %}generateLetter(){% endcsp_handler %} class="btn btn-primary group" id="generate-btn">
           <span class="hidden h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent group-disabled:inline-block" aria-hidden="true"></span>
           <span class="group-disabled:hidden">Generate letter</span>
           <span class="hidden group-disabled:inline">Writing your letter…</span>
@@ -80,8 +82,8 @@
       <div class="flex flex-wrap items-center justify-between gap-3">
         <h2 id="rl-output-title" class="text-sm font-medium text-muted-foreground">Your letter</h2>
         <div class="flex gap-2">
-          <button type="button" onclick="copyLetter()" class="btn btn-ghost btn-sm" id="copy-btn">Copy</button>
-          <button type="button" onclick="downloadLetter()" class="btn btn-ghost btn-sm">Download .txt</button>
+          <button type="button" {% csp_handler "onclick" %}copyLetter(){% endcsp_handler %} class="btn btn-ghost btn-sm" id="copy-btn">Copy</button>
+          <button type="button" {% csp_handler "onclick" %}downloadLetter(){% endcsp_handler %} class="btn btn-ghost btn-sm">Download .txt</button>
         </div>
       </div>
       <div class="relative mt-4">
@@ -96,14 +98,14 @@
 
   <!-- Rate limit modal -->
   <div id="limit-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="limit-modal-title">
-    <div class="absolute inset-0 bg-foreground/25 backdrop-blur-sm" onclick="document.getElementById('limit-modal').classList.add('hidden')"></div>
+    <div class="absolute inset-0 bg-foreground/25 backdrop-blur-sm" {% csp_handler "onclick" %}document.getElementById('limit-modal').classList.add('hidden'){% endcsp_handler %}></div>
     <div class="relative mx-auto mt-24 max-w-md px-4">
       <div class="card space-y-4 p-6">
         <h2 id="limit-modal-title" class="card-title">Free limit reached</h2>
         <p class="text-sm text-muted-foreground">You've used your 3 free letters. Create a free account to keep writing.</p>
         <div class="flex flex-col gap-2 sm:flex-row-reverse sm:justify-start">
           <a href="{% url 'account_signup' %}?next={{ request.path }}" class="btn btn-primary">Create free account</a>
-          <button type="button" onclick="document.getElementById('limit-modal').classList.add('hidden')" class="btn btn-ghost">Maybe later</button>
+          <button type="button" {% csp_handler "onclick" %}document.getElementById('limit-modal').classList.add('hidden'){% endcsp_handler %} class="btn btn-ghost">Maybe later</button>
         </div>
       </div>
     </div>
@@ -162,7 +164,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+{% csp_script %}<script>
 const GENERATE_URL = "{% url 'jobs:resignation_letter_generate' %}";
 const RATE_LIMIT_KEY = 'rl_gen_count';
 
@@ -276,5 +278,5 @@ function downloadLetter() {
   if (r <= 0) document.getElementById('rl-usage').textContent = 'Free limit reached — sign up to continue';
 })();
 {% endif %}
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

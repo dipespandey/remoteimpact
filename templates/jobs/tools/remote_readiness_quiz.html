@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load csp %}
+
 
 {% block title %}Am I Ready for Remote Work? Free Quiz | Remote Work Readiness Assessment{% endblock %}
 
@@ -58,7 +60,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="container py-8 sm:py-10"
+{% csp_component %}<div class="container py-8 sm:py-10"
   x-data="{
     step: 0,
     answers: {},
@@ -271,7 +273,7 @@
       return Math.round((Object.keys(this.answers).length / this.questions.length) * 100);
     }
   }"
->
+>{% endcsp_component %}
   <nav aria-label="Breadcrumb" class="!border-b-0">
     <ol class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
       <li><a href="{% url 'jobs:resources' %}" class="hover:text-foreground hover:underline">Resources</a></li>
@@ -322,7 +324,7 @@
                 <div class="flex items-start gap-3">
                   <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-medium transition-colors"
                         :class="answers[q.id] === opt.score ? 'bg-background/15 text-background' : 'bg-card text-muted-foreground'"
-                        x-text="String.fromCharCode(65 + oi)"></span>
+                        x-text="'ABCD'[oi]"></span>
                   <span class="min-w-0 text-sm sm:text-base" x-text="opt.text"></span>
                 </div>
               </button>

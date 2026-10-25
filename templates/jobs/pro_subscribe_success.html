@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load csp %}
+
 
 {% block title %}Remote Impact Pro is active{% endblock %}
 
@@ -17,7 +19,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+{% csp_script %}<script>
 (function () {
     if (typeof gtag !== 'function') return;
     const sessionId = '{{ request.GET.session_id|default:""|escapejs }}';
@@ -31,5 +33,5 @@
         sessionStorage.setItem(key, '1');
     }
 })();
-</script>
+</script>{% endcsp_script %}
 {% endblock %}

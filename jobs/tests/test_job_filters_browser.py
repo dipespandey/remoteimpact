@@ -4,7 +4,8 @@ import os
 from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch
-from urllib.parse import urlencode
+from urllib.parse import urlencode, parse_qs, urlsplit
+from playwright.sync_api import expect
 
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.core.cache import cache
@@ -49,18 +50,19 @@ class JobFiltersBrowserTests(StaticLiveServerTestCase):
         b = p.chromium.launch(headless=True, executable_path=os.environ.get('PLAYWRIGHT_CHROMIUM_EXECUTABLE', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'))
         ctx = b.new_context(viewport={'width':width, 'height':900})
         ctx.route('**/*', lambda r:r.continue_() if r.request.url.startswith(self.live_server_url) else r.abort())
-        return b, ctx, ctx.new_page()
+        page = ctx.new_page()
+        return b, ctx, page
 
     def open(self, page, query=''):
         page.goto(self.live_server_url+'/jobs/'+('?' + query if query else ''))
-        page.wait_for_function('window.Alpine && document.querySelector("#filter-areas").getAttribute("aria-expanded") === "false"')
+        expect(page.locator('#options-areas')).not_to_have_attribute('x-cloak', '')
         if page.locator('#filter-toggle-btn').is_visible():
             page.locator('#filter-toggle-btn').click()
 
     def assert_rows(self, page, expected, case, param=None, value=None):
         if param:
-            page.wait_for_function('([k,v]) => new URLSearchParams(location.search).getAll(k).includes(v)', arg=[param, value], timeout=10000)
-        page.wait_for_function('document.querySelector("#job-results-area")?.getAttribute("aria-busy") === "false"')
+            page.wait_for_url(lambda url: value in parse_qs(urlsplit(url).query).get(param, []), timeout=10000)
+        expect(page.locator('#job-results-area')).to_have_attribute('aria-busy', 'false')
         actual = [int(x) for x in page.locator('#job-results-area [data-rank-job]').evaluate_all('(els) => els.map(e=>e.dataset.rankJob)')]
         expected = sorted(expected)
         self.assertEqual(sorted(actual), expected, case)
@@ -117,7 +119,7 @@ class JobFiltersBrowserTests(StaticLiveServerTestCase):
                 self.assert_rows(page,all_ids,'skill search preserves earlier selection','skill','sql')
                 self.assertEqual(sorted(page.locator('#options-skills input[name="skill"]:checked').evaluate_all('(es)=>es.map(e=>e.value)')),['python','sql'])
                 page.locator('#options-skills').get_by_role('button',name='Clear',exact=True).click()
-                page.wait_for_function('!new URLSearchParams(location.search).has("skill")')
+                page.wait_for_url(lambda url: 'skill' not in parse_qs(urlsplit(url).query))
                 self.assert_rows(page,all_ids,'per-filter clear')
                 self.open(page);page.locator('#job-search').fill('Matrix role 00')
                 self.assert_rows(page,[self.rows[0]['pk']],'keyword debounce','q','Matrix role 00')
@@ -144,7 +146,7 @@ class JobFiltersBrowserTests(StaticLiveServerTestCase):
                 self.assert_rows(page,expected,'salary upper bound','salary_max','100000')
                 self.open(page,'posted=7');page.locator('#filter-posted').click()
                 page.locator('#options-posted').get_by_role('button',name='Any time',exact=True).click()
-                page.wait_for_function('!new URLSearchParams(location.search).has("posted")')
+                page.wait_for_url(lambda url: 'posted' not in parse_qs(urlsplit(url).query))
                 self.assert_rows(page,all_ids,'date reset')
                 browser.close()
         (self.folder/'visible-filter-results.json').write_text(json.dumps(self.proofs,indent=2)+'\n')
@@ -178,8 +180,8 @@ class JobFiltersBrowserTests(StaticLiveServerTestCase):
             for sort in ['salary-high','salary-low','date']:
                 self.open(page,'has_salary=1')
                 page.locator('#sort-select').select_option(sort)
-                page.wait_for_function('(s)=>new URLSearchParams(location.search).get("sort")===s',arg=sort)
-                page.wait_for_function('document.querySelector("#job-results-area").getAttribute("aria-busy")==="false"')
+                page.wait_for_url(lambda url: parse_qs(urlsplit(url).query).get('sort') == [sort])
+                expect(page.locator('#job-results-area')).to_have_attribute('aria-busy', 'false')
                 ids=[int(v) for v in page.locator('[data-rank-job]').evaluate_all('(es)=>es.map(e=>e.dataset.rankJob)')]
                 self.assertEqual(len(ids),11)
                 if sort.startswith('salary'):
@@ -194,12 +196,11 @@ class JobFiltersBrowserTests(StaticLiveServerTestCase):
             cache.clear();self.open(page,'q=Paging&sort=date')
             first=page.locator('[data-rank-job]').evaluate_all('(es)=>es.map(e=>e.dataset.rankJob)');self.assertEqual(len(first),20)
             page.get_by_role('link',name='Next',exact=True).click()
-            from playwright.sync_api import expect
             expect(page.locator('[data-rank-job]')).to_have_count(4)
             second=page.locator('[data-rank-job]').evaluate_all('(es)=>es.map(e=>e.dataset.rankJob)');self.assertEqual(len(second),4)
             self.assertFalse(set(first)&set(second));self.assertIn('q=Paging',page.url);self.assertIn('sort=date',page.url)
             self.select(page,'areas','category','climate')
-            page.wait_for_function('new URLSearchParams(location.search).has("category") && !new URLSearchParams(location.search).has("page")')
+            page.wait_for_url(lambda url: 'category' in parse_qs(urlsplit(url).query) and 'page' not in parse_qs(urlsplit(url).query))
             self.assertEqual(page.locator('[data-rank-job]').count(),20)
             self.open(page,'q=Matrix')
             page.locator('#sort-select').select_option('relevance')
@@ -219,11 +220,11 @@ class JobFiltersBrowserTests(StaticLiveServerTestCase):
             button=page.locator('#save-job-btn')
             save_url=button.get_attribute('data-url')
             page.route('**'+save_url,lambda r:r.fulfill(status=500,body='temporary failure'))
-            button.click();page.wait_for_function('!document.querySelector("#save-job-btn").disabled')
+            button.click();expect(page.locator('#save-job-btn')).to_be_enabled()
             self.assertEqual(page.evaluate('window.saveEvents'),[])
             page.unroute('**'+save_url)
-            button.click();page.wait_for_function('document.querySelector("#save-job-btn").dataset.saved==="true"')
-            button.click();page.wait_for_function('document.querySelector("#save-job-btn").dataset.saved==="false"')
+            button.click();expect(page.locator('#save-job-btn')).to_have_attribute('data-saved', 'true')
+            button.click();expect(page.locator('#save-job-btn')).to_have_attribute('data-saved', 'false')
             self.assertEqual(page.evaluate('window.saveEvents.map(e=>e[1])'),['save_job','unsave_job'])
             browser.close()
         (self.folder/'additional-filter-results.json').write_text(json.dumps(self.proofs,indent=2)+'\n')

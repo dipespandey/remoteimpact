@@ -1,3 +1,5 @@
+
+{% load csp %}
 {% load humanize %}<!doctype html>
 <html lang="en">
 <head>
@@ -128,7 +130,7 @@
   {% if page.has_other_pages %}<nav class="pagination" aria-label="Prospect pages"><div>{% if page.has_previous %}<a class="btn" href="?{{ page_query }}&page={{ page.previous_page_number }}">Previous</a>{% endif %}</div><span class="sub">Page {{ page.number }} of {{ page.paginator.num_pages }}</span><div>{% if page.has_next %}<a class="btn" href="?{{ page_query }}&page={{ page.next_page_number }}">Next</a>{% endif %}</div></nav>{% endif %}
   <footer>Messages are sent manually. Link checks observe page HTML; they do not establish indexing or ranking impact. Campaign results are recorded from your analytics reports.</footer>
 </main>
-<script>
+{% csp_script %}<script>
 document.querySelectorAll('[data-copy]').forEach(function(button) {
   button.addEventListener('click', async function() {
     var box = document.getElementById(button.dataset.copy);
@@ -137,6 +139,6 @@ document.querySelectorAll('[data-copy]').forEach(function(button) {
     setTimeout(function() { button.textContent = 'Copy draft'; }, 1800);
   });
 });
-</script>
+</script>{% endcsp_script %}
 </body>
 </html>
