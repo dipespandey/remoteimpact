@@ -113,6 +113,17 @@ class NonprofitDestinationTests(TestCase):
         self.assertEqual(response['Location'], self.url + '?q=program&page=2')
         self.assertNotIn('remote-positions-in-nonprofits', [c['slug'] for c in KEYWORD_SEO_PAGES])
 
+    def test_unfiltered_nonprofit_category_uses_the_broader_employer_destination(self):
+        from jobs.models import Category
+        from jobs.sitemaps import CategorySitemap
+
+        Category.objects.create(name='Nonprofit & Charity', slug='nonprofit-charity')
+        category = reverse('jobs:category_landing', args=['nonprofit-charity'])
+        response = self.client.get(category)
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response['Location'], self.url)
+        self.assertNotIn('nonprofit-charity', [item.slug for item in CategorySitemap().items()])
+
     def test_home_and_board_link_to_primary_destination_with_distinct_titles(self):
         home = self.client.get('/')
         board = self.client.get('/jobs/')
