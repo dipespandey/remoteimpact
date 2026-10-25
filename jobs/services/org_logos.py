@@ -56,7 +56,7 @@ def to_square_png(data: bytes, max_ratio: float = 1.25) -> bytes | None:
     from PIL import Image
 
     try:
-        image = Image.open(io.BytesIO(data))
+        image = Image.open(io.BytesIO(data), formats=("PNG", "JPEG", "WEBP", "ICO", "GIF"))
         if image.format == "ICO":
             sizes = sorted(image.info.get("sizes") or [image.size], key=lambda s: s[0] * s[1])
             image.size = sizes[-1]

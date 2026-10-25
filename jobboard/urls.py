@@ -27,6 +27,9 @@ from django.http import HttpResponse
 from django.urls import include, path, reverse
 from django.views.generic import RedirectView
 
+from allauth.account.decorators import secure_admin_login
+admin.site.login = secure_admin_login(admin.site.login)
+
 from jobs.views import admin_analytics, admin_backlinks, impersonate
 from jobs.sitemaps import (
     StaticSitemap, ApplicationGuidesSitemap, CategorySitemap,

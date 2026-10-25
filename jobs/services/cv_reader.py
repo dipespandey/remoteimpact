@@ -16,33 +16,25 @@ MAX_CHARS = 30000
 
 def extract_text(file_obj, name=""):
     """Plain text from a PDF or DOCX file object; "" when unreadable or unsupported."""
+    import subprocess
+    import sys
+    from pathlib import Path
     name = (name or getattr(file_obj, "name", "") or "").lower()
     try:
-        data = file_obj.read()
+        data = file_obj.read(5 * 1024 * 1024 + 1)
         if hasattr(file_obj, "seek"):
             file_obj.seek(0)
-        if name.endswith(".pdf") or data[:5] == b"%PDF-":
-            from pypdf import PdfReader
-
-            reader = PdfReader(io.BytesIO(data))
-            text = "\n".join((page.extract_text() or "") for page in reader.pages[:MAX_PAGES])
-        elif name.endswith(".docx") or data[:2] == b"PK":
-            import docx
-
-            document = docx.Document(io.BytesIO(data))
-            parts = [p.text for p in document.paragraphs]
-            for table in document.tables[:20]:
-                for row in table.rows:
-                    parts.append(" | ".join(cell.text for cell in row.cells))
-            text = "\n".join(parts)
-        else:
+        if len(data) > 5 * 1024 * 1024:
             return ""
-    except Exception:  # noqa: BLE001 - a broken file simply yields no text
-        logger.warning("Could not read CV %s", name or "(unnamed)")
+        result = subprocess.run(
+            [sys.executable, "-I", str(Path(__file__).with_name("cv_parser_process.py")), name],
+            input=data, capture_output=True, timeout=12, check=True,
+        )
+        text = json.loads(result.stdout)
+        return text[:MAX_CHARS] if isinstance(text, str) else ""
+    except Exception:  # a failed parser must not affect the web/worker process
+        logger.warning("Could not read CV")
         return ""
-    text = re.sub(r"[ \t]+", " ", text)
-    text = re.sub(r"\n{3,}", "\n\n", text).strip()
-    return text[:MAX_CHARS]
 
 
 def _norm(text):

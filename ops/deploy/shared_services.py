@@ -88,6 +88,8 @@ def ensure(root, *, container_name='ri-cache', network='easyclaw_default'):
     for path in (root / 'cache', root / 'performance-logs', root / 'redis-data'):
         path.mkdir(mode=0o700, exist_ok=True)
         path.chmod(0o700)
+        if path.name in {'cache', 'performance-logs'}:
+            os.chown(path, 10001, 10001)
     password_file = private / 'cache-password'
     if not password_file.exists():
         descriptor = os.open(password_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)

@@ -128,6 +128,25 @@ class ReleaseTests(unittest.TestCase):
             self.assertFalse(any('sync_org_plans' in call for call in calls))
             self.assertIn(('docker', 'rm', '-f', 'candidate'), calls)
 
+    def test_runtime_is_bounded_and_migration_secret_is_not_given_to_web(self):
+        with tempfile.TemporaryDirectory() as folder:
+            release, source = self.pipeline_fixture(folder)
+            secret = Path(folder) / "secrets/migrations.env"
+            secret.parent.mkdir(); secret.write_text("DATABASE_URL=synthetic-test-only")
+            calls = []
+            with patch.object(bg, 'run', side_effect=self.pipeline_run(source, calls)), patch.object(release, 'ready'), patch.object(release, 'switch'):
+                release.deploy(check_only=True)
+            create = next(call for call in calls if call[:2] == ('docker', 'create'))
+            self.assertIn('--read-only', create)
+            self.assertIn('ALL', create)
+            self.assertIn('no-new-privileges:true', create)
+            self.assertNotIn(str(secret), create)
+            migrate = [call for call in calls if call[:2] == ('docker', 'run') and 'migrate' in call]
+            self.assertTrue(migrate)
+            self.assertTrue(all(str(secret) in call for call in migrate))
+            checks = [call for call in calls if call[:2] == ('docker', 'run') and 'check' in call and 'migrate' not in call]
+            self.assertTrue(all(str(secret) not in call for call in checks))
+
     def test_running_job_prevents_retiring_its_container(self):
         with tempfile.TemporaryDirectory() as folder:
             release = bg.Release(folder)
