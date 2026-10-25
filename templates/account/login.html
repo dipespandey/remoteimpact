@@ -45,7 +45,7 @@
             {% endif %}
 
             <div>
-                <label class="label" for="{{ form.login.id_for_label }}">Email</label>
+                <label class="label" for="{{ form.login.id_for_label }}">{{ form.login.label }}</label>
                 {{ form.login|add_class:"input" }}
                 {% if form.login.errors %}
                     <p class="field-error">{{ form.login.errors|striptags }}</p>
