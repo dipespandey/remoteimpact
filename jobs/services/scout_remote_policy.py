@@ -59,13 +59,16 @@ def check_matches(jobs, preferences, diagnostics, *, allow_api=True):
     if candidate is None:
         diagnostics['remote_policy'] = 'unsupported_location_request'
         return jobs
+    from jobs.services.scout_source_evidence import load_original_sources
+    from jobs.services.scout_constraints import plain_job_field
+    jobs = load_original_sources(jobs)
     records = []
     pending = []
     model = str(getattr(settings, 'DEEPSEEK_MODEL', ''))
     diagnostics['remote_policy'] = VERSION
     diagnostics['remote_policy_cache_hits'] = 0
     for index, job in enumerate(jobs):
-        text = clean('\n'.join(str(getattr(job, field, '') or '')
+        text = clean('\n'.join(plain_job_field(job, field)
                                for field in ('title', 'description', 'requirements')))
         location = clean(source_location(job) or getattr(job, 'location', '') or '')
         decision = rules(text, candidate, location=location)
