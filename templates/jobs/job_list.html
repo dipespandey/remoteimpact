@@ -362,7 +362,7 @@
             </div>
 
             <!-- Date posted -->
-            {% csp_component %}<div x-data="{ open: false, selected: '{{ filters.posted|default:'' }}' }" class="md:relative">{% endcsp_component %}
+            {% csp_component %}<div x-data="{ open: false, selected: '{{ filters.posted|default:''|escapejs }}' }" class="md:relative">{% endcsp_component %}
                 <label for="filter-posted" class="sr-only">Date posted</label>
                 <input type="hidden" name="posted" :value="selected">
                 <button id="filter-posted" type="button" :aria-expanded="open.toString()" aria-controls="options-posted" @keydown.escape="open = false" @click="open = !open"
@@ -431,7 +431,7 @@
                     border: none;
                 }
             </style>
-            {% csp_component %}<div x-data="salarySlider({{ filters.salary_min|default:'0' }}, {{ filters.salary_max|default:'1000000' }})" class="md:relative"
+            {% csp_component %}<div x-data="salarySlider('{{ filters.salary_min|default:'0'|escapejs }}', '{{ filters.salary_max|default:'1000000'|escapejs }}')" class="md:relative"
                  @pointerdown.window="pressedInside = $refs.salaryPanel.contains($event.target)">{% endcsp_component %}
                 <button id="filter-salary" type="button" :aria-expanded="open.toString()" aria-controls="options-salary" @keydown.escape="open = false" @click="open = !open"
                     class="inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-full bg-muted px-3.5 text-xs font-medium text-foreground transition-colors hover:bg-accent md:w-auto" :class="{ '!bg-foreground !text-background': isActive() }">
@@ -475,6 +475,10 @@
             {% csp_script %}<script>
             function salarySlider(initLo, initHi) {
                 var MAX = 1000000;
+                initLo = Number(initLo);
+                initHi = Number(initHi);
+                if (!Number.isFinite(initLo)) initLo = 0;
+                if (!Number.isFinite(initHi)) initHi = MAX;
                 function valToPos(v) {
                     v = Math.max(0, Math.min(MAX, v));
                     return (v / MAX) * 1000;
