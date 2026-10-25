@@ -1,6 +1,7 @@
 import json
 import os
 from django import forms
+from allauth.account.forms import LoginForm
 
 from django_countries.widgets import CountrySelectWidget
 
@@ -13,6 +14,20 @@ from .models import (
     Organization,
     UserProfile,
 )
+
+
+class SignInForm(LoginForm):
+    """Keep allauth's authentication flow with a shared email/username field."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["login"].label = "Email or username"
+        self.fields["login"].widget.attrs.update({
+            "placeholder": "Email or username",
+            "autocomplete": "username",
+            "autocapitalize": "none",
+            "spellcheck": "false",
+        })
 
 
 class OnboardingTypeForm(forms.Form):
