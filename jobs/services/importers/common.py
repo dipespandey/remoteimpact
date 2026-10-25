@@ -145,6 +145,9 @@ def _normalize_duplicate_title(value: Any) -> str:
 
 def _is_generic_listing_title(value: Any) -> bool:
     """Reject talent pools and generic forms that are not concrete openings."""
+    from jobs.services.scout_verification import non_opening
+    if non_opening(value):
+        return True
     title = _normalize_duplicate_title(value)
     return title in _GENERIC_LISTING_TITLES or any(
         re.search(pattern, title, flags=re.IGNORECASE)
@@ -881,8 +884,10 @@ async def batch_upsert_jobs(
 
     stats = {"fetched": len(payloads), "created": 0, "updated": 0, "skipped": 0, "failed": 0}
 
+    from jobs.services.scout_verification import non_opening
     publishable_payloads = [
         payload for payload in payloads if not _is_generic_listing_title(payload.get("title"))
+        and not non_opening(payload.get('title'), payload.get('application_url'))
     ]
     stats["skipped"] += len(payloads) - len(publishable_payloads)
     payloads = publishable_payloads

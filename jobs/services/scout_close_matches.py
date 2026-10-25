@@ -117,6 +117,10 @@ def close_matches(qs, preferences, terms, diagnostics, limit=MAX_PICKS, force=Fa
     else:candidates=candidates[:CANDIDATES]
     if not candidates:
         return []
+    from jobs.services.scout_source_evidence import load_original_sources
+    from jobs.services.scout_constraints import evaluate_job
+    candidates = [job for job in load_original_sources(candidates)
+                  if evaluate_job(job, loose_preferences(preferences), relaxed=True).allowed]
     from jobs.services.scout_review import evidence_fields, CHECK_INSTRUCTIONS, requested_checks, apply_review
     from jobs.services.scout_evidence import compensation_display
     evidence = {}

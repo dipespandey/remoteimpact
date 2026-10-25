@@ -7,7 +7,7 @@ import hashlib
 import json
 import re
 
-VERSION = 4
+VERSION = 5
 KEY = 'scout_source_profile'
 MAX_SPANS = 16
 MAX_DUTIES = 6000
@@ -79,7 +79,7 @@ def build_profile(fields,*,geography=True,workplace=True,spans=True):
     from jobs.services.scout_review import workplace_conflict
     return {'version':VERSION,'source_hash':source_hash(fields),'spans':spans,
         'geography':extract_location_evidence(fields) if geography else None,
-        'mandatory_workplace':workplace_conflict(None,{'intent_text':'remote work'},' '.join(fields[f] for f in ('title','description','requirements'))) if workplace else None}
+        'mandatory_workplace':workplace_conflict(None,{'intent_text':'remote work'},' '.join(fields[f] for f in ('title','description','requirements')), title=fields['title']) if workplace else None}
 
 
 def profile_for(job,*,geography=False,workplace=False):
@@ -97,7 +97,7 @@ def profile_for(job,*,geography=False,workplace=False):
             local['geography']=extract_location_evidence(fields)
         if workplace and local.get('mandatory_workplace') is None:
             from jobs.services.scout_review import workplace_conflict
-            local['mandatory_workplace']=workplace_conflict(None,{'intent_text':'remote work'},' '.join(fields[f] for f in ('title','description','requirements')))
+            local['mandatory_workplace']=workplace_conflict(None,{'intent_text':'remote work'},' '.join(fields[f] for f in ('title','description','requirements')), title=fields['title'])
         return fields,local
     digest=source_hash(fields)
     data=getattr(job,'__dict__',{})
@@ -144,7 +144,7 @@ def profile_for(job,*,geography=False,workplace=False):
             profile['geography'] = extract_location_evidence(fields)
         if workplace and profile.get('mandatory_workplace') is None:
             from jobs.services.scout_review import workplace_conflict
-            profile['mandatory_workplace'] = workplace_conflict(None, {'intent_text':'remote work'}, ' '.join(fields[f] for f in ('title','description','requirements')))
+            profile['mandatory_workplace'] = workplace_conflict(None, {'intent_text':'remote work'}, ' '.join(fields[f] for f in ('title','description','requirements')), title=fields['title'])
 
     job._scout_source_profile=profile
     job._scout_source_profile_inputs=inputs

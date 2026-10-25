@@ -132,6 +132,7 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=20
         scout_source_period=KeyTextTransform('salaryPeriod','raw_data'),
         scout_source_pay_min=KeyTextTransform('salaryMinimum','raw_data'),
         scout_source_pay_max=KeyTextTransform('salaryMaximum','raw_data'),
+        scout_source_currency=KeyTextTransform('salaryCurrency','raw_data'),
         scout_source_location=KeyTextTransform('name',KeyTransform('location',KeyTransform('api_response','raw_data'))),
         scout_requisition=KeyTextTransform('requisition_id',KeyTransform('api_response','raw_data'))).defer('embedding','embedding_content_hash','search_vector','raw_data','custom_questions','company_description','how_to_apply_text','benefits')
     score=Value(0.0,output_field=FloatField())

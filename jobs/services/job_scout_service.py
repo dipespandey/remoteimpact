@@ -324,7 +324,7 @@ skills is not a request for invented, exact job titles. JSON only."""
         )
 
         model_exclusions = preferences["exclude_keywords"]
-        preferences.update({key: fallback[key] for key in ("constraint_version", "intent_text", "candidate_years", "required_employer_type", "actual_annual_pay", "part_time_contract", "exclude_keywords", "locations", "excluded_locations", "excluded_work_authorization", "salary_requirement", "min_salary", "required_domains", "required_skills", "required_skill_groups", "unresolved_constraints", "require_verified_location", "experience_levels", "requested_role_phrases", "required_category_slugs", "required_category_options") if key in fallback})
+        preferences.update({key: fallback[key] for key in ("constraint_version", "intent_text", "candidate_years", "required_employer_type", "weekly_hours", "actual_annual_pay", "part_time_contract", "exclude_keywords", "locations", "excluded_locations", "excluded_work_authorization", "salary_requirement", "min_salary", "required_domains", "required_skills", "required_skill_groups", "unresolved_constraints", "require_verified_location", "experience_levels", "requested_role_phrases", "required_category_slugs", "required_category_options") if key in fallback})
         preferences["exclude_keywords"] = list(dict.fromkeys([*preferences.get("exclude_keywords", []), *model_exclusions]))[:20]
         terms=parsed.get('retrieval_terms')
         if (getattr(settings,'SCOUT_COMBINED_PLAN_ENABLED',True) and isinstance(terms,list) and len(terms)<=6
@@ -511,16 +511,14 @@ skills is not a request for invented, exact job titles. JSON only."""
         # Sector hints in alternative job functions (e.g. Education Support)
         # are useful ranking terms, not a compulsory employer sector.
         sector_text = sector_request_text(lowered) if requested_roles else lowered
-        required_categories = [slug for slug in category_slugs if slug in cls.HARD_CATEGORY_SLUGS
-            and any(re.search(rf"\b{re.escape(phrase)}\b", sector_text)
-                    for phrase in [slug.replace('-', ' '), *[p for p,s in cls.CATEGORY_ALIASES.items() if s == slug]])]
-        sector_list = re.search(r"\b(?:jobs?|roles?|work|positions?)\s+in\s+([^.!?]+)", sector_text)
-        sector_options = [slug for slug in category_slugs if sector_list and any(
-            re.search(rf"\b{re.escape(phrase)}\b", sector_list[1]) for phrase in
-            [slug.replace('-', ' '), *[p for p,s in cls.CATEGORY_ALIASES.items() if s == slug]])]
-        if sector_list and re.search(r",|\bor\b", sector_list[1]) and len(sector_options) > 1:
+        from jobs.services.scout_intent import sector_requirements
+        required_categories, sector_options = sector_requirements(
+            sector_text, list(Category.objects.values_list('slug', flat=True)),
+            cls.CATEGORY_ALIASES, cls.HARD_CATEGORY_SLUGS)
+        if sector_options:
             preferences['category_match_mode'] = 'any'
             preferences['required_category_options'] = sector_options
+            preferences['category_slugs'] = list(dict.fromkeys([*preferences['category_slugs'], *sector_options]))
         preferences['required_category_slugs'] = required_categories
         if requested_roles:
             preferences['requested_role_phrases'] = requested_roles
@@ -948,7 +946,7 @@ skills is not a request for invented, exact job titles. JSON only."""
 
         if alert.intent_text:
             grounded = cls._fallback_parse(alert.intent_text)
-            for key in ("constraint_version", "intent_text", "candidate_years", "required_employer_type", "actual_annual_pay", "part_time_contract", "exclude_keywords", "locations", "excluded_locations", "excluded_work_authorization", "salary_requirement", "min_salary", "required_domains", "required_skills", "required_skill_groups", "unresolved_constraints", "require_verified_location", "experience_levels", "job_types", "required_category_slugs", "requested_role_phrases", "category_match_mode", "required_category_options"):
+            for key in ("constraint_version", "intent_text", "candidate_years", "required_employer_type", "weekly_hours", "actual_annual_pay", "part_time_contract", "exclude_keywords", "locations", "excluded_locations", "excluded_work_authorization", "salary_requirement", "min_salary", "required_domains", "required_skills", "required_skill_groups", "unresolved_constraints", "require_verified_location", "experience_levels", "job_types", "required_category_slugs", "requested_role_phrases", "category_match_mode", "required_category_options"):
                 preferences[key] = grounded.get(key, [] if key == "required_skills" else None)
             if grounded.get('requested_role_phrases'):
                 preferences['titles'] = grounded['requested_role_phrases']
@@ -1199,6 +1197,10 @@ skills is not a request for invented, exact job titles. JSON only."""
             selected.extend(recovered)
             diagnostics['source_rule_recovery'] = prior_recovery_count + len(recovered)
         # Model evidence must never hide a constraint that remains unverified.
+        from jobs.services.scout_verification import verify_matches
+        from jobs.services.scout_workflow import timed_stage
+        with timed_stage('verify'):
+            selected = verify_matches(selected, preferences, diagnostics)
         from jobs.services.scout_review import listing_caveats,sector_caveats
         for job in selected:
             job.scout_caveats = list(dict.fromkeys([*getattr(job, "scout_caveats", []), *listing_caveats(job), *sector_caveats(job,preferences)]))

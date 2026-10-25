@@ -20,7 +20,7 @@ from jobs.models import ScoutPreviewAccess, ScoutPreviewQueueGuard, ScoutPreview
 from jobs.services.job_service import JobService
 
 logger = logging.getLogger(__name__)
-TASK_SEMANTICS_VERSION = "scout-preview-v1"
+TASK_SEMANTICS_VERSION = "scout-preview-v2"
 DEFAULT_QUEUE_LIMIT = 20
 DEFAULT_SESSION_LIMIT = 5
 DEFAULT_SESSION_WINDOW_SECONDS = 600
@@ -173,8 +173,11 @@ def job_fingerprint(job):
     if not isinstance(raw_location, dict):
         raw_location = {}
     organization = job.organization
+    from jobs.services.scout_source_evidence import original_description
+    original = original_description(raw)
     value = {
         "title": job.title,
+        "application_url": job.application_url,
         "organization": [
             job.organization_id, organization.name, organization.description,
             organization.organization_type,
@@ -191,11 +194,13 @@ def job_fingerprint(job):
         "impact": job.impact,
         "benefits": job.benefits,
         "source_evidence": {
+            "description_hash": hashlib.sha256(original.encode()).hexdigest() if original else None,
             "location": raw_location.get("name"),
             "salary_period": raw.get("salary_period"),
             "salaryPeriod": raw.get("salaryPeriod"),
             "salaryMinimum": raw.get("salaryMinimum"),
             "salaryMaximum": raw.get("salaryMaximum"),
+            "salaryCurrency": raw.get("salaryCurrency"),
             "requisition_id": api.get("requisition_id"),
         },
         "updated_at": job.updated_at.isoformat() if job.updated_at else "",

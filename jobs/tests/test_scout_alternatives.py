@@ -50,6 +50,13 @@ class OlderOpeningsTests(TestCase):
         self.assertEqual(len(older_openings(self.prefs)), 1)
         self.assertEqual(older_openings({'titles': []}), [])
 
+    def test_older_suggestion_uses_original_duties_instead_of_enriched_claims(self):
+        self.job(raw_data={'description': 'Coordinate community programs remotely worldwide.'})
+        good = self.job(raw_data={'description': 'Responsibilities: Build software services remotely worldwide.'})
+        result = older_openings(self.prefs)
+        self.assertEqual([job.pk for job in result], [good.pk])
+        self.assertIn('Build software services remotely worldwide', result[0].alternative_evidence)
+
 
 @override_settings(SECURE_SSL_REDIRECT=False, ACCOUNT_RATE_LIMITS={})
 class OlderPreviewTests(TestCase):

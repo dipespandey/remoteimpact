@@ -75,6 +75,18 @@ def initial_result_context(alert):
                 context["preview_jobs"].append(job)
         context["initial_result_state"] = "matches" if context["preview_jobs"] else "expired"
         context["initial_results_changed"] = len(context["preview_jobs"]) < len(deliveries)
+    if context['preview_jobs']:
+        # Validate stored suggestions against current source facts without
+        # matching again or altering the historical email/delivery ledger.
+        from jobs.services.job_scout_service import JobScoutService
+        from jobs.services.scout_verification import verify_matches
+        previous_count = len(context['preview_jobs'])
+        context['preview_jobs'] = verify_matches(context['preview_jobs'],
+            JobScoutService.preferences_for_alert(alert), {}, annotate=False)
+        if len(context['preview_jobs']) < previous_count:
+            context['initial_results_changed'] = True
+            context['initial_results_rechecked'] = True
+            context['initial_result_state'] = 'matches' if context['preview_jobs'] else 'unavailable'
     for job in context["preview_jobs"]:
         delivery = delivery_by_job.get(job.pk)
         if delivery:
