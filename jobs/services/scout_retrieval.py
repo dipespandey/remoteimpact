@@ -125,6 +125,10 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=20
                 # Unknown or non-comparable pay may be shown with a caveat;
                 # a known lower salary in the requested currency never is.
                 known|=Q(salary_min__isnull=True,salary_max__isnull=True)|~Q(salary_currency=requirement['currency'])
+            # Original source pay can disagree with legacy normalized columns.
+            # Keep that bounded candidate for the unit-aware eligibility check.
+            known |= Q(raw_data__salaryPeriod__isnull=False) & (
+                Q(raw_data__salaryMinimum__isnull=False) | Q(raw_data__salaryMaximum__isnull=False))
             qs=qs.filter(known)
     from django.db.models.fields.json import KeyTextTransform, KeyTransform
     qs=qs.annotate(scout_salary_period=KeyTextTransform('salary_period','raw_data'),
@@ -132,6 +136,7 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=20
         scout_source_period=KeyTextTransform('salaryPeriod','raw_data'),
         scout_source_pay_min=KeyTextTransform('salaryMinimum','raw_data'),
         scout_source_pay_max=KeyTextTransform('salaryMaximum','raw_data'),
+        scout_source_currency=KeyTextTransform('salaryCurrency','raw_data'),
         scout_source_location=KeyTextTransform('name',KeyTransform('location',KeyTransform('api_response','raw_data'))),
         scout_requisition=KeyTextTransform('requisition_id',KeyTransform('api_response','raw_data'))).defer('embedding','embedding_content_hash','search_vector','raw_data','custom_questions','company_description','how_to_apply_text','benefits')
     score=Value(0.0,output_field=FloatField())

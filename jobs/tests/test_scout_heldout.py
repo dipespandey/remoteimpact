@@ -66,8 +66,8 @@ class HeldoutGeography(SimpleTestCase):
 
     def test_salary_monthly_currency_period_and_unknown(self):
         p=extract_constraints('Salary at least €5000 per month')['salary_requirement']
-        self.assertTrue(salary_compatible(candidate(salary_currency='EUR',salary_max=60000),p))
-        self.assertFalse(salary_compatible(candidate(salary_currency='EUR',salary_max=59999),p))
+        self.assertTrue(salary_compatible(candidate(salary_currency='EUR',salary_min=50000,salary_max=60000),p))
+        self.assertFalse(salary_compatible(candidate(salary_currency='EUR',salary_min=50000,salary_max=59999),p))
         self.assertFalse(salary_compatible(candidate(salary_currency='EUR',raw_data={'salary_period':'month'}),p))
         self.assertFalse(salary_compatible(candidate(salary_max=None,salary_min=None),p))
 

@@ -21,25 +21,39 @@ def compensation(job):
     """Return original pay units when supplied; never assume full-time hours."""
     period = source_value(job, 'scout_source_period', 'salaryPeriod')
     low, high = job.salary_min, job.salary_max
-    if period and str(period).lower() not in {'year', 'annual', 'annually', 'yearly'}:
-        low = source_value(job, 'scout_source_pay_min', 'salaryMinimum')
-        high = source_value(job, 'scout_source_pay_max', 'salaryMaximum')
+    original_low = source_value(job, 'scout_source_pay_min', 'salaryMinimum')
+    original_high = source_value(job, 'scout_source_pay_max', 'salaryMaximum')
+    if period and (original_low is not None or original_high is not None
+                   or str(period).lower() not in {'year', 'annual', 'annually', 'yearly'}):
+        low, high = original_low, original_high
     else:
         period = source_value(job, 'scout_salary_period', 'salary_period') or 'year'
+        # Legacy numeric columns are annual-normalized. A legacy unit marker
+        # alone cannot turn them into original monthly/hourly amounts.
+        if str(period).lower() not in {'year', 'annual', 'annually', 'yearly'}:
+            low = high = None
     def number(value):
         try:
             n = Decimal(str(value))
             return n if n.is_finite() and n >= 0 else None
         except (InvalidOperation, ValueError, TypeError):
             return None
-    return number(low), number(high), str(period).lower()
+    parsed_low, parsed_high = number(low), number(high)
+    if low is not None and parsed_low is None or high is not None and parsed_high is None:
+        parsed_low = parsed_high = None
+    return parsed_low, parsed_high, str(period).lower()
+
+
+def compensation_currency(job):
+    return str(source_value(job, 'scout_source_currency', 'salaryCurrency')
+               or getattr(job, 'salary_currency', '') or '').upper()
 
 
 def compensation_display(job):
     low, high, period = compensation(job)
     if low is None and high is None:
         return ''
-    currency = getattr(job, 'salary_currency', '') or 'USD'
+    currency = compensation_currency(job) or 'USD'
     symbol = {'USD': '$', 'GBP': '£', 'EUR': '€'}.get(currency, currency + ' ')
     def display(n):
         return symbol + (f'{n:,.2f}'.rstrip('0').rstrip('.') if n % 1 else f'{n:,.0f}')
@@ -170,6 +184,11 @@ def location_evidence_warning(job, prefs, text):
     names={'us':'United States','usa':'United States','united states':'United States','uk':'United Kingdom'}
     def country_warning(offered):
         return 'Location restricted to '+', '.join(sorted({names.get(p,p.title()) for p in offered}))+'; confirm eligibility'
+    for label in re.finditer(r'\b(?:work\s+)?location\s*:\s*remote\s*[/–—:-]\s*([^.;!?]{2,100})', clean, re.I):
+        region = re.split(r'\b(?:salary|position|contract|about|company|responsibilities|qualifications|requirements)\b', label[1], maxsplit=1, flags=re.I)[0]
+        offered = places(region)
+        if offered:
+            return country_warning(offered)
     for clause in re.split(r'[.!?;\n]|\bbut\b',clean,flags=re.I):
         if re.search(r'\b(?:worldwide|globally|anywhere)\s*,?\s*(?:including|such as|for example)\b',clause,re.I):continue
         if re.search(r'\b(?:no need to|not required to|do not need to|need not|don.t need to)\b',clause,re.I):continue

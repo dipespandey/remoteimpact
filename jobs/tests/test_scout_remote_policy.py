@@ -38,6 +38,15 @@ class RemotePolicyTests(SimpleTestCase):
             self.assertIsNone(requested_candidate({'locations': locations}))
 
     @patch('jobs.services.scout_workflow.generate')
+    def test_original_residence_restriction_overrides_enriched_worldwide_prose(self, model):
+        item = job(text='Build services remotely worldwide.', location='Remote worldwide')
+        item.raw_data = {'description': 'Applicants must reside in the United States.'}
+        result, diag = self.review([item])
+        self.assertEqual(result, [])
+        self.assertEqual(diag['remote_policy_counts']['incompatible'], 1)
+        model.assert_not_called()
+
+    @patch('jobs.services.scout_workflow.generate')
     def test_rules_filter_conflicts_without_api(self, model):
         allowed = job(location='Remote Canada')
         denied = job(pk=2, location='Remote US only')

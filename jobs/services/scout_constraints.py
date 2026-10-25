@@ -290,8 +290,11 @@ def extract_constraints(text):
     domains=[]
     for phrase in ['behavioral health','behavioural health','mental health','public health']:
         if re.search(r'\b'+phrase+r'\b',positive,re.I):domains.append(phrase)
-    return {'constraint_version':5,'intent_text':text,'candidate_years':candidate_years,
-            'required_employer_type':'nonprofit' if re.search(r'\bnon[- ]?profits?\b',positive,re.I) else None,
+    from jobs.services.scout_intent import required_nonprofit
+    from jobs.services.scout_verification import weekly_hours_requirement
+    return {'constraint_version':6,'intent_text':text,'candidate_years':candidate_years,
+            'required_employer_type':required_nonprofit(positive),
+            'weekly_hours':weekly_hours_requirement(positive),
             'actual_annual_pay':bool(re.search(r'\bactual\s+annual\s+pay\b',positive,re.I)),
             'part_time_contract':bool(re.search(r'\bpart[- ]time\s+contract\b',positive,re.I)),'exclude_keywords':exclusions[:20],
             'locations':allowed[:12],'excluded_locations':list(dict.fromkeys(denied_places)),
@@ -310,7 +313,8 @@ def plain_job_field(job, field):
     if cached is None:cached={};job._scout_plain_fields=cached
     sources=getattr(job,'_scout_plain_sources',None)
     if sources is None:sources={};job._scout_plain_sources=sources
-    raw=str(getattr(job,field,'') or '')
+    original = getattr(job, '_scout_source_fields', {})
+    raw=str(original[field] if field in original else getattr(job,field,'') or '')
     if sources.get(field)!=raw:
         cached.pop(field,None)
         sources[field]=raw
@@ -411,6 +415,10 @@ CAVEAT_TEXT = {
     'contingent_hiring': 'Check: contingent opening; confirm hiring conditions',
     'salary_unlisted': 'Check: salary not listed',
     'salary_other_currency': 'Check: salary is in another currency',
+    'salary_period_unconfirmed': 'Check: listed pay cannot establish the requested pay period',
+    'weekly_hours_differ': 'Check: listed weekly hours differ from your target',
+    'weekly_hours_unconfirmed': 'Check: requested weekly hours are not confirmed',
+    'request_details_needed': 'Check: add your preferred role to assess suitability',
     'location_unconfirmed': 'Check: location eligibility not confirmed',
     'working_timezone': 'Check: working hours not stated',
     'location_code': 'Check: location eligibility not confirmed',
@@ -423,13 +431,24 @@ def salary_caveat(job, requirement):
     """A soft salary miss: the listing has no comparable pay, not a lower one."""
     if not requirement:
         return None
-    if getattr(job,'salary_min',None) is None and getattr(job,'salary_max',None) is None:
+    from jobs.services.scout_evidence import compensation, compensation_currency
+    low, high, period = compensation(job)
+    if low is None and high is None:
         return 'salary_unlisted'
     currency=requirement.get('currency')
     if not currency:
         return 'salary_currency'
-    if currency and str(getattr(job,'salary_currency','') or '').upper() not in ('',currency.upper()):
+    actual_currency = compensation_currency(job)
+    if not actual_currency:
+        return 'salary_currency'
+    if currency and actual_currency != currency.upper():
         return 'salary_other_currency'
+    aliases = {'annual':'year', 'annually':'year', 'annum':'year', 'yearly':'year',
+               'hourly':'hour', 'hr':'hour', 'monthly':'month', 'weekly':'week', 'daily':'day'}
+    period = aliases.get(period, period)
+    wanted = requirement.get('period', 'year')
+    if period != wanted and {period, wanted} - {'year', 'month'}:
+        return 'salary_period_unconfirmed'
     return None
 
 
@@ -440,26 +459,22 @@ def salary_compatible(job, requirement):
         amount=Decimal(str(requirement['amount']))
         if not amount.is_finite() or amount<0:return False
     except (KeyError,TypeError,InvalidOperation):return False
+    from jobs.services.scout_evidence import compensation, compensation_currency
     currency=requirement.get('currency')
-    if not currency or str(getattr(job,'salary_currency','')).upper()!=currency.upper():return False
-    raw={} if hasattr(job,'scout_salary_period') else (getattr(job,'raw_data',{}) or {})
-    # The model salary fields are annual normalized amounts. Any source-period
-    # evidence indicating raw unannualized amounts requires normalization first.
-    period=str((job.scout_salary_period or 'year') if hasattr(job,'scout_salary_period') else raw.get('salary_period','year')).lower()
-    if period not in {'year','annual','annually','annum','yearly'}:return False
-    source_period=str(source_value(job,'scout_source_period','salaryPeriod') or 'year').lower()
-    if source_period not in {'year','annual','annually','annum','yearly','month','monthly'}:return False
-    maximum=getattr(job,'salary_min',None) if requirement.get('mode')=='floor' else getattr(job,'salary_max',None)
-    if maximum is None:maximum=getattr(job,'salary_min',None)
+    if not currency or compensation_currency(job) != currency.upper():return False
+    low, high, period = compensation(job)
+    if low is not None and high is not None and low > high:return False
+    maximum = low if requirement.get('mode') == 'floor' else high if high is not None else low
     if maximum is None:return False
-    # Hourly requirements cannot safely assume hours/year. Monthly is exactly
-    # convertible for an annualized salary; hourly requires matching evidence.
-    if requirement.get('period','year') not in {'year','month'}:return False
-    if requirement.get('period')=='month':amount*=12
-    try:
-        maximum=Decimal(str(maximum))
-        return maximum.is_finite() and maximum>=amount
-    except (InvalidOperation,ValueError,TypeError):return False
+    aliases = {'annual':'year', 'annually':'year', 'annum':'year', 'yearly':'year',
+               'hourly':'hour', 'hr':'hour', 'monthly':'month', 'weekly':'week', 'daily':'day'}
+    period = aliases.get(period, period)
+    wanted = requirement.get('period', 'year')
+    if period == wanted and period in {'hour', 'week', 'day', 'year', 'month'}:
+        return maximum >= amount
+    if {period, wanted} <= {'year', 'month'}:
+        return maximum * (12 if period == 'month' else 1) >= amount * (12 if wanted == 'month' else 1)
+    return False
 
 
 def _eligibility_source(job):
@@ -472,14 +487,16 @@ def _eligibility_source(job):
     api_location=api.get('location') or {}
     org=getattr(job,'organization',None)
     return (
-        *(getattr(job,f,None) for f in ('title','description','requirements','location','country',
+        *(getattr(job,f,None) for f in ('title','application_url','description','requirements','location','country',
             'experience_level','job_type','salary_min','salary_max','salary_currency')),
         *(getattr(org,f,None) for f in ('name','description','organization_type')),
+        tuple(sorted(data.get('_scout_source_fields', {}).items())),
         data.get('scout_source_location',api_location.get('name') if isinstance(api_location,dict) else None),
         data.get('scout_source_period',raw.get('salaryPeriod')),
         data.get('scout_salary_period',raw.get('salary_period')),
         data.get('scout_source_pay_min',raw.get('salaryMinimum')),
         data.get('scout_source_pay_max',raw.get('salaryMaximum')),
+        data.get('scout_source_currency',raw.get('salaryCurrency')),
     )
 
 
@@ -520,8 +537,10 @@ def _evaluate_job(job, prefs, relaxed=False):
     matches instead of nothing.
     """
     from jobs.services.importers.common import _is_generic_listing_title
+    from jobs.services.scout_verification import non_opening, hours_status
     title = plain_job_field(job, 'title')
-    if _is_generic_listing_title(title) or re.search(r'\b(?:spontaneous|unsolicited)\s+applications?\b', title, re.I):
+    if (_is_generic_listing_title(title) or non_opening(title, getattr(job, 'application_url', ''))
+            or re.search(r'\b(?:spontaneous|unsolicited)\s+applications?\b', title, re.I)):
         return Eligibility(False, 'not_job_opening')
     caveats=[]
     levels=prefs.get('experience_levels',[])
@@ -543,9 +562,15 @@ def _evaluate_job(job, prefs, relaxed=False):
     if location is False:return Eligibility(False,'location',location)
     from jobs.services.scout_review import remote_requested,dominant_function_conflict
     if dominant_function_conflict(fields,prefs,title):return Eligibility(False,"primary_function")
-    if remote_requested(prefs):
-        from jobs.services.scout_source_profile import profile_for
-        if profile_for(job,workplace=True)[1]['mandatory_workplace']:return Eligibility(False,'workplace')
+    # Every Scout searches a remote-work platform. The seeker need not repeat
+    # remote to reject a known physical or mandatory-office opening.
+    from jobs.services.scout_source_profile import profile_for
+    if profile_for(job,workplace=True)[1]['mandatory_workplace']:return Eligibility(False,'workplace')
+    hours = hours_status(job, prefs.get('weekly_hours'))
+    if hours == 'conflict':return Eligibility(False, 'weekly_hours')
+    if hours in {'different', 'unknown'}:
+        if not relaxed:return Eligibility(False, 'weekly_hours')
+        caveats.append('weekly_hours_differ' if hours == 'different' else 'weekly_hours_unconfirmed')
     if experience_conflict(job,prefs,fields):return Eligibility(False,'experience_evidence')
     if role_conflict(job,prefs,fields):return Eligibility(False,'role_evidence')
     if prefs.get('required_employer_type')=='nonprofit':
@@ -570,14 +595,16 @@ def _evaluate_job(job, prefs, relaxed=False):
     currency_request=re.search(r'\bpaid in (US dollars|USD|EUR|euros|GBP|British pounds)\b',prefs.get('intent_text',''),re.I)
     if currency_request:
         requested_currency={'us dollars':'USD','usd':'USD','eur':'EUR','euros':'EUR','gbp':'GBP','british pounds':'GBP'}[currency_request.group(1).lower()]
-        has_pay=getattr(job,'salary_min',None) is not None or getattr(job,'salary_max',None) is not None
-        actual_currency=str(getattr(job,'salary_currency','') or '').upper()
+        from jobs.services.scout_evidence import compensation, compensation_currency
+        pay_min, pay_max, _ = compensation(job)
+        has_pay=pay_min is not None or pay_max is not None
+        actual_currency=compensation_currency(job)
         if has_pay and actual_currency and actual_currency!=requested_currency:return Eligibility(False,'salary')
         if not has_pay or not actual_currency:
             if not relaxed:return Eligibility(False,'salary')
             caveats.append('paid_currency_unconfirmed')
     if not salary_compatible(job,requirement):
-        allow_unconfirmed=relaxed and not re.search(r'\bguaranteed\b',prefs.get('intent_text',''),re.I)
+        allow_unconfirmed=relaxed and not prefs.get('actual_annual_pay') and not re.search(r'\bguaranteed\b',prefs.get('intent_text',''),re.I)
         caveat=salary_caveat(job,requirement) if allow_unconfirmed else None
         if not caveat:return Eligibility(False,'salary')
         caveats.append(caveat)

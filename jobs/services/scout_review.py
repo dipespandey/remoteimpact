@@ -98,9 +98,12 @@ def remote_requested(prefs):
     return bool(re.search(r'\bremote\b', text, re.I)) and not re.search(r'\bremote\s+(?:or|and)\s+(?:hybrid|on[- ]site)\b', text, re.I)
 
 
-def workplace_conflict(job, prefs, text):
+def workplace_conflict(job, prefs, text, *, title=None):
     if not remote_requested(prefs):
         return False
+    from jobs.services.scout_verification import physical_work
+    if physical_work(title if title is not None else str(getattr(job, 'title', '') or ''), text):
+        return True
     if not re.search(r'\b(?:hybrid|on[- ]site|in[- ]office|office|in[- ]person)\b',text,re.I):
         return False
     # Require workplace wording: hybrid cloud and remote build caches aren't locations.
@@ -277,7 +280,15 @@ def listing_caveats(job):
 def sector_caveats(job,prefs):
     """A function match cannot silently establish an environmental sector."""
     from jobs.services.scout_constraints import plain_job_field,positive_text
+    required = prefs.get('required_category_slugs')
+    if required is not None and 'climate-environment' not in required:
+        return []
     if not re.search(r'\b(?:climate|sustainability|circular economy)\b',positive_text(prefs.get('intent_text','')),re.I):return []
+    if prefs.get('category_match_mode') == 'any':
+        options = prefs.get('required_category_options') or prefs.get('category_slugs') or []
+        category = getattr(job, 'category', None)
+        if getattr(category, 'slug', None) in options:
+            return []
     org=getattr(job,'organization',None)
     text=' '.join([*(plain_job_field(job,f) for f in ('description','requirements','impact')),
         str(getattr(org,'description','') or '')])

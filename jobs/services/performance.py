@@ -21,7 +21,7 @@ from jobboard.performance_logging import ConcurrentJSONLHandler, PerformanceJSON
 _ALLOWED_OUTCOMES = {"ok", "error", "cache", "fallback", "timeout", "partial", "unknown"}
 _ALLOWED_STAGES = {
     "workflow", "parse", "match", "retrieval", "embedding", "plan", "refinement", "reranker",
-    "close_matches", "source_profile", "remote_policy", "model", "plan_cache",
+    "close_matches", "source_profile", "remote_policy", "model", "plan_cache", "verify",
 }
 _ROUTE_CHARS = re.compile(r"[^a-zA-Z0-9_:/{}.-]")
 _ROUTE_CONVERTER = re.compile(r"<(?:(?:str|int|slug|uuid|path):)?([a-zA-Z_][a-zA-Z0-9_]*)>")

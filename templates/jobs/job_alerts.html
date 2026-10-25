@@ -78,7 +78,7 @@
         </div>
         {% endif %}
         {% if initial_review_incomplete %}<div class="alert alert-warning mt-4" role="status"><p><strong>Match review is temporarily incomplete.</strong> We have not finished checking this search, so this does not establish whether suitable jobs are available.{% if not free_scout_used and not is_pro %} Your free one-time Scout is still available.{% endif %}</p></div>{% endif %}
-        {% if initial_results_changed and preview_jobs %}<p class="mt-4 text-sm text-muted-foreground">Some roles from this result are no longer available and have been hidden.</p>{% endif %}
+        {% if initial_results_changed and preview_jobs %}<p class="mt-4 text-sm text-muted-foreground">{% if initial_results_rechecked %}Some suggestions no longer pass our current checks and have been hidden.{% else %}Some roles from this result are no longer available and have been hidden.{% endif %}</p>{% endif %}
 
         {% if preview_jobs %}
         {% for tier in preview_jobs|scout_tiers %}
@@ -123,7 +123,7 @@
         {% elif initial_result_state == 'expired' %}
         <p class="mt-4 text-sm text-muted-foreground"><strong>The roles from this result are no longer available.</strong> <a href="{% url 'jobs:job_list' %}" class="underline">Browse current jobs</a>.</p>
         {% elif initial_result_state == 'unavailable' %}
-        <p class="mt-4 text-sm text-muted-foreground"><strong>This saved result is unavailable.</strong> We have not run another search. <a href="{% url 'jobs:job_list' %}" class="underline">Browse current jobs</a>.</p>
+        <p class="mt-4 text-sm text-muted-foreground"><strong>{% if initial_results_rechecked %}These saved suggestions no longer pass our current checks.{% else %}This saved result is unavailable.{% endif %}</strong> We have not run another search. <a href="{% url 'jobs:job_list' %}" class="underline">Browse current jobs</a>.</p>
         {% elif location_blocked %}
         <div class="mt-4 px-1 text-sm leading-6 text-muted-foreground">
             <p><strong class="font-medium text-foreground">Most current roles like this are limited to other countries.</strong> Many remote employers can only hire in the US or Europe, so we'd rather tell you now than charge you to wait.</p>

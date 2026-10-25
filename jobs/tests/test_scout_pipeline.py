@@ -243,11 +243,13 @@ class PipelineCases(TestCase):
         expected=self.make_job()
         preferences=JobScoutService._fallback_parse('Python software engineer in Norway, salary $90000 or more')
         # Lightweight ranked IDs, one source hydration batch, then the empty
-        # caveated-fill ID query. No per-job deferred vector fetches.
-        with self.assertNumQueries(3):
+        # caveated-fill ID query, plus one projected original-source evidence
+        # batch for final verification. No per-job full JSON/vector fetches.
+        with self.assertNumQueries(4):
             d={};found=JobScoutService.get_matches_for_preferences(preferences,diagnostics=d)
             self.assertEqual([j.pk for j in found],[expected.pk])
             self.assertIn('embedding',found[0].get_deferred_fields())
+            self.assertIn('raw_data',found[0].get_deferred_fields())
             self.assertGreaterEqual(d['retrieval']['lexical']['load_seconds'],0)
             self.assertGreaterEqual(d['retrieval']['lexical']['eligibility_seconds'],0)
 

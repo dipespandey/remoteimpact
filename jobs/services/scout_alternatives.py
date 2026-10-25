@@ -27,7 +27,8 @@ def older_openings(preferences, *, limit=3):
         qs = qs.filter(category__slug__in=((preferences.get('required_category_options') or preferences['category_slugs'])
                        if preferences.get('category_match_mode') == 'any' else categories))
     picked, seen = [], set()
-    for job in qs[:60]:
+    from jobs.services.scout_source_evidence import load_original_sources
+    for job in load_original_sources(qs[:60]):
         if not evaluate_job(job, preferences, relaxed=False).allowed:
             continue
         quote = duty_evidence(job, preferences)

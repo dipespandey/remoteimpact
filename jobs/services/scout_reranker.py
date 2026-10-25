@@ -122,12 +122,18 @@ def rerank(candidates,preferences,fallback,diagnostics,relaxed=False):
     if backend != 'deepseek' or not getattr(settings, 'DEEPSEEK_API_KEY', ''):
         diagnostics['reranker']='disabled';return fallback
     candidates=[job for job in candidates if evaluate_job(job,preferences,relaxed=relaxed).allowed][:MAX_CANDIDATES]
+    from jobs.services.scout_source_evidence import load_original_sources
+    candidates = [job for job in load_original_sources(candidates)
+                  if evaluate_job(job, preferences, relaxed=relaxed).allowed]
     from jobs.services.scout_review import evidence_fields, CHECK_INSTRUCTIONS, requested_checks, apply_review
-    from jobs.services.scout_evidence import compensation_display
+    from jobs.services.scout_evidence import compensation_display, compensation, compensation_currency
     evidence={};rows=[]
     for job in candidates:
+        pay_min, pay_max, pay_period = compensation(job)
         row={'id':job.pk,**evidence_fields(job, preferences),
-             'location':job.location,'salary':compensation_display(job),'currency':job.salary_currency,'salary_min':str(job.salary_min) if job.salary_min is not None else None,'salary_max':str(job.salary_max) if job.salary_max is not None else None}
+             'location':job.location,'salary':compensation_display(job),'currency':compensation_currency(job),
+             'salary_min':str(pay_min) if pay_min is not None else None,
+             'salary_max':str(pay_max) if pay_max is not None else None,'salary_period':pay_period}
         # Stay bounded even when every long field is populated.
         if len(json.dumps(rows+[row],ensure_ascii=False))>MAX_PROMPT_CHARS-3000:break
         rows.append(row);evidence[job.pk]=row
