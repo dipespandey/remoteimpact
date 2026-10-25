@@ -379,6 +379,7 @@ LOGGING["loggers"]["performance"] = {"handlers": ["performance"], "level": "INFO
 
 REDIS_URL = os.getenv("REDIS_URL", "")
 PUBLIC_PAGE_CACHE_ENABLED = True
+CSP_RELEASE_SCOPE = os.getenv("RELEASE_ID", "development")
 
 if REDIS_URL:
     CACHES = {

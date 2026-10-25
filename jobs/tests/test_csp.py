@@ -49,6 +49,14 @@ class AuthoredScriptPolicyTests(SimpleTestCase):
         self.assertEqual(policy_hashes(html), policy_hashes(html))
         self.assertNotIn(digest('window.cspCached=2;'), policy_hashes(html.replace('Cached=1','Cached=2'))[0])
 
+    def test_previous_release_cannot_authorize_code_in_the_current_release(self):
+        code = 'window.cspReleaseBoundary=1;'
+        with override_settings(CSP_RELEASE_SCOPE='previous-release'):
+            html = self.render('{% csp_script %}<script>' + code + '</script>{% endcsp_script %}')
+            self.assertIn(digest(code), policy_hashes(html)[0])
+        with override_settings(CSP_RELEASE_SCOPE='current-release'):
+            self.assertNotIn(digest(code), policy_hashes(html)[0])
+
     def test_component_compiles_to_registered_factory_without_eval(self):
         html = self.render('{% csp_component %}<div x-data="{open:false, init(){this.open=true;}}">{% endcsp_component %}')
         self.assertIn('Alpine.data(', html)
