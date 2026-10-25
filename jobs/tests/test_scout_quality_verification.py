@@ -263,6 +263,20 @@ class SavedSourceVerificationTests(TestCase):
         self.job.raw_data['description'] = 'Changed duties with mandatory office attendance.'
         self.assertNotEqual(job_fingerprint(self.job), before)
 
+    def test_retrieval_does_not_discard_source_pay_because_legacy_columns_disagree(self):
+        self.job.application_url = 'https://employer.example/jobs/1'
+        self.job.salary_min = self.job.salary_max = 10000
+        self.job.raw_data = {'salaryPeriod': 'MONTH', 'salaryMinimum': 7000,
+            'salaryMaximum': 7000, 'salaryCurrency': 'USD'}
+        self.job.save()
+        prefs = {'intent_text': 'Economics Instructor', 'titles': ['Economics Instructor'],
+            'salary_requirement': {'amount': '80000', 'currency': 'USD', 'period': 'year'}}
+        from jobs.services.job_service import JobService
+        from jobs.services.scout_retrieval import retrieve
+        diagnostic = {}
+        result = retrieve(JobService.get_available_jobs(), prefs, ['economics instructor'], diagnostic)
+        self.assertIn(self.job.pk, [j.pk for j in result], diagnostic)
+
     def test_final_pipeline_rejects_invalid_opening_even_when_review_returns_it(self):
         with patch('jobs.services.scout_reranker.rerank', return_value=[self.job]):
             diagnostic = {}
