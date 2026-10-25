@@ -72,6 +72,31 @@ class StaffMFATests(TestCase):
         self.assertFalse(adapter.can_delete_authenticator(Authenticator(user=self.staff, type='totp')))
 
 
+@override_settings(ADMIN_REQUIRE_MFA=False)
+class OptionalStaffMFATests(TestCase):
+    def setUp(self):
+        self.staff = get_user_model().objects.create_user(
+            'optional-staff', 'optional@example.test', 'synthetic-test-password', is_staff=True)
+        self.client.force_login(self.staff)
+
+    def test_staff_can_enter_admin_without_enrolling_when_enforcement_disabled(self):
+        self.assertEqual(self.client.get('/admin/').status_code, 200)
+
+    def test_mfa_management_and_setup_remain_available(self):
+        response = self.client.get(reverse('mfa_index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse('mfa_activate_totp'))
+
+    def test_optional_enrollment_remains_encrypted_and_can_be_disabled(self):
+        from jobs.mfa_adapter import StaffMFAAdapter
+        from allauth.mfa.models import Authenticator
+        adapter = StaffMFAAdapter()
+        value = adapter.encrypt('SYNTHETICOPTIONALSECRET')
+        self.assertNotIn('SYNTHETICOPTIONALSECRET', value)
+        self.assertEqual(adapter.decrypt(value), 'SYNTHETICOPTIONALSECRET')
+        self.assertTrue(adapter.can_delete_authenticator(Authenticator(user=self.staff, type='totp')))
+
+
 class ParserBoundaryTests(TestCase):
     def test_oversized_cv_is_rejected_before_starting_a_parser(self):
         from io import BytesIO

@@ -483,7 +483,7 @@ SCOUT_RERANK_WIDE = os.getenv("SCOUT_RERANK_WIDE", "false").lower() == "true"
 TRUSTED_PROXY_CIDRS = [n.strip() for n in os.getenv("TRUSTED_PROXY_CIDRS", "127.0.0.1/32,::1/128").split(",") if n.strip()]
 ALLAUTH_TRUSTED_PROXY_COUNT = 0
 ALLAUTH_TRUSTED_CLIENT_IP_HEADER = None
-ADMIN_REQUIRE_MFA = not TESTING
+ADMIN_REQUIRE_MFA = not TESTING and os.getenv("ADMIN_REQUIRE_MFA", "true").lower() in ("true", "1", "yes")
 ADMIN_MFA_MAX_AGE = 8 * 60 * 60
 MFA_SUPPORTED_TYPES = ["totp", "recovery_codes"]
 MFA_TRUST_ENABLED = False
