@@ -351,11 +351,18 @@ class JobScoutPreviewView(TemplateView):
         else:
             context["preview_pending"] = False
         context["preview_queue_limited"] = bool(getattr(self, "queue_limited", False))
+        explore_jobs = []
+        if not matches and not older_jobs and not context['preview_pending']:
+            from jobs.services.scout_alternatives import explore_openings
+            if not preferences:
+                preferences = JobScoutService._fallback_parse(self.intent)
+            explore_jobs = explore_openings(preferences)
         context.update(
             intent=self.intent,
             preferences=preferences,
             preview_jobs=matches,
             older_jobs=older_jobs,
+            explore_jobs=explore_jobs,
             empty_advice=JobScoutService.empty_advice(workflow_diagnostics, preferences),
             review_incomplete=workflow_diagnostics.get("review_incomplete", False),
             provisional=any(getattr(job, "scout_needs_confirmation", False) for job in matches),
@@ -377,6 +384,7 @@ class JobScoutPreviewView(TemplateView):
                 user=self.request.user,
                 metadata={
                     "match_count": len(matches),
+                    "explore_count": len(explore_jobs),
                     "intent_text": self.intent[:2000],
                     "workflow": workflow_diagnostics,
                     "source": source,

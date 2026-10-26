@@ -206,7 +206,9 @@ class ScoutResultTests(TestCase):
         alert = JobAlert.objects.create(user=self.user, intent_text=self.intent, frequency="once")
         E.objects.create(alert=alert, user=self.user, event=E.Event.INITIAL_MATCHES_EMPTY, metadata={"matching": {"hard_rejections": {"location": 4}}})
         page = self.result(reverse("jobs:job_alerts")+f"?created={alert.pk}")
-        self.assertContains(page, "Most current roles like this")
+        self.assertEqual(page.context['initial_result_state'], 'empty')
+        self.assertTrue(page.context['location_blocked'])
+        self.assertContains(page, "Possible roles to explore")
         self.assertNotContains(page, 'add &quot;worldwide&quot;')
 
     def test_real_email_signup_preserves_brief_and_source(self):

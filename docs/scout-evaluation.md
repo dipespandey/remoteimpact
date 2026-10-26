@@ -111,3 +111,20 @@ delayed. Exhaustion retains the incomplete-review outcome and existing retry UI,
 rather than implying the inventory has no suitable role. Each attempt retains its
 existing four-call and deadline budgets. Semantic model warm-up is unchanged and
 requires a separate controlled relevance, memory and latency comparison.
+
+## Product requirement: no dead-end Scout results
+
+The owner requires Scout screens to offer probable openings even when the exact
+search returns no good matches. Preview and saved-result pages must show current
+exploration options after empty, failed or incomplete reviews, whenever real
+publishable remote openings are available. Loading remains loading; an actually
+empty inventory must never be disguised with invented, expired or non-job records.
+
+`explore_openings` ranks related source duties first, deduplicates reposts and
+excludes known physical/mandatory-office roles and non-openings. Its bounded
+96-row candidate read has no model calls. Exploration cards explicitly disclose
+that they are not verified matches, with source pay and location restrictions and
+known differences. Strict match gates, delivery history, billing/free credits and
+match email contents remain unchanged. Analytics records `explore_count` separately
+from `match_count`. Regression tests cover both synchronous and asynchronous
+previews, saved results, failures, safety exclusions, ranking and mobile rendering.
