@@ -101,6 +101,12 @@ class AuditedRequirementsTests(TestCase):
             item = job(description=text)
             verify_matches([item], {'intent_text': 'Software engineer', 'titles': ['Software Engineer']}, {})
             self.assertNotIn('location_required', item.scout_caveats)
+        excluded = job(description='Remote worldwide, except Canada.')
+        prefs = {'intent_text': 'Software engineer', 'titles': ['Software Engineer']}
+        verify_matches([excluded], prefs, {})
+        self.assertIn('location_required', excluded.scout_caveats)
+        self.assertTrue(any('Canada' in reason for reason in excluded.scout_reasons))
+        self.assertFalse(evaluate_job(excluded, {**prefs, 'locations': ['Canada']}, relaxed=True).allowed)
 
 
 class BroadSearchRecoveryTests(TestCase):

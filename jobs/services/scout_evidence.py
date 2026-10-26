@@ -201,6 +201,9 @@ def location_evidence_warning(job, prefs, text):
         names = {'US': 'United States', 'GB': 'United Kingdom'}
         labels = sorted(names.get(code, dict(countries).get(code, code)) for code in offered)
         return 'Location restricted to ' + ', '.join(labels) + '; confirm eligibility'
+    if facts['denied']:
+        labels = sorted(dict(countries).get(code, code) for code in facts['denied'])
+        return 'Hiring excludes ' + ', '.join(labels) + '; confirm eligibility'
     return None
 
 
