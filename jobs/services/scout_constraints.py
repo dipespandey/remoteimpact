@@ -252,8 +252,13 @@ def extract_constraints(text):
             allowed.append('Worldwide');break
     # Preserve the user's specified compensation units. A bare $ follows the
     # existing USD convention, but no cross-currency conversion is implied.
-    salary=None
-    unresolved=[]
+    from jobs.services.scout_pay_ranges import pay_range
+    range_found, salary, unresolved = pay_range(positive)
+    ambiguous_places = re.findall(r'\bout of\s+(?:the\s+)?([^,;.!?()]{2,40})', positive, re.I)
+    ambiguous_codes = set().union(*(expand([part]) for part in ambiguous_places)) if ambiguous_places else set()
+    if ambiguous_codes:
+        allowed = [place for place in allowed if not expand([place]) & ambiguous_codes]
+        unresolved.append('location_ambiguous')
     # Timezone overlap and scheduling aren't represented in catalogue fields.
     # Preserve their uncertainty rather than claiming verified eligibility.
     if re.search(r'\b(?:UTC|GMT)\s*[+-]\s*\d|\b(?:EST|EDT|PST|PDT|CET|CEST)\b|\b(?:time ?zone|working hours|hours overlap)\b', positive, re.I):
@@ -265,10 +270,10 @@ def extract_constraints(text):
         unresolved.append('location_code')
     amount=r'(?P<currency>US\$|C\$|A\$|USD|EUR|GBP|CAD|AUD|CHF|NOK|INR|\$|£|€)?\s*(?P<amount>\d[\d,]*(?:\.\d+)?)\s*(?P<k>k\b|thousand\b)?'
     pattern=r'(?:at least|minimum(?: salary)?|min(?:imum)? pay|over|above|from|starting at|salary(?: of)?|pay(?: of)?)\s*'+amount
-    match=re.search(pattern,positive,re.I)
-    if not match:
+    match=None if range_found else re.search(pattern,positive,re.I)
+    if not match and not range_found:
         match=re.search(amount+r'\s*(?:or more|and up|minimum|\+)',positive,re.I)
-    if not match:
+    if not match and not range_found:
         # A stated rate with its unit ("$40/hour", "80 thousand a year") is a pay requirement on its own.
         match=re.search(amount+r'\s*(?=(?:a|per|/)\s*(?:year|yr|annum|hour|hr|month)\b)',positive,re.I)
         if match and not (match.group('currency') or match.group('k')):match=None
@@ -284,15 +289,16 @@ def extract_constraints(text):
         for unit, pattern in [('hour',r'(?:per|/)\s*(?:hour|hr)|hourly'),('month',r'(?:per|/)\s*month|monthly'),('week',r'(?:per|/)\s*week|weekly'),('day',r'(?:per|/)\s*day|daily')]:
             if re.search(pattern,tail,re.I):period=unit;break
         salary={'amount':str(value),'currency':currency,'period':period}
-        if re.search(r'\b(?:minimum salary|guaranteed|actual annual|not full.time.equivalent)\b',positive,re.I):salary['mode']='floor'
         if currency is None:
             unresolved.append('salary_currency')
+    if salary and re.search(r'\b(?:minimum salary|guaranteed|actual annual|not full.time.equivalent)\b',positive,re.I):
+        salary['mode']='floor'
     domains=[]
     for phrase in ['behavioral health','behavioural health','mental health','public health']:
         if re.search(r'\b'+phrase+r'\b',positive,re.I):domains.append(phrase)
     from jobs.services.scout_intent import required_nonprofit
     from jobs.services.scout_verification import weekly_hours_requirement
-    return {'constraint_version':6,'intent_text':text,'candidate_years':candidate_years,
+    return {'constraint_version':7,'intent_text':text,'candidate_years':candidate_years,
             'required_employer_type':required_nonprofit(positive),
             'weekly_hours':weekly_hours_requirement(positive),
             'actual_annual_pay':bool(re.search(r'\bactual\s+annual\s+pay\b',positive,re.I)),
@@ -348,14 +354,15 @@ def extract_location_evidence(fields):
     restrict=[]
     # Explicit role-location labels can be lost during import. Scope this to
     # labelled locations so remote/canada server paths are not residency rules.
-    for label in re.finditer(r'\b(?:work\s+)?location[\s*]*:[\s*]*remote[\s*]*(?:/|\(|[-–:])\s*([^.;!?]{2,100})',body,re.I):
+    for label in re.finditer(r'\b(?:work\s+)?location[\s*]*:[\s*]*remote[\s*]*(?:/|\(|[-–:]|,\s*(?:in\s+)?|\bin\s+)\s*([^.;!?]{2,100})',body,re.I):
         region=re.split(r'\b(?:salary|position|contract|about|company|responsibilities|qualifications|requirements)\b',label[1],maxsplit=1,flags=re.I)[0]
         if places(region) or state_names(region):restrict.append(region)
-    for clause in re.split(r'[.!?;\n]',body):
+    for clause in re.split(r'[.!?;\n]|\bbut\b',body,flags=re.I):
         lowered=clause.lower()
         if re.search(r'\b(?:worldwide|globally|anywhere)\s*,?\s*(?:including|such as|for example)\b',clause,re.I):continue
+        if re.search(r"\b(?:no need to|not required to|do not need to|need not|don.t need to)\b",clause,re.I):continue
         if not any(token in lowered for token in ('remote','must','need to','only','candidates','applicants')):continue
-        if re.search(r'remote\s+(?:within|from|in)|(?:must|need to|only)\s+(?:be\s+)?(?:based|reside|located)|(?:candidates|applicants)\s+(?:(?:must|can|may|should|will|need to)\s+)?(?:be\s+)?(?:based|reside|located|live)',clause,re.I):
+        if re.search(r'remote\s*,?\s+(?:within|from|in)|(?:must|need to|only)\s+(?:be\s+)?(?:based|reside|located)|(?:must|need to)\s+(?:be\s+)?(?:legally\s+)?(?:authorized|authorised|entitled|eligible)\s+to\s+work\s+(?:in|from)|(?:candidates|applicants)\s+(?:(?:must|can|may|should|will|need to)\s+)?(?:be\s+)?(?:based|reside|located|live)',clause,re.I):
             if places(clause) or state_names(clause):
                 if not re.search(r"\b(?:not|n't)\s+(?:be\s+)?(?:based|reside|located)|\bnot\s+remote\s+(?:in|within|from)",clause,re.I):restrict.append(clause)
     offered=expand(restrict or [location,country])
@@ -423,6 +430,9 @@ CAVEAT_TEXT = {
     'working_timezone': 'Check: working hours not stated',
     'location_code': 'Check: location eligibility not confirmed',
     'salary_currency': 'Check: salary currency',
+    'salary_range': 'Check: clarify the requested pay range and currency',
+    'location_ambiguous': 'Check: clarify whether you mean based in or outside the named country',
+    'location_required': 'Check: confirm you meet the listing’s hiring-location requirements',
     'paid_currency_unconfirmed': 'Check: payment in the requested currency is not confirmed',
 }
 
@@ -471,10 +481,25 @@ def salary_compatible(job, requirement):
     period = aliases.get(period, period)
     wanted = requirement.get('period', 'year')
     if period == wanted and period in {'hour', 'week', 'day', 'year', 'month'}:
-        return maximum >= amount
-    if {period, wanted} <= {'year', 'month'}:
-        return maximum * (12 if period == 'month' else 1) >= amount * (12 if wanted == 'month' else 1)
-    return False
+        factor = 1
+    elif {period, wanted} <= {'year', 'month'}:
+        factor = Decimal(12 if period == 'month' else 1) / Decimal(12 if wanted == 'month' else 1)
+    else:
+        return False
+    if maximum * factor < amount:
+        return False
+    upper = requirement.get('max_amount')
+    if upper is not None and not requirement.get('upper_open'):
+        try:
+            upper = Decimal(str(upper))
+            if not upper.is_finite() or upper < amount:
+                return False
+        except (TypeError, InvalidOperation):
+            return False
+        # A published minimum above the requested interval cannot overlap it.
+        if low is not None and low * factor > upper:
+            return False
+    return True
 
 
 def _eligibility_source(job):

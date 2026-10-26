@@ -178,30 +178,29 @@ def experience_evidence_warning(job, prefs, text):
 def location_evidence_warning(job, prefs, text):
     """Keep source restrictions visible when no applicant location is given."""
     if prefs.get('locations'):return None
-    from django.utils.html import strip_tags
-    from jobs.services.scout_constraints import state_names,places
-    clean=re.sub(r'\bU\.S\.(?:A\.)?', 'USA', strip_tags(text), flags=re.I)
-    names={'us':'United States','usa':'United States','united states':'United States','uk':'United Kingdom'}
-    def country_warning(offered):
-        return 'Location restricted to '+', '.join(sorted({names.get(p,p.title()) for p in offered}))+'; confirm eligibility'
-    for label in re.finditer(r'\b(?:work\s+)?location\s*:\s*remote\s*[/–—:-]\s*([^.;!?]{2,100})', clean, re.I):
-        region = re.split(r'\b(?:salary|position|contract|about|company|responsibilities|qualifications|requirements)\b', label[1], maxsplit=1, flags=re.I)[0]
-        offered = places(region)
-        if offered:
-            return country_warning(offered)
-    for clause in re.split(r'[.!?;\n]|\bbut\b',clean,flags=re.I):
-        if re.search(r'\b(?:worldwide|globally|anywhere)\s*,?\s*(?:including|such as|for example)\b',clause,re.I):continue
-        if re.search(r'\b(?:no need to|not required to|do not need to|need not|don.t need to)\b',clause,re.I):continue
-        if not re.search(r'\b(?:must|need to|only)\s+(?:be\s+)?(?:reside|based|located)|\bresidency required\b|\bremote\s+(?:within|from|in)\b|\b(?:authorized|eligible) to work from\b|\b(?:candidates|applicants)\s+(?:(?:must|can|may|should|will|need to)\s+)?(?:be\s+)?(?:based|reside|located|live)\b',clause,re.I):continue
-        states=state_names(clause)
-        if states:return ', '.join(sorted(s.title() for s in states))+' residency required; confirm eligibility'
-        offered=places(clause)
-        if offered:return country_warning(offered)
-    location=source_location(job) or str(getattr(job,'location','') or '')
-    if re.search(r'\bworldwide|\banywhere|\bglobally',location,re.I):return None
-    offered=places(location)
+    from django_countries import countries
+    from jobs.services.scout_source_profile import profile_for
+    _, profile = profile_for(job, geography=True)
+    facts = profile['geography']
+    if text:
+        # Callers may supply source text before attaching it to the job object.
+        from jobs.services.scout_constraints import extract_location_evidence
+        from jobs.services.scout_source_profile import source_fields
+        fields = source_fields(job)
+        fields.update(description=text, requirements='')
+        facts = extract_location_evidence(fields)
+    states = facts['offered_states']
+    if states:
+        return ', '.join(sorted(state.title() for state in states)) + ' residency required; confirm eligibility'
+    offered = facts['offered']
     if offered:
-        return country_warning(offered)
+        from jobs.services.scout_constraints import REGIONS
+        region = next((name for name, codes in REGIONS.items() if set(offered) == codes), None)
+        if region:
+            return 'Location restricted to ' + region.title() + '; confirm eligibility'
+        names = {'US': 'United States', 'GB': 'United Kingdom'}
+        labels = sorted(names.get(code, dict(countries).get(code, code)) for code in offered)
+        return 'Location restricted to ' + ', '.join(labels) + '; confirm eligibility'
     return None
 
 

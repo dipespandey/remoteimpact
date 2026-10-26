@@ -20,7 +20,7 @@ from jobs.models import ScoutPreviewAccess, ScoutPreviewQueueGuard, ScoutPreview
 from jobs.services.job_service import JobService
 
 logger = logging.getLogger(__name__)
-TASK_SEMANTICS_VERSION = "scout-preview-v2"
+TASK_SEMANTICS_VERSION = "scout-preview-v3"
 DEFAULT_QUEUE_LIMIT = 20
 DEFAULT_SESSION_LIMIT = 5
 DEFAULT_SESSION_WINDOW_SECONDS = 600
@@ -384,6 +384,23 @@ def execute_claimed_task(task_id, lease_token):
         ).first()
         if not task:
             return False
+        incomplete_empty = not result.get('matches') and result.get('diagnostics', {}).get('review_incomplete') is True
+        if incomplete_empty:
+            max_attempts = int(_setting("SCOUT_PREVIEW_MAX_ATTEMPTS", DEFAULT_MAX_ATTEMPTS))
+            if task.attempts < max_attempts:
+                # A completed worker call is not a completed relevance review.
+                # Retry only empty failures; do not delay useful partial results
+                # or retry a genuine inventory no-match. Existing leases/caps win.
+                task.state = ScoutPreviewTask.State.QUEUED
+                task.result = result
+                task.available_at = timezone.now() + timedelta(seconds=3)
+                task.lease_until = None
+                task.lease_token = None
+                task.last_error = 'ReviewIncomplete'
+                task.completed_at = None
+                task.save(update_fields=['state', 'result', 'available_at', 'lease_until', 'lease_token', 'last_error', 'completed_at', 'updated_at'])
+                return False
+            result = {**result, 'diagnostics': {**result.get('diagnostics', {}), 'review_retry_exhausted': True}}
         task.state = ScoutPreviewTask.State.SUCCEEDED
         task.result = result
         task.lease_until = None

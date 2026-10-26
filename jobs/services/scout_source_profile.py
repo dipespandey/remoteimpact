@@ -7,7 +7,7 @@ import hashlib
 import json
 import re
 
-VERSION = 5
+VERSION = 6
 KEY = 'scout_source_profile'
 MAX_SPANS = 16
 MAX_DUTIES = 6000

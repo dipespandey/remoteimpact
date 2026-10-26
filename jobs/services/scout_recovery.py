@@ -82,12 +82,33 @@ def duty_evidence(job, preferences):
     return None
 
 
+def broad_search_evidence(job):
+    """A real duty for browsing when the seeker has not specified a profession.
+
+    This cannot establish personal suitability. The caller must retain the
+    request-details and unreviewed caveats and all deterministic restrictions.
+    """
+    fields, profile = profile_for(job)
+    text = fields['description']
+    spans = profile['spans']['description'] or [[0, min(len(text), 700)]]
+    for start, end in spans:
+        for clause in re.split(r'[.!?;•]|\s[–—]\s', text[start:end]):
+            clause = clause.strip(' *:-')
+            if re.search(r'\b(?:experience|qualifications?|required|proficiency|familiarity|ability to|our company|we (?:build|develop|design))\b', clause, re.I):
+                continue
+            if re.match(r"(?:(?:you will|you.ll)\s+)?(?:write|edit|build|develop|design|manage|coordinate|maintain|provide|support|lead|analyze|analyse)\s+\S.{12,}", clause, re.I):
+                return clause[:300]
+    return None
+
+
 def recover(candidates, preferences, selected, diagnostics, *, limit=3, rejected_ids=()):
     if limit <= 0 or not getattr(settings, 'SCOUT_RULE_RECOVERY_ENABLED', True):
         return []
     from jobs.services.job_scout_service import JobScoutService
     from jobs.services.scout_evidence import source_value
     from jobs.services.scout_review import requested_checks
+    from jobs.services.scout_verification import needs_role_details
+    broad = needs_role_details(preferences)
     blocked = set(rejected_ids)
     seen = set()
     def keys(job):
@@ -106,11 +127,12 @@ def recover(candidates, preferences, selected, diagnostics, *, limit=3, rejected
         eligibility = evaluate_job(job, preferences, relaxed=True)
         if not eligibility.allowed:
             continue
-        quote = duty_evidence(job, preferences)
+        quote = broad_search_evidence(job) if broad else duty_evidence(job, preferences)
         if not quote:
             continue
         job.scout_caveats = list(dict.fromkeys([*getattr(job, 'scout_caveats', []),
             *eligibility.caveats, 'source_review_pending',
+            *(['request_details_needed'] if broad else []),
             *['review_' + name for name in requested_checks(preferences) if name != 'function']]))
         job.scout_needs_confirmation = True
         job.scout_reasons = ['Listing duties: ' + quote]

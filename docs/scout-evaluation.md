@@ -78,3 +78,36 @@ Nested exclusions such as “exclude jobs that exclude Pakistan” do not exclud
 The combined review pool defaults to 160 eligible candidates per branch (`SCOUT_REVIEW_POOL_LIMIT`), rather than 400, preserving time for source review. This trades candidate breadth for latency and is not a recall guarantee. Unfinished preparation with no results, partial reviews, and retrieval deadline exhaustion remain visibly retryable rather than evidence of an empty market. The same-brief retry uses the loading state and does not send email.
 
 Regression fixtures are in `jobs/tests/test_scout_empty_regressions.py`. Browser tests cover 390px/1280px retry, exact brief preservation and no email send. A read-only production replay returned possibilities for all three reported briefs, with unresolved location/seniority warnings retained. Returned possibilities do not establish Pakistan eligibility.
+
+## October 26 requirement and recovery regressions
+
+`jobs.tests.test_scout_audit_regressions` covers synthetic cases derived from the
+production audit, plus held-out currency, range, study and negative-evidence
+variants. No customer briefs or identifiers belong in fixtures.
+
+Pay intervals retain their lower and upper amounts, currency and period. A trailing
+`+` keeps the upper end open. Known comparable pay must overlap the stated interval;
+unknown units or currency require a caveat rather than an invented conversion.
+Reversed or mixed-currency intervals require clarification. Study arrangements do
+not become requested employment types. Ambiguous “out of [country]” language is
+preserved as unresolved geography, never a confirmed country preference. These
+constraints are re-grounded for model parses and existing saved Scouts alike.
+
+Matching and final warnings share source geography extraction. Original-source
+country restrictions override a generic catalogue “Remote” label. When the brief
+has no working country, a restricted role must carry a location warning and remain
+in the provisional tier. Geography profile version 6 invalidates older prepared
+profiles; final verification version 2 also annotates recovered results.
+
+A broad request without a profession can recover a bounded source-backed browsing
+option from actual duties. It remains labelled as needing role details and full
+review; it does not establish personal suitability. All deterministic restrictions,
+explicit prior rejections, deduplication and original-source verification still
+apply. No new provider calls or prompt changes are introduced by this recovery.
+
+Empty preview results with incomplete review receive one bounded queue retry under
+the existing two-attempt limit. Genuine no-match and useful partial results are not
+delayed. Exhaustion retains the incomplete-review outcome and existing retry UI,
+rather than implying the inventory has no suitable role. Each attempt retains its
+existing four-call and deadline budgets. Semantic model warm-up is unchanged and
+requires a separate controlled relevance, memory and latency comparison.
