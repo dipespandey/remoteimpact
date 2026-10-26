@@ -31,6 +31,7 @@ def initial_result_context(alert):
     incomplete = bool(diagnostics.get("review_incomplete") or diagnostics.get("empty_reason") == "review_incomplete")
     context = {
         "preview_jobs": [],
+        "explore_jobs": [],
         "initial_result_state": "unavailable",
         "initial_email_failed": bool(event and event.event == ConsumerFunnelEvent.Event.INITIAL_EMAIL_FAILED),
         "initial_review_incomplete": incomplete,
@@ -97,4 +98,8 @@ def initial_result_context(alert):
         context["initial_result_state"] == "empty" and not incomplete and rejections
         and max(rejections, key=rejections.get) in ("location", "location_rejected", "excluded_location")
     )
+    if not context['preview_jobs']:
+        from jobs.services.job_scout_service import JobScoutService
+        from jobs.services.scout_alternatives import explore_openings
+        context['explore_jobs'] = explore_openings(JobScoutService.preferences_for_alert(alert))
     return context

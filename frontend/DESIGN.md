@@ -186,3 +186,13 @@ Use component classes before adding page-specific styling. Preserve form names, 
 accessible labels, tracking attributes, Alpine and HTMX bindings during changes.
 Build with `npm ci && npm run build` from `frontend`; generated CSS and local vendor
 assets belong in the release.
+
+### Scout exploration state
+
+A completed Scout screen without verified matches shows an editorial list of
+current roles to explore using the existing `list-surface`, `job-title` and semantic
+text tokens. Each card shows employer, location, source pay, date and plain-text
+differences; it never uses an eligibility/success badge. The primary action refines
+the brief. The same component appears in preview and saved results. Incomplete
+review status remains visible above the options; historical result state and
+verified-match counts are not rewritten. This is an English product surface.

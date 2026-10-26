@@ -120,6 +120,9 @@
             {% endfor %}
         </ul>{% else %}<p class="mt-3 text-sm text-muted-foreground">No {{ tier.heading|lower }} for this brief yet.</p>{% endif %}
         {% endfor %}
+        {% elif explore_jobs %}
+        {% if initial_result_state == 'expired' %}<p class="mt-4 text-sm text-muted-foreground">The roles from this result are no longer available. Here are current options to explore.</p>{% elif initial_result_state == 'unavailable' %}<p class="mt-4 text-sm text-muted-foreground">This saved result is unavailable. Here are current options to explore.</p>{% endif %}
+        {% include "jobs/_scout_explore.html" %}
         {% elif initial_review_incomplete %}
         <p class="mt-4 text-sm text-muted-foreground">You can <a href="{% url 'jobs:job_scout_preview' %}?intent={{ created_alert.intent_text|urlencode }}&amp;source=scout_review_retry" class="underline">retry this search without sending an email</a> or <a href="{% url 'jobs:job_list' %}" class="underline">browse current jobs</a>.</p>
         {% elif initial_result_state == 'expired' %}

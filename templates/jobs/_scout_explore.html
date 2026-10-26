@@ -1,0 +1,15 @@
+{% load job_extras %}
+<section aria-labelledby="scout-explore-heading" class="mt-5">
+    <h2 id="scout-explore-heading" class="section-title">Possible roles to explore</h2>
+    <p class="mt-2 text-sm leading-6 text-muted-foreground">These are current openings to explore, not verified matches for every requirement in your brief. Location, pay or responsibilities may differ. Review the notes before applying.</p>
+    <ul class="list-surface mt-4">
+        {% for job in explore_jobs %}<li>
+            <article class="px-4 py-4 sm:px-5">
+                <h3 class="job-title break-words"><a href="{{ job.get_absolute_url }}" class="hover:underline">{{ job.title|display_title }}</a></h3>
+                <p class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground"><span class="font-medium text-foreground">{{ job.organization.name }}</span><span>{{ job.location|default:"Remote arrangement to confirm" }}</span>{% if job.explore_pay %}<span>{{ job.explore_pay }}</span>{% endif %}<span>Posted {{ job.posted_at|date:"M j, Y" }}</span></p>
+                {% if job.explore_evidence %}<p class="mt-3 text-sm leading-6">Listing duties: {{ job.explore_evidence }}</p>{% endif %}
+                {% if job.explore_notes %}<ul class="mt-3 space-y-1 text-sm leading-6 text-muted-foreground" aria-label="Differences and details to confirm">{% for note in job.explore_notes %}<li>{{ note }}</li>{% endfor %}</ul>{% endif %}
+            </article>
+        </li>{% endfor %}
+    </ul>
+</section>

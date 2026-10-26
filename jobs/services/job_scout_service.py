@@ -645,6 +645,11 @@ skills is not a request for invented, exact job titles. JSON only."""
     @staticmethod
     def _explicit_job_types(text: str) -> list[str]:
         """Extract employment arrangements without confusing domain language."""
+        # Study plans describe the candidate, not the desired employment.
+        text = re.sub(r'\b(?:part|full)[ -]?time\s+(?:degree|student|studies|education|course|school|college|university)\b', ' ', text or '', flags=re.I)
+        text = re.sub(r'\b(?:study|studying|pursue|pursuing|complete|completing|attend|attending)\b'
+                      r'(?:(?!\b(?:job|role|position|work)\b)[^.;!?]){0,65}?\b(?:part|full)[ -]?time\b',
+                      ' ', text, flags=re.I)
         patterns = [
             (r"\bfull[ -]?time\b|(?i:\bpermanent(?:\s*,|\s+(?:and|or|roles?|jobs?|positions?|employment|contracts?)\b))", "full-time"),
             (r"\bpart[ -]?time\b", "part-time"),
@@ -1025,7 +1030,7 @@ skills is not a request for invented, exact job titles. JSON only."""
         terms = cls._search_terms(preferences)
         diagnostics = diagnostics if diagnostics is not None else {}
         diagnostics.update({
-            "matcher_version": 7, "candidate_count": 0,
+            "matcher_version": 8, "candidate_count": 0,
             "location_rejected": 0, "experience_rejected": 0, "title_rejected": 0,
             "skill_evidence_rejected": 0, "score_rejected": 0,
         })

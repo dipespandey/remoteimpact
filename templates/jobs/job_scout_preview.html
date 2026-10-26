@@ -45,7 +45,7 @@
     <header class="page-header">
         <a href="{% url 'jobs:job_alerts' %}" class="text-xs text-muted-foreground hover:text-foreground">AI Job Scout</a>
         {% if preview_pending %}<h1 class="page-title mt-1">Loading your matches</h1><div class="scout-preview-progress" role="status" aria-live="polite" aria-atomic="true" aria-busy="true"><span class="scout-preview-progress-spinner" aria-hidden="true"></span><p class="page-lede m-0">We’re checking current openings against your brief. This page will update when the preview is ready.</p></div>{% elif sample_preview %}<h1 class="page-title mt-1">Try this search</h1><p class="page-lede">An example to start from. Edit it to fit you.</p>{% elif preview_jobs %}<h1 class="page-title mt-1">Your job matches</h1>
-        <p class="page-lede">{{ preview_jobs|length }} result{{ preview_jobs|length|pluralize }}. Check the details before applying.</p>{% elif review_incomplete %}<h1 class="page-title mt-1">Match review is temporarily incomplete</h1><p class="page-lede">Try again shortly; this does not mean there are no suitable jobs.</p>{% else %}<h1 class="page-title mt-1">No eligible matches in this preview</h1>
+        <p class="page-lede">{{ preview_jobs|length }} result{{ preview_jobs|length|pluralize }}. Check the details before applying.</p>{% elif explore_jobs or older_jobs %}<h1 class="page-title mt-1">Some options to explore</h1><p class="page-lede">Start with these openings while you refine your search. Check the differences and eligibility details before applying.</p>{% elif review_incomplete %}<h1 class="page-title mt-1">Match review is temporarily incomplete</h1><p class="page-lede">Try again shortly; this does not mean there are no suitable jobs.</p>{% else %}<h1 class="page-title mt-1">No eligible matches in this preview</h1>
         <p class="page-lede">We did not find a strong current match in the available catalogue. You can edit your brief or create an account to save a Scout; this does not guarantee additional matches.</p>{% endif %}
     </header>
 
@@ -116,7 +116,7 @@
                         </article>
                     </li>{% endfor %}
                 </ul>{% else %}<p class="mt-3 text-sm text-muted-foreground">No {{ tier.heading|lower }} in the current catalogue for this brief.</p>{% endif %}
-            </section>{% endif %}{% endfor %}{% else %}<section class="card p-5 sm:p-6">
+            </section>{% endif %}{% endfor %}{% elif explore_jobs %}{% if review_incomplete %}<div class="alert alert-warning" role="status"><div class="w-full"><h2 class="text-base font-semibold">Match review is temporarily incomplete</h2><p class="mt-2">Your full match review is still incomplete. These browsing options do not establish eligibility for your brief.</p>{% include "jobs/_scout_retry.html" %}</div></div>{% endif %}{% include "jobs/_scout_explore.html" %}{% else %}<section class="card p-5 sm:p-6">
                 <h2 class="section-title">{% if review_incomplete %}We couldn’t finish checking these matches{% else %}No verified match yet{% endif %}</h2>
                 <p class="mt-1.5 text-sm leading-6 text-muted-foreground">{% if review_incomplete %}Please try this search again shortly. We haven’t confirmed whether suitable jobs are available.{% else %}{{ empty_advice }}{% endif %}</p>
                 {% if review_incomplete %}{% include "jobs/_scout_retry.html" %}{% endif %}
@@ -134,11 +134,13 @@
         </div>
 
         <aside class="card p-5 sm:p-6 lg:sticky lg:top-24 lg:order-none" aria-label="Receive complete Job Scout results">
-            <h2 class="text-lg font-semibold leading-snug tracking-tight text-foreground">{% if sample_preview %}Keep these results{% else %}Email your matches{% endif %}</h2>
-            <p class="mt-1.5 text-sm leading-6 text-muted-foreground">{% if sample_preview %}Edit the example above, or continue with this search.{% else %}One free email with up to five matches. Create an account, then confirm your search.{% endif %}</p>
+            <h2 class="text-lg font-semibold leading-snug tracking-tight text-foreground">{% if explore_jobs %}Refine your Scout{% elif sample_preview %}Keep these results{% else %}Email your matches{% endif %}</h2>
+            <p class="mt-1.5 text-sm leading-6 text-muted-foreground">{% if explore_jobs %}Review the options or adjust your role, location and pay preferences. Your match email uses the requirements in your brief.{% elif sample_preview %}Edit the example above, or continue with this search.{% else %}One free email with up to five matches. Create an account, then confirm your search.{% endif %}</p>
             <div class="mt-5">
+            {% if explore_jobs %}<a href="#personalize-brief" class="btn btn-primary btn-lg btn-block">Adjust my search</a>{% else %}
             {% if sample_preview %}<a href="#personalize-brief" class="btn btn-primary btn-lg btn-block" data-track="scout_sample_personalize">Personalize this search</a>{% endif %}
             {% if user.is_authenticated %}<a href="{{ next_path }}" class="btn {% if sample_preview %}btn-outline mt-2{% else %}btn-primary{% endif %} btn-lg btn-block" data-track="scout_preview_continue" data-track-category="job_scout_conversion">{% if sample_preview %}Use this exact search{% else %}Review and send my Scout{% endif %}</a>{% else %}<a href="{% url 'jobs:job_scout_signup_start' %}?next={{ next_path|urlencode }}&source={{ request.GET.source|urlencode }}" class="btn {% if sample_preview %}btn-outline mt-2{% else %}btn-primary{% endif %} btn-lg btn-block" data-track="scout_preview_signup" data-track-category="job_scout_conversion">{% if sample_preview %}Use this exact search{% else %}Continue to my free Scout{% endif %}</a>{% endif %}
+            {% endif %}
             </div>
             <p class="help text-center">No card. No recurring emails.</p>
             {% if not user.is_authenticated %}

@@ -6,7 +6,7 @@ provider calls, persisted job edits or messages are performed here.
 import re
 from urllib.parse import urlsplit
 
-VERSION = 1
+VERSION = 2
 HOURS = re.compile(r'(?<![\d.])(\d{1,2}(?:\.\d+)?)\s*(?:[-–]\s*(\d{1,2}(?:\.\d+)?))?\s*(?:max\s*)?(?:hours?|hrs?)\s*(?:/|per\s+|a\s+)\s*week\b', re.I)
 
 
@@ -94,7 +94,7 @@ def needs_role_details(preferences):
         'my we our us please any anything something jobs job roles role work working employment position positions '
         'full time part fulltime parttime remote paid stable decent good pay salary compensation '
         'per hour hours hourly week weekly month monthly year yearly annual least minimum maximum '
-        'at to from in of with and or need'.split())
+        'at to from in of with and or need which can be done anywhere world globally worldwide'.split())
     locations = set(re.findall(r'[a-z]+', ' '.join(preferences.get('locations') or []).lower()))
     words = set(re.findall(r'[a-z]+', preferences['intent_text'].lower()))
     return not (words - generic - locations)
@@ -136,6 +136,13 @@ def verify_matches(jobs, preferences, diagnostics, *, annotate=True):
         if needs_role_details(preferences):
             job.scout_caveats = list(dict.fromkeys([*job.scout_caveats, 'request_details_needed']))
         reasons = list(getattr(job, 'scout_reasons', []))
+        # Apply source restrictions to model-reviewed and recovered rows alike.
+        from jobs.services.scout_evidence import location_evidence_warning
+        warning = location_evidence_warning(job, preferences, '')
+        if warning:
+            job.scout_caveats = list(dict.fromkeys([*job.scout_caveats, 'location_required']))
+            job.scout_needs_confirmation = True
+            reasons.append(warning)
         if preferences.get('salary_requirement'):
             pay = compensation_display(job)
             if pay:
