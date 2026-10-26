@@ -1,5 +1,6 @@
 """Source-backed exploration options, kept separate from match/email results."""
 from datetime import timedelta
+import re
 
 from django.db.models import Q
 from django.utils import timezone
@@ -19,8 +20,10 @@ def explore_openings(preferences, *, limit=3, exclude_ids=()):
     from jobs.services.job_scout_service import JobScoutService
     from jobs.services.scout_constraints import CAVEAT_TEXT, location_compatibility, salary_compatible, salary_caveat
     from jobs.services.scout_evidence import compensation_display, location_evidence_warning
-    from jobs.services.scout_source_profile import request_terms, function_priority
+    from jobs.services.scout_source_profile import request_terms, function_priority, profile_for
     from jobs.services.scout_source_evidence import load_original_sources
+    from jobs.services.scout_verification import non_opening
+    from jobs.services.importers.common import _is_generic_listing_title
     if limit <= 0:
         return []
     terms = sorted(request_terms(preferences))[:8]
@@ -36,7 +39,11 @@ def explore_openings(preferences, *, limit=3, exclude_ids=()):
     ranked = []
     for job in candidates:
         # Keep non-openings and known physical/office roles out of discovery too.
-        if not evaluate_job(job, {}, relaxed=True).allowed:
+        fields, profile = profile_for(job, workplace=True)
+        title = fields['title']
+        if (_is_generic_listing_title(title) or non_opening(title, job.application_url)
+                or re.search(r'\b(?:spontaneous|unsolicited)\s+applications?\b', title, re.I)
+                or profile['mandatory_workplace']):
             continue
         decision = evaluate_job(job, preferences, relaxed=True)
         priority = function_priority(job, preferences, terms=terms)

@@ -98,6 +98,11 @@ class ScoutExploreTests(TestCase):
     def test_no_inventory_is_honest_and_related_options_are_deduplicated(self):
         from jobs.services.scout_alternatives import explore_openings
         self.assertEqual(len(explore_openings(self.prefs)), 1)
+        self.job.title = 'Finance Director'
+        self.job.description = 'Financial Management (60%). Lead financial planning and remote team accounting.'
+        self.job.save(update_fields=['title', 'description'])
+        finance = {'intent_text': 'Remote finance leadership roles', 'titles': ['Finance Director']}
+        self.assertEqual([j.pk for j in explore_openings(finance)], [self.job.pk])
         self.job.is_active = False
         self.job.save(update_fields=['is_active'])
         self.assertEqual(explore_openings(self.prefs), [])
