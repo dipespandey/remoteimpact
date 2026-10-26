@@ -116,7 +116,7 @@
                         </article>
                     </li>{% endfor %}
                 </ul>{% else %}<p class="mt-3 text-sm text-muted-foreground">No {{ tier.heading|lower }} in the current catalogue for this brief.</p>{% endif %}
-            </section>{% endif %}{% endfor %}{% elif explore_jobs %}{% if review_incomplete %}<div class="alert alert-warning" role="status"><p>Your full match review is still incomplete. These browsing options do not establish eligibility for your brief.</p>{% include "jobs/_scout_retry.html" %}</div>{% endif %}{% include "jobs/_scout_explore.html" %}{% else %}<section class="card p-5 sm:p-6">
+            </section>{% endif %}{% endfor %}{% elif explore_jobs %}{% if review_incomplete %}<div class="alert alert-warning" role="status"><div class="w-full"><h2 class="text-base font-semibold">Match review is temporarily incomplete</h2><p class="mt-2">Your full match review is still incomplete. These browsing options do not establish eligibility for your brief.</p>{% include "jobs/_scout_retry.html" %}</div></div>{% endif %}{% include "jobs/_scout_explore.html" %}{% else %}<section class="card p-5 sm:p-6">
                 <h2 class="section-title">{% if review_incomplete %}We couldn’t finish checking these matches{% else %}No verified match yet{% endif %}</h2>
                 <p class="mt-1.5 text-sm leading-6 text-muted-foreground">{% if review_incomplete %}Please try this search again shortly. We haven’t confirmed whether suitable jobs are available.{% else %}{{ empty_advice }}{% endif %}</p>
                 {% if review_incomplete %}{% include "jobs/_scout_retry.html" %}{% endif %}
