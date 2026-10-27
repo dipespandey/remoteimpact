@@ -65,8 +65,15 @@
       {% include 'earlycareers/_discovery.html' with placement='role_directory' %}
     {% endif %}
     {% include 'jobs/seo/_destination_search.html' %}
-    {% if search_destination %}{% include 'jobs/seo/_destination_salary.html' %}{% else %}{% include 'jobs/seo/_salary_summary.html' %}{% endif %}
+    {% if search_destination %}
+    <div class="mt-6 grid items-stretch gap-4{% if salary_stats and salary_stats.count %} lg:grid-cols-2{% endif %}">
+        {% include 'jobs/seo/_destination_salary.html' %}
+        {% include 'jobs/seo/_inventory_evidence.html' %}
+    </div>
+    {% else %}
+    {% include 'jobs/seo/_salary_summary.html' %}
     {% include 'jobs/seo/_inventory_evidence.html' %}
+    {% endif %}
 
     {% if category_breakdown and not search_destination %}
     <section class="mt-6" aria-labelledby="by-area-heading">

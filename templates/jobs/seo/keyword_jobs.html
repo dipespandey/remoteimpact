@@ -87,7 +87,7 @@
     </section>
     {% endif %}
 
-    {% include 'jobs/seo/_destination_search.html' %}
+    {% if not nonprofit_page %}{% include 'jobs/seo/_destination_search.html' %}{% endif %}
     {% if nonprofit_page %}
     <section class="card mb-6 p-5" aria-labelledby="nonprofit-search-heading">
         <h2 id="nonprofit-search-heading" class="section-title">Find the right nonprofit role</h2>
@@ -119,11 +119,25 @@
         <p class="mt-3 text-sm text-muted-foreground">Starting out? <a href="{% url 'jobs:early_careers' %}" class="underline underline-offset-4">Compare fellowships and internships</a> by funding, work format and application status.</p>
         <p class="mt-4 text-sm text-muted-foreground">Looking beyond nonprofits? <a href="{% url 'jobs:job_list' %}" class="font-medium text-foreground underline underline-offset-4">Browse all impact jobs</a> at mission-driven companies, research groups and public-interest organizations.</p>
         <p class="mt-2 text-sm text-muted-foreground">Nonprofit, non-profit and non profit are different spellings for the same search intent here. For sector-specific advice, read our <a href="{% url 'jobs:pillar_detail' pillar_slug='humanitarian-ingo-careers' %}" class="font-medium text-foreground underline underline-offset-4">INGO and humanitarian career guide</a>.</p>
+        <div class="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-4">
+            <div>
+                <p class="text-sm font-medium text-foreground">Want a more specific shortlist?</p>
+                <p class="mt-1 text-xs text-muted-foreground">Add your eligibility and pay preferences in Scout. A preview does not subscribe you to emails.</p>
+            </div>
+            <a href="{{ destination_scout_url }}" class="btn btn-secondary" data-track="seo_scout_cta" data-track-category="job_scout_acquisition">Personalize this nonprofit search</a>
+        </div>
     </section>
     {% endif %}
 
-    {% if search_destination %}{% include 'jobs/seo/_destination_salary.html' %}{% else %}{% include 'jobs/seo/_salary_summary.html' %}{% endif %}
+    {% if search_destination %}
+    <div class="mt-6 grid items-stretch gap-4{% if salary_stats and salary_stats.count %} lg:grid-cols-2{% endif %}">
+        {% include 'jobs/seo/_destination_salary.html' %}
+        {% include 'jobs/seo/_inventory_evidence.html' %}
+    </div>
+    {% else %}
+    {% include 'jobs/seo/_salary_summary.html' %}
     {% include 'jobs/seo/_inventory_evidence.html' %}
+    {% endif %}
 
     {% if category_breakdown %}
     <section class="mt-6" aria-labelledby="by-area-heading">

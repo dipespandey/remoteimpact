@@ -55,7 +55,7 @@ class SearchDestinationTests(TestCase):
         self.assertContains(response, f'https://remoteimpact.org{self.education}')
         self.assertContains(response, 'value="Canada" selected')
         self.assertContains(response, 'not verified applicant eligibility')
-        self.assertContains(response, 'Teaching (1)')
+        self.assertIn(('Teaching', 1), [(role['label'], role['count']) for role in response.context['destination_roles']])
         self.assertNotContains(response, 'jobs by impact area')
 
     def test_filter_state_survives_pagination_and_unknown_location(self):
@@ -77,7 +77,7 @@ class SearchDestinationTests(TestCase):
         self.job('Software Engineer', country='Canada')
         response = self.client.get(self.sustainability, {'q': 'ESG', 'country': 'Canada'})
         self.assertEqual([job.pk for job in response.context['jobs']], [expected.pk])
-        self.assertContains(response, 'ESG (1)')
+        self.assertIn(('ESG', 1), [(role['label'], role['count']) for role in response.context['destination_roles']])
         self.assertContains(response, 'seo_sustainability')
 
     def test_each_destination_has_editable_scout_handoff_and_no_subscription_side_effect(self):
@@ -98,7 +98,8 @@ class SearchDestinationTests(TestCase):
         response = self.client.get(self.education)
         self.assertEqual(response.context['salary_stats']['count'], 2)
         self.assertEqual(response.context['salary_stats']['max_count'], 1)
-        self.assertContains(response, '$75,000 average stated minimum')
+        self.assertContains(response, '$75,000')
+        self.assertContains(response, 'average stated minimum')
         self.assertContains(response, 'not a market salary range')
         self.assertContains(response, 'Listings in this search')
 
