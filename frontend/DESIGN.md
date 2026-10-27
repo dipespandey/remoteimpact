@@ -187,6 +187,30 @@ accessible labels, tracking attributes, Alpine and HTMX bindings during changes.
 Build with `npm ci && npm run build` from `frontend`; generated CSS and local vendor
 assets belong in the release.
 
+## Admin workspace (October 2026)
+
+The Django admin is an Operate surface using the existing neutral Remote Impact
+theme, Geist and native Django forms. Keep the public semantic colour tokens;
+admin spacing, density and sizing tokens live in `static/admin/workspace.css`.
+This extends the product theme instead of introducing Alpine branding.
+
+- Daily navigation groups hiring, people, Scouts/subscriptions and publishing.
+  Reports and tools expand on demand. Advanced records is a searchable, complete
+  permission-filtered registry: hide clutter from navigation, never unregister
+  models or delete data just to simplify a screen.
+- The workspace shows workflow links and the current staff member's recent
+  changes. Avoid unmeasured counts or costly dashboard queries on every page.
+- Account names link to the account admin and show email only when that record is accessible;
+  profile links remain separate. Long headlines truncate with the full value in
+  the title and on the profile. Legacy newsletter consent stays in the record,
+  not the default people table or filters.
+- Desktop navigation is separate from the work area; mobile uses a native
+  disclosure. Tables scroll inside their results region, not the whole page.
+  Preserve Django actions, confirmation pages, related-object popups, form media,
+  search/filter parameters, history and POST/CSRF logout.
+- Keep advanced-record search client-side over the existing allowed model
+  names. No extra endpoint, permission bypass or external dependency is needed.
+
 ### Scout exploration state
 
 A completed Scout screen without verified matches shows an editorial list of

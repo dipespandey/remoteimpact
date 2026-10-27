@@ -84,7 +84,7 @@ X_FRAME_OPTIONS = "DENY"
 # Application definition
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
+    "jobboard.admin_site.RemoteImpactAdminConfig",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",

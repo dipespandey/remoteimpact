@@ -1,6 +1,10 @@
 from django.contrib import admin
 from . import link_admin  # noqa: F401
 from django.utils.html import format_html
+from django.contrib.auth import get_user_model
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.formats import date_format
 from .models import (
     Application,
     Job,
@@ -366,15 +370,69 @@ class StoryResonanceAdmin(admin.ModelAdmin):
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = [
-        "user",
+        "account",
         "account_type",
-        "headline",
-        "email_newsletter",
-        "created_at",
+        "short_headline",
+        "joined_at",
+        "profile_record",
     ]
-    list_filter = ["account_type", "email_newsletter", "created_at"]
-    search_fields = ["user__email", "headline"]
+    list_display_links = None
+    list_select_related = ["user"]
+    list_per_page = 50
+    ordering = ["-created_at"]
+    list_filter = ["account_type", "created_at"]
+    search_fields = ["user__username", "user__email", "user__first_name", "user__last_name", "headline"]
     readonly_fields = ["created_at", "updated_at", "email_newsletter", "weekly_newsletter_status"]
+    fieldsets = (
+        ("Account", {"fields": ("user", "account_type")}),
+        ("Profile", {"fields": ("headline", "bio", "linkedin_url", "years_experience", "country")}),
+        ("Newsletter", {"fields": ("weekly_newsletter_status", "email_newsletter", "email_newsletter_unsubscribed_at"),
+                        "classes": ("collapse",)}),
+        ("Record details", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
+    )
+
+    @admin.display(description="Account", ordering="user__username")
+    def account(self, obj):
+        return obj.user.get_username()
+
+    def get_list_display(self, request):
+        # ModelAdmin is a singleton; capture request in this callable rather
+        # than storing it on self and leaking permissions between requests.
+        user_admin = self.admin_site._registry.get(get_user_model())
+
+        @admin.display(description="Account", ordering="user__username")
+        def account(obj):
+            name = obj.user.get_username()
+            email = ""
+            if user_admin and user_admin.has_view_or_change_permission(request, obj.user):
+                opts = obj.user._meta
+                name = format_html('<a href="{}">{}</a>', reverse(
+                    f"admin:{opts.app_label}_{opts.model_name}_change", args=[obj.user_id]
+                ), obj.user.get_username())
+                email = obj.user.email
+            return format_html('<div class="ri-account">{}<span class="ri-meta">{}</span></div>', name, email)
+
+        return [account if field == "account" else field for field in self.list_display]
+
+    def get_sortable_by(self, request):
+        # The request-scoped account callable is recreated by get_list_display;
+        # let Django use each column's admin_order_field rather than identity.
+        return None
+
+    @admin.display(description="Headline", ordering="headline")
+    def short_headline(self, obj):
+        return format_html('<span class="ri-headline" title="{}">{}</span>', obj.headline, obj.headline) if obj.headline else "—"
+
+    @admin.display(description="Created", ordering="created_at")
+    def joined_at(self, obj):
+        local = timezone.localtime(obj.created_at)
+        return format_html('<time datetime="{}" title="{}">{}</time>', local.isoformat(),
+                           date_format(local, "DATETIME_FORMAT"), date_format(local, "M j, Y"))
+
+    @admin.display(description="Profile")
+    def profile_record(self, obj):
+        return format_html('<a href="{}" aria-label="Open profile for {}">Open</a>',
+                           reverse("admin:jobs_userprofile_change", args=[obj.pk]), obj.user.get_username())
 
     @admin.display(description="Weekly newsletter status")
     def weekly_newsletter_status(self, obj):
