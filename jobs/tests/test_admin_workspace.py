@@ -17,7 +17,7 @@ class AdminWorkspaceTests(TestCase):
         cls.reader.user_permissions.add(Permission.objects.get(codename="view_userprofile"))
         cls.person = get_user_model().objects.create_user("seeker-name", "seeker@example.org")
         cls.profile, _ = UserProfile.objects.get_or_create(user=cls.person)
-        cls.profile.headline = '<script>alert("unsafe")</script>' + " A long headline" * 20
+        cls.profile.headline = '<script>alert("unsafe")</script>' + " A long headline" * 8
         cls.profile.save()
 
     def test_home_groups_daily_work_and_keeps_full_registry_separate(self):
