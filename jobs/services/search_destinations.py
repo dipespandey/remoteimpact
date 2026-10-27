@@ -35,7 +35,7 @@ EDUCATION_TITLE = (r'(^|[^a-z0-9_])(educat(ion(al)?|or)s?|teach(er|ing)?s?|tutor
 def role_query(slug):
     if slug == 'remote-education-jobs':
         return Q(title__iregex=EDUCATION_TITLE) & ~Q(title__iregex=(
-            r'(^|[^a-z0-9_])((ai|llm|model|machine) (tutor|trainer)|pre[- ]?training|post[- ]?training|paid training|training provided)([^a-z0-9_]|$)'))
+            r'(^|[^a-z0-9_])((ai|llm|model|machine) (tutor|trainer)|pre[- ]?training|post[- ]?training|paid training|training provided|in[- ]training|training infra(structure)?)([^a-z0-9_]|$)'))
     if slug == 'remote-sustainability-jobs':
         return Q(title__iregex=r'(^|[^a-z0-9_])(sustainab\w*|environment\w*|climate|carbon|renewable energy|clean energy|ESG|decarboni[sz]\w*)([^a-z0-9_]|$)')
     return None

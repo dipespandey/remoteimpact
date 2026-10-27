@@ -96,6 +96,13 @@ class OrganizationProfileMetadataTests(TestCase):
         self.assertNotIn('Internships', context['meta_title'])
         self.assertIsNone(context['date_modified'])
 
+    def test_empty_profile_has_current_jobs_path_instead_of_empty_roles_cta(self):
+        org = Organization.objects.create(name='Merit America', slug='merit-america')
+        response = self.client.get(reverse('jobs:organization_profile', args=[org.slug]))
+        self.assertContains(response, 'Browse current jobs')
+        self.assertNotContains(response, 'See open roles')
+        self.assertContains(response, 'name="robots" content="noindex, follow"')
+
     def test_company_page_has_plain_description_jobs_title_and_related_scout_link(self):
         org = Organization.objects.create(
             name='Anthropic', slug='anthropic',
@@ -112,6 +119,14 @@ class OrganizationProfileMetadataTests(TestCase):
         self.assertNotIn('We post specific opportunities', content)
         self.assertContains(response, 'source=company_profile')
         self.assertContains(response, 'Find related jobs with Scout')
+        self.assertContains(response, 'See 1 open role')
+
+    def test_company_careers_source_is_visible_when_available(self):
+        org = Organization.objects.create(name='Anthropic', slug='anthropic', careers_url='https://example.org/careers')
+        Job.objects.create(organization=org, title='Researcher', slug='researcher', source=Job.Source.MANUAL)
+        response = self.client.get(reverse('jobs:organization_profile', args=[org.slug]))
+        self.assertContains(response, 'Anthropic official careers')
+        self.assertContains(response, 'https://example.org/careers')
 
     def test_company_page_remains_single_indexable_url(self):
         org = Organization.objects.create(name='Research Team', slug='research-team')
