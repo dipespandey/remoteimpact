@@ -28,7 +28,7 @@ class SearchDestinationTests(TestCase):
 
     def test_education_requires_education_work_not_machine_learning_or_student_status(self):
         included = [self.job(title) for title in ['Teacher', 'Associate Instructional Designer', 'Training & Curriculum Lead', 'Student Support Advisor', 'Learning and Development Manager', 'Online Tutor']]
-        for title in ['Machine Learning Engineer', 'Sr Machine Learning Engineering Manager', 'Lead Machine Learning Engineer - Localization', 'Werkstudent Sales', 'Law Student Volunteer', 'Monitoring, Evaluation and Learning Consultant', 'Humane Studies Fellowship for PhD Students', 'AI Tutor - Writing', 'Research Lead, Pre-Training Safety', 'Research Engineer, Pre-training', 'Field Technician (Paid Training)', 'Academic Expert (SME) - Procurement KPI Framework']:
+        for title in ['Machine Learning Engineer', 'Sr Machine Learning Engineering Manager', 'Lead Machine Learning Engineer - Localization', 'Werkstudent Sales', 'Law Student Volunteer', 'Monitoring, Evaluation and Learning Consultant', 'Humane Studies Fellowship for PhD Students', 'AI Tutor - Writing', 'Research Lead, Pre-Training Safety', 'Research Engineer, Pre-training', 'Field Technician (Paid Training)', 'Academic Expert (SME) - Procurement KPI Framework', 'Organizer In-Training', 'Member of Technical Staff, Training Infra Engineer']:
             self.job(title, salary_min=200000, salary_max=300000)
         self.job('Teacher', is_active=False)
         response = self.client.get(self.education)
@@ -38,6 +38,10 @@ class SearchDestinationTests(TestCase):
         self.assertIsNone(response.context.get('salary_stats'))
         self.assertContains(response, '<title>Remote Education Jobs | Teaching &amp; Learning Design</title>', html=True)
         self.assertNotContains(response, 'from anywhere')
+
+        directory = self.client.get(reverse('jobs:all_role_pages'))
+        education = next(page for page in directory.context['role_pages'] if page['slug'] == 'remote-education-jobs')
+        self.assertEqual(education['job_count'], len(included))
 
     def test_targeted_filters_preserve_membership_counts_and_canonical(self):
         match = self.job('Curriculum Designer', country='Canada')

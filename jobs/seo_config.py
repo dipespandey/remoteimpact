@@ -187,7 +187,12 @@ ROLE_SEO_PAGES = [
     {
         'slug': 'remote-education-jobs',
         'role': 'Education',
-        'patterns': ['education', 'teacher', 'teaching', 'curriculum', 'learning', 'instructional designer', 'student'],
+        # Broad "learning" and "student" matches pull in machine-learning
+        # engineers and unrelated student jobs. Keep this page about education.
+        'patterns': ['education', 'teacher', 'teaching', 'curriculum',
+                     'instructional designer', 'learning design', 'learning experience',
+                     'learning and development', 'learning & development',
+                     'student support', 'academic programs'],
         'h1': 'Remote Education & Teaching Jobs',
         'title': 'Remote Education & Teaching Jobs (2026) | {count}+ Roles',
         'meta_desc': 'Find {count}+ remote education and teaching jobs: online teaching, tutoring, curriculum, learning design and student support at education nonprofits.',

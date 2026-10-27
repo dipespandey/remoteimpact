@@ -234,13 +234,15 @@ class AllRolePagesView(ListView):
 
     def get_queryset(self):
         """Get all role pages with job counts."""
+        from ..services.search_destinations import role_query
         result = []
         counters = {'total': Count('pk')}
         for index, config in enumerate(ROLE_SEO_PAGES):
-            patterns = config['patterns']
-            q_objects = Q()
-            for pattern in patterns:
-                q_objects |= Q(title__icontains=pattern)
+            q_objects = role_query(config['slug'])
+            if q_objects is None:
+                q_objects = Q()
+                for pattern in config['patterns']:
+                    q_objects |= Q(title__icontains=pattern)
             
             counters[f'role_{index}'] = Count('pk', filter=q_objects)
         counts = visible_jobs().aggregate(**counters)
