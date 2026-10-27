@@ -195,6 +195,8 @@ admin spacing, density and sizing tokens live in `static/admin/workspace.css`.
 This extends the product theme instead of introducing Alpine branding.
 
 - Daily navigation groups hiring, people, Scouts/subscriptions and publishing.
+  Employer funnel events live under Hiring; customer funnel events live under
+  People. Both links follow the existing model permissions.
   Reports and tools expand on demand. Advanced records is a searchable, complete
   permission-filtered registry: hide clutter from navigation, never unregister
   models or delete data just to simplify a screen.
