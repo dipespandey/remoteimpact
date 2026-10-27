@@ -29,4 +29,4 @@ class HiringEvidenceTests(TestCase):
         self.assertEqual(json.loads(data["schema_json"])["@type"], "Dataset")
         early = view.get_context_data(topic="early-career-hiring")
         self.assertEqual(early["counts"]["total"], 1)
-        self.assertEqual(len(HiringEvidenceSitemap().items()), 4)
+        self.assertEqual(len(HiringEvidenceSitemap().items()), 5)

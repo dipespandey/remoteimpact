@@ -26,9 +26,11 @@ class HiringEvidenceSitemap(Sitemap):
     priority = 0.7
 
     def items(self):
-        return list(TOPICS)
+        return [*TOPICS, "nonprofit-hiring-locations"]
 
     def location(self, item):
+        if item == "nonprofit-hiring-locations":
+            return reverse("jobs:nonprofit_hiring_locations")
         return reverse("jobs:hiring_evidence", kwargs={"topic": item})
 
 

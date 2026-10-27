@@ -8,6 +8,7 @@ from .views import shortlists, tracking, employers, applications, developers
 from .api import mcp as api_mcp, rest as api_rest
 from .views.agent_report import AgentEvidenceReportView
 from .views.hiring_evidence import HiringEvidenceView
+from .views.nonprofit_hiring import NonprofitHiringLocationsView, nonprofit_hiring_locations_data
 from .views.early_careers import early_careers, early_careers_join, early_careers_save, early_careers_outbound, early_careers_access_report, early_careers_embed
 from earlycareers.feeds import EarlyCareersFeed
 from .feeds import LatestJobsFeed, CategoryJobsFeed, IndeedXMLFeed, LinkedInXMLFeed
@@ -35,6 +36,8 @@ urlpatterns = [
     path("resources/", views.ResourcesView.as_view(), name="resources"),
     path("resources/remote-impact-jobs/", views.PartnerResourcesView.as_view(), name="partner_resources"),
     path("insights/remote-impact-jobs/", views.ImpactJobsSnapshotView.as_view(), name="impact_jobs_snapshot"),
+    path("insights/nonprofit-hiring-locations/", NonprofitHiringLocationsView.as_view(), name="nonprofit_hiring_locations"),
+    path("insights/nonprofit-hiring-locations/data.json", nonprofit_hiring_locations_data, name="nonprofit_hiring_locations_data"),
     path("insights/<slug:topic>/", HiringEvidenceView.as_view(), name="hiring_evidence"),
     path("how-we-check/", views.HowWeCheckView.as_view(), name="how_we_check"),
     path("domains/", views.AllDomainsView.as_view(), name="all_domains"),

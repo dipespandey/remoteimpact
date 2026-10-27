@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Remote nonprofit jobs: location data | Remote Impact{% endblock %}
+{% block meta_description %}Where are remote nonprofit jobs advertised? Compare dated country-label counts, worldwide labels and missing information in Remote Impact's catalogue, with methods and free JSON data.{% endblock %}
+{% block canonical %}{{ report.url }}{% endblock %}
+{% block structured_data %}<script type="application/ld+json">{{ schema_json|safe }}</script>{% endblock %}
+{% block content %}
+<article class="container py-8 sm:py-10">
+  <header class="page-header">
+    <p class="kicker">Remote Impact catalogue research</p>
+    <h1 class="page-title mt-1">Remote nonprofit jobs: where are they listed?</h1>
+    <p class="page-lede max-w-3xl">Compare the location labels on {{ report.total_listings|intcomma }} listing{{ report.total_listings|pluralize }} from {{ report.total_employers|intcomma }} employer{{ report.total_employers|pluralize }} in our nonprofit search. A remote label alone does not tell you whether an employer can hire in your country.</p>
+    <p class="mt-3 text-sm text-muted-foreground">Observed {{ observed_at|date:"F j, Y, H:i T" }} · Refreshed about every five minutes · Published by Remote Impact</p>
+    <div class="mt-5 flex flex-wrap gap-3">
+      <a class="btn btn-primary" href="{{ report.search_url }}" data-track="nonprofit_evidence_jobs" data-track-category="job_search_acquisition">Explore nonprofit jobs</a>
+      <a class="btn btn-outline" href="{{ report.data_url }}">View the JSON dataset</a>
+    </div>
+  </header>
+  <section aria-labelledby="location-groups" class="section">
+    <h2 id="location-groups" class="section-title">What do the recorded locations say?</h2>
+    <p class="mt-2 text-sm text-muted-foreground">Each listing appears in one group. Percentages use all {{ report.total_listings|intcomma }} records as the denominator and may not sum to 100% after rounding.</p>
+    <dl class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {% for group in report.location_groups %}
+      <div class="card p-5"><dt class="text-sm text-muted-foreground">{{ group.label }}</dt><dd class="mt-2 text-3xl font-semibold tabular-nums">{{ group.listings|intcomma }} <span class="text-sm font-normal text-muted-foreground">{% if group.percent != None %}({{ group.percent }}%){% else %}(no records){% endif %}</span></dd></div>
+      {% endfor %}
+    </dl>
+    <p class="mt-4 text-sm leading-6 text-muted-foreground">These are catalogue labels, not verified applicant eligibility. Worldwide-labelled jobs may still limit residency, work authorisation, time zones or travel. A blank country field means we lack that label; it does not mean worldwide hiring.</p>
+  </section>
+  <div class="grid items-start gap-6 lg:grid-cols-2">
+    <section class="card p-5" aria-labelledby="country-labels">
+      <h2 id="country-labels" class="section-title">All recorded location labels</h2>
+      <p class="mt-2 text-sm leading-6 text-muted-foreground">Exact country names and common aliases are combined. Regions and multiple-location labels remain separate. Counts describe records, including possible regional variants of the same opening.</p>
+      <table class="mt-4 w-full table-fixed text-left text-sm"><caption class="sr-only">Country labels across all nonprofit search listing records</caption><thead><tr class="border-b border-border"><th scope="col" class="py-3 pr-3 font-medium">Location label</th><th scope="col" class="w-24 py-3 text-right font-medium">Listings</th></tr></thead><tbody>
+      {% for row in report.location_labels %}<tr class="border-b border-border"><th scope="row" class="py-3 pr-3 font-normal break-words">{{ row.label }}{% if row.group == 'worldwide' %}<span class="block text-xs text-muted-foreground">Worldwide label; restrictions may remain</span>{% elif row.group == 'other' %}<span class="block text-xs text-muted-foreground">Region, multiple locations or unrecognised label</span>{% endif %}</th><td class="py-3 text-right align-top tabular-nums">{{ row.listings|intcomma }}</td></tr>{% empty %}<tr><td colspan="2" class="py-4">No listings currently meet this search's availability rules.</td></tr>{% endfor %}
+      </tbody></table>
+    </section>
+    <div class="space-y-6">
+      <section class="card p-5" aria-labelledby="scope"><h2 id="scope" class="section-title">Which employers are included?</h2><p class="mt-2 text-sm leading-6 text-muted-foreground">We use the same discovery scope as the nonprofit job search. Here is how the {{ report.total_listings|intcomma }} records qualify for that scope:</p>
+        <dl class="mt-4 space-y-4 text-sm"><div class="flex justify-between gap-4"><dt>Employer recorded as nonprofit or foundation</dt><dd class="tabular-nums">{{ report.classification_basis.recorded_type|intcomma }}</dd></div><div class="flex justify-between gap-4"><dt>Unclassified employer; Idealist labels listing nonprofit</dt><dd class="tabular-nums">{{ report.classification_basis.source_classification|intcomma }}</dd></div><div class="flex justify-between gap-4"><dt>Unclassified employer; nonprofit-related name only</dt><dd class="tabular-nums">{{ report.classification_basis.name_candidate|intcomma }}</dd></div></dl>
+        <p class="mt-4 text-sm leading-6 text-muted-foreground">These are classification clues. We have not independently verified every employer's legal charity status. Name candidates can be wrong; known other employer types are excluded.</p>
+      </section>
+      <section class="surface p-5" aria-labelledby="apply"><h2 id="apply" class="section-title">Can I apply from my country?</h2><ol class="mt-3 list-decimal space-y-3 pl-5 text-sm leading-6"><li>Start with the <a class="underline" href="{{ report.search_url }}">nonprofit search</a> and its location-label filter.</li><li>Open the employer's original posting from the job page. Check hiring countries, residency and work authorisation separately.</li><li>If your country is not mentioned, ask the employer. A global label or missing restriction is not proof of eligibility.</li></ol><p class="mt-4 text-sm"><a class="underline" href="{% url 'jobs:how_we_check' %}">How we check listings</a> · <a class="underline" href="{% url 'jobs:contact' %}">Report a correction</a></p></section>
+    </div>
+  </div>
+  <section class="section" aria-labelledby="examples"><h2 id="examples" class="section-title">Listings behind the figures</h2><p class="mt-2 text-sm text-muted-foreground">Up to eight recent catalogue records, ordered by posting date. Listing availability and requirements can change; follow the employer source before applying.</p><ul class="mt-5 grid gap-4 md:grid-cols-2">{% for job in report.examples %}<li class="card p-5"><a class="font-medium underline underline-offset-4" href="{{ job.url }}">{{ job.title }}</a><p class="mt-2 text-sm text-muted-foreground">{{ job.employer }}</p><p class="mt-2 text-sm">Location: {{ job.location|default:'Not recorded' }} · Country label: {{ job.country_label }}</p></li>{% empty %}<li>No current examples in this scope. <a class="underline" href="{% url 'jobs:job_list' %}">Browse other impact jobs</a>.</li>{% endfor %}</ul></section>
+  <section class="section" aria-labelledby="method"><h2 id="method" class="section-title">Method, coverage and reuse</h2><div class="mt-4 grid gap-6 md:grid-cols-2"><div><h3 class="font-medium">How to interpret these counts</h3><ul class="mt-3 list-disc space-y-3 pl-5 text-sm leading-6 text-muted-foreground">{% for note in report.methodology %}<li>{{ note }}</li>{% endfor %}</ul></div><div><h3 class="font-medium">For researchers and AI agents</h3><p class="mt-3 text-sm leading-6 text-muted-foreground">The <a class="underline" href="{{ report.data_url }}">free JSON dataset</a> has the same observation time, denominator, counts, examples and definitions as this page. It requires no account or API key. A short cache means updates are not instantaneous. There is no historical series here, so this report cannot establish a hiring trend.</p><p class="mt-3 text-sm leading-6 text-muted-foreground">{{ report.attribution }} Use the timestamp in the dataset when citing a changing number.</p><p class="mt-3 text-sm leading-6"><a class="underline" href="{% url 'jobs:developers' %}">Explore the jobs API and MCP server</a> for individual listings, subject to their access terms.</p><p class="mt-5 text-sm"><a class="underline" href="{% url 'jobs:hiring_evidence' topic='early-career-hiring' %}">Early-career hiring data</a> · <a class="underline" href="{% url 'jobs:hiring_evidence' topic='climate-hiring' %}">Climate hiring data</a></p></div></div></section>
+</article>
+{% endblock %}
