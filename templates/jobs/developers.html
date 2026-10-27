@@ -9,6 +9,7 @@
 
 {% block content %}
 <div class="container py-8 sm:py-10">
+  <aside class="surface mb-6 p-4 text-sm"><a class="underline underline-offset-4" href="{% url 'jobs:nonprofit_hiring_locations' %}">Public nonprofit location dataset</a>: dated aggregate counts with definitions and unknowns, available as <a class="underline underline-offset-4" href="{% url 'jobs:nonprofit_hiring_locations_data' %}">JSON without a key</a>. These counts describe labels, not applicant eligibility. Individual job access uses the API below.</aside>
   <header class="page-header max-w-3xl">
     <p class="kicker">For developers, researchers and AI agents</p>
     <h1 class="page-title mt-1">Remote impact jobs, as structured data.</h1>
