@@ -21,10 +21,12 @@ class RemoteImpactAdminSite(AdminSite):
         (_("Hiring"), _("Manage listings, employers and applications."), (
             ("jobs.job", _("Jobs")), ("jobs.organization", _("Organizations")),
             ("jobs.application", _("Applications")),
+            ("jobs.employerfunnelevent", _("Employer funnel events")),
         )),
         (_("People"), _("Find accounts and keep seeker profiles up to date."), (
             ("auth.user", _("Accounts")), ("jobs.userprofile", _("User profiles")),
             ("jobs.seekerprofile", _("Seeker profiles")),
+            ("jobs.consumerfunnelevent", _("Customer funnel events")),
         )),
         (_("Scouts & subscriptions"), _("Review searches, contacts and paid access."), (
             ("jobs.jobalert", _("Job Scouts")), ("jobs.scoutcontact", _("Scout contacts")),
