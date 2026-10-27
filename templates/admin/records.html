@@ -1,0 +1,10 @@
+{% extends 'admin/base_site.html' %}
+{% load i18n static %}
+{% block bodyclass %}{{ block.super }} ri-records{% endblock %}
+{% block content %}
+<p class="ri-page-lede">{% translate 'All records you have permission to access. Everyday tasks are on the workspace; technical and legacy records stay available here.' %}</p>
+<label class="ri-record-search" for="ri-record-search">{% translate 'Find a record type' %}<input type="search" id="ri-record-search" placeholder="{% translate 'Search names, e.g. delivery or authenticator' %}" autocomplete="off"></label>
+<div id="ri-record-list">{% include 'admin/app_list.html' with app_list=app_list show_changelinks=True %}</div>
+<p id="ri-record-empty" role="status" hidden>{% translate 'No record types match your search.' %}</p>
+<script src="{% static 'admin/workspace.js' %}" defer></script>
+{% endblock %}

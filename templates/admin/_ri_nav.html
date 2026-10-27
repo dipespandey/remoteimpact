@@ -8,6 +8,6 @@
     <a href="{% url 'admin_backlinks' %}" {% if request.resolver_match.url_name == 'admin_backlinks' %}aria-current="page"{% endif %}>Backlinks</a>
     <a href="{% url 'admin_api_usage' %}" {% if request.resolver_match.url_name == 'admin_api_usage' %}aria-current="page"{% endif %}>API usage</a>
     <a href="{% url 'admin_impersonate' %}" {% if request.resolver_match.url_name == 'admin_impersonate' %}aria-current="page"{% endif %}>View as user</a>
-    <a href="{% url 'admin:index' %}">Records</a>
+    <a href="{% url 'admin:index' %}">Workspace</a>
   </nav>
 </header>

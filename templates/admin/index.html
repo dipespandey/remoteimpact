@@ -1,0 +1,19 @@
+{% extends 'admin/base_site.html' %}
+{% load i18n log %}
+{% block bodyclass %}{{ block.super }} ri-workspace{% endblock %}
+{% block nav-breadcrumbs %}{% endblock %}
+{% block content_title %}<div class="ri-page-heading"><div><h1>{% translate 'Workspace' %}</h1><p>{% translate 'Manage the work behind Remote Impact.' %}</p></div><a class="ri-primary-link" href="{% url 'admin_analytics' %}">{% translate 'Open analytics' %} ↗</a></div>{% endblock %}
+{% block content %}
+<div class="ri-home-layout"><div>
+<div class="ri-section-grid">
+{% for section in workspace_sections %}
+<section class="ri-work-section"><h2>{{ section.title }}</h2><p>{{ section.description }}</p>
+<ul>{% for item in section.items %}<li><a href="{{ item.url }}">{{ item.label }}<span aria-hidden="true">→</span></a>{% if item.add_url %}<a class="ri-add-link" href="{{ item.add_url }}" aria-label="{% translate 'Add' %} {{ item.label }}">{% translate 'Add' %}</a>{% endif %}</li>{% endfor %}</ul></section>
+{% empty %}<p>{% translate 'No records are available for your account. Ask an administrator to review your permissions.' %}</p>{% endfor %}
+</div>
+{% if workspace_tools %}<section class="ri-report-section"><h2>{% translate 'Reports & tools' %}</h2><div class="ri-report-links">{% for item in workspace_tools %}<a href="{{ item.url }}">{{ item.label }} ↗</a>{% endfor %}</div></section>{% endif %}
+<div class="ri-advanced-note"><div><h2>{% translate 'Looking for something else?' %}</h2><p>{% translate 'Event logs, delivery history, legacy records and system settings live in Advanced records.' %}</p></div><a href="{% url 'admin:records' %}">{% translate 'Browse all records' %} →</a></div>
+</div><aside class="ri-recent"><h2>{% translate 'Your recent changes' %}</h2><p>{% translate 'Records you added, edited or deleted.' %}</p>
+{% get_admin_log 8 as admin_log for_user user %}
+<ul>{% for entry in admin_log %}<li><span class="ri-meta">{% if entry.is_addition %}{% translate 'Added' %}{% elif entry.is_deletion %}{% translate 'Deleted' %}{% else %}{% translate 'Edited' %}{% endif %} · {{ entry.action_time|date:'M j, H:i' }}</span>{% if entry.is_deletion or not entry.get_admin_url %}<span>{{ entry.object_repr }}</span>{% else %}<a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>{% endif %}<span class="ri-meta">{{ entry.content_type.name|capfirst }}</span></li>{% empty %}<li class="ri-empty">{% translate 'No changes yet. Your admin activity will appear here.' %}</li>{% endfor %}</ul></aside></div>
+{% endblock %}

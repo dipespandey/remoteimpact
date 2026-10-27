@@ -1,18 +1,28 @@
 {% extends "admin/base.html" %}
-{% load static %}
+{% load i18n static %}
 
 {% block dark-mode-vars %}{% endblock %}
 {% block extrastyle %}{{ block.super }}{% include "admin/_ri_admin_styles.html" %}{% endblock %}
+{% block responsive %}{{ block.super }}<link rel="stylesheet" href="{% static 'admin/workspace.css' %}">{% endblock %}
 
 {% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | Remote Impact admin{% endblock %}
 
 {% block branding %}
-<div id="site-name"><a href="{% url 'admin:index' %}"><img src="{% static 'favicon.svg' %}" width="28" height="28" alt="">Remote Impact <span style="font-weight:400">/ Admin</span></a></div>
+<div id="site-name"><a href="{% url 'admin:index' %}"><img src="{% static 'favicon.svg' %}" width="28" height="28" alt="">Remote Impact <span class="ri-admin-label">Admin</span></a></div>
 {% endblock %}
 
-{% block userlinks %}
-<a href="{% url 'admin_analytics' %}">Analytics</a> / <a href="{% url 'admin_outreach' %}">Outreach</a> / <a href="{% url 'admin_backlinks' %}">Backlinks</a> / <a href="{% url 'admin_api_usage' %}">API usage</a> / <a href="{% url 'admin_impersonate' %}">View as user</a> /
-{{ block.super }}
+{% block usertools %}{% if has_permission %}
+<div id="user-tools" class="ri-user-tools">
+  <span class="ri-staff-name">{% firstof user.get_short_name user.get_username %}</span>
+  {% if site_url %}<a href="{{ site_url }}">{% translate 'View site' %} ↗</a>{% endif %}
+  {% if user.has_usable_password %}<a href="{% url 'admin:password_change' %}">{% translate 'Password' %}</a>{% endif %}
+  <form id="logout-form" method="post" action="{% url 'admin:logout' %}">{% csrf_token %}<button type="submit">{% translate 'Log out' %}</button></form>
+</div>{% endif %}{% endblock %}
+
+{% block nav-sidebar %}{% if has_permission %}
+<aside class="ri-sidebar"><nav aria-label="{% translate 'Workspace' %}">{% include 'admin/_workspace_links.html' %}</nav></aside>
+<details class="ri-mobile-nav"><summary>{% translate 'Navigate admin' %}</summary><nav aria-label="{% translate 'Workspace' %}">{% include 'admin/_workspace_links.html' %}</nav></details>
+{% endif %}
 {% endblock %}
 
 {% block nav-global %}{% endblock %}

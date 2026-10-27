@@ -1,0 +1,9 @@
+{% load i18n %}
+<a class="ri-nav-home" href="{% url 'admin:index' %}"{% if workspace_home %} aria-current="page"{% endif %}>{% translate 'Workspace' %}</a>
+{% for section in workspace_sections %}
+<div class="ri-nav-group"><h2>{{ section.title }}</h2>
+{% for item in section.items %}<a href="{{ item.url }}"{% if item.current %} aria-current="page"{% endif %}>{{ item.label }}</a>{% endfor %}</div>
+{% endfor %}
+{% if workspace_tools %}<details class="ri-nav-group ri-tools"><summary>{% translate 'Reports & tools' %}</summary>
+{% for item in workspace_tools %}<a href="{{ item.url }}"{% if item.current %} aria-current="page"{% endif %}>{{ item.label }}</a>{% endfor %}</details>{% endif %}
+<a class="ri-nav-advanced" href="{% url 'admin:records' %}"{% if workspace_records %} aria-current="page"{% endif %}>{% translate 'Advanced records' %}</a>
