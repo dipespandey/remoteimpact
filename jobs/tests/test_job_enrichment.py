@@ -10,6 +10,7 @@ from jobs.models import Category, Job, Organization
 from jobs.services.importers.common import _mark_job_seen, _upsert_job
 from jobs.services.crawlers.base import _jobs_needing_crawl_queryset
 from jobs.services.job_enrichment import enrich_job_payload, infer_category_slug, infer_country
+from jobs.services.raw_data_extractor import RawDataExtractor
 from jobs.services.matching_service import MatchingService
 from jobs.services.job_service import JobService
 from jobs.constants.skills import normalize_skill_slugs
@@ -20,9 +21,28 @@ class JobEnrichmentTests(TestCase):
         self.organization = Organization.objects.create(name="Quality Test Org")
 
     def test_country_inference_distinguishes_worldwide_and_regions(self):
-        self.assertEqual(infer_country("Remote"), "Worldwide")
+        self.assertIsNone(infer_country("Remote"))
+        self.assertIsNone(infer_country("Unknown location"))
+        self.assertEqual(infer_country("Remote worldwide"), "Worldwide")
+        self.assertEqual(infer_country("Remote anywhere in the US"), "USA")
         self.assertEqual(infer_country("Remote (Berlin, Germany)"), "Germany")
         self.assertEqual(infer_country("Remote across LATAM"), "Latin America")
+
+    def test_remote_preference_does_not_invent_global_eligibility(self):
+        data = RawDataExtractor.extract('climatebase', {'remote_preferences': ['Remote']})
+        self.assertEqual(data['location'], 'Remote')
+        self.assertNotIn('country', data)
+
+    def test_new_import_preserves_unknown_and_explicit_hiring_country(self):
+        base = {
+            'title': 'Climate Researcher', 'organization_name': 'Quality Test Org',
+            'source': 'climatebase', 'description': 'Research climate resilience. ' * 10,
+            'location': 'Remote', 'raw_data': {'remote_preferences': ['Remote']},
+        }
+        unknown, _ = _upsert_job({**base, 'external_id': 'country-unknown', 'application_url': 'https://example.org/unknown'})
+        known, _ = _upsert_job({**base, 'external_id': 'country-known', 'country': 'USA', 'application_url': 'https://example.org/known'})
+        self.assertIsNone(unknown.country)
+        self.assertEqual(known.country, 'USA')
 
     def test_refresh_preserves_recovered_salary_and_dead_source_evidence(self):
         payload = {
@@ -318,7 +338,7 @@ class JobEnrichmentTests(TestCase):
 
         call_command("backfill_job_quality", stdout=StringIO())
         job.refresh_from_db()
-        self.assertEqual(job.country, "Worldwide")
+        self.assertIsNone(job.country)
         self.assertIn("python", job.skills)
         self.assertEqual(job.category.slug, "technology")
 
