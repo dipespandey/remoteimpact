@@ -33,6 +33,17 @@ class JobEnrichmentTests(TestCase):
         self.assertEqual(data['location'], 'Remote')
         self.assertNotIn('country', data)
 
+    def test_new_import_preserves_unknown_and_explicit_hiring_country(self):
+        base = {
+            'title': 'Climate Researcher', 'organization_name': 'Quality Test Org',
+            'source': 'climatebase', 'description': 'Research climate resilience. ' * 10,
+            'location': 'Remote', 'raw_data': {'remote_preferences': ['Remote']},
+        }
+        unknown, _ = _upsert_job({**base, 'external_id': 'country-unknown', 'application_url': 'https://example.org/unknown'})
+        known, _ = _upsert_job({**base, 'external_id': 'country-known', 'country': 'USA', 'application_url': 'https://example.org/known'})
+        self.assertIsNone(unknown.country)
+        self.assertEqual(known.country, 'USA')
+
     def test_refresh_preserves_recovered_salary_and_dead_source_evidence(self):
         payload = {
             "title": "Python Engineer", "organization_name": "Quality Test Org",
