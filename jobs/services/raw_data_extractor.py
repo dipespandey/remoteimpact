@@ -380,9 +380,6 @@ class RawDataExtractor:
             if "Remote" in remote_prefs:
                 if not result.get("location"):
                     result["location"] = "Remote"
-                # If Remote preference but no countries specified, it's likely global
-                if "country" not in result and not countries:
-                    result["country"] = "Global"
             elif "Hybrid" in remote_prefs and not result.get("location"):
                 result["location"] = "Hybrid"
 

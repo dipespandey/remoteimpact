@@ -14,7 +14,6 @@ from jobs.services.raw_data_extractor import RawDataExtractor
 
 
 REMOTE_COUNTRIES = {
-    "Remote": "Worldwide",
     "Remote (US)": "USA",
     "Remote (UK)": "UK",
     "Remote (EU)": "Europe",
@@ -73,10 +72,16 @@ def infer_country(location: str) -> str | None:
     # it collapse to plain "Remote" and then a false "Worldwide".
     from jobs.services.geo import single_country
 
-    specific = single_country(location or "")
-    if specific and not re.search(r"\b(?:worldwide|anywhere|global(?:ly)?)\b", location or "", re.I):
+    text = location or ""
+    global_label = bool(re.search(r"\b(?:worldwide|global(?:ly)?|anywhere in the world)\b", text, re.I)
+                        or re.fullmatch(r"\s*(?:remote\s*[,(-]?\s*)?anywhere\s*\)?\s*", text, re.I))
+    specific = single_country(text)
+    if specific and not global_label:
         return specific
     normalized = normalize_location(location or "")
+    if normalized == "Remote":
+        # Remote describes the work arrangement, not applicant eligibility.
+        return "Worldwide" if global_label else None
     if normalized in REMOTE_COUNTRIES:
         return REMOTE_COUNTRIES[normalized]
     if normalized in COUNTRY_VALUES:
