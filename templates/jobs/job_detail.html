@@ -56,12 +56,7 @@
     </nav>
 
     {% if not job_available %}
-    <div class="alert alert-warning mt-5" role="status">
-        <div>
-            <h2 class="font-semibold">This listing is no longer available on Remote Impact</h2>
-            <p class="mt-1 leading-6">The original description remains here for reference. See the current related opportunities below or browse the newest remote impact jobs.</p>
-        </div>
-    </div>
+    {% include 'jobs/partials/unavailable_job_notice.html' %}
     {% endif %}
 
     <div class="job-detail-layout">
@@ -454,9 +449,10 @@
     {% if related_jobs %}
     <section class="job-related-section mt-12 sm:mt-16" aria-labelledby="similar-roles-heading">
         <div class="flex items-baseline justify-between px-1">
-            <h2 id="similar-roles-heading" class="section-title">Similar roles</h2>
+            <h2 id="similar-roles-heading" class="section-title">{% if job.category %}More opportunities in {{ job.category.name }}{% else %}Current opportunities{% endif %}</h2>
             <a href="{% url 'jobs:job_list' %}" class="text-xs text-muted-foreground hover:text-foreground">View all roles</a>
         </div>
+        <p class="mt-1 px-1 text-sm text-muted-foreground">Check each role’s location and experience requirements.</p>
         <ul class="list-surface mt-3 grid gap-0.5 md:grid-cols-2">
             {% for related_job in related_jobs %}
             <li>
