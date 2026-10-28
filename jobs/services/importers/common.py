@@ -700,6 +700,7 @@ def _upsert_job(payload: Dict, *, create_only: bool = False) -> Tuple[Job, bool]
     # Reviews are local editorial evidence, never instructions from a feed.
     defaults['raw_data'] = dict(defaults['raw_data'] or {})
     defaults['raw_data'].pop('location_source_review', None)
+    defaults['raw_data'].pop('category_source_review', None)
     drop_implausible_salary(defaults)
 
     job = Job.objects.filter(
@@ -784,6 +785,17 @@ def _upsert_job(payload: Dict, *, create_only: bool = False) -> Tuple[Job, bool]
                 defaults[field] = getattr(job, field)
         drop_implausible_salary(defaults)
         incoming_raw = dict(defaults["raw_data"] or {})
+        # Only a locally recorded review of this exact source input may retain
+        # an editorial correction. A changed posting requires fresh review.
+        from jobs.services.category_review import retained_category_review
+        category_review = retained_category_review(job, original_payload)
+        if category_review:
+            category = job.category
+            incoming_raw['category_source_review'] = category_review
+        elif isinstance(old_raw.get('category_source_review'), dict):
+            incoming_raw['category_source_review'] = {
+                **old_raw['category_source_review'], 'needs_review': True,
+            }
         # An unchanged aggregator label must not immediately undo a recent
         # employer-source correction. Changed source inputs require a new review.
         from jobs.services.location_review import retained_location_review
@@ -822,7 +834,8 @@ def _upsert_job(payload: Dict, *, create_only: bool = False) -> Tuple[Job, bool]
                     phase="staged" if prior_canary.get("phase") == "staged" else "source_changed",
                 )
         defaults["raw_data"] = incoming_raw
-        if job.category_id and (category is None or category.slug == "other"):
+        if (job.category_id and (category is None or category.slug == "other")
+                and not (old_raw.get('category_source_review') and not category_review)):
             category = job.category
         for field, value in defaults.items():
             setattr(job, field, value)
