@@ -48,6 +48,9 @@ def compensation(job):
 
 
 def compensation_currency(job):
+    review = source_value(job, 'scout_compensation_review', 'compensation_source_review')
+    if isinstance(review, dict) and review.get('version') == 1 and review.get('action') == 'suppress':
+        return ''
     # Keep the currency paired with the amount selected by compensation(). A
     # feed's default currency must not override a separately extracted amount.
     period = source_value(job, 'scout_source_period', 'salaryPeriod')

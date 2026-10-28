@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from jobs.services.category_review import category_review_input_hash
 from jobs.services.importers.common import _upsert_job, batch_upsert_jobs
 from jobs.services.job_quality import normalize_salary, supported_base_salary
-from jobs.services.scout_evidence import compensation, compensation_display
+from jobs.services.scout_evidence import compensation, compensation_currency, compensation_display
 
 
 class CompensationReviewRefreshTests(TestCase):
@@ -43,9 +43,10 @@ class CompensationReviewRefreshTests(TestCase):
     def test_scout_projection_hides_original_raw_amount(self):
         projected = SimpleNamespace(scout_compensation_review={'version': 1, 'action': 'suppress'},
             scout_source_period='YEAR', scout_source_pay_min=60000, scout_source_pay_max=60000,
-            salary_min=None, salary_max=None, salary_currency='', description='')
+            scout_source_currency='USD', salary_min=None, salary_max=None, salary_currency='', description='')
         self.assertEqual(compensation_display(projected), '')
         self.assertEqual(compensation(projected)[:2], (None, None))
+        self.assertEqual(compensation_currency(projected), '')
 
     def test_incremental_refresh_marks_changed_source_for_review(self):
         changed = {**self.payload, 'description': 'Changed role and pay details. ' * 20}
