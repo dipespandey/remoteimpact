@@ -449,7 +449,7 @@
     {% if related_jobs %}
     <section class="job-related-section mt-12 sm:mt-16" aria-labelledby="similar-roles-heading">
         <div class="flex items-baseline justify-between px-1">
-            <h2 id="similar-roles-heading" class="section-title">{% if job.category %}More opportunities in {{ job.category.name }}{% else %}Current opportunities{% endif %}</h2>
+            <h2 id="similar-roles-heading" class="section-title scroll-mt-24">{% if job.category %}More opportunities in {{ job.category.name }}{% else %}Current opportunities{% endif %}</h2>
             <a href="{% url 'jobs:job_list' %}" class="text-xs text-muted-foreground hover:text-foreground">View all roles</a>
         </div>
         <p class="mt-1 px-1 text-sm text-muted-foreground">Check each role’s location and experience requirements.</p>
