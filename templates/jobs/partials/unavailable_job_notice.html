@@ -1,0 +1,14 @@
+<div class="alert alert-warning mt-5" role="status">
+    <div>
+        <h2 class="font-semibold">This listing is no longer available on Remote Impact</h2>
+        <p class="mt-1 leading-6">The description is kept for reference. Explore current opportunities instead.</p>
+        <div class="mt-3 flex flex-wrap gap-2">
+            {% if related_jobs %}
+            <a href="#similar-roles-heading" class="btn btn-primary btn-sm">See current opportunities</a>
+            <a href="{% url 'jobs:job_list' %}" class="btn btn-ghost btn-sm">Browse all jobs</a>
+            {% else %}
+            <a href="{% url 'jobs:job_list' %}" class="btn btn-primary btn-sm">Browse current jobs</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
