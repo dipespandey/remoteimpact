@@ -63,7 +63,7 @@ class IssueRegistryTests(SimpleTestCase):
 
     def test_programme_review_dates_and_reviewed_corrections(self):
         rows = programme_registry()
-        self.assertEqual(len(rows), 53)
+        self.assertEqual(len(rows), 54)
         by_slug = {r['slug']: r for r in rows}
         for slug in ('claude-corps', 'anthropic-ai-safety', 'govai', 'edf-climate-corps', 'oecd-internships'):
             self.assertEqual(by_slug[slug]['checked_on'], '2026-10-28')
@@ -191,14 +191,14 @@ class IssuePageTests(TestCase):
         self.assertEqual(response.context['open_paid_remote_internships'], intersection)
         self.assertContains(response, 'not a count of paid jobs currently available')
         self.assertNotContains(response, 'Directory reviewed through')
-        self.assertContains(response, f'{latest_count} of 53 entries were checked on {latest:%b} {latest.day}, {latest.year}')
+        self.assertContains(response, f'{latest_count} of {len(rows)} entries were checked on {latest:%b} {latest.day}, {latest.year}')
 
     def test_access_report_zero_intersection_and_overdue_counts_remain_honest(self):
         rows = opportunities(date(2026, 11, 20))
         with patch('jobs.views.early_careers.opportunities', return_value=rows):
             response = self.client.get(reverse('jobs:early_careers_access_report'))
         self.assertEqual(response.context['open_paid_remote_internships'], 0)
-        self.assertEqual(response.context['review_due_count'], 53)
+        self.assertEqual(response.context['review_due_count'], len(rows))
         self.assertContains(response, '0 open, paid, fully remote internship programmes')
 
 
