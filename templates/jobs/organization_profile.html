@@ -116,6 +116,7 @@
                 <span class="text-xs tabular-nums text-muted-foreground">{{ job_count }}</span>
             </div>
             {% if jobs %}
+            <p class="mt-2 px-1 text-sm text-muted-foreground">Hiring locations, office attendance and travel requirements vary by role. Check the employer’s original listing before applying.</p>
             <ul class="list-surface mt-3">
                 {% for job in jobs %}
                 <li>{% include "jobs/partials/job_row.html" with heading="h3" show_org=False %}</li>
