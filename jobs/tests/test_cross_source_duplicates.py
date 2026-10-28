@@ -122,3 +122,31 @@ class CrossSourceDuplicatesTests(TestCase):
         self.assertNotEqual(_canonical_duplicate_url(pairs[0][0]), _canonical_duplicate_url(pairs[0][0].replace('1EF50F64B4','D1701EEC39')))
         self.assertNotEqual(_canonical_duplicate_url(pairs[1][0]), _canonical_duplicate_url(pairs[1][0].replace('2832457','2828413')))
         self.assertEqual(_canonical_duplicate_url('https://apply.workable.com/employer/'), '')
+
+    def test_description_match_cannot_merge_distinct_ats_requisitions(self):
+        org = Organization.objects.create(name='AECOM', slug='aecom-requisitions')
+        description = 'Design utility-scale physical substations and prepare engineering calculations. ' * 5
+        jobs = [Job.objects.create(title='Substation Engineer', slug=f'substation-{number}',
+            organization=org, source='climatebase', location='Remote (US)', country='USA',
+            application_url=f'https://jobs.smartrecruiters.com/AECOM2/{number}-substation-engineer',
+            description=description, raw_data={'description': description})
+            for number in ('744000144376089', '744000153817469')]
+        for strategy in ('all', 'raw-description'):
+            with self.subTest(strategy=strategy):
+                call_command('deactivate_duplicate_jobs', strategy=strategy, stdout=StringIO())
+                self.assertEqual(Job.objects.filter(pk__in=[job.pk for job in jobs], is_active=True).count(), 2)
+                self.assertFalse(JobSlugRedirect.objects.filter(old_slug__in=[job.slug for job in jobs]).exists())
+
+    def test_default_strategy_still_merges_same_ats_posting_campaign_copies(self):
+        org = Organization.objects.create(name='AECOM', slug='aecom-campaign-copy')
+        url = 'https://jobs.smartrecruiters.com/AECOM2/744000144376089-substation-engineer'
+        first = Job.objects.create(title='Substation Engineer', slug='substation-original',
+            organization=org, source='climatebase', application_url=url, quality_score=90)
+        copy = Job.objects.create(title=first.title, slug='substation-campaign',
+            organization=org, source='climatebase', application_url=url+'?utm_source=another-board', quality_score=50)
+        call_command('deactivate_duplicate_jobs', stdout=StringIO())
+        first.refresh_from_db()
+        copy.refresh_from_db()
+        self.assertTrue(first.is_active)
+        self.assertFalse(copy.is_active)
+        self.assertEqual(JobSlugRedirect.objects.get(old_slug=copy.slug).job_id, first.pk)
