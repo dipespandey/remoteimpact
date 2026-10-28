@@ -10,6 +10,27 @@ VERSION = 2
 HOURS = re.compile(r'(?<![\d.])(\d{1,2}(?:\.\d+)?)\s*(?:[-–]\s*(\d{1,2}(?:\.\d+)?))?\s*(?:max\s*)?(?:hours?|hrs?)\s*(?:/|per\s+|a\s+)\s*week\b', re.I)
 
 
+def source_non_opening(source, raw_data):
+    """Probably Good explicitly distinguishes resources from advertised jobs."""
+    if source != 'probablygood' or not isinstance(raw_data, dict):
+        return False
+    workloads = raw_data.get('tags_workload')
+    if not isinstance(workloads, list):
+        return False
+    return any(isinstance(value, str) and value.strip().casefold() in {
+        'training', 'funding',
+    } for value in workloads)
+
+
+def job_source_non_opening(job):
+    """Use projected source tags without loading deferred full source JSON."""
+    data = getattr(job, '__dict__', {})
+    raw = data.get('raw_data')
+    raw = raw if isinstance(raw, dict) else {}
+    workloads = data.get('scout_source_workloads', raw.get('tags_workload'))
+    return source_non_opening(data.get('source', ''), {'tags_workload': workloads})
+
+
 def non_opening(title, application_url=''):
     """Use identity evidence as well as prose that enrichment may have rewritten."""
     # A complete advising-service title is not an opening for a career adviser.

@@ -3,9 +3,9 @@
 
 {% load humanize job_extras %}
 
-{% block title %}{% if not job_available %}Unavailable: {% endif %}{{ seo_title }}{% endblock %}
+{% block title %}{% if non_opening_listing %}Resource: {% elif not job_available %}Unavailable: {% endif %}{{ seo_title }}{% endblock %}
 
-{% block meta_description %}{% if job_available %}{{ seo_description }}{% else %}This listing is no longer available on Remote Impact. Browse current related remote impact jobs.{% endif %}{% endblock %}
+{% block meta_description %}{% if non_opening_listing %}A career resource rather than an employment opening. Check the original source for access and eligibility, or browse current remote impact jobs.{% elif job_available %}{{ seo_description }}{% else %}This listing is no longer available on Remote Impact. Browse current related remote impact jobs.{% endif %}{% endblock %}
 {% block robots %}{% if job_available %}index, follow{% else %}noindex, follow{% endif %}{% endblock %}
 
 {% block canonical %}{{ job_canonical_url }}{% endblock %}
@@ -71,11 +71,11 @@
                     <dt class="text-xs text-muted-foreground">Location</dt>
                     <dd class="break-words font-medium text-foreground">{{ job.location|default:"Remote" }}</dd>
                 </div>
-                <div class="min-w-0">
+                {% if not non_opening_listing %}<div class="min-w-0">
                     <dt class="text-xs text-muted-foreground">Type</dt>
                     <dd class="font-medium text-foreground">{{ job.get_job_type_display }}</dd>
-                </div>
-                {% if job|compensation_display %}
+                </div>{% endif %}
+                {% if not non_opening_listing and job|compensation_display %}
                 <div class="min-w-0">
                     <dt class="text-xs text-muted-foreground">Compensation</dt>
                     <dd class="break-words font-medium tabular-nums text-foreground">{{ job|compensation_display }}</dd>
@@ -134,7 +134,9 @@
             {% if not job_available %}
             <div class="card p-5 sm:p-6 lg:sticky lg:top-24">
                 <h2 class="card-title">Find a current opportunity</h2>
-                {% if source_verification.status == 'closed' %}
+                {% if non_opening_listing %}
+                <p class="mt-2 text-sm leading-6 text-muted-foreground">This resource is kept for reference. It is not an employment vacancy and is excluded from job applications.</p>
+                {% elif source_verification.status == 'closed' %}
                 <p class="mt-2 text-sm leading-6 text-muted-foreground">{{ job.organization.name|display_title }} has closed this role{% if source_verification.checked_on %} (checked on their job board on {{ source_verification.checked_on|date:"M j, Y" }}){% endif %}. The page stays up so old links still work.</p>
                 {% elif source_verification.status == 'not_remote' %}
                 <p class="mt-2 text-sm leading-6 text-muted-foreground">{{ job.organization.name|display_title }}'s job board lists this role as {% if source_verification.workplace == 'hybrid' %}hybrid{% else %}on-site{% endif %}, so it is no longer listed here as a remote job.</p>
@@ -289,7 +291,7 @@
         <div class="job-detail-body lg:col-start-1 lg:row-start-2">
             <div class="job-detail-content">
                 <section>
-                    <h2 class="section-title">Job description</h2>
+                    <h2 class="section-title">{% if non_opening_listing %}About this resource{% else %}Job description{% endif %}</h2>
                     <div class="prose prose-zinc reading-copy max-w-none break-words prose-headings:font-semibold prose-headings:tracking-tight prose-a:text-foreground [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto mt-3">
                         {{ job.description|render_html }}
                     </div>

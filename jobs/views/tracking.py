@@ -1,5 +1,6 @@
 """Lightweight engagement tracking that employers can be shown."""
 from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.db.models import F
 from django.shortcuts import get_object_or_404
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
@@ -29,18 +30,22 @@ class JobApplyRedirectView(View):
     """Outbound apply link: counts the click, then sends the person to the employer."""
 
     def get(self, request, slug):
-        job = get_object_or_404(Job.objects.only("pk", "slug", "application_url"), slug=slug)
-        destination = safe_application_destination(job.application_url)
+        from ..services.scout_verification import non_opening, source_non_opening
+        job = get_object_or_404(Job.objects.annotate(source_workloads=F('raw_data__tags_workload'))
+            .only("pk", "slug", "title", "source", "application_url"), slug=slug)
+        resource = non_opening(job.title, job.application_url) or source_non_opening(
+            job.source, {'tags_workload': job.source_workloads})
+        destination = job.get_absolute_url() if resource else safe_application_destination(job.application_url)
         if not destination:
             raise Http404("This job has no external application link.")
-        if not job_stats.is_probably_bot(request) and job_stats.viewed_today(job.pk, request):
+        if not resource and not job_stats.is_probably_bot(request) and job_stats.viewed_today(job.pk, request):
             job_stats.record(job.pk, "apply_clicks", request=request)
             from jobs.models import ConsumerFunnelEvent
             from jobs.services.scout_engagement import record_engagement
             record_engagement(request, job.pk, ConsumerFunnelEvent.Event.SCOUT_APPLY_CLICKED)
             from jobs.services.ranking_log import log_outcome
             log_outcome(request, "apply", job.pk)
-        response = HttpResponseRedirect(job_stats.with_referral(destination))
+        response = HttpResponseRedirect(destination if resource else job_stats.with_referral(destination))
         response["X-Robots-Tag"] = "noindex, nofollow"
         response["Cache-Control"] = "no-store"
         response["Referrer-Policy"] = "origin"

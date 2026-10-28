@@ -74,6 +74,19 @@ class ProbablyGoodImporterTest(SimpleTestCase):
 
         self.assertIsNone(payload)
 
+    def test_source_resource_types_are_not_imported_as_full_time_jobs(self):
+        for label in ('Training', 'Funding'):
+            with self.subTest(label=label):
+                self.assertIsNone(_extract_job_from_algolia_hit(self._hit(
+                    title='Impact Navigator', tags_workload=[{'name': label}])))
+
+    def test_source_workload_is_retained_for_actual_roles_and_fellowships(self):
+        for label in ('Full-Time', 'Part-Time', 'Fellowship', 'Expression of Interest'):
+            with self.subTest(label=label):
+                payload = _extract_job_from_algolia_hit(self._hit(
+                    title='Training Coordinator', tags_workload=[{'name': label}]))
+                self.assertEqual(payload['raw_data']['tags_workload'], [label])
+
     def test_expired_and_descriptionless_hits_are_excluded(self):
         self.assertIsNone(
             _extract_job_from_algolia_hit(

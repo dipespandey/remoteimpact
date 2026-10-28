@@ -1,9 +1,11 @@
 """Remove imported talent pools and generic application forms from public inventory."""
 
 from django.core.management.base import BaseCommand
+from django.db.models import F
 
 from jobs.models import Job
 from jobs.services.importers.common import _is_generic_listing_title
+from jobs.services.scout_verification import source_non_opening
 
 
 class Command(BaseCommand):
@@ -20,12 +22,14 @@ class Command(BaseCommand):
         candidates = (
             Job.objects.filter(is_active=True)
             .exclude(source=Job.Source.MANUAL)
+            .annotate(source_workloads=F('raw_data__tags_workload'))
             .only("id", "title", "source")
         )
         ids = [
             job.id
             for job in candidates.iterator(chunk_size=500)
-            if _is_generic_listing_title(job.title)
+            if _is_generic_listing_title(job.title) or source_non_opening(
+                job.source, {'tags_workload': job.source_workloads})
         ]
 
         if not ids:

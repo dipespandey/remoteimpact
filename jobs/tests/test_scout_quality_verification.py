@@ -22,6 +22,16 @@ def opening(**overrides):
 
 
 class VacancyVerificationTests(SimpleTestCase):
+    def test_source_resources_cannot_be_relaxed_into_a_job_match(self):
+        from jobs.services.scout_workflow import bounded_workflow
+        candidate = opening(source='probablygood', raw_data={'tags_workload': ['Full-Time']})
+        with bounded_workflow({}):
+            self.assertTrue(evaluate_job(candidate, {}).allowed)
+            for label in ('Training', 'Funding'):
+                candidate.raw_data = {'tags_workload': [label]}
+                for relaxed in (False, True):
+                    self.assertEqual(evaluate_job(candidate, {}, relaxed).reason, 'not_job_opening')
+
     def test_course_is_rejected_even_with_employment_style_description(self):
         job = opening(title='Course, Economics and Technology',
             description='Teach economic models and develop policy analysis skills.',

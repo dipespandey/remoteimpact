@@ -580,6 +580,9 @@ def _extract_job_from_algolia_hit(hit: Dict) -> Optional[Dict]:
         hit.get("salary_text", "")
     )
     workload = _tag_names(hit, "tags_workload")
+    from ..scout_verification import source_non_opening
+    if source_non_opening(Job.Source.PROBABLYGOOD, {'tags_workload': workload}):
+        return None
     area_tags = _tag_names(hit, "tags_area")
     skill_names = _tag_names(hit, "tags_skill")
     location = "; ".join(
@@ -619,6 +622,7 @@ def _extract_job_from_algolia_hit(hit: Dict) -> Optional[Dict]:
             "tags_skill": skill_names,
             "tags_experience": _tag_names(hit, "tags_experience"),
             "tags_education": _tag_names(hit, "tags_education"),
+            "tags_workload": workload,
             "needs_crawling": False,
         },
     }
