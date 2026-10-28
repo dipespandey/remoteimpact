@@ -518,32 +518,16 @@ class Job(models.Model):
 
     @property
     def is_entry_level_friendly(self):
-        """
-        Returns True if this job is suitable for entry-level candidates
-        and career switchers. Checks experience level, years required,
-        and keywords in title.
-        """
-        # Check explicit experience level
-        if self.experience_level in ('entry', 'internship'):
-            return True
-        
-        # Check years of experience (0-1 years = entry friendly)
-        if hasattr(self, 'years_experience') and self.years_experience is not None:
-            if self.years_experience <= 1:
-                return True
-        
-        # Check title for entry-level keywords
-        if self.title:
-            title_lower = self.title.lower()
-            entry_keywords = [
-                'junior', 'entry', 'entry-level', 'trainee', 'graduate',
-                'intern', 'apprentice', 'associate', 'assistant',
-                'coordinator', 'no experience'
-            ]
-            if any(kw in title_lower for kw in entry_keywords):
-                return True
-        
-        return False
+        """Explicit seniority wins; ambiguous titles are not entry evidence."""
+        if self.experience_level:
+            return self.experience_level in ('entry', 'internship')
+        import re
+        title = self.title or ''
+        if re.search(r'\b(?:senior|principal|director|chief|head|lead|general counsel)\b', title, re.I):
+            return False
+        return bool(re.search(
+            r'\b(?:junior|entry[- ]level|trainee|intern(?:ship)?|apprentice|no experience)\b',
+            title, re.I))
 
 
 class SavedJob(models.Model):
