@@ -219,8 +219,8 @@
         <aside class="min-w-0 space-y-6">
             <section class="card p-5" aria-labelledby="alerts-heading">
                 <h2 id="alerts-heading" class="text-base font-semibold text-foreground">Get matching jobs by email</h2>
-                <p class="mt-1 text-xs leading-relaxed text-muted-foreground">Describe the job you want, including where you can work and your pay floor. We'll email the roles that fit. The first set is free.</p>
-                <a href="{% if destination_scout_url %}{{ destination_scout_url }}{% else %}{% url 'jobs:job_alerts' %}?source=seo_keyword_sidebar{% endif %}" class="btn btn-primary btn-sm btn-block mt-4" data-track="seo_scout_cta" data-track-category="job_scout_acquisition">Describe the job you want</a>
+                <p class="mt-1 text-xs leading-relaxed text-muted-foreground">Preview a sample search, then edit it to fit your skills and location. Your first match email is free.</p>
+                <a href="{% if destination_scout_url %}{{ destination_scout_url }}{% else %}{{ scout_example_url }}{% endif %}" rel="nofollow" class="btn btn-primary btn-sm btn-block mt-4" data-track="seo_scout_cta" data-track-category="job_scout_acquisition">Try a sample search</a>
             </section>
 
             {% if related_keywords %}
