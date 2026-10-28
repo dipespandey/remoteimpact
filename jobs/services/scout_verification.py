@@ -16,6 +16,8 @@ def non_opening(title, application_url=''):
     # Keep occupational titles such as Career Coach or Advising Manager eligible.
     if re.fullmatch(r'\s*(?:1\s*:\s*1|one[- ]to[- ]one)\s+career\s+(?:guidance|advising|coaching)\s*', str(title or ''), re.I):
         return True
+    if re.fullmatch(r'\s*(?:personal\s+)?career\s+advising\s*', str(title or ''), re.I):
+        return True
     if re.match(r'^\s*(?:online\s+)?courses?\s*[,：:–—]\s*\S', str(title or ''), re.I):
         return True
     try:
