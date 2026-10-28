@@ -18,6 +18,8 @@ from xml.etree.ElementTree import Element, SubElement, tostring
 from urllib.parse import urlencode, urlsplit, urlunsplit, parse_qsl
 from .models import Job, Category
 from .services.job_service import JobService
+from .services.term_compensation import quoted_term_compensation
+from django.utils.html import strip_tags
 
 
 def _community_feed_item_url(item, *, campaign):
@@ -151,7 +153,8 @@ class IndeedXMLFeed(View):
             description.text = self._cdata(desc_text[:5000])
             
             # Optional fields
-            if job.salary_min or job.salary_max:
+            term_pay = quoted_term_compensation(strip_tags(job.description or ""))
+            if not term_pay and (job.salary_min or job.salary_max):
                 salary = SubElement(job_el, 'salary')
                 if job.salary_min and job.salary_max:
                     salary.text = f"{job.salary_min}-{job.salary_max}"
@@ -227,11 +230,12 @@ class LinkedInXMLFeed(View):
             job_type = SubElement(job_el, 'jobType')
             job_type.text = job.get_job_type_display()
             
-            if job.salary_min:
+            term_pay = quoted_term_compensation(strip_tags(job.description or ""))
+            if job.salary_min and not term_pay:
                 salary_min = SubElement(job_el, 'salaryMin')
                 salary_min.text = str(int(job.salary_min))
                 
-            if job.salary_max:
+            if job.salary_max and not term_pay:
                 salary_max = SubElement(job_el, 'salaryMax')
                 salary_max.text = str(int(job.salary_max))
                 

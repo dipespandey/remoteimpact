@@ -69,3 +69,10 @@ class SchemaMissingFieldsTests(TestCase):
 
     def test_recursive_cleanup_preserves_false_and_zero(self):
         self.assertEqual(_omit_unknown_schema_values({'empty':' ','placeholder':'Not specified','nested':{'@type':'Place','address':{}},'known':False,'zero':0}),{'known':False,'zero':0})
+
+    def test_fixed_term_total_does_not_emit_yearly_base_salary(self):
+        data = self.data(
+            description='$100,000–$167,000 USD for the four-month fellowship (equivalent to $300,000–$500,000 USD annualized).',
+            salary_min=300000, salary_max=500000, salary_currency='USD',
+            raw_data={'salaryPeriod':'YEAR','salaryCurrency':'USD'})
+        self.assertNotIn('baseSalary', data)
