@@ -18,9 +18,11 @@ MIN_PEER_SALARIES = 8
 
 def _annual(job):
     """Annual USD midpoint, when the listing states one."""
-    if job.salary_currency != "USD":
+    from jobs.api.serialize import salary
+    pay = salary(job)
+    if not pay or pay['currency'] != 'USD':
         return None
-    values = [float(v) for v in (job.salary_min, job.salary_max) if v]
+    values = [float(v) for v in (pay.get('min'), pay.get('max')) if v is not None]
     if not values:
         return None
     mid = sum(values) / len(values)
@@ -29,19 +31,15 @@ def _annual(job):
 
 def category_stats(category_id, job_type):
     """Open-role count and annual USD midpoints for a category and job type (cached 30 min)."""
-    key = f"role-insights:v1:{category_id}:{job_type}"
+    key = f"role-insights:v2:{category_id}:{job_type}"
     stats = cache.get(key)
     if stats is None:
         jobs = JobService.get_available_jobs().filter(category_id=category_id, job_type=job_type)
-        rows = list(jobs.values_list("salary_min", "salary_max", "salary_currency", "posted_at"))
-        mids = []
-        for low, high, currency, _ in rows:
-            fake = Job(salary_min=low, salary_max=high, salary_currency=currency)
-            mid = _annual(fake)
-            if mid:
-                mids.append(mid)
+        # Use the public source-evidence gate for the role and every peer alike.
+        rows = list(jobs.select_related('organization', 'category'))
+        mids = [mid for job in rows if (mid := _annual(job)) is not None]
         week_ago = timezone.now() - timedelta(days=7)
-        stats = {"open": len(rows), "new_7d": sum(1 for r in rows if r[3] and r[3] >= week_ago), "mids": sorted(mids)}
+        stats = {"open": len(rows), "new_7d": sum(1 for job in rows if job.posted_at and job.posted_at >= week_ago), "mids": sorted(mids)}
         cache.set(key, stats, 30 * 60)
     return stats
 
