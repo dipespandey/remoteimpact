@@ -35,7 +35,7 @@ from jobs.sitemaps import (
     StaticSitemap, ApplicationGuidesSitemap, CategorySitemap,
     OrganizationSitemap, ToolsSitemap, TalentSitemap, RegionSitemap,
     GuidesSitemap, RolePagesSitemap, KeywordPagesSitemap, RoundupIssueSitemap,
-    visible_jobs,
+    visible_jobs, canonical_sitemap_jobs,
 )
 from blog.sitemaps import BlogSitemap
 from blog.views import BlogListView
@@ -438,12 +438,12 @@ def _xml_response(content: str) -> HttpResponse:
 
 
 def _job_sitemap_page_count() -> int:
-    return max(1, ceil(visible_jobs().count() / JOB_SITEMAP_PAGE_SIZE))
+    return max(1, ceil(canonical_sitemap_jobs().count() / JOB_SITEMAP_PAGE_SIZE))
 
 
 def sitemap_index(request):
     """Fast sitemap index that avoids expensive lastmod queries on every fetch."""
-    cache_key = "seo:sitemap:index:v2"
+    cache_key = "seo:sitemap:index:v3"
     cached = cache.get(cache_key)
     if cached:
         return _xml_response(cached)
@@ -486,14 +486,14 @@ def job_sitemap_page(request, page: int):
     if page < 1:
         return HttpResponse(status=404)
 
-    cache_key = f"seo:sitemap:jobs:{page}:v2"
+    cache_key = f"seo:sitemap:jobs:{page}:v3"
     cached = cache.get(cache_key)
     if cached:
         return _xml_response(cached)
 
     offset = (page - 1) * JOB_SITEMAP_PAGE_SIZE
     jobs = list(
-        visible_jobs()
+        canonical_sitemap_jobs()
         .only("slug", "updated_at", "posted_at")
         .order_by("-posted_at", "-id")[offset: offset + JOB_SITEMAP_PAGE_SIZE]
     )
