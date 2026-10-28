@@ -349,6 +349,11 @@ def _mark_job_seen(source: str, external_id: str, raw_data=None, payload=None) -
                     and review.get('source_input_hash') != category_review_input_hash(payload)):
                 # Let the full upsert invalidate the review and process the changed source.
                 return True
+            pay_review = ((job.raw_data if job else None) or {}).get('compensation_source_review')
+            if (isinstance(pay_review, dict) and pay_review.get('version') == 1
+                    and pay_review.get('action') == 'suppress' and not pay_review.get('needs_review')
+                    and pay_review.get('source_input_hash') != category_review_input_hash(payload)):
+                return True
         updates = {"last_seen_at": timezone.now()}
         # Greenhouse, Lever, and Ashby URLs come from search results. A result
         # may remain indexed after the posting closes, so only the board API is
@@ -713,6 +718,7 @@ def _upsert_job(payload: Dict, *, create_only: bool = False) -> Tuple[Job, bool]
     defaults['raw_data'] = dict(defaults['raw_data'] or {})
     defaults['raw_data'].pop('location_source_review', None)
     defaults['raw_data'].pop('category_source_review', None)
+    defaults['raw_data'].pop('compensation_source_review', None)
     drop_implausible_salary(defaults)
 
     job = Job.objects.filter(
@@ -797,6 +803,19 @@ def _upsert_job(payload: Dict, *, create_only: bool = False) -> Tuple[Job, bool]
                 defaults[field] = getattr(job, field)
         drop_implausible_salary(defaults)
         incoming_raw = dict(defaults["raw_data"] or {})
+        # A locally reviewed pay suppression survives feed refreshes. Preserve
+        # original feed fields, but don't advertise unverified numeric pay.
+        pay_review = old_raw.get('compensation_source_review')
+        if (isinstance(pay_review, dict) and pay_review.get('version') == 1
+                and pay_review.get('action') == 'suppress'):
+            from jobs.services.category_review import category_review_input_hash
+            incoming_raw['compensation_source_review'] = {
+                **pay_review,
+                'needs_review': (pay_review.get('needs_review', False)
+                    or pay_review.get('source_input_hash') != category_review_input_hash(original_payload)),
+            }
+            defaults['salary_min'] = defaults['salary_max'] = None
+            defaults['salary_currency'] = ''
         # Only a locally recorded review of this exact source input may retain
         # an editorial correction. A changed posting requires fresh review.
         from jobs.services.category_review import retained_category_review

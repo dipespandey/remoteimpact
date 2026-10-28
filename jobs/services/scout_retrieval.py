@@ -132,6 +132,7 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=20
             qs=qs.filter(known)
     from django.db.models.fields.json import KeyTextTransform, KeyTransform
     qs=qs.annotate(scout_salary_period=KeyTextTransform('salary_period','raw_data'),
+        scout_compensation_review=KeyTransform('compensation_source_review','raw_data'),
         scout_source_workloads=KeyTransform('tags_workload','raw_data'),
         scout_source_profile=KeyTransform('scout_source_profile','raw_data'),
         scout_source_period=KeyTextTransform('salaryPeriod','raw_data'),

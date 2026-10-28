@@ -19,6 +19,9 @@ def source_location(job):
 
 def compensation(job):
     """Return original pay units when supplied; never assume full-time hours."""
+    review = source_value(job, 'scout_compensation_review', 'compensation_source_review')
+    if isinstance(review, dict) and review.get('version') == 1 and review.get('action') == 'suppress':
+        return None, None, 'year'
     period = source_value(job, 'scout_source_period', 'salaryPeriod')
     low, high = job.salary_min, job.salary_max
     original_low = source_value(job, 'scout_source_pay_min', 'salaryMinimum')
@@ -45,6 +48,9 @@ def compensation(job):
 
 
 def compensation_currency(job):
+    review = source_value(job, 'scout_compensation_review', 'compensation_source_review')
+    if isinstance(review, dict) and review.get('version') == 1 and review.get('action') == 'suppress':
+        return ''
     # Keep the currency paired with the amount selected by compensation(). A
     # feed's default currency must not override a separately extracted amount.
     period = source_value(job, 'scout_source_period', 'salaryPeriod')
@@ -58,6 +64,9 @@ def compensation_currency(job):
 
 
 def compensation_display(job):
+    review = source_value(job, 'scout_compensation_review', 'compensation_source_review')
+    if isinstance(review, dict) and review.get('version') == 1 and review.get('action') == 'suppress':
+        return ''
     from django.utils.html import strip_tags
     from jobs.services.term_compensation import quoted_term_compensation
     term = quoted_term_compensation(strip_tags(getattr(job, 'description', '') or ''))
