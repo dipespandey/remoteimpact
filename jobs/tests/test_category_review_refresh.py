@@ -37,3 +37,15 @@ class CategoryReviewRefreshTests(TestCase):
         self.job.save(update_fields=['raw_data'])
         job, _ = _upsert_job({**self.payload, 'raw_data': {'category_source_review': self.review}})
         self.assertNotIn('category_source_review', job.raw_data)
+        job, created = _upsert_job({**self.payload, 'external_id': 'new-record',
+                                    'organization_name': 'Another Employer',
+                                    'application_url': 'https://example.org/jobs/new',
+                                    'raw_data': {'category_source_review': self.review}})
+        self.assertTrue(created)
+        self.assertNotIn('category_source_review', job.raw_data)
+
+    def test_changed_source_does_not_retain_stale_review_when_category_is_unknown(self):
+        job, _ = _upsert_job({**self.payload, 'title': 'Different Security Officer',
+                              'category_name': 'Unmapped category'})
+        self.assertTrue(job.raw_data['category_source_review']['needs_review'])
+        self.assertNotEqual(job.category.slug, 'humanitarian')
