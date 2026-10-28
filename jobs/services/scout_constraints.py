@@ -524,6 +524,7 @@ def _eligibility_source(job):
         data.get('scout_source_pay_min',raw.get('salaryMinimum')),
         data.get('scout_source_pay_max',raw.get('salaryMaximum')),
         data.get('scout_source_currency',raw.get('salaryCurrency')),
+        repr(data.get('scout_compensation_review', raw.get('compensation_source_review'))),
     )
 
 
