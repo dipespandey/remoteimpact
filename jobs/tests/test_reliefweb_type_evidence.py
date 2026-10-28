@@ -28,6 +28,7 @@ class ReliefWebTypeEvidenceTests(SimpleTestCase):
             with self.subTest(types=types):
                 self.assertEqual(_transform_reliefweb_item(item(types))["job_type"], expected)
         self.assertEqual(_transform_reliefweb_item(item([{"name": "Job"}], "Volunteer"))["job_type"], "")
+        self.assertEqual(_transform_reliefweb_item(item([{"name": "Consultancy"}], "Researcher - Volunteer"))["job_type"], "")
 
 
 class ReliefWebTypePersistenceTests(TestCase):

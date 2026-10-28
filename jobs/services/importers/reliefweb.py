@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime, timezone as dt_timezone
 from typing import Callable, Dict, Optional, Tuple
 
@@ -154,7 +155,8 @@ def _transform_reliefweb_item(item: Dict) -> Dict:
         source_types = [source_types]
     labels = {str(entry.get("name") or "").strip().casefold() for entry in source_types if isinstance(entry, dict)}
     # A generic ReliefWeb job does not establish its working hours.
-    job_type = "contract" if labels == {"consultancy"} else ""
+    is_volunteer = bool(re.search(r"\bvolunteer(?:ing)?\b", title, re.I))
+    job_type = "contract" if labels == {"consultancy"} and not is_volunteer else ""
 
     return {
         "source": Job.Source.RELIEFWEB,
