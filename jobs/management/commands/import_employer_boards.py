@@ -7,6 +7,7 @@ as remote. Each one starts out verified (it came from the employer's board) and
 verify_ats_jobs keeps it honest afterwards.
 """
 import asyncio
+import re
 from datetime import datetime, timezone as dt_timezone
 import threading
 import time
@@ -148,6 +149,9 @@ class Command(BaseCommand):
     @staticmethod
     def _payload(entry, listing, description, checked_at):
         ref = entry["ref"]
+        location = (listing.location or '').strip()
+        if listing.workplace == 'remote' and not re.search(r'\bremote\b', location, re.I):
+            location = f'Remote ({location})' if location else 'Remote'
         salary = extract_salary_from_text(listing.salary_text) or extract_salary_from_text(description) or {}
         posted = parse_datetime(listing.posted_at) if listing.posted_at else None
         if posted is None and listing.posted_at:
@@ -163,7 +167,7 @@ class Command(BaseCommand):
             "title": listing.title.strip(),
             "description": description,
             "requirements": description,
-            "location": listing.location or "Remote",
+            "location": location or "Remote",
             "job_type": _map_job_type(listing.employment_type),
             "application_url": listing.url,
             "application_email": "",
