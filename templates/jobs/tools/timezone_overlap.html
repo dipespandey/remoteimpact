@@ -60,7 +60,7 @@
     <!-- Overlap chart -->
     <div>
       <h2 class="section-title">Working hours by zone</h2>
-      <p class="mt-1 text-sm text-muted-foreground">Columns are UTC hours; each cell shows the local hour. Shaded cells are inside working hours.</p>
+      <p class="mt-1 text-sm text-muted-foreground">Columns are UTC hours; each cell shows the local hour. Shaded cells are full hours inside the working day. The totals below include partial hours.</p>
 
       <p x-show="activeZones().length < 2" class="mt-4 text-sm text-muted-foreground">
         Choose at least two time zones to see the overlap.
@@ -85,7 +85,7 @@
               <template x-for="h in 24" :key="'c-'+i+'-'+(h-1)">
                 <div class="flex h-9 items-center justify-center border-l border-border text-[10px] tabular-nums transition-colors duration-150"
                      :class="isWorkHour(tz.value, h - 1) ? 'bg-muted text-foreground' : 'bg-card text-muted-foreground/60'"
-                     x-text="localHour(tz.value, h - 1)"></div>
+                     x-text="localTime(tz.value, h - 1)"></div>
               </template>
             </div>
           </template>
@@ -295,7 +295,7 @@ document.addEventListener('alpine:init', () => {
 
     getOffset(tz) {
       const now = new Date(this.tick);
-      const str = now.toLocaleString('en-US', {timeZone: tz, hour12: false, hour: '2-digit', minute: '2-digit'});
+      const str = new Intl.DateTimeFormat('en-GB', {timeZone: tz, hourCycle: 'h23', hour: '2-digit', minute: '2-digit'}).format(now);
       const [h, m] = str.split(':').map(Number);
       const utcH = now.getUTCHours(), utcM = now.getUTCMinutes();
       let diff = (h * 60 + m) - (utcH * 60 + utcM);
@@ -306,12 +306,27 @@ document.addEventListener('alpine:init', () => {
 
     localHour(tz, utcH) {
       const off = this.getOffset(tz);
-      return ((Math.round((utcH * 60 + off) / 60) % 24) + 24) % 24;
+      return (((utcH * 60 + off) % 1440) + 1440) % 1440 / 60;
+    },
+
+    localTime(tz, utcH) {
+      const minutes = Math.round(this.localHour(tz, utcH) * 60);
+      return Math.floor(minutes / 60) + ':' + String(minutes % 60).padStart(2, '0');
+    },
+
+    isWorkMinute(tz, utcMinute, offset = this.getOffset(tz)) {
+      if (!Number.isInteger(this.workStart) || !Number.isInteger(this.workEnd) ||
+          this.workStart < 0 || this.workStart > 23 || this.workEnd < 0 || this.workEnd > 23 ||
+          this.workStart === this.workEnd) return false;
+      const local = ((utcMinute + offset) % 1440 + 1440) % 1440;
+      const start = this.workStart * 60, end = this.workEnd * 60;
+      return start < end ? local >= start && local < end : local >= start || local < end;
     },
 
     isWorkHour(tz, utcH) {
-      const lh = this.localHour(tz, utcH);
-      return lh >= this.workStart && lh < this.workEnd;
+      const offset = this.getOffset(tz);
+      return Array.from({length: 60}, (_, m) => utcH * 60 + m)
+        .every(m => this.isWorkMinute(tz, m, offset));
     },
 
     isOverlapHour(utcH) {
@@ -320,23 +335,32 @@ document.addEventListener('alpine:init', () => {
       return azs.every(z => this.isWorkHour(z.value, utcH));
     },
 
-    overlapCount() {
-      let c = 0;
-      for (let h = 0; h < 24; h++) { if (this.isOverlapHour(h)) c++; }
-      return c;
+    overlapMinutes() {
+      const zones = this.activeZones().map(z => ({...z, offset: this.getOffset(z.value)}));
+      if (zones.length < 2) return [];
+      return Array.from({length: 1440}, (_, m) => m)
+        .filter(m => zones.every(z => this.isWorkMinute(z.value, m, z.offset)));
     },
 
-    overlapHoursList() {
-      const hrs = [];
-      for (let h = 0; h < 24; h++) { if (this.isOverlapHour(h)) hrs.push(h); }
-      return hrs;
+    overlapCount() {
+      return this.overlapMinutes().length / 60;
     },
 
     overlapRange(tz) {
-      const hrs = this.overlapHoursList();
-      if (!hrs.length) return '';
-      const locals = hrs.map(h => this.localHour(tz, h)).sort((a, b) => a - b);
-      return locals[0] + ':00 – ' + (locals[locals.length - 1] + 1) + ':00';
+      const offset = this.getOffset(tz);
+      const minutes = this.overlapMinutes()
+        .map(m => ((m + offset) % 1440 + 1440) % 1440)
+        .sort((a, b) => a - b);
+      if (!minutes.length) return '';
+      const format = m => Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0');
+      const ranges = [];
+      let start = minutes[0], last = start;
+      for (const minute of minutes.slice(1)) {
+        if (minute !== last + 1) { ranges.push(format(start) + ' – ' + format(last + 1)); start = minute; }
+        last = minute;
+      }
+      ranges.push(format(start) + ' – ' + format(last + 1));
+      return ranges.join(', ');
     },
 
     liveTime(tz) {
