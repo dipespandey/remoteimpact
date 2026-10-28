@@ -15,6 +15,14 @@ def normalize_salary(job) -> list[str]:
     minimum, maximum = job.salary_min, job.salary_max
     raw = job.raw_data or {}
 
+    review = raw.get('compensation_source_review')
+    if isinstance(review, dict) and review.get('version') == 1 and review.get('action') == 'suppress':
+        for field in ('salary_min', 'salary_max', 'salary_currency'):
+            if getattr(job, field) not in (None, ''):
+                setattr(job, field, '' if field == 'salary_currency' else None)
+                changed.append(field)
+        return changed
+
     if job.source == "idealist":
         period = str(raw.get("salaryPeriod") or "YEAR").upper()
         if period in {'HOUR','DAY','WEEK'}:
