@@ -116,6 +116,35 @@ def _map_reliefweb_category(raw_name: str) -> str:
     return RELIEFWEB_CATEGORY_MAP.get(raw_name, "Impact Careers")
 
 
+def _has_remote_work_evidence(item: Dict) -> bool:
+    """A missing country is not evidence that a ReliefWeb role is remote."""
+    fields = item.get("fields") or {}
+    title = str(fields.get("title") or "")
+    title = re.sub(r"\bremote\s+sensing\b", "", title, flags=re.I)
+    if re.search(r"\b(?:not|non)[-\s]+remote\b|\bhybrid\b", title, re.I):
+        return False
+    body = str(fields.get("body") or "")
+    body = re.sub(r"(?i)</?(?:p|div|br|li|h[1-6])\b[^>]*>", "\n", body)
+    body = re.sub(r"<[^>]*>", " ", body)
+    if re.search(r"(?im)^\s*\**(?:location|work(?:ing)? (?:location|arrangement|mode)|duty station)\**\s*:\s*\**(?:not\s+remote|on[- ]site|in[- ]person|hybrid)\b", body):
+        return False
+    lines = [line.replace("*", "").strip() for line in body.splitlines()]
+    values = []
+    for line in lines:
+        labeled = re.match(r"(?i)^(?:location|work(?:ing)? (?:location|arrangement|mode)|duty station)\s*:\s*(.{1,200})$", line)
+        if labeled:
+            values.append(labeled.group(1))
+    if any(re.search(r"(?i)\b(?:not|non)[-\s]+remote\b|\bhybrid\b|\brequired attendance\b|\b(?:on[- ]site|in[- ]person)\b", value) for value in values):
+        return False
+    for value in values:
+        if re.search(r"(?i)\b(?:remote|home[- ]based)\b", value) and not re.search(r"(?i)\bremote\s+sensing\b", value):
+            return True
+    for line in lines:
+        if re.search(r"(?i)\b(?:this (?:is|position is|role is)|the (?:position|role) is)\s+(?:a\s+)?(?:fully\s+)?remote\s+(?:role|position|job)\b", line):
+            return True
+    return bool(re.search(r"\b(?:remote|home[- ]based)\b", title, re.I))
+
+
 def _explicit_schedule(description: str) -> str:
     """Read explicit schedule labels without treating incidental mentions as hours."""
     text = re.sub(r"<[^>]+>", " ", description or "")
@@ -216,7 +245,7 @@ async def import_reliefweb(
     Import remote jobs from ReliefWeb.
 
     Args:
-        limit: Maximum number of jobs to import
+        limit: Maximum number of source records to examine
         dry_run: If True, fetch but don't save to database
         use_ai: If True, use AI to enrich job descriptions
         batch_size: Number of concurrent AI requests (default: 20)
@@ -233,6 +262,7 @@ async def import_reliefweb(
     # Collect all job payloads first
     all_payloads = []
     offset = 0
+    examined = 0
 
     while True:
         list_items, total_count = _fetch_reliefweb_list(app_name, offset, headers)
@@ -240,18 +270,21 @@ async def import_reliefweb(
             break
 
         for item in list_items:
+            if limit and examined >= limit:
+                break
+            examined += 1
             detail = _fetch_reliefweb_detail(str(item.get("id")), app_name, headers)
             if not detail:
                 continue
+            if not _has_remote_work_evidence(detail):
+                continue
             job_payload = _transform_reliefweb_item(detail)
             all_payloads.append(job_payload)
-            if limit and len(all_payloads) >= limit:
-                break
 
         offset += PAGE_SIZE
         if total_count is not None and offset >= total_count:
             break
-        if limit and len(all_payloads) >= limit:
+        if limit and examined >= limit:
             break
 
     if dry_run:
