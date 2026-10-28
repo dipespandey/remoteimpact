@@ -15,6 +15,18 @@ import tarfile
 import time
 import urllib.request
 
+MIN_DEPLOY_FREE_BYTES = 6 * 1024 ** 3
+
+
+def require_deploy_headroom(root):
+    """Fail before building a candidate if application or container storage is low."""
+    for path in (Path(root), Path('/var/lib/docker'), Path('/var/lib/containerd')):
+        if path.exists():
+            free = shutil.disk_usage(path).free
+            if free < MIN_DEPLOY_FREE_BYTES:
+                raise RuntimeError(f'Insufficient free space on {path}: {free // (1024 ** 2)} MiB available; '
+                                   f'{MIN_DEPLOY_FREE_BYTES // (1024 ** 2)} MiB required. Production unchanged.')
+
 
 def run(*args, capture=False, **kwargs):
     return subprocess.run(args, check=True, text=True, stdout=subprocess.PIPE if capture else None, **kwargs).stdout
@@ -160,6 +172,7 @@ class Release:
     def deploy(self, ref=None, allow_migrations=False, check_only=False):
         if not ref and (self.root / 'require-github-deploy').exists():
             raise RuntimeError('Production requires an exact GitHub-tested commit SHA; snapshot deployment is disabled.')
+        require_deploy_headroom(self.root)
         state = self.load()
         self.ready(state['active'])
         if check_only and allow_migrations:
