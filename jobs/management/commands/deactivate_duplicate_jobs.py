@@ -98,10 +98,11 @@ class Command(BaseCommand):
 
             if strategy in {"all", "raw-description"}:
                 # Employers reuse descriptions across distinct requisitions and
-                # locations. A recognised posting ID must outrank text similarity;
-                # equivalent IDs are already handled by the canonical-URL strategy.
+                # locations. A usable posting URL must outrank text similarity,
+                # including functional IDs on providers without a dedicated parser.
+                # Equivalent destinations are handled by the canonical-URL strategy.
                 posting_identity = _canonical_duplicate_url(job.application_url)
-                if posting_identity.startswith(UNIQUE_ATS_POSTING_PREFIXES):
+                if posting_identity:
                     continue
                 raw_signature = _job_raw_description_signature(job)
                 if raw_signature and location:

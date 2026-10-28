@@ -150,3 +150,18 @@ class CrossSourceDuplicatesTests(TestCase):
         self.assertTrue(first.is_active)
         self.assertFalse(copy.is_active)
         self.assertEqual(JobSlugRedirect.objects.get(old_slug=copy.slug).job_id, first.pk)
+
+    def test_description_match_cannot_override_workday_or_functional_url_ids(self):
+        org = Organization.objects.create(name='Impact Employer', slug='functional-url-employer')
+        description = 'Manage programme delivery and coordinate technical reporting across teams. ' * 5
+        cases = [('https://employer.wd1.myworkdayjobs.com/careers/job/Remote/Coordinator_R100',
+                  'https://employer.wd1.myworkdayjobs.com/careers/job/Remote/Coordinator_R200'),
+                 ('https://example.org/careers?id=100', 'https://example.org/careers?id=200')]
+        for index, urls in enumerate(cases):
+            with self.subTest(urls=urls):
+                jobs = [Job.objects.create(title=f'Coordinator {index}', slug=f'functional-{index}-{number}',
+                    organization=org, source='climatebase', location='Remote (US)',
+                    application_url=url, description=description) for number, url in enumerate(urls)]
+                call_command('deactivate_duplicate_jobs', stdout=StringIO())
+                self.assertEqual(Job.objects.filter(pk__in=[job.pk for job in jobs], is_active=True).count(), 2)
+                self.assertFalse(JobSlugRedirect.objects.filter(old_slug__in=[job.slug for job in jobs]).exists())
