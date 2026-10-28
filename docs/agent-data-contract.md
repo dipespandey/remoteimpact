@@ -28,3 +28,13 @@ annual pay or extrapolate it into a yearly salary. The existing `salary` field a
 unknown when term evidence is available. Annual minimum-pay filters conservatively
 exclude listings mentioning annualized/annualised compensation; this can omit an
 otherwise annual role that discusses annualized figures elsewhere in its text.
+
+## MCP discovery and request allowance
+
+All identified MCP requests share their tier's per-minute limit. Static protocol
+methods `initialize`, `ping`, `tools/list`, `resources/list` and `prompts/list`
+do not consume the daily data allowance. Job tool calls, data resource reads and
+unrecognized methods still consume that allowance. REST request accounting is
+unchanged. Discovery remains available after the daily data allowance is exhausted,
+but it cannot bypass the shared per-minute limit. The wire schemas, authentication,
+result caps and commercial access policy are unchanged.

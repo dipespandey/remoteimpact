@@ -164,6 +164,43 @@ class McpTests(ApiBase):
             payload["id"] = id_
         return self.client.post("/mcp/", json.dumps(payload), content_type="application/json", **extra)
 
+    def test_discovery_does_not_consume_anonymous_daily_data_allowance(self):
+        from jobs.api import auth
+        with mock.patch.dict(auth.TIERS['anonymous'], per_day=1, per_minute=20):
+            for method in ['initialize', 'tools/list', 'resources/list', 'prompts/list', 'ping']:
+                self.assertEqual(self.rpc(method).status_code, 200)
+            self.assertEqual(self.rpc('tools/call', {'name': 'list_areas'}).status_code, 200)
+            self.assertEqual(self.rpc('tools/list').status_code, 200)
+            limited = self.rpc('tools/call', {'name': 'list_areas'})
+            self.assertEqual(limited.status_code, 429)
+            self.assertIn('Retry-After', limited)
+
+    def test_discovery_keeps_the_shared_per_minute_cap(self):
+        from jobs.api import auth
+        with mock.patch.dict(auth.TIERS['anonymous'], per_minute=2):
+            self.assertEqual(self.rpc('initialize').status_code, 200)
+            self.assertEqual(self.rpc('tools/list').status_code, 200)
+            self.assertEqual(self.rpc('ping').status_code, 429)
+
+    def test_keyed_discovery_does_not_increment_daily_data_count(self):
+        from jobs.api import auth
+        raw, key = ApiKey.issue(name='Free', email='discovery@example.org')
+        with mock.patch.dict(auth.TIERS['free'], per_day=1):
+            self.assertEqual(self.rpc('initialize', HTTP_X_API_KEY=raw).status_code, 200)
+            key.refresh_from_db()
+            self.assertEqual(key.requests_today, 0)
+            self.assertEqual(self.rpc('tools/call', {'name': 'list_areas'}, HTTP_X_API_KEY=raw).status_code, 200)
+            self.assertEqual(self.rpc('tools/list', HTTP_X_API_KEY=raw).status_code, 200)
+            self.assertEqual(self.rpc('tools/call', {'name': 'list_areas'}, HTTP_X_API_KEY=raw).status_code, 429)
+            key.refresh_from_db()
+            self.assertEqual(key.requests_today, 1)
+
+    def test_unknown_and_resource_read_methods_still_consume_daily_allowance(self):
+        from jobs.api import auth
+        with mock.patch.dict(auth.TIERS['anonymous'], per_day=1):
+            self.assertEqual(self.rpc('resources/read').json()['error']['code'], -32601)
+            self.assertEqual(self.rpc('unrecognized-method').status_code, 429)
+
     def test_initialize_and_tools_list(self):
         init = self.rpc("initialize", {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "t", "version": "1"}})
         self.assertEqual(init.status_code, 200)
