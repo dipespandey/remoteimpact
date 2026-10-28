@@ -14,10 +14,10 @@ from ..seo_config import MIN_INDEXABLE_JOBS
 REGIONS = {
     "worldwide": {
         "name": "Worldwide",
-        "h1": "Remote Jobs — Worldwide",
+        "h1": "Remote Jobs Around the World",
         "description": (
             "Browse all remote jobs from impact-driven organizations around the globe. "
-            "Work from anywhere and make a difference."
+            "Hiring countries, office attendance and travel requirements vary by role; check the employer’s posting before applying."
         ),
         "filter": None,  # No location filter — show all
     },
@@ -146,6 +146,8 @@ class RegionJobsView(FastJobPaginationMixin, ListView):
         context["index_page"] = job_count >= MIN_INDEXABLE_JOBS and not self.request.GET
         context["meta_title"] = f"{self.region['h1']} — Remote Impact Jobs"
         context["meta_description"] = (
+            f"Browse {job_count} remote impact jobs across countries. Check each employer’s hiring location and working arrangements."
+            if self.region_slug == "worldwide" else
             f"Browse {job_count}+ remote jobs in {self.region['name']}. "
             f"Find purpose-driven roles from top impact organizations."
         )
