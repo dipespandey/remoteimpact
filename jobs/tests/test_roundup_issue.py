@@ -61,12 +61,14 @@ class IssueRegistryTests(SimpleTestCase):
             with self.subTest(mutate=mutate), self.assertRaises(ValueError):
                 validate_issues(rows, date(2026, 10, 22))
 
-    def test_only_six_programmes_rechecked_and_reviewed_corrections(self):
+    def test_programme_review_dates_and_reviewed_corrections(self):
         rows = programme_registry()
         self.assertEqual(len(rows), 53)
-        self.assertEqual(sum(r['checked_on'] == '2026-10-22' for r in rows), 6)
-        self.assertEqual(sum(r['checked_on'] == '2026-10-19' for r in rows), 47)
         by_slug = {r['slug']: r for r in rows}
+        for slug in ('claude-corps', 'anthropic-ai-safety', 'govai', 'edf-climate-corps', 'oecd-internships'):
+            self.assertEqual(by_slug[slug]['checked_on'], '2026-10-28')
+        self.assertEqual(by_slug['govai']['status'], 'open')
+        self.assertIn('22 November 2026', by_slug['govai']['timing'])
         self.assertEqual(by_slug['outreachy']['status'], 'closed')
         self.assertEqual(by_slug['outreachy']['deadline'], '2026-08-31')
         self.assertIn('Mandatory in-person Basecamp', by_slug['claude-corps']['requirements'])
@@ -177,17 +179,19 @@ class IssuePageTests(TestCase):
     def test_access_report_dates_and_intersection_do_not_overstate_available_jobs(self):
         with patch('jobs.services.early_careers.timezone.localdate', return_value=date(2026, 10, 22)):
             response = self.client.get(reverse('jobs:early_careers_access_report'))
-        self.assertEqual(response.context['latest_reviewed_count'], 6)
-        self.assertEqual(response.context['oldest_reviewed'], date(2026, 10, 19))
-        self.assertEqual(response.context['last_reviewed'], date(2026, 10, 22))
-        self.assertEqual(response.context['review_due_count'], 0)
         rows = opportunities(date(2026, 10, 22))
+        latest = max(r['checked_date'] for r in rows)
+        latest_count = sum(r['checked_date'] == latest for r in rows)
+        self.assertEqual(response.context['latest_reviewed_count'], latest_count)
+        self.assertEqual(response.context['oldest_reviewed'], date(2026, 10, 19))
+        self.assertEqual(response.context['last_reviewed'], latest)
+        self.assertEqual(response.context['review_due_count'], 0)
         intersection = sum(r['kind'] == 'internship' and r['funding'] == 'paid'
             and r['mode'] == 'remote' and r['status'] == 'open' for r in rows)
         self.assertEqual(response.context['open_paid_remote_internships'], intersection)
         self.assertContains(response, 'not a count of paid jobs currently available')
         self.assertNotContains(response, 'Directory reviewed through')
-        self.assertContains(response, '6 of 53 entries were checked on Oct 22, 2026')
+        self.assertContains(response, f'{latest_count} of 53 entries were checked on {latest:%b} {latest.day}, {latest.year}')
 
     def test_access_report_zero_intersection_and_overdue_counts_remain_honest(self):
         rows = opportunities(date(2026, 11, 20))
