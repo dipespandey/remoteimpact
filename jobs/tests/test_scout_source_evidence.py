@@ -14,6 +14,13 @@ def listing(**kw):
  data.update(kw);return SimpleNamespace(**data)
 
 class SourceEvidenceTests(SimpleTestCase):
+ def test_display_currency_follows_the_selected_salary_amount(self):
+  j=listing(salary_min=60000,salary_max=68000,salary_currency='GBP',raw_data={'salaryCurrency':'USD','salaryPeriod':'YEAR'})
+  self.assertEqual(compensation_display(j),'£60,000 – £68,000 per year')
+  j=listing(salary_min=93600,salary_max=114400,salary_currency='USD',raw_data={'salaryCurrency':'GBP','salaryPeriod':'HOUR','salaryMinimum':45,'salaryMaximum':55})
+  self.assertEqual(compensation_display(j),'£45 – £55 per hour')
+  j=listing(salary_min=60000,salary_max=68000,salary_currency='',raw_data={'salaryCurrency':'USD','salaryPeriod':'YEAR'})
+  self.assertEqual(compensation_display(j),'60,000 – 68,000 per year (currency unconfirmed)')
  def test_named_employer_identity_is_distinct_from_nonprofit_clients(self):
   j=listing();j.organization=SimpleNamespace(name='Example Foods',organization_type='',description='')
   self.assertIs(nonprofit_compatibility(j,'<p>Example Foods is a national nonprofit that delivers produce.</p>'),True)

@@ -48,8 +48,16 @@ def compensation(job):
 
 
 def compensation_currency(job):
-    return str(source_value(job, 'scout_source_currency', 'salaryCurrency')
-               or getattr(job, 'salary_currency', '') or '').upper()
+    # Keep the currency paired with the amount selected by compensation(). A
+    # feed's default currency must not override a separately extracted amount.
+    period = source_value(job, 'scout_source_period', 'salaryPeriod')
+    raw_low = source_value(job, 'scout_source_pay_min', 'salaryMinimum')
+    raw_high = source_value(job, 'scout_source_pay_max', 'salaryMaximum')
+    uses_source_amount = bool(period and (raw_low is not None or raw_high is not None
+        or str(period).lower() not in {'year', 'annual', 'annually', 'yearly'}))
+    source_currency = source_value(job, 'scout_source_currency', 'salaryCurrency')
+    stored_currency = getattr(job, 'salary_currency', '')
+    return str((source_currency or stored_currency if uses_source_amount else stored_currency) or '').upper()
 
 
 def compensation_display(job):
@@ -66,14 +74,14 @@ def compensation_display(job):
     low, high, period = compensation(job)
     if low is None and high is None:
         return ''
-    currency = compensation_currency(job) or 'USD'
-    symbol = {'USD': '$', 'GBP': '£', 'EUR': '€'}.get(currency, currency + ' ')
+    currency = compensation_currency(job)
+    symbol = {'USD': '$', 'GBP': '£', 'EUR': '€'}.get(currency, currency + ' ' if currency else '')
     def display(n):
         return symbol + (f'{n:,.2f}'.rstrip('0').rstrip('.') if n % 1 else f'{n:,.0f}')
     value = (display(low) + ' – ' + display(high) if low is not None and high is not None
              else display(low) + '+' if low is not None else 'Up to ' + display(high))
     unit = {'annual': 'year', 'annually': 'year', 'yearly': 'year', 'hr': 'hour', 'hourly': 'hour', 'monthly': 'month'}.get(period, period)
-    return value + ' per ' + unit
+    return value + ' per ' + unit + ('' if currency else ' (currency unconfirmed)')
 
 
 YEAR_REQUIREMENT = re.compile(r"\b(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\s*(?:\+|[-–]\s*\d+)?\s+years?\s+(?:of\s+)?(?:[a-z][a-z,&/–-]*\s+){0,8}experience\b",re.I)
