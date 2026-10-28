@@ -1,5 +1,28 @@
 [
   {
+    "slug": "gain-africa-ai-safety-essentials",
+    "name": "AI Safety Essentials Fellowship",
+    "organization": "Global AI Youth Network SSA",
+    "kind": "fellowship",
+    "sector": "AI safety",
+    "audience": "first-step",
+    "funding": "unknown",
+    "funding_detail": "No participant salary is stated. Selected proposals may receive micro-grants for project expenses; confirm any fees or personal compensation with the organiser.",
+    "mode": "remote",
+    "location": "Virtual, focused on African participants. Confirm eligibility from your country with the organiser.",
+    "duration": "7 weeks; approximately 5 hours per week",
+    "status": "open",
+    "timing": "Expressions of interest close 8 November 2026. The organiser does not specify a cutoff time or time zone.",
+    "fit": "An introduction to AI safety with facilitated group learning and a project proposal.",
+    "requirements": "The organiser welcomes applicants from varied backgrounds and primarily targets African students and recent graduates. Stable internet, a microphone, camera and a quiet environment are requested.",
+    "source_url": "https://gainssa.org/initiatives/fellowship",
+    "application_url": "https://docs.google.com/forms/d/e/1FAIpQLSe0yChC6ew2QcNWAObTZjv8XkPEZen2SIslqi8tIANk-dRtbQ/viewform",
+    "checked_on": "2026-10-28",
+    "no_degree_required": false,
+    "deadline": "2026-11-08",
+    "eligibility_summary": "African students and recent graduates; confirm country eligibility"
+  },
+  {
     "slug": "claude-corps",
     "name": "Claude Corps",
     "organization": "Anthropic · CodePath",
