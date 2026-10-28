@@ -11,6 +11,14 @@ def visible_jobs():
     return Job.objects.filter(Job.availability_filter())
 
 
+def canonical_sitemap_jobs():
+    """Shared inventory for Django and public paginated job sitemaps."""
+    aliases = JobSlugRedirect.objects.filter(
+        job__in=visible_jobs(),
+    ).exclude(old_slug=F('job__slug')).values('old_slug')
+    return visible_jobs().exclude(slug__in=aliases)
+
+
 def _live_stats(view_name, config):
     """Count and modification time from the page's own matching public jobs."""
     from .views import seo_pages
@@ -30,10 +38,7 @@ class JobSitemap(Sitemap):
         # Reviewed aliases advertise another live job as canonical. Keep them
         # accessible for bookmarks, but submit only the preferred URL. If the
         # target closes, canonical_job falls back to the surviving alias.
-        aliases = JobSlugRedirect.objects.filter(
-            job__in=visible_jobs(),
-        ).exclude(old_slug=F('job__slug')).values('old_slug')
-        return visible_jobs().exclude(slug__in=aliases).select_related('organization').order_by('-posted_at')
+        return canonical_sitemap_jobs().select_related('organization').order_by('-posted_at')
 
     def location(self, obj):
         return reverse('jobs:job_detail', args=[obj.slug])

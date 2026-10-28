@@ -88,3 +88,25 @@ class SeoIdentityTests(TestCase):
         job = self.job('sitemap-self')
         JobSlugRedirect.objects.create(old_slug=job.slug, job=job)
         self.assertIn(job.slug, set(JobSitemap().items().values_list('slug', flat=True)))
+
+    def test_public_sitemap_shards_and_count_use_reviewed_canonical_inventory(self):
+        from django.core.cache.backends.locmem import LocMemCache
+        original = self.job('public-original')
+        alias = self.job('public-alias', application_url='https://other.example/jobs/123')
+        separate = self.job('public-separate', application_url='https://example.org/jobs/456')
+        JobSlugRedirect.objects.create(old_slug=alias.slug, job=original)
+        isolated_cache = LocMemCache('public-sitemap-test', {})
+        with patch('jobboard.urls.cache', isolated_cache), patch('jobboard.urls.JOB_SITEMAP_PAGE_SIZE', 2):
+            index = self.client.get('/sitemap.xml')
+            self.assertContains(index, '/sitemap-jobs-1.xml')
+            self.assertNotContains(index, '/sitemap-jobs-2.xml')
+            shard = self.client.get('/sitemap-jobs-1.xml')
+            self.assertContains(shard, original.get_absolute_url())
+            self.assertContains(shard, separate.get_absolute_url())
+            self.assertNotContains(shard, alias.get_absolute_url())
+            original.is_active = False
+            original.save()
+            isolated_cache.clear()
+            shard = self.client.get('/sitemap-jobs-1.xml')
+            self.assertContains(shard, alias.get_absolute_url())
+            self.assertNotContains(shard, original.get_absolute_url())
