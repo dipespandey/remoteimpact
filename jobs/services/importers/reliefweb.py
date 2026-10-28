@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime, timezone as dt_timezone
 from typing import Callable, Dict, Optional, Tuple
 
@@ -9,7 +10,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from jobs.models import Job
-from .common import _map_job_type, batch_upsert_jobs
+from .common import batch_upsert_jobs
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +116,27 @@ def _map_reliefweb_category(raw_name: str) -> str:
     return RELIEFWEB_CATEGORY_MAP.get(raw_name, "Impact Careers")
 
 
+def _explicit_schedule(description: str) -> str:
+    """Read explicit schedule labels without treating incidental mentions as hours."""
+    text = re.sub(r"<[^>]+>", " ", description or "")
+    found = set()
+    for line in text.splitlines():
+        line = line.replace("*", "").strip()
+        match = re.match(r"(?i)^(?:commitment|working arrangements?|employment type|schedule|working hours|hours)\s*:\s*(.{1,200})$", line)
+        if not match:
+            continue
+        value = match.group(1)
+        if not re.match(r"(?i)^(?:flexible,?\s*)?(?:full|part)[ -]?time\b", value):
+            continue
+        if re.search(r"\b(?:not|no|optional)\b", value, re.I):
+            continue
+        if re.search(r"\bfull[ -]?time\b", value, re.I):
+            found.add("full-time")
+        if re.search(r"\bpart[ -]?time\b", value, re.I):
+            found.add("part-time")
+    return next(iter(found)) if len(found) == 1 else ""
+
+
 def _transform_reliefweb_item(item: Dict) -> Dict:
     fields = item.get("fields", {})
     title = fields.get("title") or "Untitled role"
@@ -149,6 +171,14 @@ def _transform_reliefweb_item(item: Dict) -> Dict:
         if redirects:
             application_url = redirects[0]
 
+    source_types = fields.get("type") or []
+    if isinstance(source_types, dict):
+        source_types = [source_types]
+    labels = {str(entry.get("name") or "").strip().casefold() for entry in source_types if isinstance(entry, dict)}
+    # A generic ReliefWeb job does not establish its working hours.
+    is_volunteer = bool(re.search(r"\bvolunteer(?:ing)?\b", title, re.I))
+    job_type = "contract" if labels == {"consultancy"} and not is_volunteer else _explicit_schedule(description)
+
     return {
         "source": Job.Source.RELIEFWEB,
         "external_id": str(item.get("id")),
@@ -156,7 +186,7 @@ def _transform_reliefweb_item(item: Dict) -> Dict:
         "description": description,
         "requirements": description,
         "location": "Remote",
-        "job_type": _map_job_type(""),
+        "job_type": job_type,
         "application_url": application_url,
         "application_email": "",
         "salary_min": None,
