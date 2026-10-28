@@ -35,6 +35,8 @@ class ReliefWebTypeEvidenceTests(SimpleTestCase):
             ("**Commitment:** Full-time availability for the internship.", "full-time"),
             ("**Working arrangements:** Flexible, part-time or full-time.", ""),
             ("This role supports full-time staff.", ""),
+            ("Commitment: Not full-time", ""),
+            ("Schedule: Full-time is not required", ""),
             ("Schedule: Part-time", "part-time"),
         ]:
             entry = item([{"name": "Internship"}])

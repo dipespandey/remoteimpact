@@ -126,6 +126,10 @@ def _explicit_schedule(description: str) -> str:
         if not match:
             continue
         value = match.group(1)
+        if not re.match(r"(?i)^(?:flexible,?\s*)?(?:full|part)[ -]?time\b", value):
+            continue
+        if re.search(r"\b(?:not|no|optional)\b", value, re.I):
+            continue
         if re.search(r"\bfull[ -]?time\b", value, re.I):
             found.add("full-time")
         if re.search(r"\bpart[ -]?time\b", value, re.I):
