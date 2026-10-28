@@ -50,6 +50,37 @@ class SalaryBenchmarkEvidenceTests(TestCase):
         self.assertIsNone(context['overall']['avg_min'])
         self.assertEqual(context['top_paying'], [])
 
+    def test_salary_serialization_skips_unrelated_description_and_geography_work(self):
+        from jobs.api.serialize import salary
+        job = self.job('source-annual', source='ashby', location='Remote (US)',
+                       raw_data={'salaryPeriod': 'YEAR', 'salaryCurrency': 'USD'})
+        with patch('jobs.services.job_quality._schema_description', side_effect=AssertionError('unrelated description work')), \
+             patch('jobs.services.job_quality.schema_applicant_countries', side_effect=AssertionError('unrelated geography work')), \
+             patch.object(job, 'get_absolute_url', side_effect=AssertionError('unrelated URL work')):
+            self.assertEqual(salary(job), {'min': 60000.0, 'max': 80000.0, 'currency': 'USD', 'period': 'year'})
+
+    def test_salary_only_and_full_schema_use_identical_evidence_policy(self):
+        from jobs.api.serialize import salary
+        from jobs.services.job_quality import job_posting_schema_json
+        variants = [
+            {}, {'source': 'ashby', 'raw_data': {'salaryPeriod': 'YEAR', 'salaryCurrency': 'USD'}},
+            {'source': 'ashby', 'raw_data': {}},
+            {'raw_data': {'salaryPeriod': 'HOUR', 'salaryCurrency': 'USD'}},
+            {'description': '$100,000–$167,000 USD for the four-month fellowship.'},
+            {'salary_min': 90000, 'salary_max': 70000},
+            {'salary_currency': 'EUR'}, {'salary_max': None},
+        ]
+        for number, changes in enumerate(variants):
+            with self.subTest(changes=changes):
+                job = self.job(f'policy-{number}', **changes)
+                amount = json.loads(job_posting_schema_json(job, 'https://remoteimpact.org')).get('baseSalary')
+                record = salary(job)
+                if not amount:
+                    self.assertIsNone(record)
+                else:
+                    self.assertEqual(record, {'min': amount['value'].get('minValue'),
+                        'max': amount['value'].get('maxValue'), 'currency': amount['currency'], 'period': 'year'})
+
     def test_domain_counts_and_public_markup_describe_the_actual_sample(self):
         for number in range(10):
             self.job(f'annual-{number}')
