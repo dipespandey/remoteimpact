@@ -105,9 +105,9 @@ class Command(BaseCommand):
                 if summary.get("error") or key not in FEED_SOURCES:
                     continue
                 if summary.get("skip_retirement"):
-                    self.stdout.write(f"{key}: retirement skipped because the source results were filtered")
+                    self.stdout.write(f"{key}: retirement skipped because source retrieval was incomplete")
                     continue
-                result = retire_unseen_listings(key, run_started, summary.get("fetched", 0))
+                result = retire_unseen_listings(key, run_started, summary.get("source_fetched", summary.get("fetched", 0)))
                 note = f" (skipped: {result['skipped']})" if result["skipped"] else ""
                 self.stdout.write(f"{key}: retired {result['retired']} listings no longer in the feed{note}")
 

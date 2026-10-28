@@ -6,6 +6,7 @@ from datetime import datetime, timezone as dt_timezone
 from typing import Callable, Dict, Optional, Tuple
 
 import requests
+from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.utils import timezone
 
@@ -126,6 +127,8 @@ def _has_remote_work_evidence(item: Dict) -> bool:
     body = str(fields.get("body") or "")
     body = re.sub(r"(?i)</?(?:p|div|br|li|h[1-6])\b[^>]*>", "\n", body)
     body = re.sub(r"<[^>]*>", " ", body)
+    if re.search(r"(?i)\b(?:this|the)\s+(?:position|role|job)\s+is\s+not\s+remote\b", body):
+        return False
     if re.search(r"(?im)^\s*\**(?:location|workplace|work(?:ing)? (?:location|arrangement|mode)|duty station)\**\s*:\s*\**(?:not\s+remote|on[- ]site|in[- ]person|hybrid)\b", body):
         return False
     lines = [line.replace("*", "").strip() for line in body.splitlines()]
@@ -145,6 +148,13 @@ def _has_remote_work_evidence(item: Dict) -> bool:
         if re.search(r"(?i)\b(?:all work is remote|this (?:position|role|job) is (?:fully |100% )?remote)\b", line):
             return True
     return bool(re.search(r"\b(?:remote|home[- ]based)\b", title, re.I))
+
+
+def _mark_filtered_existing_seen(external_ids):
+    """Record source sightings without reactivating or editing filtered jobs."""
+    if external_ids:
+        Job.objects.filter(source=Job.Source.RELIEFWEB, external_id__in=external_ids,
+                           is_active=True).update(last_seen_at=timezone.now())
 
 
 def _explicit_schedule(description: str) -> str:
@@ -265,11 +275,20 @@ async def import_reliefweb(
     all_payloads = []
     offset = 0
     examined = 0
+    filtered_ids = []
+    incomplete = False
+    expected_count = None
 
     while True:
         list_items, total_count = _fetch_reliefweb_list(app_name, offset, headers)
         if not list_items:
+            if expected_count is not None and offset < expected_count:
+                incomplete = True
             break
+        if total_count is not None:
+            expected_count = total_count
+            if len(list_items) < PAGE_SIZE and offset + len(list_items) < total_count:
+                incomplete = True
 
         for item in list_items:
             if limit and examined >= limit:
@@ -277,8 +296,13 @@ async def import_reliefweb(
             examined += 1
             detail = _fetch_reliefweb_detail(str(item.get("id")), app_name, headers)
             if not detail:
+                incomplete = True
+                continue
+            if str(detail.get("id")) != str(item.get("id")):
+                incomplete = True
                 continue
             if not _has_remote_work_evidence(detail):
+                filtered_ids.append(str(item.get("id")))
                 continue
             job_payload = _transform_reliefweb_item(detail)
             all_payloads.append(job_payload)
@@ -290,7 +314,9 @@ async def import_reliefweb(
             break
 
     if dry_run:
-        return {"fetched": len(all_payloads), "created": 0, "updated": 0, "skip_retirement": True}
+        return {"fetched": len(all_payloads), "created": 0, "updated": 0, "source_fetched": examined, "skip_retirement": True}
+
+    await sync_to_async(_mark_filtered_existing_seen, thread_sensitive=True)(filtered_ids)
 
     # Batch upsert with optional AI processing
     stats = await batch_upsert_jobs(
@@ -301,7 +327,7 @@ async def import_reliefweb(
         provider=provider,
         skip_existing=skip_existing,
     )
-    # Filtered-out records may still exist upstream. Their lack of a sighting
-    # must not be recorded as proof that ReliefWeb removed them.
-    stats["skip_retirement"] = True
+    # A detail-fetch failure means the source inventory was incomplete.
+    stats["source_fetched"] = examined
+    stats["skip_retirement"] = incomplete or expected_count is None
     return stats
