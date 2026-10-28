@@ -9,7 +9,7 @@
     </div>
     <dl class="mt-5 grid gap-4 text-sm sm:grid-cols-3">
         <div><dt class="text-xs text-muted-foreground">Location</dt><dd class="mt-0.5 text-foreground">{{ job.location|default:"Remote" }}</dd></div>
-        <div><dt class="text-xs text-muted-foreground">Type</dt><dd class="mt-0.5 text-foreground">{{ job.get_job_type_display }}</dd></div>
+        <div><dt class="text-xs text-muted-foreground">Type</dt><dd class="mt-0.5 text-foreground">{{ job.get_job_type_display|default:'Not specified' }}</dd></div>
         <div><dt class="text-xs text-muted-foreground">Posted</dt><dd class="mt-0.5 tabular-nums text-foreground">{{ job.posted_at|date:"M d, Y" }}</dd></div>
         {% if job|compensation_display %}
         <div><dt class="text-xs text-muted-foreground">Compensation</dt><dd class="mt-0.5 tabular-nums text-foreground">{{ job|compensation_display }}</dd></div>

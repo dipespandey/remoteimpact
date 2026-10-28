@@ -9,7 +9,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from jobs.models import Job
-from .common import _map_job_type, batch_upsert_jobs
+from .common import batch_upsert_jobs
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +149,13 @@ def _transform_reliefweb_item(item: Dict) -> Dict:
         if redirects:
             application_url = redirects[0]
 
+    source_types = fields.get("type") or []
+    if isinstance(source_types, dict):
+        source_types = [source_types]
+    labels = {str(entry.get("name") or "").strip().casefold() for entry in source_types if isinstance(entry, dict)}
+    # A generic ReliefWeb job does not establish its working hours.
+    job_type = "contract" if labels == {"consultancy"} else ""
+
     return {
         "source": Job.Source.RELIEFWEB,
         "external_id": str(item.get("id")),
@@ -156,7 +163,7 @@ def _transform_reliefweb_item(item: Dict) -> Dict:
         "description": description,
         "requirements": description,
         "location": "Remote",
-        "job_type": _map_job_type(""),
+        "job_type": job_type,
         "application_url": application_url,
         "application_email": "",
         "salary_min": None,

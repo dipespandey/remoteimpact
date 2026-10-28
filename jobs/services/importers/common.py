@@ -747,7 +747,9 @@ def _upsert_job(payload: Dict, *, create_only: bool = False) -> Tuple[Job, bool]
                 for field in ("experience_level", "education_level", "job_type", "salary_min", "salary_max", "salary_currency"):
                     adopted[field] = trusted.get(field) if trusted.get(field) is not None else values.get(field)
                 if not adopted.get("job_type"):
-                    adopted["job_type"] = original_payload.get("job_type") or job.job_type
+                    adopted["job_type"] = (original_payload.get("job_type", "")
+                        if original_payload.get('source') == Job.Source.RELIEFWEB
+                        else original_payload.get("job_type") or job.job_type)
                 if values.get("impact_area"):
                     adopted["category_slug"] = values["impact_area"]
                 else:

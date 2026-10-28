@@ -73,7 +73,7 @@
                 </div>
                 {% if not non_opening_listing %}<div class="min-w-0">
                     <dt class="text-xs text-muted-foreground">Type</dt>
-                    <dd class="font-medium text-foreground">{{ job.get_job_type_display }}</dd>
+                    <dd class="font-medium text-foreground">{{ job.get_job_type_display|default:'Not specified' }}</dd>
                 </div>{% endif %}
                 {% if not non_opening_listing and job|compensation_display %}
                 <div class="min-w-0">
