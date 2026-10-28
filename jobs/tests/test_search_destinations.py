@@ -26,6 +26,14 @@ class SearchDestinationTests(TestCase):
     def job(self, title, **kwargs):
         return Job.objects.create(title=title, slug=f'fixture-{Job.objects.count()}', organization=self.org, source='manual', **kwargs)
 
+    def test_worldwide_region_explains_that_hiring_locations_vary(self):
+        self.job('US-only Analyst', country='USA', location='Remote (US)')
+        response = self.client.get(reverse('jobs:region_jobs', args=['worldwide']))
+        self.assertContains(response, 'Remote Jobs Around the World')
+        self.assertContains(response, 'Hiring countries, office attendance and travel requirements vary by role')
+        self.assertContains(response, 'US-only Analyst')
+        self.assertNotContains(response, 'Work from anywhere and make a difference')
+
     def test_education_requires_education_work_not_machine_learning_or_student_status(self):
         included = [self.job(title) for title in ['Teacher', 'Associate Instructional Designer', 'Training & Curriculum Lead', 'Student Support Advisor', 'Learning and Development Manager', 'Online Tutor']]
         for title in ['Machine Learning Engineer', 'Sr Machine Learning Engineering Manager', 'Lead Machine Learning Engineer - Localization', 'Werkstudent Sales', 'Law Student Volunteer', 'Monitoring, Evaluation and Learning Consultant', 'Humane Studies Fellowship for PhD Students', 'AI Tutor - Writing', 'Research Lead, Pre-Training Safety', 'Research Engineer, Pre-training', 'Field Technician (Paid Training)', 'Academic Expert (SME) - Procurement KPI Framework', 'Organizer In-Training', 'Member of Technical Staff, Training Infra Engineer']:
