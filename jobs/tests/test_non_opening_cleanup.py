@@ -38,3 +38,21 @@ class NonOpeningCleanupTests(TestCase):
         self.assertFalse(self.pool.is_active)
         self.assertTrue(self.role.is_active)
         self.assertTrue(self.manual_pool.is_active)
+
+    def test_source_resource_metadata_is_scoped_and_dry_run_preserves_records(self):
+        resource = Job.objects.create(title='Impact Navigator', organization=self.role.organization,
+            source=Job.Source.PROBABLYGOOD, slug='source-training',
+            raw_data={'tags_workload': ['Training']})
+        occupation = Job.objects.create(title='Training Coordinator', organization=self.role.organization,
+            source=Job.Source.PROBABLYGOOD, slug='training-occupation',
+            raw_data={'tags_workload': ['Full-Time']})
+        other_source = Job.objects.create(title='Training Manager', organization=self.role.organization,
+            source=Job.Source.ASHBY, slug='other-training-source',
+            raw_data={'tags_workload': ['Training']})
+        call_command('deactivate_non_opening_jobs', dry_run=True)
+        resource.refresh_from_db()
+        self.assertTrue(resource.is_active)
+        call_command('deactivate_non_opening_jobs')
+        for job, expected in ((resource, False), (occupation, True), (other_source, True)):
+            job.refresh_from_db()
+            self.assertEqual(job.is_active, expected)

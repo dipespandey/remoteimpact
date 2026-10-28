@@ -504,6 +504,7 @@ def salary_compatible(job, requirement):
 
 def _eligibility_source(job):
     """Fields used by eligibility; inspect loaded JSON without causing a deferred read."""
+    from jobs.services.scout_verification import job_source_non_opening
     data=getattr(job,'__dict__',{})
     raw=data.get('raw_data') or {}
     if not isinstance(raw,dict):raw={}
@@ -514,6 +515,7 @@ def _eligibility_source(job):
     return (
         *(getattr(job,f,None) for f in ('title','application_url','description','requirements','location','country',
             'experience_level','job_type','salary_min','salary_max','salary_currency')),
+        job_source_non_opening(job),
         *(getattr(org,f,None) for f in ('name','description','organization_type')),
         tuple(sorted(data.get('_scout_source_fields', {}).items())),
         data.get('scout_source_location',api_location.get('name') if isinstance(api_location,dict) else None),
@@ -562,9 +564,10 @@ def _evaluate_job(job, prefs, relaxed=False):
     matches instead of nothing.
     """
     from jobs.services.importers.common import _is_generic_listing_title
-    from jobs.services.scout_verification import non_opening, hours_status
+    from jobs.services.scout_verification import non_opening, job_source_non_opening, hours_status
     title = plain_job_field(job, 'title')
     if (_is_generic_listing_title(title) or non_opening(title, getattr(job, 'application_url', ''))
+            or job_source_non_opening(job)
             or re.search(r'\b(?:spontaneous|unsolicited)\s+applications?\b', title, re.I)):
         return Eligibility(False, 'not_job_opening')
     caveats=[]

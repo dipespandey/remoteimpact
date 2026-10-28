@@ -397,7 +397,10 @@ class JobDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["job_available"] = self._available_queryset().filter(
+        from ..services.scout_verification import non_opening, source_non_opening
+        context['non_opening_listing'] = non_opening(self.object.title, self.object.application_url) or source_non_opening(
+            self.object.source, self.object.raw_data)
+        context["job_available"] = not context['non_opening_listing'] and self._available_queryset().filter(
             pk=self.object.pk
         ).exists()
 
@@ -587,7 +590,12 @@ class ApplicationGuideView(DetailView):
 
     def get(self, request, *args, **kwargs):
         try:
-            return super().get(request, *args, **kwargs)
+            response = super().get(request, *args, **kwargs)
+            from ..services.scout_verification import non_opening, source_non_opening
+            job = response.context_data['job']
+            if non_opening(job.title, job.application_url) or source_non_opening(job.source, job.raw_data):
+                return redirect(job.get_absolute_url(), permanent=True)
+            return response
         except Http404:
             # Preserve useful historical links when a role has closed. The
             # detail page can explain that the role is unavailable, while a
