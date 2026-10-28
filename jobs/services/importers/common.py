@@ -335,10 +335,15 @@ def _retired_duplicate_has_available_keeper(job: Job, application_url=None, titl
 @transaction.atomic
 def _mark_job_seen(source: str, external_id: str, raw_data=None, payload=None) -> bool:
     if source and external_id:
+        is_ats = source in {"greenhouse", "lever", "ashby", "workable", "recruitee", "personio", "bamboohr"}
+        job = None
+        if not is_ats or payload is not None:
+            job = Job.objects.select_for_update().filter(source=source, external_id=external_id).only(
+                'raw_data', 'is_active', 'slug', 'title', 'application_url', 'organization_id'
+            ).first()
         if payload is not None:
             from jobs.services.category_review import category_review_input_hash
-            existing = Job.objects.filter(source=source, external_id=external_id).values('raw_data').first()
-            review = ((existing or {}).get('raw_data') or {}).get('category_source_review')
+            review = ((job.raw_data if job else None) or {}).get('category_source_review')
             if (isinstance(review, dict) and review.get('version') == 1
                     and not review.get('needs_review')
                     and review.get('source_input_hash') != category_review_input_hash(payload)):
@@ -348,10 +353,7 @@ def _mark_job_seen(source: str, external_id: str, raw_data=None, payload=None) -
         # Greenhouse, Lever, and Ashby URLs come from search results. A result
         # may remain indexed after the posting closes, so only the board API is
         # allowed to reactivate these records.
-        if source not in {"greenhouse", "lever", "ashby", "workable", "recruitee", "personio", "bamboohr"}:
-            job = Job.objects.select_for_update().filter(source=source, external_id=external_id).only(
-                'raw_data', 'is_active', 'slug', 'title', 'application_url', 'organization_id'
-            ).first()
+        if not is_ats:
             if (job and source == Job.Source.IDEALIST and isinstance(raw_data, dict)
                     and str(raw_data.get('objectID') or '') == str(external_id)
                     and raw_data.get('orgName') == (job.raw_data or {}).get('orgName')):
