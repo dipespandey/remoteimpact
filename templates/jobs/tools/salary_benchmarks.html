@@ -5,7 +5,7 @@
 
 {% block title %}Remote Impact Job Salaries 2026 | Salary Benchmarks by Domain{% endblock %}
 
-{% block meta_description %}Salary data for remote impact jobs: average pay ranges by domain and experience level{% if total_with_salary %} from {{ total_with_salary|intcomma }} active listings that publish a salary{% endif %}. Covers climate, AI safety, global health and nonprofits.{% endblock %}
+{% block meta_description %}Supported annual USD salary ranges by domain and experience level{% if total_with_salary %} from {{ total_with_salary|intcomma }} currently available listings with comparable annual USD pay{% endif %}. Covers climate, AI safety, global health and nonprofits.{% endblock %}
 
 {% block extra_head %}
 <script type="application/ld+json">
@@ -13,14 +13,14 @@
     "@context": "https://schema.org",
     "@type": "Dataset",
     "name": "Remote Impact Job Salary Benchmarks 2026",
-    "description": "Salary data for remote jobs at impact-focused organizations, covering climate, AI safety, global health, and social good sectors.",
+    "description": "Supported annual USD salary ranges from currently available Remote Impact listings. This is a partial advertised-pay sample, not a representative market salary survey.",
     "url": "https://remoteimpact.org/salaries/",
     "creator": {
         "@type": "Organization",
         "name": "Remote Impact"
     },
     "temporalCoverage": "2026",
-    "spatialCoverage": "Global (Remote)",
+    
     "variableMeasured": [
         {
             "@type": "PropertyValue",
@@ -35,38 +35,7 @@
     ]
 }
 </script>
-<script type="application/ld+json">
-{
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-        {
-            "@type": "Question",
-            "name": "What is the average salary for remote climate jobs?",
-            "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Based on our data from {{ by_domain.0.job_count|default:'1,500' }}+ jobs, remote climate and environment roles pay an average of ${{ by_domain.0.avg_min|floatformat:0|default:'90,000' }} to ${{ by_domain.0.avg_max|floatformat:0|default:'130,000' }} per year."
-            }
-        },
-        {
-            "@type": "Question",
-            "name": "Do nonprofit jobs pay well?",
-            "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Nonprofit salaries vary widely. Our data shows average ranges from $40,000 to $150,000+ depending on role seniority and organization size. Impact-focused tech companies and well-funded nonprofits often pay competitively with for-profit sectors."
-            }
-        },
-        {
-            "@type": "Question",
-            "name": "What are the highest paying impact domains?",
-            "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Based on current job listings, AI Safety, Climate Tech, and Global Health tend to have the highest average salaries, often $120,000-$200,000+ for senior roles."
-            }
-        }
-    ]
-}
-</script>
+
 {% endblock %}
 
 {% block content %}
@@ -81,7 +50,7 @@
 
     <header class="mt-4 max-w-3xl">
         <h1 class="page-title">Salaries in remote impact jobs</h1>
-        <p class="page-lede">Average pay ranges from the {{ total_with_salary|intcomma }} active listings on Remote Impact that publish a salary, by domain and experience level.</p>
+        <p class="page-lede">Average advertised annual USD ranges from {{ total_with_salary|intcomma }} currently available listings with supported pay evidence. These are listing averages, not expected offers.</p>
     </header>
 
     {% if total_with_salary %}
@@ -97,14 +66,14 @@
         </div>
         <div class="stat min-w-0">
             <p class="stat-value break-words">{{ total_with_salary|intcomma }}</p>
-            <p class="stat-label">Listings with salary</p>
+            <p class="stat-label">Annual USD listings</p>
         </div>
     </div>
 
     <!-- By domain -->
     <section class="mt-12">
         <h2 class="section-title px-1">By domain</h2>
-        <p class="mt-1 px-1 text-sm text-muted-foreground">Domains with at least 10 listings that publish a salary.</p>
+        <p class="mt-1 px-1 text-sm text-muted-foreground">Domains with at least 10 supported annual USD salary ranges.</p>
         {% if by_domain %}
         <div class="table-wrap mt-4">
             <table class="table tabular-nums">
@@ -181,7 +150,7 @@
                         </div>
                         <div class="shrink-0 text-right">
                             <p class="font-semibold tabular-nums text-foreground">{% if job.salary_currency and job.salary_currency != "USD" %}{{ job.salary_max|floatformat:0|intcomma }} {{ job.salary_currency }}{% else %}${{ job.salary_max|floatformat:0|intcomma }}{% endif %}</p>
-                            <p class="text-xs text-muted-foreground">Max salary</p>
+                            <p class="text-xs text-muted-foreground">USD / year maximum</p>
                         </div>
                     </div>
                 </a>
@@ -192,7 +161,7 @@
     {% endif %}
     {% else %}
     <div class="alert alert-info mt-8 max-w-3xl">
-        <p>No active listings with salary information yet. Check back once more jobs are posted.</p>
+        <p>No currently available listings meet this annual USD comparison policy. Other listings may still advertise pay in a different currency or period.</p>
     </div>
     {% endif %}
 
@@ -200,9 +169,9 @@
     <section class="mt-12 max-w-3xl">
         <h2 class="section-title">About this data</h2>
         <ul class="mt-4 space-y-3 text-base leading-7 text-muted-foreground">
-            <li><strong class="font-medium text-foreground">Source.</strong> Active job listings on Remote Impact that state both a minimum and a maximum salary ({{ total_with_salary|intcomma }} right now). Listings with a maximum of 1,000,000 or more are left out as outliers.</li>
-            <li><strong class="font-medium text-foreground">Currency.</strong> Averages use the amounts as listed. Salaries in other currencies are not converted to USD, so treat the dollar figures as approximate.</li>
-            <li><strong class="font-medium text-foreground">Coverage.</strong> Many employers do not publish pay, so these figures cover only part of the listings. Actual offers vary with experience, location and organization.</li>
+            <li><strong class="font-medium text-foreground">Source.</strong> Currently available job listings on Remote Impact with evidence supporting both a minimum and a maximum annual USD salary ({{ total_with_salary|intcomma }} right now). Listings with a maximum of 1,000,000 or more are left out as outliers.</li>
+            <li><strong class="font-medium text-foreground">Currency.</strong> Only supported annual USD amounts are included. Other currencies, hourly pay, fixed-term totals and unsupported estimates are excluded; no currency conversion is applied.</li>
+            <li><strong class="font-medium text-foreground">Coverage.</strong> Many employers do not publish comparable pay, so these figures cover only part of the listings. Each listing has equal weight; averages are not medians or a representative market survey. Actual offers vary with experience, location and organization.</li>
         </ul>
     </section>
 
