@@ -4,6 +4,7 @@ import fcntl
 from pathlib import Path
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location('blue_green', Path(__file__).with_name('blue_green.py'))
@@ -13,6 +14,16 @@ spec.loader.exec_module(bg)
 CADDY = ':80 {\n reverse_proxy 127.0.0.1:3456\n}\n\nremoteimpact.org {\n\treverse_proxy 127.0.0.1:8100\n\tlog {\n\t\toutput file /var/log/caddy/remoteimpact-access.log\n\t}\n}\n'
 
 class ReleaseTests(unittest.TestCase):
+    def test_low_disk_space_rejects_release_before_readiness_or_build(self):
+        with tempfile.TemporaryDirectory() as folder:
+            release = bg.Release(folder)
+            with patch.object(bg.shutil, 'disk_usage', return_value=SimpleNamespace(free=100 * 1024 ** 2)), \
+                 patch.object(bg, 'run') as run, patch.object(release, 'ready') as ready:
+                with self.assertRaisesRegex(RuntimeError, 'Insufficient free space'):
+                    release.deploy()
+                run.assert_not_called()
+                ready.assert_not_called()
+
     def test_only_production_upstream_changes_and_header_is_replaced(self):
         first = bg.caddy_config(CADDY, 8101, 'one')
         second = bg.caddy_config(first, 8102, 'two')
