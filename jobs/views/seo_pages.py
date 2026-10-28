@@ -17,6 +17,7 @@ from django.db.models import Count, Max, Q
 from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
+from urllib.parse import urlencode
 
 from ..models import Job, Category, Organization
 from ..seo_config import (
@@ -186,6 +187,10 @@ class RoleJobsView(FastJobPaginationMixin, ListView):
         context['intro'] = self.config['intro']
         context['icon'] = self.config['icon']
         context['role_name'] = self.config['role']
+        context['scout_example_url'] = reverse('jobs:job_scout_preview') + '?' + urlencode({
+            'intent': f"{self.config['h1']}. Show hiring locations and advertised pay.",
+            'source': 'seo_role_sidebar',
+        })
         
         jobs_qs = self.get_queryset()
         category_rows = (
@@ -405,6 +410,10 @@ class KeywordJobsView(FastJobPaginationMixin, ListView):
         context['page_title'] = self.config['title'].format(count=job_count)
         context['meta_description'] = self.config['meta_desc'].format(count=job_count)
         context['intro'] = self.config['intro']
+        context['scout_example_url'] = reverse('jobs:job_scout_preview') + '?' + urlencode({
+            'intent': f"{self.config['h1']}. Show hiring locations and advertised pay.",
+            'source': 'seo_keyword_sidebar',
+        })
         context['icon'] = self.config['icon']
         context['keyword'] = self.config['keyword']
         context['nonprofit_page'] = self.config.get('filter_type') == 'nonprofit'

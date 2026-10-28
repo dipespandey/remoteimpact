@@ -2,6 +2,7 @@ import json
 import re
 from io import StringIO
 from unittest.mock import Mock, patch
+from urllib.parse import parse_qs, urlsplit
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
@@ -33,6 +34,22 @@ class SearchDestinationTests(TestCase):
         self.assertContains(response, 'Hiring countries, office attendance and travel requirements vary by role')
         self.assertContains(response, 'US-only Analyst')
         self.assertNotContains(response, 'Work from anywhere and make a difference')
+
+    def test_anonymous_role_and_keyword_pages_offer_a_sample_preview(self):
+        self.job('Communications Manager')
+        for name, slug, source in [
+            ('role_jobs', 'remote-communications-manager-jobs', 'seo_role_sidebar'),
+            ('keyword_jobs', 'remote-humanitarian-jobs', 'seo_keyword_sidebar'),
+        ]:
+            with self.subTest(slug=slug):
+                response = self.client.get(reverse('jobs:' + name, args=[slug]))
+                self.assertContains(response, 'Try a sample search')
+                url = urlsplit(response.context['scout_example_url'])
+                self.assertEqual(url.path, reverse('jobs:job_scout_preview'))
+                params = parse_qs(url.query)
+                self.assertEqual(params['source'], [source])
+                self.assertGreaterEqual(len(params['intent'][0]), 20)
+                self.assertContains(response, response.context['scout_example_url'].replace('&', '&amp;'), html=False)
 
     def test_humanitarian_search_keeps_relevant_missions_without_generic_development(self):
         humanitarian = self.job('Humanitarian Program Manager')
