@@ -126,12 +126,12 @@ def _has_remote_work_evidence(item: Dict) -> bool:
     body = str(fields.get("body") or "")
     body = re.sub(r"(?i)</?(?:p|div|br|li|h[1-6])\b[^>]*>", "\n", body)
     body = re.sub(r"<[^>]*>", " ", body)
-    if re.search(r"(?im)^\s*\**(?:location|work(?:ing)? (?:location|arrangement|mode)|duty station)\**\s*:\s*\**(?:not\s+remote|on[- ]site|in[- ]person|hybrid)\b", body):
+    if re.search(r"(?im)^\s*\**(?:location|workplace|work(?:ing)? (?:location|arrangement|mode)|duty station)\**\s*:\s*\**(?:not\s+remote|on[- ]site|in[- ]person|hybrid)\b", body):
         return False
     lines = [line.replace("*", "").strip() for line in body.splitlines()]
     values = []
     for line in lines:
-        labeled = re.match(r"(?i)^(?:location|work(?:ing)? (?:location|arrangement|mode)|duty station)\s*:\s*(.{1,200})$", line)
+        labeled = re.match(r"(?i)^(?:location|workplace|work(?:ing)? (?:location|arrangement|mode)|duty station)\s*:\s*(.{1,200})$", line)
         if labeled:
             values.append(labeled.group(1))
     if any(re.search(r"(?i)\b(?:not|non)[-\s]+remote\b|\bhybrid\b|\brequired attendance\b|\b(?:on[- ]site|in[- ]person)\b", value) for value in values):
@@ -141,6 +141,8 @@ def _has_remote_work_evidence(item: Dict) -> bool:
             return True
     for line in lines:
         if re.search(r"(?i)\b(?:this (?:is|position is|role is)|the (?:position|role) is)\s+(?:a\s+)?(?:fully\s+)?remote\s+(?:role|position|job)\b", line):
+            return True
+        if re.search(r"(?i)\b(?:all work is remote|this (?:position|role|job) is (?:fully |100% )?remote)\b", line):
             return True
     return bool(re.search(r"\b(?:remote|home[- ]based)\b", title, re.I))
 
