@@ -99,3 +99,11 @@ class SyndicationAvailabilityTests(TestCase):
         self.live.save()
         root = ET.fromstring(self.client.get(reverse('jobs:linkedin_feed')).content)
         self.assertEqual([j.findtext('salaryMin') for j in root.findall('job') if j.find('salaryMin') is not None], ['60000'])
+
+    def test_annual_salary_comparisons_exclude_annualized_quotes(self):
+        from jobs.services.job_service import JobService
+        self.live.description = 'Compensation $100,000 for four months; $300,000 annualized.'
+        self.live.save()
+        ids = set(JobService._annual_salary_jobs(Job.objects.all()).values_list('pk', flat=True))
+        self.assertNotIn(self.live.pk, ids)
+        self.assertIn(self.unknown_pay.pk, ids)
