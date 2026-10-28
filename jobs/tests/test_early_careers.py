@@ -13,6 +13,14 @@ from jobs.sitemaps import StaticSitemap
 
 
 class ProgrammeIntegrityTests(SimpleTestCase):
+    def test_gain_africa_fellowship_is_learning_with_unconfirmed_funding(self):
+        row = next(r for r in registry() if r['slug'] == 'gain-africa-ai-safety-essentials')
+        self.assertEqual(row['funding'], 'unknown')
+        self.assertEqual(row['mode'], 'remote')
+        self.assertEqual(row['deadline'], '2026-11-08')
+        self.assertIn('No participant salary is stated', row['funding_detail'])
+        self.assertEqual(next(r for r in opportunities(date(2026, 11, 9)) if r['slug'] == row['slug'])['status'], 'closed')
+
     def test_reviewed_registry_is_unique_and_source_backed(self):
         rows = registry()
         self.assertGreaterEqual(len(rows), 40)
