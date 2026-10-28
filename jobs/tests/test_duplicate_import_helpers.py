@@ -145,3 +145,12 @@ class DuplicateImportHelperTests(SimpleTestCase):
             self.assertTrue(_is_generic_listing_title(title))
 
         self.assertFalse(_is_generic_listing_title("Software Engineering Internship"))
+
+    def test_one_to_one_career_advising_is_a_service_not_a_vacancy(self):
+        for title in ('1:1 Career Guidance', '1:1 Career Coaching', 'One-to-one Career Advising'):
+            with self.subTest(title=title):
+                self.assertTrue(_is_generic_listing_title(title))
+        for title in ('Career Coach', 'Career Guidance Adviser', 'Career Advising Programme Manager',
+                      '1:1 Career Guidance Coordinator'):
+            with self.subTest(title=title):
+                self.assertFalse(_is_generic_listing_title(title))
