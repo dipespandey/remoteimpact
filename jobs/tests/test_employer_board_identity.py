@@ -8,6 +8,8 @@ from jobs.management.commands.import_employer_boards import Command
 from jobs.models import Job
 from jobs.services.ats_boards import AtsRef, Listing
 from jobs.services.importers.common import _upsert_job
+from jobs.services.job_quality import job_posting_schema_json
+import json
 
 
 class EmployerBoardIdentityTests(TestCase):
@@ -51,3 +53,27 @@ class EmployerBoardIdentityTests(TestCase):
         self.assertFalse(created)
         self.assertEqual(updated.pk,legacy.pk)
         self.assertEqual(updated.external_id,'occrp:60')
+
+    def test_explicit_remote_workplace_survives_country_only_location(self):
+        entry = {'ref': AtsRef('ashby', 'example', 'role-1'),
+                 'org_name': 'Remote Employer', 'category_name': None}
+        listing = Listing('role-1', 'Engineer', 'https://jobs.ashbyhq.com/example/role-1',
+                          'Build reliable software for climate teams. ' * 12,
+                          'United States', 'remote')
+        payload = Command._payload(entry, listing, listing.description_html, timezone.now().isoformat())
+        self.assertEqual(payload['location'], 'Remote (United States)')
+        job, _ = _upsert_job(payload)
+        self.assertIn('Remote', job.location)
+        schema = json.loads(job_posting_schema_json(job, 'https://remoteimpact.org'))
+        self.assertEqual(schema['jobLocationType'], 'TELECOMMUTE')
+        self.assertEqual(schema['applicantLocationRequirements']['name'], 'United States of America')
+
+    def test_workplace_label_does_not_invent_remote_for_other_modes(self):
+        entry = {'ref': AtsRef('ashby', 'example', 'role-2'),
+                 'org_name': 'Example Employer', 'category_name': None}
+        for workplace in ('onsite', 'hybrid', None):
+            with self.subTest(workplace=workplace):
+                listing = Listing('role-2', 'Engineer', 'https://example.org/job/2',
+                                  'Role description.', 'Seattle', workplace)
+                payload = Command._payload(entry, listing, listing.description_html, timezone.now().isoformat())
+                self.assertEqual(payload['location'], 'Seattle')
