@@ -419,11 +419,12 @@
                 <!-- AI Job Scout: continue this search -->
                 <section class="flex flex-col">
                     <h2 class="text-sm font-semibold text-foreground">Want more roles like this?</h2>
-                    <p class="mt-1 flex-1 text-xs leading-relaxed text-muted-foreground">Describe what you want and get your strongest matching jobs by email.</p>
-                    <a href="{% url 'jobs:job_alerts' %}?intent=Remote%20{{ job.title|urlencode }}%20roles%20similar%20to%20this%20one&source=job_detail"
+                    <p class="mt-1 flex-1 text-xs leading-relaxed text-muted-foreground">{% if request.user.is_authenticated %}Describe what you want and get your strongest matching jobs by email.{% else %}Preview matching jobs for free. No account needed.{% endif %}</p>
+                    <a href="{% if request.user.is_authenticated %}{% url 'jobs:job_alerts' %}{% else %}{% url 'jobs:job_scout_preview' %}{% endif %}?intent=Remote%20{{ job.title|urlencode }}%20roles%20similar%20to%20this%20one&amp;source=job_detail"
+                       {% if not request.user.is_authenticated %}data-scout-loading rel="nofollow"{% endif %}
                        class="btn btn-outline btn-sm mt-3 self-start"
                        data-track="job_scout_job_detail" data-track-category="job_scout" data-track-label="{{ job.slug }}">
-                        Find matching jobs
+                        {% if request.user.is_authenticated %}Find matching jobs{% else %}Preview matching jobs{% endif %}
                     </a>
                 </section>
             </div>
@@ -582,4 +583,5 @@
   })();
 </script>{% endcsp_script %}
 {% endif %}
+{% include 'jobs/_scout_loading.html' %}
 {% endblock %}

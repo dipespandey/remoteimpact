@@ -516,3 +516,31 @@ class JobDetailAvailabilityTest(TestCase):
 
         self.assertEqual(response.status_code, 301)
         self.assertEqual(response.url, reverse("jobs:job_detail", args=[job.slug]))
+
+    def test_anonymous_job_scout_link_previews_matches_before_signin(self):
+        from bs4 import BeautifulSoup
+        from urllib.parse import urlsplit, parse_qs
+        for provider, provider_id in (("google", ""), ("openid_connect", "linkedin")):
+            app = SocialApp.objects.create(provider=provider, provider_id=provider_id,
+                name=provider, client_id="test-client", secret="test-secret",
+                settings={"server_url": "https://www.linkedin.com/oauth"} if provider_id else {})
+            app.sites.add(Site.objects.get_current())
+        job = Job.objects.create(title='Climate & Energy Analyst', slug='anonymous-scout-role',
+            organization=self.organization, description='A current role.',
+            posted_at=timezone.now()-timedelta(days=1), is_active=True)
+        self.client.logout()
+        response = self.client.get(reverse('jobs:job_detail', args=[job.slug]))
+        self.assertEqual(response.status_code, 200)
+        link = BeautifulSoup(response.content, 'html.parser').find('a', attrs={'data-track':'job_scout_job_detail'})
+        self.assertIsNotNone(link)
+        destination = urlsplit(link['href'])
+        self.assertEqual(destination.path, reverse('jobs:job_scout_preview'))
+        self.assertEqual(parse_qs(destination.query)['source'], ['job_detail'])
+        self.assertIn(job.title, parse_qs(destination.query)['intent'][0])
+        self.assertTrue(link.has_attr('data-scout-loading'))
+        self.assertIn('nofollow', link.get('rel', []))
+        self.assertContains(response, 'scout-loading-spinner')
+        self.client.force_login(self.user)
+        signed_in = self.client.get(reverse('jobs:job_detail', args=[job.slug]))
+        signed_in_link = BeautifulSoup(signed_in.content, 'html.parser').find('a', attrs={'data-track':'job_scout_job_detail'})
+        self.assertEqual(urlsplit(signed_in_link['href']).path, reverse('jobs:job_alerts'))
