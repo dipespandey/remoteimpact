@@ -1,6 +1,8 @@
 from unittest.mock import AsyncMock, patch
 from asgiref.sync import async_to_sync
 from django.test import TestCase, SimpleTestCase, override_settings
+from django.core.management import call_command
+from django.core.management.base import CommandError
 
 from jobs.services.importers.common import _upsert_job
 from jobs.services.importers.reliefweb import _has_remote_work_evidence, _mark_filtered_existing_seen, _reliefweb_headers, _transform_reliefweb_item, import_reliefweb
@@ -83,6 +85,25 @@ class ReliefWebTypeEvidenceTests(SimpleTestCase):
                  patch('jobs.services.importers.reliefweb._mark_filtered_existing_seen'), \
                  patch('jobs.services.importers.reliefweb.batch_upsert_jobs', new_callable=AsyncMock, return_value={}):
                 self.assertTrue(async_to_sync(import_reliefweb)()['skip_retirement'])
+
+    def test_retirement_uses_source_inventory_and_skips_failed_imports(self):
+        for extra, expected in [
+            ({'source_fetched': 50}, True),
+            ({'source_fetched': 50, 'skip_retirement': True}, False),
+            ({'source_fetched': 50, 'failed': 1}, False),
+        ]:
+            summary = {'fetched': 2, 'created': 0, 'updated': 0, **extra}
+            with self.subTest(extra=extra), \
+                 patch('jobs.management.commands.import_remote_jobs.Command._run_imports_with_cleanup', new_callable=AsyncMock, return_value={'reliefweb': summary}), \
+                 patch('jobs.management.commands.import_remote_jobs.retire_unseen_listings', return_value={'retired': 0, 'skipped': ''}) as retire:
+                if summary.get('failed'):
+                    with self.assertRaises(CommandError):
+                        call_command('import_remote_jobs', source='reliefweb', skip_maintenance=True)
+                else:
+                    call_command('import_remote_jobs', source='reliefweb', skip_maintenance=True)
+                self.assertEqual(retire.called, expected)
+                if expected:
+                    self.assertEqual(retire.call_args.args[2], 50)
 
     def test_source_type_does_not_invent_hours(self):
         for types, expected in [
