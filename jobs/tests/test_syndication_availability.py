@@ -107,3 +107,22 @@ class SyndicationAvailabilityTests(TestCase):
         ids = set(JobService._annual_salary_jobs(Job.objects.all()).values_list('pk', flat=True))
         self.assertNotIn(self.live.pk, ids)
         self.assertIn(self.unknown_pay.pk, ids)
+
+    def test_term_pay_is_visible_on_public_detail_and_job_card(self):
+        from django.template.loader import render_to_string
+        from allauth.socialaccount.models import SocialApp
+        from django.contrib.sites.models import Site
+        for provider, provider_id in [('google', ''), ('openid_connect', 'linkedin')]:
+            app = SocialApp.objects.create(provider=provider, provider_id=provider_id,
+                name=provider, client_id='test-client', secret='test-secret',
+                settings={'server_url': 'https://www.linkedin.com/oauth'} if provider_id else {})
+            app.sites.add(Site.objects.get_current())
+        self.live.description = '$100,000–$167,000 USD for the four-month fellowship (annualized $300,000–$500,000).'
+        self.live.salary_min = 300000
+        self.live.salary_max = 500000
+        self.live.save()
+        response = self.client.get(reverse('jobs:job_detail', args=[self.live.slug]))
+        self.assertContains(response, '$100,000 – $167,000 for 4 months')
+        card = render_to_string('jobs/partials/job_row.html', {'job': self.live})
+        self.assertIn('$100,000 – $167,000 for 4 months', card)
+        self.assertNotIn('$300,000 – $500,000 per year', card)
