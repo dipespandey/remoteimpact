@@ -97,6 +97,12 @@ class Command(BaseCommand):
                     grouped_keys[("canonical-url", None if unique_posting else title, identity, canonical_url)].append(job.id)
 
             if strategy in {"all", "raw-description"}:
+                # Employers reuse descriptions across distinct requisitions and
+                # locations. A recognised posting ID must outrank text similarity;
+                # equivalent IDs are already handled by the canonical-URL strategy.
+                posting_identity = _canonical_duplicate_url(job.application_url)
+                if posting_identity.startswith(UNIQUE_ATS_POSTING_PREFIXES):
+                    continue
                 raw_signature = _job_raw_description_signature(job)
                 if raw_signature and location:
                     grouped_keys[
