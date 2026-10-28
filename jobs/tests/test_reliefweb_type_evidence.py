@@ -45,8 +45,9 @@ class ReliefWebTypeEvidenceTests(SimpleTestCase):
         with patch('jobs.services.importers.reliefweb._fetch_reliefweb_list', return_value=([{'id': 'remote'}, {'id': 'field'}], 2)), \
              patch('jobs.services.importers.reliefweb._fetch_reliefweb_detail', side_effect=[remote, field]), \
              patch('jobs.services.importers.reliefweb.batch_upsert_jobs', new_callable=AsyncMock, return_value={'created': 1}) as upsert:
-            async_to_sync(import_reliefweb)()
+            result = async_to_sync(import_reliefweb)()
         self.assertEqual([p['title'] for p in upsert.await_args.args[0]], ['Researcher (Remote)'])
+        self.assertTrue(result['skip_retirement'])
 
     @override_settings(RELIEFWEB_APP_NAME="remoteimpact-test")
     def test_limit_bounds_source_requests_even_without_remote_matches(self):

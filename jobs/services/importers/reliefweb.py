@@ -288,7 +288,7 @@ async def import_reliefweb(
             break
 
     if dry_run:
-        return {"fetched": len(all_payloads), "created": 0, "updated": 0}
+        return {"fetched": len(all_payloads), "created": 0, "updated": 0, "skip_retirement": True}
 
     # Batch upsert with optional AI processing
     stats = await batch_upsert_jobs(
@@ -299,4 +299,7 @@ async def import_reliefweb(
         provider=provider,
         skip_existing=skip_existing,
     )
+    # Filtered-out records may still exist upstream. Their lack of a sighting
+    # must not be recorded as proof that ReliefWeb removed them.
+    stats["skip_retirement"] = True
     return stats
