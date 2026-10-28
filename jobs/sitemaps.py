@@ -108,6 +108,7 @@ class ToolsSitemap(Sitemap):
         return [
             ('jobs:tools_index', 0.8, 'weekly'),
             ('jobs:salary_to_hourly', 0.7, 'monthly'),
+            ('jobs:timezone_overlap', 0.7, 'monthly'),
             ('jobs:freelance_rate', 0.7, 'monthly'),
             ('jobs:pto_calculator', 0.7, 'monthly'),
             ('jobs:pay_raise_calculator', 0.7, 'monthly'),
