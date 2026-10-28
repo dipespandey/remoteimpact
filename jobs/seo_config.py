@@ -196,7 +196,7 @@ ROLE_SEO_PAGES = [
         'h1': 'Remote Education & Teaching Jobs',
         'title': 'Remote Education & Teaching Jobs (2026) | {count}+ Roles',
         'meta_desc': 'Find {count}+ remote education and teaching jobs: online teaching, tutoring, curriculum, learning design and student support at education nonprofits.',
-        'intro': 'Remote education jobs let you improve learning outcomes from anywhere. Browse curriculum, program, student support, and learning design roles.',
+        'intro': 'Browse remote curriculum, education program, student support and learning design roles. Check each listing for hiring countries, time zones and experience requirements.',
         'icon': '📚',
     },
     {
