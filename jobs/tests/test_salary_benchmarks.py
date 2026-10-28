@@ -1,5 +1,9 @@
 from datetime import timedelta
+import json
+from unittest.mock import Mock, patch
 
+from bs4 import BeautifulSoup
+from django.template.loader import render_to_string
 from django.test import TestCase
 from django.utils import timezone
 
@@ -45,3 +49,20 @@ class SalaryBenchmarkEvidenceTests(TestCase):
         self.assertEqual(context['total_with_salary'], 0)
         self.assertIsNone(context['overall']['avg_min'])
         self.assertEqual(context['top_paying'], [])
+
+    def test_domain_counts_and_public_markup_describe_the_actual_sample(self):
+        for number in range(10):
+            self.job(f'annual-{number}')
+        self.job('foreign', salary_currency='EUR')
+        context = benchmark_context()
+        self.assertEqual(context['by_domain'][0]['job_count'], 10)
+        self.assertEqual(context['by_domain'][0]['avg_max'], 80000)
+        provider = Mock(get_login_url=Mock(return_value='/accounts/google/login/'))
+        with patch('allauth.socialaccount.adapter.DefaultSocialAccountAdapter.get_provider', return_value=provider):
+            html = render_to_string('jobs/tools/salary_benchmarks.html', context)
+        soup = BeautifulSoup(html, 'html.parser')
+        schemas = [json.loads(script.string) for script in soup.find_all('script', type='application/ld+json')]
+        dataset = next(schema for schema in schemas if schema.get('@type') == 'Dataset')
+        self.assertEqual(dataset['variableMeasured'][0]['unitText'], 'USD per year')
+        self.assertFalse(any(schema.get('@type') == 'FAQPage' for schema in schemas))
+        self.assertIn('Other currencies, hourly pay, fixed-term totals and unsupported estimates are excluded', soup.get_text(' ', strip=True))
