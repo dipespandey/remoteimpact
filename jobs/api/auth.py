@@ -54,7 +54,7 @@ def _client_ip(request) -> str:
     return client_ip(request)
 
 
-def identify(request) -> Caller:
+def identify(request, *, count_daily=True) -> Caller:
     """Resolve the caller; raises RateLimited when over their limits."""
     from jobs.models import ApiKey
 
@@ -66,7 +66,7 @@ def identify(request) -> Caller:
         caller = Caller(tier=key.tier, key=key, scope=f"key:{key.pk}")
     else:
         caller = Caller(tier="anonymous", scope=f"ip:{_client_ip(request)}")
-    _count(caller)
+    _count(caller, count_daily=count_daily)
     return caller
 
 
@@ -97,12 +97,14 @@ def _bump(cache_key: str, timeout: int) -> int:
     return ApiRateBucket.objects.values_list("count", flat=True).get(key=key)
 
 
-def _count(caller: Caller):
+def _count(caller: Caller, *, count_daily=True):
     now = timezone.now()
     limits = caller.limits
     minute = _bump(f"api:m:{caller.scope}:{now.strftime('%Y%m%d%H%M')}", 120)
     if minute > limits["per_minute"]:
         raise RateLimited(60 - now.second, caller)
+    if not count_daily:
+        return  # Discovery still passed the same per-minute abuse cap.
     if caller.key is not None:
         today = now.date()
         from jobs.models import ApiKey

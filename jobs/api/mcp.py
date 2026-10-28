@@ -15,6 +15,12 @@ from jobs.api import serialize, usage
 from jobs.api.auth import RateLimited, identify
 from jobs.api.rest import ATTRIBUTION, CORS, search
 
+# Static discovery returns no job records and does not consume the daily data allowance.
+# All methods still share the per-minute cap. Data reads and unknown methods count daily.
+DAILY_QUOTA_EXEMPT_METHODS = frozenset({
+    "initialize", "ping", "tools/list", "resources/list", "prompts/list",
+})
+
 PROTOCOL_VERSIONS = ("2025-06-18", "2025-03-26", "2024-11-05")
 SERVER = {"name": "remote-impact-jobs", "version": "1.0.0", "title": "Remote Impact Jobs",
           "description": "Structured remote jobs at climate, global health, AI safety and other impact organizations: search by area, "
@@ -195,7 +201,7 @@ def endpoint(request):
     if id_ is None:  # notification
         return HttpResponse(status=202)
     try:
-        caller = identify(request)
+        caller = identify(request, count_daily=method not in DAILY_QUOTA_EXEMPT_METHODS)
     except RateLimited as exc:
         usage.record(request, exc.caller, "mcp", (params.get("name") if method == "tools/call" else method) or method, 429)
         response = _error(id_, -32000, "Rate limited; add an API key from remoteimpact.org/developers/ for higher limits.", status=429)
