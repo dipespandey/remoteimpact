@@ -333,16 +333,27 @@ def _retired_duplicate_has_available_keeper(job: Job, application_url=None, titl
 
 
 @transaction.atomic
-def _mark_job_seen(source: str, external_id: str, raw_data=None) -> None:
+def _mark_job_seen(source: str, external_id: str, raw_data=None, payload=None) -> bool:
     if source and external_id:
+        is_ats = source in {"greenhouse", "lever", "ashby", "workable", "recruitee", "personio", "bamboohr"}
+        job = None
+        if not is_ats or payload is not None:
+            job = Job.objects.select_for_update().filter(source=source, external_id=external_id).only(
+                'raw_data', 'is_active', 'slug', 'title', 'application_url', 'organization_id'
+            ).first()
+        if payload is not None:
+            from jobs.services.category_review import category_review_input_hash
+            review = ((job.raw_data if job else None) or {}).get('category_source_review')
+            if (isinstance(review, dict) and review.get('version') == 1
+                    and not review.get('needs_review')
+                    and review.get('source_input_hash') != category_review_input_hash(payload)):
+                # Let the full upsert invalidate the review and process the changed source.
+                return True
         updates = {"last_seen_at": timezone.now()}
         # Greenhouse, Lever, and Ashby URLs come from search results. A result
         # may remain indexed after the posting closes, so only the board API is
         # allowed to reactivate these records.
-        if source not in {"greenhouse", "lever", "ashby", "workable", "recruitee", "personio", "bamboohr"}:
-            job = Job.objects.select_for_update().filter(source=source, external_id=external_id).only(
-                'raw_data', 'is_active', 'slug', 'title', 'application_url', 'organization_id'
-            ).first()
+        if not is_ats:
             if (job and source == Job.Source.IDEALIST and isinstance(raw_data, dict)
                     and str(raw_data.get('objectID') or '') == str(external_id)
                     and raw_data.get('orgName') == (job.raw_data or {}).get('orgName')):
@@ -361,6 +372,7 @@ def _mark_job_seen(source: str, external_id: str, raw_data=None) -> None:
             if job and not staged_canary and not verification_blocks_listing(job.raw_data) and not _retired_duplicate_has_available_keeper(job):
                 updates["is_active"] = True
         Job.objects.filter(source=source, external_id=external_id).update(**updates)
+    return False
 
 
 async def _async_return(value):
@@ -700,6 +712,7 @@ def _upsert_job(payload: Dict, *, create_only: bool = False) -> Tuple[Job, bool]
     # Reviews are local editorial evidence, never instructions from a feed.
     defaults['raw_data'] = dict(defaults['raw_data'] or {})
     defaults['raw_data'].pop('location_source_review', None)
+    defaults['raw_data'].pop('category_source_review', None)
     drop_implausible_salary(defaults)
 
     job = Job.objects.filter(
@@ -784,6 +797,17 @@ def _upsert_job(payload: Dict, *, create_only: bool = False) -> Tuple[Job, bool]
                 defaults[field] = getattr(job, field)
         drop_implausible_salary(defaults)
         incoming_raw = dict(defaults["raw_data"] or {})
+        # Only a locally recorded review of this exact source input may retain
+        # an editorial correction. A changed posting requires fresh review.
+        from jobs.services.category_review import retained_category_review
+        category_review = retained_category_review(job, original_payload)
+        if category_review:
+            category = job.category
+            incoming_raw['category_source_review'] = category_review
+        elif isinstance(old_raw.get('category_source_review'), dict):
+            incoming_raw['category_source_review'] = {
+                **old_raw['category_source_review'], 'needs_review': True,
+            }
         # An unchanged aggregator label must not immediately undo a recent
         # employer-source correction. Changed source inputs require a new review.
         from jobs.services.location_review import retained_location_review
@@ -822,7 +846,8 @@ def _upsert_job(payload: Dict, *, create_only: bool = False) -> Tuple[Job, bool]
                     phase="staged" if prior_canary.get("phase") == "staged" else "source_changed",
                 )
         defaults["raw_data"] = incoming_raw
-        if job.category_id and (category is None or category.slug == "other"):
+        if (job.category_id and (category is None or category.slug == "other")
+                and not (old_raw.get('category_source_review') and not category_review)):
             category = job.category
         for field, value in defaults.items():
             setattr(job, field, value)
@@ -927,8 +952,12 @@ async def batch_upsert_jobs(
             source = payload.get("source", "")
             external_id = payload.get("external_id", "")
             if source and external_id and await check_exists(source, external_id):
-                stats["skipped"] += 1
-                await sync_to_async(_mark_job_seen, thread_sensitive=True)(source, external_id, payload.get("raw_data"))
+                needs_refresh = await sync_to_async(_mark_job_seen, thread_sensitive=True)(
+                    source, external_id, payload.get("raw_data"), payload)
+                if needs_refresh:
+                    filtered_payloads.append(payload)
+                else:
+                    stats["skipped"] += 1
             else:
                 filtered_payloads.append(payload)
         payloads = filtered_payloads
