@@ -134,6 +134,10 @@ def job_record(job, *, enriched=False):
         "url": listing_url, "apply_url": apply_url,
         "description_excerpt": _text(job.description, EXCERPT_COMMERCIAL if enriched else EXCERPT_FREE),
     }
+    from jobs.services.term_compensation import quoted_term_compensation
+    term = quoted_term_compensation(strip_tags(job.description or ""))
+    if term:
+        record["term_compensation"] = term
     if enriched:
         record.update({
             "education_level": job.education_level or None,

@@ -412,6 +412,11 @@ def job_posting_schema_json(job, site_url: str) -> str:
     source_period = str(raw.get("salaryPeriod") or raw.get("salary_period") or "").lower()
     if source_period in {"hour", "hourly", "hr", "day", "daily", "week", "weekly"}:
         annual_evidence = False
+    # A quoted fixed-term total must not be advertised as yearly base salary.
+    from jobs.services.term_compensation import quoted_term_compensation
+    from django.utils.html import strip_tags
+    if quoted_term_compensation(strip_tags(job.description or "")):
+        annual_evidence = False
     salary_values = [value for value in (job.salary_min, job.salary_max) if value is not None]
     currency = str(job.salary_currency or "")
     currency_evidence = fact_annual or job.source == job.Source.MANUAL or any(

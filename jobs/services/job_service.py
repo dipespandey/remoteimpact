@@ -290,7 +290,9 @@ class JobService:
         return jobs.annotate(
             _source_pay_period=Coalesce(KeyTextTransform('salaryPeriod','raw_data'),Value('YEAR'),output_field=TextField()),
             _stored_pay_period=Coalesce(KeyTextTransform('salary_period','raw_data'),Value('year'),output_field=TextField()),
-        ).exclude(_source_pay_period__in=['HOUR','DAY','WEEK','hour','day','week']).exclude(_stored_pay_period__in=['hour','day','week'])
+        ).exclude(_source_pay_period__in=['HOUR','DAY','WEEK','hour','day','week']).exclude(_stored_pay_period__in=['hour','day','week']).exclude(
+            Q(description__icontains='annualized') | Q(description__icontains='annualised')
+        )
 
     @staticmethod
     def _order_jobs(queryset, sort, interleave=False):

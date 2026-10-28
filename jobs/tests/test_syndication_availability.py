@@ -69,3 +69,60 @@ class SyndicationAvailabilityTests(TestCase):
         self.assertEqual(category_query['utm_source'], ['community_rss'])
         self.assertEqual(category_query['utm_campaign'], ['category_jobs_feed_climate-environment'])
         self.assertNotIn('utm_', category.find('./channel/item/guid').text)
+
+    def test_term_pay_is_not_exported_as_annual_salary(self):
+        self.live.description = '$100,000–$167,000 USD for the four-month fellowship (annualized $300,000–$500,000).'
+        self.live.salary_min = 300000
+        self.live.salary_max = 500000
+        self.live.save()
+        for feed, fields in [('indeed_feed', ['salary']), ('linkedin_feed', ['salaryMin', 'salaryMax'])]:
+            with self.subTest(feed=feed):
+                root = ET.fromstring(self.client.get(reverse('jobs:'+feed)).content)
+                for item in root.findall('job'):
+                    for field in fields:
+                        self.assertIsNone(item.find(field))
+
+    def test_api_distinguishes_term_total_from_annual_salary(self):
+        from jobs.api.serialize import job_record
+        self.live.description = '$100,000–$167,000 USD for the four-month fellowship (annualized $300,000–$500,000).'
+        self.live.salary_min = 300000
+        self.live.salary_max = 500000
+        self.live.raw_data = {'salaryPeriod': 'YEAR', 'salaryCurrency': 'USD'}
+        record = job_record(self.live)
+        self.assertIsNone(record['salary'])
+        self.assertEqual(record['term_compensation']['minimum'], '100000')
+        self.assertEqual(record['term_compensation']['duration_value'], 4)
+
+    def test_ordinary_annual_feed_amounts_remain(self):
+        self.live.salary_min = 60000
+        self.live.salary_max = 80000
+        self.live.save()
+        root = ET.fromstring(self.client.get(reverse('jobs:linkedin_feed')).content)
+        self.assertEqual([j.findtext('salaryMin') for j in root.findall('job') if j.find('salaryMin') is not None], ['60000'])
+
+    def test_annual_salary_comparisons_exclude_annualized_quotes(self):
+        from jobs.services.job_service import JobService
+        self.live.description = 'Compensation $100,000 for four months; $300,000 annualized.'
+        self.live.save()
+        ids = set(JobService._annual_salary_jobs(Job.objects.all()).values_list('pk', flat=True))
+        self.assertNotIn(self.live.pk, ids)
+        self.assertIn(self.unknown_pay.pk, ids)
+
+    def test_term_pay_is_visible_on_public_detail_and_job_card(self):
+        from django.template.loader import render_to_string
+        from allauth.socialaccount.models import SocialApp
+        from django.contrib.sites.models import Site
+        for provider, provider_id in [('google', ''), ('openid_connect', 'linkedin')]:
+            app = SocialApp.objects.create(provider=provider, provider_id=provider_id,
+                name=provider, client_id='test-client', secret='test-secret',
+                settings={'server_url': 'https://www.linkedin.com/oauth'} if provider_id else {})
+            app.sites.add(Site.objects.get_current())
+        self.live.description = '$100,000–$167,000 USD for the four-month fellowship (annualized $300,000–$500,000).'
+        self.live.salary_min = 300000
+        self.live.salary_max = 500000
+        self.live.save()
+        response = self.client.get(reverse('jobs:job_detail', args=[self.live.slug]))
+        self.assertContains(response, '$100,000 – $167,000 for 4 months')
+        card = render_to_string('jobs/partials/job_row.html', {'job': self.live})
+        self.assertIn('$100,000 – $167,000 for 4 months', card)
+        self.assertNotIn('$300,000 – $500,000 per year', card)

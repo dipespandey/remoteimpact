@@ -50,6 +50,13 @@ def compensation_currency(job):
 
 
 def compensation_display(job):
+    from django.utils.html import strip_tags
+    from jobs.services.term_compensation import quoted_term_compensation
+    term = quoted_term_compensation(strip_tags(getattr(job, 'description', '') or ''))
+    if term:
+        low, high = Decimal(term['minimum']), Decimal(term['maximum'])
+        return (f'${low:,.0f} – ${high:,.0f} for {term["duration_value"]} '
+                f'{term["duration_unit"]}' + ('s' if term['duration_value'] != 1 else ''))
     low, high, period = compensation(job)
     if low is None and high is None:
         return ''
