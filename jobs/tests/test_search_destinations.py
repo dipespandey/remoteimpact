@@ -34,6 +34,15 @@ class SearchDestinationTests(TestCase):
         self.assertContains(response, 'US-only Analyst')
         self.assertNotContains(response, 'Work from anywhere and make a difference')
 
+    def test_humanitarian_search_keeps_relevant_missions_without_generic_development(self):
+        humanitarian = self.job('Humanitarian Program Manager')
+        international = self.job('International Development Adviser')
+        contextual = self.job('Finance Officer', description='Support humanitarian assistance programs.')
+        self.job('Software Development Engineer')
+        self.job('Business Development Manager')
+        response = self.client.get(reverse('jobs:keyword_jobs', args=['remote-humanitarian-jobs']))
+        self.assertEqual({job.pk for job in response.context['jobs']}, {humanitarian.pk, international.pk, contextual.pk})
+
     def test_education_requires_education_work_not_machine_learning_or_student_status(self):
         included = [self.job(title) for title in ['Teacher', 'Associate Instructional Designer', 'Training & Curriculum Lead', 'Student Support Advisor', 'Learning and Development Manager', 'Online Tutor']]
         for title in ['Machine Learning Engineer', 'Sr Machine Learning Engineering Manager', 'Lead Machine Learning Engineer - Localization', 'Werkstudent Sales', 'Law Student Volunteer', 'Monitoring, Evaluation and Learning Consultant', 'Humane Studies Fellowship for PhD Students', 'AI Tutor - Writing', 'Research Lead, Pre-Training Safety', 'Research Engineer, Pre-training', 'Field Technician (Paid Training)', 'Academic Expert (SME) - Procurement KPI Framework', 'Organizer In-Training', 'Member of Technical Staff, Training Infra Engineer']:

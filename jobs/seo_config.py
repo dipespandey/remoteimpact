@@ -476,7 +476,8 @@ KEYWORD_SEO_PAGES = [
         'intro': 'Explore remote roles supporting crisis response, refugee assistance and development programs. Check each employer’s hiring locations, travel and work authorization requirements.',
         'icon': '🚑',
         'filter_type': 'keyword',
-        'patterns': ['humanitarian', 'relief', 'refugee', 'crisis', 'emergency', 'disaster', 'aid worker', 'development'],
+        # Bare "development" also matches software, fundraising and sales.
+        'patterns': ['humanitarian', 'relief', 'refugee', 'crisis', 'emergency', 'disaster', 'aid worker', 'international development', 'development cooperation'],
         'difficulty': 46,
         'search_volume': 'medium',
     },

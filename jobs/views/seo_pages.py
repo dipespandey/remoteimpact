@@ -367,6 +367,27 @@ class KeywordJobsView(FastJobPaginationMixin, ListView):
                 q_objects |= Q(title__icontains=pattern)
                 q_objects |= Q(category__name__icontains=pattern)
                 q_objects |= Q(organization__name__icontains=pattern)
+            if self.keyword_slug == 'remote-humanitarian-jobs':
+                # Specific aid missions in a description can make a generic
+                # finance or technical role relevant. On PostgreSQL use the
+                # existing index to bound the exact-text check.
+                from django.db import connection
+                phrases = ('humanitarian response', 'humanitarian aid',
+                           'humanitarian assistance', 'disaster relief',
+                           'refugee response', 'international development')
+                literal = Q()
+                for phrase in phrases:
+                    literal |= Q(description__icontains=phrase)
+                if connection.vendor == 'postgresql':
+                    from django.contrib.postgres.search import SearchQuery
+                    indexed = Q()
+                    for phrase in phrases:
+                        indexed |= Q(search_vector=SearchQuery(phrase, config='english', search_type='phrase'))
+                    matches = base_qs.filter(indexed).filter(literal).values('pk')
+                    unindexed = base_qs.filter(search_vector__isnull=True).filter(literal).values('pk')
+                    q_objects |= Q(pk__in=matches) | Q(pk__in=unindexed)
+                else:
+                    q_objects |= literal
             return base_qs.filter(q_objects).distinct().order_by('-posted_at')
         
         return base_qs.order_by('-posted_at')
