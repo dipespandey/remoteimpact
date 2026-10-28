@@ -305,7 +305,8 @@ def verification_blocks_listing(raw: Dict) -> bool:
     """A feed sighting must not resurrect a listing the employer's own site says is gone."""
     raw = raw or {}
     return ((raw.get("source_verification") or {}).get("status") in BLOCKING_VERIFICATION_STATUSES
-            or (raw.get("source_page_enrichment") or {}).get("status") in {"http_404", "http_410"})
+            or (raw.get("source_page_enrichment") or {}).get("status") in {"http_404", "http_410"}
+            or (raw.get('location_source_review') or {}).get('needs_review') is True)
 
 
 def _retired_duplicate_has_available_keeper(job: Job, application_url=None, title=None) -> bool:
@@ -696,6 +697,9 @@ def _upsert_job(payload: Dict, *, create_only: bool = False) -> Tuple[Job, bool]
         "raw_data": payload.get("raw_data", {}),
         "last_seen_at": timezone.now(),
     }
+    # Reviews are local editorial evidence, never instructions from a feed.
+    defaults['raw_data'] = dict(defaults['raw_data'] or {})
+    defaults['raw_data'].pop('location_source_review', None)
     drop_implausible_salary(defaults)
 
     job = Job.objects.filter(
@@ -780,6 +784,26 @@ def _upsert_job(payload: Dict, *, create_only: bool = False) -> Tuple[Job, bool]
                 defaults[field] = getattr(job, field)
         drop_implausible_salary(defaults)
         incoming_raw = dict(defaults["raw_data"] or {})
+        # An unchanged aggregator label must not immediately undo a recent
+        # employer-source correction. Changed source inputs require a new review.
+        from jobs.services.location_review import retained_location_review
+        location_review = retained_location_review(job, original_payload)
+        incoming_raw.pop('location_source_review', None)
+        if location_review:
+            correction = location_review['correction']
+            defaults['location'] = correction['location']
+            defaults['country'] = correction['country']
+            incoming_raw['location_source_review'] = location_review
+            if correction.get('jobLocation'):
+                incoming_raw['jobLocation'] = correction['jobLocation']
+        elif (isinstance(old_raw.get('location_source_review'), dict)
+              and old_raw['location_source_review'].get('version') == 1):
+            incoming_raw['location_source_review'] = {
+                **old_raw['location_source_review'], 'needs_review': True,
+            }
+            defaults['is_active'] = False
+        elif isinstance(old_raw.get('location_source_review'), dict):
+            incoming_raw['location_source_review'] = old_raw['location_source_review']
         for key in ("quality_enrichment", "source_page_enrichment", "source_verification", "last_stale_check", "crawl_error", "ats", "ats_check"):
             if key in old_raw and key not in incoming_raw and (same_destination or key == "quality_enrichment"):
                 incoming_raw[key] = old_raw[key]
