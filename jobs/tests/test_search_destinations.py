@@ -51,6 +51,17 @@ class SearchDestinationTests(TestCase):
                 self.assertGreaterEqual(len(params['intent'][0]), 20)
                 self.assertContains(response, response.context['scout_example_url'].replace('&', '&amp;'), html=False)
 
+    @override_settings(SCOUT_PREVIEW_ASYNC_ENABLED=False)
+    def test_anonymous_visitor_can_open_a_role_sample(self):
+        self.job('Communications Manager')
+        page = self.client.get(reverse('jobs:role_jobs', args=['remote-communications-manager-jobs']))
+        with patch('jobs.views.job_alerts.JobScoutService.search_intent', return_value=({'titles': ['Communications Manager']}, [])), \
+             patch('jobs.services.scout_alternatives.older_openings', return_value=[]), \
+             patch('jobs.services.scout_alternatives.explore_openings', return_value=[]):
+            preview = self.client.get(page.context['scout_example_url'])
+        self.assertEqual(preview.status_code, 200)
+        self.assertContains(preview, 'Remote Communications Manager Jobs')
+
     def test_humanitarian_search_keeps_relevant_missions_without_generic_development(self):
         humanitarian = self.job('Humanitarian Program Manager')
         international = self.job('International Development Adviser')
