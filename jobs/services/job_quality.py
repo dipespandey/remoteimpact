@@ -359,6 +359,51 @@ def _schema_physical_location(raw):
     return {"@type": "Place", "address": clean_address}
 
 
+def supported_base_salary(job):
+    """The shared annual-pay evidence gate, without unrelated job schema work."""
+    import re
+
+    raw = job.raw_data if isinstance(job.raw_data, dict) else {}
+    salary_meta = (raw.get("quality_enrichment") or {}).get("salary") or {}
+    from jobs.services.job_facts import annual_salary_matches
+    fact_annual = annual_salary_matches(
+        raw.get("job_facts"), job.title, job.organization.name,
+        "\n".join((job.description or "", job.requirements or "")),
+        job.salary_min, job.salary_max, job.salary_currency,
+    )
+    annual_evidence = (
+        fact_annual or job.source == job.Source.MANUAL
+        or str(raw.get("salaryPeriod") or "").upper() == "YEAR"
+        or salary_meta.get("method") == "source_period_normalization_v1"
+    )
+    if not annual_evidence:
+        return None
+    # Legacy enrichment can retain an annualized estimate for hourly work.
+    # The explicit source unit takes precedence over that cached metadata.
+    source_period = str(raw.get("salaryPeriod") or raw.get("salary_period") or "").lower()
+    if source_period in {"hour", "hourly", "hr", "day", "daily", "week", "weekly"}:
+        return None
+    # A quoted fixed-term total must not be advertised as yearly base salary.
+    from jobs.services.term_compensation import quoted_term_compensation
+    from django.utils.html import strip_tags
+    if quoted_term_compensation(strip_tags(job.description or "")):
+        return None
+    salary_values = [value for value in (job.salary_min, job.salary_max) if value is not None]
+    currency = str(job.salary_currency or "")
+    currency_evidence = fact_annual or job.source == job.Source.MANUAL or any(
+        str(raw.get(field) or "").upper() == currency for field in ("salaryCurrency", "salary_currency", "currency")
+    ) or bool(currency and re.search(r"\b" + re.escape(currency) + r"\b", " ".join((job.description or "", job.requirements or ""))))
+    if currency_evidence and annual_evidence and salary_values and all(0 < value <= 10_000_000 for value in salary_values) and re.fullmatch(r"[A-Z]{3}", currency) and not str(salary_meta.get("method", "")).startswith("rejected"):
+        if job.salary_min is None or job.salary_max is None or job.salary_min <= job.salary_max:
+            value = {"@type": "QuantitativeValue", "unitText": "YEAR"}
+            if job.salary_min is not None:
+                value["minValue"] = float(job.salary_min)
+            if job.salary_max is not None:
+                value["maxValue"] = float(job.salary_max)
+            return {"@type": "MonetaryAmount", "currency": currency, "value": value}
+    return None
+
+
 def job_posting_schema_json(job, site_url: str) -> str:
     """Serialize source facts without invented expiry, employer identity or geography."""
     import json
@@ -395,41 +440,8 @@ def job_posting_schema_json(job, site_url: str) -> str:
             data["applicantLocationRequirements"] = requirements[0] if len(requirements) == 1 else requirements
     elif location := _schema_physical_location(raw):
         data["jobLocation"] = location
-    salary_meta = (raw.get("quality_enrichment") or {}).get("salary") or {}
-    from jobs.services.job_facts import annual_salary_matches
-    fact_annual = annual_salary_matches(
-        raw.get("job_facts"), job.title, job.organization.name,
-        "\n".join((job.description or "", job.requirements or "")),
-        job.salary_min, job.salary_max, job.salary_currency,
-    )
-    annual_evidence = (
-        fact_annual or job.source == job.Source.MANUAL
-        or str(raw.get("salaryPeriod") or "").upper() == "YEAR"
-        or salary_meta.get("method") == "source_period_normalization_v1"
-    )
-    # Legacy enrichment can retain an annualized estimate for hourly work.
-    # The explicit source unit takes precedence over that cached metadata.
-    source_period = str(raw.get("salaryPeriod") or raw.get("salary_period") or "").lower()
-    if source_period in {"hour", "hourly", "hr", "day", "daily", "week", "weekly"}:
-        annual_evidence = False
-    # A quoted fixed-term total must not be advertised as yearly base salary.
-    from jobs.services.term_compensation import quoted_term_compensation
-    from django.utils.html import strip_tags
-    if quoted_term_compensation(strip_tags(job.description or "")):
-        annual_evidence = False
-    salary_values = [value for value in (job.salary_min, job.salary_max) if value is not None]
-    currency = str(job.salary_currency or "")
-    currency_evidence = fact_annual or job.source == job.Source.MANUAL or any(
-        str(raw.get(field) or "").upper() == currency for field in ("salaryCurrency", "salary_currency", "currency")
-    ) or bool(currency and re.search(r"\b" + re.escape(currency) + r"\b", " ".join((job.description or "", job.requirements or ""))))
-    if currency_evidence and annual_evidence and salary_values and all(0 < value <= 10_000_000 for value in salary_values) and re.fullmatch(r"[A-Z]{3}", currency) and not str(salary_meta.get("method", "")).startswith("rejected"):
-        if job.salary_min is None or job.salary_max is None or job.salary_min <= job.salary_max:
-            value = {"@type": "QuantitativeValue", "unitText": "YEAR"}
-            if job.salary_min is not None:
-                value["minValue"] = float(job.salary_min)
-            if job.salary_max is not None:
-                value["maxValue"] = float(job.salary_max)
-            data["baseSalary"] = {"@type": "MonetaryAmount", "currency": currency, "value": value}
+    if base_salary := supported_base_salary(job):
+        data["baseSalary"] = base_salary
     # JSON serialization is necessary: escapejs emits JavaScript escapes (\\u0027
     # is valid, \\x is not JSON), and source text may contain a script terminator.
     return json.dumps(_omit_unknown_schema_values(data), ensure_ascii=False).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")

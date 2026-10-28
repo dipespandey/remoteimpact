@@ -53,9 +53,9 @@ def salary(job):
     """
     if job.salary_min is None and job.salary_max is None:
         return None
-    from jobs.services.job_quality import job_posting_schema_json
+    from jobs.services.job_quality import supported_base_salary
 
-    amount = json.loads(job_posting_schema_json(job, _site())).get("baseSalary")
+    amount = supported_base_salary(job)
     if not amount:
         return None
     value = amount["value"]
