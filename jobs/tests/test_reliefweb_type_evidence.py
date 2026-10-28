@@ -38,6 +38,9 @@ class ReliefWebTypeEvidenceTests(SimpleTestCase):
             ("Commitment: Not full-time", ""),
             ("Schedule: Full-time is not required", ""),
             ("Schedule: Part-time", "part-time"),
+            ("**Working Hours:** Part Time", "part-time"),
+            ("**Hours:** Full time, with some weekend work", "full-time"),
+            ("**Hours:** 20 hours per week", ""),
         ]:
             entry = item([{"name": "Internship"}])
             entry["fields"]["body"] = description

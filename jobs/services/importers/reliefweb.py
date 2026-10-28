@@ -122,7 +122,7 @@ def _explicit_schedule(description: str) -> str:
     found = set()
     for line in text.splitlines():
         line = line.replace("*", "").strip()
-        match = re.match(r"(?i)^(?:commitment|working arrangements?|employment type|schedule)\s*:\s*(.{1,200})$", line)
+        match = re.match(r"(?i)^(?:commitment|working arrangements?|employment type|schedule|working hours|hours)\s*:\s*(.{1,200})$", line)
         if not match:
             continue
         value = match.group(1)
