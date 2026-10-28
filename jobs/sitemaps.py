@@ -1,8 +1,8 @@
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
-from django.db.models import Count, Max, Q
+from django.db.models import Count, Max, Q, F
 
-from .models import Job, Category, SeekerProfile, Organization
+from .models import Job, JobSlugRedirect, Category, SeekerProfile, Organization
 from .seo_config import MIN_INDEXABLE_JOBS
 
 
@@ -27,7 +27,13 @@ class JobSitemap(Sitemap):
     limit = 5000  # Google recommends max 50,000 URLs per sitemap
 
     def items(self):
-        return visible_jobs().select_related('organization').order_by('-posted_at')
+        # Reviewed aliases advertise another live job as canonical. Keep them
+        # accessible for bookmarks, but submit only the preferred URL. If the
+        # target closes, canonical_job falls back to the surviving alias.
+        aliases = JobSlugRedirect.objects.filter(
+            job__in=visible_jobs(),
+        ).exclude(old_slug=F('job__slug')).values('old_slug')
+        return visible_jobs().exclude(slug__in=aliases).select_related('organization').order_by('-posted_at')
 
     def location(self, obj):
         return reverse('jobs:job_detail', args=[obj.slug])
