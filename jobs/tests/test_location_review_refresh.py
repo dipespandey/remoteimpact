@@ -67,6 +67,22 @@ class LocationReviewRefreshTests(TestCase):
                 self.assertFalse(job.is_active)
                 self.assertNotEqual(job.location, 'Washington, D.C. (in-person)')
 
+    def test_pending_review_blocks_both_incremental_and_full_refresh(self):
+        for source in ('80000hours', 'probablygood'):
+            with self.subTest(source=source):
+                payload = {**self.payload, 'source': source, 'external_id': f'pending-{source}',
+                           'application_url': f'https://example.org/{source}/role'}
+                job, _ = _upsert_job(payload)
+                job.is_active = False
+                job.raw_data = {'location_source_review': {'version': 1, 'needs_review': True}}
+                job.save(update_fields=['is_active', 'raw_data'])
+                _mark_job_seen(source, payload['external_id'])
+                job.refresh_from_db()
+                self.assertFalse(job.is_active)
+                job, _ = _upsert_job(payload)
+                self.assertFalse(job.is_active)
+                self.assertTrue(job.raw_data['location_source_review']['needs_review'])
+
     def test_incoming_feed_cannot_supply_a_review_override(self):
         self.job.raw_data = {}
         self.job.save(update_fields=['raw_data'])
