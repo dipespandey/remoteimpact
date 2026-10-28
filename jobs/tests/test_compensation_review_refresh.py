@@ -1,6 +1,8 @@
 from asgiref.sync import async_to_sync
 from django.test import TestCase
+from django.db.models.fields.json import KeyTransform
 from types import SimpleNamespace
+from jobs.models import Job
 
 from jobs.services.category_review import category_review_input_hash
 from jobs.services.importers.common import _upsert_job, batch_upsert_jobs
@@ -47,6 +49,14 @@ class CompensationReviewRefreshTests(TestCase):
         self.assertEqual(compensation_display(projected), '')
         self.assertEqual(compensation(projected)[:2], (None, None))
         self.assertEqual(compensation_currency(projected), '')
+        loaded = Job.objects.annotate(
+            scout_compensation_review=KeyTransform('compensation_source_review', 'raw_data'),
+            scout_source_pay_min=KeyTransform('salaryMinimum', 'raw_data'),
+            scout_source_pay_max=KeyTransform('salaryMaximum', 'raw_data'),
+            scout_source_period=KeyTransform('salaryPeriod', 'raw_data'),
+        ).defer('raw_data').get(pk=self.job.pk)
+        self.assertEqual(compensation_display(loaded), '')
+        self.assertEqual(compensation(loaded)[:2], (None, None))
 
     def test_incremental_refresh_marks_changed_source_for_review(self):
         changed = {**self.payload, 'description': 'Changed role and pay details. ' * 20}
