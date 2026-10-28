@@ -1,8 +1,9 @@
 from django.test import TestCase
+from asgiref.sync import async_to_sync
 
 from jobs.models import Category
 from jobs.services.category_review import category_review_input_hash
-from jobs.services.importers.common import _mark_job_seen, _upsert_job
+from jobs.services.importers.common import _mark_job_seen, _upsert_job, batch_upsert_jobs
 
 
 class CategoryReviewRefreshTests(TestCase):
@@ -31,6 +32,14 @@ class CategoryReviewRefreshTests(TestCase):
         job, _ = _upsert_job({**self.payload, 'description': 'A different communications role. ' * 20})
         self.assertTrue(job.raw_data['category_source_review']['needs_review'])
         self.assertNotEqual(job.category.slug, 'humanitarian')
+
+    def test_incremental_import_refreshes_a_changed_reviewed_posting(self):
+        changed = {**self.payload, 'description': 'A different communications role. ' * 20}
+        result = async_to_sync(batch_upsert_jobs)([changed], skip_existing=True, skip_duplicates=False)
+        self.job.refresh_from_db()
+        self.assertEqual(result['updated'], 1)
+        self.assertTrue(self.job.raw_data['category_source_review']['needs_review'])
+        self.assertNotEqual(self.job.category.slug, 'humanitarian')
 
     def test_source_cannot_inject_review(self):
         self.job.raw_data = {}

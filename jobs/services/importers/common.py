@@ -333,8 +333,17 @@ def _retired_duplicate_has_available_keeper(job: Job, application_url=None, titl
 
 
 @transaction.atomic
-def _mark_job_seen(source: str, external_id: str, raw_data=None) -> None:
+def _mark_job_seen(source: str, external_id: str, raw_data=None, payload=None) -> bool:
     if source and external_id:
+        if payload is not None:
+            from jobs.services.category_review import category_review_input_hash
+            existing = Job.objects.filter(source=source, external_id=external_id).values('raw_data').first()
+            review = ((existing or {}).get('raw_data') or {}).get('category_source_review')
+            if (isinstance(review, dict) and review.get('version') == 1
+                    and not review.get('needs_review')
+                    and review.get('source_input_hash') != category_review_input_hash(payload)):
+                # Let the full upsert invalidate the review and process the changed source.
+                return True
         updates = {"last_seen_at": timezone.now()}
         # Greenhouse, Lever, and Ashby URLs come from search results. A result
         # may remain indexed after the posting closes, so only the board API is
@@ -361,6 +370,7 @@ def _mark_job_seen(source: str, external_id: str, raw_data=None) -> None:
             if job and not staged_canary and not verification_blocks_listing(job.raw_data) and not _retired_duplicate_has_available_keeper(job):
                 updates["is_active"] = True
         Job.objects.filter(source=source, external_id=external_id).update(**updates)
+    return False
 
 
 async def _async_return(value):
@@ -940,8 +950,12 @@ async def batch_upsert_jobs(
             source = payload.get("source", "")
             external_id = payload.get("external_id", "")
             if source and external_id and await check_exists(source, external_id):
-                stats["skipped"] += 1
-                await sync_to_async(_mark_job_seen, thread_sensitive=True)(source, external_id, payload.get("raw_data"))
+                needs_refresh = await sync_to_async(_mark_job_seen, thread_sensitive=True)(
+                    source, external_id, payload.get("raw_data"), payload)
+                if needs_refresh:
+                    filtered_payloads.append(payload)
+                else:
+                    stats["skipped"] += 1
             else:
                 filtered_payloads.append(payload)
         payloads = filtered_payloads
