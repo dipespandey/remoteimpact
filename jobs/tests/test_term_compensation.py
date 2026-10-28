@@ -28,3 +28,20 @@ class TermCompensationTests(unittest.TestCase):
         from jobs.services.scout_evidence import compensation_display
         job = SimpleNamespace(description='$100,000–$167,000 USD for the four-month fellowship (annualized $300,000–$500,000).')
         self.assertEqual(compensation_display(job), '$100,000 – $167,000 for 4 months')
+
+    def test_negated_historical_or_example_totals_are_not_current_pay(self):
+        for prefix in ['Not ', 'We never pay ', 'Example: ', 'Hypothetical pay: ', 'Previously paid ', 'Formerly ']:
+            with self.subTest(prefix=prefix):
+                self.assertIsNone(quoted_term_compensation(prefix + '$100,000–$167,000 USD for the four-month fellowship.'))
+
+    def test_conflicting_totals_abstain(self):
+        self.assertIsNone(quoted_term_compensation(
+            '$100,000–$167,000 USD for the four-month fellowship. '
+            '$110,000–$170,000 USD for the four-month fellowship.'))
+
+    def test_duration_and_amount_bounds(self):
+        for quote in ['$0–$10 USD for the four-month fellowship',
+                      '$10–$20 USD for the 0-month fellowship',
+                      '$10–$20 USD for the 366-day contract']:
+            with self.subTest(quote=quote):
+                self.assertIsNone(quoted_term_compensation(quote))

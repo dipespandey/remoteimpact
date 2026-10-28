@@ -16,7 +16,7 @@ def quoted_term_compensation(text):
     candidates = []
     for match in _QUOTE.finditer(text or ''):
         prefix = re.split(r'[.!?;\n]', (text or '')[:match.start()])[-1]
-        if re.search(r'\b(?:budget|funding|grant|revenue|annualized|annualised)\b', prefix, re.I):
+        if re.search(r'\b(?:budget|funding|grant|revenue|annualized|annualised|not|never|example|hypothetical|previously|formerly)\b', prefix, re.I):
             continue
         low = Decimal(match['low'].replace(',', ''))
         high = Decimal(match['high'].replace(',', ''))
