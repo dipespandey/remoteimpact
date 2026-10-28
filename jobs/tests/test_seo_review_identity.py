@@ -68,3 +68,23 @@ class SeoIdentityTests(TestCase):
         self.assertEqual(canonical_job(copy).pk,original.pk)
         original.is_active=False;original.save()
         self.assertEqual(canonical_job(copy).pk,copy.pk)
+
+    def test_job_sitemap_omits_only_reviewed_alias_with_live_target(self):
+        from jobs.sitemaps import JobSitemap
+        original = self.job('sitemap-original')
+        alias = self.job('sitemap-alias', application_url='https://other.example/jobs/123')
+        separate = self.job('sitemap-separate', application_url='https://example.org/jobs/456')
+        JobSlugRedirect.objects.create(old_slug=alias.slug, job=original)
+        slugs = set(JobSitemap().items().values_list('slug', flat=True))
+        self.assertIn(original.slug, slugs)
+        self.assertIn(separate.slug, slugs)
+        self.assertNotIn(alias.slug, slugs)
+        original.is_active = False
+        original.save()
+        self.assertIn(alias.slug, set(JobSitemap().items().values_list('slug', flat=True)))
+
+    def test_job_sitemap_keeps_self_mapping(self):
+        from jobs.sitemaps import JobSitemap
+        job = self.job('sitemap-self')
+        JobSlugRedirect.objects.create(old_slug=job.slug, job=job)
+        self.assertIn(job.slug, set(JobSitemap().items().values_list('slug', flat=True)))
