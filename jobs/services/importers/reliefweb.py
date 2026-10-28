@@ -116,6 +116,23 @@ def _map_reliefweb_category(raw_name: str) -> str:
     return RELIEFWEB_CATEGORY_MAP.get(raw_name, "Impact Careers")
 
 
+def _explicit_schedule(description: str) -> str:
+    """Read explicit schedule labels without treating incidental mentions as hours."""
+    text = re.sub(r"<[^>]+>", " ", description or "")
+    found = set()
+    for line in text.splitlines():
+        line = line.replace("*", "").strip()
+        match = re.match(r"(?i)^(?:commitment|working arrangements?|employment type|schedule)\s*:\s*(.{1,200})$", line)
+        if not match:
+            continue
+        value = match.group(1)
+        if re.search(r"\bfull[ -]?time\b", value, re.I):
+            found.add("full-time")
+        if re.search(r"\bpart[ -]?time\b", value, re.I):
+            found.add("part-time")
+    return next(iter(found)) if len(found) == 1 else ""
+
+
 def _transform_reliefweb_item(item: Dict) -> Dict:
     fields = item.get("fields", {})
     title = fields.get("title") or "Untitled role"
@@ -156,7 +173,7 @@ def _transform_reliefweb_item(item: Dict) -> Dict:
     labels = {str(entry.get("name") or "").strip().casefold() for entry in source_types if isinstance(entry, dict)}
     # A generic ReliefWeb job does not establish its working hours.
     is_volunteer = bool(re.search(r"\bvolunteer(?:ing)?\b", title, re.I))
-    job_type = "contract" if labels == {"consultancy"} and not is_volunteer else ""
+    job_type = "contract" if labels == {"consultancy"} and not is_volunteer else _explicit_schedule(description)
 
     return {
         "source": Job.Source.RELIEFWEB,

@@ -30,6 +30,18 @@ class ReliefWebTypeEvidenceTests(SimpleTestCase):
         self.assertEqual(_transform_reliefweb_item(item([{"name": "Job"}], "Volunteer"))["job_type"], "")
         self.assertEqual(_transform_reliefweb_item(item([{"name": "Consultancy"}], "Researcher - Volunteer"))["job_type"], "")
 
+    def test_explicit_schedule_and_ambiguous_arrangements(self):
+        for description, expected in [
+            ("**Commitment:** Full-time availability for the internship.", "full-time"),
+            ("**Working arrangements:** Flexible, part-time or full-time.", ""),
+            ("This role supports full-time staff.", ""),
+            ("Schedule: Part-time", "part-time"),
+        ]:
+            entry = item([{"name": "Internship"}])
+            entry["fields"]["body"] = description
+            with self.subTest(description=description):
+                self.assertEqual(_transform_reliefweb_item(entry)["job_type"], expected)
+
 
 class ReliefWebTypePersistenceTests(TestCase):
     def test_unknown_type_survives_create_and_refresh_and_is_not_structured_as_full_time(self):
