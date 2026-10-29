@@ -79,3 +79,11 @@ class SitemapEfficiencyTests(TestCase):
             self.assertEqual([i['slug'] for i in items], ['climate'])
             with self.assertNumQueries(0):
                 self.assertEqual(sitemap.lastmod(items[0]), self.old)
+
+    def test_keyword_sitemap_supports_keyword_views_without_dispatch(self):
+        configs = [dict(slug="remote-humanitarian-jobs", filter_type="keyword",
+                        patterns=["humanitarian"])]
+        with patch("jobs.seo_config.KEYWORD_SEO_PAGES", configs):
+            response = self.client.get("/sitemap-keywords.xml")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"<urlset", response.content)

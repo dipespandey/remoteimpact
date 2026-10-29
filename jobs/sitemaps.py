@@ -24,6 +24,9 @@ def _live_stats(view_name, config):
     from .views import seo_pages
     view = getattr(seo_pages, view_name)()
     view.config = config
+    if view_name == "KeywordJobsView":
+        # dispatch normally sets this; sitemap queries bypass dispatch.
+        view.keyword_slug = config["slug"]
     return view.get_queryset().order_by().values('pk', 'updated_at').aggregate(
         total=Count('pk'), lastmod=Max('updated_at'))
 
