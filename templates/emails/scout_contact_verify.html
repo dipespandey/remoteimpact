@@ -1,3 +1,9 @@
-<p>Confirm your email to save your Remote Impact Scout follow-up preference.</p>
-<p><a href="{{ verify_url }}">Confirm my email</a></p>
-<p>This link expires in seven days. If you did not request this, you can ignore this email.</p>
+{% extends "emails/base.html" %}
+{% block title %}Confirm your Scout follow-up · Remote Impact{% endblock %}
+{% block content %}
+<p style="margin:32px 0 9px;color:#5b7152;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase">AI Job Scout</p>
+<h1 style="margin:0;font-size:30px;line-height:1.2">Confirm your email</h1>
+<p style="margin:14px 0 24px;color:#565e57;font-size:16px;line-height:1.6">Confirm your email to save your Remote Impact Scout follow-up preference.</p>
+<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#1d211e"><a href="{{ verify_url }}" style="display:inline-block;padding:13px 20px;color:#fff;font-size:15px;font-weight:bold;text-decoration:none">Confirm my email</a></td></tr></table>
+<p style="margin:24px 0 0;color:#626a63;font-size:14px;line-height:1.6">This link expires in seven days. If you did not request this, you can ignore this email.</p>
+{% endblock %}

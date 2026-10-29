@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 from typing import Optional
 from urllib.parse import urlencode
 
@@ -59,6 +60,11 @@ class EmailService:
         """
         if getattr(settings, "EMAIL_PROVIDER", "resend") == "none":
             return False
+        # Small operational messages are often authored as HTML fragments. Give
+        # those messages the same shell as our full email templates.
+        if html and not re.search(r"<\s*(?:!doctype\s+html|html)\b", html, re.IGNORECASE):
+            from django.utils.safestring import mark_safe
+            html = render_to_string("emails/fragment.html", {"subject": subject, "content": mark_safe(html)})
         from jobs.services.outbound_links import attribute_html_links
         html = attribute_html_links(html, medium="email", campaign="remote_impact_emails")
         headers = {}

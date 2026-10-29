@@ -1,6 +1,5 @@
-<!doctype html>
-<html lang="en"><body style="margin:0;padding:24px;background:#fcfcfb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1d1d22;font-size:15px;line-height:1.6">
-<div style="max-width:560px;margin:0 auto">
+{% extends "emails/base.html" %}
+{% block content %}
 <p>Hi {{ claim.name|default:"there" }},</p>
 <p>In the last 30 days, {{ claim.organization.name }}'s {{ stats.roles }} live role{{ stats.roles|pluralize }} on Remote Impact {{ stats.roles|pluralize:"was,were" }} viewed {{ stats.views }} times and {{ stats.clicks }} people clicked through to apply. They arrive tagged utm_source=remoteimpact.</p>
 {% if stats.top %}<p>Most clicked: {{ stats.top }}.</p>{% endif %}
@@ -8,4 +7,4 @@
 <p>If a listing is wrong or closed, reply and we'll fix it.</p>
 <p>Remote Impact</p>
 <p style="margin-top:32px;font-size:12px;color:#6b6b70">You get this because you claimed {{ claim.organization.name }}. Reply "stop" and we'll stop sending it.</p>
-</div></body></html>
+{% endblock %}

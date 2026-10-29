@@ -1,11 +1,7 @@
+{% extends "emails/base.html" %}
 {% load job_extras %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New jobs matching your Scout</title>
-    <style>
+{% block extra_head %}
+<style>
         body, table, td, p, a, li { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
         table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
         img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
@@ -15,12 +11,13 @@
             .job-card { padding: 16px !important; }
         }
     </style>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f3f2ee;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f3f2ee;">
+{% endblock %}
+{% block title %}New jobs matching your Scout{% endblock %}
+{% block content %}
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f3f2ee;">
         <tr>
             <td align="center" style="padding: 40px 20px;">
-                <table role="presentation" class="container" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden;">
+                <table role="presentation" class="container" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden;">
 
                     <!-- Header -->
                     <tr>
@@ -149,5 +146,4 @@
             </td>
         </tr>
     </table>
-</body>
-</html>
+{% endblock %}
