@@ -45,6 +45,16 @@ class ScoutFunnelTests(TestCase):
         self.assertEqual(E.objects.get(event=E.Event.INITIAL_EMAIL_SENT).metadata['scout_flow_id'],flow)
         self.assertEqual(E.objects.get(event=E.Event.SCOUT_SUBMIT_RESULT).metadata['outcome'],'created')
 
+    @override_settings(SCOUT_PREVIEW_ASYNC_ENABLED=True)
+    def test_async_preview_signup_and_create_keep_same_flow(self):
+        from jobs.models import ScoutPreviewTask
+        task = SimpleNamespace(pk="00000000-0000-0000-0000-000000000001",
+            state=ScoutPreviewTask.State.SUCCEEDED, State=ScoutPreviewTask.State,
+            result={"preferences": self.prefs, "diagnostics": {}})
+        with patch("jobs.services.scout_tasks.enqueue_preview", return_value=(task, False)), \
+             patch("jobs.services.scout_tasks.hydrate_result", return_value=([self.job], [], False)):
+            self.test_anonymous_signup_and_create_share_flow_across_session_rotation()
+
     def test_anonymous_contact_capture_is_purpose_limited_and_verified(self):
         self.client.logout()
         page = self.preview()
