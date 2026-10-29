@@ -1,18 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Top Impact Jobs For You</title>
-    <style>
+{% extends "emails/base.html" %}
+{% block extra_head %}
+<style>
         body { margin: 0; padding: 0; background-color: #f3f2ee; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         @media screen and (max-width: 600px) { .container { width: 100% !important; } }
     </style>
-</head>
-<body style="background-color: #f3f2ee; margin: 0; padding: 0;">
+{% endblock %}
+{% block title %}Top Impact Jobs For You{% endblock %}
+{% block content %}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f2ee;">
 <tr><td align="center" style="padding: 40px 16px;">
-<table class="container" role="presentation" width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+<table class="container" role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
     <tr><td style="background-color: #16803c; padding: 32px; text-align: center;">
         <h1 style="color: #ffffff; margin: 0; font-size: 26px;">{% if has_profile %}Jobs that match your profile{% else %}New remote impact jobs{% endif %}</h1>
     </td></tr>
@@ -42,5 +39,4 @@
 </table>
 </td></tr>
 </table>
-</body>
-</html>
+{% endblock %}
