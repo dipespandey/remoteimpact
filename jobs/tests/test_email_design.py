@@ -24,3 +24,16 @@ class EmailDesignTests(SimpleTestCase):
             self.assertIn(value, roundup)
         for value in ('https://example.com/verify', 'seven days'):
             self.assertIn(value, scout)
+
+    def test_inline_email_is_wrapped_without_losing_content(self):
+        from unittest.mock import patch
+        from django.test import override_settings
+        from jobs.services.email_service import EmailService
+        with override_settings(EMAIL_PROVIDER='cloudflare'):
+            service = EmailService()
+            with patch.object(service, '_send_cloudflare', return_value='sent') as send:
+                self.assertTrue(service.send_email('test@example.org', 'Example subject', '<p>Important update</p>'))
+                html = send.call_args.args[2]
+                self.assertIn('Remote Impact', html)
+                self.assertIn('<p>Important update</p>', html)
+                self.assertIn('Example subject', html)
