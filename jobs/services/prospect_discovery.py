@@ -103,7 +103,9 @@ def assess_page(url, sector, result, *, today=None):
         if (tag.get('property') or tag.get('name') or '').lower() in ('article:modified_time', 'article:published_time', 'date', 'datemodified', 'datepublished'):
             dates.append(tag.get('content', '')[:10])
     for tag in soup.find_all('time', datetime=True):
-        dates.append(tag['datetime'][:10])
+        # A comment or event time does not establish when this page was updated.
+        if (tag.get('itemprop') or '').lower() in ('datepublished', 'datemodified'):
+            dates.append(tag['datetime'][:10])
     valid_dates = []
     for value in dates:
         try:

@@ -34,6 +34,12 @@ class PageAssessmentTests(SimpleTestCase):
         self.assertEqual(result['freshness'],'unknown')
         self.assertIn('Not established',result['permission'])
 
+    def test_unrelated_recent_time_does_not_refresh_old_article(self):
+        html = '<meta property="article:published_time" content="2017-06-27"><footer><time datetime="2026-10-29">Recent comment</time></footer>' + GOOD
+        result = assess_page('https://resources.example/', 'climate', FetchResult('ok', text=html), today=date(2026,10,30))
+        self.assertEqual(result['freshness'], 'older_than_two_years')
+        self.assertEqual(result['status'], 'needs_review')
+
     def test_frozen_labelled_cases(self):
         output=io.StringIO()
         call_command('evaluate_partner_discovery',dataset=Path(__file__).parent/'fixtures/partner_research_cases.json',stdout=output)
