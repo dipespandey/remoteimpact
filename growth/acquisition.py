@@ -4,7 +4,7 @@ External pages are evidence only. They never grant permission, execute code, or
 supply instructions to an LLM. Drafts are deterministic, inspectable proposals.
 """
 from collections import Counter
-from datetime import timedelta
+from datetime import date, timedelta
 from urllib.parse import urlencode, urlsplit, urlunsplit, parse_qsl
 import time
 import uuid
@@ -41,23 +41,9 @@ def restricted_host(url):
     return any(host == root or host.endswith('.' + root) for root in BLOCKED_HOSTS)
 
 
-def discover(sector, limit=5):
-    from ddgs import DDGS
-    query = link_prospecting.QUERIES[sector][0]
-    results = DDGS(timeout=10).text(query, max_results=limit)
-    count = 0
-    for item in list(results)[:limit]:
-        url = item.get('href', '')
-        try:
-            if restricted_host(url) or link_prospecting.target_is_ours(url):
-                continue
-            _, created = link_prospecting.import_prospect(
-                {'url': url, 'name': item.get('title', '')[:255], 'sector': sector},
-                source=f'Growth discovery: {query}')
-            count += int(created)
-        except (ValidationError, ValueError):
-            continue
-    return count
+def discover(sector, limit=5, *, active=lambda: True):
+    from jobs.services.prospect_discovery import discover_prospects
+    return discover_prospects(sector, limit=limit, active=active)
 
 
 def partner_draft(campaign, prospect):
@@ -112,9 +98,19 @@ def sync_partner(prospect, *, inspect=True):
         campaign.next_action = 'Resolve the existing restriction before any outreach.'
         campaign.save()
         return campaign
-    stale = not prospect.last_checked_at or prospect.last_checked_at < timezone.now() - timedelta(days=7)
+    assessment = prospect.research_assessment or {}
+    try:
+        assessment_recent = date.fromisoformat(assessment.get('checked_on', '')) >= timezone.localdate() - timedelta(days=7)
+    except (ValueError, TypeError):
+        assessment_recent = False
+    stale = not prospect.last_checked_at or prospect.last_checked_at < timezone.now() - timedelta(days=7) or not assessment_recent
     if inspect and stale:
         link_prospecting.inspect_page(prospect, placement=bool(prospect.placement_url))
+    assessment = prospect.research_assessment or {}
+    try:
+        assessment_recent = date.fromisoformat(assessment.get('checked_on', '')) >= timezone.localdate() - timedelta(days=7)
+    except (ValueError, TypeError):
+        assessment_recent = False
     reasons = []
     score = 10
     if prospect.audience and prospect.fit_reason:
@@ -137,21 +133,30 @@ def sync_partner(prospect, *, inspect=True):
     if previous.get('scouts', 0) > 0:
         score += 10
         reasons.append('Recorded campaign has produced Scouts')
+    if assessment:
+        reasons.extend(assessment.get('reasons', []))
+        if assessment.get('status') == 'promising' and fresh and assessment_recent:
+            score += 10
+        elif assessment.get('status') in ('unsuitable', 'unverified'):
+            score = min(score, 20)
     campaign.title = prospect.name
     campaign.destination = prospect.target_url or link_prospecting.default_target(prospect)
     campaign.score = min(score, 100)
     campaign.reasons = reasons or ['Audience fit still needs research']
     sample_evidence = campaign.evidence.get('sample_jobs')
     campaign.evidence = {'source_url': prospect.url, 'checked_at': prospect.last_checked_at.isoformat() if prospect.last_checked_at else None,
-                         'check_status': prospect.check_status, 'permission': 'Not inferred from page content', 'method': 'rules-v1'}
+                         'check_status': prospect.check_status, 'permission': 'Not inferred from page content', 'method': 'rules-v2', 'research': assessment}
     if sample_evidence is not None:
         campaign.evidence['sample_jobs'] = sample_evidence
     if prospect.status in ('contacted', 'replied', 'placed'):
         campaign.status = 'placed' if prospect.check_status == 'target_link_found' and fresh else 'contacted'
         campaign.next_action = 'Review partner response and placement results in Backlinks.'
     else:
-        campaign.status = 'review' if score >= 55 else 'research'
-        campaign.next_action = ('Review the sourced contact, audience fit and prepared roundup.' if score >= 55
+        qualified = (fresh and assessment_recent and assessment.get('status') == 'promising'
+                     and prospect.audience and prospect.fit_reason and prospect.contact_source_url
+                     and (prospect.contact_url or prospect.contact_email))
+        campaign.status = 'review' if score >= 55 and qualified else 'research'
+        campaign.next_action = ('Review the sourced contact, audience fit and prepared roundup.' if campaign.status == 'review'
                                 else 'Confirm audience fit and a permitted contact channel.')
         # Preserve existing human drafts. Only create a proposal in this separate workspace.
         if not campaign.draft:
@@ -296,7 +301,11 @@ def run_cycle(force=False):
         if discover_enabled and active():
             sector = list(link_prospecting.QUERIES)[timezone.localdate().toordinal() % 4]
             try:
-                summary['discovered'] = discover(sector)
+                research = discover(sector, active=active)
+                summary['discovered'] = research['counts']['imported']
+                summary['discovery'] = research
+                if research['counts']['search_failures'] or research['counts']['fetch_failures']:
+                    errors.append('Some search or page checks were unavailable; see discovery coverage.')
             except Exception:
                 errors.append('Discovery unavailable; existing prospects still processed.')
         prospects = LinkProspect.objects.exclude(status__in=BLOCKED_PROSPECTS).exclude(

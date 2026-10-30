@@ -46,6 +46,7 @@ def filters(values, *, prefix=""):
     return {"q": value("q").strip()[:200],
             "status": value("status") if value("status") in LinkProspect.Status.values else "",
             "sector": value("sector") if value("sector") in LinkProspect.Sector.values else "",
+            "quality": value("quality") if value("quality") in ("promising", "needs_review", "unsuitable", "unverified") else "",
             "due": "1" if value("due") == "1" else ""}
 
 
@@ -72,6 +73,8 @@ def workspace(request, *, bound_form=None, bound_pk=None, create_form=None):
         prospects = prospects.filter(status=selected["status"])
     if selected["sector"]:
         prospects = prospects.filter(sector=selected["sector"])
+    if selected["quality"]:
+        prospects = prospects.filter(research_assessment__status=selected["quality"])
     if selected["due"]:
         prospects = prospects.filter(status__in=["contacted", "replied"], follow_up_on__lte=timezone.localdate())
     page = Paginator(prospects, 20).get_page(values.get("page"))

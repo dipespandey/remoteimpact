@@ -82,6 +82,7 @@
   <form method="get" class="search" aria-label="Filter prospects">
     <input type="search" name="q" value="{{ selected.q }}" aria-label="Search prospects" placeholder="Search name, site or audience">
     <select name="sector" aria-label="Sector"><option value="">All sectors</option>{% for value,label in sectors %}<option value="{{ value }}" {% if selected.sector == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+    <select name="quality" aria-label="Page qualification"><option value="">All research quality</option><option value="promising" {% if selected.quality == 'promising' %}selected{% endif %}>Promising</option><option value="needs_review" {% if selected.quality == 'needs_review' %}selected{% endif %}>Needs review</option><option value="unsuitable" {% if selected.quality == 'unsuitable' %}selected{% endif %}>Poor fit</option><option value="unverified" {% if selected.quality == 'unverified' %}selected{% endif %}>Not verified</option></select>
     <select name="due" aria-label="Follow-ups"><option value="">All follow-ups</option><option value="1" {% if selected.due %}selected{% endif %}>Follow-ups due</option></select>
     <input type="hidden" name="status" value="{{ selected.status }}"><button class="btn" type="submit">Filter</button>
   </form>
@@ -95,6 +96,7 @@
         {% if p.fit_reason %}<p>{{ p.fit_reason }}</p>{% else %}<p class="sub">Inspect this page and record who it helps before generating a pitch.</p>{% endif %}
         <div class="links"><a href="{{ p.url }}" target="_blank" rel="noopener noreferrer">Prospect page ↗</a>{% if p.target_url %}<a href="{{ p.target_url }}" target="_blank" rel="noopener noreferrer">Our resource ↗</a>{% endif %}<a href="{% url 'admin:jobs_linkprospect_change' p.pk %}">Full record &amp; history</a></div>
         <div class="meta">{% if p.contact_email %}{{ p.contact_email }}{% elif p.contact_url %}Public contact page recorded{% else %}Contact not researched{% endif %}{% if p.check_status %} · Last check: {{ p.check_status }}{% endif %}</div>
+        {% include 'admin/_prospect_research.html' with assessment=p.research_assessment %}
         {% if p.pitch %}<details><summary>Email draft</summary><textarea class="draftbox" readonly id="draft-{{ p.pk }}" aria-label="Email draft for {{ p.name }}">Subject: {{ p.subject }}
 
 {{ p.pitch }}</textarea></details>{% endif %}

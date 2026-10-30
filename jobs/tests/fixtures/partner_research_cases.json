@@ -1,0 +1,141 @@
+{
+  "description": "Manually labelled synthetic regression cases; not a representative live-lead benchmark",
+  "as_of": "2026-10-30",
+  "cases": [
+    {
+      "id": "climate-resources",
+      "sector": "climate",
+      "url": "https://climate-resources.example/resources",
+      "html": "<title>Climate career resources</title><main><p>Climate career resources. Suggest a resource for our readers.</p></main>",
+      "expected_status": "promising",
+      "fetch_status": "ok"
+    },
+    {
+      "id": "climate-irrelevant",
+      "sector": "climate",
+      "url": "https://climate-irrelevant.example/resources",
+      "html": "<title>Shop</title><nav>Climate global health AI safety nonprofit career resources</nav><main>Buy sports clothing</main>",
+      "expected_status": "unsuitable",
+      "fetch_status": "ok"
+    },
+    {
+      "id": "health-resources",
+      "sector": "health",
+      "url": "https://health-resources.example/resources",
+      "html": "<title>Global health career resources</title><main><p>Global health career resources. Suggest a resource for our readers.</p></main>",
+      "expected_status": "promising",
+      "fetch_status": "ok"
+    },
+    {
+      "id": "health-irrelevant",
+      "sector": "health",
+      "url": "https://health-irrelevant.example/resources",
+      "html": "<title>Shop</title><nav>Climate global health AI safety nonprofit career resources</nav><main>Buy sports clothing</main>",
+      "expected_status": "unsuitable",
+      "fetch_status": "ok"
+    },
+    {
+      "id": "ai-resources",
+      "sector": "ai",
+      "url": "https://ai-resources.example/resources",
+      "html": "<title>AI safety career resources</title><main><p>AI safety career resources. Suggest a resource for our readers.</p></main>",
+      "expected_status": "promising",
+      "fetch_status": "ok"
+    },
+    {
+      "id": "ai-irrelevant",
+      "sector": "ai",
+      "url": "https://ai-irrelevant.example/resources",
+      "html": "<title>Shop</title><nav>Climate global health AI safety nonprofit career resources</nav><main>Buy sports clothing</main>",
+      "expected_status": "unsuitable",
+      "fetch_status": "ok"
+    },
+    {
+      "id": "impact-resources",
+      "sector": "impact",
+      "url": "https://impact-resources.example/resources",
+      "html": "<title>Nonprofit career resources</title><main><p>Nonprofit career resources. Suggest a resource for our readers.</p></main>",
+      "expected_status": "promising",
+      "fetch_status": "ok"
+    },
+    {
+      "id": "impact-irrelevant",
+      "sector": "impact",
+      "url": "https://impact-irrelevant.example/resources",
+      "html": "<title>Shop</title><nav>Climate global health AI safety nonprofit career resources</nav><main>Buy sports clothing</main>",
+      "expected_status": "unsuitable",
+      "fetch_status": "ok"
+    },
+    {
+      "id": "dated-article",
+      "sector": "impact",
+      "url": "https://dated-article.example/resources",
+      "html": "<meta property=\"article:published_time\" content=\"2017-06-27\"><main>Nonprofit career resources and job boards.</main>",
+      "expected_status": "needs_review",
+      "fetch_status": "ok"
+    },
+    {
+      "id": "no-soliciting",
+      "sector": "health",
+      "url": "https://no-soliciting.example/resources",
+      "html": "<main>Global health career resources. Suggest a resource. No unsolicited commercial messages.</main>",
+      "expected_status": "unsuitable",
+      "fetch_status": "ok"
+    },
+    {
+      "id": "failed-fetch",
+      "sector": "climate",
+      "url": "https://failed-fetch.example/resources",
+      "html": "",
+      "expected_status": "unverified",
+      "fetch_status": "http_403"
+    },
+    {
+      "id": "competing-board",
+      "sector": "climate",
+      "url": "https://climatebase.org/jobs",
+      "html": "<main>Climate career resources and job boards.</main>",
+      "expected_status": "unsuitable",
+      "fetch_status": "ok"
+    },
+    {
+      "id": "unknown-audience",
+      "sector": "ai",
+      "url": "https://unknown-audience.example/resources",
+      "html": "<main>AI job search automation. Career resources. Suggest a resource.</main>",
+      "expected_status": "unsuitable",
+      "fetch_status": "ok"
+    },
+    {
+      "id": "updated-article",
+      "sector": "impact",
+      "url": "https://updated-article.example/resources",
+      "html": "<meta property=\"article:published_time\" content=\"2017-06-27\"><meta property=\"article:modified_time\" content=\"2026-10-25\"><main>Social impact career resources. Suggest a resource.</main>",
+      "expected_status": "promising",
+      "fetch_status": "ok"
+    },
+    {
+      "id": "future-date",
+      "sector": "health",
+      "url": "https://future-date.example/resources",
+      "html": "<time datetime=\"2030-01-01\"></time><main>Public health career resources. Suggest a resource.</main>",
+      "expected_status": "promising",
+      "fetch_status": "ok"
+    },
+    {
+      "id": "generic-list",
+      "sector": "climate",
+      "url": "https://generic-list.example/resources",
+      "html": "<main>Climate career resources.</main>",
+      "expected_status": "needs_review",
+      "fetch_status": "ok"
+    },
+    {
+      "id": "general-newsletter-not-career-distribution",
+      "url": "https://health.example/get-involved",
+      "sector": "health",
+      "html": "<title>Get involved</title><main><h1>Public health</h1><p>Careers at our organization.</p><p>Support community programmes, donate and volunteer to improve health around the world.</p><p>Subscribe to our newsletter for programme updates.</p><a href=\"https://a.example/\">a</a><a href=\"https://b.example/\">b</a></main>",
+      "expected_status": "needs_review"
+    }
+  ]
+}

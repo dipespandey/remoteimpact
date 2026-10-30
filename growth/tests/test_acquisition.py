@@ -25,7 +25,8 @@ class AcquisitionTests(TestCase):
 
     @patch('growth.acquisition.sample_jobs', return_value=[])
     def test_research_prepares_tagged_draft_and_preserves_human_edits(self, jobs):
-        p = self.prospect(last_checked_at=timezone.now(), check_status='ok')
+        p = self.prospect(last_checked_at=timezone.now(), check_status='ok',
+            research_assessment={'status':'promising', 'checked_on':timezone.localdate().isoformat(), 'reasons':['Relevant career resource page']})
         c = sync_partner(p, inspect=False)
         self.assertEqual(c.status, 'review')
         self.assertIn('link_prospect_', campaign_url(c))
@@ -130,7 +131,7 @@ class AcquisitionTests(TestCase):
         c.refresh_from_db(); self.assertEqual(c.status, 'hold')
 
     @patch('growth.acquisition.sync_employers', return_value=0)
-    @patch('growth.acquisition.discover', return_value=2)
+    @patch('growth.acquisition.discover', return_value={'counts':{'imported':2, 'search_failures':0, 'fetch_failures':0}})
     @patch('growth.acquisition.link_prospecting.inspect_page', return_value='ok')
     @patch('growth.acquisition.sample_jobs', return_value=[])
     def test_cycle_connects_existing_prospect_to_measured_campaign(self, jobs, inspect, discover, employers):

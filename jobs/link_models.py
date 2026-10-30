@@ -52,6 +52,7 @@ class LinkProspect(models.Model):
     sector = models.CharField(max_length=12, choices=Sector.choices, default=Sector.IMPACT)
     kind = models.CharField(max_length=12, choices=Kind.choices, default=Kind.RESOURCE)
     source = models.CharField(max_length=500, blank=True, help_text="Research query, export filename, or other provenance.")
+    research_assessment = models.JSONField(default=dict, blank=True, null=True, editable=False)
     audience = models.CharField(max_length=500, blank=True)
     fit_reason = models.TextField(blank=True, help_text="Specific benefit for this page's readers. Required before review.")
     target_url = models.URLField(max_length=1000, blank=True)
