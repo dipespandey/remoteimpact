@@ -91,6 +91,23 @@ class AcquisitionTests(TestCase):
         record_landing(request, HttpResponse())
         self.assertEqual(AcquisitionDaily.objects.get().landing_sessions, 1)
 
+    def test_returns_use_one_query_and_respect_cohort_window(self):
+        c = AcquisitionCampaign.objects.create(key='returns', title='Returns', source='link_prospect_456', audience='seeker')
+        now = timezone.now()
+        signup = ConsumerFunnelEvent.objects.create(user=self.person, event='account_created', metadata={'utm_source': c.source})
+        ConsumerFunnelEvent.objects.filter(pk=signup.pk).update(created_at=now-timedelta(days=10))
+        event = ConsumerFunnelEvent.objects.create(user=self.person, event='scout_created')
+        ConsumerFunnelEvent.objects.filter(pk=event.pk).update(created_at=now-timedelta(days=8))
+        from django.test.utils import CaptureQueriesContext
+        from django.db import connection
+        with CaptureQueriesContext(connection) as captured:
+            metrics = metrics_for(c)
+        self.assertEqual(metrics['returning_accounts'], 1)
+        self.assertEqual(metrics['mature_accounts'], 1)
+        self.assertLessEqual(len(captured), 8)
+        ConsumerFunnelEvent.objects.filter(pk=event.pk).update(created_at=now-timedelta(days=1))
+        self.assertEqual(metrics_for(c)['returning_accounts'], 0)
+
     @patch('growth.acquisition.sample_jobs', return_value=[])
     def test_workspace_permissions_escaping_controls_and_details(self, jobs):
         c = sync_partner(self.prospect(), inspect=False)

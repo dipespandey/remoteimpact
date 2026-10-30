@@ -12,7 +12,7 @@ import uuid
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Count, F, Q, Sum
+from django.db.models import Count, Exists, F, OuterRef, Q, Sum
 from django.utils import timezone
 
 from jobs.link_models import LinkProspect
@@ -141,8 +141,11 @@ def sync_partner(prospect, *, inspect=True):
     campaign.destination = prospect.target_url or link_prospecting.default_target(prospect)
     campaign.score = min(score, 100)
     campaign.reasons = reasons or ['Audience fit still needs research']
+    sample_evidence = campaign.evidence.get('sample_jobs')
     campaign.evidence = {'source_url': prospect.url, 'checked_at': prospect.last_checked_at.isoformat() if prospect.last_checked_at else None,
                          'check_status': prospect.check_status, 'permission': 'Not inferred from page content', 'method': 'rules-v1'}
+    if sample_evidence is not None:
+        campaign.evidence['sample_jobs'] = sample_evidence
     if prospect.status in ('contacted', 'replied', 'placed'):
         campaign.status = 'placed' if prospect.check_status == 'target_link_found' and fresh else 'contacted'
         campaign.next_action = 'Review partner response and placement results in Backlinks.'
@@ -205,11 +208,12 @@ def metrics_for(campaign, days=30):
     cq = consumer.filter(label_query | Q(user_id__in=account_ids))
     counts = dict(cq.values_list('event').annotate(n=Count('id')))
     eq = employer.filter(label_query)
-    matured = list(acquired.filter(created_at__lte=now-timedelta(days=7)).values('user_id', 'created_at')[:1001])
-    returns = 0
-    for signup in matured[:1000]:
-        returns += int(consumer.filter(user_id=signup['user_id'], created_at__gte=signup['created_at']+timedelta(days=1),
-                                       created_at__lt=signup['created_at']+timedelta(days=8)).exists())
+    return_events = consumer.filter(user_id=OuterRef('user_id'),
+                                   created_at__gte=OuterRef('created_at')+timedelta(days=1),
+                                   created_at__lt=OuterRef('created_at')+timedelta(days=8))
+    matured = list(acquired.filter(created_at__lte=now-timedelta(days=7)).annotate(
+        returned=Exists(return_events)).values('user_id', 'returned')[:1001])
+    returns = len({signup['user_id'] for signup in matured[:1000] if signup['returned']})
     # Only exact local job-payment references, never event amounts or trials.
     intents = Job.objects.filter(funnel_events__in=eq.filter(event='payment_completed')).exclude(stripe_payment_intent='').values('stripe_payment_intent')
     money = CashMovement.objects.filter(scope_verified=True, livemode=True, payment_intent_id__in=intents,
@@ -220,7 +224,7 @@ def metrics_for(campaign, days=30):
             'accounts': acquired.values('user_id').distinct().count(), 'scouts': counts.get('scout_created', 0),
             'saves': counts.get('interest_saved', 0), 'apply_clicks': counts.get('scout_apply_clicked', 0),
             'checkouts': eq.filter(event='checkout_started').count(), 'returning_accounts': returns,
-            'mature_accounts': min(len(matured), 1000), 'return_coverage_capped': len(matured) > 1000,
+            'mature_accounts': len({signup['user_id'] for signup in matured[:1000]}), 'return_coverage_capped': len(matured) > 1000,
             'verified_cash': currencies,
             'cash_coverage': 'Matched reconciled employer job-posting payments only; feature and subscription cash are not attributed here.',
             'coverage': 'Campaign-tagged events plus signup-cohort actions. Session-day landing counts begin at activation, may include scanners, and are not unique people. Returns mean a recorded action on days 1–7, not every site visit. Missing cash reconciliation is not zero revenue.'}
