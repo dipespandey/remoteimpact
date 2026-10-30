@@ -122,6 +122,7 @@ class AcquisitionTests(TestCase):
         self.assertContains(r, '&lt;script&gt;')
         r = self.client.get(reverse('admin_growth_detail', args=[c.pk]))
         self.assertContains(r, 'Draft text')
+        self.assertContains(r, 'href="/admin/growth/?audience=employer"')
         self.assertEqual(self.client.get(reverse('admin_growth_control')).status_code, 405)
         self.client.post(reverse('admin_growth_control'), {'action':'pause'})
         self.assertFalse(AcquisitionAutomation.objects.get(pk=1).enabled)
