@@ -62,6 +62,9 @@ class RemoteImpactAdminSite(AdminSite):
             tools.append(("admin_backlinks", _("Backlink outreach")))
         if request.user.has_perms(("jobs.view_consumerfunnelevent", "jobs.view_employerfunnelevent")):
             tools.append(("admin_diagnostics", _("Product analytics")))
+        from growth.views import PERMISSIONS
+        if request.user.has_perms(PERMISSIONS):
+            tools.insert(0, ("admin_growth", _("Growth")))
         tools.extend((("admin_api_usage", _("API usage")), ("admin_impersonate", _("View as user"))))
         context["workspace_sections"] = groups
         context["workspace_tools"] = [

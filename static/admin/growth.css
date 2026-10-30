@@ -1,0 +1,26 @@
+/* Reuses Remote Impact's existing semantic theme. */
+:root { --growth-space: 1rem; --growth-space-lg: 1.5rem; --growth-space-sm: .5rem; }
+.growth-tabs,.growth-actions { display:flex; gap:var(--growth-space-sm); flex-wrap:wrap; align-items:center; margin-block:var(--growth-space); }
+.growth-tabs a { padding:var(--growth-space-sm) var(--growth-space); border-radius:var(--radius); text-decoration:none; }
+.growth-tabs [aria-current] { background:hsl(var(--muted)); font-weight:600; }
+.growth-section,.growth-detail { margin-block:var(--growth-space-lg); }
+.growth-opportunity { display:grid; grid-template-columns:2rem minmax(0,1fr) auto; gap:var(--growth-space); padding:var(--growth-space-lg); align-items:start; }
+.growth-opportunity + .growth-opportunity { border-top:1px solid hsl(var(--border)); }
+.growth-opportunity h3,.growth-opportunity p { margin:0 0 var(--growth-space-sm); }
+.growth-rank { color:hsl(var(--muted-foreground)); }
+.growth-notice { padding:var(--growth-space); background:hsl(var(--muted)); border-radius:var(--radius); }
+.growth-detail h3 { margin-top:var(--growth-space-lg); }
+.growth-detail label { display:block; margin-block:var(--growth-space-sm); }
+.growth-detail textarea,.growth-detail input { width:100%; padding:var(--growth-space); border:1px solid hsl(var(--input)); border-radius:var(--radius); background:hsl(var(--card)); color:inherit; font:inherit; }
+.growth-detail textarea { resize:vertical; margin-bottom:var(--growth-space); }
+.growth-detail .stat strong { display:block; font-variant-numeric:tabular-nums; }
+.growth-draft { white-space:pre-wrap; overflow-wrap:anywhere; }
+.growth-table { overflow-x:auto; }
+.growth-bar { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:var(--growth-space-sm); margin-block:var(--growth-space); }
+.growth-bar progress { grid-column:1/-1; width:100%; height:var(--growth-space-sm); accent-color:hsl(var(--primary)); }
+.growth-bar progress::-webkit-progress-bar { background:hsl(var(--muted)); border-radius:var(--radius); }
+.growth-bar progress::-webkit-progress-value { background:hsl(var(--primary)); border-radius:var(--radius); }
+.growth-detail, .growth-opportunity { overflow-wrap:anywhere; }
+h1,h2,h3 { text-wrap:balance; } p { text-wrap:pretty; }
+:focus-visible { outline:2px solid hsl(var(--ring)); outline-offset:3px; }
+@media(max-width:640px) { .growth-opportunity { grid-template-columns:1fr; } .growth-rank { display:none; } }

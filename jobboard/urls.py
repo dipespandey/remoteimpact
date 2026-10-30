@@ -30,6 +30,7 @@ from django.views.generic import RedirectView
 from allauth.account.decorators import secure_admin_login
 admin.site.login = secure_admin_login(admin.site.login)
 
+from growth import views as growth_views
 from jobs.views import admin_analytics, admin_backlinks, impersonate
 from jobs.sitemaps import (
     StaticSitemap, ApplicationGuidesSitemap, CategorySitemap,
@@ -542,6 +543,10 @@ urlpatterns = [
         name="apple_touch_icon_precomposed",
     ),
     path("healthz/", healthz, name="healthz"),
+    path("admin/growth/", admin.site.admin_view(growth_views.workspace), name="admin_growth"),
+    path("admin/growth/control/", admin.site.admin_view(growth_views.control), name="admin_growth_control"),
+    path("admin/growth/<int:pk>/", admin.site.admin_view(growth_views.workspace), name="admin_growth_detail"),
+    path("admin/growth/<int:pk>/update/", admin.site.admin_view(growth_views.update), name="admin_growth_update"),
     path("admin/analytics/", admin.site.admin_view(admin_analytics.analytics), name="admin_analytics"),
     path("admin/analytics/diagnostics/", admin.site.admin_view(admin_analytics.diagnostics), name="admin_diagnostics"),
     path("admin/outreach/", admin.site.admin_view(admin_analytics.outreach), name="admin_outreach"),

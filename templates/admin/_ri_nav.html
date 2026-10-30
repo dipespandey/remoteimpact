@@ -2,6 +2,7 @@
 <header class="top">
   <a class="brand" href="{% url 'admin:index' %}"><img src="{% static 'favicon.svg' %}" width="28" height="28" alt=""><span class="name">Remote Impact</span><span class="crumb">/ Admin</span></a>
   <nav class="staff-nav" aria-label="Staff pages">
+    {% if perms.growth.view_acquisitioncampaign and perms.jobs.view_linkprospect and perms.jobs.view_consumerfunnelevent and perms.jobs.view_employerfunnelevent and perms.growth.view_cashmovement %}<a href="{% url 'admin_growth' %}" {% if request.resolver_match.url_name == 'admin_growth' %}aria-current="page"{% endif %}>Growth</a>{% endif %}
     <a href="{% url 'admin_analytics' %}" {% if request.resolver_match.url_name == 'admin_analytics' %}aria-current="page"{% endif %}>Analytics</a>
     {% if perms.jobs.view_consumerfunnelevent and perms.jobs.view_employerfunnelevent %}<a href="{% url 'admin_diagnostics' %}" {% if request.resolver_match.url_name == 'admin_diagnostics' %}aria-current="page"{% endif %}>Product analytics</a>{% endif %}
     <a href="{% url 'admin_outreach' %}" {% if request.resolver_match.url_name == 'admin_outreach' %}aria-current="page"{% endif %}>Outreach</a>
