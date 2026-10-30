@@ -1,7 +1,6 @@
 """Bounded prospect discovery, imports and verification; never sends outreach."""
 import csv
 from pathlib import Path
-from urllib.parse import urlsplit
 
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
@@ -67,14 +66,10 @@ class Command(BaseCommand):
                 rows = []
                 for item in list(results)[:options["limit"]]:
                     url = item.get("href", "")
-                    try:
-                        canonical = service.canonical_prospect_url(url)
-                        parsed = urlsplit(canonical)
-                        if (len(canonical) > 1000 or service.target_is_ours(canonical)
-                                or (parsed.hostname in {"www.bing.com", "bing.com", "www.google.com", "google.com"}
-                                    and parsed.path in {"/aclick", "/url", "/search", "/pagead/aclk"})):
-                            continue
-                    except ValidationError:
+                    from jobs.services.prospect_discovery import clean_candidate_url, host_key
+                    from django.conf import settings
+                    canonical, rejection = clean_candidate_url(url, host_key(settings.SITE_URL))
+                    if rejection:
                         continue
                     rows.append({"name": item.get("title", "")[:255], "url": canonical, "sector": options["sector"]})
             except Exception as exc:

@@ -50,10 +50,12 @@ def workspace(request, pk=None):
         for bar in bars:
             bar['percent'] = round((bar['value'] or 0)*100/maximum)
         funnel.append({'title': label, 'bars': bars, 'measured': bool(subset)})
+    runs = list(AcquisitionRun.objects.all()[:8])
+    discovery = next((r.summary.get('discovery') for r in runs if r.summary.get('discovery')), None)
     context = {**admin.site.each_context(request), 'title': 'Growth', 'campaigns': campaigns,
                'selected': selected, 'draft_form': DraftForm(instance=selected) if selected else None,
                'counts': counts, 'top': top, 'funnel': funnel, 'audience': family,
-               'runs': AcquisitionRun.objects.all()[:8], 'config': config,
+               'runs': runs, 'discovery': discovery, 'config': config,
                'can_change': request.user.has_perm('growth.change_acquisitioncampaign'),
                'can_control': request.user.has_perm('growth.change_acquisitionautomation'),
                'has_more': rows.count() > 100}

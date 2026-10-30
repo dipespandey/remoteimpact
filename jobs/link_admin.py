@@ -106,6 +106,9 @@ class LinkProspectAdmin(admin.ModelAdmin):
         material = {"url", "audience", "fit_reason", "target_url", "contact_name", "contact_email", "contact_url",
                     "contact_source_url", "subject", "pitch", "name", "sector", "kind"}
         old = LinkProspect.objects.get(pk=obj.pk) if change else None
+        if old and {"url", "sector"}.intersection(form.changed_data):
+            obj.research_assessment = {}
+            obj.last_checked_at = None
         if old and material.intersection(form.changed_data):
             obj.reviewed_at = None
             obj.reviewed_by = None

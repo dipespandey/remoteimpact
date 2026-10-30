@@ -99,3 +99,20 @@ class BacklinkWorkspaceTests(TestCase):
         client = Client(enforce_csrf_checks=True)
         client.force_login(self.user)
         self.assertEqual(client.post(url, self.form_data()).status_code, 403)
+
+    def test_page_quality_filter_and_edit_invalidates_old_assessment(self):
+        self.prospect.research_assessment = {'status':'promising','checked_on':'2026-10-30','score':75,
+            'reasons':['<script>untrusted</script>'], 'permission':'Not established'}
+        self.prospect.save()
+        response = self.client.get(reverse('admin_backlinks'), {'quality':'promising'})
+        self.assertEqual(len(response.context['rows']), 1)
+        self.assertContains(response, '&lt;script&gt;untrusted&lt;/script&gt;')
+        response = self.client.get(reverse('admin_backlinks'), {'quality':'unsuitable'})
+        self.assertEqual(len(response.context['rows']), 0)
+        data = self.form_data()
+        data.update(url='https://different.example/resources/', operation='save', _filter_quality='promising')
+        response = self.client.post(reverse('admin_backlinks_update', args=[self.prospect.pk]), data)
+        self.assertIn('quality=promising', response.url)
+        self.prospect.refresh_from_db()
+        self.assertEqual(self.prospect.research_assessment, {})
+        self.assertIsNone(self.prospect.last_checked_at)

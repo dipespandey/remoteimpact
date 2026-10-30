@@ -24,3 +24,7 @@
 h1,h2,h3 { text-wrap:balance; } p { text-wrap:pretty; }
 :focus-visible { outline:2px solid hsl(var(--ring)); outline-offset:3px; }
 @media(max-width:640px) { .growth-opportunity { grid-template-columns:1fr; } .growth-rank { display:none; } }
+
+.research-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:1rem; margin-block:1rem; }
+.research-stats strong { display:block; font-size:1.6rem; font-variant-numeric:tabular-nums; }
+.research-evidence { margin-block:1rem; }

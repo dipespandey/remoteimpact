@@ -57,7 +57,7 @@ def comparison_url(url):
     return (parsed.hostname or "").lower(), parsed.path or "/", query
 
 
-def inspect_page(prospect, *, placement=False, actor=None):
+def inspect_page(prospect, *, placement=False, actor=None, fetched=None):
     url = prospect.placement_url if placement else prospect.url
     if not url:
         raise ValidationError("Record a placement URL first.")
@@ -65,7 +65,7 @@ def inspect_page(prospect, *, placement=False, actor=None):
         raise ValidationError("Choose a Remote Impact target URL before verifying a placement.")
     if placement and target_is_ours(url):
         raise ValidationError("A placement must be on another website.")
-    result = fetch_public_html(url, total_timeout=8)
+    result = fetched if fetched is not None else fetch_public_html(url, total_timeout=8)
     detail = {"url": url, "status": result.status}
     prospect.last_checked_at = timezone.now()
     prospect.check_status = result.status
@@ -117,7 +117,10 @@ def inspect_page(prospect, *, placement=False, actor=None):
             else:
                 prospect.check_status = "target_link_found" if any(link["matches_target"] for link in links) else "target_link_not_found"
     # Failed requests are unknown, never evidence that a link was removed.
-    prospect.save(update_fields=["last_checked_at", "check_status", "page_title", "page_excerpt", "contact_candidates", "link_evidence", "updated_at"])
+    if not placement:
+        from .prospect_discovery import assess_page
+        prospect.research_assessment = assess_page(result.final_url or url, prospect.sector, result, today=timezone.localdate())
+    prospect.save(update_fields=["research_assessment", "last_checked_at", "check_status", "page_title", "page_excerpt", "contact_candidates", "link_evidence", "updated_at"])
     import json
     LinkProspectEvent.objects.create(prospect=prospect, actor=actor, action="placement_check" if placement else "research_check", detail=json.dumps(detail))
     return prospect.check_status

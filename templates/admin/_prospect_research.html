@@ -1,0 +1,8 @@
+{% if assessment %}
+<details class="research-evidence"><summary>Page assessment · {% if assessment.status == 'promising' %}Promising{% elif assessment.status == 'needs_review' %}Needs review{% elif assessment.status == 'unsuitable' %}Poor fit{% else %}Not verified{% endif %}</summary>
+<p class="sub">Checked {{ assessment.checked_on }} · Research fit {{ assessment.score }}/100. This is not a conversion forecast.</p>
+<ul>{% for reason in assessment.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+{% if assessment.signals %}<p>Observed on the page:</p><ul>{% for signal in assessment.signals %}<li>{{ signal.label }}: “{{ signal.matched }}”</li>{% endfor %}</ul>{% endif %}
+<p class="sub">{% if assessment.page_date %}Page date: {{ assessment.page_date }}. {% else %}Page freshness is unknown. {% endif %}{{ assessment.permission }}</p>
+</details>
+{% else %}<p class="sub">Page qualification pending. Inspect the page to assess audience fit and freshness.</p>{% endif %}
