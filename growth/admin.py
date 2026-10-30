@@ -114,3 +114,30 @@ class ArticleRevisionAdmin(admin.ModelAdmin):
     def reject(self, request, queryset):
         queryset.exclude(state=ArticleRevision.State.PUBLISHED).update(
             state=ArticleRevision.State.REJECTED, approval_hash="", approved_by=None, approved_at=None)
+
+
+from .models import AcquisitionCampaign, AcquisitionAutomation, AcquisitionRun
+
+
+@admin.register(AcquisitionCampaign)
+class AcquisitionCampaignAdmin(admin.ModelAdmin):
+    list_display = ('title', 'audience', 'status', 'score', 'metrics_at')
+    list_filter = ('audience', 'status')
+    search_fields = ('title', 'source')
+    readonly_fields = ('key', 'source', 'score', 'reasons', 'evidence', 'metrics', 'metrics_at')
+
+
+@admin.register(AcquisitionRun)
+class AcquisitionRunAdmin(ImmutableEvidenceAdmin):
+    list_display = ('started_at', 'finished_at', 'status')
+
+
+@admin.register(AcquisitionAutomation)
+class AcquisitionAutomationAdmin(admin.ModelAdmin):
+    readonly_fields = ('last_started_at', 'lease_until', 'lease_token')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

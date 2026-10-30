@@ -304,7 +304,13 @@ class AcquisitionAttributionMiddleware:
             # do not splice them into the previously recorded one.
             if attribution != stored:
                 request.session[self.SESSION_KEY] = attribution
-        return self.get_response(request)
+        response = self.get_response(request)
+        try:
+            from growth.acquisition import record_landing
+            record_landing(request, response)
+        except Exception:
+            pass  # Analytics must not break browsing, including rolling schema upgrades.
+        return response
 
 
 class CloudflareEdgeCacheMiddleware:

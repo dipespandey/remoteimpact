@@ -339,6 +339,15 @@ class Release:
             for name in ('blue_green.py', 'exec-active', 'github-deploy'):
                 shutil.copy2(source / 'ops/deploy' / name, self.root / name)
                 os.chmod(self.root / name, 0o755)
+            # The cron dispatches only a command present in the active release, so
+            # rolling back to an older image safely skips acquisition work.
+            import importlib.util
+            growth_schedule = source / 'ops/deploy/growth_schedule.py'
+            if growth_schedule.exists():
+                spec = importlib.util.spec_from_file_location('growth_schedule', growth_schedule)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                module.install()
             print(f'Deployed {release_id} on {port}; previous release retained for rollback.', flush=True)
             try:
                 self.stop_previous_if_idle()

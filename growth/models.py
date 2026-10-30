@@ -180,3 +180,5 @@ class ArticleRevision(models.Model):
                 kwargs["update_fields"] = set(kwargs["update_fields"]) | {
                     "state", "approval_hash", "approved_by", "approved_at"}
         super().save(*args, **kwargs)
+
+from .acquisition_models import AcquisitionAutomation, AcquisitionCampaign, AcquisitionDaily, AcquisitionRun  # noqa: E402,F401

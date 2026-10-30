@@ -222,3 +222,13 @@ differences; it never uses an eligibility/success badge. The primary action refi
 the brief. The same component appears in preview and saved results. Incomplete
 review status remains visible above the options; historical result state and
 verified-match counts are not rewritten. This is an English product surface.
+
+## Growth workspace
+
+The staff Growth view reuses the existing analytics shell, semantic colours and
+local fonts. It leads with three ranked actions, then recorded activity and the
+campaign ledger; detailed draft/evidence editing lives on a separate detail URL.
+Native progress elements include text counts and remain readable without colour.
+Missing measurement renders as pending/unknown, including cash without reconciliation.
+The existing English-only admin scope is retained; this feature does not introduce
+a second locale or replace the Remote Impact theme with Alpine branding.
