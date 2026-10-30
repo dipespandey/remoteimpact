@@ -41,10 +41,14 @@ def workspace(request, pk=None):
     for audience, label in [('seeker', 'Job seekers'), ('employer', 'Employers')]:
         subset = [r for r in campaigns if r.audience == audience and r.metrics_at]
         keys = [('landing_sessions', 'Landing session-days'), ('accounts', 'Accounts'), ('scouts', 'Scouts')] if audience == 'seeker' else [('landing_sessions', 'Landing session-days'), ('checkouts', 'Checkout events')]
-        bars = [{'label': name, 'value': sum((r.metrics.get(key) or 0) for r in subset)} for key, name in keys]
-        maximum = max([b['value'] for b in bars] + [1])
+        bars = []
+        for key, name in keys:
+            observed = [r.metrics[key] for r in subset if r.metrics.get(key) is not None]
+            bars.append({'label': name, 'value': sum(observed) if observed else None,
+                         'partial': bool(observed) and len(observed) < len(subset)})
+        maximum = max([b['value'] or 0 for b in bars] + [1])
         for bar in bars:
-            bar['percent'] = round(bar['value']*100/maximum)
+            bar['percent'] = round((bar['value'] or 0)*100/maximum)
         funnel.append({'title': label, 'bars': bars, 'measured': bool(subset)})
     context = {**admin.site.each_context(request), 'title': 'Growth', 'campaigns': campaigns,
                'selected': selected, 'draft_form': DraftForm(instance=selected) if selected else None,
