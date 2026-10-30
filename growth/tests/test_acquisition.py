@@ -122,6 +122,7 @@ class AcquisitionTests(TestCase):
         self.assertContains(r, '&lt;script&gt;')
         r = self.client.get(reverse('admin_growth_detail', args=[c.pk]))
         self.assertContains(r, 'Draft text')
+        self.assertContains(r, 'href="/admin/growth/?audience=employer"')
         self.assertEqual(self.client.get(reverse('admin_growth_control')).status_code, 405)
         self.client.post(reverse('admin_growth_control'), {'action':'pause'})
         self.assertFalse(AcquisitionAutomation.objects.get(pk=1).enabled)
@@ -157,6 +158,22 @@ class AcquisitionTests(TestCase):
         self.assertIsNotNone(claim_run())
         run.refresh_from_db()
         self.assertEqual(run.status, 'interrupted')
+
+    def test_overview_distinguishes_missing_zero_and_partial_measurement(self):
+        c = AcquisitionCampaign.objects.create(key='coverage', title='Coverage', source='link_prospect_789',
+            audience='seeker', metrics_at=timezone.now(), metrics={'landing_sessions': None, 'accounts': 0, 'scouts': 0})
+        self.client.force_login(self.owner)
+        response = self.client.get(reverse('admin_growth'))
+        self.assertContains(response, 'Not measured')
+        bars = response.context['funnel'][0]['bars']
+        self.assertIsNone(bars[0]['value'])
+        self.assertEqual(bars[1]['value'], 0)
+        AcquisitionCampaign.objects.create(key='tracked', title='Tracked', source='link_prospect_790',
+            audience='seeker', metrics_at=timezone.now(), metrics={'landing_sessions': 3, 'accounts': 0, 'scouts': 0})
+        response = self.client.get(reverse('admin_growth'))
+        self.assertEqual(response.context['funnel'][0]['bars'][0]['value'], 3)
+        self.assertTrue(response.context['funnel'][0]['bars'][0]['partial'])
+        self.assertContains(response, 'partial coverage')
 
     def test_cash_uses_exact_live_processor_reference_and_keeps_refunds(self):
         from growth.models import RevenueRun, CashMovement
