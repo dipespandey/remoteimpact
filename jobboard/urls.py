@@ -58,6 +58,30 @@ Disallow: /checkout/
 Disallow: /jobs/*/feature/
 Disallow: /jobs/*/go/
 
+# Search, AI answers and link previews: public pages only.
+User-agent: Googlebot
+User-agent: bingbot
+User-agent: Applebot
+User-agent: OAI-SearchBot
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: Perplexity-User
+User-agent: DuckAssistBot
+User-agent: Bravebot
+User-agent: YouBot
+User-agent: ExaSearchBot
+User-agent: LinkupBot
+User-agent: ShapBot
+User-agent: facebookexternalhit
+User-agent: Twitterbot
+Allow: /
+Disallow: /admin/
+Disallow: /accounts/
+Disallow: /api/
+Disallow: /checkout/
+Disallow: /jobs/*/feature/
+Disallow: /jobs/*/go/
+
 # AI/LLM Crawlers - Allow with crawl-delay
 # See our llms.txt for structured info: {site_url}/llms.txt
 
@@ -131,13 +155,26 @@ Disallow: /jobs/*/feature/
 Disallow: /jobs/*/go/
 Crawl-delay: 2
 
-# AI search and training crawlers that cite or learn from public pages: allowed (they follow the
-# default rules above). Common Crawl (CCBot) feeds many AI models; Amazonbot powers Alexa/Rufus answers.
-
-# Block low-value scrapers
+# Owner-selected crawler exclusions. robots.txt is advisory, not access control.
+User-agent: meta-externalagent
+User-agent: meta-externalads
+User-agent: Reflectionbot
+User-agent: ElevenlabsCrawler
+User-agent: AionBot
+User-agent: TokenFoundryBot
 User-agent: Bytespider
+User-agent: CCBot
+User-agent: AwarioBot
+User-agent: QlyzeBot
+User-agent: Barkrowler
+User-agent: SERankingBacklinksBot
+User-agent: SenderBot
+User-agent: TernCrawler
+User-agent: SQLSpider
+User-agent: SpiderLing
 Disallow: /
 
+# Retain existing scraper exclusions.
 User-agent: DataForSeoBot
 Disallow: /
 
