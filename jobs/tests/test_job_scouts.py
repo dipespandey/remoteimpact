@@ -774,6 +774,7 @@ class JobScoutFlowTest(TestCase):
         signup_start = self.client.get(
             reverse("jobs:job_scout_signup_start"),
             {"next": response.context["next_path"], "source": "home_hero"},
+            HTTP_USER_AGENT="Mozilla/5.0",
         )
         self.assertRedirects(
             signup_start,
