@@ -71,6 +71,11 @@
             global health, education and other public-interest problems.
         </p>
         <p class="mt-3 text-sm"><a href="{% url 'jobs:keyword_jobs' keyword_slug='remote-nonprofit-jobs' %}" class="font-medium text-foreground underline underline-offset-4">Explore remote nonprofit jobs</a> for a focused search across nonprofits, foundations and charity-related employers.</p>
+        <nav aria-label="Explore focused job searches" class="mt-4 flex flex-wrap gap-2">
+            <a href="{% url 'jobs:role_jobs' role_slug='remote-education-jobs' %}" class="btn btn-outline btn-sm" data-track="job_board_education">Education jobs</a>
+            <a href="{% url 'jobs:category_landing' slug='climate-environment' %}" class="btn btn-outline btn-sm" data-track="job_board_climate">Climate jobs</a>
+            <a href="{% url 'jobs:early_careers' %}" class="btn btn-outline btn-sm" data-track="job_board_early_careers">Fellowships &amp; internships</a>
+        </nav>
     </header>
 
     {% if show_job_scout_nudge and not nav_employer %}
