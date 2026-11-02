@@ -10,7 +10,7 @@ from django.utils import timezone
 BOT_UA = re.compile(
     r"bot|crawl|spider|slurp|preview|fetch|monitor|headless|python|curl|wget|httpclient|"
     r"java/|go-http|okhttp|axios|node-fetch|scrapy|facebookexternalhit|embedly|whatsapp|"
-    r"telegram|slack|discord|lighthouse|pagespeed",
+    r"telegram|slack|discord|lighthouse|pagespeed|meta-externalagent|meta-externalfetcher",
     re.I,
 )
 FIELDS = {"views", "apply_clicks", "scout_deliveries"}

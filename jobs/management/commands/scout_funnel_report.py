@@ -45,6 +45,10 @@ class Command(BaseCommand):
                         metadata__has_key='scout_flow_id').exclude(metadata__scout_flow_id__in=preview_ids).values('metadata__scout_flow_id').distinct().count()
         result = {'as_of_utc':now.isoformat(),'since_utc':since.isoformat(),
                   'cohort':'Search flows first observed in previews during the window; not people or all new accounts.',
+                  'signup_handoff_requests': {
+                      'total': E.objects.filter(event=E.Event.SCOUT_SIGNUP_STARTED, created_at__gte=since, created_at__lt=now).count(),
+                      'with_session_flow': E.objects.filter(event=E.Event.SCOUT_SIGNUP_STARTED, created_at__gte=since, created_at__lt=now, metadata__has_key='scout_flow_id').count(),
+                  },
                   'preview_events':previews.count(),'form_flows_without_observed_preview':direct_form_flows,'unlinked_legacy_preview_events':previews.exclude(metadata__has_key='scout_flow_id').count(),
                   'capped': linked.count() > 5000, 'cohort_limit':5000,
                   'totals':summarize(list(cohort.values())),
@@ -53,6 +57,7 @@ class Command(BaseCommand):
                   'caveats':['Outcomes are observed only through report time; recent flows have less time to convert.',
                              'Anonymous session loss, expiration and separate-device signup may remain unlinked.',
                              'Existing authenticated users can skip signup/account-created stages; compare anonymous-entry cohorts separately.',
+                             'Signup-start stages record unverified GET handoffs, not human intent; historical counts can include crawlers.',
                              'Legacy events are not retroactively attributed. Counts can include internal/test activity.',
                              'Submit attempts count POSTs received by the server, not clicks blocked by client-side validation.']}
         self.stdout.write(json.dumps(result,indent=2))

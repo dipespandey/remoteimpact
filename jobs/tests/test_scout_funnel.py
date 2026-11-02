@@ -17,7 +17,9 @@ from allauth.account.signals import user_signed_up
 
 @override_settings(SECURE_SSL_REDIRECT=False,ACCOUNT_RATE_LIMITS={})
 class ScoutFunnelTests(TestCase):
+
     def setUp(self):
+        self.client.defaults["HTTP_USER_AGENT"] = "Mozilla/5.0"
         self.addCleanup(patch.stopall)
         patch('jobs.services.email_service.email_service.send_email',return_value=True).start()
         setup_scout_fixture(self)
@@ -240,3 +242,21 @@ class ScoutFunnelTests(TestCase):
         report=json.loads(stream.getvalue())
         self.assertEqual(report['form_flows_without_observed_preview'],1)
         self.assertEqual(report['totals']['flows'],0)
+
+    def test_signup_handoff_ignores_crawlers_and_head_but_redirects(self):
+        url=reverse('jobs:job_scout_signup_start')
+        for agent in ('Mozilla/5.0 (compatible; meta-externalagent/1.1)',
+                      'Mozilla/5.0 meta-externalfetcher/1.1', 'Googlebot', ''):
+            response=self.client.get(url, HTTP_USER_AGENT=agent)
+            self.assertEqual(response.status_code,302)
+        response=self.client.head(url)
+        self.assertEqual(response.status_code,302)
+        self.assertFalse(E.objects.filter(event=E.Event.SCOUT_SIGNUP_STARTED).exists())
+
+    def test_browser_handoff_is_explicitly_unverified_and_deduplicated(self):
+        url=reverse('jobs:job_scout_signup_start')
+        for _ in range(2):
+            self.assertEqual(self.client.get(url).status_code,302)
+        event=E.objects.get(event=E.Event.SCOUT_SIGNUP_STARTED)
+        self.assertEqual(event.metadata['signal'],'unverified_request')
+        self.assertEqual(event.metadata['tracking_version'],2)

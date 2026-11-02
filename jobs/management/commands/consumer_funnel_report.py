@@ -66,6 +66,7 @@ class Command(BaseCommand):
             ("Completed seeker profiles", completed_profiles),
             ("Scout landings", landings),
             ("Scout job views", job_views),
+            ("Signup handoffs*", events.get(ConsumerFunnelEvent.Event.SCOUT_SIGNUP_STARTED, 0)),
             ("Scout previews", events.get(ConsumerFunnelEvent.Event.SCOUT_PREVIEWED, 0)),
             ("Shortlist user-days", events.get(ConsumerFunnelEvent.Event.SHORTLIST_VIEWED, 0)),
             ("Interest updates", events.get(ConsumerFunnelEvent.Event.INTEREST_SAVED, 0)),
@@ -114,5 +115,6 @@ class Command(BaseCommand):
         self.stdout.write(f"Accounts with seeker profile: {profiles} / {users} ({rate(profiles, users)})")
         self.stdout.write(f"Seeker profiles completed: {completed_profiles} / {profiles} ({rate(completed_profiles, profiles)})")
         self.stdout.write(f"Accounts with Pro start event (includes trials): {len(cohort_pro_users)} / {users} ({rate(len(cohort_pro_users), users)})")
+        self.stdout.write("* Signup handoffs are unverified GET requests, not people beginning signup; historical counts include crawlers.")
         self.stdout.write("Event totals above can include older accounts and repeated actions; they are not a sequential conversion funnel.")
         self.stdout.write("Trial and non-trial completion events are not verified cash receipts. Organic acquisition and collected revenue require separate attribution/payment evidence.")

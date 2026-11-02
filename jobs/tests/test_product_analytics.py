@@ -240,3 +240,12 @@ class DiagnosticsAccessTests(TestCase):
         response = self.client.get(self.url, {'view': 'journeys'})
         self.assertContains(response, 'Recent-event sample capped')
         self.assertNotContains(response, 'Showing the 50 most recent journeys')
+
+    def test_signup_handoffs_are_requests_even_for_historical_rows(self):
+        C.objects.create(event='scout_signup_started', metadata={'source':'scout_preview'})
+        report=build_product_analytics()
+        row=report['timeline'][0]
+        self.assertEqual(row['event'],'Signup handoff requested (unverified)')
+        self.assertEqual(row['evidence'],'Unverified request; may be scanner')
+        campaign=next(r for r in report['campaigns'] if r['source']=='scout_preview')
+        self.assertEqual(campaign['requests'],1)

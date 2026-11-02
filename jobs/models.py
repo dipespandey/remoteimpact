@@ -949,7 +949,7 @@ class ConsumerFunnelEvent(models.Model):
         SCOUT_JOB_VIEWED = "scout_job_viewed", "Scout job viewed"
         SCOUT_APPLY_CLICKED = "scout_apply_clicked", "Scout apply link clicked"
         SCOUT_PREVIEWED = "scout_previewed", "Scout previewed"
-        SCOUT_SIGNUP_STARTED = "scout_signup_started", "Scout signup started"
+        SCOUT_SIGNUP_STARTED = "scout_signup_started", "Signup handoff requested (unverified)"
         SCOUT_PERSONALIZED = "scout_personalized", "Scout search personalized"
         SCOUT_FORM_VIEWED = "scout_form_viewed", "Scout confirmation viewed"
         SCOUT_SUBMIT_STARTED = "scout_submit_started", "Scout submit attempted"
