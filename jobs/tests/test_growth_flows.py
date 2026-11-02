@@ -93,7 +93,7 @@ class ScoutActivationFlowTests(TestCase):
             anchor for anchor in preview_anchors.anchors
             if anchor["attrs"].get("data-track") == "scout_preview_signup"
         )
-        signup_start = self.client.get(signup_link["attrs"]["href"])
+        signup_start = self.client.get(signup_link["attrs"]["href"], HTTP_USER_AGENT="Mozilla/5.0")
         self.assertEqual(signup_start.status_code, 302)
         signup_target = urlsplit(signup_start["Location"])
         self.assertEqual(signup_target.path, reverse("account_signup"))

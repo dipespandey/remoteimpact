@@ -80,3 +80,19 @@ neither viewing a preview nor creating an account sends an email.
 This addresses verified button visibility, not a proven cause of abandonment.
 Measure linked anonymous preview → signup → confirmed Scout cohorts after release;
 exclude internal/browser test sources and retain session-loss caveats.
+
+## Signup handoff measurement — 2 November 2026
+
+`scout_signup_started` is retained as a stable event code, but its display label is
+**Signup handoff requested (unverified)**. It records a GET redirect, not a person
+starting or submitting the account form. Old rows have the same limitation and
+are preserved, without invented attribution or retroactive bot classifications.
+New events carry `signal=unverified_request`, `method=GET`, `tracking_version=2`.
+Recognised crawlers (including Meta external agents), missing/non-browser user
+agents and HEAD requests redirect normally but do not create handoff events.
+Browser-shaped scanners can still pass this heuristic. Session deduplication and
+allauth continuation are preserved. The report separates total requests and those
+with a session-bound flow; preview-anchored cohorts remain a separate measure.
+
+Migration 0088 changes only the event label in Django state. It neither changes
+the stored event code nor rewrites historical rows; its database SQL is a no-op.

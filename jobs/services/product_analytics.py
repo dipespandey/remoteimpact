@@ -73,7 +73,7 @@ def _row(event, family):
         kind, value = 'account', event.user_id
     else:
         kind, value = None, None
-    request = event.event in ('post_job_viewed', 'feature_page_requested')
+    request = event.event in ('post_job_viewed', 'feature_page_requested', 'scout_signup_started')
     trial = family == 'consumer' and event.event == 'payment_completed' and meta.get('trial') is True
     labels = dict((Consumer if family == 'consumer' else Employer).Event.choices)
     return {
@@ -234,7 +234,7 @@ def build_product_analytics(days=30, family='all', failures_only=False, scope=No
             campaign = label(row['metadata__campaign_labels__utm_campaign'])
             bucket = campaigns[(key, source, campaign)]
             bucket['events'] += row['n']
-            if row['event'] in ('post_job_viewed', 'feature_page_requested'):
+            if row['event'] in ('post_job_viewed', 'feature_page_requested', 'scout_signup_started'):
                 bucket['requests'] += row['n']
             if row['event'] == 'scout_created':
                 bucket['scouts'] += row['n']
