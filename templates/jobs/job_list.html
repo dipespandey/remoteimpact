@@ -6,10 +6,10 @@
 {% block title %}Impact Jobs: Browse Remote Roles | Remote Impact{% endblock %}
 {% block robots %}{% if request.GET %}noindex, follow{% else %}index, follow{% endif %}{% endblock %}
 
-{% block meta_description %}Browse {{ page_obj.paginator.count|default:"8,000+" }} remote impact jobs in climate, AI safety, nonprofit, global health, education, and social good. Find purpose-driven roles with source links and clear remote details.{% endblock %}
+{% block meta_description %}Browse {% if page_obj.paginator.count is not None %}{{ page_obj.paginator.count }} {% endif %}remote impact jobs in climate, AI safety, nonprofit, global health, education, and social good. Find purpose-driven roles with source links and clear remote details.{% endblock %}
 
 {% block og_title %}Impact Jobs: Browse Remote Roles | Remote Impact{% endblock %}
-{% block og_description %}Browse {{ page_obj.paginator.count|default:"8,000+" }} remote impact jobs in climate, AI safety, nonprofit, global health, education, and social good.{% endblock %}
+{% block og_description %}Browse {% if page_obj.paginator.count is not None %}{{ page_obj.paginator.count }} {% endif %}remote impact jobs in climate, AI safety, nonprofit, global health, education, and social good.{% endblock %}
 {% block twitter_title %}Impact Jobs: Browse Remote Roles | Remote Impact{% endblock %}
 {% block twitter_description %}Browse remote impact jobs in climate, AI safety, nonprofit, global health, education, and social good.{% endblock %}
 

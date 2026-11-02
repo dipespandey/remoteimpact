@@ -7,6 +7,7 @@ from django.core.management.base import CommandError
 from django.db import connection, transaction
 from django.test import TestCase, override_settings
 from django.utils import timezone
+from django.urls import reverse
 
 from jobs.models import Job, Organization
 from jobs.services.search_indexing import acknowledge, candidates, fingerprint, pending
@@ -28,6 +29,19 @@ class SearchIndexingTests(TestCase):
             'application_url': 'https://example.org/software-role'}
         defaults.update(kwargs)
         return Job.objects.create(**defaults)
+
+    def test_empty_job_search_does_not_advertise_a_fabricated_count(self):
+        from allauth.socialaccount.models import SocialApp
+        from django.contrib.sites.models import Site
+        for provider, provider_id in (("google", ""), ("openid_connect", "linkedin")):
+            app = SocialApp.objects.create(provider=provider, provider_id=provider_id, name=provider,
+                client_id="test-client", secret="test-secret",
+                settings={"server_url": "https://www.linkedin.com/oauth"} if provider_id else {})
+            app.sites.add(Site.objects.get_current())
+        response = self.client.get(reverse('jobs:job_list'), {'q': 'zz-no-matching-job-918273'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Browse 0 remote impact jobs')
+        self.assertNotContains(response, '8,000+')
 
     def test_dry_run_and_disabled_modes_do_not_transmit(self):
         job = self.job()
