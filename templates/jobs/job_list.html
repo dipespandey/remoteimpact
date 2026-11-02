@@ -616,15 +616,16 @@
         {% if not jobs and not sponsored_jobs %}
         <div class="card p-6 sm:p-8{% if sponsored_jobs %} mt-4{% endif %}">
             <h2 class="section-title">No roles match these filters</h2>
-            <p class="mt-1.5 max-w-xl text-sm text-muted-foreground">Try removing a filter or using a broader search term. You can also set up a job alert and we will email you when a matching role is posted.</p>
+            <p class="mt-1.5 max-w-xl text-sm text-muted-foreground">Try removing a filter or using a broader search term. Scout offers one free match email after you confirm your search. Ongoing personalized alerts require Pro.</p>
             <div class="mt-5 flex flex-wrap gap-2">
                 <a href="{% url 'jobs:job_list' %}" class="btn btn-primary btn-sm">Reset all filters</a>
                 {% if user.is_authenticated %}
-                <a href="{% url 'jobs:job_alerts' %}" class="btn btn-outline btn-sm">Set up a job alert</a>
+                <a href="{% url 'jobs:job_alerts' %}" class="btn btn-outline btn-sm">Review my Scout options</a>
                 {% else %}
-                <a href="{% url 'account_signup' %}?next={% url 'jobs:job_alerts' %}" class="btn btn-outline btn-sm">Sign up for job alerts</a>
+                <a href="{% url 'account_signup' %}?next={% url 'jobs:job_alerts' %}" class="btn btn-outline btn-sm">Explore my free Scout</a>
                 {% endif %}
             </div>
+            <p class="mt-4 text-sm text-muted-foreground">Prefer a weekly roundup? <a href="{% url 'jobs:roundup' %}?source=job_search_empty" class="font-medium underline underline-offset-4" data-track="job_search_empty_roundup">Choose your topics for free weekly job picks</a>.</p>
         </div>
 
         {% if recommended_orgs %}
