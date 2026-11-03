@@ -2,6 +2,7 @@ import json
 import re
 from html import unescape
 from unittest.mock import Mock, patch
+from urllib.parse import parse_qs, urlsplit
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -53,3 +54,23 @@ class CategorySeoEvidenceTests(TestCase):
         self.assertContains(response, 'noindex, follow')
         self.assertContains(response, f'https://remoteimpact.org{self.url}')
         self.assertNotContains(response, 'Software Engineer in Health')
+
+    def test_personalized_preview_preserves_category_and_selected_preferences(self):
+        response = self.client.get(self.url, {'q': 'communications & policy', 'country': ['Pakistan', 'Worldwide'], 'experience': 'entry'})
+        url = urlsplit(response.context['category_scout_url'])
+        query = parse_qs(url.query)
+        self.assertEqual(url.path, reverse('jobs:job_scout_preview'))
+        self.assertEqual(query['source'], ['category_climate-environment'])
+        self.assertIn(self.category.name.lower(), query['intent'][0])
+        self.assertIn('communications & policy', query['intent'][0])
+        self.assertIn('Pakistan, Worldwide', query['intent'][0])
+        self.assertIn('entry-level', query['intent'][0])
+        self.assertContains(response, 'Preview a personalized search')
+        self.assertContains(response, 'Ongoing alerts require Pro.')
+        self.assertNotContains(response, 'we will email you when one is posted')
+
+    def test_populated_category_has_tracked_preview_without_signup_gate(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, 'Personalize this search')
+        self.assertContains(response, 'data-track="seo_scout_cta"')
+        self.assertNotContains(response, 'Sign up for job alerts')
