@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Pro Rata Salary Calculator: FTE to Actual Pay | Remote Impact{% endblock %}
+{% block meta_description %}Convert an advertised full-time equivalent salary into actual part-time annual, monthly and fixed-term gross pay. Free calculator with clear hours and contract assumptions.{% endblock %}
+{% block canonical %}{{ SITE_URL }}/tools/pro-rata-salary-calculator/{% endblock %}
+{% block og_title %}Pro Rata Salary Calculator: FTE to Actual Pay | Remote Impact{% endblock %}
+{% block twitter_title %}Pro Rata Salary Calculator: FTE to Actual Pay | Remote Impact{% endblock %}
+{% block og_description %}Calculate actual part-time annual, monthly and fixed-term gross pay from an advertised FTE salary and your paid hours. Free, no account needed.{% endblock %}
+{% block twitter_description %}Calculate actual part-time annual, monthly and fixed-term gross pay from an advertised FTE salary and your paid hours. Free, no account needed.{% endblock %}
+{% block content %}
+<div class="container py-8 sm:py-10">
+    <a href="{% url 'jobs:tools_index' %}" class="text-sm underline">Career tools</a>
+    <header class="mt-4 max-w-3xl"><h1 class="page-title">What will this part-time job actually pay?</h1><p class="page-lede">Convert the advertised full-time equivalent (FTE) salary into your actual gross pay. No account needed.</p></header>
+    <div class="mt-8 grid gap-6 lg:grid-cols-2">
+        <form method="post" class="card p-5 sm:p-6 space-y-4">{% csrf_token %}
+            <p class="text-sm text-muted-foreground">Use the same currency throughout. Enter the employer’s full-time hours, not an assumed 40-hour week.</p>
+            {{ form.non_field_errors }}
+            {% for field in form %}<div><label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
+            <button class="btn btn-primary" type="submit">Calculate actual pay</button>
+            <p class="text-xs text-muted-foreground">Amounts are submitted for this calculation and are not saved to your profile. Currency is not converted.</p>
+        </form>
+        <section class="card p-5 sm:p-6" aria-labelledby="pay-result"><h2 id="pay-result" class="section-title">Your gross pay estimate</h2>
+            {% if result %}<dl class="mt-4 space-y-4"><div><dt>Annual pay at your hours</dt><dd class="text-2xl font-semibold">{{ result.annual_gross|floatformat:2 }}</dd></div><div><dt>Average monthly pay</dt><dd class="text-xl font-semibold">{{ result.monthly_gross|floatformat:2 }}</dd></div><div><dt>Total over the paid contract term</dt><dd class="text-xl font-semibold">{{ result.contract_gross|floatformat:2 }}</dd></div></dl>{% else %}<p class="mt-3 text-muted-foreground">Enter the salary, hours and paid contract length to see your estimate.</p>{% endif %}
+            <p class="mt-5 text-sm text-muted-foreground">Figures use the currency of your input, before taxes and deductions. Assumes constant pay and paid hours for the whole term, with no unpaid breaks or bonuses. Benefits and employer payroll rules may differ.</p>
+        </section>
+    </div>
+    <section class="mt-8 max-w-3xl"><h2 class="section-title">How to read an FTE salary advert</h2><p class="mt-3">Actual annual pay = annual FTE salary × your paid weekly hours ÷ full-time weekly hours. Monthly pay = actual annual pay ÷ 12. Contract total = monthly pay × paid months.</p><p class="mt-3">For example, 40,000 FTE at 21 hours out of a 35-hour week means 24,000 a year, averaging 2,000 a month. A six-month paid contract totals 12,000 gross.</p><p class="mt-3">If an advert already gives the actual part-time salary, do not pro-rate it again. Ask the employer whether the figure is FTE or actual, whether the term is fully paid, and how paid leave is handled.</p>
+    <a href="{% url 'jobs:keyword_jobs' keyword_slug='remote-part-time-jobs' %}" class="btn btn-primary mt-5" data-track="pro_rata_browse_jobs">Browse part-time impact jobs</a></section>
+</div>
+{% endblock %}

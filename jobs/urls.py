@@ -1,3 +1,4 @@
+from .views.pro_rata import ProRataPayView
 from .views.roundup_issue import roundup_issue
 from .views.roundup import RoundupView, RoundupConfirmView, RoundupUnsubscribeView
 from django.urls import path
@@ -16,6 +17,7 @@ from .feeds import LatestJobsFeed, CategoryJobsFeed, IndeedXMLFeed, LinkedInXMLF
 app_name = "jobs"
 
 urlpatterns = [
+    path("tools/pro-rata-salary-calculator/", ProRataPayView.as_view(), name="pro_rata_pay"),
     path("shortlist/", shortlists.shortlist, name="shortlist"),
     path("shortlist/share/", shortlists.share, name="share_shortlist"),
     path("collections/tech-for-impact/", shortlists.tech_collection, name="tech_collection"),

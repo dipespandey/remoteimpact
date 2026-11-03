@@ -77,6 +77,7 @@
         </nav>
         <h1 class="page-title mt-3">{{ h1 }}</h1>
         {% if intro %}<p class="page-lede">{{ intro }}</p>{% endif %}
+    {% if config.slug == 'remote-part-time-jobs' %}<p class="mt-4 text-sm text-muted-foreground">Salary shown as FTE? <a href="{% url 'jobs:pro_rata_pay' %}" class="font-medium underline underline-offset-4" data-track="part_time_pay_calculator">Calculate the actual pay for your hours and contract length</a>.</p>{% endif %}
     </header>
 
     {% if config.slug == 'remote-social-impact-jobs' %}
