@@ -43,6 +43,7 @@ class ProRataPageTests(TestCase):
         url=reverse('jobs:pro_rata_pay')
         page=self.client.get(url)
         self.assertContains(page, 'No account needed.')
+        self.assertContains(page, 'property="og:title" content="Pro Rata Salary Calculator: FTE to Actual Pay | Remote Impact"')
         self.assertContains(page, reverse('jobs:keyword_jobs',kwargs={'keyword_slug':'remote-part-time-jobs'}))
         response=self.client.post(url,{'annual_fte':'40000','full_time_hours':'35','actual_hours':'21','months':'6'})
         self.assertContains(response, '24000.00')
