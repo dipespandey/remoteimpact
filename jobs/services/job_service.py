@@ -459,8 +459,9 @@ class JobService:
             if strong.count() >= JobService.MIN_STRONG_SEARCH_RESULTS:
                 queryset = strong
             else:
+                from django.contrib.postgres.search import SearchQuery
                 body_q = (
-                    Q(fts_rank__gt=0.01) if connection.vendor == "postgresql"
+                    Q(search_vector=SearchQuery(phrase, search_type="plain", config="english")) if connection.vendor == "postgresql"
                     else JobService._word_q("description", phrase)  # local SQLite has no FTS
                 )
                 queryset = queryset.filter(body_q | strong_q)

@@ -198,3 +198,12 @@ class ListingLanguageTests(TestCase):
         self.assertEqual(listing_language("Projektleitung (m/w/d)", "Wir suchen dich für unser Team und die Energiewende mit uns."), "German")
         self.assertEqual(listing_language("Chargé de projet", "Nous recherchons une personne pour rejoindre notre équipe avec des compétences dans les projets et des partenaires."), "French")
         self.assertEqual(listing_language("Program Manager", "You will lead our programs and work with the team on climate projects for our partners."), "")
+
+
+class LiteralFallbackTests(TestCase):
+    def test_hyphenated_query_does_not_return_body_matches_for_one_component(self):
+        org = Organization.objects.create(name="Literal employer", slug="literal-employer")
+        Job.objects.create(title="Field Technician", slug="literal-technician", organization=org,
+                           description="Climate programs need reliable operations support.")
+        found = JobService.get_filtered_jobs({"q": "climate-unicorn918273"})
+        self.assertFalse(found.exists())
