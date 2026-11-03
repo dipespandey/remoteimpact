@@ -29,7 +29,6 @@
     <p class="page-lede">Drafts, calculators and checklists for applying, negotiating and working remotely. Most need no account.</p>
   </div>
 
-  <p class="mt-5"><a href="{% url 'jobs:pro_rata_pay' %}" class="font-medium underline">Pro-rata salary calculator: convert FTE into actual part-time pay</a></p>
   <div class="mt-8 grid gap-x-8 gap-y-10 lg:grid-cols-2">
     <section aria-labelledby="tools-apply">
       <h2 id="tools-apply" class="section-title px-1">Applying and interviewing</h2>
@@ -76,6 +75,7 @@
     <section aria-labelledby="tools-pay">
       <h2 id="tools-pay" class="section-title px-1">Pay and offers</h2>
       <ul class="list-surface mt-3">
+        <li><a href="{% url 'jobs:pro_rata_pay' %}" class="block rounded-xl px-3.5 py-3 transition-colors hover:bg-muted"><span class="block text-base font-medium text-foreground">Pro-rata salary calculator</span><span class="mt-0.5 block text-xs leading-relaxed text-muted-foreground">Turn an FTE salary into actual part-time annual, monthly and fixed-term pay.</span></a></li>
         <li>
           <a href="{% url 'jobs:salary_negotiation' %}" class="block rounded-xl px-3.5 py-3 transition-colors hover:bg-muted">
             <span class="block text-base font-medium text-foreground">Salary negotiation script</span>
