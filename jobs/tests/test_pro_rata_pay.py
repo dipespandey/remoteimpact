@@ -55,3 +55,41 @@ class ProRataPageTests(TestCase):
         response=self.client.post(reverse('jobs:pro_rata_pay'),{'annual_fte':'40000','full_time_hours':'35','actual_hours':'40','months':'6'})
         self.assertContains(response, 'Actual hours must be positive')
         self.assertIsNone(response.context['result'])
+
+
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from pathlib import Path
+import os
+
+
+@override_settings(SECURE_SSL_REDIRECT=False, ALLOWED_HOSTS=['*'])
+class ProRataBrowserTests(StaticLiveServerTestCase):
+    def setUp(self):
+        for provider, provider_id in (("google", ""), ("openid_connect", "linkedin")):
+            app = SocialApp.objects.create(provider=provider, provider_id=provider_id, name=provider,
+                client_id="test-client", secret="test-secret",
+                settings={"server_url": "https://www.linkedin.com/oauth"} if provider_id else {})
+            app.sites.add(Site.objects.get_current())
+
+    def test_mobile_and_desktop_calculation(self):
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as pw:
+            options = {'headless': True}
+            if os.environ.get('PLAYWRIGHT_CHROMIUM_EXECUTABLE'):
+                options['executable_path'] = os.environ['PLAYWRIGHT_CHROMIUM_EXECUTABLE']
+            browser = pw.chromium.launch(**options)
+            try:
+                for width in (390, 1440):
+                    page = browser.new_page(viewport={'width':width,'height':1000})
+                    page.goto(self.live_server_url + reverse('jobs:pro_rata_pay'))
+                    page.get_by_label('Advertised annual full-time salary').fill('40000')
+                    page.get_by_label('Paid contract length in months').fill('6')
+                    page.get_by_role('button',name='Calculate actual pay').click()
+                    page.get_by_text('24000.00',exact=True).wait_for()
+                    self.assertTrue(page.get_by_text('12000.00',exact=True).is_visible())
+                    self.assertTrue(page.evaluate('document.documentElement.scrollWidth <= innerWidth'))
+                    folder = Path('.audit/pro-rata');folder.mkdir(parents=True,exist_ok=True)
+                    page.screenshot(path=str(folder / f'pay-{width}.png'),full_page=True)
+                    page.close()
+            finally:
+                browser.close()
