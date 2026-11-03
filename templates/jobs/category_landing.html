@@ -48,6 +48,13 @@
 
     {% include "jobs/seo/_focused_search.html" %}
 
+    {% if jobs or sponsored_jobs %}
+    <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-4">
+        <p class="text-sm text-muted-foreground">Need a closer fit? Add your skills, location and experience.</p>
+        <a href="{{ category_scout_url }}" class="btn btn-secondary btn-sm" data-track="seo_scout_cta" data-track-category="job_scout_acquisition">Personalize this search</a>
+    </div>
+    {% endif %}
+
     <!-- Job listings -->
     <section class="relative z-10 mt-3" aria-label="Job results" data-rank-surface="category">
         {% if jobs or sponsored_jobs %}
@@ -61,13 +68,9 @@
         {% if not jobs and not sponsored_jobs %}
         <div class="card p-6 sm:p-8{% if sponsored_jobs %} mt-4{% endif %}">
             <h2 class="section-title">No open {{ category.name|lower }} roles right now</h2>
-            <p class="mt-1.5 max-w-xl text-sm text-muted-foreground">New listings are added every day. Set up a job alert for {{ category.name|lower }} and we will email you when one is posted, or browse every open role.</p>
+            <p class="mt-1.5 max-w-xl text-sm text-muted-foreground">Try a broader search or add your preferences in Scout. Preview without an account; your first match email is free. Ongoing alerts require Pro.</p>
             <div class="mt-5 flex flex-wrap gap-2">
-                {% if user.is_authenticated %}
-                <a href="{% url 'jobs:job_alerts' %}" class="btn btn-primary btn-sm">Set up a job alert</a>
-                {% else %}
-                <a href="{% url 'account_signup' %}?next={% url 'jobs:job_alerts' %}" class="btn btn-primary btn-sm">Sign up for job alerts</a>
-                {% endif %}
+                <a href="{{ category_scout_url }}" class="btn btn-primary btn-sm" data-track="seo_scout_cta" data-track-category="job_scout_acquisition">Preview a personalized search</a>
                 <a href="{% url 'jobs:job_list' %}" class="btn btn-outline btn-sm">Browse all jobs</a>
             </div>
         </div>

@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import urlencode
 from django.views.generic import ListView, DetailView, FormView, View, TemplateView
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -820,6 +821,20 @@ class CategoryLandingView(FastJobPaginationMixin, ListView):
             "Review remote-work eligibility, pay when published and employer application details."
         )
         context["search_query"] = self.request.GET.get("q", "").strip()
+        scout_intent = f"Remote {cat.name.lower()} jobs."
+        if context["search_query"]:
+            scout_intent += f" Focus on {context['search_query'][:100]}."
+        countries = [value.strip()[:100] for value in self.request.GET.getlist("country")[:10] if value.strip()]
+        if countries:
+            scout_intent += " Hiring location preferences: " + ", ".join(countries) + "."
+        levels = {"entry": "entry-level", "junior": "junior", "mid": "mid-level", "senior": "senior", "lead": "lead", "executive": "executive", "internship": "internship"}
+        experience = [levels[value] for value in self.request.GET.getlist("experience") if value in levels]
+        if experience:
+            scout_intent += " Experience: " + ", ".join(dict.fromkeys(experience)) + "."
+        context["category_scout_url"] = reverse("jobs:job_scout_preview") + "?" + urlencode({
+            "intent": scout_intent,
+            "source": "category_" + cat.slug,
+        })
         context["job_count"] = context["page_obj"].paginator.count
         pagination_params = self.request.GET.copy()
         pagination_params.pop('page', None)
