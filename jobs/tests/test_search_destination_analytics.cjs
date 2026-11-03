@@ -47,3 +47,24 @@ test('explicit campaigns are not labelled organic and external entry replaces an
     assert.equal(page.events[0][2].landing_group, 'education');
     assert.doesNotMatch(JSON.stringify(page.events), /private-campaign/);
 });
+test('sector entry preserves its group through Scout and job actions without raw inputs', () => {
+    const landing = visit('https://remoteimpact.org/jobs/category/animal-welfare/?country=private-country', 'https://chatgpt.com/c/private-conversation');
+    assert.equal(landing.events[0][2].landing_group, 'animal_welfare');
+    assert.equal(landing.events[0][2].discovery_source, 'ai_assistant');
+    landing.handlers.click({target: {closest: () => ({dataset: {track: 'seo_scout_cta'}})}});
+    assert.equal(landing.events[1][1], 'seo_scout_click');
+    const scout = visit('https://remoteimpact.org/alerts/preview/?intent=private-brief', 'https://remoteimpact.org/jobs/category/animal-welfare/', landing.stored());
+    assert.equal(scout.events[0][1], 'seo_scout_visit');
+    assert.equal(scout.events[0][2].landing_group, 'animal_welfare');
+    assert.doesNotMatch(JSON.stringify([landing.events, scout.events, scout.stored()]), /private/);
+});
+test('known AI referrals are distinct from search while lookalike domains are not trusted', () => {
+    for (const host of ['chatgpt.com', 'chat.openai.com', 'claude.ai', 'www.perplexity.ai', 'gemini.google.com', 'copilot.microsoft.com']) {
+        const page = visit('https://remoteimpact.org/impact/remote-foundation-jobs/', `https://${host}/`);
+        assert.equal(page.events[0][2].discovery_source, 'ai_assistant', host);
+    }
+    const fake = visit('https://remoteimpact.org/jobs/category/ai-safety/', 'https://chatgpt.com.example.org/');
+    assert.equal(fake.events[0][2].discovery_source, 'other_referral');
+    const campaign = visit('https://remoteimpact.org/jobs/category/global-health/?utm_source=private', 'https://gemini.google.com/');
+    assert.equal(campaign.events[0][2].discovery_source, 'campaign');
+});
