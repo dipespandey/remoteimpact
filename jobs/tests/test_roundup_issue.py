@@ -9,6 +9,8 @@ from urllib.parse import urlsplit
 from allauth.socialaccount.models import SocialApp
 from django.contrib.sites.models import Site
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from django.core.management.color import no_style
+from django.db import connection
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -34,6 +36,11 @@ def create_reviewed_jobs():
             title=pick['title'], description='Reviewed fixture.', requirements='See source.',
             application_url=pick['expected_catalogue_application_url'], is_active=True,
             posted_at=timezone.now(), quality_score=75)
+    # Explicit registry IDs do not advance PostgreSQL sequences. A later
+    # auto-ID fixture must not collide depending on which tests ran first.
+    with connection.cursor() as cursor:
+        for sql in connection.ops.sequence_reset_sql(no_style(), [Organization, Job]):
+            cursor.execute(sql)
 
 
 class IssueRegistryTests(SimpleTestCase):

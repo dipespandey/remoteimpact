@@ -6,15 +6,22 @@
         '/remote-education-jobs/': 'education',
         '/remote-sustainability-jobs/': 'sustainability',
         '/impact/remote-nonprofit-jobs/': 'nonprofit',
-        '/impact/remote-positions-in-nonprofits/': 'nonprofit'
+        '/impact/remote-positions-in-nonprofits/': 'nonprofit',
+        '/jobs/category/animal-welfare/': 'animal_welfare',
+        '/jobs/category/climate-environment/': 'climate',
+        '/jobs/category/global-health/': 'global_health',
+        '/jobs/category/ai-safety/': 'ai_safety',
+        '/impact/remote-conservation-jobs/': 'conservation',
+        '/impact/remote-foundation-jobs/': 'foundation'
     };
-    var groups = ['education', 'sustainability', 'nonprofit'];
-    var sources = ['bing', 'google', 'other_search', 'campaign', 'other_referral', 'direct_or_unknown'];
+    var groups = ['education', 'sustainability', 'nonprofit', 'animal_welfare', 'climate', 'global_health', 'ai_safety', 'conservation', 'foundation'];
+    var sources = ['bing', 'google', 'ai_assistant', 'other_search', 'campaign', 'other_referral', 'direct_or_unknown'];
     var key = 'ri_search_destination_v1', now = Date.now(), journey = null;
     function referrer() { try { return new URL(document.referrer); } catch (_) { return null; } }
     function source() {
         if (new URLSearchParams(location.search).has('utm_source')) return 'campaign';
         var ref = referrer(), host = ref ? ref.hostname.toLowerCase() : '';
+        if (/(^|\.)(chatgpt\.com|chat\.openai\.com|claude\.ai|perplexity\.ai|gemini\.google\.com|copilot\.microsoft\.com)$/.test(host)) return 'ai_assistant';
         if (/(^|\.)bing\.com$/.test(host)) return 'bing';
         if (/(^|\.)google\.[a-z.]+$/.test(host)) return 'google';
         if (/(^|\.)(duckduckgo\.com|search\.yahoo\.com|ecosia\.org)$/.test(host)) return 'other_search';
