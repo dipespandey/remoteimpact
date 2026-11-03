@@ -121,6 +121,7 @@ class ToolsSitemap(Sitemap):
         # Only include tools that actually exist in urls.py
         return [
             ('jobs:tools_index', 0.8, 'weekly'),
+            ('jobs:pro_rata_pay', 0.7, 'monthly'),
             ('jobs:salary_to_hourly', 0.7, 'monthly'),
             ('jobs:timezone_overlap', 0.7, 'monthly'),
             ('jobs:freelance_rate', 0.7, 'monthly'),
