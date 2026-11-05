@@ -533,17 +533,18 @@ class JobScoutSignupStartView(View):
         token = parse_qs(urlsplit(next_path).query).get('scout_flow', [''])[0]
         flow = scout_funnel.get_flow(request, token) if token else None
         scout_funnel.prepare_signup(request, flow)
-        # GET handoffs are requests, not proof a person began signup. Crawlers
-        # follow these links and often discard cookies between every request.
+        # Require a flow from this session. Crawlers often follow generated links
+        # without the preview session, producing inflated unlinked GET counts.
+        # Even a linked GET is not proof of a human or a completed signup.
         from jobs.services.job_stats import is_probably_bot
-        if request.method == "GET" and not is_probably_bot(request):
+        if request.method == "GET" and flow and not is_probably_bot(request):
             if not request.session.session_key:
                 request.session.create()
             handoff_digest = hashlib.sha256(next_path.encode("utf-8")).hexdigest()[:16]
             record_consumer_event(
                 ConsumerFunnelEvent.Event.SCOUT_SIGNUP_STARTED,
                 metadata={"source": source, **scout_funnel.metadata(flow),
-                          "signal": "unverified_request", "method": "GET", "tracking_version": 2},
+                          "signal": "unverified_request", "method": "GET", "tracking_version": 3},
                 dedupe_key=f"scout-signup-flow:{flow['id']}" if flow else f"scout-signup-start:{request.session.session_key}:{handoff_digest}",
             )
         return redirect(

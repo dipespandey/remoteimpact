@@ -20,6 +20,11 @@ class BriefPhrasings(SimpleTestCase):
     def test_domain_words_are_not_job_types(self):
         self.assertEqual(JobScoutService._explicit_job_types("interim reports for global health programs".replace("interim", "quarterly")), [])
 
+    def test_contract_alternative_in_a_list_is_preserved(self):
+        for brief in ("open to full-time, contract or advisory", "full-time or contract"):
+            self.assertEqual(set(JobScoutService._explicit_job_types(brief)), {"full-time", "contract"})
+        self.assertEqual(JobScoutService._explicit_job_types("full-time, contract drafting roles"), ["full-time"])
+
     def test_pay_floor_in_words(self):
         self.assertEqual(extract_constraints("ethics of ai from 80 thousand a year salary")["min_salary"], 80000)
         hourly = extract_constraints("AI training work, around $40/hour paid weekly")["salary_requirement"]
