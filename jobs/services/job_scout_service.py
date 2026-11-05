@@ -660,6 +660,8 @@ skills is not a request for invented, exact job titles. JSON only."""
                 r"|\bwork(?:ing)?\s+as\s+(?:a\s+)?contractor\b"
                 r"|\b(?:part|full)[ -]?time\s+contract\b"
                 r"|\b(?:short[- ]term|paid|temporary)\s+(?:paid\s+)?contracts?\b"
+                r"|\b(?:full[ -]?time|part[ -]?time|freelance)\s*(?:,|\bor\b|\band\b)\s*(?:or\s+|and\s+)?contracts?\b(?=\s*(?:[,;.!?]|\b(?:or|and)\b|$))"
+                r"|(?:^|[,;])\s*contracts?\s+(?:or|and)\s+(?:advisory|freelance|part[ -]?time|full[ -]?time)\b"
                 r"|(?:^|[,;])\s*contract(?:\s+only)?\s*(?=[,;.!?]|$)",
                 "contract",
             ),

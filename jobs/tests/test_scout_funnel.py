@@ -255,8 +255,11 @@ class ScoutFunnelTests(TestCase):
 
     def test_browser_handoff_is_explicitly_unverified_and_deduplicated(self):
         url=reverse('jobs:job_scout_signup_start')
+        self.assertEqual(self.client.get(url).status_code,302)
+        self.assertFalse(E.objects.filter(event=E.Event.SCOUT_SIGNUP_STARTED).exists())
+        page=self.preview()
         for _ in range(2):
-            self.assertEqual(self.client.get(url).status_code,302)
+            self.assertEqual(self.client.get(url, {'next':page.context['next_path']}).status_code,302)
         event=E.objects.get(event=E.Event.SCOUT_SIGNUP_STARTED)
         self.assertEqual(event.metadata['signal'],'unverified_request')
-        self.assertEqual(event.metadata['tracking_version'],2)
+        self.assertEqual(event.metadata['tracking_version'],3)
