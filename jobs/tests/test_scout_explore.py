@@ -107,6 +107,26 @@ class ScoutExploreTests(TestCase):
         self.job.save(update_fields=['is_active'])
         self.assertEqual(explore_openings(self.prefs), [])
 
+    def test_unrelated_jobs_do_not_fill_an_empty_preview(self):
+        from jobs.services.scout_alternatives import explore_openings
+        self.job.title = 'Sales Director'
+        self.job.description = 'Lead customer acquisition campaigns for an organization using Python.'
+        self.job.save(update_fields=['title', 'description'])
+        self.assertEqual(explore_openings(self.prefs), [])
+
+    def test_title_variants_survive_a_large_pool_of_body_mentions(self):
+        from jobs.models import Job
+        from jobs.services.scout_alternatives import explore_openings
+        self.job.title = 'Software Engineer'
+        self.job.save(update_fields=['title'])
+        Job.objects.bulk_create([
+            Job(title=f'Sales role {i}', slug=f'crowding-sales-{i}',
+                organization=self.job.organization, description='Our engineering company sells services.')
+            for i in range(100)
+        ])
+        results = explore_openings({'titles': ['engineer']})
+        self.assertEqual([j.pk for j in results], [self.job.pk])
+
     def test_related_roles_rank_first_and_duplicate_posts_do_not_fill_slots(self):
         from jobs.models import Job
         from jobs.services.scout_alternatives import explore_openings

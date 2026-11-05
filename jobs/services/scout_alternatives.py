@@ -20,17 +20,26 @@ def explore_openings(preferences, *, limit=3, exclude_ids=()):
     from jobs.services.job_scout_service import JobScoutService
     from jobs.services.scout_constraints import CAVEAT_TEXT, location_compatibility, salary_compatible, salary_caveat
     from jobs.services.scout_evidence import compensation_display, location_evidence_warning
-    from jobs.services.scout_source_profile import request_terms, function_priority, profile_for
+    from jobs.services.scout_source_profile import request_terms, function_priority, profile_for, WORDS, CANONICAL
     from jobs.services.scout_source_evidence import load_original_sources
     from jobs.services.scout_verification import non_opening
     from jobs.services.importers.common import _is_generic_listing_title
     if limit <= 0:
         return []
-    terms = sorted(request_terms(preferences))[:8]
+    # Preserve the request's ordering: alphabetizing can drop the role in a
+    # longer brief and retrieve only incidental skills or sector words.
+    terms = request_terms(preferences)[:8]
+    if not terms:
+        terms = request_terms({'titles': preferences.get('skills') or []})[:8]
     title_query, body_query = Q(pk__in=[]), Q(pk__in=[])
     for term in terms:
-        title_query |= Q(title__icontains=term)
-        body_query |= Q(description__icontains=term)
+        # Ranking canonicalizes engineer -> engineering, for example, while
+        # the database contains both spellings. Retrieve both forms so a large
+        # number of unrelated recent jobs cannot crowd out a relevant title.
+        variants = {term, *(word for word, canonical in CANONICAL.items() if canonical == term)}
+        for variant in variants:
+            title_query |= Q(title__icontains=variant)
+            body_query |= Q(description__icontains=variant)
     qs = JobService.get_available_jobs().exclude(pk__in=list(exclude_ids)).select_related('organization', 'category')
     qs = qs.defer('embedding', 'search_vector', 'raw_data').annotate(
         explore_priority=Case(When(title_query, then=Value(2)), When(body_query, then=Value(1)),
@@ -47,6 +56,12 @@ def explore_openings(preferences, *, limit=3, exclude_ids=()):
             continue
         decision = evaluate_job(job, preferences, relaxed=True)
         priority = function_priority(job, preferences, terms=terms)
+        title_terms = {CANONICAL.get(w.lower(), w.lower()) for w in WORDS.findall(title)}
+        evidence = duty_evidence(job, preferences)
+        # Do not fill a zero-result preview with unrelated recent listings.
+        # Sector/skill words in a company description do not establish fit.
+        if not evidence and not set(terms).intersection(title_terms):
+            continue
         ranked.append((not decision.allowed, -priority, -job.pk, job, decision))
     reason_text = {
         'location': 'Hiring location differs from your requested location.',
