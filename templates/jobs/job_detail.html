@@ -585,5 +585,6 @@
   })();
 </script>{% endcsp_script %}
 {% endif %}
+{% if job_available and show_weekly_prompt %}{% include 'jobs/partials/weekly_apply_prompt.html' %}{% endif %}
 {% include 'jobs/_scout_loading.html' %}
 {% endblock %}

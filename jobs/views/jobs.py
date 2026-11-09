@@ -432,6 +432,14 @@ class JobDetailView(DetailView):
         context["apply_inplatform"] = self.object.source == Job.Source.MANUAL and (
             self.object.is_paid or not context.get("apply_redirect_url"))
         context["safe_organization_website"] = safe_application_destination(self.object.organization.website)
+        from jobs.services.newsletter_audience import weekly_subscription
+        from jobs.services.roundup import CATEGORY, TOPICS
+        category_slug = getattr(self.object.category, "slug", "")
+        context["weekly_prompt_topic"] = next((t for t, slug in CATEGORY.items() if slug == category_slug), "all")
+        context["weekly_prompt_topic_label"] = TOPICS[context["weekly_prompt_topic"]] if context["weekly_prompt_topic"] != "all" else ""
+        context["weekly_prompt_campaign"] = category_slug[:64]
+        context["show_weekly_prompt"] = bool(context.get("apply_redirect_url")) and not (
+            self.request.user.is_authenticated and weekly_subscription(self.request.user.email))
         verification = (self.object.raw_data or {}).get("source_verification") or {}
         verification = dict(verification) if isinstance(verification, dict) else {}
         checked = parse_datetime(str(verification.get("checked_at") or ""))

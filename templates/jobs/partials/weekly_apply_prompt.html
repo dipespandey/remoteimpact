@@ -1,0 +1,68 @@
+{% load csp %}
+<dialog id="weekly-apply-prompt" aria-labelledby="weekly-apply-prompt-title" class="card w-full p-5 sm:p-6"
+    data-endpoint="{% url 'jobs:roundup_quick' %}" data-topic="{{ weekly_prompt_topic }}" data-campaign="{{ weekly_prompt_campaign }}">
+  <div data-prompt-ask>
+    <h2 id="weekly-apply-prompt-title" class="text-xl font-semibold tracking-tight">Good luck with your application</h2>
+    <p class="mt-2 text-muted-foreground">Want more roles like this? Get one free email every Thursday with hand-picked remote {% if weekly_prompt_topic_label %}{{ weekly_prompt_topic_label|lower }} {% else %}impact {% endif %}jobs.</p>
+    <form class="mt-4 space-y-3" data-prompt-form novalidate>
+      <label for="weekly-apply-prompt-email" class="label">Email address</label>
+      <input id="weekly-apply-prompt-email" class="input w-full" type="email" name="email" autocomplete="email" required maxlength="254"
+          placeholder="you@example.org" value="{% if user.is_authenticated %}{{ user.email }}{% endif %}">
+      <p class="text-sm text-red-600" role="alert" data-prompt-error hidden></p>
+      <button type="submit" class="btn btn-primary btn-block">Send me weekly picks</button>
+      <p class="help">One free email a week. We'll send a link to confirm first. Unsubscribe anytime.</p>
+    </form>
+    <form method="dialog" class="mt-2 flex justify-center">
+      <button class="btn btn-ghost btn-sm" data-prompt-dismiss>No thanks</button>
+    </form>
+  </div>
+  <div data-prompt-done hidden>
+    <h2 class="text-xl font-semibold tracking-tight" role="status">Check your inbox</h2>
+    <p class="mt-2 text-muted-foreground">Open the link we sent to start getting weekly picks.</p>
+    <form method="dialog" class="mt-4"><button class="btn btn-secondary btn-block">Back to the role</button></form>
+  </div>
+</dialog>
+<style>#weekly-apply-prompt::backdrop { background: rgb(0 0 0 / .5); backdrop-filter: blur(4px); } #weekly-apply-prompt { margin: auto; width: min(480px, calc(100% - 2rem)); }</style>
+{% csp_script %}<script>
+(function () {
+  var dialog = document.getElementById('weekly-apply-prompt');
+  if (!dialog || typeof dialog.showModal !== 'function') return;
+  var KEY = 'ri-weekly-apply-prompt';
+  var DAY = 86400000;
+  function quietUntil() { try { return Number(localStorage.getItem(KEY)) || 0; } catch (e) { return 0; } }
+  function quiet(days) { try { localStorage.setItem(KEY, String(Date.now() + days * DAY)); } catch (e) {} }
+  function track(name) { if (typeof gtag === 'function') gtag('event', name, {event_category: 'newsletter'}); }
+  var shown = false;
+  document.querySelectorAll('[data-track="apply_click"]').forEach(function (link) {
+    link.addEventListener('click', function () {
+      if (shown || quietUntil() > Date.now()) return;
+      shown = true;
+      setTimeout(function () { dialog.showModal(); track('weekly_prompt_shown'); }, 300);
+    });
+  });
+  dialog.querySelector('[data-prompt-dismiss]').addEventListener('click', function () { quiet(30); track('weekly_prompt_dismissed'); });
+  var form = dialog.querySelector('[data-prompt-form]');
+  var error = dialog.querySelector('[data-prompt-error]');
+  var button = form.querySelector('button[type=submit]');
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    var body = new URLSearchParams({email: form.email.value, consent: 'yes', topic: dialog.dataset.topic,
+                                    source: 'apply_prompt', campaign: dialog.dataset.campaign});
+    button.disabled = true;
+    error.hidden = true;
+    fetch(dialog.dataset.endpoint, {method: 'POST', body: body, credentials: 'same-origin', headers: {'Accept': 'application/json'}})
+      .then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (data) { return {ok: response.ok, data: data}; });
+      })
+      .then(function (result) {
+        if (!result.ok) throw new Error(result.data.error || 'Something went wrong. Please try again.');
+        quiet(365);
+        track('weekly_prompt_submitted');
+        dialog.querySelector('[data-prompt-ask]').hidden = true;
+        dialog.querySelector('[data-prompt-done]').hidden = false;
+      })
+      .catch(function (err) { error.textContent = err.message; error.hidden = false; })
+      .finally(function () { button.disabled = false; });
+  });
+})();
+</script>{% endcsp_script %}
