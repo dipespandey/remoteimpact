@@ -183,7 +183,10 @@ class EmailService:
     def send_employer_monthly_report(self, claim, stats: dict, report_link: str) -> bool:
         """Monthly 'applicants we sent you' summary for a verified employer contact."""
         feature_url = ""
-        if stats.get("top_slug"):
+        from django.utils import timezone
+        from jobs.models import Job
+        already_featured = Job.objects.filter(slug=stats.get("top_slug"), featured_until__gt=timezone.now()).exists()
+        if stats.get("top_slug") and not already_featured:
             feature_url = (settings.SITE_URL.rstrip("/") + reverse("jobs:feature_job", kwargs={"slug": stats["top_slug"]})
                            + "?utm_source=email&utm_campaign=employer_monthly")
         context = {"claim": claim, "stats": stats, "report_link": report_link, "feature_url": feature_url}

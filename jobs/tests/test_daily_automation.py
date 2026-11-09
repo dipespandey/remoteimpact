@@ -28,9 +28,9 @@ class DailyAutomationTests(EmployerTestBase):
         self.climate = Category.objects.create(name="Climate & Environment", slug="climate-environment")
         self.health = Category.objects.create(name="Global Health", slug="global-health")
 
-    def role(self, n, category, *, raw=None, salary=60000, level="mid", org=None):
+    def role(self, n, category, *, raw=None, salary=60000, level="mid", org=None, description=DESCRIPTION):
         org = org or Organization.objects.create(name=f"Org {n}", slug=f"org-{n}")
-        return Job.objects.create(title=f"Role {n}", slug=f"role-{n}", organization=org, category=category, description=DESCRIPTION,
+        return Job.objects.create(title=f"Role {n}", slug=f"role-{n}", organization=org, category=category, description=description,
                                   application_url=f"https://jobs.example.org/{n}", quality_score=80, salary_min=salary,
                                   salary_max=salary + 10000, location="Remote (US)", experience_level=level, raw_data=raw or {})
 
@@ -77,15 +77,17 @@ class DailyAutomationTests(EmployerTestBase):
         good = [self.role(n, self.climate if n % 2 else self.health, raw=verified()) for n in range(4)]
         self.role(10, self.climate, raw=verified(hours_ago=30))
         self.role(11, self.climate, raw={"source_verification": {"status": "closed", "checked_at": timezone.now().isoformat()}})
-        self.role(12, self.climate, raw=verified(), salary=40)
+        self.role(12, self.climate, raw={**verified(), "salaryPeriod": "HOUR"})
+        self.role(13, self.climate, raw={**verified(), "salaryPeriod": "MONTH"})
+        self.role(14, self.climate, raw=["not", "a", "dict"])
         RoundupSubscriber.objects.create(email="reader@example.org", confirmed_at=timezone.now())
         provider, out = self.auto_roundup("--send")
         self.assertEqual(provider.call_count, 1)
         _, subject, html, text, _ = provider.call_args.args
-        self.assertEqual(subject, "4 verified remote impact roles this week")
+        self.assertEqual(subject, "This week's verified remote impact roles")
         for job in good:
             self.assertIn(job.title, text)
-        for title in ("Role 10", "Role 11", "Role 12"):
+        for title in ("Role 10", "Role 11", "Role 12", "Role 13", "Role 14"):
             self.assertNotIn(title, text)
         self.assertIn("The employer lists: Remote - US.", text)
         self.assertIn("USD 60,000–70,000 a year", text)
@@ -106,6 +108,22 @@ class DailyAutomationTests(EmployerTestBase):
         provider, out = self.auto_roundup("--send")
         provider.assert_not_called()
         self.assertIn("Only 1 verified roles qualified", out)
+
+    def test_monthly_report_does_not_pitch_a_role_that_is_already_featured(self):
+        self.job.featured_until = timezone.now() + timedelta(days=10)
+        self.job.save()
+        JobDailyStat.objects.create(job=self.job, date=timezone.localdate(), views=30, apply_clicks=5)
+        OrganizationClaim.objects.create(organization=self.org, email="a@climate.example.org", verified_at=timezone.now())
+        with patch("jobs.services.email_service.EmailService.send_email", return_value=True) as send:
+            call_command("send_employer_monthly_reports", send=True, stdout=io.StringIO())
+        self.assertNotIn("/feature/", send.call_args.kwargs["text"])
+
+    def test_insight_only_claims_a_real_gap(self):
+        from jobs.management.commands.send_auto_roundup import insight
+        for n in range(10):
+            JobDailyStat.objects.create(job=self.role(n, self.climate, level="entry"), date=timezone.localdate(), apply_clicks=2)
+            JobDailyStat.objects.create(job=self.role(100 + n, self.climate, level="senior"), date=timezone.localdate(), apply_clicks=2)
+        self.assertNotIn("times as many", insight())
 
     def test_monthly_report_offers_a_feature_for_the_most_clicked_role(self):
         self.org.homepage_url = "https://climate.example.org"

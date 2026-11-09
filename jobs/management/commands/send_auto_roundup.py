@@ -1,7 +1,7 @@
 """Assemble and send the weekly roundup from machine-verified roles, without a manual review step.
 
 A role qualifies only if the employer's own ATS confirmed it open in the last 23 hours (verify_ats_jobs
-runs daily), it lists an annual pay range, and it was posted in the last three weeks. The issue goes
+runs daily), it passes the site's annual-pay evidence gate, and it was posted in the last three weeks. The issue goes
 through send_roundup, so its identity, freshness and duplicate-delivery checks all still apply.
 If any issue was already delivered this week (for example a hand-edited one), this does nothing.
 
@@ -24,16 +24,22 @@ from django.utils.dateparse import parse_datetime
 
 from jobs.models import JobDailyStat, RoundupDelivery
 from jobs.services.impact_metrics import competition
+from jobs.services.job_quality import supported_base_salary
 from jobs.services.job_service import JobService
 from jobs.services.roundup import CATEGORY, issue_week
 
 SLOTS = (("climate", 2), ("health", 2), ("ai", 2), ("early", 1))
 MAX_PICKS = 8
-MIN_ANNUAL = 15000
+
+
+def raw(job, key):
+    data = job.raw_data if isinstance(job.raw_data, dict) else {}
+    value = data.get(key)
+    return value if isinstance(value, dict) else {}
 
 
 def verified_at(job, now):
-    check = (job.raw_data or {}).get("source_verification") or {}
+    check = raw(job, "source_verification")
     checked = parse_datetime(str(check.get("checked_at") or ""))
     if check.get("status") == "open" and checked and now - timedelta(hours=23) <= checked <= now:
         return checked
@@ -47,16 +53,16 @@ def topics(job):
     return found
 
 
-def pay(job):
-    low, high, currency = int(job.salary_min), int(job.salary_max or 0), job.salary_currency or "USD"
-    if high > low:
+def pay(salary):
+    value = salary["value"]
+    low, high, currency = int(value.get("minValue") or 0), int(value.get("maxValue") or 0), salary["currency"]
+    if low and high > low:
         return f"{currency} {low:,}–{high:,} a year, as listed by the employer."
-    return f"{currency} {low:,} a year, as listed by the employer."
+    return f"{currency} {low or high:,} a year, as listed by the employer."
 
 
 def where(job):
-    check = (job.raw_data or {}).get("ats_check") or {}
-    listed = (check.get("location") or "").strip()
+    listed = str(raw(job, "ats_check").get("location") or "").strip()
     text = job.location.strip().rstrip(".") + "."
     if listed and listed.lower() not in job.location.lower():
         text += f" The employer lists: {listed[:120]}."
@@ -64,44 +70,47 @@ def where(job):
 
 
 def choose(now):
-    pool = (JobService.get_available_jobs().filter(posted_at__gte=now - timedelta(days=21), salary_min__gte=MIN_ANNUAL)
-            .exclude(application_url="").select_related("organization", "category"))
-    pool = [(job, verified_at(job, now)) for job in pool]
-    pool = [(job, checked) for job, checked in pool if checked]
+    recent = (JobService.get_available_jobs().filter(posted_at__gte=now - timedelta(days=21), salary_min__gt=0)
+              .exclude(application_url="").select_related("organization", "category").defer("embedding", "search_vector"))
+    pool = []
+    for job in JobService._annual_salary_jobs(recent):
+        checked, salary = verified_at(job, now), None
+        if checked:
+            salary = supported_base_salary(job)
+        if salary:
+            pool.append((job, checked, salary))
     since = timezone.localdate() - timedelta(days=6)
     clicks = {row["job_id"]: row["c"] or 0 for row in JobDailyStat.objects.filter(
-        date__gte=since, job_id__in=[job.pk for job, _ in pool]).values("job_id").annotate(c=Sum("apply_clicks"))}
+        date__gte=since, job_id__in=[job.pk for job, _, _ in pool]).values("job_id").annotate(c=Sum("apply_clicks"))}
     pool.sort(key=lambda item: (-clicks.get(item[0].pk, 0), -(item[0].quality_score or 0), -item[0].posted_at.timestamp()))
     picked, employers = [], set()
 
-    def take(job, checked):
-        picked.append((job, checked))
-        employers.add(job.organization_id)
-
     for topic, count in SLOTS:
-        for job, checked in pool:
-            if count and topic in topics(job) and job.organization_id not in employers:
-                take(job, checked)
+        for item in pool:
+            if count and topic in topics(item[0]) and item[0].organization_id not in employers:
+                picked.append(item)
+                employers.add(item[0].organization_id)
                 count -= 1
-    for job, checked in pool:
+    for item in pool:
         if len(picked) >= MAX_PICKS:
             break
-        if job.organization_id not in employers:
-            take(job, checked)
+        if item[0].organization_id not in employers:
+            picked.append(item)
+            employers.add(item[0].organization_id)
     return picked
 
 
 def insight():
     sectors = competition("category")
-    levels = {row.label: row for row in competition("level", min_roles=1)}
+    levels = {row.label: row for row in competition("level", min_roles=10)}
     lines = []
     if len(sectors) >= 2:
         busy, quiet = sectors[0], sectors[-1]
         lines.append(f"Over the last 30 days, {busy.label.lower()} roles drew {busy.per_role:.1f} apply clicks each from "
                      f"Remote Impact readers, while {quiet.label.lower()} roles drew {quiet.per_role:.1f}.")
     entry, senior = levels.get("Entry Level"), levels.get("Senior")
-    if entry and senior and senior.per_role:
-        lines.append(f"Entry-level roles drew {entry.per_role / senior.per_role:.0f} times as many clicks per role as senior ones, "
+    if entry and senior and senior.per_role and entry.per_role / senior.per_role >= 1.5:
+        lines.append(f"Entry-level roles drew {entry.per_role / senior.per_role:.1f} times as many clicks per role as senior ones, "
                      "so experienced applicants often face less competition than they expect.")
     return " ".join(lines)
 
@@ -114,13 +123,13 @@ def build_issue(now):
                   {"utm_source": "newsletter", "utm_medium": "email", "utm_campaign": f"roundup_{stamp}"}),
               "employer_source": job.application_url, "job_id": str(job.pk),
               "employer_source_reviewed_at": checked.isoformat(),
-              "eligible_countries_review": where(job), "salary_review": pay(job)}
-             for job, checked in choose(now)]
-    note = [f"{len(picks)} remote roles this week, each confirmed open on the employer's own site in the last day."]
+              "eligible_countries_review": where(job), "salary_review": pay(salary)}
+             for job, checked, salary in choose(now)]
+    note = ["This week's remote roles, each confirmed open on the employer's own site in the last day."]
     if text := insight():
         note.append(text)
     return {"prepared_at": now.isoformat(), "status": "approved", "issue_week": issue_week(),
-            "subject": f"{len(picks)} verified remote impact roles this week", "note": note, "picks": picks,
+            "subject": "This week's verified remote impact roles", "note": note, "picks": picks,
             "editorial_approval": {"method": "automatic", "rule": "employer ATS confirmed open within 23 hours; annual pay listed"},
             "send_enabled": True}
 

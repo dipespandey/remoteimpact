@@ -389,7 +389,7 @@ def supported_base_salary(job):
     # Legacy enrichment can retain an annualized estimate for hourly work.
     # The explicit source unit takes precedence over that cached metadata.
     source_period = str(raw.get("salaryPeriod") or raw.get("salary_period") or "").lower()
-    if source_period in {"hour", "hourly", "hr", "day", "daily", "week", "weekly"}:
+    if source_period in {"hour", "hourly", "hr", "day", "daily", "week", "weekly", "month", "monthly"}:
         return None
     # A quoted fixed-term total must not be advertised as yearly base salary.
     from jobs.services.term_compensation import quoted_term_compensation

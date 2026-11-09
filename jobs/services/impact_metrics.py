@@ -70,7 +70,7 @@ def day_signal(day):
     return {
         "job_views": stats["v"] or 0,
         "apply_clicks": stats["c"] or 0,
-        "new_roles": Job.objects.filter(posted_at__gte=start, posted_at__lt=end).count(),
+        "roles_seen": JobService.get_available_jobs().filter(last_seen_at__gte=start, last_seen_at__lt=end).count(),
         "accounts": ConsumerFunnelEvent.objects.filter(event="account_created", created_at__gte=start, created_at__lt=end).count(),
         "weekly_requests": weekly.filter(confirmation_requested_at__gte=start, confirmation_requested_at__lt=end).count(),
         "weekly_requests_from_apply_prompt": weekly.filter(source="apply_prompt", confirmation_requested_at__gte=start,
