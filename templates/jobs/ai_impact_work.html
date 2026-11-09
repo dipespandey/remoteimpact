@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}AI and the Future of Impact Work: Remote Impact Data{% endblock %}
+{% block meta_description %}How AI shows up in remote impact hiring: high-impact areas from AI safety and effective altruism to global health and climate, impact roles asking for AI skills, and where experienced applicants face less competition. Updated from live listings.{% endblock %}
+{% block og_title %}AI and the future of impact work{% endblock %}
+{% block og_description %}Open AI safety roles, impact roles asking for AI skills, and apply-click competition by seniority, from Remote Impact's live listings.{% endblock %}
+{% block canonical %}{{ SITE_URL }}{% url 'jobs:ai_impact_work' %}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "AI and the Future of Impact Work",
+  "description": "Open roles and demand in high-impact areas (AI safety, effective altruism, biosecurity, global health, animal welfare, climate, poverty), open AI safety and governance roles, impact roles that name AI in the title by domain, and apply clicks per open role by experience level, from Remote Impact's current remote listings.",
+  "url": "{{ SITE_URL }}{% url 'jobs:ai_impact_work' %}",
+  "creator": {"@type": "Organization", "name": "Remote Impact", "url": "{{ SITE_URL }}"},
+  "dateModified": "{{ updated_at|date:'c' }}",
+  "variableMeasured": ["Open roles and apply clicks per role in high-impact areas", "Open AI safety and governance roles", "Apply clicks per AI safety role", "Impact roles naming AI in the title, by domain", "Apply clicks per open role by experience level"],
+  "isAccessibleForFree": true
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container py-8 sm:py-10">
+  <header class="page-header max-w-3xl">
+    <p class="kicker">Remote impact jobs index</p>
+    <h1 class="page-title mt-1">AI and the future of impact work</h1>
+    <p class="page-lede">AI is changing which skills employers ask for and where people want to work. These numbers come from the remote roles Remote Impact lists today and how our readers apply to them. They describe this catalogue, not the whole labour market.</p>
+    <p class="mt-3 text-xs tabular-nums text-muted-foreground">Updated {{ updated_at|date:"F j, Y" }} · {{ ai_demand.live_roles|intcomma }} current roles</p>
+  </header>
+
+  <section class="section" aria-labelledby="areas-heading">
+    <div class="max-w-[68ch]">
+      <h2 id="areas-heading" class="section-title">High-impact areas</h2>
+      <p class="mt-2 text-base leading-7 text-muted-foreground">Where the work is most directly about doing the most good: making AI safe and accountable, effective altruism, pandemic preparedness, global health, animal welfare, climate and poverty. Open roles today, and apply clicks per role over the last 30 days.</p>
+    </div>
+    <div class="card mt-5 p-5 sm:p-6">
+      <div class="space-y-3.5">
+        {% for row in impact_areas %}
+        <div class="flex items-center justify-between gap-4 text-sm"><a href="{% url 'jobs:category_landing' slug=row.slug %}" class="font-medium text-foreground hover:underline">{{ row.label }}</a><span class="text-xs tabular-nums text-muted-foreground">{{ row.roles|intcomma }} roles · {{ row.per_role }} clicks per role</span></div>
+        {% empty %}<p class="text-sm text-muted-foreground">No current roles in these areas.</p>{% endfor %}
+      </div>
+    </div>
+    <dl class="mt-5 grid gap-3 sm:grid-cols-3">
+      <div class="stat"><dd class="stat-value">{{ ai_demand.safety_roles|intcomma }}</dd><dt class="stat-label">Open AI safety and governance roles</dt></div>
+      <div class="stat"><dd class="stat-value">{{ ai_demand.safety_per_role }}</dd><dt class="stat-label">Apply clicks per AI safety role, last 30 days</dt></div>
+      <div class="stat"><dd class="stat-value">{{ ai_demand.ai_titled_elsewhere|intcomma }}</dd><dt class="stat-label">Other impact roles naming AI in the title</dt></div>
+    </dl>
+  </section>
+
+  <section class="section" aria-labelledby="skills-heading">
+    <div class="max-w-[68ch]">
+      <h2 id="skills-heading" class="section-title">Impact roles that ask for AI skills</h2>
+      <p class="mt-2 text-base leading-7 text-muted-foreground">Open roles outside AI safety whose title names AI, machine learning or LLMs, by impact domain. Titles understate it: many more roles mention AI tools in the description.</p>
+    </div>
+    <div class="card mt-5 p-5 sm:p-6">
+      <div class="space-y-3.5">
+        {% for row in ai_sectors %}
+        <div class="flex items-center justify-between gap-4 text-sm"><a href="{% url 'jobs:category_landing' slug=row.slug %}" class="font-medium text-foreground hover:underline">{{ row.label }}</a><span class="text-xs tabular-nums text-muted-foreground">{{ row.roles|intcomma }} roles</span></div>
+        {% empty %}<p class="text-sm text-muted-foreground">No current roles name AI in the title outside AI safety.</p>{% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="experience-heading">
+    <div class="max-w-[68ch]">
+      <h2 id="experience-heading" class="section-title">Where experience counts</h2>
+      <p class="mt-2 text-base leading-7 text-muted-foreground">Apply clicks per open role over the last 30 days, by experience level. A lower number usually means less competition for each opening. This counts readers who left Remote Impact for the employer's application page, not the employer's whole applicant pool.</p>
+    </div>
+    <div class="card mt-5 p-5 sm:p-6">
+      <div class="space-y-3.5">
+        {% for row in demand_levels %}
+        <div>
+          <div class="flex items-center justify-between gap-4 text-sm"><span class="font-medium text-foreground">{{ row.label }}</span><span class="text-xs tabular-nums text-muted-foreground">{{ row.per_role }} · {{ row.roles|intcomma }} roles</span></div>
+          <div class="mt-1.5 h-1.5 rounded-full bg-muted" aria-hidden="true"><div class="h-1.5 rounded-full bg-foreground/70" style="width: {{ row.percent }}%;"></div></div>
+        </div>
+        {% empty %}<p class="text-sm text-muted-foreground">Not enough activity yet.</p>{% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="surface flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6" aria-labelledby="weekly-heading">
+    <div><h2 id="weekly-heading" class="section-title">Follow it weekly</h2><p class="mt-1 text-sm text-muted-foreground">One free email every Thursday with verified remote impact roles and what the numbers show.</p></div>
+    <div class="flex flex-wrap gap-2"><a href="{% url 'jobs:roundup' %}?source=ai_work" data-track="ai_work_roundup" data-track-category="newsletter" class="btn btn-primary">Get the weekly picks</a><a href="{% url 'jobs:impact_jobs_snapshot' %}" class="btn btn-secondary">Full jobs index</a></div>
+  </section>
+
+  <p class="mt-8 max-w-[68ch] text-xs leading-6 text-muted-foreground">Methodology: counts use Remote Impact's public catalogue at the update time shown. AI-titled roles match "AI", "artificial intelligence", "machine learning", "ML" or "LLM" as whole words in the title. Apply clicks are counted once per visitor per role per day, only after a real page view, and exclude known bots.</p>
+</div>
+{% endblock %}

@@ -185,3 +185,25 @@ class PlainTextEmailTemplateTests(EmployerTestBase):
         self.assertIn("Huntington's Disease", text)
         self.assertIn("Programs & Support", text)
         self.assertIn("?a=1&b=2", text)
+
+
+@override_settings(SECURE_SSL_REDIRECT=False, SITE_URL="https://remoteimpact.org")
+class AIImpactWorkPageTests(EmployerTestBase):
+    def test_page_shows_ai_safety_demand_and_ai_skill_roles_by_domain(self):
+        cache.clear()
+        safety = Category.objects.create(name="AI Safety & Governance", slug="ai-safety")
+        climate = Category.objects.create(name="Climate & Environment", slug="climate-environment")
+        for n, (title, category) in enumerate([("Research Engineer", safety), ("AI Program Lead", climate), ("Machine Learning Analyst", climate), ("Grant Writer", climate)]):
+            org = Organization.objects.create(name=f"AI Org {n}", slug=f"ai-org-{n}")
+            Job.objects.create(title=title, slug=f"ai-role-{n}", organization=org, category=category, description=DESCRIPTION,
+                               application_url=f"https://jobs.example.org/ai/{n}", quality_score=80)
+        response = self.client.get(reverse("jobs:ai_impact_work"))
+        self.assertContains(response, "AI and the future of impact work")
+        self.assertContains(response, '<a href="/jobs/category/climate-environment/" class="font-medium text-foreground hover:underline">Climate &amp; Environment</a><span class="text-xs tabular-nums text-muted-foreground">2 roles</span>', html=False)
+        self.assertContains(response, '"@type": "Dataset"')
+        self.assertContains(response, "High-impact areas")
+        ea = Category.objects.create(name="Effective Altruism", slug="effective-altruism")
+        Job.objects.create(title="Operations Lead", slug="ea-ops", organization=self.org, category=ea, description=DESCRIPTION,
+                           application_url="https://jobs.example.org/ea", quality_score=80)
+        cache.clear()
+        self.assertContains(self.client.get(reverse("jobs:ai_impact_work")), ">Effective Altruism</a>")

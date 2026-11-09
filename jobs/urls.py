@@ -2,6 +2,7 @@ from .views.pro_rata import ProRataPayView
 from .views.roundup_issue import roundup_issue
 from .views.roundup import RoundupView, RoundupConfirmView, RoundupQuickView, RoundupUnsubscribeView
 from django.urls import path
+from .views.resources import AIImpactWorkView
 from django.views.generic import RedirectView
 from . import views
 from .views.resources import home as resources_home
@@ -38,6 +39,7 @@ urlpatterns = [
     path("resources/", views.ResourcesView.as_view(), name="resources"),
     path("resources/remote-impact-jobs/", views.PartnerResourcesView.as_view(), name="partner_resources"),
     path("insights/remote-impact-jobs/", views.ImpactJobsSnapshotView.as_view(), name="impact_jobs_snapshot"),
+    path("insights/ai-and-impact-work/", AIImpactWorkView.as_view(), name="ai_impact_work"),
     path("insights/nonprofit-hiring-locations/", NonprofitHiringLocationsView.as_view(), name="nonprofit_hiring_locations"),
     path("insights/nonprofit-hiring-locations/data.json", nonprofit_hiring_locations_data, name="nonprofit_hiring_locations_data"),
     path("insights/<slug:topic>/", HiringEvidenceView.as_view(), name="hiring_evidence"),

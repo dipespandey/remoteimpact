@@ -87,3 +87,27 @@ def day_signal(day):
 def weekly_audience():
     from jobs.services.roundup import active_subscribers
     return active_subscribers().count()
+
+
+def ai_titled_by_sector(limit=8):
+    """Open roles outside AI safety whose title names AI, by impact domain."""
+    rows = (JobService.get_available_jobs().exclude(category__slug="ai-safety").filter(AI_TITLE)
+            .exclude(category__isnull=True).values("category__name", "category__slug").annotate(n=Count("pk")).order_by("-n")[:limit])
+    return [{"label": r["category__name"], "slug": r["category__slug"], "roles": r["n"]} for r in rows]
+
+
+HIGH_IMPACT_AREAS = ("ai-safety", "effective-altruism", "biosecurity", "global-health", "animal-welfare",
+                     "climate-environment", "poverty-development", "nuclear-security")
+
+
+def impact_areas(slugs=HIGH_IMPACT_AREAS, days=30):
+    """Open roles and apply clicks per role in the domains Remote Impact treats as highest-impact."""
+    live = JobService.get_available_jobs().filter(category__slug__in=slugs)
+    since = timezone.localdate() - timedelta(days=days - 1)
+    clicks = {r["job__category__slug"]: r["c"] or 0 for r in JobDailyStat.objects.filter(date__gte=since, job__in=live)
+              .values("job__category__slug").annotate(c=Sum("apply_clicks"))}
+    rows = [{"label": r["category__name"], "slug": r["category__slug"], "roles": r["n"],
+             "per_role": round(clicks.get(r["category__slug"], 0) / r["n"], 1)}
+            for r in live.values("category__name", "category__slug").annotate(n=Count("pk"))]
+    order = {slug: i for i, slug in enumerate(slugs)}
+    return sorted(rows, key=lambda r: order[r["slug"]])
