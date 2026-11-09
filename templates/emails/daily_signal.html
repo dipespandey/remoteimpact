@@ -12,4 +12,7 @@
 {% for row in rows %}<tr><td style="padding:8px 0;color:#1d211e;border-bottom:1px solid #e5e9e4">{{ row.label }}</td><td style="padding:8px 0;text-align:right;font-weight:bold;border-bottom:1px solid #e5e9e4">{{ row.value }}</td><td style="padding:8px 0;text-align:right;color:#626a63;border-bottom:1px solid #e5e9e4">{{ row.average }}</td></tr>
 {% endfor %}</table>
 <p style="margin:16px 0 0;color:#626a63;font-size:13px;line-height:1.5">Days are UTC. Apply clicks are people who left Remote Impact for an employer's application page.</p>
+{% if linkedin_post %}<h2 style="margin:28px 0 8px;font-size:18px">LinkedIn post, ready to paste</h2>
+<p style="margin:0 0 8px;color:#626a63;font-size:13px">Post it as the RemoteImpact company page.</p>
+<pre style="margin:0;padding:14px;background:#f4f7f1;white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:1.5;color:#1d211e">{{ linkedin_post }}</pre>{% endif %}
 {% endblock %}

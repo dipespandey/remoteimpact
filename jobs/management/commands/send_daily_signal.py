@@ -10,7 +10,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from jobs.services.email_service import email_service
-from jobs.services.impact_metrics import day_signal, weekly_audience
+from jobs.services.impact_metrics import competition, day_signal, impact_areas, weekly_audience
 
 ROWS = [
     ("apply_clicks", "Apply clicks sent to employers"),
@@ -27,6 +27,26 @@ ROWS = [
     ("pro_payments", "Pro payments"),
 ]
 MONEY = ("features_sold", "posts_sold", "pro_payments")
+
+
+def linkedin_draft():
+    """A company-page post built from this month's numbers, for the owner to paste on Fridays."""
+    areas = [a for a in impact_areas() if a["roles"] >= 10]
+    levels = {r.label: r for r in competition("level", min_roles=10)}
+    if len(areas) < 2:
+        return ""
+    quiet = min(areas, key=lambda a: a["per_role"])
+    busy = max(areas, key=lambda a: a["per_role"])
+    lines = [f"Where is it easiest to stand out in impact work right now?",
+             "",
+             f"Over the last 30 days on Remote Impact, {busy['label']} roles drew {busy['per_role']} apply clicks each. "
+             f"{quiet['label']} roles drew {quiet['per_role']}, across {quiet['roles']:,} open roles."]
+    entry, senior = levels.get("Entry Level"), levels.get("Senior")
+    if entry and senior and senior.per_role and entry.per_role / senior.per_role >= 1.5:
+        lines.append(f"Entry-level roles drew {entry.per_role / senior.per_role:.1f}x the clicks per role of senior ones.")
+    lines += ["", "Live numbers for AI safety, effective altruism, global health, climate and more:",
+              settings.SITE_URL.rstrip("/") + "/insights/ai-and-impact-work/"]
+    return "\n".join(lines)
 
 
 def build_signal(day):
@@ -48,7 +68,8 @@ def build_signal(day):
     audience = weekly_audience()
     subject = (f"Remote Impact {day:%a %d %b}: {today['apply_clicks']} apply clicks, "
                f"{today['weekly_confirmed']} new subscribers, {sales} sale{'s' if sales != 1 else ''}")
-    return {"day": day, "rows": rows, "alerts": alerts, "audience": audience, "subject": subject}
+    post = linkedin_draft() if day.weekday() == 3 else ""
+    return {"day": day, "rows": rows, "alerts": alerts, "audience": audience, "subject": subject, "linkedin_post": post}
 
 
 class Command(BaseCommand):
