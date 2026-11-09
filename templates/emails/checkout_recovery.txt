@@ -1,4 +1,4 @@
-Hi {{ user.first_name|default:"there" }},
+{% autoescape off %}Hi {{ user.first_name|default:"there" }},
 
 {% if reached_checkout %}You started setting up Remote Impact Pro yesterday but didn't finish. No problem, nothing was charged.{% else %}You had a look at Remote Impact Pro yesterday. Your Scout has already found roles for you, and Pro keeps it checking every new one.{% endif %}
 
@@ -12,3 +12,4 @@ If something got in the way (price, payment method, or the checkout itself), jus
 Remote Impact
 
 Don't want emails like this? {{ unsubscribe_url }}
+{% endautoescape %}

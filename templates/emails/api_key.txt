@@ -1,4 +1,4 @@
-Hi {{ key.name }},
+{% autoescape off %}Hi {{ key.name }},
 
 Here is your Remote Impact API key ({{ key.get_tier_display }}):
 
@@ -18,3 +18,4 @@ Please link to the listing URL whenever you show a role, and don't republish ful
 This trial key is limited (500 requests a day, 100 roles per query). For a product or research on the full catalogue, request commercial access at {{ site }}/developers/#get-key{% endif %}
 
 Remote Impact
+{% endautoescape %}

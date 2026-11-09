@@ -1,4 +1,4 @@
-Hi,
+{% autoescape off %}Hi,
 
 You signed up for Remote Impact a while ago. We now send one short email a week with hand-picked remote roles in climate, global health, AI safety and social impact.
 
@@ -12,3 +12,4 @@ Don't email me about this: {{ stop_url }}
 
 Dipesh
 Remote Impact · remoteimpact.org
+{% endautoescape %}

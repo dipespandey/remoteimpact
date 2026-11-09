@@ -1,4 +1,4 @@
-Remote Impact Jobs - Your Weekly Digest
+{% autoescape off %}Remote Impact Jobs - Your Weekly Digest
 ========================================
 
 Hi{% if user.first_name %} {{ user.first_name }}{% endif %},
@@ -31,3 +31,4 @@ Get personalized job matches by completing your Impact Profile: {{ profile_url }
 You're receiving this because you signed up for Remote Impact Jobs.
 Unsubscribe: {{ unsubscribe_url }}
 Visit: {{ site_url }}
+{% endautoescape %}

@@ -1,0 +1,15 @@
+{% extends "emails/base.html" %}
+{% block title %}Remote Impact daily signal{% endblock %}
+{% block content %}
+<p style="margin:32px 0 9px;color:#5b7152;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase">Daily signal</p>
+<h1 style="margin:0;font-size:26px;line-height:1.25">{{ day|date:"l j F" }}</h1>
+{% if alerts %}<div style="margin:18px 0 0;padding:14px 16px;background:#f4f7f1;border-left:3px solid #365426">
+{% for alert in alerts %}<p style="margin:0 0 6px;color:#1d211e;font-size:15px;line-height:1.5">{{ alert }}</p>{% endfor %}
+</div>{% endif %}
+<p style="margin:18px 0 8px;color:#565e57;font-size:15px">Weekly roundup audience now: <strong style="color:#1d211e">{{ audience }}</strong></p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:14px">
+<tr><td style="padding:8px 0;color:#626a63;border-bottom:1px solid #e5e9e4"></td><td style="padding:8px 0;color:#626a63;text-align:right;border-bottom:1px solid #e5e9e4">Yesterday</td><td style="padding:8px 0;color:#626a63;text-align:right;border-bottom:1px solid #e5e9e4">7-day avg</td></tr>
+{% for row in rows %}<tr><td style="padding:8px 0;color:#1d211e;border-bottom:1px solid #e5e9e4">{{ row.label }}</td><td style="padding:8px 0;text-align:right;font-weight:bold;border-bottom:1px solid #e5e9e4">{{ row.value }}</td><td style="padding:8px 0;text-align:right;color:#626a63;border-bottom:1px solid #e5e9e4">{{ row.average }}</td></tr>
+{% endfor %}</table>
+<p style="margin:16px 0 0;color:#626a63;font-size:13px;line-height:1.5">Days are UTC. Apply clicks are people who left Remote Impact for an employer's application page.</p>
+{% endblock %}

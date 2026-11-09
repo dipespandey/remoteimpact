@@ -1,4 +1,4 @@
-Hi {{ user.first_name|default:"there" }},
+{% autoescape off %}Hi {{ user.first_name|default:"there" }},
 
 You signed up for Remote Impact — awesome! But you haven't finished your Impact Profile yet.
 
@@ -12,3 +12,4 @@ Complete it here: {{ site_url }}/impact-profile/wizard/
 {{ site_url }}
 
 Unsubscribe: {{ unsubscribe_url }}
+{% endautoescape %}

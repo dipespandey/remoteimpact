@@ -3,6 +3,7 @@
 <p>Hi {{ claim.name|default:"there" }},</p>
 <p>In the last 30 days, {{ claim.organization.name }}'s {{ stats.roles }} live role{{ stats.roles|pluralize }} on Remote Impact {{ stats.roles|pluralize:"was,were" }} viewed {{ stats.views }} times and {{ stats.clicks }} people clicked through to apply. They arrive tagged utm_source=remoteimpact.</p>
 {% if stats.top %}<p>Most clicked: {{ stats.top }}.</p>{% endif %}
+{% if feature_url %}<p>Want more applicants for {{ stats.top }}? <a href="{{ feature_url }}" style="color:#365426;font-weight:600">Feature it for $49</a> to pin it to the top of matching searches and the homepage for 30 days.</p>{% endif %}
 <p style="margin:24px 0"><a href="{{ report_link }}" style="display:inline-block;padding:10px 18px;background:#1d1d22;color:#fff;text-decoration:none;border-radius:999px;font-weight:600">See every role</a></p>
 <p>If a listing is wrong or closed, reply and we'll fix it.</p>
 <p>Remote Impact</p>

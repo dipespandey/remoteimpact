@@ -1,4 +1,4 @@
-Hi {{ user.first_name|default:"there" }},
+{% autoescape off %}Hi {{ user.first_name|default:"there" }},
 
 Welcome to Remote Impact, the job board for remote roles that make a difference.
 
@@ -12,3 +12,4 @@ Happy job hunting!
 - The Remote Impact Team
 
 {{ site_url }}
+{% endautoescape %}

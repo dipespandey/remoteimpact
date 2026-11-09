@@ -1,4 +1,4 @@
-Hi {{ user.first_name|default:"there" }},
+{% autoescape off %}Hi {{ user.first_name|default:"there" }},
 
 A while ago you asked Remote Impact to look for{% if brief %}: "{{ brief }}"{% else %} remote impact roles for you{% endif %}.
 
@@ -12,3 +12,4 @@ Not looking anymore? No action needed, this is the only email like this you'll g
 Remote Impact
 
 Unsubscribe: {{ unsubscribe_url }}
+{% endautoescape %}

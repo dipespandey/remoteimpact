@@ -182,7 +182,11 @@ class EmailService:
 
     def send_employer_monthly_report(self, claim, stats: dict, report_link: str) -> bool:
         """Monthly 'applicants we sent you' summary for a verified employer contact."""
-        context = {"claim": claim, "stats": stats, "report_link": report_link}
+        feature_url = ""
+        if stats.get("top_slug"):
+            feature_url = (settings.SITE_URL.rstrip("/") + reverse("jobs:feature_job", kwargs={"slug": stats["top_slug"]})
+                           + "?utm_source=email&utm_campaign=employer_monthly")
+        context = {"claim": claim, "stats": stats, "report_link": report_link, "feature_url": feature_url}
         return self.send_email(
             to=claim.email,
             subject=f"{stats['clicks']} applicants from Remote Impact to {claim.organization.name} this month",

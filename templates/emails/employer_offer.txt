@@ -1,12 +1,13 @@
-Hi,
+{% autoescape off %}Hi,
 
 Remote Impact lists remote roles at impact organizations. In the last 30 days, {{ org.name }}'s {{ stats.roles }} live role{{ stats.roles|pluralize }} here {{ stats.roles|pluralize:"was,were" }} viewed {{ stats.views }} times, and {{ stats.clicks }} people clicked through to apply. Most clicked: {{ stats.top }}.
 
-If you'd like more applicants for {{ stats.top }}, you can feature it for $49. It gets pinned to the top of matching searches and category pages and shown on the homepage for 30 days: {{ feature_url }}
+If you'd like more applicants for {{ stats.top }}, you can feature it for $49. It gets pinned to the top of matching searches and category pages and shown on the homepage for 30 days: {{ feature_url|safe }}
 
-Or claim {{ org.name }}'s page for free to correct details and get these numbers monthly: {{ claim_url }}
+Or claim {{ org.name }}'s page for free to correct details and get these numbers monthly: {{ claim_url|safe }}
 
 Reply "no thanks" and I won't email again.
 
 Dipesh
 Remote Impact · remoteimpact.org
+{% endautoescape %}

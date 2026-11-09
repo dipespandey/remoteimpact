@@ -1,4 +1,4 @@
-Hi,
+{% autoescape off %}Hi,
 
 We list {{ count }} of {{ org.name }}'s open remote role{{ count|pluralize }} at {{ org_url }}, with source links and recorded verification details.
 
@@ -8,3 +8,4 @@ Reply "no thanks" and we won't email again.
 
 Dipesh
 Remote Impact · remoteimpact.org
+{% endautoescape %}
