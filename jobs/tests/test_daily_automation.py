@@ -59,6 +59,14 @@ class DailyAutomationTests(EmployerTestBase):
         self.assertIn("Features sold ($49): 1", text)
         self.assertIn("An employer claimed their page", text)
 
+    def test_click_alert_compares_with_the_same_weekday(self):
+        day = timezone.localdate() - timedelta(days=1)
+        JobDailyStat.objects.create(job=self.job, date=day, apply_clicks=90)
+        JobDailyStat.objects.create(job=self.role(50, self.climate), date=day - timedelta(days=1), apply_clicks=400)
+        JobDailyStat.objects.create(job=self.role(51, self.climate), date=day - timedelta(days=7), apply_clicks=100)
+        from jobs.management.commands.send_daily_signal import build_signal
+        self.assertFalse([a for a in build_signal(day)["alerts"] if "Apply clicks fell" in a])
+
     def test_daily_signal_dry_run_sends_nothing(self):
         with patch("jobs.management.commands.send_daily_signal.email_service.send_email") as send:
             out = io.StringIO()
@@ -73,12 +81,11 @@ class DailyAutomationTests(EmployerTestBase):
             call_command("send_auto_roundup", *args, stdout=out)
         return provider, out.getvalue()
 
-    def test_auto_roundup_sends_only_freshly_verified_annual_pay_roles(self):
+    def test_auto_roundup_sends_freshly_verified_roles_and_only_states_annual_pay(self):
         good = [self.role(n, self.climate if n % 2 else self.health, raw=verified()) for n in range(4)]
         self.role(10, self.climate, raw=verified(hours_ago=30))
         self.role(11, self.climate, raw={"source_verification": {"status": "closed", "checked_at": timezone.now().isoformat()}})
-        self.role(12, self.climate, raw={**verified(), "salaryPeriod": "HOUR"})
-        self.role(13, self.climate, raw={**verified(), "salaryPeriod": "MONTH"})
+        hourly = self.role(12, self.climate, raw={**verified(), "salaryPeriod": "HOUR"})
         self.role(14, self.climate, raw=["not", "a", "dict"])
         RoundupSubscriber.objects.create(email="reader@example.org", confirmed_at=timezone.now())
         provider, out = self.auto_roundup("--send")
@@ -87,8 +94,11 @@ class DailyAutomationTests(EmployerTestBase):
         self.assertEqual(subject, "This week's verified remote impact roles")
         for job in good:
             self.assertIn(job.title, text)
-        for title in ("Role 10", "Role 11", "Role 12", "Role 13", "Role 14"):
+        for title in ("Role 10", "Role 11", "Role 14"):
             self.assertNotIn(title, text)
+        hourly_block = text.split(hourly.title + " —")[1].split("\n\n")[0]
+        self.assertIn("Pay: check the employer's posting.", hourly_block)
+        self.assertNotIn("a year", hourly_block)
         self.assertIn("The employer lists: Remote - US.", text)
         self.assertIn("USD 60,000–70,000 a year", text)
 

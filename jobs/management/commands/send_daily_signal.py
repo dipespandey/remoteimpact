@@ -40,9 +40,9 @@ def build_signal(day):
         alerts.append(f"{sales} paid event{'s' if sales != 1 else ''} yesterday. Check Stripe and thank the customer.")
     if today["roles_seen"] == 0:
         alerts.append("No live role was re-seen at its source. Imports or verify_ats_jobs may be failing: check /var/log/easyclaw_import*.log and easyclaw_ats_verify.log.")
-    clicks_avg = next(r["average"] for r in rows if r["key"] == "apply_clicks")
-    if clicks_avg >= 50 and today["apply_clicks"] < 0.6 * clicks_avg:
-        alerts.append(f"Apply clicks fell to {today['apply_clicks']} from a 7-day average of {clicks_avg:.0f}.")
+    same_day_last_week = history[-1]["apply_clicks"]
+    if same_day_last_week >= 50 and today["apply_clicks"] < 0.6 * same_day_last_week:
+        alerts.append(f"Apply clicks fell to {today['apply_clicks']} from {same_day_last_week} on the same day last week.")
     if today["claims_verified"]:
         alerts.append("An employer claimed their page. They are your warmest lead this week.")
     audience = weekly_audience()
