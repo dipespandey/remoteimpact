@@ -15,6 +15,9 @@ from jobs.services.email_service import email_service
 from jobs.services.roundup import active_subscribers, public_url, token_for, share_url, issue_week
 
 
+DEFAULT_SUBJECT = 'Your Remote Impact weekly job picks'
+
+
 class Command(BaseCommand):
     help = "Preview by default. Sending requires a reviewed manifest, exact approval hash and --send. No automatic scheduling."
     def add_arguments(self, parser):
@@ -38,6 +41,11 @@ class Command(BaseCommand):
         picks = issue.get('picks', [])
         if not isinstance(picks, list) or not 1 <= len(picks) <= 10:
             raise CommandError("An issue needs 1–10 reviewed picks.")
+        subject = issue.get('subject') or DEFAULT_SUBJECT
+        note = issue.get('note') or []
+        if not isinstance(subject, str) or len(subject) > 90 or not isinstance(note, list) or len(note) > 4 \
+                or not all(isinstance(p, str) and 0 < len(p) <= 600 for p in note):
+            raise CommandError("Subject must be text up to 90 characters; note must be up to 4 paragraphs of up to 600 characters.")
         if options['send']:
             if options['approve_sha256'] != digest or issue.get('status') != 'approved':
                 raise CommandError("Review the manifest, mark approved, and pass its exact SHA-256.")
@@ -88,15 +96,15 @@ class Command(BaseCommand):
             if not active_subscribers().filter(pk=sub.pk).exists():
                 claim.status='suppressed';claim.save(update_fields=['status']);continue
             stop=public_url('jobs:roundup_unsubscribe',token=token_for(sub,'unsubscribe'))
-            html=render_to_string('emails/roundup_issue.html',{'picks':selected,'stop_url':stop,'share_url':share_url(sub)})
-            text='Remote Impact weekly picks\n\n'+'\n\n'.join(f"{p['title']} — {p['employer']}\n{p['eligible_countries_review']}\n{p['salary_review']}\n{p['url']}" for p in selected)+f'\n\nUnsubscribe: {stop}'
+            html=render_to_string('emails/roundup_issue.html',{'picks':selected,'note':note,'stop_url':stop,'share_url':share_url(sub)})
+            text='Remote Impact weekly picks\n\n'+''.join(p+'\n\n' for p in note)+'\n\n'.join(f"{p['title']} — {p['employer']}\n{p['eligible_countries_review']}\n{p['salary_review']}\n{p['url']}" for p in selected)+f"\n\nKnow someone looking for meaningful work? Forward this or share: {share_url(sub)}\n\nUnsubscribe: {stop}"
             headers={'List-Unsubscribe':f'<{stop}>','List-Unsubscribe-Post':'List-Unsubscribe=One-Click'}
             try:
                 # One configured provider only. Never fallback after an ambiguous timeout.
                 if settings.EMAIL_PROVIDER=='cloudflare':
-                    accepted=email_service._send_cloudflare(sub.email,'Your Remote Impact weekly job picks',html,text,headers)=='sent'
+                    accepted=email_service._send_cloudflare(sub.email,subject,html,text,headers)=='sent'
                 else:
-                    accepted=email_service._send_resend(sub.email,'Your Remote Impact weekly job picks',html,text,headers)
+                    accepted=email_service._send_resend(sub.email,subject,html,text,headers)
             except Exception:
                 accepted=False
             claim.status='accepted' if accepted else 'unknown'

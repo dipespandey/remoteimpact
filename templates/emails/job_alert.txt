@@ -1,4 +1,4 @@
-{% load job_extras %}
+{% autoescape off %}{% load job_extras %}
 AI Job Scout: {{ job_count }} job match{{ job_count|pluralize:"es" }}{% if alert_name %} for "{{ alert_name }}"{% endif %}
 
 Hi{% if user.first_name %} {{ user.first_name }}{% endif %},
@@ -36,3 +36,4 @@ Track your progress and share selected job picks: {{ site_url }}/shortlist/
 Unsubscribe: {{ unsubscribe_url }}
 
 — Remote Impact Jobs
+{% endautoescape %}

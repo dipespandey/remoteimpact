@@ -1,4 +1,4 @@
-Hi {{ first_name|default:"there" }},
+{% autoescape off %}Hi {{ first_name|default:"there" }},
 
 We've rebuilt a lot of Remote Impact since you joined:
 
@@ -13,3 +13,4 @@ Dipesh
 Remote Impact
 
 Unsubscribe: {{ unsubscribe_url }}
+{% endautoescape %}

@@ -17,7 +17,8 @@
   "@context": "https://schema.org",
   "@type": "Dataset",
   "name": "Remote Impact Jobs Market Snapshot",
-  "description": "A dated snapshot of current remote jobs across climate, global health, AI safety, nonprofits, and social impact.",
+  "description": "A dated snapshot of current remote jobs across climate, global health, AI safety, nonprofits, and social impact, with apply-click demand per role by domain and experience level.",
+  "variableMeasured": ["Current remote impact roles", "Apply clicks per open role by impact domain", "Apply clicks per open role by experience level", "Open AI safety and governance roles"],
   "url": "{{ SITE_URL }}{% url 'jobs:impact_jobs_snapshot' %}",
   "creator": {"@type": "Organization", "name": "Remote Impact", "url": "{{ SITE_URL }}"},
   "dateModified": "{{ snapshot_updated_at|date:'c' }}",
@@ -83,6 +84,50 @@
       </div>
     </section>
   </div>
+
+  <section class="section" id="demand" aria-labelledby="demand-heading">
+    <div class="max-w-[68ch]">
+      <h2 id="demand-heading" class="section-title">Where applicants are going</h2>
+      <p class="mt-2 text-base leading-7 text-muted-foreground">Apply clicks per open role over the last 30 days: how many people left Remote Impact for the employer's application page, divided by the roles currently open. It measures demand through this site, not an employer's whole applicant pool. A lower number usually means less competition.</p>
+    </div>
+    <div class="mt-5 grid gap-4 lg:grid-cols-2">
+      <div class="card p-5 sm:p-6">
+        <div class="flex items-baseline justify-between"><h3 class="section-title">By impact domain</h3><span class="text-xs text-muted-foreground">Clicks per role</span></div>
+        <div class="mt-4 space-y-3.5">
+          {% for row in demand_sectors %}
+          <div>
+            <div class="flex items-center justify-between gap-4 text-sm"><span class="font-medium text-foreground">{{ row.label }}</span><span class="text-xs tabular-nums text-muted-foreground">{{ row.per_role }} · {{ row.roles|intcomma }} roles</span></div>
+            <div class="mt-1.5 h-1.5 rounded-full bg-muted" aria-hidden="true"><div class="h-1.5 rounded-full bg-foreground/70" style="width: {{ row.percent }}%;"></div></div>
+          </div>
+          {% empty %}<p class="text-sm text-muted-foreground">Not enough activity yet.</p>{% endfor %}
+        </div>
+      </div>
+      <div class="card p-5 sm:p-6">
+        <div class="flex items-baseline justify-between"><h3 class="section-title">By experience level</h3><span class="text-xs text-muted-foreground">Clicks per role</span></div>
+        <div class="mt-4 space-y-3.5">
+          {% for row in demand_levels %}
+          <div>
+            <div class="flex items-center justify-between gap-4 text-sm"><span class="font-medium text-foreground">{{ row.label }}</span><span class="text-xs tabular-nums text-muted-foreground">{{ row.per_role }} · {{ row.roles|intcomma }} roles</span></div>
+            <div class="mt-1.5 h-1.5 rounded-full bg-muted" aria-hidden="true"><div class="h-1.5 rounded-full bg-foreground/40" style="width: {{ row.percent }}%;"></div></div>
+          </div>
+          {% empty %}<p class="text-sm text-muted-foreground">Not enough activity yet.</p>{% endfor %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="ai-and-impact" aria-labelledby="ai-heading">
+    <div class="max-w-[68ch]">
+      <h2 id="ai-heading" class="section-title">AI and impact work</h2>
+      <p class="mt-2 text-base leading-7 text-muted-foreground">As AI changes what work looks like, two kinds of roles are worth tracking: work that makes AI safe and accountable, and impact roles that already ask for AI skills. Both are counted from current listings.</p>
+    </div>
+    <dl class="mt-5 grid gap-3 sm:grid-cols-3">
+      <div class="stat"><dd class="stat-value">{{ ai_demand.safety_roles|intcomma }}</dd><dt class="stat-label">Open AI safety and governance roles</dt></div>
+      <div class="stat"><dd class="stat-value">{{ ai_demand.safety_per_role }}</dd><dt class="stat-label">Apply clicks per AI safety role, last 30 days</dt></div>
+      <div class="stat"><dd class="stat-value">{{ ai_demand.ai_titled_elsewhere|intcomma }}</dd><dt class="stat-label">Other impact roles naming AI in the title</dt></div>
+    </dl>
+    <a href="{% url 'jobs:category_landing' slug='ai-safety' %}" data-track="snapshot_ai_safety_jobs" data-track-category="distribution" class="btn btn-secondary mt-5">Browse AI safety roles <span aria-hidden="true">&rarr;</span></a>
+  </section>
 
   <section class="section" aria-labelledby="coverage-heading">
     <div class="max-w-[68ch]"><h2 id="coverage-heading" class="section-title">How complete is the catalogue?</h2><p class="mt-2 text-base leading-7 text-muted-foreground">Coverage shows how often a current listing includes useful normalized fields. A missing field does not mean a role is low quality; it means the original posting did not provide enough structured information for that field.</p></div>

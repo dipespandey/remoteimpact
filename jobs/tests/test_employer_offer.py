@@ -37,7 +37,8 @@ class EmployerOfferTests(EmployerTestBase):
         sent = self.send.call_args.kwargs
         self.assertEqual(sent["to"], "jobs@climate.example.org")
         self.assertIn("viewed 40 times, and 6 people clicked through to apply", sent["text"])
-        self.assertIn("/jobs/program-manager-climate-org/feature/", sent["text"])
+        self.assertIn("/jobs/program-manager-climate-org/feature/?utm_source=email&utm_campaign=employer-offer-2026-11", sent["text"])
+        self.assertNotIn("&amp;", sent["text"])
 
     def test_dry_run_sends_nothing(self):
         self.assertIn("Would email Climate Org", self.run_command())

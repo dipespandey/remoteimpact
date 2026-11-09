@@ -1,4 +1,4 @@
-Hi {{ user.first_name|default:"there" }},
+{% autoescape off %}Hi {{ user.first_name|default:"there" }},
 
 Tell the AI Job Scout exactly what you want, including role, skills, location, salary, and exclusions.
 
@@ -15,3 +15,4 @@ Create your Scout: {{ site_url }}/alerts/
 {{ site_url }}
 
 Unsubscribe: {{ unsubscribe_url }}
+{% endautoescape %}

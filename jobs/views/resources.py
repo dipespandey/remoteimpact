@@ -356,9 +356,27 @@ class ImpactJobsSnapshotView(TemplateView):
                 "sources": sources,
                 "domains": domains,
                 "coverage": [(label, coverage(i)) for i, (label, _) in enumerate(coverage_queries)],
+                **demand_context(),
             }
         )
         return context
+
+
+def demand_context():
+    """Apply-click competition and AI-related demand. The page itself is cached."""
+    from ..services.impact_metrics import ai_and_impact, competition
+
+    sectors = competition("category")[:10]
+    levels = competition("level", min_roles=10)
+    top = max([r.per_role for r in sectors + levels] or [0]) or 1
+
+    def bars(rows):
+        return [{"label": r.label, "roles": r.roles, "per_role": round(r.per_role, 1),
+                 "percent": round(r.per_role / top * 100)} for r in rows]
+
+    ai = ai_and_impact()
+    ai["safety_per_role"] = round(ai["safety_clicks"] / ai["safety_roles"], 1) if ai["safety_roles"] else 0
+    return {"demand_sectors": bars(sectors), "demand_levels": bars(levels), "ai_demand": ai}
 
 
 @method_decorator(cache_page(getattr(settings, 'CACHE_TTL_LONG', 3600)), name='dispatch')

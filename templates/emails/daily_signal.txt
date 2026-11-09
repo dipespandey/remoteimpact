@@ -1,0 +1,11 @@
+{% autoescape off %}Remote Impact, {{ day|date:"l j F" }} (UTC)
+{% if alerts %}
+Needs attention:
+{% for alert in alerts %}- {{ alert }}
+{% endfor %}{% endif %}
+Weekly roundup audience now: {{ audience }}
+
+{% for row in rows %}{{ row.label }}: {{ row.value }} (7-day avg {{ row.average }})
+{% endfor %}
+Apply clicks are people who left Remote Impact for an employer's application page.
+{% endautoescape %}

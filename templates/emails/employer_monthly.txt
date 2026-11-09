@@ -1,8 +1,10 @@
-Hi {{ claim.name|default:"there" }},
+{% autoescape off %}Hi {{ claim.name|default:"there" }},
 
 In the last 30 days, {{ claim.organization.name }}'s {{ stats.roles }} live role{{ stats.roles|pluralize }} on Remote Impact {{ stats.roles|pluralize:"was,were" }} viewed {{ stats.views }} times and {{ stats.clicks }} people clicked through to apply. They arrive tagged utm_source=remoteimpact.
 {% if stats.top %}
 Most clicked: {{ stats.top }}.
+{% endif %}{% if feature_url %}
+Want more applicants for {{ stats.top }}? Feature it for $49 to pin it to the top of matching searches and the homepage for 30 days: {{ feature_url|safe }}
 {% endif %}
 See every role: {{ report_link }}
 
@@ -11,3 +13,4 @@ If a listing is wrong or closed, reply and we'll fix it.
 Remote Impact
 
 You get this because you claimed {{ claim.organization.name }}. Reply "stop" and we'll stop sending it.
+{% endautoescape %}

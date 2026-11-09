@@ -1,0 +1,162 @@
+import io
+import json
+from datetime import timedelta
+from unittest.mock import patch
+
+from django.core.cache import cache
+from django.core.management import call_command
+from django.test import override_settings
+from django.urls import reverse
+from django.utils import timezone
+
+from jobs.models import (Category, ConsumerFunnelEvent, Job, JobDailyStat, JobFeaturePurchase, Organization,
+                         OrganizationClaim, RoundupDelivery, RoundupSubscriber)
+from jobs.services.impact_metrics import competition
+from jobs.tests.test_employer_product import DESCRIPTION, EmployerTestBase
+
+
+def verified(hours_ago=1):
+    checked = (timezone.now() - timedelta(hours=hours_ago)).isoformat()
+    return {"source_verification": {"status": "open", "checked_at": checked}, "ats_check": {"location": "Remote - US"}}
+
+
+@override_settings(SECURE_SSL_REDIRECT=False, SITE_URL="https://remoteimpact.org", OWNER_REPORT_EMAIL="owner@example.org")
+class DailyAutomationTests(EmployerTestBase):
+    def setUp(self):
+        super().setUp()
+        cache.clear()
+        self.climate = Category.objects.create(name="Climate & Environment", slug="climate-environment")
+        self.health = Category.objects.create(name="Global Health", slug="global-health")
+
+    def role(self, n, category, *, raw=None, salary=60000, level="mid", org=None, description=DESCRIPTION):
+        org = org or Organization.objects.create(name=f"Org {n}", slug=f"org-{n}")
+        return Job.objects.create(title=f"Role {n}", slug=f"role-{n}", organization=org, category=category, description=description,
+                                  application_url=f"https://jobs.example.org/{n}", quality_score=80, salary_min=salary,
+                                  salary_max=salary + 10000, location="Remote (US)", experience_level=level, raw_data=raw or {})
+
+    def test_competition_divides_clicks_by_open_roles(self):
+        for n in range(20):
+            job = self.role(n, self.climate)
+            JobDailyStat.objects.create(job=job, date=timezone.localdate(), views=10, apply_clicks=3 if n < 10 else 0)
+        row = next(r for r in competition("category") if r.label == "Climate & Environment")
+        self.assertEqual((row.roles, row.clicks, row.per_role), (20, 30, 1.5))
+
+    def test_daily_signal_reports_yesterday_and_flags_sales(self):
+        yesterday = timezone.now() - timedelta(days=1)
+        JobDailyStat.objects.create(job=self.job, date=yesterday.date(), views=40, apply_clicks=12)
+        purchase = JobFeaturePurchase.objects.create(job=self.job, stripe_checkout_session_id="cs_1", amount_cents=4900,
+                                                     featured_until=timezone.now() + timedelta(days=30))
+        JobFeaturePurchase.objects.filter(pk=purchase.pk).update(created_at=yesterday)
+        claim = OrganizationClaim.objects.create(organization=self.org, email="a@climate.example.org")
+        OrganizationClaim.objects.filter(pk=claim.pk).update(verified_at=yesterday)
+        with patch("jobs.management.commands.send_daily_signal.email_service.send_email", return_value=True) as send:
+            call_command("send_daily_signal", send=True, stdout=io.StringIO())
+        to, subject, html = send.call_args.args
+        text = send.call_args.kwargs["text"]
+        self.assertEqual(to, "owner@example.org")
+        self.assertIn("12 apply clicks", subject)
+        self.assertIn("1 sale", subject)
+        self.assertIn("Features sold ($49): 1", text)
+        self.assertIn("An employer claimed their page", text)
+
+    def test_daily_signal_dry_run_sends_nothing(self):
+        with patch("jobs.management.commands.send_daily_signal.email_service.send_email") as send:
+            out = io.StringIO()
+            call_command("send_daily_signal", stdout=out)
+        send.assert_not_called()
+        self.assertIn("Apply clicks sent to employers", out.getvalue())
+
+    def auto_roundup(self, *args):
+        out = io.StringIO()
+        with override_settings(EMAIL_PROVIDER="resend"), \
+                patch("jobs.management.commands.send_roundup.email_service._send_resend", return_value=True) as provider:
+            call_command("send_auto_roundup", *args, stdout=out)
+        return provider, out.getvalue()
+
+    def test_auto_roundup_sends_only_freshly_verified_annual_pay_roles(self):
+        good = [self.role(n, self.climate if n % 2 else self.health, raw=verified()) for n in range(4)]
+        self.role(10, self.climate, raw=verified(hours_ago=30))
+        self.role(11, self.climate, raw={"source_verification": {"status": "closed", "checked_at": timezone.now().isoformat()}})
+        self.role(12, self.climate, raw={**verified(), "salaryPeriod": "HOUR"})
+        self.role(13, self.climate, raw={**verified(), "salaryPeriod": "MONTH"})
+        self.role(14, self.climate, raw=["not", "a", "dict"])
+        RoundupSubscriber.objects.create(email="reader@example.org", confirmed_at=timezone.now())
+        provider, out = self.auto_roundup("--send")
+        self.assertEqual(provider.call_count, 1)
+        _, subject, html, text, _ = provider.call_args.args
+        self.assertEqual(subject, "This week's verified remote impact roles")
+        for job in good:
+            self.assertIn(job.title, text)
+        for title in ("Role 10", "Role 11", "Role 12", "Role 13", "Role 14"):
+            self.assertNotIn(title, text)
+        self.assertIn("The employer lists: Remote - US.", text)
+        self.assertIn("USD 60,000–70,000 a year", text)
+
+    def test_auto_roundup_never_sends_twice_in_a_week(self):
+        for n in range(4):
+            self.role(n, self.climate, raw=verified())
+        RoundupSubscriber.objects.create(email="reader@example.org", confirmed_at=timezone.now())
+        self.auto_roundup("--send")
+        provider, out = self.auto_roundup("--send")
+        provider.assert_not_called()
+        self.assertIn("already went out", out)
+        self.assertEqual(RoundupDelivery.objects.count(), 1)
+
+    def test_auto_roundup_holds_a_thin_issue(self):
+        self.role(1, self.climate, raw=verified())
+        RoundupSubscriber.objects.create(email="reader@example.org", confirmed_at=timezone.now())
+        provider, out = self.auto_roundup("--send")
+        provider.assert_not_called()
+        self.assertIn("Only 1 verified roles qualified", out)
+
+    def test_monthly_report_does_not_pitch_a_role_that_is_already_featured(self):
+        self.job.featured_until = timezone.now() + timedelta(days=10)
+        self.job.save()
+        JobDailyStat.objects.create(job=self.job, date=timezone.localdate(), views=30, apply_clicks=5)
+        OrganizationClaim.objects.create(organization=self.org, email="a@climate.example.org", verified_at=timezone.now())
+        with patch("jobs.services.email_service.EmailService.send_email", return_value=True) as send:
+            call_command("send_employer_monthly_reports", send=True, stdout=io.StringIO())
+        self.assertNotIn("/feature/", send.call_args.kwargs["text"])
+
+    def test_insight_only_claims_a_real_gap(self):
+        from jobs.management.commands.send_auto_roundup import insight
+        for n in range(10):
+            JobDailyStat.objects.create(job=self.role(n, self.climate, level="entry"), date=timezone.localdate(), apply_clicks=2)
+            JobDailyStat.objects.create(job=self.role(100 + n, self.climate, level="senior"), date=timezone.localdate(), apply_clicks=2)
+        self.assertNotIn("times as many", insight())
+
+    def test_monthly_report_offers_a_feature_for_the_most_clicked_role(self):
+        self.org.homepage_url = "https://climate.example.org"
+        self.org.save()
+        JobDailyStat.objects.create(job=self.job, date=timezone.localdate(), views=30, apply_clicks=5)
+        OrganizationClaim.objects.create(organization=self.org, email="a@climate.example.org", verified_at=timezone.now())
+        with patch("jobs.services.email_service.EmailService.send_email", return_value=True) as send:
+            call_command("send_employer_monthly_reports", send=True, stdout=io.StringIO())
+        self.assertIn(f"/jobs/{self.job.slug}/feature/?utm_source=email&utm_campaign=employer_monthly", send.call_args.kwargs["text"])
+
+    def test_index_page_shows_demand_and_ai_sections(self):
+        for n in range(20):
+            job = self.role(n, self.climate)
+            JobDailyStat.objects.create(job=job, date=timezone.localdate(), views=10, apply_clicks=2)
+        response = self.client.get(reverse("jobs:impact_jobs_snapshot"))
+        self.assertContains(response, "Where applicants are going")
+        self.assertContains(response, "AI and impact work")
+        self.assertContains(response, "2.0 · 20 roles")
+
+
+class PlainTextEmailTemplateTests(EmployerTestBase):
+    def test_plain_text_emails_are_never_html_escaped(self):
+        from pathlib import Path
+        from django.conf import settings
+        folder = Path(settings.BASE_DIR) / "templates" / "emails"
+        missing = [p.name for p in folder.glob("*.txt") if not p.read_text().startswith("{% autoescape off %}")]
+        self.assertEqual(missing, [], "Plain-text emails must start with {% autoescape off %} or links and names arrive as &amp; and &#x27;")
+
+    def test_names_and_links_survive_in_plain_text(self):
+        from django.template.loader import render_to_string
+        text = render_to_string("emails/employer_offer.txt", {
+            "org": Organization(name="Huntington's Disease Youth Organization"), "stats": {"roles": 1, "views": 3, "clicks": 2, "top": "Programs & Support"},
+            "feature_url": "https://remoteimpact.org/x/?a=1&b=2", "claim_url": "https://remoteimpact.org/y/?a=1&b=2"})
+        self.assertIn("Huntington's Disease", text)
+        self.assertIn("Programs & Support", text)
+        self.assertIn("?a=1&b=2", text)

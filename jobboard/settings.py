@@ -323,6 +323,8 @@ DEFAULT_FROM_EMAIL = os.getenv(
 CLOUDFLARE_ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID", "")
 CLOUDFLARE_EMAIL_TOKEN = os.getenv("CLOUDFLARE_EMAIL_TOKEN", "")
 EMAIL_PROVIDER = os.getenv("EMAIL_PROVIDER", "resend").strip().lower()
+# The owner's daily signal and other internal reports.
+OWNER_REPORT_EMAIL = os.getenv("OWNER_REPORT_EMAIL", "dipesh@remoteimpact.org")
 if EMAIL_PROVIDER == "cloudflare" and not (CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_EMAIL_TOKEN):
     EMAIL_PROVIDER = "resend"  # never switch to a half-configured provider
 
