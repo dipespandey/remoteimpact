@@ -1,3 +1,7 @@
+# Current focus
+
+Until the owner lifts it, a feature freeze is in effect. Read `docs/growth/revenue-target.md` before starting product work. Do not start new Scout, SEO-surface or measurement features. Selling, distribution, checkout friction and production fixes come first.
+
 # Production deployment
 
 Remote Impact uses blue-green releases on the VPS. Read `ops/deploy/README.md` before deploying.
