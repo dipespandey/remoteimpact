@@ -1,7 +1,8 @@
 """Assemble and send the weekly roundup from machine-verified roles, without a manual review step.
 
 A role qualifies only if the employer's own ATS confirmed it open in the last 23 hours (verify_ats_jobs
-runs daily), it passes the site's annual-pay evidence gate, and it was posted in the last three weeks. The issue goes
+runs daily) and it was posted in the last three weeks. Pay is shown only when it passes the site's annual-pay
+evidence gate; otherwise readers are told to check the posting. The issue goes
 through send_roundup, so its identity, freshness and duplicate-delivery checks all still apply.
 If any issue was already delivered this week (for example a hand-edited one), this does nothing.
 
@@ -54,6 +55,8 @@ def topics(job):
 
 
 def pay(salary):
+    if not salary:
+        return "Pay: check the employer's posting."
     value = salary["value"]
     low, high, currency = int(value.get("minValue") or 0), int(value.get("maxValue") or 0), salary["currency"]
     if low and high > low:
@@ -70,19 +73,17 @@ def where(job):
 
 
 def choose(now):
-    recent = (JobService.get_available_jobs().filter(posted_at__gte=now - timedelta(days=21), salary_min__gt=0)
+    recent = (JobService.get_available_jobs().filter(posted_at__gte=now - timedelta(days=21))
               .exclude(application_url="").select_related("organization", "category").defer("embedding", "search_vector"))
     pool = []
-    for job in JobService._annual_salary_jobs(recent):
-        checked, salary = verified_at(job, now), None
-        if checked:
-            salary = supported_base_salary(job)
-        if salary:
-            pool.append((job, checked, salary))
+    for job in recent:
+        if checked := verified_at(job, now):
+            pool.append((job, checked, supported_base_salary(job)))
     since = timezone.localdate() - timedelta(days=6)
     clicks = {row["job_id"]: row["c"] or 0 for row in JobDailyStat.objects.filter(
         date__gte=since, job_id__in=[job.pk for job, _, _ in pool]).values("job_id").annotate(c=Sum("apply_clicks"))}
-    pool.sort(key=lambda item: (-clicks.get(item[0].pk, 0), -(item[0].quality_score or 0), -item[0].posted_at.timestamp()))
+    pool.sort(key=lambda item: (-clicks.get(item[0].pk, 0), item[2] is None, -(item[0].quality_score or 0),
+                                -item[0].posted_at.timestamp()))
     picked, employers = [], set()
 
     for topic, count in SLOTS:
