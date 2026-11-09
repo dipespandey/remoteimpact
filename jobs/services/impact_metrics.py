@@ -87,3 +87,10 @@ def day_signal(day):
 def weekly_audience():
     from jobs.services.roundup import active_subscribers
     return active_subscribers().count()
+
+
+def ai_titled_by_sector(limit=8):
+    """Open roles outside AI safety whose title names AI, by impact domain."""
+    rows = (JobService.get_available_jobs().exclude(category__slug="ai-safety").filter(AI_TITLE)
+            .exclude(category__isnull=True).values("category__name", "category__slug").annotate(n=Count("pk")).order_by("-n")[:limit])
+    return [{"label": r["category__name"], "slug": r["category__slug"], "roles": r["n"]} for r in rows]

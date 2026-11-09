@@ -379,6 +379,18 @@ def demand_context():
     return {"demand_sectors": bars(sectors), "demand_levels": bars(levels), "ai_demand": ai}
 
 
+@method_decorator(cache_page(3600), name="dispatch")
+class AIImpactWorkView(TemplateView):
+    """What Remote Impact's own listings and apply clicks show about AI and impact careers."""
+    template_name = "jobs/ai_impact_work.html"
+
+    def get_context_data(self, **kwargs):
+        from ..services.impact_metrics import ai_titled_by_sector
+        context = super().get_context_data(**kwargs)
+        context.update(demand_context(), ai_sectors=ai_titled_by_sector(), updated_at=timezone.now())
+        return context
+
+
 @method_decorator(cache_page(getattr(settings, 'CACHE_TTL_LONG', 3600)), name='dispatch')
 class ResourcesView(TemplateView):
     template_name = "jobs/resources.html"

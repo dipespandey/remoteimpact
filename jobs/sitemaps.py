@@ -237,6 +237,7 @@ class StaticSitemap(Sitemap):
             ('jobs:tech_collection', 0.7, 'daily'),
             ('jobs:employers', 0.7, 'monthly'),
             ('jobs:impact_jobs_snapshot', 0.8, 'weekly'),
+            ('jobs:ai_impact_work', 0.8, 'weekly'),
             ('jobs:agent_evidence_report', 0.7, 'yearly'),
             ('jobs:how_we_check', 0.7, 'weekly'),
             ('jobs:about', 0.5, 'monthly'),
