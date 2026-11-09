@@ -102,6 +102,21 @@ class DailyAutomationTests(EmployerTestBase):
         self.assertIn("The employer lists: Remote - US.", text)
         self.assertIn("USD 60,000–70,000 a year", text)
 
+    def test_auto_roundup_skips_recruiting_pages_and_cleans_locations(self):
+        from jobs.management.commands.send_auto_roundup import where
+        for n in range(4):
+            self.role(n, self.climate, raw=verified())
+        generic = self.role(9, self.climate, raw=verified())
+        generic.title = "Early Career Opportunities"
+        generic.save()
+        RoundupSubscriber.objects.create(email="reader@example.org", confirmed_at=timezone.now())
+        provider, _ = self.auto_roundup("--send")
+        self.assertNotIn("Early Career Opportunities", provider.call_args.args[3])
+        messy = Job(location="Remote (US)", raw_data={"ats_check": {"location": ",, ,, United States"}})
+        self.assertIn("The employer lists: United States.", where(messy))
+        vague = Job(location="Remote", raw_data={"ats_check": {"location": "Remote job"}})
+        self.assertNotIn("employer lists", where(vague))
+
     def test_auto_roundup_never_sends_twice_in_a_week(self):
         for n in range(4):
             self.role(n, self.climate, raw=verified())
