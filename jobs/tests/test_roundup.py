@@ -127,6 +127,29 @@ class RoundupTests(TestCase):
                     self.assertEqual(provider.call_count,1)
                     self.assertEqual(RoundupDelivery.objects.get().status,'unknown')
                     self.assertIn('List-Unsubscribe-Post',provider.call_args.args[-1])
+    def test_approved_editor_note_and_subject_reach_readers(self):
+        import hashlib
+        org=Organization.objects.create(name='Note Example',slug='note-example')
+        Job.objects.create(title='Data Analyst',slug='data-analyst-note',organization=org,description='Useful substantive role. '*40,application_url='https://example.com/apply',quality_score=80)
+        RoundupSubscriber.objects.create(email='confirmed@example.com',confirmed_at=timezone.now())
+        with tempfile.TemporaryDirectory() as folder:
+            draft=Path(folder)/'draft'; call_command('prepare_roundup',output_dir=str(draft),stdout=io.StringIO())
+            manifest=draft/'review.json'
+            data=json.loads(manifest.read_text()); data['status']='approved'
+            data['picks'][0].update(employer_source_reviewed_at=timezone.now().isoformat(),eligible_countries_review='UK only',salary_review='£40,000')
+            data['note']=['Senior roles drew a quarter of the competition this month.']*5
+            manifest.write_text(json.dumps(data))
+            with override_settings(EMAIL_PROVIDER='resend'), self.assertRaises(CommandError):
+                call_command('send_roundup',manifest=str(manifest),stdout=io.StringIO())
+            data['note']=['Senior roles drew a quarter of the competition this month.']; data['subject']='5 roles, and where competition is lowest'
+            manifest.write_text(json.dumps(data)); digest=hashlib.sha256(manifest.read_bytes()).hexdigest()
+            with override_settings(EMAIL_PROVIDER='resend'), patch('jobs.management.commands.send_roundup.email_service._send_resend',return_value=True) as provider:
+                call_command('send_roundup',manifest=str(manifest),approve_sha256=digest,send=True,stdout=io.StringIO())
+            to,subject,html,text,_=provider.call_args.args
+            self.assertEqual(subject,'5 roles, and where competition is lowest')
+            self.assertIn('Senior roles drew a quarter of the competition this month.',html)
+            self.assertIn('Senior roles drew a quarter of the competition this month.',text)
+            self.assertIn('ref=',text)
     def test_expired_confirmation_is_rejected(self):
         from django.core.signing import TimestampSigner
         self.subscribe(); sub=RoundupSubscriber.objects.get()
