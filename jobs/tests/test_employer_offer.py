@@ -40,6 +40,14 @@ class EmployerOfferTests(EmployerTestBase):
         self.assertIn("/jobs/program-manager-climate-org/feature/?utm_source=email&utm_campaign=employer-offer-2026-11", sent["text"])
         self.assertNotIn("&amp;", sent["text"])
 
+    def test_websites_are_looked_up_once_per_month(self):
+        from django.core.cache import cache
+        from jobs.management.commands import send_employer_offer
+        cache.clear()
+        self.run_command()
+        self.run_command()
+        self.assertEqual(send_employer_offer.site_email.call_count, 1)
+
     def test_dry_run_sends_nothing(self):
         self.assertIn("Would email Climate Org", self.run_command())
         self.send.assert_not_called()
