@@ -96,7 +96,7 @@
         <div class="mt-4 space-y-3.5">
           {% for row in demand_sectors %}
           <div>
-            <div class="flex items-center justify-between gap-4 text-sm"><span class="font-medium text-foreground">{{ row.label }}</span><span class="text-xs tabular-nums text-muted-foreground">{{ row.per_role }} · {{ row.roles|intcomma }} roles</span></div>
+            <div class="flex items-center justify-between gap-4 text-sm"><span class="font-medium text-foreground">{{ row.label }}</span><span class="text-xs tabular-nums text-muted-foreground">{{ row.per_role }} · {{ row.roles|intcomma }} role{{ row.roles|pluralize }}</span></div>
             <div class="mt-1.5 h-1.5 rounded-full bg-muted" aria-hidden="true"><div class="h-1.5 rounded-full bg-foreground/70" style="width: {{ row.percent }}%;"></div></div>
           </div>
           {% empty %}<p class="text-sm text-muted-foreground">Not enough activity yet.</p>{% endfor %}
@@ -107,7 +107,7 @@
         <div class="mt-4 space-y-3.5">
           {% for row in demand_levels %}
           <div>
-            <div class="flex items-center justify-between gap-4 text-sm"><span class="font-medium text-foreground">{{ row.label }}</span><span class="text-xs tabular-nums text-muted-foreground">{{ row.per_role }} · {{ row.roles|intcomma }} roles</span></div>
+            <div class="flex items-center justify-between gap-4 text-sm"><span class="font-medium text-foreground">{{ row.label }}</span><span class="text-xs tabular-nums text-muted-foreground">{{ row.per_role }} · {{ row.roles|intcomma }} role{{ row.roles|pluralize }}</span></div>
             <div class="mt-1.5 h-1.5 rounded-full bg-muted" aria-hidden="true"><div class="h-1.5 rounded-full bg-foreground/40" style="width: {{ row.percent }}%;"></div></div>
           </div>
           {% empty %}<p class="text-sm text-muted-foreground">Not enough activity yet.</p>{% endfor %}
