@@ -8,7 +8,8 @@ from django.core.exceptions import ValidationError
 from django.core.signing import BadSignature
 from django.core.validators import validate_email
 from django.db import transaction
-from django.http import HttpResponse
+from django.conf import settings
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -38,62 +39,100 @@ class RoundupView(View):
 
     def post(self, request):
         context = self.context(request)
-        email = request.POST.get("email", "").strip().lower()
-        try:
-            validate_email(email)
-            if len(email) > 254:
-                raise ValidationError("Email too long")
-        except ValidationError:
-            return render(request, "jobs/newsletter/roundup.html", {**context, "error": "Enter a valid email address."}, status=400)
-        if request.POST.get("consent") != "yes":
-            return render(request, "jobs/newsletter/roundup.html", {**context, "error": "Please agree to the weekly email before subscribing."}, status=400)
-        if request.POST.get("website"):
+        if request.POST.get("consent") != "yes" and not request.POST.get("website"):
+            outcome = "no_consent" if valid_email(request.POST.get("email", "")) else "invalid"
+        else:
+            outcome = request_weekly(request, request.POST.get("email", ""), context["topic"], context["source"],
+                                     context["campaign"], context["ref"])
+        if outcome == "requested":
             return render(request, "jobs/newsletter/roundup.html", {**context, "requested": True})
-        # Shared cache protects mail volume; hash keys so addresses/IPs aren't retained there.
-        ip = request.META.get("HTTP_CF_CONNECTING_IP") or request.META.get("REMOTE_ADDR", "")
-        key = "roundup-ip:" + hashlib.sha256(ip.encode()).hexdigest()
-        cache.add(key, 0, 3600)
-        try:
-            limited = cache.incr(key) > 10
-        except ValueError:
-            limited = True
-        if limited:
-            response = render(request, "jobs/newsletter/roundup.html", {**context, "error": "Please wait before requesting another confirmation email."}, status=429)
+        response = render(request, "jobs/newsletter/roundup.html", {**context, "error": ERRORS[outcome]}, status=STATUS[outcome])
+        if outcome == "rate_limited":
             response["Retry-After"] = "3600"
-            return response
-        now = timezone.now()
-        with transaction.atomic():
-            sub, created = RoundupSubscriber.objects.get_or_create(email=email, defaults={"topic": context["topic"], "source": context["source"], "campaign": context["campaign"]})
-            sub = RoundupSubscriber.objects.select_for_update().get(pk=sub.pk)
-            if sub.confirmed_at and not sub.unsubscribed_at:
-                # No preference changes or account-existence disclosure from a public form.
-                return render(request, "jobs/newsletter/roundup.html", {**context, "requested": True})
-            if sub.confirmation_requested_at and sub.confirmation_requested_at > now - timedelta(minutes=10):
-                return render(request, "jobs/newsletter/roundup.html", {**context, "requested": True})
-            if sub.unsubscribed_at:
-                sub.confirmation_key = uuid.uuid4()  # Old links cannot renew consent.
-            sub.topic, sub.source, sub.campaign = context["topic"], context["source"], context["campaign"]
-            sub.consent_at, sub.confirmation_requested_at = now, now
-            sub.consent_basis = "weekly_request"
-            sub.consent_version = "weekly-roundup-2026-10-23"
-            try:
-                ref = active_subscribers().filter(referral_code=uuid.UUID(context["ref"])).exclude(pk=sub.pk).first()
-            except (ValueError, AttributeError):
-                ref = None
-            if created or sub.unsubscribed_at:
-                sub.referred_by = ref
-            sub.save()
-        confirm = public_url("jobs:roundup_confirm", token=token_for(sub, "confirm"))
-        stop = public_url("jobs:roundup_unsubscribe", token=token_for(sub, "unsubscribe"))
-        # No broadcast is triggered here. A confirmation is the only requested email.
-        from django.template.loader import render_to_string
-        html = render_to_string("emails/roundup_confirm.html", {"confirm_url": confirm, "stop_url": stop})
-        accepted = email_service.send_email(email, "Confirm your Remote Impact weekly roundup", html,
-            text=f"Confirm one weekly job roundup: {confirm}\nIf you didn't request this, ignore it. Stop requests: {stop}", unsubscribe_url=stop)
-        if not accepted:
-            return render(request, "jobs/newsletter/roundup.html", {**context, "error": "We couldn't send the confirmation. Please try again in 10 minutes."}, status=503)
-        return render(request, "jobs/newsletter/roundup.html", {**context, "requested": True})
+        return response
 
+
+@method_decorator(never_cache, name="dispatch")
+@method_decorator(csrf_exempt, name="dispatch")
+class RoundupQuickView(View):
+    """One-field signup for prompts on cached pages, which carry no CSRF cookie. Same-origin only."""
+
+    def post(self, request):
+        if request.headers.get("Origin") != settings.SITE_URL.rstrip("/"):
+            return JsonResponse({"error": "Forbidden"}, status=403)
+        if request.POST.get("consent") != "yes":
+            return JsonResponse({"error": ERRORS["no_consent"]}, status=400)
+        topic = request.POST.get("topic", "all")
+        outcome = request_weekly(request, request.POST.get("email", ""), topic if topic in TOPICS else "all",
+                                 safe_label(request.POST.get("source"), "prompt"), safe_label(request.POST.get("campaign")), "")
+        if outcome == "requested":
+            return JsonResponse({"requested": True})
+        return JsonResponse({"error": ERRORS[outcome]}, status=STATUS[outcome])
+
+
+ERRORS = {"invalid": "Enter a valid email address.",
+          "no_consent": "Please agree to the weekly email before subscribing.",
+          "rate_limited": "Please wait before requesting another confirmation email.",
+          "send_failed": "We couldn't send the confirmation. Please try again in 10 minutes."}
+STATUS = {"invalid": 400, "no_consent": 400, "rate_limited": 429, "send_failed": 503}
+
+
+def valid_email(email):
+    try:
+        validate_email(email)
+    except ValidationError:
+        return False
+    return len(email) <= 254
+
+
+def request_weekly(request, email, topic, source, campaign, ref):
+    """Record a weekly signup request and email its confirmation link.
+
+    Returns "requested", "invalid", "rate_limited" or "send_failed". Nobody receives the
+    roundup until they confirm, and the public result never reveals whether an address exists.
+    """
+    email = email.strip().lower()
+    if not valid_email(email):
+        return "invalid"
+    if request.POST.get("website"):
+        return "requested"
+    # Shared cache protects mail volume; hash keys so addresses/IPs aren't retained there.
+    ip = request.META.get("HTTP_CF_CONNECTING_IP") or request.META.get("REMOTE_ADDR", "")
+    key = "roundup-ip:" + hashlib.sha256(ip.encode()).hexdigest()
+    cache.add(key, 0, 3600)
+    try:
+        if cache.incr(key) > 10:
+            return "rate_limited"
+    except ValueError:
+        return "rate_limited"
+    now = timezone.now()
+    with transaction.atomic():
+        sub, created = RoundupSubscriber.objects.get_or_create(email=email, defaults={"topic": topic, "source": source, "campaign": campaign})
+        sub = RoundupSubscriber.objects.select_for_update().get(pk=sub.pk)
+        if sub.confirmed_at and not sub.unsubscribed_at:
+            return "requested"
+        if sub.confirmation_requested_at and sub.confirmation_requested_at > now - timedelta(minutes=10):
+            return "requested"
+        if sub.unsubscribed_at:
+            sub.confirmation_key = uuid.uuid4()  # Old links cannot renew consent.
+        sub.topic, sub.source, sub.campaign = topic, source, campaign
+        sub.consent_at, sub.confirmation_requested_at = now, now
+        sub.consent_basis = "weekly_request"
+        sub.consent_version = "weekly-roundup-2026-10-23"
+        try:
+            referrer = active_subscribers().filter(referral_code=uuid.UUID(ref)).exclude(pk=sub.pk).first()
+        except (ValueError, AttributeError):
+            referrer = None
+        if created or sub.unsubscribed_at:
+            sub.referred_by = referrer
+        sub.save()
+    confirm = public_url("jobs:roundup_confirm", token=token_for(sub, "confirm"))
+    stop = public_url("jobs:roundup_unsubscribe", token=token_for(sub, "unsubscribe"))
+    from django.template.loader import render_to_string
+    html = render_to_string("emails/roundup_confirm.html", {"confirm_url": confirm, "stop_url": stop})
+    accepted = email_service.send_email(email, "Confirm your Remote Impact weekly roundup", html,
+        text=f"Confirm one weekly job roundup: {confirm}\nIf you didn't request this, ignore it. Stop requests: {stop}", unsubscribe_url=stop)
+    return "requested" if accepted else "send_failed"
 
 
 class PrivateLinkView(View):

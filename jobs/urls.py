@@ -1,6 +1,6 @@
 from .views.pro_rata import ProRataPayView
 from .views.roundup_issue import roundup_issue
-from .views.roundup import RoundupView, RoundupConfirmView, RoundupUnsubscribeView
+from .views.roundup import RoundupView, RoundupConfirmView, RoundupQuickView, RoundupUnsubscribeView
 from django.urls import path
 from django.views.generic import RedirectView
 from . import views
@@ -204,6 +204,7 @@ urlpatterns = [
     # Weekly roundup has separate explicit consent from legacy product updates.
     path("newsletter/issues/<slug:issue_slug>/", roundup_issue, name="roundup_issue"),
     path("newsletter/", RoundupView.as_view(), name="roundup"),
+    path("newsletter/quick/", RoundupQuickView.as_view(), name="roundup_quick"),
     path("newsletter/confirm/<str:token>/", RoundupConfirmView.as_view(), name="roundup_confirm"),
     path("newsletter/stop/<str:token>/", RoundupUnsubscribeView.as_view(), name="roundup_unsubscribe"),
     # Newsletter
