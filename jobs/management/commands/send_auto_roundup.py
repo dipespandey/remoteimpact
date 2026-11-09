@@ -127,7 +127,8 @@ def build_issue(now):
              for job, checked, salary in choose(now)]
     note = ["This week's remote roles, each confirmed open on the employer's own site in the last day."]
     if text := insight():
-        note.append(text)
+        index = settings.SITE_URL.rstrip("/") + "/insights/remote-impact-jobs/#demand"
+        note.append(f"{text} The full numbers, including AI safety demand, are at {index}")
     return {"prepared_at": now.isoformat(), "status": "approved", "issue_week": issue_week(),
             "subject": "This week's verified remote impact roles", "note": note, "picks": picks,
             "editorial_approval": {"method": "automatic", "rule": "employer ATS confirmed open within 23 hours; annual pay listed"},
