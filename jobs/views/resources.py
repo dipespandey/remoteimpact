@@ -385,9 +385,9 @@ class AIImpactWorkView(TemplateView):
     template_name = "jobs/ai_impact_work.html"
 
     def get_context_data(self, **kwargs):
-        from ..services.impact_metrics import ai_titled_by_sector
+        from ..services.impact_metrics import ai_titled_by_sector, impact_areas
         context = super().get_context_data(**kwargs)
-        context.update(demand_context(), ai_sectors=ai_titled_by_sector(), updated_at=timezone.now())
+        context.update(demand_context(), ai_sectors=ai_titled_by_sector(), impact_areas=impact_areas(), updated_at=timezone.now())
         return context
 
 

@@ -2,7 +2,7 @@
 {% load humanize %}
 
 {% block title %}AI and the Future of Impact Work: Remote Impact Data{% endblock %}
-{% block meta_description %}How AI shows up in remote impact hiring: open AI safety and governance roles, impact roles asking for AI skills, and where experienced applicants face less competition. Updated from live listings.{% endblock %}
+{% block meta_description %}How AI shows up in remote impact hiring: high-impact areas from AI safety and effective altruism to global health and climate, impact roles asking for AI skills, and where experienced applicants face less competition. Updated from live listings.{% endblock %}
 {% block og_title %}AI and the future of impact work{% endblock %}
 {% block og_description %}Open AI safety roles, impact roles asking for AI skills, and apply-click competition by seniority, from Remote Impact's live listings.{% endblock %}
 {% block canonical %}{{ SITE_URL }}{% url 'jobs:ai_impact_work' %}{% endblock %}
@@ -13,11 +13,11 @@
   "@context": "https://schema.org",
   "@type": "Dataset",
   "name": "AI and the Future of Impact Work",
-  "description": "Open AI safety and governance roles, impact roles that name AI in the title by domain, and apply clicks per open role by experience level, from Remote Impact's current remote listings.",
+  "description": "Open roles and demand in high-impact areas (AI safety, effective altruism, biosecurity, global health, animal welfare, climate, poverty), open AI safety and governance roles, impact roles that name AI in the title by domain, and apply clicks per open role by experience level, from Remote Impact's current remote listings.",
   "url": "{{ SITE_URL }}{% url 'jobs:ai_impact_work' %}",
   "creator": {"@type": "Organization", "name": "Remote Impact", "url": "{{ SITE_URL }}"},
   "dateModified": "{{ updated_at|date:'c' }}",
-  "variableMeasured": ["Open AI safety and governance roles", "Apply clicks per AI safety role", "Impact roles naming AI in the title, by domain", "Apply clicks per open role by experience level"],
+  "variableMeasured": ["Open roles and apply clicks per role in high-impact areas", "Open AI safety and governance roles", "Apply clicks per AI safety role", "Impact roles naming AI in the title, by domain", "Apply clicks per open role by experience level"],
   "isAccessibleForFree": true
 }
 </script>
@@ -32,17 +32,23 @@
     <p class="mt-3 text-xs tabular-nums text-muted-foreground">Updated {{ updated_at|date:"F j, Y" }} · {{ ai_demand.live_roles|intcomma }} current roles</p>
   </header>
 
-  <section class="section" aria-labelledby="safety-heading">
+  <section class="section" aria-labelledby="areas-heading">
     <div class="max-w-[68ch]">
-      <h2 id="safety-heading" class="section-title">Work that makes AI safe and accountable</h2>
-      <p class="mt-2 text-base leading-7 text-muted-foreground">Research, policy, security and operations roles at organizations working on AI safety and governance.</p>
+      <h2 id="areas-heading" class="section-title">High-impact areas</h2>
+      <p class="mt-2 text-base leading-7 text-muted-foreground">Where the work is most directly about doing the most good: making AI safe and accountable, effective altruism, pandemic preparedness, global health, animal welfare, climate and poverty. Open roles today, and apply clicks per role over the last 30 days.</p>
+    </div>
+    <div class="card mt-5 p-5 sm:p-6">
+      <div class="space-y-3.5">
+        {% for row in impact_areas %}
+        <div class="flex items-center justify-between gap-4 text-sm"><a href="{% url 'jobs:category_landing' slug=row.slug %}" class="font-medium text-foreground hover:underline">{{ row.label }}</a><span class="text-xs tabular-nums text-muted-foreground">{{ row.roles|intcomma }} roles · {{ row.per_role }} clicks per role</span></div>
+        {% empty %}<p class="text-sm text-muted-foreground">No current roles in these areas.</p>{% endfor %}
+      </div>
     </div>
     <dl class="mt-5 grid gap-3 sm:grid-cols-3">
       <div class="stat"><dd class="stat-value">{{ ai_demand.safety_roles|intcomma }}</dd><dt class="stat-label">Open AI safety and governance roles</dt></div>
-      <div class="stat"><dd class="stat-value">{{ ai_demand.safety_per_role }}</dd><dt class="stat-label">Apply clicks per role, last 30 days</dt></div>
+      <div class="stat"><dd class="stat-value">{{ ai_demand.safety_per_role }}</dd><dt class="stat-label">Apply clicks per AI safety role, last 30 days</dt></div>
       <div class="stat"><dd class="stat-value">{{ ai_demand.ai_titled_elsewhere|intcomma }}</dd><dt class="stat-label">Other impact roles naming AI in the title</dt></div>
     </dl>
-    <a href="{% url 'jobs:category_landing' slug='ai-safety' %}" data-track="ai_work_safety_jobs" data-track-category="distribution" class="btn btn-primary mt-5">Browse AI safety roles <span aria-hidden="true">&rarr;</span></a>
   </section>
 
   <section class="section" aria-labelledby="skills-heading">

@@ -201,3 +201,9 @@ class AIImpactWorkPageTests(EmployerTestBase):
         self.assertContains(response, "AI and the future of impact work")
         self.assertContains(response, '<a href="/jobs/category/climate-environment/" class="font-medium text-foreground hover:underline">Climate &amp; Environment</a><span class="text-xs tabular-nums text-muted-foreground">2 roles</span>', html=False)
         self.assertContains(response, '"@type": "Dataset"')
+        self.assertContains(response, "High-impact areas")
+        ea = Category.objects.create(name="Effective Altruism", slug="effective-altruism")
+        Job.objects.create(title="Operations Lead", slug="ea-ops", organization=self.org, category=ea, description=DESCRIPTION,
+                           application_url="https://jobs.example.org/ea", quality_score=80)
+        cache.clear()
+        self.assertContains(self.client.get(reverse("jobs:ai_impact_work")), ">Effective Altruism</a>")
