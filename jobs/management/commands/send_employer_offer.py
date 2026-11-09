@@ -7,6 +7,7 @@ emails promised no further contact after "no thanks", and replies are not record
 Dry run by default. Pass --send; --limit caps one batch (default 25, about one week of hand-selling).
 """
 from django.conf import settings
+from django.core.cache import cache
 from django.core.management.base import BaseCommand
 from django.db import IntegrityError
 from django.template.loader import render_to_string
@@ -19,6 +20,17 @@ from jobs.services.email_service import email_service
 from jobs.services.job_service import JobService
 
 CAMPAIGN = "employer-offer-2026-11"
+LOOKUP_TTL = 30 * 86400
+
+
+def public_role_address(org):
+    """site_email, remembered for 30 days so weekly runs only fetch organizations they have not seen."""
+    key = f"employer-offer:site-email:{org.pk}"
+    found = cache.get(key)
+    if found is None:
+        found = site_email(org)
+        cache.set(key, found, LOOKUP_TTL)
+    return found
 
 
 def prospects(min_clicks):
@@ -47,7 +59,7 @@ class Command(BaseCommand):
         for org, stats in rows:
             if reached >= options["limit"]:
                 break
-            email = site_email(org)
+            email = public_role_address(org)
             if not email or email.lower() in contacted_emails:
                 self.stdout.write(f"Skip {org.name}: {'already contacted' if email else 'no public role address'}")
                 continue
