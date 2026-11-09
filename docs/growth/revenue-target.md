@@ -39,6 +39,20 @@ Run these on production with `/opt/easyclaw/exec-active python manage.py ...`. E
 - `send_roundup_reconsent --limit 100`: sends each legacy audience member one request to confirm the weekly roundup. Nobody is subscribed without clicking. Run one batch a day until the dry run reports 0 eligible.
 - `send_employer_offer --limit 25`: emails unclaimed organizations whose live roles got apply clicks from us in the last 30 days. Each email shows their views and clicks and offers a $49 feature for the most-clicked role. It skips anyone reached by an earlier employer campaign. Run weekly. Record each "no thanks" reply by hand so nobody is emailed again.
 
+## What runs without the owner
+
+All of these run through `/opt/easyclaw/exec-active` from the root crontab on the server. Times are UTC.
+
+| When | Command | What it does |
+|---|---|---|
+| Daily 05:00 | `verify_ats_jobs` | Confirms imported roles against each employer's own hiring system (ATS). |
+| Daily 06:30 | `send_daily_signal --send` | Emails `OWNER_REPORT_EMAIL` yesterday's numbers against the 7-day average, with alerts. |
+| Daily 08:15 | `send_employer_monthly_reports --send` | Sends each claimed organization its stats every 25 days or more, with a $49 feature link. |
+| Monday 08:00 | `send_employer_offer --send --limit 25` | Sends the next 25 unclaimed employers with apply clicks their numbers and the offer. |
+| Thursday 09:00 | `send_auto_roundup --send` | Sends the weekly roundup from roles verified open that morning, unless an issue already went out this week. |
+
+To send a hand-edited issue instead, send it with `send_roundup` before Thursday 09:00. The automatic one then skips that week.
+
 ## Monday review
 
 Run on production and paste the numbers into the week's row below.
