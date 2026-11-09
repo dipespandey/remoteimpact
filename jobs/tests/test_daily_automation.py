@@ -67,6 +67,19 @@ class DailyAutomationTests(EmployerTestBase):
         from jobs.management.commands.send_daily_signal import build_signal
         self.assertFalse([a for a in build_signal(day)["alerts"] if "Apply clicks fell" in a])
 
+    def test_friday_signal_carries_a_linkedin_post_built_from_the_data(self):
+        from jobs.management.commands.send_daily_signal import build_signal
+        global_health = Category.objects.create(name="Global Health", slug="global-health") if not Category.objects.filter(slug="global-health").exists() else Category.objects.get(slug="global-health")
+        for n in range(10):
+            JobDailyStat.objects.create(job=self.role(200 + n, self.climate), date=timezone.localdate(), apply_clicks=1)
+            JobDailyStat.objects.create(job=self.role(300 + n, global_health), date=timezone.localdate(), apply_clicks=5)
+        thursday = timezone.localdate() - timedelta(days=(timezone.localdate().weekday() - 3) % 7 or 7)
+        post = build_signal(thursday)["linkedin_post"]
+        self.assertIn("Global Health roles drew 5.0 apply clicks each", post)
+        self.assertIn("Climate & Environment roles drew 1.0, across 10 open roles", post)
+        self.assertIn("/insights/ai-and-impact-work/", post)
+        self.assertEqual(build_signal(thursday - timedelta(days=1))["linkedin_post"], "")
+
     def test_daily_signal_dry_run_sends_nothing(self):
         with patch("jobs.management.commands.send_daily_signal.email_service.send_email") as send:
             out = io.StringIO()
