@@ -11,6 +11,7 @@ Dry run unless --send.
 import hashlib
 import io
 import json
+import re
 import tempfile
 from datetime import timedelta
 from pathlib import Path
@@ -31,6 +32,10 @@ from jobs.services.roundup import CATEGORY, issue_week
 
 SLOTS = (("climate", 2), ("health", 2), ("ai", 2), ("early", 1))
 MAX_PICKS = 8
+# Recruiting pages that are not a single opening.
+GENERIC_TITLE = re.compile(r"\b(opportunities|general application|open application|talent (pool|community|network)|"
+                           r"expression of interest|future (roles|openings)|join our team)\b", re.I)
+VAGUE_LOCATION = {"remote", "remote job", "anywhere", "n/a", "tbd"}
 
 
 def raw(job, key):
@@ -65,7 +70,9 @@ def pay(salary):
 
 
 def where(job):
-    listed = str(raw(job, "ats_check").get("location") or "").strip()
+    listed = re.sub(r"\s*,(\s*,)*\s*", ", ", str(raw(job, "ats_check").get("location") or "")).strip(" ,.")
+    if len(re.findall(r"[A-Za-z]", listed)) < 3 or listed.lower() in VAGUE_LOCATION:
+        listed = ""
     text = job.location.strip().rstrip(".") + "."
     if listed and listed.lower() not in job.location.lower():
         text += f" The employer lists: {listed[:120]}."
@@ -77,6 +84,8 @@ def choose(now):
               .exclude(application_url="").select_related("organization", "category").defer("embedding", "search_vector"))
     pool = []
     for job in recent:
+        if GENERIC_TITLE.search(job.title):
+            continue
         if checked := verified_at(job, now):
             pool.append((job, checked, supported_base_salary(job)))
     since = timezone.localdate() - timedelta(days=6)
@@ -107,8 +116,8 @@ def insight():
     lines = []
     if len(sectors) >= 2:
         busy, quiet = sectors[0], sectors[-1]
-        lines.append(f"Over the last 30 days, {busy.label.lower()} roles drew {busy.per_role:.1f} apply clicks each from "
-                     f"Remote Impact readers, while {quiet.label.lower()} roles drew {quiet.per_role:.1f}.")
+        lines.append(f"Over the last 30 days, roles in {busy.label} drew {busy.per_role:.1f} apply clicks each from "
+                     f"Remote Impact readers, while roles in {quiet.label} drew {quiet.per_role:.1f}.")
     entry, senior = levels.get("Entry Level"), levels.get("Senior")
     if entry and senior and senior.per_role and entry.per_role / senior.per_role >= 1.5:
         lines.append(f"Entry-level roles drew {entry.per_role / senior.per_role:.1f} times as many clicks per role as senior ones, "
