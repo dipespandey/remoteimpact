@@ -1,0 +1,11 @@
+{% extends "emails/base.html" %}
+{% block title %}{{ org.name }} on Remote Impact{% endblock %}
+{% block content %}
+<p style="margin:32px 0 14px;color:#565e57;font-size:16px;line-height:1.6">Hi,</p>
+<p style="margin:0 0 14px;color:#565e57;font-size:16px;line-height:1.6">Remote Impact lists remote roles at impact organizations. In the last 30 days, {{ org.name }}'s {{ stats.roles }} live role{{ stats.roles|pluralize }} here {{ stats.roles|pluralize:"was,were" }} viewed <strong>{{ stats.views }}</strong> times, and <strong>{{ stats.clicks }}</strong> people clicked through to apply. Most clicked: {{ stats.top }}.</p>
+<p style="margin:0 0 24px;color:#565e57;font-size:16px;line-height:1.6">If you'd like more applicants for {{ stats.top }}, you can feature it for $49. It gets pinned to the top of matching searches and category pages and shown on the homepage for 30 days.</p>
+<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#1d211e"><a href="{{ feature_url }}" style="display:inline-block;padding:13px 20px;color:#fff;font-size:15px;font-weight:bold;text-decoration:none">Feature this role for $49</a></td></tr></table>
+<p style="margin:24px 0 0;color:#626a63;font-size:14px;line-height:1.6">Or <a href="{{ claim_url }}" style="color:#365426">claim {{ org.name }}'s page for free</a> to correct details and get these numbers monthly.</p>
+<p style="margin:14px 0 0;color:#626a63;font-size:14px;line-height:1.6">Reply "no thanks" and I won't email again.</p>
+<p style="margin:14px 0 0;color:#565e57;font-size:15px">Dipesh</p>
+{% endblock %}

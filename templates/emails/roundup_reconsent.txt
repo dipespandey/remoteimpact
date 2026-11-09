@@ -1,0 +1,14 @@
+Hi,
+
+You signed up for Remote Impact a while ago. We now send one short email a week with hand-picked remote roles in climate, global health, AI safety and social impact.
+
+We'll only send it if you confirm. If you don't click, you won't hear from us about it again.
+
+Yes, send me weekly picks: {{ confirm_url }}
+
+The link works for 48 hours. After that you can sign up any time at {{ signup_url }}
+
+Don't email me about this: {{ stop_url }}
+
+Dipesh
+Remote Impact · remoteimpact.org

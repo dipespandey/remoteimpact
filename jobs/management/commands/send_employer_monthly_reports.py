@@ -19,7 +19,7 @@ def claim_stats(organization):
     live = JobService.get_available_jobs().filter(organization=organization)
     rows = (
         JobDailyStat.objects.filter(date__gte=since, job__in=live)
-        .values("job__title").annotate(views=Sum("views"), clicks=Sum("apply_clicks"))
+        .values("job__title", "job__slug").annotate(views=Sum("views"), clicks=Sum("apply_clicks"))
         .order_by("-clicks", "-views")
     )
     rows = list(rows)
@@ -28,6 +28,7 @@ def claim_stats(organization):
         "views": sum(r["views"] or 0 for r in rows),
         "clicks": sum(r["clicks"] or 0 for r in rows),
         "top": rows[0]["job__title"] if rows and rows[0]["clicks"] else "",
+        "top_slug": rows[0]["job__slug"] if rows and rows[0]["clicks"] else "",
     }
 
 
