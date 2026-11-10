@@ -56,6 +56,11 @@ def _subscription_for(user):
 DECLARED_CRAWLER = re.compile(r"bot|crawl|spider|slurp", re.I)
 
 
+def seed_job_id(value):
+    value = str(value or "")
+    return int(value) if value.isascii() and value.isdecimal() and len(value) <= 10 and 0 < int(value) < 2**31 else None
+
+
 def _scout_preview_path(flow):
     """Return the latest safe preview URL for a session-bound Scout flow."""
     event = (
@@ -72,7 +77,10 @@ def _scout_preview_path(flow):
     intent = str(metadata.get("intent_text") or "").strip()
     if not intent:
         return reverse("jobs:home")
-    return f"{reverse('jobs:job_scout_preview')}?{urlencode({'intent': intent, 'source': metadata.get('source') or flow.get('source') or 'scout_preview'})}"
+    query = {'intent': intent, 'source': metadata.get('source') or flow.get('source') or 'scout_preview'}
+    if seed_job_id(metadata.get('seed_job_id')):
+        query['similar_to'] = metadata['seed_job_id']
+    return f"{reverse('jobs:job_scout_preview')}?{urlencode(query)}"
 
 
 def _contact_verify_url(contact):
@@ -258,8 +266,7 @@ class JobScoutPreviewView(TemplateView):
             messages.info(request, "Describe the job you want in a little more detail.")
             return redirect("jobs:home")
         self.intent = intent
-        similar_to = request.GET.get("similar_to", "")
-        self.seed_job_id = int(similar_to) if similar_to.isdigit() and 0 < int(similar_to) < 2**31 else None
+        self.seed_job_id = seed_job_id(request.GET.get("similar_to", ""))
         source = " ".join(request.GET.get('source', '').split())[:80] or 'scout_preview'
         self.scout_flow, changed = scout_funnel.start_flow(request, intent, source,
                                                     personalized=source == 'scout_personalized')
@@ -370,7 +377,7 @@ class JobScoutPreviewView(TemplateView):
             from jobs.services.scout_alternatives import explore_openings
             if not preferences:
                 preferences = JobScoutService._fallback_parse(self.intent)
-            explore_jobs = explore_openings(preferences)
+            explore_jobs = explore_openings({**preferences, "_seed_job_id": self.seed_job_id})
         context.update(
             intent=self.intent,
             preferences=preferences,
@@ -400,6 +407,7 @@ class JobScoutPreviewView(TemplateView):
                     "match_count": len(matches),
                     "explore_count": len(explore_jobs),
                     "intent_text": self.intent[:2000],
+                    "seed_job_id": self.seed_job_id,
                     "workflow": workflow_diagnostics,
                     "source": source,
                     "authenticated": self.request.user.is_authenticated, **scout_funnel.metadata(self.scout_flow),

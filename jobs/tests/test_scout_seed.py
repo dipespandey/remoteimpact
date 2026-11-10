@@ -92,3 +92,36 @@ class SimilarRolesPreviewTests(SeedFixture, TestCase):
         with patch.object(JobScoutService, "search_intent"):
             self.client.get(reverse("jobs:job_scout_preview"), {"intent": INTENT, "similar_to": "1;drop"})
         self.assertIsNone(ScoutPreviewTask.objects.get().seed_job_id)
+
+
+class SimilarRolesFallbackTests(SeedFixture, TestCase):
+    def setUp(self):
+        self.make_jobs()
+
+    def test_empty_result_lists_never_offer_the_job_it_started_from(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        from jobs.services.scout_alternatives import explore_openings, older_openings
+        Job.objects.filter(pk__in=[self.seed.pk, self.repost.pk, self.peer.pk]).update(posted_at=timezone.now() - timedelta(days=45))
+        preferences = {**JobScoutService._fallback_parse(INTENT), "_seed_job_id": self.seed.pk}
+        with patch("jobs.services.scout_alternatives.duty_evidence", return_value="Manage grant applications"):
+            older = older_openings({**preferences, "titles": ["grants manager"]}, limit=5)
+        for listed in (explore_openings(preferences, limit=5), older):
+            ids = {job.pk for job in listed}
+            self.assertIn(self.peer.pk, ids)
+            self.assertFalse(ids & {self.seed.pk, self.repost.pk})
+
+
+class SimilarRolesLinkTests(TestCase):
+    def test_contact_redirect_keeps_the_seed(self):
+        from jobs.models import ConsumerFunnelEvent
+        from jobs.views.job_alerts import _scout_preview_path
+        ConsumerFunnelEvent.objects.create(event=ConsumerFunnelEvent.Event.SCOUT_PREVIEWED,
+                                           metadata={"scout_flow_id": "f1", "intent_text": INTENT, "source": "job_detail", "seed_job_id": 42})
+        self.assertIn("similar_to=42", _scout_preview_path({"id": "f1"}))
+
+    def test_crafted_seed_values_are_ignored(self):
+        from jobs.views.job_alerts import seed_job_id
+        for value in ("²", "9" * 5000, "-1", "0", "1;drop", "", None, "4294967296"):
+            self.assertIsNone(seed_job_id(value))
+        self.assertEqual(seed_job_id("42"), 42)

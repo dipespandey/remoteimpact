@@ -40,7 +40,8 @@ def explore_openings(preferences, *, limit=3, exclude_ids=()):
         for variant in variants:
             title_query |= Q(title__icontains=variant)
             body_query |= Q(description__icontains=variant)
-    qs = JobService.get_available_jobs().exclude(pk__in=list(exclude_ids)).select_related('organization', 'category')
+    from jobs.services.scout_seed import exclude_seed
+    qs = exclude_seed(JobService.get_available_jobs().exclude(pk__in=list(exclude_ids)), preferences).select_related('organization', 'category')
     qs = qs.defer('embedding', 'search_vector', 'raw_data').annotate(
         explore_priority=Case(When(title_query, then=Value(2)), When(body_query, then=Value(1)),
                               default=Value(0), output_field=IntegerField()))
@@ -111,7 +112,8 @@ def older_openings(preferences, *, limit=3):
     title_query = Q()
     for title in titles:
         title_query |= Q(title__icontains=title)
-    qs = JobService.get_available_jobs().filter(
+    from jobs.services.scout_seed import exclude_seed
+    qs = exclude_seed(JobService.get_available_jobs(), preferences).filter(
         title_query, posted_at__gte=now - timedelta(days=90), posted_at__lt=now - timedelta(days=30)
     ).select_related('organization', 'category').defer('embedding', 'search_vector').order_by('-posted_at', '-pk')
     from jobs.services.job_scout_service import JobScoutService
