@@ -1255,7 +1255,8 @@ skills is not a request for invented, exact job titles. JSON only."""
                                        len(getattr(job, 'scout_caveats', [])),
                                        -getattr(job, 'scout_score', 0)))
         if seed_rank:
-            selected = scout_seed.one_per_employer_first(selected)
+            selected = scout_seed.one_per_employer_first(
+                selected, within=lambda job: (getattr(job, 'scout_location_priority', 1), tier_for_job(job) != 'good'))
         selected = selected[:limit]
         for job in selected:
             if tier_for_job(job) == 'consider':

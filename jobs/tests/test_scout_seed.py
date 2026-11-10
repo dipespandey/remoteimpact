@@ -166,3 +166,11 @@ class SeedClosenessTests(TestCase):
         copy = make_job(self.orgs[1], "Sales Manager Düsseldorf", "sales-duesseldorf")
         other = make_job(self.orgs[2], "Sales Manager", "sales-other")
         self.assertEqual(one_per_employer_first([first, copy, other]), [first, other, copy])
+        better = {first.pk: 0, copy.pk: 0, other.pk: 1}
+        self.assertEqual(one_per_employer_first([first, copy, other], within=lambda job: better[job.pk]), [first, copy, other])
+
+    def test_ties_keep_retrieval_order_not_job_age(self):
+        from jobs.services.scout_seed import closest
+        older = make_job(self.orgs[1], "Graphic Designer", "designer-old")
+        newer = make_job(self.orgs[2], "Data Engineer", "engineer-new")
+        self.assertEqual(closest(self.preferences, [newer, older]), [newer, older])

@@ -6,9 +6,11 @@ and a fuller brief for the review model. The deterministic rules keep reading
 the short request the person saw.
 """
 import hashlib
+import logging
 
 from django.utils.html import strip_tags
 
+logger = logging.getLogger(__name__)
 BRIEF_DESCRIPTION_CHARS = 700
 
 
@@ -85,6 +87,7 @@ def closest(preferences, jobs):
     so "interconnection" outweighs "lead". Returns the jobs unchanged when there is no seed.
     """
     import math
+    from django.conf import settings
     from django.db import connection
     from jobs.models import Job
     from jobs.services.scout_retrieval import reciprocal_rank_fusion
@@ -101,20 +104,33 @@ def closest(preferences, jobs):
             frequency[word] = frequency.get(word, 0) + 1
     weight = {word: math.log(1 + len(jobs) / frequency.get(word, 1)) for word in _title_words(seed["title"])}
     overlap = {pk: sum(weight[word] for word in found if word in weight) for pk, found in words.items()}
-    rankings = [sorted(jobs, key=lambda job: (-overlap[job.pk], job.pk))]
-    vector = embedding(preferences) if connection.vendor == "postgresql" else None
-    if vector is not None:
-        from pgvector.django import CosineDistance
-        distance = dict(Job.objects.filter(pk__in=list(words), embedding__isnull=False)
-                        .annotate(seed_distance=CosineDistance("embedding", vector)).values_list("pk", "seed_distance"))
-        rankings.append(sorted(jobs, key=lambda job: (distance.get(job.pk, 2.0), job.pk)))
+    # Stable sorts: ties keep the order the jobs arrived in, which is retrieval relevance.
+    rankings = [sorted(jobs, key=lambda job: -overlap[job.pk])]
+    if connection.vendor == "postgresql" and getattr(settings, "SCOUT_SEMANTIC_ENABLED", True):
+        try:
+            vector = embedding(preferences)
+            if vector is not None:
+                from pgvector.django import CosineDistance
+                distance = dict(Job.objects.filter(pk__in=list(words), embedding__isnull=False)
+                                .annotate(seed_distance=CosineDistance("embedding", vector)).values_list("pk", "seed_distance"))
+                rankings.append(sorted(jobs, key=lambda job: distance.get(job.pk, 2.0)))
+        except Exception:
+            # Closeness is an ordering aid; the search continues on title words alone.
+            logger.warning("Scout seed distance unavailable", exc_info=False)
     return reciprocal_rank_fusion(rankings, limit=len(jobs))
 
 
-def one_per_employer_first(jobs):
-    """Regional copies of one opening must not fill every slot; a second role from an employer waits its turn."""
-    first, later, seen = [], [], set()
-    for job in jobs:
-        (later if job.organization_id in seen else first).append(job)
-        seen.add(job.organization_id)
-    return [*first, *later]
+def one_per_employer_first(jobs, *, within=lambda job: None):
+    """Regional copies of one opening must not fill every slot; a second role from an employer waits its turn.
+
+    Jobs only trade places inside a run that shares `within`, so a better tier is never demoted.
+    """
+    from itertools import groupby
+    result, seen = [], set()
+    for _, group in groupby(jobs, key=within):
+        first, later = [], []
+        for job in group:
+            (later if job.organization_id in seen else first).append(job)
+            seen.add(job.organization_id)
+        result += [*first, *later]
+    return result
