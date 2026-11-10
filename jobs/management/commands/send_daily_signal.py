@@ -4,6 +4,8 @@ Prints instead of sending unless --send. Days are UTC, matching the stats tables
 """
 from datetime import timedelta
 
+import requests
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.template.loader import render_to_string
@@ -16,6 +18,8 @@ ROWS = [
     ("apply_clicks", "Apply clicks sent to employers"),
     ("job_views", "Job page views"),
     ("roles_seen", "Live roles re-seen at their source"),
+    ("scout_searches", "Scout searches"),
+    ("scout_unreviewed", "... of which Scout could not review"),
     ("accounts", "New accounts"),
     ("weekly_requests", "Weekly roundup signups requested"),
     ("weekly_requests_from_apply_prompt", "... of which from the apply prompt"),
@@ -27,6 +31,23 @@ ROWS = [
     ("pro_payments", "Pro payments"),
 ]
 MONEY = ("features_sold", "posts_sold", "pro_payments")
+LOW_BALANCE_USD = 5
+
+
+def deepseek_balance():
+    """USD balance of the account Scout's review uses; 0 when unusable, None when it can't be read."""
+    if not getattr(settings, "DEEPSEEK_API_KEY", ""):
+        return None
+    try:
+        response = requests.get("https://api.deepseek.com/user/balance", timeout=15,
+                                headers={"Authorization": f"Bearer {settings.DEEPSEEK_API_KEY}"})
+        response.raise_for_status()
+        data = response.json()
+        if not data.get("is_available"):
+            return 0.0
+        return sum(float(b["total_balance"]) for b in data.get("balance_infos", []) if b.get("currency") == "USD")
+    except (requests.RequestException, ValueError, KeyError, TypeError):
+        return None
 
 
 def linkedin_draft():
@@ -63,6 +84,13 @@ def build_signal(day):
     same_day_last_week = history[-1]["apply_clicks"]
     if same_day_last_week >= 50 and today["apply_clicks"] < 0.6 * same_day_last_week:
         alerts.append(f"Apply clicks fell to {today['apply_clicks']} from {same_day_last_week} on the same day last week.")
+    if today["scout_searches"] >= 5 and today["scout_unreviewed"] >= 0.3 * today["scout_searches"]:
+        alerts.append(f"Scout could not review {today['scout_unreviewed']} of {today['scout_searches']} searches, so those people saw "
+                      "no matches. The DeepSeek review call is failing.")
+    balance = deepseek_balance()
+    if balance is not None and balance < LOW_BALANCE_USD:
+        alerts.append(f"DeepSeek balance is ${balance:.2f}. Scout returns no matches when it runs out. "
+                      "Top up at platform.deepseek.com.")
     if today["claims_verified"]:
         alerts.append("An employer claimed their page. They are your warmest lead this week.")
     audience = weekly_audience()

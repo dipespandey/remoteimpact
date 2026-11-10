@@ -67,7 +67,11 @@ def day_signal(day):
     weekly = RoundupSubscriber.objects.filter(consent_basis__in=["weekly_request", "account_explicit"])
     features = JobFeaturePurchase.objects.filter(created_at__gte=start, created_at__lt=end)
     posts = Job.objects.filter(paid_at__gte=start, paid_at__lt=end)
+    searches = ConsumerFunnelEvent.objects.filter(event=ConsumerFunnelEvent.Event.SCOUT_PREVIEWED, created_at__gte=start, created_at__lt=end)
     return {
+        "scout_searches": searches.count(),
+        "scout_unreviewed": searches.filter(Q(metadata__workflow__review_incomplete=True)
+                                            | Q(metadata__workflow__reranker="review_unavailable")).count(),
         "job_views": stats["v"] or 0,
         "apply_clicks": stats["c"] or 0,
         "roles_seen": JobService.get_available_jobs().filter(last_seen_at__gte=start, last_seen_at__lt=end).count(),

@@ -220,3 +220,50 @@ class AIImpactWorkPageTests(EmployerTestBase):
                            application_url="https://jobs.example.org/ea", quality_score=80)
         cache.clear()
         self.assertContains(self.client.get(reverse("jobs:ai_impact_work")), ">Effective Altruism</a>")
+
+
+class ScoutOutageSignalTests(EmployerTestBase):
+    def searches(self, unreviewed, reviewed):
+        yesterday = timezone.now() - timedelta(days=1)
+        for n in range(unreviewed + reviewed):
+            workflow = {"reranker": "review_unavailable", "review_incomplete": True} if n < unreviewed else {"reranker": "model"}
+            event = ConsumerFunnelEvent.objects.create(event=ConsumerFunnelEvent.Event.SCOUT_PREVIEWED,
+                                                       metadata={"match_count": 0, "workflow": workflow})
+            ConsumerFunnelEvent.objects.filter(pk=event.pk).update(created_at=yesterday)
+
+    def balance_response(self, payload):
+        response = type("R", (), {"raise_for_status": lambda self: None, "json": lambda self: payload})()
+        return patch("jobs.management.commands.send_daily_signal.requests.get", return_value=response)
+
+    @override_settings(DEEPSEEK_API_KEY="sk-test")
+    def test_signal_flags_searches_scout_could_not_review_and_an_empty_balance(self):
+        self.searches(unreviewed=6, reviewed=4)
+        from jobs.management.commands.send_daily_signal import build_signal
+        with self.balance_response({"is_available": False, "balance_infos": [{"currency": "USD", "total_balance": "0.00"}]}):
+            signal = build_signal(timezone.localdate() - timedelta(days=1))
+        rows = {r["key"]: r["value"] for r in signal["rows"]}
+        self.assertEqual((rows["scout_searches"], rows["scout_unreviewed"]), (10, 6))
+        self.assertTrue(any("could not review 6 of 10" in a for a in signal["alerts"]))
+        self.assertTrue(any("DeepSeek balance is $0.00" in a for a in signal["alerts"]))
+
+    @override_settings(DEEPSEEK_API_KEY="sk-test")
+    def test_healthy_scout_and_funded_account_raise_nothing(self):
+        self.searches(unreviewed=1, reviewed=9)
+        from jobs.management.commands.send_daily_signal import build_signal
+        with self.balance_response({"is_available": True, "balance_infos": [{"currency": "USD", "total_balance": "42.10"}]}):
+            alerts = build_signal(timezone.localdate() - timedelta(days=1))["alerts"]
+        self.assertFalse([a for a in alerts if "Scout" in a or "DeepSeek" in a])
+
+
+@override_settings(SCOUT_PREVIEW_ASYNC_ENABLED=True)
+class ScoutCrawlerTests(EmployerTestBase):
+    def test_crawlers_following_similar_roles_links_start_no_paid_search(self):
+        from jobs.scout_task_models import ScoutPreviewTask
+        url = reverse("jobs:job_scout_preview") + "?intent=Remote%20Program%20Manager%20roles%20similar%20to%20this%20one&source=job_detail"
+        agent = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ShapBot/0.1.0"
+        response = self.client.get(url, HTTP_USER_AGENT=agent)
+        self.assertEqual(response["X-Robots-Tag"], "noindex, nofollow")
+        self.assertFalse(ScoutPreviewTask.objects.exists())
+        self.assertFalse(ConsumerFunnelEvent.objects.exists())
+        self.client.get(url, HTTP_USER_AGENT="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15")
+        self.assertTrue(ScoutPreviewTask.objects.exists())
