@@ -10,7 +10,7 @@ from itertools import islice
 
 from django.conf import settings
 from django.db import connection
-from django.db.models import Case, FloatField, Value, When, Q
+from django.db.models import Case, ExpressionWrapper, FloatField, Value, When, Q
 from django.core.cache import cache
 
 from jobs.services.scout_constraints import evaluate_job,DOMAIN_VARIANTS,skill_requirement_groups
@@ -51,9 +51,8 @@ def ranked_rows(query, source_query, metrics, *, scan=2000, batch_size=100):
 
     Keep the ranked order and scan cap. Source rows are always fetched through
     the current filtered queryset, so the JSON annotations are computed for
-    loaded batches, not for every ranked row. The semantic order's id
-    tiebreaker keeps it an exact sort, which the HNSW index cannot serve, so
-    projecting ids does not change its candidate set.
+    loaded batches, not for every ranked row. The semantic order is padded so
+    the HNSW index cannot serve it; projecting ids then keeps its candidate set.
     """
     ids = query.values_list('pk', flat=True)[:scan].iterator(chunk_size=batch_size)
     try:
@@ -201,7 +200,10 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=20
             vector=seed_vector if seed_vector is not None and getattr(settings,'SCOUT_SEMANTIC_ENABLED',True) else query_embedding(preferences.get('intent_text') or ' '.join(terms))
             if vector is not None:
                 from pgvector.django import CosineDistance
-                semantic=qs.filter(embedding__isnull=False).annotate(scout_distance=CosineDistance('embedding',vector)).order_by('scout_distance','-id')
+                # "+ 0" keeps this an exact sort. A bare distance order could be served by the HNSW
+                # index, which returns only hnsw.ef_search (40) rows with iterative scan off.
+                distance=ExpressionWrapper(CosineDistance('embedding',vector)+Value(0.0),output_field=FloatField())
+                semantic=qs.filter(embedding__isnull=False).annotate(scout_distance=distance).order_by('scout_distance','-id')
                 branches.append(('semantic',semantic))
         except Exception:
             # Neither a transient cache nor an embedding failure disables search.
