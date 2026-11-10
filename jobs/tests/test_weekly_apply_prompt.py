@@ -64,11 +64,26 @@ class WeeklyApplyPromptTests(EmployerTestBase):
         self.assertContains(response, 'data-topic="climate"')
         self.assertContains(response, "hand-picked remote climate jobs")
 
+    def test_job_page_offers_the_signup_beside_the_apply_button_before_any_click(self):
+        html = self.job_page().content.decode()
+        panel = html[html.index('id="apply-panel"'):]
+        form = panel.index('data-source="apply_inline"')
+        self.assertLess(panel.index('Apply on company site'), form)
+        self.assertLess(form, panel.index('Application guide'))
+
+    def test_inline_signups_count_toward_the_daily_job_page_signups(self):
+        from jobs.services.impact_metrics import day_signal
+        self.signup(source="apply_inline")
+        self.signup(email="second@example.org")
+        self.assertEqual(day_signal(timezone.localdate())["weekly_requests_from_apply_prompt"], 2)
+
     def test_subscribed_members_are_not_prompted(self):
         user = self.make_user()
         RoundupSubscriber.objects.create(email=user.email, confirmed_at=timezone.now())
         self.client.force_login(user)
-        self.assertNotContains(self.job_page(), 'id="weekly-apply-prompt"')
+        page = self.job_page()
+        self.assertNotContains(page, 'id="weekly-apply-prompt"')
+        self.assertNotContains(page, "data-weekly-inline")
 
     def test_signed_in_members_who_are_not_subscribed_see_their_email_prefilled(self):
         self.client.force_login(self.make_user())
@@ -78,7 +93,9 @@ class WeeklyApplyPromptTests(EmployerTestBase):
         self.job.application_url = ""
         self.job.application_email = "jobs@example.org"
         self.job.save()
-        self.assertNotContains(self.job_page(), 'id="weekly-apply-prompt"')
+        page = self.job_page()
+        self.assertNotContains(page, 'id="weekly-apply-prompt"')
+        self.assertNotContains(page, "data-weekly-inline")
 
     def make_user(self):
         from django.contrib.auth import get_user_model
