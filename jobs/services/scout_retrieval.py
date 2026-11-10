@@ -70,6 +70,13 @@ def ranked_rows(query, source_query, metrics, *, scan=2000, batch_size=100):
         ids.close()
 
 
+def semantic_ranking(qs, vector):
+    """Exact cosine order. "+ 0" stops the HNSW index serving it, which would cap rows at hnsw.ef_search."""
+    from pgvector.django import CosineDistance
+    distance = ExpressionWrapper(CosineDistance('embedding', vector) + Value(0.0), output_field=FloatField())
+    return qs.filter(embedding__isnull=False).annotate(scout_distance=distance).order_by('scout_distance', '-id')
+
+
 def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=200):
     retrieval_start=monotonic()
     from jobs.services.scout_workflow import retrieval_time_available
@@ -199,11 +206,7 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=20
         try:
             vector=seed_vector if seed_vector is not None and getattr(settings,'SCOUT_SEMANTIC_ENABLED',True) else query_embedding(preferences.get('intent_text') or ' '.join(terms))
             if vector is not None:
-                from pgvector.django import CosineDistance
-                # "+ 0" keeps this an exact sort. A bare distance order could be served by the HNSW
-                # index, which returns only hnsw.ef_search (40) rows with iterative scan off.
-                distance=ExpressionWrapper(CosineDistance('embedding',vector)+Value(0.0),output_field=FloatField())
-                semantic=qs.filter(embedding__isnull=False).annotate(scout_distance=distance).order_by('scout_distance','-id')
+                semantic=semantic_ranking(qs,vector)
                 branches.append(('semantic',semantic))
         except Exception:
             # Neither a transient cache nor an embedding failure disables search.
