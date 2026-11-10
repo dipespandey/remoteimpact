@@ -226,7 +226,8 @@
 
 @layer components {
   .prose p:empty, .prose p:has(> br:only-child) { display: none; }
-  .job-apply-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .25rem; margin-top: .75rem; }
-  .job-apply-links > :last-child:nth-child(odd) { grid-column: 1 / -1; }
-  @screen lg { .job-apply-links { display: flex; flex-direction: column; } }
+  /* Secondary actions: one even row where the panel is wide, a stack in the narrow sidebar. */
+  .job-apply-links { display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid hsl(var(--border)); }
+  @screen sm { .job-apply-links { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); } }
+  @screen lg { .job-apply-links { grid-auto-flow: row; } }
 }
