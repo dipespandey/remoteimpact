@@ -125,3 +125,14 @@ class SimilarRolesLinkTests(TestCase):
         for value in ("²", "9" * 5000, "-1", "0", "1;drop", "", None, "4294967296"):
             self.assertIsNone(seed_job_id(value))
         self.assertEqual(seed_job_id("42"), 42)
+
+
+class SemanticRankingShapeTests(TestCase):
+    def test_vector_order_cannot_be_served_by_the_capped_hnsw_index(self):
+        from django.db.models.expressions import CombinedExpression
+        from jobs.services.scout_retrieval import semantic_ranking
+        ranked = semantic_ranking(Job.objects.all(), [0.0, 1.0])
+        self.assertEqual(ranked.query.order_by, ("scout_distance", "-id"))
+        distance = ranked.query.annotations["scout_distance"].expression
+        self.assertIsInstance(distance, CombinedExpression)
+        self.assertEqual(distance.connector, "+")
