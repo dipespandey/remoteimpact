@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Email confirmed — Remote Impact{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block content %}
+<section class="container max-w-xl py-12">
+  <div class="card p-6 sm:p-8">
+    <h1 class="page-title">Your email is confirmed</h1>
+    {% if results_url %}
+    <p class="mt-2 text-muted-foreground">Your matches are waiting. Create your free Scout from your results to get them by email.</p>
+    <a href="{{ results_url }}" class="btn btn-primary mt-6" data-track="scout_contact_verified_continue" data-track-category="job_scout">See my results</a>
+    {% else %}
+    <p class="mt-2 text-muted-foreground">Describe the role you want and we'll find current matches.</p>
+    <a href="{% url 'jobs:home' %}" class="btn btn-primary mt-6">Start a search</a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
