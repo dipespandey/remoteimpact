@@ -16,6 +16,7 @@ class ScoutPreviewTask(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     semantic_key = models.CharField(max_length=64, unique=True)
     intent_text = models.CharField(max_length=2000)
+    seed_job_id = models.PositiveIntegerField(null=True, blank=True)
     state = models.CharField(max_length=12, choices=State.choices, default=State.QUEUED, db_index=True)
     result = models.JSONField(default=dict, blank=True)
     attempts = models.PositiveSmallIntegerField(default=0)

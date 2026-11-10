@@ -3,5 +3,6 @@
     <input type="hidden" name="source" value="{{ request.GET.source|default:'scout_retry' }}">
     <input type="hidden" name="scout_flow" value="{{ scout_flow_id }}">
     <input type="hidden" name="retry" value="1">
+    {% if request.GET.similar_to %}<input type="hidden" name="similar_to" value="{{ request.GET.similar_to }}">{% endif %}
     <button type="submit" class="btn btn-outline btn-sm" data-track="scout_review_retry">Retry this search</button>
 </form>

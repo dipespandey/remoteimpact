@@ -258,6 +258,8 @@ class JobScoutPreviewView(TemplateView):
             messages.info(request, "Describe the job you want in a little more detail.")
             return redirect("jobs:home")
         self.intent = intent
+        similar_to = request.GET.get("similar_to", "")
+        self.seed_job_id = int(similar_to) if similar_to.isdigit() and 0 < int(similar_to) < 2**31 else None
         source = " ".join(request.GET.get('source', '').split())[:80] or 'scout_preview'
         self.scout_flow, changed = scout_funnel.start_flow(request, intent, source,
                                                     personalized=source == 'scout_personalized')
@@ -274,7 +276,7 @@ class JobScoutPreviewView(TemplateView):
 
             task_id = request.GET.get("scout_task", "").strip()
             task = accessible_task(task_id, request.session.session_key) if task_id else None
-            if task and (task.intent_text != intent or task.semantic_key != semantic_key(intent)):
+            if task and (task.intent_text != intent or task.semantic_key != semantic_key(intent, self.seed_job_id)):
                 task = None
             explicit_retry = request.GET.get("retry") == "1"
             try:
@@ -283,6 +285,7 @@ class JobScoutPreviewView(TemplateView):
                     request.session.session_key,
                     force_refresh=explicit_retry,
                     retry_failed=explicit_retry,
+                    seed_job_id=self.seed_job_id,
                 )
             except PreviewQueueLimited:
                 self.queue_limited = True
@@ -322,7 +325,8 @@ class JobScoutPreviewView(TemplateView):
 
                     try:
                         self.scout_task, _ = enqueue_preview(
-                            self.intent, self.request.session.session_key, force_refresh=True
+                            self.intent, self.request.session.session_key, force_refresh=True,
+                            seed_job_id=self.seed_job_id,
                         )
                         self.preview_pending = self.scout_task.state in (
                             self.scout_task.State.QUEUED, self.scout_task.State.RUNNING
@@ -342,6 +346,7 @@ class JobScoutPreviewView(TemplateView):
         else:
             preferences, matches = JobScoutService.search_intent(
                 self.intent,
+                seed_job_id=self.seed_job_id,
                 diagnostics=workflow_diagnostics,
                 since=timezone.now() - timedelta(days=30),
                 limit=3,

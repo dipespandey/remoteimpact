@@ -41,5 +41,7 @@ class JobsConfig(AppConfig):
         import jobs.signals  # noqa: F401
 
         running_web = "gunicorn" in os.path.basename(sys.argv[0] if sys.argv else "")
-        if running_web and os.getenv("SCOUT_WARM_EMBEDDINGS", "1") == "1":
+        # Anonymous previews run in the queue worker, not in gunicorn.
+        running_worker = "run_scout_preview_worker" in sys.argv and "--check" not in sys.argv
+        if (running_web or running_worker) and os.getenv("SCOUT_WARM_EMBEDDINGS", "1") == "1":
             threading.Thread(target=_warm_embedding_model, name="warm-embeddings", daemon=True).start()

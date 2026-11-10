@@ -167,9 +167,10 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=20
     # delivery history. Reload through the current availability/filter queryset
     # and rerun eligibility on every hit. Newly imported jobs may take <=60s.
     cache_key=None
-    from jobs.services import embedding_service
+    from jobs.services import embedding_service, scout_seed
+    seed_vector = scout_seed.embedding(preferences) if connection.vendor == "postgresql" else None
     semantic_ready = (connection.vendor == "postgresql" and getattr(settings, "SCOUT_SEMANTIC_ENABLED", True)
-                      and embedding_service._model is not None)
+                      and (seed_vector is not None or embedding_service._model is not None))
     if preferences.get('_scout_preview_cache') and getattr(settings,'SCOUT_RETRIEVAL_CACHE_ENABLED',connection.vendor=='postgresql'):
         try:
             sql,params=qs.query.sql_with_params()
@@ -196,7 +197,7 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=20
     embedding_start=monotonic()
     if connection.vendor=='postgresql':
         try:
-            vector=query_embedding(preferences.get('intent_text') or ' '.join(terms))
+            vector=seed_vector if seed_vector is not None and getattr(settings,'SCOUT_SEMANTIC_ENABLED',True) else query_embedding(preferences.get('intent_text') or ' '.join(terms))
             if vector is not None:
                 from pgvector.django import CosineDistance
                 semantic=qs.filter(embedding__isnull=False).annotate(scout_distance=CosineDistance('embedding',vector)).order_by('scout_distance','-id')

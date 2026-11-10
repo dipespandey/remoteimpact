@@ -263,7 +263,7 @@ class Release:
         safe_to_remove = True
         succeeded = False
         runtime_args = ['--read-only', '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges:true',
-            '--memory', '3g', '--memory-swap', '3g', '--pids-limit', '256',
+            '--memory', '3584m', '--memory-swap', '3584m', '--pids-limit', '256',
             '--tmpfs', '/tmp:rw,nosuid,nodev,size=256m,mode=1777',
             '--tmpfs', '/home/remoteimpact:rw,nosuid,nodev,size=32m,uid=10001,gid=10001']
         if performance_env:

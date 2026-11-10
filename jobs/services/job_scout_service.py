@@ -966,13 +966,20 @@ skills is not a request for invented, exact job titles. JSON only."""
         return preferences
 
     @classmethod
-    def search_intent(cls, intent, *, since=None, limit=None, diagnostics=None):
+    def search_intent(cls, intent, *, since=None, limit=None, diagnostics=None, seed_job_id=None):
+        from jobs.services import scout_seed
         from jobs.services.scout_workflow import bounded_workflow
         diagnostics = diagnostics if diagnostics is not None else {}
+        seed = scout_seed.load(seed_job_id)
         with bounded_workflow(diagnostics):
             from jobs.services.scout_workflow import timed_stage
             with timed_stage('parse'):
-                preferences = cls.parse_intent(intent)
+                if seed:
+                    intent = " ".join((intent or "").split())[:2000]
+                    preferences = scout_seed.preferences(intent, seed, cls._fallback_parse(intent))
+                    diagnostics['seed_job'] = True
+                else:
+                    preferences = cls.parse_intent(intent)
             preferences['_scout_current_inventory'] = True
             preferences['_scout_preview_cache'] = True
             return preferences, cls.get_matches_for_preferences(preferences, since=since, limit=limit, diagnostics=diagnostics)
@@ -1009,7 +1016,8 @@ skills is not a request for invented, exact job titles. JSON only."""
             qs = qs.exclude(pk__in=JobAlertDelivery.objects.filter(
                 alert__user_id=alert.user_id, feedback="not_relevant"
             ).values("job_id"))
-        qs = qs.select_related("organization", "category")
+        from jobs.services.scout_seed import exclude_seed
+        qs = exclude_seed(qs, preferences).select_related("organization", "category")
 
         if preferences.get("job_types"):
             qs = qs.filter(job_type__in=preferences["job_types"])

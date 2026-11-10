@@ -131,7 +131,8 @@ def close_matches(qs, preferences, terms, diagnostics, limit=MAX_PICKS, force=Fa
                **evidence_fields(job, preferences)}
         rows.append(row)
         evidence[job.pk] = row
-    body = json.dumps({"request": preferences["intent_text"][:2000], "candidates": rows}, ensure_ascii=False)
+    from jobs.services.scout_seed import review_request
+    body = json.dumps({"request": review_request(preferences), "candidates": rows}, ensure_ascii=False)
     system = SYSTEM.format(n=limit) + CHECK_INSTRUCTIONS.format(checks=', '.join(requested_checks(preferences)))
     key = "scout-close-v7:" + hashlib.sha256((body + system).encode()).hexdigest()
     try:
