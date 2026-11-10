@@ -394,7 +394,7 @@ class JobScoutPreviewView(TemplateView):
         )
         if not self.request.session.session_key:
             self.request.session.create()
-        intent_digest = hashlib.sha256(self.intent.lower().encode("utf-8")).hexdigest()[:16]
+        intent_digest = hashlib.sha256(self.intent.lower() + (f"\0seed:{self.seed_job_id}" if self.seed_job_id else "").encode("utf-8")).hexdigest()[:16]
         result_ready = (
             not self.async_preview
             or (self.scout_task and self.scout_task.state in (self.scout_task.State.SUCCEEDED, self.scout_task.State.FAILED))
