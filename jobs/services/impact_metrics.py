@@ -77,7 +77,7 @@ def day_signal(day):
         "roles_seen": JobService.get_available_jobs().filter(last_seen_at__gte=start, last_seen_at__lt=end).count(),
         "accounts": ConsumerFunnelEvent.objects.filter(event="account_created", created_at__gte=start, created_at__lt=end).count(),
         "weekly_requests": weekly.filter(confirmation_requested_at__gte=start, confirmation_requested_at__lt=end).count(),
-        "weekly_requests_from_apply_prompt": weekly.filter(source="apply_prompt", confirmation_requested_at__gte=start,
+        "weekly_requests_from_apply_prompt": weekly.filter(source__in=("apply_prompt", "apply_inline"), confirmation_requested_at__gte=start,
                                                            confirmation_requested_at__lt=end).count(),
         "weekly_confirmed": weekly.filter(**{f"confirmed_at__{k}": v for k, v in in_day.items()}).count(),
         "pro_payments": ConsumerFunnelEvent.objects.filter(event="payment_completed", created_at__gte=start, created_at__lt=end).count(),

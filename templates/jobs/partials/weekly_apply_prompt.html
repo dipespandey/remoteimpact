@@ -4,7 +4,7 @@
   <div data-prompt-ask>
     <h2 id="weekly-apply-prompt-title" class="text-xl font-semibold tracking-tight">Good luck with your application</h2>
     <p class="mt-2 text-muted-foreground">Want more roles like this? Get one free email every Thursday with hand-picked remote {% if weekly_prompt_topic_label %}{{ weekly_prompt_topic_label|lower }} {% else %}impact {% endif %}jobs.</p>
-    <form class="mt-4 space-y-3" data-prompt-form novalidate>
+    <form class="mt-4 space-y-3" data-weekly-form data-source="apply_prompt" novalidate>
       <label for="weekly-apply-prompt-email" class="label">Email address</label>
       <input id="weekly-apply-prompt-email" class="input w-full" type="email" name="email" autocomplete="email" required maxlength="254"
           placeholder="you@example.org" value="{% if user.is_authenticated %}{{ user.email }}{% endif %}">
@@ -26,7 +26,7 @@
 {% csp_script %}<script>
 (function () {
   var dialog = document.getElementById('weekly-apply-prompt');
-  if (!dialog || typeof dialog.showModal !== 'function') return;
+  if (!dialog) return;
   var KEY = 'ri-weekly-apply-prompt';
   var DAY = 86400000;
   function quietUntil() { try { return Number(localStorage.getItem(KEY)) || 0; } catch (e) { return 0; } }
@@ -35,34 +35,37 @@
   var shown = false;
   document.querySelectorAll('[data-track="apply_click"]').forEach(function (link) {
     link.addEventListener('click', function () {
-      if (shown || quietUntil() > Date.now()) return;
+      if (shown || quietUntil() > Date.now() || typeof dialog.showModal !== 'function') return;
       shown = true;
       setTimeout(function () { dialog.showModal(); track('weekly_prompt_shown'); }, 300);
     });
   });
   dialog.querySelector('[data-prompt-dismiss]').addEventListener('click', function () { quiet(30); track('weekly_prompt_dismissed'); });
-  var form = dialog.querySelector('[data-prompt-form]');
-  var error = dialog.querySelector('[data-prompt-error]');
-  var button = form.querySelector('button[type=submit]');
-  form.addEventListener('submit', function (event) {
-    event.preventDefault();
-    var body = new URLSearchParams({email: form.email.value, consent: 'yes', topic: dialog.dataset.topic,
-                                    source: 'apply_prompt', campaign: dialog.dataset.campaign});
-    button.disabled = true;
-    error.hidden = true;
-    fetch(dialog.dataset.endpoint, {method: 'POST', body: body, credentials: 'same-origin', headers: {'Accept': 'application/json'}})
-      .then(function (response) {
-        return response.json().catch(function () { return {}; }).then(function (data) { return {ok: response.ok, data: data}; });
-      })
-      .then(function (result) {
-        if (!result.ok) throw new Error(result.data.error || 'Something went wrong. Please try again.');
-        quiet(365);
-        track('weekly_prompt_submitted');
-        dialog.querySelector('[data-prompt-ask]').hidden = true;
-        dialog.querySelector('[data-prompt-done]').hidden = false;
-      })
-      .catch(function (err) { error.textContent = err.message; error.hidden = false; })
-      .finally(function () { button.disabled = false; });
+  // The inline form under the apply button and the after-click dialog share one signup path.
+  document.querySelectorAll('form[data-weekly-form]').forEach(function (form) {
+    var box = form.closest('[data-weekly-inline]') || dialog;
+    var error = box.querySelector('[data-prompt-error]');
+    var button = form.querySelector('button[type=submit]');
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      var body = new URLSearchParams({email: form.email.value, consent: 'yes', topic: dialog.dataset.topic,
+                                      source: form.dataset.source, campaign: dialog.dataset.campaign});
+      button.disabled = true;
+      error.hidden = true;
+      fetch(dialog.dataset.endpoint, {method: 'POST', body: body, credentials: 'same-origin', headers: {'Accept': 'application/json'}})
+        .then(function (response) {
+          return response.json().catch(function () { return {}; }).then(function (data) { return {ok: response.ok, data: data}; });
+        })
+        .then(function (result) {
+          if (!result.ok) throw new Error(result.data.error || 'Something went wrong. Please try again.');
+          quiet(365);
+          track(form.dataset.source === 'apply_prompt' ? 'weekly_prompt_submitted' : 'weekly_inline_submitted');
+          box.querySelector('[data-prompt-ask]').hidden = true;
+          box.querySelector('[data-prompt-done]').hidden = false;
+        })
+        .catch(function (err) { error.textContent = err.message; error.hidden = false; })
+        .finally(function () { button.disabled = false; });
+    });
   });
 })();
 </script>{% endcsp_script %}

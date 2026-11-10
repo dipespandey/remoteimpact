@@ -258,20 +258,22 @@
                 {% endif %}
                 </div>
 
+                {% if job_available and show_weekly_prompt %}{% include 'jobs/partials/weekly_apply_inline.html' %}{% endif %}
+
                 <div class="job-apply-links">
                     <!-- Application Guide button -->
                     <a href="{% url 'jobs:application_guide' slug=job.slug %}"
-                        class="btn btn-ghost btn-block"
+                        class="btn btn-outline btn-sm btn-block"
                         data-track="application_guide" data-track-category="job_action" data-track-label="{{ job.slug }}">
                         Application guide
                     </a>
-                    {% if job_available %}<a href="{% url 'jobs:job_interest' job.slug %}" class="btn btn-ghost btn-block">Track this role</a>{% endif %}
+                    {% if job_available %}<a href="{% url 'jobs:job_interest' job.slug %}" class="btn btn-outline btn-sm btn-block">Track this role</a>{% endif %}
                     {% if user.is_authenticated %}
                     <button type="button" id="save-job-btn" data-url="{% url 'jobs:save_job' slug=job.slug %}"
                         data-saved="{{ saved|yesno:'true,false' }}"
-                        class="btn btn-ghost btn-block">{% if saved %}Saved{% else %}Save job{% endif %}</button>
+                        class="btn btn-outline btn-sm btn-block">{% if saved %}Saved{% else %}Save job{% endif %}</button>
                     {% else %}
-                    <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn btn-ghost btn-block">
+                    <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn btn-outline btn-sm btn-block">
                         Sign in to save
                     </a>
                     {% endif %}

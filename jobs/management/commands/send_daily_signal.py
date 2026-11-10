@@ -22,7 +22,7 @@ ROWS = [
     ("scout_unreviewed", "... of which Scout could not review"),
     ("accounts", "New accounts"),
     ("weekly_requests", "Weekly roundup signups requested"),
-    ("weekly_requests_from_apply_prompt", "... of which from the apply prompt"),
+    ("weekly_requests_from_apply_prompt", "... of which from job pages (apply prompt and form)"),
     ("weekly_confirmed", "Weekly roundup signups confirmed"),
     ("claims_verified", "Employer pages claimed"),
     ("employer_offers_sent", "Employer offers sent"),
