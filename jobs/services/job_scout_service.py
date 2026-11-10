@@ -1046,7 +1046,8 @@ skills is not a request for invented, exact job titles. JSON only."""
         })
         from jobs.services.scout_workflow import plan_terms
         planned = plan_terms(preferences, diagnostics)
-        terms = list(dict.fromkeys([*terms[:6], *planned, *terms[6:]]))
+        from jobs.services import scout_seed
+        terms = scout_seed.search_terms(preferences, list(dict.fromkeys([*terms[:6], *planned, *terms[6:]])))
         combined_review = bool(cls.RELAXED_FILL and getattr(settings, "SCOUT_RERANK_ENABLED", False)
                                and getattr(settings, "SCOUT_RERANK_BACKEND", "deepseek") == "deepseek"
                                and getattr(settings, "DEEPSEEK_API_KEY", ""))
@@ -1121,6 +1122,30 @@ skills is not a request for invented, exact job titles. JSON only."""
                 diagnostics['source_ranked_review']=True
                 diagnostics['source_recovered_candidates']=len(recovered)
                 diagnostics['source_prepared_candidates']=sum(bool(getattr(j,'_scout_source_profile_prepared',False)) for j in shared_candidates)
+        seed_rank = {}
+        if preferences.get('_seed_job_id'):
+            by_closeness = scout_seed.closest(preferences, [*pool, *(shared_candidates or candidates)])
+            seed_rank = {job.pk: rank for rank, job in enumerate(by_closeness)}
+        if seed_rank and combined_review:
+            # Review the openings closest to the seed, not the ones whose titles repeat its common words.
+            from jobs.services.scout_source_profile import shortlist
+            nearby, per_employer = [], {}
+            for job in by_closeness:
+                # Country copies of one opening share its title; two per employer leaves room for others.
+                if per_employer.get(job.organization_id, 0) >= 2:
+                    continue
+                if not hasattr(job, 'scout_caveats'):
+                    eligibility = evaluate_job(job, preferences, relaxed=True)
+                    if not eligibility.allowed:
+                        continue
+                    job.scout_caveats = list(eligibility.caveats)
+                nearby.append(job)
+                per_employer[job.organization_id] = per_employer.get(job.organization_id, 0) + 1
+                if len(nearby) >= 8:
+                    break
+            # Keep the strongest rule-scored openings too: closeness is a second opinion, not a replacement.
+            pool = shortlist(pool, preferences, anchors=[*nearby, *pool[:4]])
+            diagnostics['seed_ranked_review'] = True
         selected = rerank(pool, preferences, scored, diagnostics, relaxed=combined_review)
         # One opening can have several regional source postings. Keep the best
         # eligible region, and never merge unrelated jobs with similar titles.
@@ -1226,8 +1251,12 @@ skills is not a request for invented, exact job titles. JSON only."""
         from jobs.services.scout_tiers import tier_for_job
         selected.sort(key=lambda job: (getattr(job, 'scout_location_priority', 1),
                                        tier_for_job(job) != 'good',
+                                       seed_rank.get(job.pk, len(seed_rank)),
                                        len(getattr(job, 'scout_caveats', [])),
                                        -getattr(job, 'scout_score', 0)))
+        if seed_rank:
+            selected = scout_seed.one_per_employer_first(
+                selected, within=lambda job: (getattr(job, 'scout_location_priority', 1), tier_for_job(job) != 'good'))
         selected = selected[:limit]
         for job in selected:
             if tier_for_job(job) == 'consider':
