@@ -16,7 +16,7 @@
       <button class="btn btn-ghost btn-sm" data-prompt-dismiss>No thanks</button>
     </form>
   </div>
-  <div data-prompt-done hidden>
+  <div data-prompt-done tabindex="-1" hidden>
     <h2 class="text-xl font-semibold tracking-tight" role="status">Check your inbox</h2>
     <p class="mt-2 text-muted-foreground">Open the link we sent to start getting weekly picks.</p>
     <form method="dialog" class="mt-4"><button class="btn btn-secondary btn-block">Back to the role</button></form>
@@ -28,6 +28,10 @@
   var dialog = document.getElementById('weekly-apply-prompt');
   if (!dialog) return;
   var KEY = 'ri-weekly-apply-prompt';
+  var SUBSCRIBED = 'ri-weekly-subscribed';
+  try {
+    if (localStorage.getItem(SUBSCRIBED)) document.querySelectorAll('[data-weekly-inline]').forEach(function (box) { box.hidden = true; });
+  } catch (e) {}
   var DAY = 86400000;
   function quietUntil() { try { return Number(localStorage.getItem(KEY)) || 0; } catch (e) { return 0; } }
   function quiet(days) { try { localStorage.setItem(KEY, String(Date.now() + days * DAY)); } catch (e) {} }
@@ -59,9 +63,12 @@
         .then(function (result) {
           if (!result.ok) throw new Error(result.data.error || 'Something went wrong. Please try again.');
           quiet(365);
+          try { localStorage.setItem(SUBSCRIBED, '1'); } catch (e) {}
           track(form.dataset.source === 'apply_prompt' ? 'weekly_prompt_submitted' : 'weekly_inline_submitted');
           box.querySelector('[data-prompt-ask]').hidden = true;
-          box.querySelector('[data-prompt-done]').hidden = false;
+          var done = box.querySelector('[data-prompt-done]');
+          done.hidden = false;
+          done.focus();
         })
         .catch(function (err) { error.textContent = err.message; error.hidden = false; })
         .finally(function () { button.disabled = false; });
