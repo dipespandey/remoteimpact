@@ -244,7 +244,7 @@ class ScoutOutageSignalTests(EmployerTestBase):
         rows = {r["key"]: r["value"] for r in signal["rows"]}
         self.assertEqual((rows["scout_searches"], rows["scout_unreviewed"]), (10, 6))
         self.assertTrue(any("could not review 6 of 10" in a for a in signal["alerts"]))
-        self.assertTrue(any("DeepSeek balance is $0.00" in a for a in signal["alerts"]))
+        self.assertTrue(any("AI credit balance is $0.00" in a for a in signal["alerts"]))
 
     @override_settings(DEEPSEEK_API_KEY="sk-test")
     def test_healthy_scout_and_funded_account_raise_nothing(self):
@@ -252,7 +252,7 @@ class ScoutOutageSignalTests(EmployerTestBase):
         from jobs.management.commands.send_daily_signal import build_signal
         with self.balance_response({"is_available": True, "balance_infos": [{"currency": "USD", "total_balance": "42.10"}]}):
             alerts = build_signal(timezone.localdate() - timedelta(days=1))["alerts"]
-        self.assertFalse([a for a in alerts if "Scout" in a or "DeepSeek" in a])
+        self.assertFalse([a for a in alerts if "Scout" in a or "credit balance" in a])
 
 
 @override_settings(SCOUT_PREVIEW_ASYNC_ENABLED=True)
@@ -267,3 +267,22 @@ class ScoutCrawlerTests(EmployerTestBase):
         self.assertFalse(ConsumerFunnelEvent.objects.exists())
         self.client.get(url, HTTP_USER_AGENT="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15")
         self.assertTrue(ScoutPreviewTask.objects.exists())
+
+
+class OpenRouterTests(EmployerTestBase):
+    @override_settings(DEEPSEEK_API_KEY="sk-or-test", DEEPSEEK_BASE_URL="https://openrouter.ai/api/v1", DEEPSEEK_MODEL="deepseek-v4-flash")
+    def test_openrouter_serves_the_same_model_and_reports_remaining_credit(self):
+        from jobs.services.ai import AIClient
+        from jobs.management.commands.send_daily_signal import deepseek_balance
+        reply = type("C", (), {"choices": [type("Ch", (), {"message": type("M", (), {"content": "ok"})()})()]})()
+        client = AIClient()
+        with patch.object(client.client.chat.completions, "create", return_value=reply) as create:
+            client.generate("hi")
+        self.assertEqual(str(client.client.base_url).rstrip("/"), "https://openrouter.ai/api/v1")
+        self.assertEqual(create.call_args.kwargs["model"], "deepseek/deepseek-v4-flash")
+        self.assertEqual(create.call_args.kwargs["extra_body"], {"reasoning": {"enabled": False}})
+        response = type("R", (), {"raise_for_status": lambda self: None,
+                                  "json": lambda self: {"data": {"total_credits": 10, "total_usage": 7.5}}})()
+        with patch("jobs.management.commands.send_daily_signal.requests.get", return_value=response) as get:
+            self.assertEqual(deepseek_balance(), 2.5)
+        self.assertEqual(get.call_args.args[0], "https://openrouter.ai/api/v1/credits")

@@ -20,6 +20,7 @@ import logging
 from typing import Any
 
 from django.conf import settings
+from jobs.services.ai import no_thinking, wire_model
 from jobs.constants import IMPACT_AREAS_FOR_PROMPT
 from jobs.constants.skills import SKILLS_FOR_PROMPT, normalize_skill_slugs
 from jobs.services.experience_classifier import ExperienceClassifier
@@ -154,7 +155,7 @@ class JobParser:
         from openai import AsyncOpenAI
         self.client = AsyncOpenAI(
             api_key=api_key,
-            base_url=self.config["base_url"],
+            base_url=settings.DEEPSEEK_BASE_URL,
         )
         self._parse_fn = self._parse_openai_compat
 
@@ -175,7 +176,7 @@ class JobParser:
         async with self._semaphore:
             try:
                 response = await self.client.chat.completions.create(
-                    model=self.config["model"],
+                    model=wire_model(self.config["model"]),
                     messages=[
                         {
                             "role": "system",
@@ -185,7 +186,7 @@ class JobParser:
                     ],
                     response_format={"type": "json_object"},
                     temperature=0.1,
-                    extra_body={"thinking": {"type": "disabled"}},
+                    extra_body=no_thinking(),
                 )
 
                 content = response.choices[0].message.content

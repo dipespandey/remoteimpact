@@ -139,20 +139,21 @@ def _call_deepseek(prompt: str) -> Optional[Dict]:
     """Call DeepSeek API."""
     import os
     import httpx
+    from jobs.services.ai import chat_completions_url, no_thinking, wire_model
 
     def request_content(temperature: float) -> str:
         response = httpx.post(
-            "https://api.deepseek.com/chat/completions",
+            chat_completions_url(),
             headers={
-                "Authorization": f"Bearer {os.getenv('DEEPSEEK_API_KEY')}",
+                "Authorization": f"Bearer {settings.DEEPSEEK_API_KEY}",
                 "Content-Type": "application/json",
             },
             json={
-                "model": os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash"),
+                "model": wire_model(),
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": temperature,
                 "response_format": {"type": "json_object"},
-                "thinking": {"type": "disabled"},
+                **no_thinking(),
             },
             timeout=30,
         )

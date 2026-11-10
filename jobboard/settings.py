@@ -301,6 +301,9 @@ SOCIALACCOUNT_PROVIDERS = {
 # model with DEEPSEEK_MODEL only when a task needs a different DeepSeek model.
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash")
+# Set to https://openrouter.ai/api/v1 (with an OpenRouter key in DEEPSEEK_API_KEY) to serve the same
+# DeepSeek model through OpenRouter. DEEPSEEK_MODEL keeps its DeepSeek name so cache keys stay stable.
+DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com").rstrip("/")
 # Opt in explicitly after the bounded new-import canary is reviewed.
 JOB_EXTRACTION_OPTIMIZED_ENABLED = os.getenv("JOB_EXTRACTION_OPTIMIZED_ENABLED", "false").lower() == "true"
 

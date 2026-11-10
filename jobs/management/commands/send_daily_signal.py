@@ -35,14 +35,17 @@ LOW_BALANCE_USD = 5
 
 
 def deepseek_balance():
-    """USD balance of the account Scout's review uses; 0 when unusable, None when it can't be read."""
+    """USD left on the account Scout's review uses; 0 when unusable, None when it can't be read."""
     if not getattr(settings, "DEEPSEEK_API_KEY", ""):
         return None
+    openrouter = "openrouter.ai" in settings.DEEPSEEK_BASE_URL
+    url = settings.DEEPSEEK_BASE_URL + "/credits" if openrouter else "https://api.deepseek.com/user/balance"
     try:
-        response = requests.get("https://api.deepseek.com/user/balance", timeout=15,
-                                headers={"Authorization": f"Bearer {settings.DEEPSEEK_API_KEY}"})
+        response = requests.get(url, timeout=15, headers={"Authorization": f"Bearer {settings.DEEPSEEK_API_KEY}"})
         response.raise_for_status()
         data = response.json()
+        if openrouter:
+            return float(data["data"]["total_credits"]) - float(data["data"]["total_usage"])
         if not data.get("is_available"):
             return 0.0
         return sum(float(b["total_balance"]) for b in data.get("balance_infos", []) if b.get("currency") == "USD")
@@ -86,11 +89,11 @@ def build_signal(day):
         alerts.append(f"Apply clicks fell to {today['apply_clicks']} from {same_day_last_week} on the same day last week.")
     if today["scout_searches"] >= 5 and today["scout_unreviewed"] >= 0.3 * today["scout_searches"]:
         alerts.append(f"Scout could not review {today['scout_unreviewed']} of {today['scout_searches']} searches, so those people saw "
-                      "no matches. The DeepSeek review call is failing.")
+                      "no matches. The AI review call is failing.")
     balance = deepseek_balance()
     if balance is not None and balance < LOW_BALANCE_USD:
-        alerts.append(f"DeepSeek balance is ${balance:.2f}. Scout returns no matches when it runs out. "
-                      "Top up at platform.deepseek.com.")
+        alerts.append(f"AI credit balance is ${balance:.2f}. Scout returns no matches when it runs out. "
+                      "Top up at openrouter.ai/settings/credits or platform.deepseek.com.")
     if today["claims_verified"]:
         alerts.append("An employer claimed their page. They are your warmest lead this week.")
     audience = weekly_audience()
