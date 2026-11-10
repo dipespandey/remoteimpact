@@ -1,5 +1,6 @@
 import logging
 import hashlib
+import re
 from datetime import timedelta
 from urllib.parse import urlencode, urlsplit, parse_qs
 
@@ -50,6 +51,9 @@ SCOUT_CONTACT_VERIFY_MAX_AGE = 7 * 24 * 60 * 60
 
 def _subscription_for(user):
     return AssistantSubscription.get_or_create_for_user(user)
+
+
+DECLARED_CRAWLER = re.compile(r"bot|crawl|spider|slurp", re.I)
 
 
 def _scout_preview_path(flow):
@@ -244,6 +248,11 @@ class JobScoutPreviewView(TemplateView):
         return redirect(f"{reverse('jobs:job_scout_preview')}?{urlencode({'intent': intent, 'source': source, 'scout_flow': flow['id']})}")
 
     def get(self, request, *args, **kwargs):
+        if DECLARED_CRAWLER.search(request.META.get("HTTP_USER_AGENT", "")):
+            # Crawlers follow every job page's "similar roles" link; each search costs a paid review.
+            response = HttpResponse("Scout searches run for people, not crawlers.", content_type="text/plain")
+            response["X-Robots-Tag"] = "noindex, nofollow"
+            return response
         intent = " ".join(request.GET.get("intent", "").split())[:2000]
         if len(intent) < 20:
             messages.info(request, "Describe the job you want in a little more detail.")
