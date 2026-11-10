@@ -212,7 +212,8 @@ const assert = require('assert');
 const vm = require('vm');
 const document = {referrer: 'https://remoteimpact.org/accounts/confirm-email/secret-token/?alert_id=918&scout_delivery=725&intent=PRIVATE_BRIEF#private-hash', addEventListener: () => {}};
 const window = {location: {origin: 'https://remoteimpact.org', pathname: '/jobs/example/', search: '?scout_delivery=725&alert_id=918&intent=PRIVATE_BRIEF', hash: '#private-hash'}};
-vm.runInNewContext(SCRIPT, {window, document, Date, URL});
+class FixedDate extends Date { constructor(...args) { super(...(args.length ? args : [0])); } static now() { return 0; } }
+vm.runInNewContext(SCRIPT, {window, document, Date: FixedDate, URL});
 window.gtag('event', 'search', {event_label: 'PRIVATE_BRIEF', source_link: document.referrer, delivery_id: 725});
 const serialized = JSON.stringify(window.dataLayer);
 for (const secret of ['secret-token', '918', '725', 'PRIVATE_BRIEF', 'private-hash', 'source_link', 'delivery_id']) assert(!serialized.includes(secret), secret);
