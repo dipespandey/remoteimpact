@@ -49,10 +49,11 @@ def query_embedding(text):
 def ranked_rows(query, source_query, metrics, *, scan=2000, batch_size=100):
     """Rank lightweight IDs before fetching batches of source evidence.
 
-    Keep the lexical ranked order and scan cap. Source rows are always fetched
-    through the current filtered queryset. Semantic retrieval keeps its original
-    query shape: changing projection can change PostgreSQL's approximate-vector
-    query plan and therefore its candidate set.
+    Keep the ranked order and scan cap. Source rows are always fetched through
+    the current filtered queryset, so the JSON annotations are computed for
+    loaded batches, not for every ranked row. The semantic order's id
+    tiebreaker keeps it an exact sort, which the HNSW index cannot serve, so
+    projecting ids does not change its candidate set.
     """
     ids = query.values_list('pk', flat=True)[:scan].iterator(chunk_size=batch_size)
     try:
@@ -216,7 +217,7 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=20
         # Keep SQL ordering, scan cap and eligibility semantics unchanged. A
         # server-side cursor avoids materializing 2,000 long listings when the
         # first few hundred already supply the eligible candidate limit.
-        if name == 'lexical' and getattr(settings, 'SCOUT_ID_FIRST_RETRIEVAL', True):
+        if getattr(settings, 'SCOUT_ID_FIRST_RETRIEVAL', True):
             rows=ranked_rows(query, qs, diagnostics, scan=scan)
         else:
             rows=query[:scan].iterator(chunk_size=100)
