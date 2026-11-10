@@ -136,3 +136,33 @@ class SemanticRankingShapeTests(TestCase):
         distance = ranked.query.annotations["scout_distance"].expression
         self.assertIsInstance(distance, CombinedExpression)
         self.assertEqual(distance.connector, "+")
+
+
+class SeedClosenessTests(TestCase):
+    def setUp(self):
+        self.orgs = [Organization.objects.create(name=f"Org {n}", slug=f"org-{n}") for n in range(4)]
+        self.seed = make_job(self.orgs[0], "Interconnection Policy Lead", "seed-lead")
+        self.preferences = {"_seed_job_id": self.seed.pk}
+
+    def test_rare_title_words_outrank_common_ones(self):
+        from jobs.services.scout_seed import closest
+        common = [make_job(self.orgs[1], f"Policy Lead {n}", f"policy-lead-{n}") for n in range(4)]
+        rare = make_job(self.orgs[2], "Senior Interconnection Manager", "interconnection-manager")
+        unrelated = make_job(self.orgs[3], "Graphic Designer", "designer")
+        ranked = closest(self.preferences, [*common, unrelated, rare])
+        self.assertLess(ranked.index(rare), ranked.index(unrelated))
+        self.assertEqual(ranked[-1], unrelated)
+        self.assertEqual(closest({}, [unrelated, rare]), [unrelated, rare])
+
+    def test_link_wording_is_not_searched_and_typed_terms_are_kept(self):
+        from jobs.services.scout_seed import search_terms
+        terms = ["interconnection", "similar", "this", "one", "policy"]
+        self.assertEqual(search_terms(self.preferences, terms), ["interconnection", "policy"])
+        self.assertEqual(search_terms({}, terms), terms)
+
+    def test_a_second_role_from_one_employer_waits_behind_other_employers(self):
+        from jobs.services.scout_seed import one_per_employer_first
+        first = make_job(self.orgs[1], "Sales Manager Köln", "sales-koeln")
+        copy = make_job(self.orgs[1], "Sales Manager Düsseldorf", "sales-duesseldorf")
+        other = make_job(self.orgs[2], "Sales Manager", "sales-other")
+        self.assertEqual(one_per_employer_first([first, copy, other]), [first, other, copy])
