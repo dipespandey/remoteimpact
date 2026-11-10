@@ -7,6 +7,7 @@ import json
 import re
 from django.core.management.base import BaseCommand
 from django.conf import settings
+from jobs.services.ai import chat_completions_url, no_thinking, wire_model
 from jobs.models import Job
 
 
@@ -70,17 +71,17 @@ Return ONLY the formatted markdown, no explanation."""
                 return ""
             
             response = requests.post(
-                "https://api.deepseek.com/v1/chat/completions",
+                chat_completions_url(),
                 headers={
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": getattr(settings, "DEEPSEEK_MODEL", "deepseek-v4-flash"),
+                    "model": wire_model(),
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.1,
                     "max_tokens": 4000,
-                    "thinking": {"type": "disabled"},
+                    **no_thinking(),
                 },
                 timeout=60,
             )

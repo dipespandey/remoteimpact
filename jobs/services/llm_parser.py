@@ -8,6 +8,7 @@ import logging
 from typing import Any
 
 from django.conf import settings
+from jobs.services.ai import no_thinking, wire_model
 from jobs.constants.skills import normalize_skill_slugs
 from jobs.services.experience_classifier import ExperienceClassifier
 from jobs.services.json_utils import parse_json_object
@@ -68,7 +69,7 @@ class JobParser:
         from openai import AsyncOpenAI
         self.client = AsyncOpenAI(
             api_key=api_key,
-            base_url=self.config["base_url"],
+            base_url=settings.DEEPSEEK_BASE_URL,
             max_retries=0, timeout=45.0,
         )
         self._parse_fn = self._parse_openai_compat
@@ -84,9 +85,9 @@ class JobParser:
         async def request(fields=None):
             messages, spans = messages_for(title, organization, description, fields)
             response = await self.client.chat.completions.create(
-                model=self.config["model"], messages=messages,
+                model=wire_model(self.config["model"]), messages=messages,
                 response_format={"type": "json_object"}, temperature=0.1,
-                max_tokens=2400, extra_body={"thinking": {"type": "disabled"}},
+                max_tokens=2400, extra_body=no_thinking(),
             )
             usage = response.usage
             attempts.append({

@@ -2,6 +2,7 @@ import json
 import logging
 from django.conf import settings
 from openai import OpenAI
+from jobs.services.ai import no_thinking, wire_model
 from jobs.services.json_utils import parse_json_object
 
 logger = logging.getLogger(__name__)
@@ -13,7 +14,7 @@ class JobParser:
             raise RuntimeError("DEEPSEEK_API_KEY is required for job parsing.")
         self.client = OpenAI(
             api_key=settings.DEEPSEEK_API_KEY,
-            base_url="https://api.deepseek.com",
+            base_url=settings.DEEPSEEK_BASE_URL,
         )
 
     def parse(self, text: str) -> dict:
@@ -63,7 +64,7 @@ class JobParser:
                 ],
                 response_format={"type": "json_object"},
                 temperature=0.1,  # Low temperature for consistent extraction
-                extra_body={"thinking": {"type": "disabled"}},
+                extra_body=no_thinking(),
             )
 
             content = response.choices[0].message.content
