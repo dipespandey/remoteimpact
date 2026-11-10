@@ -350,7 +350,8 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 # New allauth settings (replaces deprecated ACCOUNT_EMAIL_REQUIRED, ACCOUNT_AUTHENTICATION_METHOD, ACCOUNT_USERNAME_REQUIRED)
 ACCOUNT_LOGIN_METHODS = {"email", "username"}
 ACCOUNT_FORMS = {"login": "jobs.forms.SignInForm"}
-ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
+# One password field: the confirmation box cost signups, and password reset covers typos.
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*"]
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 SOCIALACCOUNT_LOGIN_ON_GET = True

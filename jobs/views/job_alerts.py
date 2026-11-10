@@ -537,8 +537,10 @@ class ScoutContactVerifyView(View):
                 metadata={"scout_flow_id": contact.scout_flow_id, "source": contact.source},
                 dedupe_key=f"scout-contact-verified:{contact.pk}",
             )
-        messages.success(request, "Your email is confirmed. We’ll use it only for the preferences you selected.")
-        return redirect("jobs:home")
+        # Return people to their own results, where the free Scout starts, not to the homepage.
+        # The intent comes from the preview event, so a link opened on another device still works.
+        messages.success(request, "Your email is confirmed. Create your free Scout below to get these matches by email.")
+        return redirect(_scout_preview_path({"id": contact.scout_flow_id, "source": contact.source}))
 
 
 class JobScoutSignupStartView(View):

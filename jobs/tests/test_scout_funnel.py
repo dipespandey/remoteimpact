@@ -82,7 +82,9 @@ class ScoutFunnelTests(TestCase):
 
         token = TimestampSigner(salt="scout-contact-verify").sign(str(contact.pk))
         verified = self.client.get(reverse("jobs:scout_contact_verify", kwargs={"token": token}))
-        self.assertRedirects(verified, reverse("jobs:home"), fetch_redirect_response=False)
+        # Verified people return to their own results, where the free Scout starts.
+        self.assertTrue(verified.url.startswith(reverse("jobs:job_scout_preview") + "?intent="))
+        self.assertIn("source=home_hero_example_python", verified.url)
         contact.refresh_from_db()
         self.assertIsNotNone(contact.verified_at)
         subscriber = NewsletterSubscriber.objects.get(email="reader@example.org")
