@@ -284,7 +284,6 @@ class ScoutResultsBrowserTests(StaticLiveServerTestCase):
                 page.locator(".card").first.screenshot(path=str(screenshots/"signup-step.png"))
                 page.locator('#id_email').fill("browser-scout@example.org")
                 page.locator('[name="password1"]').fill("test-browser-scout-password-531!")
-                page.locator('[name="password2"]').fill("test-browser-scout-password-531!")
                 page.get_by_role("button", name="Continue to my Scout").click()
                 page.wait_for_url("**/alerts/?**")
             self.assertIn("home_hero_example_python", page.url)

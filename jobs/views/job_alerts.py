@@ -537,8 +537,15 @@ class ScoutContactVerifyView(View):
                 metadata={"scout_flow_id": contact.scout_flow_id, "source": contact.source},
                 dedupe_key=f"scout-contact-verified:{contact.pk}",
             )
-        messages.success(request, "Your email is confirmed. We’ll use it only for the preferences you selected.")
-        return redirect("jobs:home")
+        # Point people back to their own results, where the free Scout starts. A button, not a redirect:
+        # mail scanners fetch every link, and opening the results page can start a paid search.
+        # The intent comes from the preview event, so a link opened on another device still works.
+        results_url = _scout_preview_path({"id": contact.scout_flow_id, "source": contact.source})
+        from django.template.response import TemplateResponse
+        response = TemplateResponse(request, "jobs/scout_contact_verified.html",
+                                    {"results_url": "" if results_url == reverse("jobs:home") else results_url})
+        response["X-Robots-Tag"] = "noindex, nofollow"
+        return response
 
 
 class JobScoutSignupStartView(View):

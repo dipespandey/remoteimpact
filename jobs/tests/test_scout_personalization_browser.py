@@ -45,7 +45,6 @@ class ScoutPersonalizationBrowserTests(StaticLiveServerTestCase):
                 mobile_next.click()
                 page.locator('#id_email').fill('personalized-browser@example.org')
                 page.locator('[name="password1"]').fill('test-personalized-password-531!')
-                page.locator('[name="password2"]').fill('test-personalized-password-531!')
                 page.get_by_role('button',name='Continue to my Scout').click()
                 page.wait_for_url('**/alerts/?**')
             self.assertEqual(page.locator('[name="intent_text"]').input_value(),intent)
