@@ -56,6 +56,11 @@ def _subscription_for(user):
 DECLARED_CRAWLER = re.compile(r"bot|crawl|spider|slurp", re.I)
 
 
+def seed_job_id(value):
+    value = str(value or "")
+    return int(value) if value.isascii() and value.isdecimal() and len(value) <= 10 and 0 < int(value) < 2**31 else None
+
+
 def _scout_preview_path(flow):
     """Return the latest safe preview URL for a session-bound Scout flow."""
     event = (
@@ -72,7 +77,10 @@ def _scout_preview_path(flow):
     intent = str(metadata.get("intent_text") or "").strip()
     if not intent:
         return reverse("jobs:home")
-    return f"{reverse('jobs:job_scout_preview')}?{urlencode({'intent': intent, 'source': metadata.get('source') or flow.get('source') or 'scout_preview'})}"
+    query = {'intent': intent, 'source': metadata.get('source') or flow.get('source') or 'scout_preview'}
+    if seed_job_id(metadata.get('seed_job_id')):
+        query['similar_to'] = metadata['seed_job_id']
+    return f"{reverse('jobs:job_scout_preview')}?{urlencode(query)}"
 
 
 def _contact_verify_url(contact):
@@ -258,6 +266,7 @@ class JobScoutPreviewView(TemplateView):
             messages.info(request, "Describe the job you want in a little more detail.")
             return redirect("jobs:home")
         self.intent = intent
+        self.seed_job_id = seed_job_id(request.GET.get("similar_to", ""))
         source = " ".join(request.GET.get('source', '').split())[:80] or 'scout_preview'
         self.scout_flow, changed = scout_funnel.start_flow(request, intent, source,
                                                     personalized=source == 'scout_personalized')
@@ -274,7 +283,7 @@ class JobScoutPreviewView(TemplateView):
 
             task_id = request.GET.get("scout_task", "").strip()
             task = accessible_task(task_id, request.session.session_key) if task_id else None
-            if task and (task.intent_text != intent or task.semantic_key != semantic_key(intent)):
+            if task and (task.intent_text != intent or task.semantic_key != semantic_key(intent, self.seed_job_id)):
                 task = None
             explicit_retry = request.GET.get("retry") == "1"
             try:
@@ -283,6 +292,7 @@ class JobScoutPreviewView(TemplateView):
                     request.session.session_key,
                     force_refresh=explicit_retry,
                     retry_failed=explicit_retry,
+                    seed_job_id=self.seed_job_id,
                 )
             except PreviewQueueLimited:
                 self.queue_limited = True
@@ -322,7 +332,8 @@ class JobScoutPreviewView(TemplateView):
 
                     try:
                         self.scout_task, _ = enqueue_preview(
-                            self.intent, self.request.session.session_key, force_refresh=True
+                            self.intent, self.request.session.session_key, force_refresh=True,
+                            seed_job_id=self.seed_job_id,
                         )
                         self.preview_pending = self.scout_task.state in (
                             self.scout_task.State.QUEUED, self.scout_task.State.RUNNING
@@ -342,6 +353,7 @@ class JobScoutPreviewView(TemplateView):
         else:
             preferences, matches = JobScoutService.search_intent(
                 self.intent,
+                seed_job_id=self.seed_job_id,
                 diagnostics=workflow_diagnostics,
                 since=timezone.now() - timedelta(days=30),
                 limit=3,
@@ -365,7 +377,7 @@ class JobScoutPreviewView(TemplateView):
             from jobs.services.scout_alternatives import explore_openings
             if not preferences:
                 preferences = JobScoutService._fallback_parse(self.intent)
-            explore_jobs = explore_openings(preferences)
+            explore_jobs = explore_openings({**preferences, "_seed_job_id": self.seed_job_id})
         context.update(
             intent=self.intent,
             preferences=preferences,
@@ -382,7 +394,7 @@ class JobScoutPreviewView(TemplateView):
         )
         if not self.request.session.session_key:
             self.request.session.create()
-        intent_digest = hashlib.sha256(self.intent.lower().encode("utf-8")).hexdigest()[:16]
+        intent_digest = hashlib.sha256((self.intent.lower() + (f"\0seed:{self.seed_job_id}" if self.seed_job_id else "")).encode("utf-8")).hexdigest()[:16]
         result_ready = (
             not self.async_preview
             or (self.scout_task and self.scout_task.state in (self.scout_task.State.SUCCEEDED, self.scout_task.State.FAILED))
@@ -395,6 +407,7 @@ class JobScoutPreviewView(TemplateView):
                     "match_count": len(matches),
                     "explore_count": len(explore_jobs),
                     "intent_text": self.intent[:2000],
+                    "seed_job_id": self.seed_job_id,
                     "workflow": workflow_diagnostics,
                     "source": source,
                     "authenticated": self.request.user.is_authenticated, **scout_funnel.metadata(self.scout_flow),

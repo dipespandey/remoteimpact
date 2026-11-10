@@ -35,12 +35,13 @@ def session_digest(session_key):
     return hashlib.sha256((session_key or "").encode("utf-8")).hexdigest()
 
 
-def semantic_key(intent):
+def semantic_key(intent, seed_job_id=None):
     # Whitespace is normalized by the caller. Case and punctuation stay intact:
     # they can carry meaningful constraints in a natural-language brief.
     release = os.getenv("RELEASE_ID", "local")
     revision = os.getenv("SCOUT_PREVIEW_CONFIG_REVISION", "default")
-    raw = f"{TASK_SEMANTICS_VERSION}\0{release}\0{revision}\0{intent}".encode("utf-8")
+    seed = f"\0seed:{seed_job_id}" if seed_job_id else ""
+    raw = f"{TASK_SEMANTICS_VERSION}\0{release}\0{revision}\0{intent}{seed}".encode("utf-8")
     return hashlib.sha256(raw).hexdigest()
 
 
@@ -48,9 +49,9 @@ def _setting(name, default):
     return getattr(settings, name, os.getenv(name, default))
 
 
-def enqueue_preview(intent, session_key, *, force_refresh=False, retry_failed=False):
+def enqueue_preview(intent, session_key, *, force_refresh=False, retry_failed=False, seed_job_id=None):
     """Return (task, created); enforce per-session and global queued-work bounds."""
-    digest = semantic_key(intent)
+    digest = semantic_key(intent, seed_job_id)
     scope = session_digest(session_key)
     now = timezone.now()
     try:
@@ -133,6 +134,7 @@ def enqueue_preview(intent, session_key, *, force_refresh=False, retry_failed=Fa
             task = ScoutPreviewTask.objects.create(
                 semantic_key=digest,
                 intent_text=intent,
+                seed_job_id=seed_job_id,
                 available_at=now,
             )
             ScoutPreviewAccess.objects.create(task=task, session_digest=scope)
@@ -142,7 +144,7 @@ def enqueue_preview(intent, session_key, *, force_refresh=False, retry_failed=Fa
     except IntegrityError:
         # A concurrent request won the unique semantic key. Reuse its work.
         return enqueue_preview(
-            intent, session_key, force_refresh=force_refresh, retry_failed=retry_failed
+            intent, session_key, force_refresh=force_refresh, retry_failed=retry_failed, seed_job_id=seed_job_id
         )
 
 
@@ -270,6 +272,7 @@ def compute_task(task_id):
 
     preferences, matches = JobScoutService.search_intent(
         task.intent_text,
+        seed_job_id=task.seed_job_id,
         diagnostics=diagnostics,
         since=timezone.now() - timedelta(days=30),
         limit=3,
