@@ -23,7 +23,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         rows, site = feature_trials.results(FeatureTrial.objects.select_related("job__organization"))
         if not rows:
-            self.stdout.write("No featured trials yet.")
+            self.stdout.write("No featured trial has run a full day yet.")
             return
         lines = ["Free featured trials: each role's numbers while featured against the same number of days before.", ""]
         clicks_before = clicks_during = 0
@@ -42,5 +42,6 @@ class Command(BaseCommand):
             self.stdout.write(text)
             return
         subject = f"Featured trials: apply clicks {clicks_before} -> {clicks_during}"
-        sent = email_service.send_email(settings.OWNER_REPORT_EMAIL, subject, "<pre>" + text + "</pre>", text=text)
+        import html
+        sent = email_service.send_email(settings.OWNER_REPORT_EMAIL, subject, "<pre>" + html.escape(text) + "</pre>", text=text)
         self.stdout.write(("Sent" if sent else "Failed to send") + f": {subject}")

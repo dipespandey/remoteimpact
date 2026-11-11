@@ -3,7 +3,7 @@
 Dry run unless --apply. Skips employers that already paid, already had a trial, or are featured now.
 `feature_trial_report` reads the results once the trials end.
 """
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from jobs.services import feature_trials
 
@@ -18,6 +18,8 @@ class Command(BaseCommand):
         parser.add_argument("--min-clicks", type=int, default=10)
 
     def handle(self, *args, **options):
+        if options["days"] < 1:
+            raise CommandError("--days must be at least 1")
         started = 0
         for job, clicks in feature_trials.candidates(options["limit"], min_clicks=options["min_clicks"]):
             line = f"{job.organization.name}: '{job.title}' ({clicks} clicks across the employer in 30 days)"

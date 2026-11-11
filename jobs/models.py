@@ -482,6 +482,11 @@ class Job(models.Model):
     def is_sponsored(self):
         return bool(self.featured_until and self.featured_until > timezone.now())
 
+    @property
+    def on_feature_trial(self):
+        """Featured free by Remote Impact, not bought: the employer can still buy the feature."""
+        return self.is_sponsored and self.feature_trials.filter(ends_at__gt=timezone.now()).exists()
+
     @classmethod
     def sponsored_filter(cls, now=None):
         return models.Q(featured_until__gt=now or timezone.now())

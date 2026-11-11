@@ -19,7 +19,7 @@ def active_trials(now=None):
 def paid_first(queryset, now=None):
     """Order featured jobs so a paying employer is never pushed out by a trial."""
     trial = active_trials(now).filter(job=OuterRef("pk"))
-    return queryset.annotate(on_trial=Exists(trial)).order_by("on_trial", "featured_until")
+    return queryset.annotate(on_trial=Exists(trial)).order_by("on_trial", "featured_until", "pk")
 
 
 def end_for_paid(job_ids, now=None):
@@ -36,7 +36,11 @@ def candidates(limit, *, min_clicks=10, days=30):
     from jobs.services.job_service import JobService
     since = timezone.localdate() - timedelta(days=days - 1)
     live = JobService.get_available_jobs()
-    paid_orgs = set(JobFeaturePurchase.objects.values_list("job__organization_id", flat=True))
+    from jobs.models import OrgSubscription
+    # Anyone who has ever paid us (feature, job post or org plan) is a customer, not a trial prospect.
+    paid_orgs = (set(JobFeaturePurchase.objects.values_list("job__organization_id", flat=True))
+                 | set(Job.objects.filter(paid_at__isnull=False).values_list("organization_id", flat=True))
+                 | set(OrgSubscription.objects.values_list("organization_id", flat=True)))
     tried_orgs = set(FeatureTrial.objects.values_list("job__organization_id", flat=True))
     featured_orgs = set(live.filter(Job.sponsored_filter()).values_list("organization_id", flat=True))
     rows = (JobDailyStat.objects.filter(date__gte=since, job__in=live)
@@ -57,6 +61,8 @@ def candidates(limit, *, min_clicks=10, days=30):
 
 
 def start(job, days, now=None):
+    if days < 1:
+        raise ValueError("A trial lasts at least one day")
     now = now or timezone.now()
     ends = now + timedelta(days=days)
     with transaction.atomic():
@@ -84,7 +90,9 @@ def results(trials):
     rows = []
     for trial in trials:
         start, end = trial.started_at.date(), min(trial.ends_at, timezone.now()).date()
-        days = max((end - start).days, 1)
+        days = (end - start).days
+        if days < 1:
+            continue  # Started today: nothing to compare yet.
         before = _window([trial.job_id], start - timedelta(days=days), start)
         during = _window([trial.job_id], start, end)
         rows.append({"trial": trial, "days": days, "before": before, "during": during})

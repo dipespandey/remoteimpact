@@ -87,6 +87,21 @@ class FeatureTrialTests(TestCase):
         self.assertEqual(list(feature_trials.paid_first(Job.objects.filter(Job.sponsored_filter()))), [self.top, self.paid])
         self.assertContains(self.client.get(reverse("jobs:job_detail", kwargs={"slug": self.top.slug})), "by the employer")
 
+    def test_a_trial_role_still_offers_the_paid_feature(self):
+        feature_trials.start(self.top, days=14)
+        page = self.client.get(reverse("jobs:job_detail", kwargs={"slug": self.top.slug}))
+        self.assertContains(page, reverse("jobs:feature_job", kwargs={"slug": self.top.slug}))
+        self.assertNotContains(page, "by the employer")
+        self.assertTrue(Job.objects.get(pk=self.top.pk).on_feature_trial)
+
+    def test_past_customers_get_no_trial_and_employers_rank_by_total_clicks(self):
+        Job.objects.filter(pk=self.next.pk).update(paid_at=timezone.now() - timedelta(days=90))
+        spread = Organization.objects.create(name="Spread Org", slug="spread")
+        a, b = make_job(spread, "Role A", "spread-a"), make_job(spread, "Role B", "spread-b")
+        clicks(a, 20); clicks(b, 19)
+        picked = [job for job, _ in feature_trials.candidates(10, min_clicks=10)]
+        self.assertEqual(picked, [a, self.top])
+
     def test_report_compares_trial_days_with_the_days_before(self):
         trial = FeatureTrial.objects.create(job=self.second, started_at=timezone.now() - timedelta(days=4),
                                             ends_at=timezone.now() + timedelta(days=10))
