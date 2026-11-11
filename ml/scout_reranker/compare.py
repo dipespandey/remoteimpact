@@ -24,7 +24,7 @@ def production_system():
 def _review_namespace():
     """Load only pure evidence helpers; offline experiments don't boot Django."""
     tree = ast.parse(Path('jobs/services/scout_review.py').read_text())
-    names = {'excerpt', 'remote_requested', 'requested_checks', 'review_checks'}
+    names = {'excerpt', '_whole_words', 'remote_requested', 'requested_checks', 'review_checks'}
     nodes = [node for node in tree.body if
              isinstance(node, ast.FunctionDef) and node.name in names or
              isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id in
@@ -45,6 +45,12 @@ def production_validator():
     functions=[node for node in tree.body if isinstance(node,ast.FunctionDef)
                and node.name in {'_normalized','validate_decisions'}]
     if len(functions)!=2:raise ValueError('Production decision validation changed')
+    constraints=ast.parse(Path('jobs/services/scout_constraints.py').read_text())
+    helpers=[node for node in [*constraints.body,*tree.body] if
+             isinstance(node,ast.FunctionDef) and node.name=='readable_text' or
+             isinstance(node,ast.Assign) and any(isinstance(t,ast.Name) and t.id in {'HTML_TAGS','_TYPOGRAPHY'} for t in node.targets)]
+    if len(helpers)!=3:raise ValueError('Production quote normalisation changed')
+    functions=[*helpers,*functions]
     namespace=_review_namespace()
     namespace.update({'json':json,'FIELDS':('title','description','requirements')})
     class PureImports(ast.NodeTransformer):

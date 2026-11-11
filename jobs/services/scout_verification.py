@@ -132,7 +132,7 @@ def verify_matches(jobs, preferences, diagnostics, *, annotate=True):
     from jobs.services.scout_constraints import evaluate_job
     from jobs.services.scout_evidence import compensation_display
     from jobs.services.scout_source_evidence import load_original_sources
-    from jobs.services.scout_reranker import _normalized
+    from jobs.services.scout_reranker import _normalized, quote_key
     from jobs.services.scout_constraints import plain_job_field
     from jobs.services.scout_review import source_checks_grounded
     kept = []
@@ -151,7 +151,7 @@ def verify_matches(jobs, preferences, diagnostics, *, annotate=True):
             source = _normalized(' '.join(plain_job_field(job, f) for f in ('title', 'location', 'description', 'requirements')))
             quotes = [r[len(prefix):] for r in getattr(job, 'scout_reasons', []) if isinstance(r, str)
                       for prefix in ('Relevant evidence: ', 'Listing duties: ') if r.startswith(prefix)]
-            if any(_normalized(quote) not in source for quote in quotes):
+            if any(quote_key(quote) is None or quote_key(quote) not in source for quote in quotes):
                 rejected['source_evidence'] = rejected.get('source_evidence', 0) + 1
                 continue
         if not annotate:

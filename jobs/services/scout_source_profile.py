@@ -162,7 +162,8 @@ def _duties_from_profile(fields, profile, field):
     spans=profile['spans'][field]
     # Unstructured short listings generally start with a role summary; keep
     # the fallback modest so a long company introduction cannot dominate.
-    return ' […] '.join(text[a:b] for a,b in spans) if spans else text[:450]
+    from jobs.services.scout_review import _whole_words
+    return ' […] '.join(text[a:b] for a,b in spans) if spans else _whole_words(text,0,450)
 
 
 def request_terms(preferences):
