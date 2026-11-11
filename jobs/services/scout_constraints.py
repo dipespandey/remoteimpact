@@ -314,6 +314,17 @@ def extract_constraints(text):
 HTML_TAGS=re.compile(r"""<(?:!--.*?--|/?[A-Za-z](?:[^<>"']|"[^"]*"|'[^']*')*)>""",re.S)
 
 
+def readable_text(text):
+    """Listing prose as a reader sees it: tags dropped and entities decoded.
+
+    Greenhouse API `content` is stored entity-escaped (&lt;p&gt;, &amp;amp;),
+    so decode, drop the tags that reveals, and decode once more.
+    """
+    from html import unescape
+    text=HTML_TAGS.sub(' ',unescape(HTML_TAGS.sub(' ',str(text))))
+    return ' '.join(unescape(text).split())
+
+
 def plain_job_field(job, field):
     cached=getattr(job,'_scout_plain_fields',None)
     if cached is None:cached={};job._scout_plain_fields=cached

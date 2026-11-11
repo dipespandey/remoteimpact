@@ -16,7 +16,7 @@ from django.conf import settings
 from django.core.cache import cache
 
 from jobs.services.scout_constraints import plain_job_field
-from jobs.services.scout_reranker import FIELDS, _normalized
+from jobs.services.scout_reranker import FIELDS, _normalized, quote_key
 
 logger = logging.getLogger(__name__)
 CANDIDATES = 12
@@ -68,7 +68,8 @@ def validate(output, evidence, limit, preferences=None):
         field, text = quote.get("field"), quote.get("quote")
         if field not in FIELDS or not isinstance(text, str) or not 8 <= len(text) <= 360:
             continue
-        if text not in evidence[pk].get(field, "") and _normalized(text) not in _normalized(evidence[pk].get(field, "")):
+        key = quote_key(text)
+        if key is None or len(key) < 8 or (text not in evidence[pk].get(field, "") and key not in _normalized(evidence[pk].get(field, ""))):
             continue
         if preferences is not None:
             # Reject invented applicant geography in comparative explanations.
