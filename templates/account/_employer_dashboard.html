@@ -112,7 +112,7 @@
                 <div class="p-5 sm:p-6 lg:col-span-2 lg:border-r lg:border-border/60">
                     <div class="flex flex-wrap items-center gap-2">
                         <span class="badge badge-success">Live</span>
-                        {% if job.featured_now %}<span class="badge badge-featured">Featured until {{ job.featured_until|date:"M j" }}</span>{% endif %}
+                        {% if job.featured_now %}<span class="badge badge-featured">{% if job.on_feature_trial %}Free featured trial{% else %}Featured{% endif %} until {{ job.featured_until|date:"M j" }}</span>{% endif %}
                     </div>
                     <h3 class="mt-2 text-lg font-semibold leading-snug text-foreground"><a href="{{ job.get_absolute_url }}" class="hover:underline">{{ job.title|display_title }}</a></h3>
                     <p class="mt-1 text-xs text-muted-foreground">{{ job.location|default:"Remote" }} · Posted {{ job.posted_at|date:"M j, Y" }}{% if job.edited_at %} · Updated {{ job.edited_at|date:"M j" }}{% endif %}{% if job.expires_at %} · Closes {{ job.expires_at|date:"M j" }}{% endif %}</p>
@@ -127,7 +127,7 @@
                         <a href="{% url 'jobs:employer_shortlist' job.slug %}" class="btn btn-outline btn-sm">Candidates</a>
                         <a href="{% url 'jobs:job_edit' job.slug %}" class="btn btn-ghost btn-sm">Edit role</a>
                         <a href="{{ job.get_absolute_url }}" class="btn btn-ghost btn-sm">View listing</a>
-                        {% if not job.featured_now %}<a href="{% url 'jobs:feature_job' job.slug %}" class="btn btn-ghost btn-sm">Feature it</a>{% endif %}
+                        {% if not job.featured_now or job.on_feature_trial %}<a href="{% url 'jobs:feature_job' job.slug %}" class="btn btn-ghost btn-sm">Feature it</a>{% endif %}
                     </div>
                     {% if job.tips %}
                     <div class="mt-5 rounded-xl bg-amber-50/70 p-3.5 dark:bg-amber-500/10">
