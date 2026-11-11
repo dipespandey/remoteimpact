@@ -1867,6 +1867,24 @@ class JobSlugRedirect(models.Model):
         return f"{self.old_slug} -> {self.job_id}"
 
 
+class FeatureTrial(models.Model):
+    """A free featured window Remote Impact gives a role to show employers what featuring does.
+
+    Kept apart from JobFeaturePurchase, which is the revenue record: trials are never sales.
+    """
+
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="feature_trials")
+    started_at = models.DateTimeField()
+    ends_at = models.DateTimeField(db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-started_at"]
+
+    def __str__(self):
+        return f"Trial {self.job_id} until {self.ends_at:%Y-%m-%d}"
+
+
 class JobFeaturePurchase(models.Model):
     """A paid 30-day featured placement for one job (also a revenue record)."""
 
