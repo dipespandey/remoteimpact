@@ -148,6 +148,7 @@ class ScoutExploreTests(TestCase):
         first = self.client.get(url, {'intent': self.intent})
         self.assertTrue(first.context['preview_pending'])
         self.assertEqual(first.context['explore_jobs'], [])
+        self.client.post(reverse('jobs:scout_preview_start'), {'intent': self.intent})
         task = ScoutPreviewTask.objects.get()
         task.state = ScoutPreviewTask.State.FAILED
         task.save(update_fields=['state'])
