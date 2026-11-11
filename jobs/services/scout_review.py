@@ -34,8 +34,21 @@ def excerpt(text, intent='', limit=2200):
             if sum(b-a for a, b in spans) + end-start + 5*len(spans) <= limit:
                 spans.append((start, end))
     if not spans:
-        return text[:limit]
-    return ' […] '.join(text[a:b] for a, b in sorted(spans))
+        return _whole_words(text, 0, limit)
+    return ' […] '.join(_whole_words(text, a, b) for a, b in sorted(spans))
+
+
+def _whole_words(text, start, end):
+    """A window cut mid-word invites the reviewer to quote the completed word."""
+    if start and not text[start-1].isspace():
+        cut = text.find(' ', start, end)
+        if cut != -1:
+            start = cut + 1
+    if end < len(text) and not text[end].isspace():
+        cut = text.rfind(' ', start, end)
+        if cut > start:
+            end = cut
+    return text[start:end].strip()
 
 
 def workload_allocations(text):
@@ -62,7 +75,7 @@ def primary_duties(text, limit=900):
     shares=[]
     for label,share,start,end in workload_allocations(text):
         if 30<=share<=100:shares.append(text[start:min(len(text),end+100)])
-    return ' […] '.join([overview,*shares])[:limit]
+    return _whole_words(' […] '.join([overview,*shares]),0,limit)
 
 
 def dominant_function_conflict(text, prefs, title=""):
@@ -78,9 +91,9 @@ def dominant_function_conflict(text, prefs, title=""):
 
 
 def evidence_fields(job, preferences):
-    from jobs.services.scout_constraints import plain_job_field
-    description = plain_job_field(job, 'description')
-    requirements = plain_job_field(job, 'requirements')
+    from jobs.services.scout_constraints import plain_job_field, readable_text
+    description = readable_text(plain_job_field(job, 'description'))
+    requirements = readable_text(plain_job_field(job, 'requirements'))
     duplicate = requirements == description
     intent = preferences.get('intent_text', '')
     from jobs.services.scout_source_profile import duty_excerpt
@@ -88,8 +101,8 @@ def evidence_fields(job, preferences):
     # Explicit workload shares retain precedence over incidental task matches.
     if list(workload_allocations(description)):
         lead=primary_duties(description,700)
-    return {'title': plain_job_field(job, 'title'),
-            'description': lead + ' […] ' + excerpt(description, intent, 2100 if duplicate else 1100),
+    return {'title': readable_text(plain_job_field(job, 'title')),
+            'description': readable_text(lead) + ' […] ' + excerpt(description, intent, 2100 if duplicate else 1100),
             'requirements': '' if duplicate else excerpt(requirements, intent, 1000)}
 
 

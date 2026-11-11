@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.cache import caches
 from jobs.services.scout_decision_cache import decision_key, decision_ttl
 
-from jobs.services.scout_constraints import evaluate_job,plain_job_field
+from jobs.services.scout_constraints import evaluate_job,plain_job_field,readable_text
 
 logger=logging.getLogger(__name__)
 cache=caches['scout_decisions']
@@ -15,12 +15,29 @@ MAX_CANDIDATES=12
 MAX_PROMPT_CHARS=44000
 MAX_OUTPUT_TOKENS=3600
 TIMEOUT_SECONDS=10.0
+REPAIR_SYSTEM=(' Your previous answer for these candidates failed validation; previous_issues says why for each ID. '
+    'Answer them again and fix those problems.')
+REPAIR_HINTS={
+    'prompt_quote_ungrounded':'a quote was not an exact contiguous copy of its named field; copy it character for character or mark the check unknown',
+    'source_quote_ungrounded':'a quote was not an exact contiguous copy of its named field; copy it character for character or mark the check unknown',
+    'invalid_quote_length':'a quote was not 8-180 characters long',
+    'missing_or_extra_checks':'checks did not cover exactly the requested dimensions',
+    'invalid_checks_schema':'checks were missing or malformed',
+    'invalid_check_value':'a check was not [status, field, quote] with a valid status and field',
+    'unverified_conflict':'a conflicting check had no exact supporting quote',
+    'unknown_function':'a selected job had unknown function; confirm it from duties or return relevant false',
+    'unsupported_constraint_check':'a confirmed check did not support its requested constraint',
+}
+
+
+_TYPOGRAPHY=str.maketrans({'\u2018':"'",'\u2019':"'",'\u201c':'"','\u201d':'"','\u2010':'-','\u2011':'-',
+    '\u2012':'-','\u2013':'-','\u2014':'-','\u2212':'-','\u2026':'...','\u00a0':' ','*':None,'\u00ad':None,'\u200b':None})
 
 
 def _normalized(text):
-    """Compare quotes without caring about case, spacing or typographic punctuation."""
+    """Compare quotes without caring about markup, case, spacing or typographic punctuation."""
     import re
-    text=str(text).lower().translate(str.maketrans({'\u2018':"'",'\u2019':"'",'\u201c':'"','\u201d':'"','\u2013':'-','\u2014':'-','\u00a0':' '}))
+    text=readable_text(text).lower().translate(_TYPOGRAPHY)
     text=re.sub(r'\s*([/\-,;:()])\s*',r'\1',text)
     return re.sub(r'\s+',' ',text).strip(' .')
 
@@ -71,6 +88,7 @@ def validated_subset(output,evidence,preferences,*,jobs=None,diagnostics=None):
 
     Invented/duplicated IDs, wrong types or schema errors still fail closed.
     Never convert an omitted or unsupported positive into a cached rejection.
+    Returns the valid records and the issue code of each unsupported positive.
     """
     from jobs.services.json_utils import parse_json_object
     parsed=parse_json_object(output)
@@ -86,7 +104,7 @@ def validated_subset(output,evidence,preferences,*,jobs=None,diagnostics=None):
     validate_decisions(output,subset,preferences)
     from jobs.services.scout_review import review_checks, review_issue, grounded_conflict, source_checks_grounded
     valid=[]
-    issues={}
+    issues={};failed={}
     for item in records:
         pk=item['id'];row=subset[pk]
         if not item['relevant']:
@@ -95,9 +113,10 @@ def validated_subset(output,evidence,preferences,*,jobs=None,diagnostics=None):
             valid.append({'id':pk,'relevant':False})
             issues['verified_conflict']=issues.get('verified_conflict',0)+1
         elif review_checks(item,row,preferences) is None:
-            reason=review_issue(item,row,preferences)
-            issues[reason]=issues.get(reason,0)+1
+            failed[pk]=review_issue(item,row,preferences)
+            issues[failed[pk]]=issues.get(failed[pk],0)+1
         elif jobs is not None and not source_checks_grounded(jobs[pk],item):
+            failed[pk]='source_quote_ungrounded'
             issues['source_quote_ungrounded']=issues.get('source_quote_ungrounded',0)+1
         else:
             valid.append(item)
@@ -106,7 +125,7 @@ def validated_subset(output,evidence,preferences,*,jobs=None,diagnostics=None):
     if diagnostics is not None:
         counts=diagnostics.setdefault('review_decision_issues',{})
         for reason,count in issues.items():counts[reason]=counts.get(reason,0)+count
-    return valid,len(valid)<len(evidence)
+    return valid,failed
 
 
 def rerank(candidates,preferences,fallback,diagnostics,relaxed=False):
@@ -198,7 +217,7 @@ def rerank(candidates,preferences,fallback,diagnostics,relaxed=False):
                     output=generate(json.dumps({'request':payload['request'],'candidates':pending},ensure_ascii=False),
                         stage='review',max_tokens=MAX_OUTPUT_TOKENS,temperature=0.0,
                         timeout=TIMEOUT_SECONDS,max_retries=0,system_message=system)
-                    records,_=validated_subset(output,{row['id']:row for row in pending},preferences,
+                    records,failed=validated_subset(output,{row['id']:row for row in pending},preferences,
                         jobs=jobs,diagnostics=diagnostics)
                     known.update({item['id']:item for item in records})
                     unresolved=[row for row in pending if row['id'] not in known]
@@ -206,9 +225,13 @@ def rerank(candidates,preferences,fallback,diagnostics,relaxed=False):
                         diagnostics['review_repair_attempted']=True
                         diagnostics['review_repair_candidates']=len(unresolved)
                         try:
-                            repaired=generate(json.dumps({'request':payload['request'],'candidates':unresolved},ensure_ascii=False),
+                            # Same prompt at temperature 0 tends to repeat the same bad quote.
+                            previous={str(row['id']):REPAIR_HINTS.get(failed.get(row['id']),'no decision was returned')
+                                      for row in unresolved}
+                            repaired=generate(json.dumps({'request':payload['request'],'candidates':unresolved,
+                                    'previous_issues':previous},ensure_ascii=False),
                                 stage='review_repair',max_tokens=MAX_OUTPUT_TOKENS,temperature=0.0,
-                                timeout=TIMEOUT_SECONDS,max_retries=0,system_message=system)
+                                timeout=TIMEOUT_SECONDS,max_retries=0,system_message=system+REPAIR_SYSTEM)
                             records,_=validated_subset(repaired,{row['id']:row for row in unresolved},preferences,
                                 jobs=jobs,diagnostics=diagnostics)
                             known.update({item['id']:item for item in records})
