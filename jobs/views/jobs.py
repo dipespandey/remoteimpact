@@ -17,6 +17,7 @@ from ..models import AssistantSubscription, ConsumerFunnelEvent, Job, Category, 
 from ..forms import JobSubmissionForm
 from ..services.job_service import JobService
 from ..services.employer_attribution import request_labels
+from ..services.feature_trials import is_trial, paid_first
 from ..services.payment_service import PaymentService
 from ..services.funnel import record_consumer_event
 from ..services.unified_matching_service import UnifiedMatchingService
@@ -273,11 +274,10 @@ class JobListView(FastJobPaginationMixin, ListView):
         context["sponsored_jobs"] = []
         if context.get("page_obj") is None or context["page_obj"].number == 1:
             try:
-                context["sponsored_jobs"] = list(
+                context["sponsored_jobs"] = list(paid_first(
                     JobService.get_filtered_jobs(self.request.GET)
                     .filter(Job.sponsored_filter())
-                    .select_related("organization", "category")
-                    .order_by("featured_until")[:3]
+                    .select_related("organization", "category"))[:3]
                 )
             except Exception:  # noqa: BLE001 - placement must never break search
                 logger.exception("Could not load featured jobs")
@@ -401,6 +401,7 @@ class JobDetailView(DetailView):
         from ..services.scout_verification import non_opening, source_non_opening
         context['non_opening_listing'] = non_opening(self.object.title, self.object.application_url) or source_non_opening(
             self.object.source, self.object.raw_data)
+        context["feature_trial"] = self.object.is_sponsored and is_trial(self.object)
         context["job_available"] = not context['non_opening_listing'] and self._available_queryset().filter(
             pk=self.object.pk
         ).exists()
@@ -881,7 +882,7 @@ class CategoryLandingView(FastJobPaginationMixin, ListView):
         ])
         
         context["sponsored_jobs"] = (
-            list(self.get_queryset().filter(Job.sponsored_filter()).order_by("featured_until")[:3])
+            list(paid_first(self.get_queryset().filter(Job.sponsored_filter()))[:3])
             if context["page_obj"].number == 1 else []
         )
         _drop_pinned_duplicates(context)
