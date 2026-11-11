@@ -279,33 +279,16 @@ class JobScoutPreviewView(TemplateView):
         if self.async_preview:
             if not request.session.session_key:
                 request.session.create()
-            from jobs.services.scout_tasks import PreviewQueueLimited, enqueue_preview, accessible_task, semantic_key
+            from jobs.services.scout_tasks import enqueue_preview
 
-            task_id = request.GET.get("scout_task", "").strip()
-            task = accessible_task(task_id, request.session.session_key) if task_id else None
-            if task and (task.intent_text != intent or task.semantic_key != semantic_key(intent, self.seed_job_id)):
-                task = None
-            explicit_retry = request.GET.get("retry") == "1"
-            try:
-                task, _ = enqueue_preview(
-                    intent,
-                    request.session.session_key,
-                    force_refresh=explicit_retry,
-                    retry_failed=explicit_retry,
-                    seed_job_id=self.seed_job_id,
-                )
-            except PreviewQueueLimited:
-                self.queue_limited = True
-                task = None
-            if explicit_retry and task is not None:
-                # Consume the one-shot retry flag before loading the page. A
-                # browser reload or the polling redirect must not enqueue a
-                # second attempt.
-                clean_query = request.GET.copy()
-                clean_query.pop("retry", None)
-                return redirect(f"{request.path}?{clean_query.urlencode()}")
-            self.preview_pending = bool(task and task.state in (task.State.QUEUED, task.State.RUNNING))
-            self.scout_task = task
+            # Opening this page never starts a paid search. Scrapers follow preview links but never run
+            # the page's script; the script, or the button shown without it, posts to ScoutPreviewStartView.
+            self.scout_task, _ = enqueue_preview(
+                intent, request.session.session_key, seed_job_id=self.seed_job_id, start=False
+            )
+            self.preview_pending = bool(
+                self.scout_task and self.scout_task.state in (self.scout_task.State.QUEUED, self.scout_task.State.RUNNING)
+            )
         response = super().get(request, *args, **kwargs)
         if self.async_preview:
             response["Cache-Control"] = "private, no-store"
@@ -328,27 +311,11 @@ class JobScoutPreviewView(TemplateView):
                 matches, older_jobs, stale = hydrate_result(result)
                 if stale:
                     stale_result = True
-                    from jobs.services.scout_tasks import PreviewQueueLimited, enqueue_preview
-
-                    try:
-                        self.scout_task, _ = enqueue_preview(
-                            self.intent, self.request.session.session_key, force_refresh=True,
-                            seed_job_id=self.seed_job_id,
-                        )
-                        self.preview_pending = self.scout_task.state in (
-                            self.scout_task.State.QUEUED, self.scout_task.State.RUNNING
-                        )
-                    except PreviewQueueLimited:
-                        self.queue_limited = True
-                        self.scout_task = None
+                    self.scout_task = None
                     preferences, matches, older_jobs = {}, [], []
-                    workflow_diagnostics = {}
-                    result = None
-                if result is not None:
+                else:
                     workflow_diagnostics = result.get("diagnostics", {})
             elif self.scout_task and self.scout_task.state == self.scout_task.State.FAILED:
-                workflow_diagnostics = {"review_incomplete": True}
-            if getattr(self, "queue_limited", False):
                 workflow_diagnostics = {"review_incomplete": True}
         else:
             preferences, matches = JobScoutService.search_intent(
@@ -364,14 +331,13 @@ class JobScoutPreviewView(TemplateView):
                 older_jobs = older_openings(preferences)
         source = " ".join(self.request.GET.get("source", "").split())[:80] or "scout_preview"
         next_path = f"{reverse('jobs:job_alerts')}?{urlencode({'intent': self.intent, 'source': source, 'scout_flow': self.scout_flow['id']})}"
-        if self.async_preview and self.preview_pending:
-            context["preview_pending"] = True
+        context["preview_start"] = self.async_preview and self.scout_task is None
+        context["preview_refresh"] = stale_result
+        context["preview_pending"] = self.preview_pending or context["preview_start"]
+        if self.preview_pending:
             context["preview_status_url"] = reverse(
                 "jobs:scout_preview_status", kwargs={"task_id": self.scout_task.pk}
             )
-        else:
-            context["preview_pending"] = False
-        context["preview_queue_limited"] = bool(getattr(self, "queue_limited", False))
         explore_jobs = []
         if not matches and not older_jobs and not context['preview_pending']:
             from jobs.services.scout_alternatives import explore_openings
@@ -415,6 +381,50 @@ class JobScoutPreviewView(TemplateView):
                 dedupe_key=f"scout-preview-flow:{self.scout_flow['id']}:{intent_digest}",
             )
         return context
+
+
+class ScoutPreviewStartView(View):
+    """Queue the paid preview search. Only the preview page's script or its no-script button posts here."""
+
+    def post(self, request, *args, **kwargs):
+        from jobs.services.scout_tasks import PreviewQueueLimited, enqueue_preview
+
+        intent = " ".join(request.POST.get("intent", "").split())[:2000]
+        if len(intent) < 20:
+            return redirect("jobs:home")
+        seed = seed_job_id(request.POST.get("similar_to", ""))
+        query = {"intent": intent, "source": " ".join(request.POST.get("source", "").split())[:80] or "scout_preview"}
+        if request.POST.get("scout_flow"):
+            query["scout_flow"] = request.POST["scout_flow"][:64]
+        if seed:
+            query["similar_to"] = seed
+        page = f"{reverse('jobs:job_scout_preview')}?{urlencode(query)}"
+        if not getattr(settings, "SCOUT_PREVIEW_ASYNC_ENABLED", False):
+            return redirect(page)
+        wants_json = "application/json" in request.headers.get("Accept", "")
+        if not request.session.session_key:
+            request.session.create()
+        # retry also covers a saved result whose listings changed since it was computed.
+        retry = request.POST.get("retry") == "1"
+        try:
+            task, _ = enqueue_preview(
+                intent, request.session.session_key, force_refresh=retry, retry_failed=retry, seed_job_id=seed
+            )
+        except PreviewQueueLimited:
+            if wants_json:
+                return JsonResponse({"status": "busy"}, status=429)
+            messages.info(request, "Scout is busy right now. Try again in a few minutes.")
+            return redirect(page)
+        if not wants_json:
+            return redirect(page)
+        if task.state in (task.State.QUEUED, task.State.RUNNING):
+            status = "processing"
+        else:
+            status = "ready" if task.state == task.State.SUCCEEDED else "retry"
+        return JsonResponse({
+            "status": status,
+            "status_url": reverse("jobs:scout_preview_status", kwargs={"task_id": task.pk}),
+        })
 
 
 class ScoutPreviewStatusView(View):

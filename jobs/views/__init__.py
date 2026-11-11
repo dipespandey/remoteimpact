@@ -75,6 +75,7 @@ from .referral import ReferralDashboardView, ReferralLandingView
 from .job_alerts import (
     JobAlertListView,
     JobScoutPreviewView,
+    ScoutPreviewStartView,
     ScoutPreviewStatusView,
     ScoutContactCaptureView,
     ScoutContactVerifyView,

@@ -72,11 +72,11 @@ class SimilarRolesPreviewTests(SeedFixture, TestCase):
         self.make_jobs()
 
     def test_job_page_link_carries_the_seed_to_the_worker(self):
-        url = reverse("jobs:job_scout_preview")
+        url = reverse("jobs:scout_preview_start")
         with patch.object(JobScoutService, "search_intent"):
-            self.client.get(url, {"intent": INTENT, "source": "job_detail", "similar_to": self.seed.pk})
-            self.client.get(url, {"intent": INTENT, "source": "job_detail", "similar_to": self.seed.pk})
-            self.client.get(url, {"intent": INTENT, "source": "job_detail"})
+            self.client.post(url, {"intent": INTENT, "source": "job_detail", "similar_to": self.seed.pk})
+            self.client.post(url, {"intent": INTENT, "source": "job_detail", "similar_to": self.seed.pk})
+            self.client.post(url, {"intent": INTENT, "source": "job_detail"})
         seeded = ScoutPreviewTask.objects.get(seed_job_id=self.seed.pk)
         self.assertEqual(seeded.semantic_key, semantic_key(INTENT, self.seed.pk))
         self.assertEqual(ScoutPreviewTask.objects.count(), 2)
@@ -90,7 +90,7 @@ class SimilarRolesPreviewTests(SeedFixture, TestCase):
 
     def test_ill_formed_seed_is_ignored(self):
         with patch.object(JobScoutService, "search_intent"):
-            self.client.get(reverse("jobs:job_scout_preview"), {"intent": INTENT, "similar_to": "1;drop"})
+            self.client.post(reverse("jobs:scout_preview_start"), {"intent": INTENT, "similar_to": "1;drop"})
         self.assertIsNone(ScoutPreviewTask.objects.get().seed_job_id)
 
 
