@@ -36,7 +36,7 @@ class AgentKeyRequestTests(ApiBase):
         key = ApiKey.objects.get(email="reader@example.org")
         self.assertNotIn(key.prefix, result["content"][0]["text"])
         self.assertEqual((key.tier, key.is_active), ("free", True))
-        self.assertIn("[mcp] job search for myself", key.use_case)
+        self.assertIn("[mcp] use: job search for myself", key.use_case)
         self.assertEqual(self.send.call_args.kwargs["to"], "reader@example.org")
 
     def test_one_key_per_address_per_day_and_few_per_connection(self):
@@ -55,6 +55,30 @@ class AgentKeyRequestTests(ApiBase):
         self.assertEqual(good.status_code, 200)
         key = ApiKey.objects.get(email="dev@example.org", use_case__startswith="[rest]")
         self.assertNotIn(key.prefix, good.content.decode())
+
+    def test_web_pages_cannot_make_visitors_request_keys(self):
+        page = self.client.post("/api/v1/keys/", {"email": "victim@example.org"}, HTTP_ORIGIN="https://evil.example")
+        self.assertEqual(page.status_code, 400)
+        mcp = self.client.post("/mcp/", json.dumps({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {
+            "name": "request_api_key", "arguments": {"email": "victim@example.org"}}}),
+            content_type="text/plain", HTTP_ORIGIN="https://evil.example")
+        self.assertTrue(mcp.json()["result"]["isError"])
+        self.assertFalse(ApiKey.objects.exists())
+        self.send.assert_not_called()
+
+    def test_the_email_carries_no_caller_text_and_a_failed_send_leaves_no_key(self):
+        self.ask(name="CLICK evil.example/x")
+        html = self.send.call_args.kwargs["html"] + self.send.call_args.kwargs["text"]
+        self.assertNotIn("evil.example", html)
+        self.assertIn("Hi there", html)
+        self.send.return_value = False
+        failed = self.ask("other@example.org").json()["result"]
+        self.assertTrue(failed["isError"])
+        self.assertFalse(ApiKey.objects.filter(email="other@example.org").exists())
+
+    def test_non_object_json_is_a_bad_request(self):
+        for body in ("[]", '"x"'):
+            self.assertEqual(self.client.post("/api/v1/keys/", body, content_type="application/json").status_code, 400)
 
     def test_rest_rate_limit_points_to_the_key_request(self):
         from jobs.api import auth

@@ -167,13 +167,14 @@ def search(params, caller, *, limit=None, page=None):
     jobs = JobService._collapse_location_variants(jobs)
     if not text_search:
         # Featured roles lead, as on the website: paid placements, then free trials, then newest.
-        from django.db.models import Case, Exists, OuterRef, Value, When, BooleanField
+        from django.db.models import Case, Exists, OuterRef, Value, When
         from jobs.services.feature_trials import active_trials
         now = timezone.now()
-        jobs = jobs.annotate(
-            api_featured=Case(When(featured_until__gt=now, then=Value(True)), default=Value(False), output_field=BooleanField()),
-            api_trial=Exists(active_trials(now).filter(job=OuterRef("pk"))),
-        ).order_by("-api_featured", "api_trial", "-posted_at", "-id")
+        from django.db.models import IntegerField
+        jobs = jobs.annotate(api_trial=Exists(active_trials(now).filter(job=OuterRef("pk")))).annotate(
+            api_rank=Case(When(featured_until__gt=now, api_trial=False, then=Value(0)),
+                          When(featured_until__gt=now, then=Value(1)), default=Value(2), output_field=IntegerField()),
+        ).order_by("api_rank", "-posted_at", "-id")
     page_max = caller.limits["page_max"]
     limit = max(1, min(int(limit or params.get("limit") or min(20, page_max)), page_max))
     page = max(1, int(page or params.get("page") or 1))
@@ -293,6 +294,8 @@ def request_key(request):
         body = json.loads(request.body or b"{}") if request.content_type == "application/json" else request.POST
     except ValueError:
         return respond({"error": "invalid_json"}, status=400)
+    if not hasattr(body, "get"):
+        return respond({"error": "invalid_json", "message": "Send a JSON object with an email."}, status=400)
     from jobs.api.keys import request_free_key
     ok, message = request_free_key(request, email=body.get("email"), name=body.get("name"),
                                    use_case=body.get("use_case"), source="rest")
