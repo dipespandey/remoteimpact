@@ -209,7 +209,7 @@ class McpTests(ApiBase):
         self.assertEqual(result["serverInfo"]["name"], "remote-impact-jobs")
         self.assertEqual(self.rpc("notifications/initialized", id_=None).status_code, 202)
         tools = self.rpc("tools/list").json()["result"]["tools"]
-        self.assertEqual({t["name"] for t in tools}, {"search_jobs", "get_job", "list_areas", "get_organization"})
+        self.assertEqual({t["name"] for t in tools}, {"search_jobs", "get_job", "list_areas", "get_organization", "request_api_key"})
 
     def test_search_and_get_tools(self):
         response = self.rpc("tools/call", {"name": "search_jobs", "arguments": {"area": "climate-environment", "level": "senior"}})
@@ -282,7 +282,11 @@ class UsageAndCardTests(ApiBase):
     def test_server_card_and_tool_annotations(self):
         card = self.client.get("/.well-known/mcp/server-card.json").json()
         self.assertTrue(card["serverInfo"]["description"])
-        self.assertTrue(all(t["annotations"]["readOnlyHint"] and t["outputSchema"] for t in card["tools"]))
+        # Data tools are read-only; request_api_key emails the user a key, so it is not, but it never destroys anything.
+        data_tools = [t for t in card["tools"] if t["name"] != "request_api_key"]
+        self.assertTrue(all(t["annotations"]["readOnlyHint"] and t["outputSchema"] for t in data_tools))
+        key_tool = next(t for t in card["tools"] if t["name"] == "request_api_key")
+        self.assertFalse(key_tool["annotations"]["readOnlyHint"] or key_tool["annotations"]["destructiveHint"])
 
 
 class AdminApiUsageTests(ApiBase):

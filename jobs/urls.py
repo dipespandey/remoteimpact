@@ -245,6 +245,7 @@ urlpatterns = [
     path("api/v1/jobs/<slug:slug>/", api_rest.job_detail, name="api_job"),
     path("api/v1/organizations/<slug:slug>/", api_rest.organization_detail, name="api_organization"),
     path("api/v1/areas/", api_rest.areas, name="api_areas"),
+    path("api/v1/keys/", api_rest.request_key, name="api_request_key"),
     path("api/v1/openapi.json", api_rest.openapi, name="api_openapi"),
     path("mcp/", api_mcp.endpoint, name="mcp"),
     path(".well-known/mcp/server-card.json", api_mcp.server_card, name="mcp_server_card"),

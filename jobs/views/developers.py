@@ -81,7 +81,7 @@ class DevelopersView(TemplateView):
 
         context = {"key": key, "raw": raw, "site": getattr(settings, "SITE_URL", "https://remoteimpact.org").rstrip("/")}
         try:
-            email_service.send_email(
+            sent = email_service.send_email(
                 to=key.email, subject="Your Remote Impact API key",
                 html=render_to_string("emails/api_key.html", context), text=render_to_string("emails/api_key.txt", context))
             if key.tier == ApiKey.Tier.COMMERCIAL:
@@ -90,5 +90,7 @@ class DevelopersView(TemplateView):
                         f"Use case: {key.use_case}\n\nActivate in admin: {context['site']}/admin/jobs/apikey/{key.pk}/change/")
                 email_service.send_email(to=owner, subject=f"API access request: {key.organization or key.name}",
                                          html="<p>" + body.replace("\n", "<br>") + "</p>", text=body)
+            return bool(sent)
         except Exception:  # noqa: BLE001 - the key is still shown on the page
             logger.exception("API key email failed")
+            return False

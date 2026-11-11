@@ -5,6 +5,7 @@ GET /api/v1/jobs/            filters: q, area, country, remote_scope, job_type, 
 GET /api/v1/jobs/<slug>/
 GET /api/v1/organizations/<slug>/
 GET /api/v1/areas/
+POST /api/v1/keys/   {"email": ...} emails that person a free key
 GET /api/v1/openapi.json
 """
 import json
@@ -14,6 +15,7 @@ from functools import wraps
 
 from django.http import JsonResponse, QueryDict
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from jobs.api import serialize, usage
@@ -26,6 +28,9 @@ CORS = {
     "Access-Control-Expose-Headers": "X-RateLimit-Tier, Retry-After, Mcp-Session-Id",
 }
 ATTRIBUTION = "Data from Remote Impact (remoteimpact.org). Link to the listing URL when you show a role."
+RATE_LIMIT_HINT = ("Too many requests without an API key. A free key raises the limit to 30 a minute and 500 a day: "
+                   "ask the user for their email and POST {\"email\": ...} to /api/v1/keys/ (MCP: call request_api_key). "
+                   "The key is emailed to them.")
 
 
 def respond(data, status=200, caller=None, cache_seconds=0):
@@ -48,7 +53,8 @@ def api_view(func):
             caller = identify(request)
         except RateLimited as exc:
             usage.record(request, exc.caller, "rest", func.__name__, 429)
-            response = respond({"error": "rate_limited", "message": "Too many requests for this tier.",
+            response = respond({"error": "rate_limited", "message": RATE_LIMIT_HINT,
+                                "request_key": serialize._site() + "/api/v1/keys/",
                                 "docs": serialize._site() + "/developers/"}, status=429)
             response["Retry-After"] = str(exc.retry_after)
             return response
@@ -160,7 +166,15 @@ def search(params, caller, *, limit=None, page=None):
         jobs = jobs.filter(pk__in=pay_ids)
     jobs = JobService._collapse_location_variants(jobs)
     if not text_search:
-        jobs = jobs.order_by("-posted_at", "-id")
+        # Featured roles lead, as on the website: paid placements, then free trials, then newest.
+        from django.db.models import Case, Exists, OuterRef, Value, When
+        from jobs.services.feature_trials import active_trials
+        now = timezone.now()
+        from django.db.models import IntegerField
+        jobs = jobs.annotate(api_trial=Exists(active_trials(now).filter(job=OuterRef("pk")))).annotate(
+            api_rank=Case(When(featured_until__gt=now, api_trial=False, then=Value(0)),
+                          When(featured_until__gt=now, then=Value(1)), default=Value(2), output_field=IntegerField()),
+        ).order_by("api_rank", "-posted_at", "-id")
     page_max = caller.limits["page_max"]
     limit = max(1, min(int(limit or params.get("limit") or min(20, page_max)), page_max))
     page = max(1, int(page or params.get("page") or 1))
@@ -260,6 +274,29 @@ def openapi(request):
                                                       "parameters": [{"name": "slug", "in": "path", "required": True, "schema": {"type": "string"}}],
                                                       "responses": {"200": {"description": "Organization"}}}},
             "/api/v1/areas/": {"get": {"summary": "Impact areas with open-role counts", "responses": {"200": {"description": "Areas"}}}},
+            "/api/v1/keys/": {"post": {"summary": "Email the user a free API key (30 requests a minute, 500 a day). The key is never returned here.",
+                                       "requestBody": {"content": {"application/json": {"schema": {"type": "object", "required": ["email"], "properties": {
+                                           "email": {"type": "string", "description": "The user's own email address"},
+                                           "name": {"type": "string"}, "use_case": {"type": "string"}}}}}},
+                                       "responses": {"200": {"description": "Key emailed"}, "400": {"description": "Invalid address or too many requests"}}}},
         },
     }
     return respond(spec, cache_seconds=3600)
+
+
+@csrf_exempt
+@require_http_methods(["POST", "OPTIONS"])
+def request_key(request):
+    """POST /api/v1/keys/ with {"email", "name"?, "use_case"?}: email a free key to that address."""
+    if request.method == "OPTIONS":
+        return respond({}, status=204)
+    try:
+        body = json.loads(request.body or b"{}") if request.content_type == "application/json" else request.POST
+    except ValueError:
+        return respond({"error": "invalid_json"}, status=400)
+    if not hasattr(body, "get"):
+        return respond({"error": "invalid_json", "message": "Send a JSON object with an email."}, status=400)
+    from jobs.api.keys import request_free_key
+    ok, message = request_free_key(request, email=body.get("email"), name=body.get("name"),
+                                   use_case=body.get("use_case"), source="rest")
+    return respond({"requested": ok, "message": message}, status=200 if ok else 400)
