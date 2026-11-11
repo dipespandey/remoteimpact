@@ -198,7 +198,7 @@ class JobAlertListView(LoginRequiredMixin, ListView):
         context["free_scout_used"] = (
             not context["is_pro"] and subscription.free_job_scout_used_at is not None
         )
-        initial_intent = " ".join(self.request.GET.get("intent", "").split())[:2000]
+        initial_intent = " ".join(self.request.GET.get("intent", "").split())[:2000].strip()
         landing_source = " ".join(self.request.GET.get("source", "").split())[:80]
         flow = None
         if not context['free_scout_used']:
@@ -261,7 +261,7 @@ class JobScoutPreviewView(TemplateView):
             response = HttpResponse("Scout searches run for people, not crawlers.", content_type="text/plain")
             response["X-Robots-Tag"] = "noindex, nofollow"
             return response
-        intent = " ".join(request.GET.get("intent", "").split())[:2000]
+        intent = " ".join(request.GET.get("intent", "").split())[:2000].strip()
         if len(intent) < 20:
             messages.info(request, "Describe the job you want in a little more detail.")
             return redirect("jobs:home")
@@ -389,7 +389,7 @@ class ScoutPreviewStartView(View):
     def post(self, request, *args, **kwargs):
         from jobs.services.scout_tasks import PreviewQueueLimited, enqueue_preview
 
-        intent = " ".join(request.POST.get("intent", "").split())[:2000]
+        intent = " ".join(request.POST.get("intent", "").split())[:2000].strip()
         if len(intent) < 20:
             return redirect("jobs:home")
         seed = seed_job_id(request.POST.get("similar_to", ""))
