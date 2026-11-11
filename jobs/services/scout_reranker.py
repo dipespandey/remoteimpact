@@ -43,7 +43,9 @@ def quote_key(quote):
     """
     from html import unescape
     from jobs.services.scout_constraints import HTML_TAGS
-    if not isinstance(quote, str) or HTML_TAGS.search(unescape(unescape(quote))):
+    # readable_text drops tags from exactly these two forms; refusing both means normalising
+    # can never delete a word, so the raw quote shown to people says only what was grounded.
+    if not isinstance(quote, str) or HTML_TAGS.search(quote) or HTML_TAGS.search(unescape(quote)):
         return None
     return _normalized(quote)
 

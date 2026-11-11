@@ -69,7 +69,7 @@ def validate(output, evidence, limit, preferences=None):
         if field not in FIELDS or not isinstance(text, str) or not 8 <= len(text) <= 360:
             continue
         key = quote_key(text)
-        if key is None or (text not in evidence[pk].get(field, "") and key not in _normalized(evidence[pk].get(field, ""))):
+        if key is None or len(key) < 8 or (text not in evidence[pk].get(field, "") and key not in _normalized(evidence[pk].get(field, ""))):
             continue
         if preferences is not None:
             # Reject invented applicant geography in comparative explanations.

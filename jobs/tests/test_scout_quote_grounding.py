@@ -150,6 +150,15 @@ class InjectedQuoteTests(SimpleTestCase):
             self.assertIsNone(review_checks(item, self.row, self.prefs), injected)
             self.assertFalse(source_checks_grounded(self.job, item), injected)
 
+    def test_tags_broken_by_decoding_are_still_refused(self):
+        from jobs.services.scout_reranker import quote_key
+        for injected in ('Lead grant reporting <i fully remote, $200k &quot;>',
+                         'Lead grant reporting <i fully remote, $200k &lt;>',
+                         'Lead grant reporting &lt;i fully remote &amp;quot;&gt;',
+                         "Lead grant reporting <i fully remote &#39;>"):
+            self.assertIsNone(quote_key(injected), injected)
+        self.assertEqual(quote_key('AT&amp;T pays 5 &lt; 6 days'), 'at&t pays 5 < 6 days')
+
     def test_quotes_that_normalise_to_nothing_are_too_short(self):
         from jobs.services.scout_review import review_checks
         for empty in ('********', '​' * 8, '­' * 8, '…' * 8, '<b></b><i>'):
