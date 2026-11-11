@@ -78,6 +78,15 @@ class FeatureTrialTests(TestCase):
         Job.objects.filter(pk=self.paid.pk).update(featured_until=timezone.now() + timedelta(days=30))
         self.assertContains(self.client.get(reverse("jobs:job_detail", kwargs={"slug": self.paid.slug})), "by the employer")
 
+    def test_an_employer_who_buys_during_a_trial_ranks_and_reads_as_paid(self):
+        from jobs.services.payment_service import PaymentService
+        feature_trials.start(self.top, days=14)
+        Job.objects.filter(pk=self.paid.pk).update(featured_until=timezone.now() + timedelta(days=60))
+        PaymentService._activate_feature({"id": "cs_trial_buyer", "amount_total": 4900, "metadata": {"job_id": self.top.pk}})
+        self.assertFalse(feature_trials.is_trial(self.top))
+        self.assertEqual(list(feature_trials.paid_first(Job.objects.filter(Job.sponsored_filter()))), [self.top, self.paid])
+        self.assertContains(self.client.get(reverse("jobs:job_detail", kwargs={"slug": self.top.slug})), "by the employer")
+
     def test_report_compares_trial_days_with_the_days_before(self):
         trial = FeatureTrial.objects.create(job=self.second, started_at=timezone.now() - timedelta(days=4),
                                             ends_at=timezone.now() + timedelta(days=10))

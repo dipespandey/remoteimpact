@@ -268,4 +268,6 @@ def sync_featuring(organization=None) -> int:
         ids = list(live.values_list("pk", flat=True)[:cap] if cap else live.values_list("pk", flat=True))
         # Only ever extend: a role someone paid to feature for 30 days keeps its longer window.
         touched += Job.objects.filter(pk__in=ids).filter(Q(featured_until__isnull=True) | Q(featured_until__lt=until)).update(featured_until=until)
+        from jobs.services.feature_trials import end_for_paid
+        end_for_paid(ids)
     return touched

@@ -22,6 +22,11 @@ def paid_first(queryset, now=None):
     return queryset.annotate(on_trial=Exists(trial)).order_by("on_trial", "featured_until")
 
 
+def end_for_paid(job_ids, now=None):
+    """A role someone pays to feature is no longer a trial: it ranks and is labelled as paid."""
+    return FeatureTrial.objects.filter(job_id__in=job_ids, ends_at__gt=now or timezone.now()).update(ends_at=now or timezone.now())
+
+
 def is_trial(job, now=None):
     return active_trials(now).filter(job=job).exists()
 
