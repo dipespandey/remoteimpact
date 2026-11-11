@@ -114,7 +114,7 @@ GET {{ site }}/api/v1/areas/</pre>
 
   <section id="mcp" class="mt-10 scroll-mt-24" aria-labelledby="mcp-heading">
     <h2 id="mcp-heading" class="section-title">MCP server for AI assistants</h2>
-    <p class="mt-1 max-w-[68ch] text-sm leading-6 text-muted-foreground">Claude, ChatGPT, Cursor and other assistants that support the Model Context Protocol can call the same data as tools: <code>search_jobs</code>, <code>get_job</code>, <code>list_areas</code>, <code>get_organization</code>. Streamable HTTP, no sign-up needed to try it; add a key for higher limits.</p>
+    <p class="mt-1 max-w-[68ch] text-sm leading-6 text-muted-foreground">Claude, ChatGPT, Cursor and other assistants that support the Model Context Protocol can call the same data as tools: <code>search_jobs</code>, <code>get_job</code>, <code>list_areas</code>, <code>get_organization</code>. Streamable HTTP, no sign-up needed to try it; add a key for higher limits. An assistant can get its user a free key with <code>request_api_key</code> (or <code>POST /api/v1/keys/</code> with <code>{"email": ...}</code>); the key is emailed to that address.</p>
     <div class="mt-4 grid gap-4 lg:grid-cols-2">
       <div class="card p-5">
         <p class="text-xs font-medium text-foreground">Endpoint</p>
