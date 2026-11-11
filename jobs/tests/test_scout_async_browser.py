@@ -12,6 +12,28 @@ from jobs.services.scout_tasks import _serialize_match, claim_task
 from jobs.tests.test_scout_results import setup_scout_fixture
 
 
+def call_in_database_thread(function, *args):
+    result_box = []
+    error_box = []
+    def invoke():
+        try:
+            result_box.append(function(*args))
+        except Exception as exc:
+            error_box.append(exc)
+    thread = threading.Thread(target=invoke, daemon=True)
+    thread.start()
+    thread.join(timeout=10)
+    if thread.is_alive():
+        raise AssertionError("database helper thread did not finish")
+    if error_box:
+        raise error_box[0]
+    return result_box[0]
+
+
+def task_count():
+    return call_in_database_thread(ScoutPreviewTask.objects.count)
+
+
 @override_settings(SECURE_SSL_REDIRECT=False, ACCOUNT_RATE_LIMITS={}, SCOUT_PREVIEW_ASYNC_ENABLED=True)
 class ScoutAsyncPreviewBrowserTests(StaticLiveServerTestCase):
     def test_progress_completes_to_results_without_sending_email_and_loading_button_works(self):
@@ -31,23 +53,6 @@ class ScoutAsyncPreviewBrowserTests(StaticLiveServerTestCase):
         worker_started = threading.Event()
         allow_worker_finish = threading.Event()
         worker_result = []
-
-        def call_in_database_thread(function, *args):
-            result_box = []
-            error_box = []
-            def invoke():
-                try:
-                    result_box.append(function(*args))
-                except Exception as exc:
-                    error_box.append(exc)
-            thread = threading.Thread(target=invoke, daemon=True)
-            thread.start()
-            thread.join(timeout=10)
-            if thread.is_alive():
-                raise AssertionError("database helper thread did not finish")
-            if error_box:
-                raise error_box[0]
-            return result_box[0]
 
         def delayed_synthetic_compute(_task_id):
             worker_started.set()
@@ -72,7 +77,12 @@ class ScoutAsyncPreviewBrowserTests(StaticLiveServerTestCase):
                     if "/alerts/preview/status/" in response.url else None)
             page.route("**/*", lambda route: route.continue_()
                        if route.request.url.startswith(self.live_server_url) else route.abort())
-            page.goto(self.live_server_url + "/alerts/preview/?intent=" + brief.replace(" ", "+"))
+            with page.expect_response(lambda response: "/alerts/preview/start/" in response.url) as started:
+                page.goto(self.live_server_url + "/alerts/preview/?intent=" + brief.replace(" ", "+"))
+            self.assertEqual(started.value.status, 200)
+            status_url = started.value.json()["status_url"]
+            self.assertEqual(task_count(), 1)
+            expect(page.locator("#preview-start")).to_be_hidden()
             expect(page.get_by_role("heading", name="Loading your matches")).to_be_visible()
             progress = page.get_by_role("status")
             expect(progress).to_be_visible()
@@ -87,11 +97,6 @@ class ScoutAsyncPreviewBrowserTests(StaticLiveServerTestCase):
             page.emulate_media(reduced_motion="no-preference")
             expect(page.get_by_text("Matching your brief and checking listing evidence.", exact=False)).to_be_visible()
             page.screenshot(path=str(screenshots / "preview-loading-mobile.png"), full_page=True)
-            status_url = page.evaluate("""() => {
-                const script = [...document.scripts].find(item => item.textContent.includes('Preview status unavailable'));
-                const raw = script.textContent.match(/const statusUrl = (\".*?\");/s)[1];
-                return JSON.parse(raw);
-            }""")
             other_page = browser.new_page()
             other_response = other_page.goto(self.live_server_url + status_url)
             self.assertEqual(other_response.status, 404)
@@ -178,3 +183,25 @@ class ScoutAsyncPreviewBrowserTests(StaticLiveServerTestCase):
         self.assertEqual(
             ConsumerFunnelEvent.objects.filter(event=ConsumerFunnelEvent.Event.SCOUT_PREVIEWED).count(), 1
         )
+
+    def test_without_script_the_page_starts_nothing_until_the_button_is_pressed(self):
+        from playwright.sync_api import expect, sync_playwright
+
+        setup_scout_fixture(self)
+        brief = "Remote Python engineering roles in Europe at climate organizations."
+        chrome = os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE")
+        if not chrome and Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome").exists():
+            chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True, **({"executable_path": chrome} if chrome else {}))
+            page = browser.new_context(java_script_enabled=False).new_page()
+            page.goto(self.live_server_url + "/alerts/preview/?intent=" + brief.replace(" ", "+") + "&source=job_detail")
+            expect(page.get_by_role("heading", name="Loading your matches")).to_be_visible()
+            self.assertEqual(task_count(), 0, "opening the page must not queue a paid search")
+
+            page.get_by_role("button", name="Show my matches").click()
+            expect(page.get_by_role("heading", name="Loading your matches")).to_be_visible()
+            expect(page.get_by_role("link", name="Check again")).to_be_visible()
+            self.assertIn("source=job_detail", page.url)
+            self.assertEqual(task_count(), 1)
+            browser.close()

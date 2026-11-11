@@ -257,6 +257,7 @@ class ScoutOutageSignalTests(EmployerTestBase):
 
 @override_settings(SCOUT_PREVIEW_ASYNC_ENABLED=True)
 class ScoutCrawlerTests(EmployerTestBase):
+    @override_settings(SCOUT_PREVIEW_ASYNC_ENABLED=True)
     def test_crawlers_following_similar_roles_links_start_no_paid_search(self):
         from jobs.scout_task_models import ScoutPreviewTask
         url = reverse("jobs:job_scout_preview") + "?intent=Remote%20Program%20Manager%20roles%20similar%20to%20this%20one&source=job_detail"
@@ -265,7 +266,11 @@ class ScoutCrawlerTests(EmployerTestBase):
         self.assertEqual(response["X-Robots-Tag"], "noindex, nofollow")
         self.assertFalse(ScoutPreviewTask.objects.exists())
         self.assertFalse(ConsumerFunnelEvent.objects.exists())
-        self.client.get(url, HTTP_USER_AGENT="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15")
+        person = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15"
+        self.client.get(url, HTTP_USER_AGENT=person)
+        self.assertFalse(ScoutPreviewTask.objects.exists(), "only the page's script or button starts the search")
+        self.client.post(reverse("jobs:scout_preview_start"), {"intent": "Remote Program Manager roles similar to this one"},
+                         HTTP_USER_AGENT=person)
         self.assertTrue(ScoutPreviewTask.objects.exists())
 
 

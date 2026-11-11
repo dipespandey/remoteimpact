@@ -15,7 +15,7 @@ from django.test import Client, TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from jobs.models import ScoutPreviewAccess, ScoutPreviewQueueGuard, ScoutPreviewTask
+from jobs.models import ConsumerFunnelEvent, ScoutPreviewAccess, ScoutPreviewQueueGuard, ScoutPreviewTask
 from jobs.management.commands.run_scout_preview_worker import release_is_active
 from jobs.services.scout_tasks import PreviewQueueLimited, claim_task, enqueue_preview, execute_claimed_task, prune_tasks, semantic_key, session_digest
 from jobs.services.scout_tasks import hydrate_result, job_fingerprint
@@ -337,21 +337,83 @@ class ScoutPreviewAsyncViewTests(TestCase):
             )
             app.sites.add(site)
 
-    def test_get_returns_progress_without_running_matching_and_status_is_session_bound(self):
-        first_client = Client()
-        other_client = Client()
+    def start(self, client, intent=INTENT, **fields):
+        return client.post(reverse("jobs:scout_preview_start"), {"intent": intent, **fields},
+                           HTTP_ACCEPT="application/json")
+
+    def succeed(self, task, diagnostics=None):
+        task.state = ScoutPreviewTask.State.SUCCEEDED
+        task.result = {"preferences": {}, "matches": [], "older_jobs": [], "diagnostics": diagnostics or {}}
+        task.completed_at = timezone.now()
+        task.save(update_fields=["state", "result", "completed_at"])
+
+    def test_plain_get_shows_progress_but_starts_no_paid_search(self):
+        browser_like = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"
         with patch("jobs.services.job_scout_service.JobScoutService.search_intent") as search:
-            response = first_client.get(reverse("jobs:job_scout_preview"), {"intent": INTENT})
+            response = Client().get(reverse("jobs:job_scout_preview"), {"intent": INTENT}, HTTP_USER_AGENT=browser_like)
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["preview_pending"])
         self.assertContains(response, "Checking the current catalogue")
+        self.assertContains(response, "Show my matches")
         search.assert_not_called()
+        self.assertFalse(ScoutPreviewTask.objects.exists())
+        self.assertFalse(ConsumerFunnelEvent.objects.filter(event=ConsumerFunnelEvent.Event.SCOUT_PREVIEWED).exists())
 
+    def test_page_script_start_queues_one_search_and_the_page_then_polls(self):
+        first_client = Client()
+        other_client = Client()
+        first_client.get(reverse("jobs:job_scout_preview"), {"intent": INTENT})
+        with patch("jobs.services.job_scout_service.JobScoutService.search_intent") as search:
+            started = self.start(first_client)
+            again = self.start(first_client)
+
+        search.assert_not_called()
+        self.assertEqual(started.status_code, 200)
+        self.assertEqual(started.json()["status"], "processing")
+        self.assertEqual(again.json(), started.json())
         task = ScoutPreviewTask.objects.get()
         status_url = reverse("jobs:scout_preview_status", kwargs={"task_id": task.pk})
+        self.assertEqual(started.json()["status_url"], status_url)
         self.assertEqual(first_client.get(status_url).status_code, 202)
         self.assertEqual(other_client.get(status_url).status_code, 404)
+
+        page = first_client.get(reverse("jobs:job_scout_preview"), {"intent": INTENT})
+        self.assertTrue(page.context["preview_pending"])
+        self.assertFalse(page.context["preview_start"])
+        self.assertEqual(page.context["preview_status_url"], status_url)
+
+    def test_start_requires_the_page_csrf_token(self):
+        client = Client(enforce_csrf_checks=True)
+        client.get(reverse("jobs:job_scout_preview"), {"intent": INTENT})
+        response = self.start(client)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(ScoutPreviewTask.objects.exists())
+
+    def test_button_without_script_starts_the_search_and_returns_to_the_page(self):
+        client = Client()
+        response = client.post(
+            reverse("jobs:scout_preview_start"),
+            {"intent": INTENT, "source": "job_detail", "scout_flow": "flow-1"},
+            follow=True,
+        )
+
+        self.assertEqual(len(response.redirect_chain), 1)
+        self.assertIn("source=job_detail", response.redirect_chain[0][0])
+        self.assertTrue(response.context["preview_pending"])
+        self.assertFalse(response.context["preview_start"])
+        self.assertEqual(ScoutPreviewTask.objects.get().state, ScoutPreviewTask.State.QUEUED)
+
+    def test_full_queue_tells_the_page_scout_is_busy(self):
+        with override_settings(SCOUT_PREVIEW_QUEUE_LIMIT=0):
+            response = self.start(Client())
+            page = Client().post(reverse("jobs:scout_preview_start"), {"intent": INTENT}, follow=True)
+
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response.json(), {"status": "busy"})
+        self.assertContains(page, "Scout is busy right now")
+        self.assertFalse(ScoutPreviewTask.objects.exists())
 
     def test_malformed_task_hint_does_not_break_preview_request(self):
         response = Client().get(
@@ -364,12 +426,8 @@ class ScoutPreviewAsyncViewTests(TestCase):
 
     def test_completed_result_is_reused_by_the_same_session(self):
         client = Client()
-        response = client.get(reverse("jobs:job_scout_preview"), {"intent": INTENT})
-        task = ScoutPreviewTask.objects.get()
-        task.state = ScoutPreviewTask.State.SUCCEEDED
-        task.result = {"preferences": {}, "matches": [], "older_jobs": [], "diagnostics": {}}
-        task.completed_at = timezone.now()
-        task.save(update_fields=["state", "result", "completed_at"])
+        self.start(client)
+        self.succeed(ScoutPreviewTask.objects.get())
 
         response = client.get(reverse("jobs:job_scout_preview"), {"intent": INTENT})
 
@@ -377,10 +435,40 @@ class ScoutPreviewAsyncViewTests(TestCase):
         self.assertFalse(response.context["preview_pending"])
         self.assertEqual(ScoutPreviewTask.objects.count(), 1)
 
+    def test_a_fresh_result_renders_on_plain_get_without_a_new_search(self):
+        self.start(Client())
+        task = ScoutPreviewTask.objects.get()
+        self.succeed(task)
+
+        response = Client().get(reverse("jobs:job_scout_preview"), {"intent": INTENT})
+
+        self.assertFalse(response.context["preview_pending"])
+        self.assertNotContains(response, "Show my matches")
+        self.assertEqual(ScoutPreviewTask.objects.count(), 1)
+        self.assertEqual(ScoutPreviewAccess.objects.filter(task=task).count(), 2)
+        self.assertEqual(sum(ScoutPreviewAccess.objects.values_list("enqueue_count", flat=True)), 1)
+        self.assertTrue(ConsumerFunnelEvent.objects.filter(event=ConsumerFunnelEvent.Event.SCOUT_PREVIEWED).exists())
+
+    def test_expired_result_waits_for_the_page_to_start_a_refresh(self):
+        client = Client()
+        self.start(client)
+        task = ScoutPreviewTask.objects.get()
+        self.succeed(task)
+        ScoutPreviewTask.objects.filter(pk=task.pk).update(completed_at=timezone.now() - timedelta(hours=1))
+
+        page = client.get(reverse("jobs:job_scout_preview"), {"intent": INTENT})
+        task.refresh_from_db()
+        self.assertTrue(page.context["preview_start"])
+        self.assertEqual(task.state, ScoutPreviewTask.State.SUCCEEDED)
+
+        self.assertEqual(self.start(client).json()["status"], "processing")
+        task.refresh_from_db()
+        self.assertEqual(task.state, ScoutPreviewTask.State.QUEUED)
+
     def test_failed_page_reload_stays_final_until_user_explicitly_retries(self):
         client = Client()
         url = reverse("jobs:job_scout_preview")
-        client.get(url, {"intent": INTENT})
+        self.start(client)
         task = ScoutPreviewTask.objects.get()
         task.state = ScoutPreviewTask.State.FAILED
         task.last_error = "TimeoutError"
@@ -392,10 +480,12 @@ class ScoutPreviewAsyncViewTests(TestCase):
         self.assertEqual(reloaded.status_code, 200)
         self.assertFalse(reloaded.context["preview_pending"])
         self.assertTrue(reloaded.context["review_incomplete"])
+        self.assertContains(reloaded, reverse("jobs:scout_preview_start"))
+        self.assertEqual(self.start(client).json()["status"], "retry")
         task.refresh_from_db()
         self.assertEqual(task.state, ScoutPreviewTask.State.FAILED)
 
-        retried = client.get(url, {"intent": INTENT, "retry": "1"}, follow=True)
+        retried = client.post(reverse("jobs:scout_preview_start"), {"intent": INTENT, "retry": "1"}, follow=True)
 
         self.assertEqual(retried.status_code, 200)
         self.assertEqual(len(retried.redirect_chain), 1)
@@ -413,17 +503,11 @@ class ScoutPreviewAsyncViewTests(TestCase):
     def test_explicit_retry_refreshes_completed_incomplete_result_once(self):
         client = Client()
         url = reverse("jobs:job_scout_preview")
-        client.get(url, {"intent": INTENT})
+        self.start(client)
         task = ScoutPreviewTask.objects.get()
-        task.state = ScoutPreviewTask.State.SUCCEEDED
-        task.result = {
-            "preferences": {}, "matches": [], "older_jobs": [],
-            "diagnostics": {"review_incomplete": True},
-        }
-        task.completed_at = timezone.now()
-        task.save(update_fields=["state", "result", "completed_at"])
+        self.succeed(task, {"review_incomplete": True})
 
-        retried = client.get(url, {"intent": INTENT, "retry": "1"}, follow=True)
+        retried = client.post(reverse("jobs:scout_preview_start"), {"intent": INTENT, "retry": "1"}, follow=True)
 
         self.assertEqual(retried.status_code, 200)
         self.assertEqual(len(retried.redirect_chain), 1)

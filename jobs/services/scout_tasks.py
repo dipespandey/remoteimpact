@@ -49,8 +49,12 @@ def _setting(name, default):
     return getattr(settings, name, os.getenv(name, default))
 
 
-def enqueue_preview(intent, session_key, *, force_refresh=False, retry_failed=False, seed_job_id=None):
-    """Return (task, created); enforce per-session and global queued-work bounds."""
+def enqueue_preview(intent, session_key, *, force_refresh=False, retry_failed=False, seed_job_id=None, start=True):
+    """Return (task, created); enforce per-session and global queued-work bounds.
+
+    With start=False nothing is queued: an existing task is returned only when it
+    can be shown as it is, otherwise (None, False).
+    """
     digest = semantic_key(intent, seed_job_id)
     scope = session_digest(session_key)
     now = timezone.now()
@@ -73,6 +77,8 @@ def enqueue_preview(intent, session_key, *, force_refresh=False, retry_failed=Fa
                 # polling redirects. Retrying can incur provider cost, so only
                 # an explicit retry action may put it back on the queue.
                 needs_refresh = (task.state == ScoutPreviewTask.State.FAILED and retry_failed) or fresh
+                if needs_refresh and not start:
+                    return None, False
                 new_access = access is None
                 recent_enqueues = ScoutPreviewAccess.objects.filter(
                     session_digest=scope, last_enqueued_at__gte=cutoff
@@ -117,6 +123,8 @@ def enqueue_preview(intent, session_key, *, force_refresh=False, retry_failed=Fa
                     task.save(update_fields=["state", "attempts", "result", "last_error", "completed_at", "available_at", "lease_until", "lease_token", "updated_at"])
                 return task, False
 
+            if not start:
+                return None, False
             window = timedelta(seconds=int(_setting("SCOUT_PREVIEW_SESSION_WINDOW_SECONDS", DEFAULT_SESSION_WINDOW_SECONDS)))
             limit = int(_setting("SCOUT_PREVIEW_SESSION_LIMIT", DEFAULT_SESSION_LIMIT))
             recent_enqueues = ScoutPreviewAccess.objects.filter(
@@ -144,7 +152,8 @@ def enqueue_preview(intent, session_key, *, force_refresh=False, retry_failed=Fa
     except IntegrityError:
         # A concurrent request won the unique semantic key. Reuse its work.
         return enqueue_preview(
-            intent, session_key, force_refresh=force_refresh, retry_failed=retry_failed, seed_job_id=seed_job_id
+            intent, session_key, force_refresh=force_refresh, retry_failed=retry_failed, seed_job_id=seed_job_id,
+            start=start,
         )
 
 
