@@ -34,6 +34,20 @@ _TYPOGRAPHY=str.maketrans({'\u2018':"'",'\u2019':"'",'\u201c':'"','\u201d':'"','
     '\u2012':'-','\u2013':'-','\u2014':'-','\u2212':'-','\u2026':'...','\u00a0':' ','*':None,'\u00ad':None,'\u200b':None})
 
 
+def quote_key(quote):
+    """The model's quote in comparable form, or None if it cannot be a copy of what it was shown.
+
+    Prompt fields reach the model already decoded and tag-free, so a quote with tags (raw or
+    escaped) was not copied. Normalising it would delete the tagged words and let invented
+    text pass. Every check on a quote must read this value, never the raw string.
+    """
+    from html import unescape
+    from jobs.services.scout_constraints import HTML_TAGS
+    if not isinstance(quote, str) or HTML_TAGS.search(unescape(unescape(quote))):
+        return None
+    return _normalized(quote)
+
+
 def _normalized(text):
     """Compare quotes without caring about markup, case, spacing or typographic punctuation."""
     import re

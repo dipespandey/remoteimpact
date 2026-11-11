@@ -123,3 +123,43 @@ class QuoteRepairTests(SimpleTestCase):
         self.assertEqual(client.return_value.generate.call_count, 4)
         self.assertNotIn('review_repair_attempted', d)
         self.assertEqual(d['reranker'], 'review_partial')
+
+
+class InjectedQuoteTests(SimpleTestCase):
+    """Text the model adds inside a quote must never pass as evidence (review of PR #106)."""
+
+    DESC = 'Hybrid role based in our Boston office three days a week. Requires 5 years of experience in grants.'
+
+    def setUp(self):
+        from types import SimpleNamespace
+        self.row = {'title': 'Program Manager', 'description': self.DESC, 'requirements': '', 'location': 'Boston, MA'}
+        self.job = SimpleNamespace(pk=1, title='Program Manager', description=self.DESC, requirements='',
+                                   location='Boston, MA', country='US', raw_data={}, scout_reasons=[])
+        self.prefs = {'intent_text': 'remote program manager'}
+
+    def checks(self, remote):
+        return {'checks': {'function': ['confirmed', 'description', 'based in our Boston office three days a week'],
+                           'remote': ['confirmed', 'description', remote]}}
+
+    def test_tagged_words_in_a_quote_cannot_confirm_remote(self):
+        from jobs.services.scout_review import review_checks, source_checks_grounded
+        self.assertEqual(review_checks(self.checks('Hybrid role based in our Boston'), self.row, self.prefs), ['review_remote'])
+        for injected in ('Hybrid role <i fully remote role>', 'Hybrid role &lt;i fully remote role&gt;',
+                         'Hybrid role &amp;lt;i fully remote role&amp;gt;'):
+            item = self.checks(injected)
+            self.assertIsNone(review_checks(item, self.row, self.prefs), injected)
+            self.assertFalse(source_checks_grounded(self.job, item), injected)
+
+    def test_quotes_that_normalise_to_nothing_are_too_short(self):
+        from jobs.services.scout_review import review_checks
+        for empty in ('********', '​' * 8, '­' * 8, '…' * 8, '<b></b><i>'):
+            item = {'checks': {'function': ['confirmed', 'description', empty],
+                               'remote': ['confirmed', 'description', 'Hybrid role based in our Boston']}}
+            self.assertIsNone(review_checks(item, self.row, self.prefs), repr(empty))
+
+    def test_hidden_characters_cannot_dodge_the_requirements_gate(self):
+        from jobs.services.scout_review import review_checks
+        for disguised in ('R*equires 5 years of experience in grants', 'Re​quires 5 years of experience in grants'):
+            item = {'checks': {'function': ['confirmed', 'description', disguised],
+                               'remote': ['confirmed', 'description', 'Hybrid role based in our Boston']}}
+            self.assertIsNone(review_checks(item, self.row, self.prefs), disguised)

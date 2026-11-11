@@ -158,7 +158,7 @@ CHECK_INSTRUCTIONS = (
 
 def review_checks(item, row, prefs):
     """Return caveat keys for a valid selection, or None for unsupported/conflicting."""
-    from jobs.services.scout_reranker import _normalized
+    from jobs.services.scout_reranker import _normalized, quote_key
     if dominant_function_conflict(row.get('primary_duties',row.get('description','')),prefs,row.get('title','')):
         return None
     checks = item.get('checks')
@@ -176,7 +176,11 @@ def review_checks(item, row, prefs):
             continue
         if status != 'confirmed' or field not in ('title', 'description', 'requirements', 'location', 'salary'):
             return None
-        if name == 'function' and isinstance(quote,str) and re.match(r'[\s*#•-]*(?:requires?\b|required qualifications?\b|(?:prior )?experience\b|proficiency\b|familiarity\b|strong (?:coding )?(?:knowledge|proficiency)\b|\d+\+? years)',quote,re.I):
+        # Every gate reads the normalised quote that grounding checks, never the raw string.
+        quote = quote_key(quote)
+        if quote is None:
+            return None
+        if name == 'function' and re.match(r'[\s*#•-]*(?:requires?\b|required qualifications?\b|(?:prior )?experience\b|proficiency\b|familiarity\b|strong (?:coding )?(?:knowledge|proficiency)\b|\d+\+? years)',quote,re.I):
             return None
         if name == 'function' and field not in ('description', 'requirements'):
             return None
@@ -186,9 +190,9 @@ def review_checks(item, row, prefs):
         if name == 'function' and re.search(r'\bpolicy\s+(?:roles?|jobs?|work|analyst|advisor)', prefs.get('intent_text', ''), re.I):
             if not isinstance(quote, str) or not re.search(r'\b(?:policy|policies|advocacy|legislation|government affairs|regulatory analysis)\b', quote, re.I):
                 return None
-        if not isinstance(quote, str) or not (2 if field == 'location' else 8) <= len(quote) <= 360:
+        if not (2 if field == 'location' else 8) <= len(quote) <= 360:
             return None
-        if _normalized(quote) not in _normalized(row.get(field, '')):
+        if quote not in _normalized(row.get(field, '')):
             return None
         if name == 'skills' and re.search(r'\b(?:useful|preferred|nice to have|bonus)\b', quote, re.I):
             unknown.append('review_skills')
@@ -206,7 +210,7 @@ def review_issue(item, row, prefs):
         return 'invalid_checks_schema'
     if set(checks) != set(requested_checks(prefs)):
         return 'missing_or_extra_checks'
-    from jobs.services.scout_reranker import _normalized
+    from jobs.services.scout_reranker import _normalized, quote_key
     for name, value in checks.items():
         if not isinstance(value, list) or len(value) != 3:
             return 'invalid_check_value'
@@ -219,9 +223,12 @@ def review_issue(item, row, prefs):
             continue
         if status != 'confirmed' or field not in ('title', 'description', 'requirements', 'location', 'salary'):
             return 'invalid_check_value'
-        if not isinstance(quote, str) or not (2 if field == 'location' else 8) <= len(quote) <= 360:
+        key = quote_key(quote)
+        if key is None:
+            return 'prompt_quote_ungrounded'
+        if not (2 if field == 'location' else 8) <= len(key) <= 360:
             return 'invalid_quote_length'
-        if _normalized(quote) not in _normalized(row.get(field, '')):
+        if key not in _normalized(row.get(field, '')):
             return 'prompt_quote_ungrounded'
     return 'unsupported_constraint_check'
 
@@ -240,12 +247,13 @@ def grounded_conflict(job, item, row, prefs):
 
 def source_checks_grounded(job,item):
     from jobs.services.scout_constraints import plain_job_field
-    from jobs.services.scout_reranker import _normalized
+    from jobs.services.scout_reranker import _normalized, quote_key
     # An excerpt separator is not original source evidence. Even a quote
     # grounded in the prompt must also occur in the actual listing field.
     for status,field,quote in item['checks'].values():
         if status=='confirmed' and field in ('title','description','requirements','location'):
-            if _normalized(quote) not in _normalized(plain_job_field(job,field)):
+            key=quote_key(quote)
+            if key is None or key not in _normalized(plain_job_field(job,field)):
                 return False
     return True
 
