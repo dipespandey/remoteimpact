@@ -482,6 +482,11 @@ class Job(models.Model):
     def is_sponsored(self):
         return bool(self.featured_until and self.featured_until > timezone.now())
 
+    @property
+    def on_feature_trial(self):
+        """Featured free by Remote Impact, not bought: the employer can still buy the feature."""
+        return self.is_sponsored and self.feature_trials.filter(ends_at__gt=timezone.now()).exists()
+
     @classmethod
     def sponsored_filter(cls, now=None):
         return models.Q(featured_until__gt=now or timezone.now())
@@ -1865,6 +1870,24 @@ class JobSlugRedirect(models.Model):
 
     def __str__(self):
         return f"{self.old_slug} -> {self.job_id}"
+
+
+class FeatureTrial(models.Model):
+    """A free featured window Remote Impact gives a role to show employers what featuring does.
+
+    Kept apart from JobFeaturePurchase, which is the revenue record: trials are never sales.
+    """
+
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="feature_trials")
+    started_at = models.DateTimeField()
+    ends_at = models.DateTimeField(db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-started_at"]
+
+    def __str__(self):
+        return f"Trial {self.job_id} until {self.ends_at:%Y-%m-%d}"
 
 
 class JobFeaturePurchase(models.Model):

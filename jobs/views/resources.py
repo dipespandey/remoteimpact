@@ -86,11 +86,11 @@ class HomeView(TemplateView):
         available_jobs = JobService.get_available_jobs()
 
         # Featured Jobs
-        # "Featured" means an employer paid for placement.
-        featured_jobs = list(
+        # Paid placements first; free trials (feature_trials) fill any remaining slots.
+        from jobs.services.feature_trials import paid_first
+        featured_jobs = list(paid_first(
             available_jobs.filter(Job.sponsored_filter())
-            .select_related("organization", "category")
-            .order_by("featured_until")[:6]
+            .select_related("organization", "category"))[:6]
         )
 
         # Latest Jobs: one per organization, so a single employer posting the same role

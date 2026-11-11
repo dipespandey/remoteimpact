@@ -28,13 +28,13 @@
         <tr>
           <td>
             <a class="font-medium hover:underline" href="{{ row.job.get_absolute_url }}">{{ row.job.title|display_title }}</a>
-            {% if row.job.is_sponsored %}<span class="badge badge-featured ml-2">★ Featured until {{ row.job.featured_until|date:"M j" }}</span>{% endif %}
+            {% if row.job.on_feature_trial %}<span class="badge badge-featured ml-2">★ Free featured trial until {{ row.job.featured_until|date:"M j" }}</span>{% elif row.job.is_sponsored %}<span class="badge badge-featured ml-2">★ Featured until {{ row.job.featured_until|date:"M j" }}</span>{% endif %}
             <p class="text-xs text-muted-foreground">Posted {{ row.job.posted_at|date:"M j, Y" }}</p>
           </td>
           <td class="text-right tabular-nums">{{ row.views|intcomma }}</td>
           <td class="text-right tabular-nums">{{ row.apply_clicks|intcomma }}</td>
           <td class="text-right tabular-nums">{{ row.scout_deliveries|intcomma }}</td>
-          <td class="text-right">{% if not row.job.is_sponsored %}<a class="btn btn-outline btn-sm" href="{% url 'jobs:feature_job' row.job.slug %}?source=employer_report">Feature · ${{ feature_price }}</a>{% endif %}</td>
+          <td class="text-right">{% if not row.job.is_sponsored or row.job.on_feature_trial %}<a class="btn btn-outline btn-sm" href="{% url 'jobs:feature_job' row.job.slug %}?source=employer_report">Feature · ${{ feature_price }}</a>{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>

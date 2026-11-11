@@ -559,6 +559,8 @@ class PaymentService:
             now = timezone.now()
             until = max(job.featured_until or now, now) + timedelta(days=FEATURE_DURATION_DAYS)
             Job.objects.filter(pk=job.pk).update(featured_until=until)
+            from .feature_trials import end_for_paid
+            end_for_paid([job.pk], now)
             details = data_object.get("customer_details") or {}
             purchase = JobFeaturePurchase.objects.create(
                 job=job,
