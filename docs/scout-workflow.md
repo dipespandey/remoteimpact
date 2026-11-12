@@ -68,10 +68,10 @@ an incomplete preview explicitly asks the seeker to retry rather than asserting
 that no suitable jobs exist. No automatic relaxation changes the seeker's brief.
 
 The four-call/18-second workflow budget remains. The provider review judges 12
-openings. In the preview worker a small CPU cross-encoder (`SCOUT_CROSS_ENCODER`)
-picks them from the top 30 eligible retrieved openings, unless under 10 seconds
-of the budget remain; elsewhere they come in retrieval order after the top four
-rule-scored matches. The reviewer grades fit 1-3: 1 is dropped and 2 is shown as
+openings. They come in retrieval order after the top four rule-scored matches.
+An optional CPU cross-encoder (`SCOUT_CROSS_ENCODER`, off by default) can pick
+them from the top 30 eligible retrieved openings in the preview worker. It is off
+because it ran the 3.5 GiB web container out of memory on 2026-11-12. The reviewer grades fit 1-3: 1 is dropped and 2 is shown as
 worth considering. One review covers all candidates, leaving time to judge alternatives; its timeout is at
 most 10 seconds and is further capped by the remaining workflow time. Strict evidence review is capped
 at 12 candidates and 44,000 prompt characters; alternatives now review at most 12
