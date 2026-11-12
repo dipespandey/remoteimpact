@@ -58,7 +58,6 @@ class BoundedScoutWorkflowTests(TestCase):
         prefs = Scout._fallback_parse('Remote software engineering roles using Python in Europe, mid-level, no internships.')
         diagnostics = {}
         Scout.get_matches_for_preferences(prefs, diagnostics=diagnostics)
-        # Initial, refined, and existing provisional pass; no unbounded retry.
         self.assertEqual(diagnostics['retrieval_passes'], 2)
         self.assertEqual(planner.call_count, 2)
         for call in rank.call_args_list:

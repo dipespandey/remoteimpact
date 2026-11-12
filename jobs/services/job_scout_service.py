@@ -29,12 +29,15 @@ def retrieval_terms(titles, planned, skills, terms):
                                *(term for term in terms if " " in term), *terms]))
 
 
-def review_pool(anchors, retrieved, preferences):
+def review_pool(anchors, retrieved, preferences, diagnostics):
+    from time import monotonic
+    from jobs.services.scout_cross_encoder import order
     from jobs.services.scout_evidence import source_value
     from jobs.services.scout_reranker import MAX_CANDIDATES
+    candidates = getattr(settings, "SCOUT_CROSS_ENCODER_CANDIDATES", 30)
     pool, seen = [], set()
     for job in [*anchors, *retrieved]:
-        if len(pool) >= MAX_CANDIDATES:
+        if len(pool) >= candidates:
             break
         requisition = source_value(job, 'scout_requisition', 'api_response', 'requisition_id')
         # Country copies of one opening would otherwise fill several of the few review slots.
@@ -50,14 +53,18 @@ def review_pool(anchors, retrieved, preferences):
         if not hasattr(job, "scout_caveats"):
             job.scout_caveats = list(eligibility.caveats)
         pool.append(job)
-    return pool
+    started = monotonic()
+    ranked = order(preferences.get("intent_text", ""), pool)
+    diagnostics['review_pool'] = 'cross_encoder' if ranked else 'retrieval_order'
+    if ranked:
+        diagnostics['cross_encoder_seconds'] = round(monotonic() - started, 3)
+    return (ranked or pool)[:MAX_CANDIDATES]
 
 
 class JobScoutService:
     """Interpret job intent once, then match cheaply and predictably."""
 
     MAX_MATCHES = 10
-    RERANK_WIDE_LIMIT = 20
     # Offer clearly labelled "possible" matches when verified ones run out.
     RELAXED_FILL = True
     # Below this many matches, add labelled close matches (settings.SCOUT_CLOSE_MATCHES).
@@ -1104,57 +1111,9 @@ skills is not a request for invented, exact job titles. JSON only."""
                 diagnostics['retrieval_passes'] = 2
         diagnostics.setdefault('retrieval_passes', 1)
         from jobs.services.scout_reranker import rerank
-        # The model only re-judges jobs that already passed every gate and the
-        # score threshold; it can drop or reorder them, never add new ones.
         pool = scored
-        if getattr(settings, "SCOUT_RERANK_WIDE", False):
-            # The keyword title check rejects most retrieved jobs, so the evidence-checking model
-            # rarely sees enough. Let it also judge jobs that pass every hard rule (location, pay,
-            # type, level) but miss on title words; the strict list stays the fallback.
-            extra = []
-            for job in candidates:
-                if len(scored) + len(extra) >= cls.RERANK_WIDE_LIMIT:
-                    break
-                if job in scored or not evaluate_job(job, preferences).allowed:
-                    continue
-                levels = preferences.get("experience_levels", [])
-                if levels and job.experience_level and job.experience_level not in levels:
-                    continue
-                if (levels and set(levels) <= {"internship", "entry"} and not job.experience_level
-                        and cls.SENIOR_TITLE.search(job.title or "")):
-                    continue
-                extra.append(job)
-            pool = scored + extra
-            diagnostics["rerank_wide_extra"] = len(extra)
-        # Review strict and caveated candidates together. Separate reviews used
-        # the last call on a weak strict match before useful alternatives were seen.
         if combined_review:
-            provisional_diagnostics = {"location_rejected": 0, "experience_rejected": 0, "title_rejected": 0,
-                                       "skill_evidence_rejected": 0, "score_rejected": 0}
-            _, provisional = cls._rank_candidates(
-                qs.exclude(pk__in=[job.pk for job in pool]), preferences, terms,
-                provisional_diagnostics, now, relaxed=True,
-                candidates=[job for job in shared_candidates if job.pk not in {j.pk for j in pool}])
-            diagnostics["provisional"] = provisional_diagnostics
-            pool = [*pool[:6], *provisional[:6], *pool[6:]]
             diagnostics["combined_review"] = True
-            if getattr(settings,'SCOUT_SOURCE_RANKING_ENABLED',True):
-                from jobs.services.scout_source_profile import shortlist,function_priority,request_terms
-                present={job.pk for job in pool}
-                recovered=[]
-                source_terms=request_terms(preferences)
-                # Heuristic title/score thresholds must not prevent grounded
-                # source review of the same work under an unusual job title.
-                for job in shared_candidates:
-                    if job.pk in present or function_priority(job,preferences,terms=source_terms)<8:continue
-                    eligibility=evaluate_job(job,preferences,relaxed=True)
-                    if not eligibility.allowed:continue
-                    job.scout_caveats=list(eligibility.caveats)
-                    recovered.append(job)
-                pool=shortlist([*pool,*recovered],preferences,anchors=pool[:3])
-                diagnostics['source_ranked_review']=True
-                diagnostics['source_recovered_candidates']=len(recovered)
-                diagnostics['source_prepared_candidates']=sum(bool(getattr(j,'_scout_source_profile_prepared',False)) for j in shared_candidates)
         seed_rank = {}
         if preferences.get('_seed_job_id'):
             by_closeness = scout_seed.closest(preferences, [*pool, *(shared_candidates or candidates)])
@@ -1180,10 +1139,9 @@ skills is not a request for invented, exact job titles. JSON only."""
             pool = shortlist(pool, preferences, anchors=[*nearby, *pool[:4]])
             diagnostics['seed_ranked_review'] = True
         if combined_review and not seed_rank:
-            # Word gates and score thresholds miss roles described in other words;
-            # the reviewer judges relevance, so it sees what retrieval ranked highest.
-            pool = review_pool([*scored[:4], *pool[:4]], shared_candidates, preferences)
-            diagnostics['review_pool'] = 'retrieval_order'
+            # Word gates and score thresholds miss roles described in other words, so the
+            # reviewer sees the retrieved openings a cross-encoder ranks most relevant.
+            pool = review_pool(scored[:4], shared_candidates, preferences, diagnostics)
         selected = rerank(pool, preferences, scored, diagnostics, relaxed=combined_review)
         # One opening can have several regional source postings. Keep the best
         # eligible region, and never merge unrelated jobs with similar titles.

@@ -481,10 +481,10 @@ SCOUT_PREVIEW_ASYNC_ENABLED = os.getenv("SCOUT_PREVIEW_ASYNC_ENABLED", "false").
 # Small local relevance models are opt-in; existing vectors/provider remain the default.
 SCOUT_RERANK_BACKEND = os.getenv("SCOUT_RERANK_BACKEND", "deepseek")
 SCOUT_LOCAL_MODEL_PATH = os.getenv("SCOUT_LOCAL_MODEL_PATH", "")
+SCOUT_CROSS_ENCODER = os.getenv("SCOUT_CROSS_ENCODER", "cross-encoder/ms-marco-MiniLM-L-12-v2")
+SCOUT_CROSS_ENCODER_CANDIDATES = int(os.getenv("SCOUT_CROSS_ENCODER_CANDIDATES", "30"))
 SCOUT_LOCAL_ALLOW_EXPERIMENTAL = os.getenv("SCOUT_LOCAL_ALLOW_EXPERIMENTAL", "false").lower() == "true"
 SCOUT_CLOSE_MATCHES = os.getenv("SCOUT_CLOSE_MATCHES", "true").lower() == "true"
-# Experimental: let the reranker judge rule-passing jobs that miss the keyword title check.
-SCOUT_RERANK_WIDE = os.getenv("SCOUT_RERANK_WIDE", "false").lower() == "true"
 
 # Origin identity is rewritten by Caddy after its Cloudflare transport check.
 TRUSTED_PROXY_CIDRS = [n.strip() for n in os.getenv("TRUSTED_PROXY_CIDRS", "127.0.0.1/32,::1/128").split(",") if n.strip()]

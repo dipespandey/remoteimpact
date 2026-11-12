@@ -49,5 +49,36 @@ class ReviewPoolTests(TestCase):
         copies = [make_job(org, "Total Rewards Partner", f"total-rewards-partner-{n}",
                            "Own salary bands, bonus plans and benefits benchmarking for 400 staff.") for n in range(5)]
         other = make_job(org, "Compensation Analyst", "compensation-analyst", "Analyse pay data.")
-        pool = review_pool([], [self.rewards, *copies, other], {})
+        pool = review_pool([], [self.rewards, *copies, other], {}, {})
         self.assertEqual([job.pk for job in pool], [self.rewards.pk, other.pk])
+
+    def test_cross_encoder_order_decides_the_review_slots(self):
+        from jobs.services.job_scout_service import review_pool
+        org = self.rewards.organization
+        others = [make_job(org, f"Unrelated Role {n}", f"unrelated-{n}", f"Different work {n}.") for n in range(14)]
+        diagnostics = {}
+        with patch("jobs.services.scout_cross_encoder.order", side_effect=lambda query, jobs: list(reversed(jobs))):
+            pool = review_pool([], [*others, self.rewards], {"intent_text": INTENT}, diagnostics)
+        self.assertEqual(pool[0].pk, self.rewards.pk)
+        self.assertEqual(len(pool), 12)
+        self.assertEqual(diagnostics["review_pool"], "cross_encoder")
+
+
+class CrossEncoderGateTests(TestCase):
+    def test_only_an_opted_in_process_loads_the_model(self):
+        from jobs.services import scout_cross_encoder
+        with patch.object(scout_cross_encoder, "_allowed", False), patch("sentence_transformers.CrossEncoder") as model:
+            self.assertIsNone(scout_cross_encoder.order("grants manager", [object()]))
+        model.assert_not_called()
+
+    def test_scoring_failure_or_a_short_budget_keeps_retrieval_order(self):
+        from jobs.services import scout_cross_encoder
+        broken = type("Broken", (), {"predict": lambda self, *a, **k: (_ for _ in ()).throw(RuntimeError())})()
+        job = Job(title="Grants Manager")
+        with patch.object(scout_cross_encoder, "get_model", return_value=broken), \
+                patch("jobs.services.scout_cross_encoder.job_text", return_value="text"):
+            self.assertIsNone(scout_cross_encoder.order("grants manager", [job]))
+        with patch.object(scout_cross_encoder, "get_model") as get_model, \
+                patch("jobs.services.scout_workflow.seconds_left", return_value=3):
+            self.assertIsNone(scout_cross_encoder.order("grants manager", [job]))
+        get_model.assert_not_called()

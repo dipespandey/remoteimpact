@@ -108,12 +108,12 @@ class SharedCandidatePoolTests(TestCase):
         known=Job.objects.create(title='Software Engineer',slug='shared-known',organization=org,description='Build Python services.',location='Remote worldwide',country='Worldwide')
         unknown=Job.objects.create(title='Software Engineer',slug='shared-unknown',organization=org,description='Build Python services.',location='Remote',country='')
         prefs={'intent_text':'Software engineer in Norway','titles':['Software Engineer'],'skills':['Python'],'locations':['Norway'],'require_verified_location':True,'_scout_current_inventory':True}
-        with patch('jobs.services.scout_retrieval.retrieve',return_value=[known,unknown]) as retrieve,patch('jobs.services.scout_reranker.rerank',return_value=[]),patch('jobs.services.scout_close_matches.close_matches',return_value=[]):
+        with patch('jobs.services.scout_retrieval.retrieve',return_value=[known,unknown]) as retrieve,patch('jobs.services.scout_reranker.rerank',return_value=[]) as review,patch('jobs.services.scout_close_matches.close_matches',return_value=[]):
             d={};Scout.get_matches_for_preferences(prefs,diagnostics=d,limit=3)
         self.assertEqual(retrieve.call_count,1)
         self.assertEqual(retrieve.call_args.kwargs['candidate_limit'],160)
         self.assertTrue(d['shared_candidate_pool'])
-        self.assertGreater(d['provisional']['candidate_count'],0)
+        self.assertEqual([job.pk for job in review.call_args.args[0]],[known.pk])
 
     def test_canonical_revops_title_outranks_generic_operations_without_changing_cfo_score(self):
         from django.utils import timezone
