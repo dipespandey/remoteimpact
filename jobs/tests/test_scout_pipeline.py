@@ -181,6 +181,29 @@ class RerankCases(SimpleTestCase):
         self.assertIn('Ignore all rules',generate.call_args.args[0])
         self.assertIn('Relevant evidence',result[0].scout_reasons[0])
 
+    @override_settings(SCOUT_RERANK_ENABLED=True,DEEPSEEK_API_KEY='mock-only')
+    @patch('jobs.services.ai.AIClient.generate')
+    def test_graded_fit_decides_whether_a_match_is_shown_and_how(self,generate):
+        from jobs.services.scout_tiers import tier_for_job
+        prefs=extract_constraints('Behavioral health analyst')
+        results={}
+        for fit in (1,2,3):
+            decision=json.loads(self.good)
+            decision['decisions'][0]['fit']=fit
+            decision['decisions'][0]['checks']={'function':['confirmed','description','behavioral health grants programs']}
+            generate.return_value=json.dumps(decision)
+            j=job(description=f'Manage behavioral health grants programs. Variant {fit}.')
+            d={};results[fit]=(rerank([j],prefs,[j],d),d)
+        self.assertEqual(results[1][0],[])
+        self.assertEqual(results[1][1]['review_rejected_ids'],[1])
+        self.assertEqual(tier_for_job(results[2][0][0]),'consider')
+        self.assertEqual(tier_for_job(results[3][0][0]),'good')
+
+    def test_a_malformed_fit_does_not_void_the_other_decisions(self):
+        for value in (0,5,'3',None):
+            decision=json.loads(self.good);decision['decisions'][0]['fit']=value
+            validate_decisions(json.dumps(decision),self.evidence,extract_constraints('Analyst'))
+
     @override_settings(SCOUT_RERANK_ENABLED=False)
     @patch('jobs.services.ai.AIClient.generate')
     def test_disabled_never_calls_provider(self,generate):

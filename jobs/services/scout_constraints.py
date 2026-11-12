@@ -438,6 +438,7 @@ CAVEAT_TEXT = {
     'weekly_hours_unconfirmed': 'Check: requested weekly hours are not confirmed',
     'request_details_needed': 'Check: add your preferred role to assess suitability',
     'location_unconfirmed': 'Check: location eligibility not confirmed',
+    'partial_fit': 'Check: related work, not an exact match for your request',
     'working_timezone': 'Check: working hours not stated',
     'location_code': 'Check: location eligibility not confirmed',
     'salary_currency': 'Check: salary currency',
