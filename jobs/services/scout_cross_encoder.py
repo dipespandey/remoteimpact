@@ -11,13 +11,13 @@ _lock = threading.Lock()
 _model = None
 _unavailable = False
 _allowed = False
+MIN_SECONDS_LEFT = 10
 
 
 def allow_in_this_process():
-    """About 400 MB per process, so only the preview worker loads it; other searches keep retrieval order."""
+    """About 150 MB while scoring, so only the preview worker loads it, on first use; other searches keep retrieval order."""
     global _allowed
     _allowed = True
-    return get_model()
 
 
 def get_model():
@@ -29,7 +29,7 @@ def get_model():
         if _model is None:
             try:
                 from sentence_transformers import CrossEncoder
-                _model = CrossEncoder(name, device="cpu", max_length=384)
+                _model = CrossEncoder(name, device="cpu", max_length=256)
             except Exception:  # noqa: BLE001 - review falls back to retrieval order
                 _unavailable = True
                 logger.warning("Scout cross-encoder unavailable; using retrieval order", exc_info=True)
@@ -46,11 +46,17 @@ def job_text(job):
 
 def order(query, jobs):
     """Most relevant first, or None when the model is off or fails."""
+    from jobs.services.scout_workflow import seconds_left
+    # The AI review needs the rest of the search budget; ranking is optional.
+    if not jobs or not query or seconds_left() < MIN_SECONDS_LEFT:
+        return None
     model = get_model()
-    if model is None or not jobs or not query:
+    if model is None:
         return None
     try:
-        scores = model.predict([(query[:1000], job_text(job)) for job in jobs], batch_size=32, show_progress_bar=False)
+        import torch
+        with torch.inference_mode():
+            scores = model.predict([(query[:1000], job_text(job)) for job in jobs], batch_size=8, show_progress_bar=False)
     except Exception:  # noqa: BLE001
         logger.warning("Scout cross-encoder scoring failed; using retrieval order", exc_info=True)
         return None

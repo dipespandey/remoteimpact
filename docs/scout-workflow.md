@@ -67,8 +67,12 @@ uncalibrated ranking scores. Provider review failures withhold unreviewed result
 an incomplete preview explicitly asks the seeker to retry rather than asserting
 that no suitable jobs exist. No automatic relaxation changes the seeker's brief.
 
-The four-call/18-second workflow budget remains. Strict and provisional candidates
-share one provider review, leaving time to judge alternatives; its timeout is at
+The four-call/18-second workflow budget remains. The provider review judges 12
+openings. In the preview worker a small CPU cross-encoder (`SCOUT_CROSS_ENCODER`)
+picks them from the top 30 eligible retrieved openings, unless under 10 seconds
+of the budget remain; elsewhere they come in retrieval order after the top four
+rule-scored matches. The reviewer grades fit 1-3: 1 is dropped and 2 is shown as
+worth considering. One review covers all candidates, leaving time to judge alternatives; its timeout is at
 most 10 seconds and is further capped by the remaining workflow time. Strict evidence review is capped
 at 12 candidates and 44,000 prompt characters; alternatives now review at most 12
 candidates, with full-source excerpts instead of 30 introductions. This tradeoff
@@ -153,8 +157,7 @@ Validated plans are bound to the original brief hash; old saved interpretations 
 invalid plans use the existing planner. `SCOUT_COMBINED_PLAN_ENABLED=False` disables
 this integration. The workflow remains at most four calls and an eighteen-second
 shared deadline, with zero provider retries. `SCOUT_SOURCE_RANKING_ENABLED=False`
-disables source-based shortlist recovery and the evidence-only PostgreSQL lexical
-branch. Semantic retrieval remains independent; unindexed lexical rows remain
+disables the evidence-only PostgreSQL lexical branch and source-ranked close matches. Semantic retrieval remains independent; unindexed lexical rows remain
 eligible for scanning.
 
 Required-tool and professional-domain necessary conditions run in SQL before long

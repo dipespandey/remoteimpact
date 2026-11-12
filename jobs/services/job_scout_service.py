@@ -29,14 +29,14 @@ def retrieval_terms(titles, planned, skills, terms):
                                *(term for term in terms if " " in term), *terms]))
 
 
-def review_pool(retrieved, preferences, diagnostics):
+def review_pool(anchors, retrieved, preferences, diagnostics):
     from time import monotonic
     from jobs.services.scout_cross_encoder import order
     from jobs.services.scout_evidence import source_value
     from jobs.services.scout_reranker import MAX_CANDIDATES
     candidates = getattr(settings, "SCOUT_CROSS_ENCODER_CANDIDATES", 30)
     pool, seen = [], set()
-    for job in retrieved:
+    for job in [*anchors, *retrieved]:
         if len(pool) >= candidates:
             break
         requisition = source_value(job, 'scout_requisition', 'api_response', 'requisition_id')
@@ -1141,7 +1141,7 @@ skills is not a request for invented, exact job titles. JSON only."""
         if combined_review and not seed_rank:
             # Word gates and score thresholds miss roles described in other words, so the
             # reviewer sees the retrieved openings a cross-encoder ranks most relevant.
-            pool = review_pool(shared_candidates, preferences, diagnostics)
+            pool = review_pool(scored[:4], shared_candidates, preferences, diagnostics)
         selected = rerank(pool, preferences, scored, diagnostics, relaxed=combined_review)
         # One opening can have several regional source postings. Keep the best
         # eligible region, and never merge unrelated jobs with similar titles.

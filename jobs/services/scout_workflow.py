@@ -49,6 +49,11 @@ def can_call(*, reserve=0):
     return state is None or (state['calls'] < 4 - reserve and state['deadline'] - monotonic() >= 0.25)
 
 
+def seconds_left():
+    state = _budget.get()
+    return float('inf') if state is None else state['deadline'] - monotonic()
+
+
 def retrieval_time_available():
     state = _budget.get()
     if state is None or state['deadline'] - monotonic() >= 6:
