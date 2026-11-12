@@ -49,5 +49,16 @@ class ReviewPoolTests(TestCase):
         copies = [make_job(org, "Total Rewards Partner", f"total-rewards-partner-{n}",
                            "Own salary bands, bonus plans and benefits benchmarking for 400 staff.") for n in range(5)]
         other = make_job(org, "Compensation Analyst", "compensation-analyst", "Analyse pay data.")
-        pool = review_pool([], [self.rewards, *copies, other], {})
+        pool = review_pool([self.rewards, *copies, other], {}, {})
         self.assertEqual([job.pk for job in pool], [self.rewards.pk, other.pk])
+
+    def test_cross_encoder_order_decides_the_review_slots(self):
+        from jobs.services.job_scout_service import review_pool
+        org = self.rewards.organization
+        others = [make_job(org, f"Unrelated Role {n}", f"unrelated-{n}", f"Different work {n}.") for n in range(14)]
+        diagnostics = {}
+        with patch("jobs.services.scout_cross_encoder.order", side_effect=lambda query, jobs: list(reversed(jobs))):
+            pool = review_pool([*others, self.rewards], {"intent_text": INTENT}, diagnostics)
+        self.assertEqual(pool[0].pk, self.rewards.pk)
+        self.assertEqual(len(pool), 12)
+        self.assertEqual(diagnostics["review_pool"], "cross_encoder")

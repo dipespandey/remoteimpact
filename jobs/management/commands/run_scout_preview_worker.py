@@ -56,6 +56,8 @@ class Command(BaseCommandWithStop):
             self.stdout.write(self.style.SUCCESS("Scout preview worker checks passed."))
             return
 
+        from jobs.services.scout_cross_encoder import allow_in_this_process
+        allow_in_this_process()
         previous_term = signal.signal(signal.SIGTERM, self._request_stop)
         previous_int = signal.signal(signal.SIGINT, self._request_stop)
         idle_since = time.monotonic()

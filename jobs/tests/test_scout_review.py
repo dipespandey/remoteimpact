@@ -115,13 +115,13 @@ from jobs.services.job_scout_service import JobScoutService
 
 class CombinedReviewTests(TestCase):
     @override_settings(SCOUT_RERANK_ENABLED=True, SCOUT_RERANK_BACKEND='deepseek', DEEPSEEK_API_KEY='test')
-    def test_strict_and_provisional_candidates_share_one_review_before_limit(self):
+    def test_retrieved_candidates_share_one_review_before_limit(self):
         org = Organization.objects.create(name='Evidence review fixture')
         strict = Job.objects.create(title='Python Engineer', slug='strict-python-review', organization=org, source=Job.Source.MANUAL)
         provisional = Job.objects.create(title='Full Stack Developer', slug='provisional-python-review', organization=org, source=Job.Source.MANUAL)
         strict.scout_caveats = ['review_remote', 'review_location', 'review_seniority']
         provisional.scout_caveats = ['location_unconfirmed']
-        with patch.object(JobScoutService, '_rank_candidates', side_effect=[([strict], [strict]), ([provisional], [provisional])]), \
+        with patch('jobs.services.scout_retrieval.retrieve', return_value=[strict, provisional]), \
              patch('jobs.services.scout_reranker.rerank', return_value=[strict, provisional]) as review, \
              patch('jobs.services.scout_close_matches.close_matches', return_value=[]):
             result = JobScoutService.get_matches_for_preferences({}, limit=1)
