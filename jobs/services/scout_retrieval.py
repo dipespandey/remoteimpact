@@ -156,12 +156,13 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=20
                     When(skills__icontains=term,then=Value(4.0)),
                     default=Value(0.0),output_field=FloatField())
     if connection.vendor=='postgresql' and terms:
-        from django.contrib.postgres.search import SearchQuery
-        # ts_rank repeatedly scans very large imported vectors. Boolean FTS
-        # evidence plus title/skill weights preserves lexical recall cheaply.
+        from django.contrib.postgres.search import SearchQuery, SearchRank
+        from django.db.models import F
+        from django.db.models.functions import Coalesce
         full_text_query=SearchQuery(' OR '.join(terms[:12]),search_type='websearch')
         lexical_evidence|=Q(search_vector=full_text_query)|Q(search_vector__isnull=True)
-        score+=Case(When(search_vector=full_text_query,then=Value(2.0)),default=Value(0.0),output_field=FloatField())
+        # Without a rank, rows matching any term tie and fall back to posting date.
+        score+=ExpressionWrapper(Coalesce(SearchRank(F('search_vector'),full_text_query,cover_density=True,normalization=Value(32)),Value(0.0))*Value(40.0),output_field=FloatField())
     lexical_qs=qs
     if connection.vendor=='postgresql' and terms and getattr(settings,'SCOUT_SOURCE_RANKING_ENABLED',True):
         # A zero-evidence row cannot contribute to lexical retrieval. Keep
