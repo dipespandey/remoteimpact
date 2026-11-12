@@ -20,6 +20,39 @@ from jobs.services.scout_constraints import (CAVEAT_TEXT, domain_evidence, extra
 logger = logging.getLogger(__name__)
 
 
+def retrieval_terms(titles, planned, skills, terms):
+    """Retrieval reads only the first terms, so lead with what names the work, not filler words."""
+    def clean(values):
+        return [" ".join(str(value).replace("-", " ").lower().split()) for value in values if str(value).strip()]
+    terms = clean(terms)
+    return list(dict.fromkeys([*clean(titles), *clean(planned), *clean(skills),
+                               *(term for term in terms if " " in term), *terms]))
+
+
+def review_pool(anchors, retrieved, preferences):
+    from jobs.services.scout_evidence import source_value
+    from jobs.services.scout_reranker import MAX_CANDIDATES
+    pool, seen = [], set()
+    for job in [*anchors, *retrieved]:
+        if len(pool) >= MAX_CANDIDATES:
+            break
+        requisition = source_value(job, 'scout_requisition', 'api_response', 'requisition_id')
+        # Country copies of one opening would otherwise fill several of the few review slots.
+        keys = {('job', job.pk), JobScoutService._repost_key(job)}
+        if requisition:
+            keys.add(('req', job.organization_id, str(requisition)))
+        if keys & seen:
+            continue
+        eligibility = evaluate_job(job, preferences, relaxed=True)
+        if not eligibility.allowed:
+            continue
+        seen |= keys
+        if not hasattr(job, "scout_caveats"):
+            job.scout_caveats = list(eligibility.caveats)
+        pool.append(job)
+    return pool
+
+
 class JobScoutService:
     """Interpret job intent once, then match cheaply and predictably."""
 
@@ -1047,7 +1080,7 @@ skills is not a request for invented, exact job titles. JSON only."""
         from jobs.services.scout_workflow import plan_terms
         planned = plan_terms(preferences, diagnostics)
         from jobs.services import scout_seed
-        terms = scout_seed.search_terms(preferences, list(dict.fromkeys([*terms[:6], *planned, *terms[6:]])))
+        terms = scout_seed.search_terms(preferences, retrieval_terms(preferences.get("titles", []), planned, preferences.get("skills", []), terms))
         combined_review = bool(cls.RELAXED_FILL and getattr(settings, "SCOUT_RERANK_ENABLED", False)
                                and getattr(settings, "SCOUT_RERANK_BACKEND", "deepseek") == "deepseek"
                                and getattr(settings, "DEEPSEEK_API_KEY", ""))
@@ -1146,6 +1179,11 @@ skills is not a request for invented, exact job titles. JSON only."""
             # Keep the strongest rule-scored openings too: closeness is a second opinion, not a replacement.
             pool = shortlist(pool, preferences, anchors=[*nearby, *pool[:4]])
             diagnostics['seed_ranked_review'] = True
+        if combined_review and not seed_rank:
+            # Word gates and score thresholds miss roles described in other words;
+            # the reviewer judges relevance, so it sees what retrieval ranked highest.
+            pool = review_pool([*scored[:4], *pool[:4]], shared_candidates, preferences)
+            diagnostics['review_pool'] = 'retrieval_order'
         selected = rerank(pool, preferences, scored, diagnostics, relaxed=combined_review)
         # One opening can have several regional source postings. Keep the best
         # eligible region, and never merge unrelated jobs with similar titles.
