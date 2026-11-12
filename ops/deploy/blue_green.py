@@ -262,8 +262,11 @@ class Release:
         switched = False
         safe_to_remove = True
         succeeded = False
+        # Four web workers and the preview worker each hold the embedding model (about 700 MB
+        # apiece), and scheduled jobs run inside this container too. At 3.5 GiB the kernel
+        # OOM-killed a process every hour or two from 2026-11-10.
         runtime_args = ['--read-only', '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges:true',
-            '--memory', '3584m', '--memory-swap', '3584m', '--pids-limit', '256',
+            '--memory', '4608m', '--memory-swap', '4608m', '--pids-limit', '256',
             '--tmpfs', '/tmp:rw,nosuid,nodev,size=256m,mode=1777',
             '--tmpfs', '/home/remoteimpact:rw,nosuid,nodev,size=32m,uid=10001,gid=10001']
         if performance_env:
