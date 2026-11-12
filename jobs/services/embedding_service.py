@@ -3,6 +3,7 @@ from jobs.constants.skills import SKILLS_BY_SLUG
 
 _model = None
 _model_unavailable = False
+_load_on_use = False
 
 
 WORK_STYLE_LABELS = {
@@ -69,16 +70,20 @@ def calibration():
     return CALIBRATION.get(name) or CALIBRATION.get(name.split("/")[-1]) or CALIBRATION["all-MiniLM-L6-v2"]
 
 
-def load_for_batch():
-    """Batch commands (alerts, sourcing) aren't web workers, so nothing preloads the model for them.
+def ready():
+    """Whether Scout may use query embeddings now: the model is loaded, or this process may load it."""
+    return _model is not None or (_load_on_use and not _model_unavailable)
 
-    Without this, Scout's query embedding is skipped and matching silently runs keyword-only.
+
+def load_for_batch():
+    """Let a batch command (alerts, sourcing, CV reading) load the model the first time it embeds text.
+
+    Web requests never cold-load it, so Scout skips query embeddings until the model is warm. Batch
+    commands may load it, but only on first use: most scheduled runs find nothing to do, and an
+    eager load cost about 550 MB per run inside the web container.
     """
-    try:
-        get_model()
-    except Exception:  # noqa: BLE001 - keyword retrieval still works
-        import logging
-        logging.getLogger(__name__).exception("Embedding model failed to load for a batch run")
+    global _load_on_use
+    _load_on_use = True
     try:
         from jobs.services.local_scout_reranker import warm_for_batch
         warm_for_batch()
