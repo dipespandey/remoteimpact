@@ -35,7 +35,7 @@ def query_embedding(text):
     from jobs.services import embedding_service
     # Warmup is an operational requirement, not a blocking network download in
     # an anonymous web request. Lexical retrieval remains available on cold start.
-    if embedding_service._model is None:
+    if not embedding_service.ready():
         return None
     import hashlib
     key='scout-query-v3:'+hashlib.sha256(text.encode()).hexdigest()
@@ -178,7 +178,7 @@ def retrieve(qs,preferences,terms,diagnostics,relaxed=False,*,candidate_limit=20
     from jobs.services import embedding_service, scout_seed
     seed_vector = scout_seed.embedding(preferences) if connection.vendor == "postgresql" else None
     semantic_ready = (connection.vendor == "postgresql" and getattr(settings, "SCOUT_SEMANTIC_ENABLED", True)
-                      and (seed_vector is not None or embedding_service._model is not None))
+                      and (seed_vector is not None or embedding_service.ready()))
     if preferences.get('_scout_preview_cache') and getattr(settings,'SCOUT_RETRIEVAL_CACHE_ENABLED',connection.vendor=='postgresql'):
         try:
             sql,params=qs.query.sql_with_params()
