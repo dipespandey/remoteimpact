@@ -112,11 +112,11 @@ class SourceRecoveryTests(SimpleTestCase):
 class PreparationBudgetTests(SimpleTestCase):
     @patch('jobs.services.scout_workflow.monotonic',return_value=0)
     @patch('jobs.services.ai.AIClient')
-    def test_preparation_has_three_seconds_total_and_preserves_review_budget(self, client, clock):
+    def test_preparation_has_a_bounded_budget_and_preserves_review_budget(self, client, clock):
         with bounded_workflow({}):
-            generate('parse',stage='parse',timeout=2.5)
-            self.assertEqual(client.return_value.generate.call_args.kwargs['timeout'],2.5)
-            clock.return_value=2.8
+            generate('parse',stage='parse',timeout=5)
+            self.assertEqual(client.return_value.generate.call_args.kwargs['timeout'],5)
+            clock.return_value=5.6
             with self.assertRaises(TimeoutError):generate('plan',stage='plan')
             generate('review',stage='review',timeout=10)
             self.assertEqual(client.return_value.generate.call_args.kwargs['timeout'],10)

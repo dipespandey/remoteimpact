@@ -19,7 +19,7 @@ def bounded_workflow(diagnostics):
         return
     started = monotonic()
     perf_started = perf_counter()
-    state = {'deadline': started + 18, 'preparation_deadline': started + 3,
+    state = {'deadline': started + 18, 'preparation_deadline': started + 5.5,
              'calls': 0, 'diagnostics': diagnostics}
     token = _budget.set(state)
     diagnostics['workflow_version'] = 4

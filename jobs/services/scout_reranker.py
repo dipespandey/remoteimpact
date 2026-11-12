@@ -68,7 +68,7 @@ def validate_decisions(output,evidence,preferences=None):
     for item in decisions:
         if not isinstance(item,dict):raise ValueError('Invalid decision')
         if preferences is None and set(item)!={'id','relevant','evidence'}:raise ValueError('Invalid decision')
-        if preferences is not None and (not {'id','relevant'} <= set(item) or set(item)-{'id','relevant','checks','evidence'}):raise ValueError('Invalid decision')
+        if preferences is not None and (not {'id','relevant'} <= set(item) or set(item)-{'id','relevant','checks','evidence','fit'}):raise ValueError('Invalid decision')
         pk=item['id']
         if type(pk) is not int or pk not in evidence or pk in seen or type(item['relevant']) is not bool:raise ValueError('Unknown or duplicated job')
         seen.add(pk)
@@ -183,7 +183,12 @@ def rerank(candidates,preferences,fallback,diagnostics,relaxed=False):
             'Judge the requested professional domain and responsibilities, not generic transferable skills. '
             'A job is relevant only if its main function is the kind of work requested; adjacent fields, clearly more senior '
             'or junior roles than requested, and roles whose core skills the request never mentions are not relevant. '
-            'Return JSON only: {"decisions":[{"id":1,"relevant":true,"checks":{}}]}. '
+            'Grade every relevant job with fit: 3 means the same kind of work at the requested level, a role this person '
+            'would apply for; 2 means the same function with a real difference such as level, specialism or sector; '
+            '1 means it only shares a keyword or transferable skill with the requested work. When the request names only a '
+            'cause, sector, location or level and no job function, any concrete opening that fits those is fit 3. '
+            'Text that is not a job request at all, such as an error page, gets relevant:false for every candidate. '
+            'Return JSON only: {"decisions":[{"id":1,"relevant":true,"fit":3,"checks":{}}]}. '
             'Return exactly one decision for every candidate ID. Order by relevance. Every true decision needs the constraint checks below; do not duplicate their quotes in a separate evidence field. '
             'Return only id and relevant:false when function is uncertain. No confidence percentages. '
             + CHECK_INSTRUCTIONS.format(checks=', '.join(requested_checks(preferences))))
@@ -276,12 +281,19 @@ def rerank(candidates,preferences,fallback,diagnostics,relaxed=False):
             diagnostics['reranker']='review_partial' if pending_failed else ('decision_cache' if not pending else 'model')
         selected=[]
         decisions={item['id']:item for item in json.loads(output)['decisions']}
-        diagnostics['review_rejected_ids'] = [pk for pk, item in decisions.items() if not item['relevant']]
+        def fit(item):
+            value=item.get('fit')
+            return value if type(value) is int and value in (1,2,3) else 2
+        weak={pk for pk,item in decisions.items() if item['relevant'] and fit(item)==1}
+        diagnostics['review_rejected_ids'] = [pk for pk, item in decisions.items() if not item['relevant'] or pk in weak]
+        diagnostics['review_weak_fit']=len(weak)
         for pk,quotes in accepted:
             job=jobs[pk]
             if not evaluate_job(job,preferences,relaxed=relaxed).allowed:continue
             job.scout_reasons=[f"Relevant evidence: {quotes[0]['quote']}",*getattr(job,'scout_reasons',[])][:3]
-            if not apply_review(job, decisions[pk], evidence[pk], preferences):continue
+            if pk in weak or not apply_review(job, decisions[pk], evidence[pk], preferences):continue
+            if fit(decisions[pk])==2:
+                job.scout_caveats=list(dict.fromkeys([*getattr(job,'scout_caveats',[]),'partial_fit']))
             selected.append(job)
         diagnostics['rerank_candidate_count']=len(rows)
         diagnostics['rerank_selected_count']=len(selected)
