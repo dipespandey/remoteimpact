@@ -481,7 +481,10 @@ SCOUT_PREVIEW_ASYNC_ENABLED = os.getenv("SCOUT_PREVIEW_ASYNC_ENABLED", "false").
 # Small local relevance models are opt-in; existing vectors/provider remain the default.
 SCOUT_RERANK_BACKEND = os.getenv("SCOUT_RERANK_BACKEND", "deepseek")
 SCOUT_LOCAL_MODEL_PATH = os.getenv("SCOUT_LOCAL_MODEL_PATH", "")
-SCOUT_CROSS_ENCODER = os.getenv("SCOUT_CROSS_ENCODER", "cross-encoder/ms-marco-MiniLM-L-12-v2")
+# Off by default: on 2026-11-12 the first real reranked search pushed the 3.5 GiB web container
+# past its limit and the OOM kill took the site down. Set "cross-encoder/ms-marco-MiniLM-L-12-v2"
+# only once the preview worker has its own memory budget.
+SCOUT_CROSS_ENCODER = os.getenv("SCOUT_CROSS_ENCODER", "")
 SCOUT_CROSS_ENCODER_CANDIDATES = int(os.getenv("SCOUT_CROSS_ENCODER_CANDIDATES", "30"))
 SCOUT_LOCAL_ALLOW_EXPERIMENTAL = os.getenv("SCOUT_LOCAL_ALLOW_EXPERIMENTAL", "false").lower() == "true"
 SCOUT_CLOSE_MATCHES = os.getenv("SCOUT_CLOSE_MATCHES", "true").lower() == "true"
