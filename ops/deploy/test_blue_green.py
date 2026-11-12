@@ -139,6 +139,16 @@ class ReleaseTests(unittest.TestCase):
             self.assertFalse(any('sync_org_plans' in call for call in calls))
             self.assertIn(('docker', 'rm', '-f', 'candidate'), calls)
 
+    def test_hup_check_keeps_the_restart_policy_armed(self):
+        # `docker kill` marks a container manually stopped, so Docker never restarts it after a crash.
+        with tempfile.TemporaryDirectory() as folder:
+            release, source = self.pipeline_fixture(folder)
+            calls = []
+            with patch.object(bg, 'run', side_effect=self.pipeline_run(source, calls)), patch.object(release, 'ready'), patch.object(release, 'switch'):
+                release.deploy(check_only=True)
+            self.assertFalse(any(call[:2] == ('docker', 'kill') for call in calls))
+            self.assertIn(('docker', 'exec', 'candidate', 'sh', '-c', 'kill -HUP 1'), calls)
+
     def test_runtime_is_bounded_and_migration_secret_is_not_given_to_web(self):
         with tempfile.TemporaryDirectory() as folder:
             release, source = self.pipeline_fixture(folder)

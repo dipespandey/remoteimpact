@@ -314,7 +314,9 @@ class Release:
             self.ready(target, ('/', '/jobs/', '/static/favicon.svg', '/static/tailwind.min.css'))
             # Old callers still send HUP; verify the immutable candidate ignores it.
             before = run('docker', 'top', cid, '-eo', 'pid', capture=True)
-            run('docker', 'kill', '--signal', 'HUP', cid)
+            # Signal from inside: `docker kill` marks the container manually stopped, which
+            # disables its restart policy, so an OOM crash on 2026-11-12 left the site down.
+            run('docker', 'exec', cid, 'sh', '-c', 'kill -HUP 1')
             time.sleep(0.5)
             after = run('docker', 'top', cid, '-eo', 'pid', capture=True)
             if not before.strip() or before != after:
