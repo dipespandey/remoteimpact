@@ -579,6 +579,85 @@ class OutreachQueueTests(TestCase):
         self.assertNotContains(self.client.get(url, {"status": "contacted"}), "Quiet Health")
 
 
+class LinkedInQueueTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        from jobs.models import JobDailyStat
+        self.staff = get_user_model().objects.create_user("ops2", "ops2@example.org", "pw-test-123", is_staff=True)
+        now = timezone.now()
+        self.orgs = {}
+        for n, (name, clicks) in enumerate([("Busy Climate", 9), ("Trial Welfare", 4), ("Emailed Health", 20), ("Quiet Policy", 0)]):
+            org = Organization.objects.create(name=name, slug=name.lower().replace(" ", "-"))
+            job = make_job(org, f"role-{n}", f"https://boards.greenhouse.io/o{n}/jobs/{n}", last_seen_at=now)
+            JobDailyStat.objects.create(job=job, date=timezone.localdate(), views=clicks * 4, apply_clicks=clicks)
+            self.orgs[name] = (org, job)
+
+    def queue(self):
+        from jobs.services.outreach import linkedin_queue
+        rows, sent_today = linkedin_queue()
+        return [r["org"].name for r in rows], rows, sent_today
+
+    def test_notes_lead_with_free_clicks_and_a_claim_link_within_linkedins_limit(self):
+        names, rows, _ = self.queue()
+        self.assertIn("Busy Climate", names)
+        self.assertNotIn("Quiet Policy", names)  # nothing to show them yet
+        note = next(r["note"] for r in rows if r["org"].name == "Busy Climate")
+        self.assertIn("we sent Busy Climate 9 apply clicks, free", note)
+        self.assertIn("/employers/claim/busy-climate/", note)
+        self.assertNotIn("$", note)
+        self.assertLessEqual(len(note), 300)
+
+    def test_employers_on_a_free_trial_come_first_and_hear_about_it(self):
+        from jobs.models import FeatureTrial
+        org, job = self.orgs["Trial Welfare"]
+        FeatureTrial.objects.create(job=job, started_at=timezone.now() - timedelta(days=2), ends_at=timezone.now() + timedelta(days=12))
+        names, rows, _ = self.queue()
+        self.assertEqual(names[0], "Trial Welfare")
+        self.assertIn("featured free until", rows[0]["note"])
+
+    def test_recent_campaign_email_rests_the_employer_for_a_month(self):
+        from jobs.models import OutreachSend
+        org, _ = self.orgs["Emailed Health"]
+        send = OutreachSend.objects.create(campaign="employer-offer-2026-11", email="jobs@health.example", organization=org)
+        self.assertNotIn("Emailed Health", self.queue()[0])
+        OutreachSend.objects.filter(pk=send.pk).update(sent_at=timezone.now() - timedelta(days=40))
+        names, rows, _ = self.queue()
+        self.assertIn("Emailed Health", names)
+        self.assertIsNotNone(next(r for r in rows if r["org"].name == "Emailed Health")["last_email"])
+
+    def test_long_names_still_fit_a_connection_request(self):
+        from jobs.services.outreach import linkedin_note
+        note = linkedin_note("The Society for the Protection of Underground Networks and Allied Fungal Research", 1234, 30,
+                             "https://remoteimpact.org/employers/claim/the-society-for-the-protection-of-underground-networks/",
+                             {"role": "Project Manager, Global Policy & Impact and Partnerships", "ends": timezone.now(), "lift": 3.8})
+        self.assertLessEqual(len(note), 300)
+        self.assertTrue(note.endswith("/the-society-for-the-protection-of-underground-networks/"))
+
+    def test_marking_a_note_sent_records_it_and_moves_the_queue_on(self):
+        from jobs.models import EmployerOutreach
+        from jobs.services import outreach
+        self.client.force_login(self.staff)
+        page = self.client.get(reverse("admin_outreach"))
+        self.assertContains(page, "Today's LinkedIn notes · 0 of 8 sent")
+        self.assertContains(page, "Find people on LinkedIn")
+        org, _ = self.orgs["Busy Climate"]
+        self.client.post(reverse("admin_outreach_update", args=[org.pk]),
+                         {"status": "contacted", "channel": "LinkedIn", "contact": "Ana Ops"})
+        record = EmployerOutreach.objects.get(organization=org)
+        self.assertEqual((record.status, record.contact), ("contacted", "Ana Ops"))
+        self.assertIn("LinkedIn note sent", record.notes)
+        names, _, sent_today = self.queue()
+        self.assertNotIn("Busy Climate", names)
+        self.assertEqual(sent_today, 1)
+        with mock.patch.object(outreach, "LINKEDIN_DAILY", 1):
+            self.assertEqual(outreach.linkedin_queue(size=outreach.LINKEDIN_DAILY), ([], 1))
+
+    def test_daily_signal_points_to_the_queue(self):
+        from jobs.management.commands.send_daily_signal import build_signal
+        alerts = build_signal(timezone.localdate() - timedelta(days=1))["alerts"]
+        self.assertTrue(any("ready for a personal LinkedIn note today" in a and "/admin/outreach/#linkedin-today" in a for a in alerts))
+
+
 class SeekerConversionEmailTests(TestCase):
     def setUp(self):
         from django.contrib.auth import get_user_model
