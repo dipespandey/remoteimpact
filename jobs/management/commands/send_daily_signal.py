@@ -2,6 +2,7 @@
 
 Prints instead of sending unless --send. Days are UTC, matching the stats tables.
 """
+import logging
 from datetime import timedelta
 
 import requests
@@ -13,6 +14,8 @@ from django.utils import timezone
 
 from jobs.services.email_service import email_service
 from jobs.services.impact_metrics import competition, day_signal, impact_areas, weekly_audience
+
+logger = logging.getLogger(__name__)
 
 ROWS = [
     ("apply_clicks", "Apply clicks sent to employers"),
@@ -73,6 +76,15 @@ def linkedin_draft():
     return "\n".join(lines)
 
 
+def linkedin_queue_size():
+    from jobs.services.outreach import linkedin_queue
+    try:
+        return len(linkedin_queue()[0])
+    except Exception:  # noqa: BLE001 - the signal must still send
+        logger.exception("Could not build the LinkedIn outreach queue for the daily signal")
+        return 0
+
+
 def build_signal(day):
     today = day_signal(day)
     history = [day_signal(day - timedelta(days=n)) for n in range(1, 8)]
@@ -96,6 +108,10 @@ def build_signal(day):
                       "Top up at openrouter.ai/settings/credits or platform.deepseek.com.")
     if today["claims_verified"]:
         alerts.append("An employer claimed their page. They are your warmest lead this week.")
+    queued = linkedin_queue_size()
+    if queued:
+        alerts.append(f"{queued} employer{'s are' if queued != 1 else ' is'} ready for a personal LinkedIn note today: "
+                      f"{settings.SITE_URL.rstrip('/')}/admin/outreach/#linkedin-today")
     audience = weekly_audience()
     subject = (f"Remote Impact {day:%a %d %b}: {today['apply_clicks']} apply clicks, "
                f"{today['weekly_confirmed']} new subscribers, {sales} sale{'s' if sales != 1 else ''}")

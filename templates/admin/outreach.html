@@ -48,6 +48,38 @@
     </div>
   </div>
 
+  {% if not status %}
+  <section class="card" style="margin-bottom:20px" aria-labelledby="linkedin-today">
+    <div style="padding:16px 16px 0">
+      <h2 id="linkedin-today" style="margin:0;font-size:17px">Today's LinkedIn notes · {{ sent_today }} of {{ daily_target }} sent</h2>
+      <div class="sub">Find someone in operations, people or hiring, send the note with a connection request, then mark it sent. Employers on a free featured trial come first. The first ask is a free claim; sell after they reply.</div>
+    </div>
+    {% for row in queue %}
+    <article class="lead" id="li-{{ row.org.pk }}">
+      <div style="min-width:0">
+        <h3>{{ row.org.name }}{% if row.trial %} <span class="pill won">Free feature{% if row.trial.lift %} · {{ row.trial.lift|floatformat:1 }}x clicks{% endif %}</span>{% endif %}</h3>
+        <div class="nums"><span><b>{{ row.clicks|intcomma }}</b> apply clicks</span><span><b>{{ row.views|intcomma }}</b> views</span><span class="muted">last 30 days</span>{% if row.last_email %}<span class="muted">Emailed {{ row.last_email|date:"M j" }}</span>{% endif %}</div>
+        <textarea class="draftbox" readonly id="note-{{ row.org.pk }}" style="min-height:96px" aria-label="LinkedIn note for {{ row.org.name }}">{{ row.note }}</textarea>
+        <div class="meta">{{ row.note|length }} of 300 characters</div>
+      </div>
+      <div class="actions">
+        <a class="btn primary" href="{{ row.linkedin }}" target="_blank" rel="noopener">Find people on LinkedIn</a>
+        <button class="btn" type="button" data-copy="note-{{ row.org.pk }}" data-label="Copy note">Copy note</button>
+        <form method="post" action="{% url 'admin_outreach_update' row.org.pk %}">{% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}#linkedin-today">
+          <input type="hidden" name="status" value="contacted">
+          <input type="hidden" name="channel" value="LinkedIn">
+          <input class="field" name="contact" placeholder="Who you sent it to" aria-label="Who you sent it to">
+          <button class="btn" type="submit">Mark sent</button>
+        </form>
+      </div>
+    </article>
+    {% empty %}
+    <p class="muted" style="padding:16px">{% if sent_today >= daily_target %}Done for today. The next {{ daily_target }} appear tomorrow.{% else %}No employers are ready for a LinkedIn note right now.{% endif %}</p>
+    {% endfor %}
+  </section>
+  {% endif %}
+
   <nav class="filters" aria-label="Status">
     <a class="chip {% if not status %}on{% endif %}" href="?days={{ days }}">All</a>
     {% for value, label in statuses %}<a class="chip {% if status == value %}on{% endif %}" href="?days={{ days }}&status={{ value }}">{{ label }}{% if value != 'new' %} · {{ counts|get_item:value|default:0 }}{% endif %}</a>{% endfor %}
@@ -98,8 +130,9 @@
     button.addEventListener('click', function () {
       const box = document.getElementById(button.dataset.copy);
       navigator.clipboard.writeText(box.value).then(function () {
+        const label = button.dataset.label || 'Copy draft';
         button.textContent = 'Copied';
-        setTimeout(function () { button.textContent = 'Copy draft'; }, 1500);
+        setTimeout(function () { button.textContent = label; }, 1500);
       });
     });
   });

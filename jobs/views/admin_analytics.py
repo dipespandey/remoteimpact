@@ -67,7 +67,7 @@ def diagnostics(request):
 def outreach(request):
     """Ranked employer outreach queue with ready-to-send drafts (staff only)."""
     from ..models import EmployerOutreach
-    from ..services.outreach import outreach_targets
+    from ..services.outreach import LINKEDIN_DAILY, linkedin_queue, outreach_targets
 
     raw_days = request.GET.get("days", "7")
     days = int(raw_days) if raw_days.isdigit() and int(raw_days) in (7, 14, 30) else 7
@@ -77,9 +77,11 @@ def outreach(request):
     sender = request.user.get_full_name() or request.user.get_username()
     rows = outreach_targets(days=days, status=status, sender=sender)
     counts = {value: EmployerOutreach.objects.filter(status=value).count() for value in EmployerOutreach.Status.values}
+    queue, sent_today = linkedin_queue() if not status else ([], 0)
     return render(request, "admin/outreach.html", {
         **admin.site.each_context(request),
         "rows": rows, "days": days, "status": status, "statuses": EmployerOutreach.Status.choices, "counts": counts,
+        "queue": queue, "sent_today": sent_today, "daily_target": LINKEDIN_DAILY,
     })
 
 
@@ -104,6 +106,9 @@ def outreach_update(request, org_id):
         record.contact = request.POST["contact"].strip()[:254]
     if "notes" in request.POST:
         record.notes = request.POST["notes"].strip()
+    channel = request.POST.get("channel", "").strip()[:40]
+    if channel:
+        record.notes = (record.notes + "\n" if record.notes else "") + f"{timezone.localdate():%Y-%m-%d}: {channel} note sent"
     record.save()
     return redirect(request.POST.get("next") or "admin_outreach")
 
