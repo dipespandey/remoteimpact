@@ -5,7 +5,7 @@ import subprocess
 import sys
 import time
 
-WEB = ['/app/.venv/bin/gunicorn', 'jobboard.wsgi:application', '--config', '/app/ops/deploy/gunicorn_release.py', '--bind', '0.0.0.0:8000', '--workers', '2', '--threads', '4', '--max-requests', '20000', '--max-requests-jitter', '2000', '--graceful-timeout', '50', '--timeout', '60', '--access-logfile', '-', '--error-logfile', '-']
+WEB = ['/app/.venv/bin/gunicorn', 'jobboard.wsgi:application', '--config', '/app/ops/deploy/gunicorn_release.py', '--bind', '0.0.0.0:8000', '--workers', '2', '--threads', '4', '--max-requests', '10000', '--max-requests-jitter', '1000', '--graceful-timeout', '50', '--timeout', '60', '--access-logfile', '-', '--error-logfile', '-']
 WORKER = ['/app/.venv/bin/python', '/app/manage.py', 'run_scout_preview_worker']
 
 
@@ -24,10 +24,12 @@ def supervise(commands, *, grace=55):
         for command in commands:
             if stopping:
                 break
-            env = None
+            # glibc gives each thread its own malloc arena; with threaded workers that grew each
+            # web worker by about 100 MB an hour on 2026-11-13. Two arenas keep memory flat.
+            env = dict(os.environ, MALLOC_ARENA_MAX='2')
             if command == WORKER:
                 # Embedding inference must leave CPU capacity for serving pages.
-                env = dict(os.environ, OMP_NUM_THREADS='1', MKL_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1', TOKENIZERS_PARALLELISM='false')
+                env.update(OMP_NUM_THREADS='1', MKL_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1', TOKENIZERS_PARALLELISM='false')
             children.append(subprocess.Popen(command, start_new_session=True, env=env))
         while not stopping:
             for child in children:

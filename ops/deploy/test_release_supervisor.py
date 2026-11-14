@@ -37,6 +37,18 @@ def wait_for(path, process, timeout=5):
 
 
 class ReleaseSupervisorTests(unittest.TestCase):
+    def test_children_run_with_two_malloc_arenas(self):
+        with tempfile.TemporaryDirectory() as folder:
+            seen = Path(folder) / 'arenas'
+            child = [sys.executable, '-c', f'import os,pathlib,time; pathlib.Path({str(seen)!r}).write_text(os.environ.get("MALLOC_ARENA_MAX","")); time.sleep(30)']
+            process = supervisor_process([child])
+            try:
+                wait_for(seen, process)
+                self.assertEqual(seen.read_text(), '2')
+            finally:
+                process.send_signal(signal.SIGTERM)
+                process.wait(timeout=10)
+
     def test_child_failure_drains_sibling_and_returns_failure(self):
         with tempfile.TemporaryDirectory() as folder:
             stopped = Path(folder) / 'sibling-stopped'
