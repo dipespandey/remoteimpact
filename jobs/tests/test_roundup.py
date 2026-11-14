@@ -43,7 +43,9 @@ class RoundupTests(TestCase):
         self.assertIn('/newsletter/confirm/',self.send.call_args.args[2])
     def test_scanner_get_is_not_confirmation_and_sensitive_page_has_no_analytics(self):
         self.subscribe(); s=RoundupSubscriber.objects.get(); link=self.link(s,'confirm')
-        self.assertNotContains(self.client.get(link),'googletagmanager.com')
+        page=self.client.get(link)
+        self.assertNotContains(page,'googletagmanager.com')
+        self.assertContains(page,"document.getElementById('roundup-confirm').submit()")
         s.refresh_from_db(); self.assertIsNone(s.confirmed_at)
         self.assertContains(self.client.post(link),"You're on the list")
         self.assertEqual(active_subscribers().count(),1)
