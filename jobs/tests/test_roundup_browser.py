@@ -69,23 +69,24 @@ class RoundupBrowserTests(StaticLiveServerTestCase):
             text = mail.call_args.kwargs['text']
             confirm_url = text.split('Confirm one weekly job roundup: ', 1)[1].split('\n', 1)[0]
             stop_url = mail.call_args.kwargs['unsubscribe_url']
-            private_response = page.goto(self.live_server_url + urlsplit(confirm_url).path)
-            self.assertEqual(private_response.headers['referrer-policy'], 'same-origin')
-            self.assertEqual(page.locator('meta[name=referrer]').get_attribute('content'), 'same-origin')
-            expect(page.get_by_role('button', name='Confirm my subscription')).to_be_visible()
+            confirm_path = self.live_server_url + urlsplit(confirm_url).path
+            # Mail scanners fetch links without running scripts; that fetch must not subscribe anyone.
+            scanner = page.request.get(confirm_path)
+            self.assertEqual(scanner.headers['referrer-policy'], 'same-origin')
+            self.assertIn('Confirm my subscription', scanner.text())
+            self.assertNotIn('googletagmanager.com', scanner.text())
             sub.refresh_from_db()
             self.assertIsNone(sub.confirmed_at)
-            self.assertNotIn('googletagmanager.com', page.content())
+            with page.expect_response(lambda response: response.request.method == 'POST' and '/newsletter/confirm/' in response.url) as confirmation:
+                page.goto(confirm_path)
+            self.assertEqual(confirmation.value.status, 200)
+            self.assertEqual(confirmation.value.request.headers.get('origin'), self.live_server_url)
+            self.assertEqual(page.locator('meta[name=referrer]').get_attribute('content'), 'same-origin')
             page.evaluate("() => { const link = document.createElement('a'); link.href='https://example.invalid/privacy-proof'; link.target='_blank'; link.textContent='Privacy probe'; document.body.append(link); }")
             with context.expect_event('request', predicate=lambda request: request.url == 'https://example.invalid/privacy-proof', timeout=5000) as external, context.expect_page() as probe:
                 page.get_by_role('link', name='Privacy probe', exact=True).click()
             self.assertNotIn('referer', external.value.headers)
             probe.value.close()
-            page.screenshot(path=str(folder/'newsletter-mobile-confirm.png'), full_page=True)
-            with page.expect_response(lambda response: response.request.method == 'POST' and '/newsletter/confirm/' in response.url) as confirmation:
-                page.get_by_role('button', name='Confirm my subscription').click()
-            self.assertEqual(confirmation.value.status, 200)
-            self.assertEqual(confirmation.value.request.headers.get('origin'), self.live_server_url)
             expect(page.get_by_role('heading', name="You're on the list")).to_be_visible()
             share = page.locator('#share-url').input_value()
             self.assertIn(str(sub.referral_code), share)
