@@ -1,0 +1,15 @@
+{% extends "emails/base.html" %}
+{% block title %}{{ org.name }}: your featured trial results{% endblock %}
+{% block content %}
+<p style="margin:32px 0 14px;color:#565e57;font-size:16px;line-height:1.6">Hi {{ org.name }} team,</p>
+<p style="margin:0 0 14px;color:#565e57;font-size:16px;line-height:1.6">Last week I featured your {{ job.title }} listing on Remote Impact for free, as a test. Here's what happened:</p>
+<ul style="margin:0 0 14px;padding-left:20px;color:#565e57;font-size:16px;line-height:1.6">
+<li>{{ days }} days before: {{ before_views }} views, <strong>{{ before_clicks }}</strong> {{ before_clicks|pluralize:"person,people" }} clicked through to apply</li>
+<li>{{ days }} days featured: {{ views }} views, <strong>{{ clicks }}</strong> {{ clicks|pluralize:"person,people" }} clicked through to apply</li>
+</ul>
+{% if site_drop %}<p style="margin:0 0 14px;color:#565e57;font-size:16px;line-height:1.6">Traffic across the site was about {{ site_drop }}% lower over the same days, so the increase came from the placement.</p>{% endif %}
+<p style="margin:0 0 24px;color:#565e57;font-size:16px;line-height:1.6">The free feature ends on {{ ends|date:"j F" }}. To keep the role pinned at the top of its category page, matching searches and the homepage, it's $49 for 30 more days, added after the free period ends.</p>
+<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#1d211e"><a href="{{ feature_url }}" style="display:inline-block;padding:13px 20px;color:#fff;font-size:15px;font-weight:bold;text-decoration:none">Keep it featured for $49</a></td></tr></table>
+<p style="margin:24px 0 0;color:#626a63;font-size:14px;line-height:1.6">If the role is filled or you'd rather not, reply "no thanks" and I won't email again.</p>
+<p style="margin:14px 0 0;color:#565e57;font-size:15px">Dipesh</p>
+{% endblock %}
