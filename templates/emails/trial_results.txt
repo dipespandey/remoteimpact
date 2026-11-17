@@ -1,0 +1,16 @@
+{% autoescape off %}Hi {{ org.name }} team,
+
+Last week I featured your {{ job.title }} listing on Remote Impact for free, as a test. Here's what happened:
+
+- {{ days }} days before: {{ before_views }} views, {{ before_clicks }} {{ before_clicks|pluralize:"person,people" }} clicked through to apply
+- {{ days }} days featured: {{ views }} views, {{ clicks }} {{ clicks|pluralize:"person,people" }} clicked through to apply
+{% if site_drop %}
+Traffic across the site was about {{ site_drop }}% lower over the same days, so the increase came from the placement.
+{% endif %}
+The free feature ends on {{ ends|date:"j F" }}. To keep the role pinned at the top of its category page, matching searches and the homepage, it's $49 for 30 more days, added after the free period ends: {{ feature_url|safe }}
+
+If the role is filled or you'd rather not, reply "no thanks" and I won't email again.
+
+Dipesh
+Remote Impact · remoteimpact.org
+{% endautoescape %}
