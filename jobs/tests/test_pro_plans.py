@@ -168,12 +168,12 @@ class TrialReminderCommandTests(TestCase):
         user = User.objects.create_user(username="cmdtrial", email="cmdtrial@example.com", password="test-pass-123")
         AssistantSubscription.objects.create(
             user=user, is_subscribed=True, stripe_subscription_id="sub_cmd",
-            expires_at=timezone.now() + timedelta(days=2),
+            subscribed_at=timezone.now() - timedelta(days=5), expires_at=timezone.now() + timedelta(days=27),
         )
         other = User.objects.create_user(username="cmdpaid", email="cmdpaid@example.com", password="test-pass-123")
         AssistantSubscription.objects.create(
             user=other, is_subscribed=True, stripe_subscription_id="sub_paid",
-            expires_at=timezone.now() + timedelta(days=2),
+            subscribed_at=timezone.now() - timedelta(days=5), expires_at=timezone.now() + timedelta(days=27),
         )
         trial_end = int((timezone.now() + timedelta(days=2)).timestamp())
         retrieve.side_effect = lambda sub_id: {
