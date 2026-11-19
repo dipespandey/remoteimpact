@@ -16,7 +16,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from jobs.models import AssistantSubscription
-from jobs.services.payment_service import PaymentService
+from jobs.services.payment_service import PRO_TRIAL_DAYS, PaymentService
 
 
 class Command(BaseCommand):
@@ -29,11 +29,12 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         stripe.api_key = settings.STRIPE_SECRET_KEY
         now = timezone.now()
+        # Select by start date: a trial's local expires_at is the 32-day checkout fallback,
+        # not the trial end, so filtering on it never found anyone still on a trial.
         candidates = (
             AssistantSubscription.objects.filter(
                 is_subscribed=True,
-                expires_at__gt=now,
-                expires_at__lte=now + timedelta(days=options["days"]),
+                subscribed_at__gte=now - timedelta(days=PRO_TRIAL_DAYS + 1),
             )
             .exclude(stripe_subscription_id="")
             .select_related("user")
