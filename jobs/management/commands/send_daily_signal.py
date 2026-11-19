@@ -31,9 +31,10 @@ ROWS = [
     ("employer_offers_sent", "Employer offers sent"),
     ("features_sold", "Features sold ($49)"),
     ("posts_sold", "Job posts sold"),
-    ("pro_payments", "Pro payments"),
+    ("pro_checkouts", "Pro checkouts (trial starts and passes)"),
+    ("pro_charges", "Pro charges collected (from Stripe reconciliation)"),
 ]
-MONEY = ("features_sold", "posts_sold", "pro_payments")
+MONEY = ("features_sold", "posts_sold", "pro_charges")
 LOW_BALANCE_USD = 5
 
 

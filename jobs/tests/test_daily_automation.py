@@ -59,6 +59,24 @@ class DailyAutomationTests(EmployerTestBase):
         self.assertIn("Features sold ($49): 1", text)
         self.assertIn("An employer claimed their page", text)
 
+    def test_pro_sales_come_from_stripe_charges_not_trial_starts(self):
+        from growth.models import CashMovement, RevenueRun
+
+        yesterday = timezone.now() - timedelta(days=1)
+        event = ConsumerFunnelEvent.objects.create(event=ConsumerFunnelEvent.Event.PAYMENT_COMPLETED)
+        ConsumerFunnelEvent.objects.filter(pk=event.pk).update(created_at=yesterday)
+        run = RevenueRun.objects.create(account_id="acct_ri", livemode=True, since=yesterday, until=timezone.now())
+        for n, live in enumerate((True, False)):
+            CashMovement.objects.create(account_id="acct_ri", livemode=live, external_id=f"txn_{n}", kind="charge",
+                                        currency="usd", amount_minor=1000, fee_minor=60, net_minor=940,
+                                        occurred_at=yesterday, product="pro", last_run=run)
+        with patch("jobs.management.commands.send_daily_signal.email_service.send_email", return_value=True) as send:
+            call_command("send_daily_signal", send=True, stdout=io.StringIO())
+        text = send.call_args.kwargs["text"]
+        self.assertIn("Pro checkouts (trial starts and passes): 1", text)
+        self.assertIn("Pro charges collected (from Stripe reconciliation): 1", text)
+        self.assertIn("1 sale", send.call_args.args[1])
+
     def test_click_alert_compares_with_the_same_weekday(self):
         day = timezone.localdate() - timedelta(days=1)
         JobDailyStat.objects.create(job=self.job, date=day, apply_clicks=90)

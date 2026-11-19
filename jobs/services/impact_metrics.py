@@ -9,6 +9,7 @@ from datetime import datetime, time, timedelta
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
+from growth.models import CashMovement
 from jobs.models import (ConsumerFunnelEvent, Job, JobDailyStat, JobFeaturePurchase, OrganizationClaim,
                          OutreachSend, RoundupSubscriber)
 from jobs.services.job_service import JobService
@@ -80,7 +81,9 @@ def day_signal(day):
         "weekly_requests_from_apply_prompt": weekly.filter(source__in=("apply_prompt", "apply_inline"), confirmation_requested_at__gte=start,
                                                            confirmation_requested_at__lt=end).count(),
         "weekly_confirmed": weekly.filter(**{f"confirmed_at__{k}": v for k, v in in_day.items()}).count(),
-        "pro_payments": ConsumerFunnelEvent.objects.filter(event="payment_completed", created_at__gte=start, created_at__lt=end).count(),
+        "pro_checkouts": ConsumerFunnelEvent.objects.filter(event="payment_completed", created_at__gte=start, created_at__lt=end).count(),
+        "pro_charges": CashMovement.objects.filter(livemode=True, product="pro", kind="charge",
+                                                   occurred_at__gte=start, occurred_at__lt=end).count(),
         "features_sold": features.count(),
         "posts_sold": posts.count(),
         "claims_verified": OrganizationClaim.objects.filter(verified_at__gte=start, verified_at__lt=end).count(),
