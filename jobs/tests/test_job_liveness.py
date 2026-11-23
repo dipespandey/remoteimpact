@@ -704,6 +704,12 @@ class SeekerConversionEmailTests(TestCase):
         send.assert_not_called()
 
 
+    def test_winback_skips_people_already_sent_a_checkout_follow_up(self):
+        self.run_cmd("send_checkout_recovery", "--send")
+        out, send = self.run_cmd("send_scout_winback", "--send")
+        self.assertIn("Sent 0", out)
+        send.assert_not_called()
+
 class LocationBlockedScoutTests(TestCase):
     def test_empty_scout_blocked_by_location_gets_honest_advice_not_a_pro_pitch(self):
         from django.contrib.auth import get_user_model

@@ -1,7 +1,8 @@
 """One-time email to people whose free Scout ran once, inviting them to keep it running.
 
 Dry run by default: prints the audience. Pass --send (and optionally --limit) to send.
-Each person gets this email at most once; unsubscribed and Pro users are skipped.
+Each person gets this email at most once; unsubscribed and Pro users, and anyone already sent a
+checkout follow-up, are skipped.
 """
 from datetime import timedelta
 
@@ -32,7 +33,9 @@ class Command(BaseCommand):
             JobAlert.objects.filter(user__is_active=True, created_at__lte=cutoff)
             .values("user_id").annotate(last=Max("created_at")).order_by("-last").values_list("user_id", flat=True)
         )
-        already = set(ConsumerFunnelEvent.objects.filter(event=CE.WINBACK_SENT).values_list("user_id", flat=True))
+        # Someone already followed up after an abandoned checkout has been pitched Pro once.
+        already = set(ConsumerFunnelEvent.objects.filter(
+            event__in=[CE.WINBACK_SENT, CE.CHECKOUT_RECOVERY_SENT]).values_list("user_id", flat=True))
         unsubscribed = set(UserProfile.objects.filter(
             email_newsletter_unsubscribed_at__isnull=False).values_list("user_id", flat=True))
         sent = skipped = 0
