@@ -116,6 +116,8 @@
   .input, .select, .textarea { @apply block w-full rounded-xl border border-transparent bg-muted px-3.5 py-2.5 text-base text-foreground transition-colors placeholder:text-muted-foreground/80 hover:bg-accent focus:border-ring/40 focus:bg-card focus:outline-none focus:ring-4 focus:ring-ring/15; }
   select.select { @apply appearance-none bg-no-repeat pr-9; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b6b70'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E"); background-position: right 0.7rem center; background-size: 1.1rem; }
   .textarea { @apply min-h-[120px] leading-6; }
+  /* On a muted surface a muted input disappears, so fields there sit on white. */
+  .surface :is(.input, .select, .textarea) { @apply bg-card shadow-sm hover:bg-card; }
   .help { @apply mt-1.5 text-xs text-muted-foreground; }
   .checkbox { @apply h-4 w-4 rounded border-input text-foreground focus:ring-ring; }
   .field-error { @apply mt-1.5 text-xs text-destructive; }
