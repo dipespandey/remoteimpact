@@ -14,14 +14,14 @@
   {% if sent %}
   <div class="alert alert-info"><p>Check your inbox. We sent a confirmation link that works for 7 days.</p></div>
   {% else %}
-  <form method="post" class="surface space-y-4 p-5 sm:p-6">{% csrf_token %}
+  <form method="post" class="surface max-w-xl space-y-4 p-5 sm:p-6">{% csrf_token %}
     <div>
       <label class="label" for="claim-name">Your name</label>
-      <input class="input" id="claim-name" name="name" autocomplete="name" maxlength="120">
+      <input class="input" id="claim-name" name="name" autocomplete="name" maxlength="120" placeholder="Jane Doe">
     </div>
     <div>
       <label class="label" for="claim-email">Work email</label>
-      <input class="input" id="claim-email" name="email" type="email" autocomplete="email" required>
+      <input class="input" id="claim-email" name="email" type="email" autocomplete="email" required placeholder="you@yourorganization.org">
       {% if organization.website %}<p class="help mt-1">An address at your organization's own domain gets confirmed fastest.</p>{% endif %}
     </div>
     <button class="btn btn-primary" type="submit">Send confirmation link</button>
