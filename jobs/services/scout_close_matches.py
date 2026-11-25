@@ -22,7 +22,9 @@ logger = logging.getLogger(__name__)
 CANDIDATES = 12
 MAX_PICKS = 5
 from jobs.services.scout_tiers import CLOSE_LABEL as LABEL
-LOOSE_DROP = ("titles", "skills", "required_domains", "category_slugs")
+LOOSE_DROP = ("titles", "skills", "required_domains", "category_slugs",
+              "required_category_slugs", "required_category_options", "category_match_mode")
+SECTOR_KEYS = ("required_category_slugs", "required_category_options")
 SOFT = ("seniority",)
 SENIORITY_NOTE = (" Exception for these close matches: a role one step off in seniority is allowed. Mark its seniority check "
                   "conflicting with the quote that shows the level, and say so in the difference.")
@@ -51,6 +53,31 @@ def loose_preferences(preferences):
     loose = {k: v for k, v in preferences.items() if k not in LOOSE_DROP}
     loose["titles"] = []
     return loose
+
+
+def phrase_ranked(candidates, terms):
+    """Candidates whose title or duties use the request's own phrases, best first.
+
+    Whole phrases ("human resources", "compliance analyst") beat the single
+    words the source profile counts, so "executive compensation" doesn't rank
+    every Executive Director first.
+    """
+    import re
+    from jobs.services.scout_source_profile import GENERIC
+    filler = {'focus', 'within', 'seeking', 'looking', 'candidate', 'sector', 'similar', 'like', 'one', 'near', 'requires'}
+    phrases = [t.lower() for t in terms if t and t.lower() not in GENERIC | filler and len(t) >= 2][:20]
+    if not phrases:
+        return []
+    patterns = [(re.compile(r'(?<![a-z0-9])' + re.escape(p) + r'(?![a-z0-9])'), 2 if ' ' in p else 1) for p in phrases]
+    scored = []
+    for job in candidates:
+        title = (job.title or '').lower()
+        body = plain_job_field(job, 'description').lower()[:4000]
+        score = sum(weight * (4 * bool(pattern.search(title)) + bool(pattern.search(body))) for pattern, weight in patterns)
+        if score:
+            scored.append((score, job))
+    scored.sort(key=lambda pair: -pair[0])
+    return [job for _, job in scored]
 
 
 def validate(output, evidence, limit, preferences=None):
@@ -109,15 +136,18 @@ def close_matches(qs, preferences, terms, diagnostics, limit=MAX_PICKS, force=Fa
     if diagnostics.get('reranker') == 'review_unavailable':
         diagnostics['close_matches'] = 'unavailable'
         return []
-    if candidates is None:
-        candidates = retrieve(qs, loose_preferences(preferences), terms, diagnostics.setdefault("close", {}), relaxed=True)
-    else:
+    if candidates is not None:
         from jobs.services.scout_constraints import evaluate_job
         candidates = [j for j in candidates if evaluate_job(j, loose_preferences(preferences), relaxed=True).allowed]
         diagnostics['close_reused_candidates'] = len(candidates)
+    # The exact search's pool is locked to the requested sector, and a small one
+    # may hold nothing of the requested kind of work, so look again more widely.
+    if candidates is None or len(candidates) < 3 * CANDIDATES or any(preferences.get(key) for key in SECTOR_KEYS):
+        fresh = retrieve(qs, loose_preferences(preferences), terms, diagnostics.setdefault("close", {}), relaxed=True)
+        candidates = list({job.pk: job for job in [*(candidates or []), *fresh]}.values())
     if getattr(settings,'SCOUT_SOURCE_RANKING_ENABLED',True):
         from jobs.services.scout_source_profile import shortlist
-        candidates=shortlist(candidates,preferences,limit=CANDIDATES)
+        candidates=shortlist(candidates,preferences,limit=CANDIDATES,anchors=phrase_ranked(candidates,terms)[:CANDIDATES//2])
     else:candidates=candidates[:CANDIDATES]
     if not candidates:
         return []
