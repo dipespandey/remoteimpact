@@ -97,6 +97,36 @@ class ScoutTierTests(TestCase):
         for key in ['required_skills', 'unresolved_constraints', 'locations', 'exclude_keywords', 'min_salary']:
             self.assertEqual(loose[key], prefs[key])
 
+    def test_close_matches_may_come_from_another_sector(self):
+        from jobs.models import Category
+        from jobs.services.scout_close_matches import loose_preferences
+        self.assertNotIn('required_category_slugs', loose_preferences({'required_category_slugs': ['animal-welfare'], 'category_match_mode': 'any'}))
+        sector = sorted(Scout.HARD_CATEGORY_SLUGS)[0]
+        inside = Category.objects.create(slug=sector, name='Inside')
+        outside = Category.objects.create(slug='operations', name='Operations')
+        org = Organization.objects.create(name='Sector source', slug='sector-source')
+        other = Job.objects.create(title='HR Associate', slug='hr-associate-other-sector', organization=org, category=outside,
+                                   source=Job.Source.MANUAL, posted_at=timezone.now(), last_seen_at=timezone.now())
+        Job.objects.create(title='Program Officer', slug='program-officer-in-sector', organization=org, category=inside,
+                           source=Job.Source.MANUAL, posted_at=timezone.now(), last_seen_at=timezone.now())
+        seen = {}
+        def close(qs, *args, **kwargs):
+            seen['ids'] = set(qs.values_list('pk', flat=True))
+            return []
+        prefs = {'intent_text': 'Jobs in this sector, focus on HR', 'required_category_slugs': [sector], 'category_slugs': [sector],
+                 '_scout_current_inventory': True}
+        with patch('jobs.services.scout_close_matches.close_matches', side_effect=close):
+            Scout.get_matches_for_preferences(prefs)
+        self.assertIn(other.pk, seen['ids'])
+
+    def test_close_match_shortlist_prefers_the_requests_own_phrases(self):
+        from jobs.services.scout_close_matches import phrase_ranked
+        jobs = [SimpleNamespace(pk=1, title='Executive Director', description='Lead the organization.', requirements='', raw_data={}),
+                SimpleNamespace(pk=2, title='HR Business Partner', description='Partner with managers on human resources.', requirements='', raw_data={}),
+                SimpleNamespace(pk=3, title='Data Engineer', description='Build pipelines.', requirements='', raw_data={})]
+        ranked = phrase_ranked(jobs, ['executive compensation', 'human resources', 'hr', 'focus'])
+        self.assertEqual([job.pk for job in ranked], [2])
+
     def test_open_ended_applications_are_never_inserted_to_fill_either_tier(self):
         from jobs.services.scout_constraints import evaluate_job
         for title in ['Software Engineer "Spontaneous Application"', 'Spontaneous application', 'General application']:

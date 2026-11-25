@@ -1061,6 +1061,13 @@ skills is not a request for invented, exact job titles. JSON only."""
 
         if preferences.get("job_types"):
             qs = qs.filter(job_type__in=preferences["job_types"])
+        minimum_salary = preferences.get("min_salary")
+        if minimum_salary and not preferences.get("salary_requirement"):
+            # "At least $X" is a hard constraint. Unknown compensation cannot
+            # honestly be presented as satisfying it.
+            qs = qs.filter(Q(salary_max__gte=minimum_salary) | Q(salary_max__isnull=True, salary_min__gte=minimum_salary))
+        # Close matches may come from another sector; every other gate still applies.
+        any_sector_qs = qs
         hard_categories = [
             slug
             for slug in preferences.get("required_category_slugs", preferences.get("category_slugs", []))
@@ -1071,11 +1078,6 @@ skills is not a request for invented, exact job titles. JSON only."""
                 (preferences.get("required_category_options") or preferences["category_slugs"])
                 if preferences.get("category_match_mode") == "any" else hard_categories
             ))
-        minimum_salary = preferences.get("min_salary")
-        if minimum_salary and not preferences.get("salary_requirement"):
-            # "At least $X" is a hard constraint. Unknown compensation cannot
-            # honestly be presented as satisfying it.
-            qs = qs.filter(Q(salary_max__gte=minimum_salary) | Q(salary_max__isnull=True, salary_min__gte=minimum_salary))
 
         terms = cls._search_terms(preferences)
         diagnostics = diagnostics if diagnostics is not None else {}
@@ -1204,7 +1206,7 @@ skills is not a request for invented, exact job titles. JSON only."""
             diagnostics['fast_preview_result'] = bool(selected)
         if len(selected) < min(limit, cls.CLOSE_MATCH_BELOW) and (not fast_preview or not selected):
             from jobs.services.scout_close_matches import close_matches
-            close = close_matches(qs.exclude(pk__in=[job.pk for job in selected]), preferences, terms,
+            close = close_matches(any_sector_qs.exclude(pk__in=[job.pk for job in selected]), preferences, terms,
                                   diagnostics, limit=min(limit - len(selected), 5),
                                   exclude_titles=[job.title or "" for job in selected],
                                   candidates=[job for job in shared_candidates if job.pk not in {j.pk for j in selected}]
