@@ -102,7 +102,7 @@
                     <h2 id="preview-{{ tier.key }}-heading" class="section-title">{{ tier.heading }} · {{ tier.jobs|length }}</h2>
                     <span class="hidden text-xs text-muted-foreground sm:inline">Ranked by relevance and freshness</span>
                 </div>
-                <p class="mt-2 text-sm text-muted-foreground">{% if tier.key == "good" %}Passed our matching and eligibility checks.{% else %}Possible matches. Confirm the flagged details before applying.{% endif %}</p>
+                <p class="mt-2 text-sm text-muted-foreground">{% if tier.key == "good" %}Passed our matching and eligibility checks.{% elif tier.key == "also" %}{{ tier.description }}{% else %}Possible matches. Confirm the flagged details before applying.{% endif %}</p>
                 {% if tier.jobs %}<ul class="list-surface mt-3">
                     {% for job in tier.jobs %}<li>
                         <article class="scout-preview-card rounded-xl px-4 py-3.5 transition-colors hover:bg-muted/60 sm:px-5">
