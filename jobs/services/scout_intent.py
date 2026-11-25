@@ -35,7 +35,7 @@ def sector_request_text(text):
 
 SOFT = re.compile(r'\b(?:prefer(?:red|ably)?|ideally|ideally suited|prioriti[sz]e|interested in|focus on)\b', re.I)
 HARD = re.compile(r'\b(?:only|exclusively|must|mandatory|non[- ]negotiable|required)\b', re.I)
-EMPLOYER_ALTERNATIVE = r'(?:private[- ]sector|for[- ]profit|B[- ]?Corps?|social enterprises?)'
+EMPLOYER_ALTERNATIVE = r'(?:private[- ]sector|for[- ]profit|B[- ]?Corps?|social enterprises?|companies|firms|businesses|corporations|startups)'
 
 
 def _intent_clauses(text):

@@ -234,3 +234,24 @@ class ScoutIncompleteRetryBrowserTests(StaticLiveServerTestCase):
                 self.assertEqual(calls, [brief, brief])
                 mail.assert_not_called()
                 browser.close()
+
+
+class BriefStructureTests(TestCase):
+    def test_colon_after_exclude_still_marks_an_exclusion_list(self):
+        brief = 'Remote program operations roles at NGOs. Please exclude: freelance gig work, commission-based sales, event-heavy positions.'
+        prefs = Scout._fallback_parse(brief)
+        self.assertEqual(prefs['job_types'], [])
+        self.assertIn('freelance gig work', prefs['exclude_keywords'])
+        self.assertIn('commission-based sales', prefs['exclude_keywords'])
+
+    def test_background_field_is_not_a_required_domain(self):
+        brief = 'Senior public affairs director roles, US remote. My background spans diplomacy, state government, public health and human services, and international development.'
+        self.assertEqual(extract_constraints(brief)['required_domains'], [])
+
+    def test_requested_field_stays_a_required_domain(self):
+        brief = 'I am seeking remote opportunities in public health research. I have a background in public health and medicine.'
+        self.assertEqual(extract_constraints(brief)['required_domains'], ['public health'])
+
+    def test_open_to_companies_is_not_a_nonprofit_only_search(self):
+        brief = 'Senior strategy roles. Open to nonprofits, foundations, NGOs, global companies, technology firms, and mission-driven businesses.'
+        self.assertIsNone(extract_constraints(brief)['required_employer_type'])
