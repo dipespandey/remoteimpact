@@ -96,7 +96,7 @@ const vm = require('vm');
 const handlers = {};
 const document = {addEventListener: (name, cb) => handlers[name] = cb};
 const window = {location: {origin: 'https://remoteimpact.org', pathname: '/scout/preview/', search: '?intent=private'}};
-vm.runInNewContext(SCRIPT, {window, document, Date});
+vm.runInNewContext(SCRIPT, {window, document, Date, URLSearchParams});
 window.gtag('event', 'search', {event_category: 'engagement', event_label: 'private email', intent: 'secret'});
 window.gtag('config', 'X', {page_path: '/secret'});
 const serialized = JSON.stringify(window.dataLayer);
