@@ -13,11 +13,31 @@ from jobs.services.scout_workflow import bounded_workflow, generate, plan_terms
 
 
 class ScoutTierTests(TestCase):
-    def test_persisted_warnings_and_close_matches_stay_in_second_tier(self):
-        for reasons in [['Check: salary not listed'], ['Close match, not exact: adjacent function'],
-                        ['Location eligibility needs confirmation'], ['Worth considering: review the differences below']]:
+    def test_persisted_warnings_stay_in_second_tier(self):
+        for reasons in [['Check: salary not listed'], ['Location eligibility needs confirmation'],
+                        ['Worth considering: review the differences below']]:
             self.assertEqual(tier_for_job(SimpleNamespace(scout_reasons=reasons)), 'consider')
         self.assertEqual(tier_for_job(SimpleNamespace(scout_reasons=['Uses Python'])), 'good')
+
+    def test_close_matches_are_shown_as_also_found_after_exact_results(self):
+        restored = SimpleNamespace(scout_reasons=['Relevant evidence: x', 'Close match, not exact: adjacent function', 'Check: salary not listed'])
+        flagged = SimpleNamespace(scout_close_match=True, scout_reasons=[])
+        exact = SimpleNamespace(scout_reasons=['Uses Python'])
+        self.assertEqual(tier_for_job(restored), 'also')
+        tiers = groups([flagged, exact, restored])
+        self.assertEqual([tier['key'] for tier in tiers], ['good', 'consider', 'also'])
+        self.assertEqual(tiers[2]['heading'], 'We also found these')
+        self.assertEqual(tiers[2]['jobs'], [flagged, restored])
+
+    def test_email_lists_close_matches_under_we_also_found_these(self):
+        job = SimpleNamespace(title='Finance Associate', organization=SimpleNamespace(name='Test'), location='Remote (US)',
+                              salary_min=None, salary_max=None, salary_currency='USD', raw_data={},
+                              scout_reasons=['Close match, not exact: finance rather than bookkeeping'],
+                              get_job_type_display='Part time', alert_email_url='https://remoteimpact.org/jobs/test/')
+        text = render_to_string('emails/job_alert.txt', {'jobs': [job], 'job_count': 1, 'user': SimpleNamespace(first_name='')})
+        self.assertIn('We also found these', text)
+        self.assertIn('finance rather than bookkeeping', text)
+        self.assertNotIn('Worth considering', text)
 
     def test_groups_keep_exact_results_separate_from_unknown_eligibility(self):
         exact = SimpleNamespace(scout_reasons=['Uses Python'])

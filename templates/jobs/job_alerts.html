@@ -83,7 +83,7 @@
         {% if initial_results_changed and preview_jobs %}<p class="mt-4 text-sm text-muted-foreground">{% if initial_results_rechecked %}Some suggestions no longer pass our current checks and have been hidden.{% else %}Some roles from this result are no longer available and have been hidden.{% endif %}</p>{% endif %}
 
         {% if preview_jobs %}
-        {% for tier in preview_jobs|scout_tiers %}
+        {% for tier in preview_jobs|scout_tiers %}{% if tier.jobs or tier.key != "also" %}
         <h2 class="section-title mt-5">{{ tier.heading }} · {{ tier.jobs|length }}</h2>
         <p class="mt-1 text-sm text-muted-foreground">{{ tier.description }}</p>
         {% if tier.jobs %}<ul class="list-surface mt-4" aria-label="{{ tier.heading }}">
@@ -95,7 +95,7 @@
                             <h3 class="job-title break-words"><a href="{{ job.get_absolute_url }}{% if job.scout_delivery_id %}?scout_delivery={{ job.scout_delivery_id }}{% endif %}" class="hover:underline">{{ job.title|display_title }}</a></h3>
                             <p class="job-meta"><span class="font-medium text-foreground">{{ job.organization.name }}</span><span>{{ job.location|default:"Remote" }}</span><span>{{ job.get_job_type_display }}</span><span>Posted {{ job.posted_at|timesince }} ago</span></p>
                         </div>
-                        <span class="badge shrink-0">{% if tier.key == "consider" %}Review the details{% else %}Evidence checked{% endif %}</span>
+                        <span class="badge shrink-0">{% if tier.key == "good" %}Evidence checked{% elif tier.key == "also" %}Close match{% else %}Review the details{% endif %}</span>
                     </div>
                     {% if job.scout_reasons %}
                     <ul class="mt-2.5 flex flex-col items-start gap-1" aria-label="Why this matched">
@@ -119,7 +119,7 @@
             </li>
             {% endfor %}
         </ul>{% else %}<p class="mt-3 text-sm text-muted-foreground">No {{ tier.heading|lower }} for this brief yet.</p>{% endif %}
-        {% endfor %}
+        {% endif %}{% endfor %}
         {% elif explore_jobs %}
         {% if initial_result_state == 'expired' %}<p class="mt-4 text-sm text-muted-foreground">The roles from this result are no longer available. Here are current options to explore.</p>{% elif initial_result_state == 'unavailable' %}<p class="mt-4 text-sm text-muted-foreground">This saved result is unavailable. Here are current options to explore.</p>{% endif %}
         {% include "jobs/_scout_explore.html" %}

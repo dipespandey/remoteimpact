@@ -431,6 +431,7 @@ CAVEAT_TEXT = {
     'review_remote': 'Check: fully remote arrangement not confirmed',
     'review_location': 'Check: hiring location not confirmed by listing',
     'review_seniority': 'Check: requested seniority not confirmed',
+    'seniority_differs': 'Check: seniority differs from what you asked for',
     'review_skills': 'Check: required skills may not be core to this role',
     'review_salary': 'Check: requested pay not confirmed',
     'listing_age': 'Check: older posting; confirm the employer is still hiring',

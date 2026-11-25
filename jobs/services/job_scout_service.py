@@ -1244,21 +1244,22 @@ skills is not a request for invented, exact job titles. JSON only."""
             checks = [CAVEAT_TEXT.get(value, "Check: listing details") for value in caveats]
             job.scout_reasons = list(dict.fromkeys([*getattr(job, "scout_reasons", []), *checks]))
             job.scout_needs_confirmation = bool(getattr(job, "scout_needs_confirmation", False) or caveats or getattr(job, "scout_close_match", False))
-        from jobs.services.scout_tiers import tier_for_job
+        from jobs.services.scout_tiers import ORDER, tier_for_job
         selected.sort(key=lambda job: (getattr(job, 'scout_location_priority', 1),
-                                       tier_for_job(job) != 'good',
+                                       ORDER[tier_for_job(job)],
                                        seed_rank.get(job.pk, len(seed_rank)),
                                        len(getattr(job, 'scout_caveats', [])),
                                        -getattr(job, 'scout_score', 0)))
         if seed_rank:
             selected = scout_seed.one_per_employer_first(
-                selected, within=lambda job: (getattr(job, 'scout_location_priority', 1), tier_for_job(job) != 'good'))
+                selected, within=lambda job: (getattr(job, 'scout_location_priority', 1), ORDER[tier_for_job(job)]))
         selected = selected[:limit]
         for job in selected:
             if tier_for_job(job) == 'consider':
                 job.scout_reasons = list(dict.fromkeys([*job.scout_reasons, 'Worth considering: review the differences above']))
         diagnostics['good_match_count'] = sum(tier_for_job(job) == 'good' for job in selected)
-        diagnostics['worth_considering_count'] = len(selected) - diagnostics['good_match_count']
+        diagnostics['close_match_count'] = sum(tier_for_job(job) == 'also' for job in selected)
+        diagnostics['worth_considering_count'] = len(selected) - diagnostics['good_match_count'] - diagnostics['close_match_count']
         diagnostics["match_count"] = len(selected)
         diagnostics["review_incomplete"] = bool(any('source_review_pending' in getattr(job, 'scout_caveats', []) for job in selected) or len(selected)<limit and (
             diagnostics.get("reranker") == "review_unavailable" or

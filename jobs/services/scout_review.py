@@ -156,19 +156,36 @@ CHECK_INSTRUCTIONS = (
 )
 
 
-def review_checks(item, row, prefs):
-    """Return caveat keys for a valid selection, or None for unsupported/conflicting."""
+def requested_only(checks, prefs):
+    """The requested checks, or None when one is missing or an extra one conflicts."""
+    requested = requested_checks(prefs)
+    if not isinstance(checks, dict) or not set(requested) <= set(checks):
+        return None
+    if any(isinstance(value, list) and value[:1] == ['conflicting']
+           for name, value in checks.items() if name not in requested):
+        return None
+    return {name: checks[name] for name in requested}
+
+
+def review_checks(item, row, prefs, soft=()):
+    """Return caveat keys for a valid selection, or None for unsupported/conflicting.
+
+    A conflict on a ``soft`` dimension is a caveat (``<name>_differs``), not a rejection.
+    """
     from jobs.services.scout_reranker import _normalized, quote_key
     if dominant_function_conflict(row.get('primary_duties',row.get('description','')),prefs,row.get('title','')):
         return None
-    checks = item.get('checks')
-    if not isinstance(checks, dict) or set(checks) != set(requested_checks(prefs)):
+    checks = requested_only(item.get('checks'), prefs)
+    if checks is None:
         return None
     unknown = []
     for name, value in checks.items():
         if not isinstance(value, list) or len(value) != 3:
             return None
         status, field, quote = value
+        if status == 'conflicting' and name in soft:
+            unknown.append(name + '_differs')
+            status = 'confirmed'
         if status == 'unknown' and field == quote == '':
             if name == 'function':
                 return None
@@ -208,7 +225,8 @@ def review_issue(item, row, prefs):
     checks = item.get('checks')
     if not isinstance(checks, dict):
         return 'invalid_checks_schema'
-    if set(checks) != set(requested_checks(prefs)):
+    checks = requested_only(checks, prefs)
+    if checks is None:
         return 'missing_or_extra_checks'
     from jobs.services.scout_reranker import _normalized, quote_key
     for name, value in checks.items():
@@ -251,15 +269,15 @@ def source_checks_grounded(job,item):
     # An excerpt separator is not original source evidence. Even a quote
     # grounded in the prompt must also occur in the actual listing field.
     for status,field,quote in item['checks'].values():
-        if status=='confirmed' and field in ('title','description','requirements','location'):
+        if status in ('confirmed','conflicting') and field in ('title','description','requirements','location'):
             key=quote_key(quote)
             if key is None or key not in _normalized(plain_job_field(job,field)):
                 return False
     return True
 
 
-def apply_review(job, item, row, prefs):
-    caveats = review_checks(item, row, prefs)
+def apply_review(job, item, row, prefs, soft=()):
+    caveats = review_checks(item, row, prefs, soft)
     if caveats is None or not source_checks_grounded(job,item):
         return False
     existing = list(getattr(job, 'scout_caveats', []))

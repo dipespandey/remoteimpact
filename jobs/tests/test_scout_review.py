@@ -50,6 +50,25 @@ class SourceReviewTests(SimpleTestCase):
         item['checks']['location'] = ['conflicting', 'description', row['description']]
         self.assertIsNone(review_checks(item, row, prefs))
 
+    def test_unrequested_check_is_ignored_unless_it_conflicts(self):
+        row = {'description': 'Manage project schedules and budgets for solar installations.', 'location': 'Remote'}
+        item = {'checks': {'function': ['confirmed', 'description', 'Manage project schedules and budgets'],
+                           'location': ['confirmed', 'location', 'Remote']}}
+        self.assertEqual(review_checks(item, row, {}), [])
+        item['checks']['location'] = ['conflicting', 'location', 'Remote']
+        self.assertIsNone(review_checks(item, row, {}))
+
+    def test_close_match_may_differ_in_seniority_with_a_visible_check(self):
+        row = {'description': 'Prepare monthly reconciliations and financial reports.',
+               'requirements': 'At least 5 years of accounting experience.'}
+        prefs = {'experience_levels': ['entry']}
+        item = {'checks': {'function': ['confirmed', 'description', 'Prepare monthly reconciliations'],
+                           'seniority': ['conflicting', 'requirements', 'At least 5 years of accounting experience']}}
+        self.assertIsNone(review_checks(item, row, prefs))
+        self.assertEqual(review_checks(item, row, prefs, soft=('seniority',)), ['seniority_differs'])
+        item['checks']['seniority'] = ['conflicting', 'requirements', 'At least 10 years of leadership']
+        self.assertIsNone(review_checks(item, row, prefs, soft=('seniority',)))
+
     def test_policy_role_with_unknown_pay_is_consider_and_residence_is_visible(self):
         row = {'description': 'Develop industrial policy recommendations. You must be located in Germany.'}
         prefs = {'locations': ['Europe'], 'min_salary': 70000}
