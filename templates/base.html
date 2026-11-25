@@ -95,11 +95,18 @@
             const send = function () { window.dataLayer.push(arguments); };
             let referrerOrigin = '';
             try { referrerOrigin = document.referrer ? new URL(document.referrer).origin : ''; } catch (_) {}
+            // Keep only campaign tags, so links that carry utm_source (ChatGPT adds one and sends no referrer)
+            // are still attributed; every other query parameter can hold private data and is dropped.
+            const campaign = new URLSearchParams();
+            new URLSearchParams(window.location.search).forEach(function (value, key) {
+                if (/^utm_(source|medium|campaign|content|term)$/.test(key)) campaign.set(key, value.slice(0, 100));
+            });
+            const query = campaign.toString();
             send('js', new Date());
             send('config', measurement, {
                 allow_google_signals: false,
                 allow_ad_personalization_signals: false,
-                page_location: window.location.origin + window.location.pathname,
+                page_location: window.location.origin + window.location.pathname + (query ? '?' + query : ''),
                 page_referrer: referrerOrigin
             });
             window.gtag = function (command, name, details) {

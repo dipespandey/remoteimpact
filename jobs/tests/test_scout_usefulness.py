@@ -213,13 +213,33 @@ const vm = require('vm');
 const document = {referrer: 'https://remoteimpact.org/accounts/confirm-email/secret-token/?alert_id=918&scout_delivery=725&intent=PRIVATE_BRIEF#private-hash', addEventListener: () => {}};
 const window = {location: {origin: 'https://remoteimpact.org', pathname: '/jobs/example/', search: '?scout_delivery=725&alert_id=918&intent=PRIVATE_BRIEF', hash: '#private-hash'}};
 class FixedDate extends Date { constructor(...args) { super(...(args.length ? args : [0])); } static now() { return 0; } }
-vm.runInNewContext(SCRIPT, {window, document, Date: FixedDate, URL});
+vm.runInNewContext(SCRIPT, {window, document, Date: FixedDate, URL, URLSearchParams});
 window.gtag('event', 'search', {event_label: 'PRIVATE_BRIEF', source_link: document.referrer, delivery_id: 725});
 const serialized = JSON.stringify(window.dataLayer);
 for (const secret of ['secret-token', '918', '725', 'PRIVATE_BRIEF', 'private-hash', 'source_link', 'delivery_id']) assert(!serialized.includes(secret), secret);
 const config = Array.from(window.dataLayer.find(args => args[0] === 'config'))[2];
 assert.strictEqual(config.page_location, 'https://remoteimpact.org/jobs/example/');
 assert.strictEqual(config.page_referrer, 'https://remoteimpact.org');
+'''.replace('SCRIPT', json.dumps(script))
+        result = subprocess.run([node, '-e', harness], capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_campaign_tags_survive_so_chatgpt_visits_are_attributed(self):
+        node = shutil.which('node')
+        if not node:
+            self.skipTest('Node is required to execute the browser analytics guard')
+        source = (Path(settings.BASE_DIR) / 'templates/base.html').read_text()
+        script = re.search(r'<script id="analytics-script">(.*?)</script>', source, re.S).group(1)
+        harness = r'''
+const assert = require('assert');
+const vm = require('vm');
+const document = {referrer: '', addEventListener: () => {}};
+const window = {location: {origin: 'https://remoteimpact.org', pathname: '/jobs/example/', search: '?utm_source=chatgpt.com&alert_id=918&intent=PRIVATE_BRIEF', hash: ''}};
+vm.runInNewContext(SCRIPT, {window, document, Date, URL, URLSearchParams});
+const serialized = JSON.stringify(window.dataLayer);
+for (const secret of ['918', 'PRIVATE_BRIEF', 'alert_id']) assert(!serialized.includes(secret), secret);
+const config = Array.from(window.dataLayer.find(args => args[0] === 'config'))[2];
+assert.strictEqual(config.page_location, 'https://remoteimpact.org/jobs/example/?utm_source=chatgpt.com');
 '''.replace('SCRIPT', json.dumps(script))
         result = subprocess.run([node, '-e', harness], capture_output=True, text=True, timeout=10)
         self.assertEqual(result.returncode, 0, result.stderr)
