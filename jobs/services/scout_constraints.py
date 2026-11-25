@@ -38,7 +38,7 @@ def state_names(text):
         result.remove('georgia')
     return result
 
-NEGATION = r"\b(?:exclude|excluding|not interested in|not looking for|do not want|don't want|avoid|stay away from|must not(?: require)?|mustn't(?: require)?|without|no|not)\s+"
+NEGATION = r"\b(?:exclude|excluding|not interested in|not looking for|do not want|don't want|avoid|stay away from|must not(?: require)?|mustn't(?: require)?|without|no|not)(?::\s*|\s+)"
 # A clause after "without"/"no" that describes the candidate, not the job.
 CANDIDATE_ATTRIBUTE = re.compile(r"^(?:a |an |any |much |formal |prior |previous )*(?:(?:college |university |bachelor'?s? |master'?s? )?degree|experience|certifications?|licen[cs]es?|background|clue|idea)\b", re.I)
 # Countries named as past experience or subject matter are not eligibility.
@@ -293,9 +293,13 @@ def extract_constraints(text):
             unresolved.append('salary_currency')
     if salary and re.search(r'\b(?:minimum salary|guaranteed|actual annual|not full.time.equivalent)\b',positive,re.I):
         salary['mode']='floor'
+    # A field named only in the seeker's background describes them, not the job.
+    requests=[sentence for sentence in re.split(r'(?<![A-Z])[.!?;]\s+|\n',positive)
+              if not (re.search(r"\b(?:my background|my experience|background (?:in|spans|includes)|I have|I've|I worked|I hold|previously|used to)\b",sentence,re.I)
+                      and not re.search(r'\b(?:looking for|seeking|want|interested in|(?:roles?|jobs?|positions?|opportunities|work) in)\b',sentence,re.I))]
     domains=[]
     for phrase in ['behavioral health','behavioural health','mental health','public health']:
-        if re.search(r'\b'+phrase+r'\b',positive,re.I):domains.append(phrase)
+        if any(re.search(r'\b'+phrase+r'\b',sentence,re.I) for sentence in requests):domains.append(phrase)
     from jobs.services.scout_intent import required_nonprofit
     from jobs.services.scout_verification import weekly_hours_requirement
     return {'constraint_version':7,'intent_text':text,'candidate_years':candidate_years,
