@@ -28,12 +28,17 @@ def mirror_weekly_preference(email):
         email_newsletter=True, email_newsletter_unsubscribed_at=None)
 
 
-@transaction.atomic
-def subscribe_account(user):
-    """A deliberate authenticated preference POST supplies new weekly consent."""
-    email = normalized_email(user.email)
+def has_verified_email(user, email=None):
     from allauth.account.models import EmailAddress
-    if not EmailAddress.objects.filter(user=user, email__iexact=email, verified=True).exists():
+    email = email or user.email
+    return bool(email) and EmailAddress.objects.filter(user=user, email__iexact=email, verified=True).exists()
+
+
+@transaction.atomic
+def subscribe_account(user, source='account_preferences', topic=None):
+    """A deliberate authenticated request supplies new weekly consent for a verified account email."""
+    email = normalized_email(user.email)
+    if not has_verified_email(user, email):
         raise ValidationError('Email confirmation is required before weekly delivery.')
     sub = RoundupSubscriber.objects.filter(email__iexact=email).select_for_update().first()
     if sub is None:
@@ -44,7 +49,9 @@ def subscribe_account(user):
     sub.consent_version = 'weekly-account-explicit-2026-10-23'
     sub.consent_at = sub.confirmed_at = now
     sub.unsubscribed_at = None
-    sub.source = 'account_preferences'
+    sub.source = source
+    if topic:
+        sub.topic = topic
     sub.save()
     profile, _ = UserProfile.objects.get_or_create(user=user)
     mirror_weekly_preference(email)

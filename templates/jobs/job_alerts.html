@@ -145,6 +145,20 @@
             <a href="{% url 'jobs:job_scout_subscribe' %}?source=free_scout_results" class="btn btn-primary w-full shrink-0 sm:w-auto" data-track="job_scout_upgrade" data-track-category="job_scout" data-track-label="free_results">Try Pro free for 7 days</a>
         </div>
         {% endif %}
+
+        {% if show_roundup_offer %}
+        <form method="post" action="{% url 'jobs:newsletter_preferences' %}" class="surface mt-4 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            {% csrf_token %}
+            <input type="hidden" name="subscribe" value="true">
+            <input type="hidden" name="source" value="scout_results">
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <div>
+                <p class="text-sm font-medium text-foreground">Get hand-checked remote impact roles every Thursday</p>
+                <p class="mt-1 text-xs leading-5 text-muted-foreground">One free email a week to {{ user.email }}. Unsubscribe anytime.</p>
+            </div>
+            <button type="submit" class="btn btn-secondary w-full shrink-0 sm:w-auto">Send me the weekly picks</button>
+        </form>
+        {% endif %}
     </section>
     {% endif %}
 
