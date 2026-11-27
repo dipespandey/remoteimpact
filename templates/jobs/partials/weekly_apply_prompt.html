@@ -17,8 +17,8 @@
     </form>
   </div>
   <div data-prompt-done tabindex="-1" hidden>
-    <h2 class="text-xl font-semibold tracking-tight" role="status">Check your inbox</h2>
-    <p class="mt-2 text-muted-foreground">Open the link we sent to start getting weekly picks.</p>
+    <h2 class="text-xl font-semibold tracking-tight" role="status" data-confirmed-text="You're in">Check your inbox</h2>
+    <p class="mt-2 text-muted-foreground" data-confirmed-text="Your first picks arrive on Thursday.">Open the link we sent to start getting weekly picks.</p>
     <form method="dialog" class="mt-4"><button class="btn btn-secondary btn-block">Back to the role</button></form>
   </div>
 </dialog>
@@ -67,6 +67,11 @@
           track(form.dataset.source === 'apply_prompt' ? 'weekly_prompt_submitted' : 'weekly_inline_submitted');
           box.querySelector('[data-prompt-ask]').hidden = true;
           var done = box.querySelector('[data-prompt-done]');
+          if (result.data.confirmed) {
+            [done].concat(Array.prototype.slice.call(done.querySelectorAll('[data-confirmed-text]'))).forEach(function (node) {
+              if (node.dataset.confirmedText) node.textContent = node.dataset.confirmedText;
+            });
+          }
           done.hidden = false;
           done.focus();
         })

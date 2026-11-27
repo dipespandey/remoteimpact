@@ -231,6 +231,8 @@ class JobAlertListView(LoginRequiredMixin, ListView):
             if created:
                 context["created_alert"] = created
                 context.update(initial_result_context(created))
+                from jobs.services.newsletter_audience import weekly_subscription
+                context["show_roundup_offer"] = bool(self.request.user.email) and not weekly_subscription(self.request.user.email)
                 if not context["free_scout_used"]:
                     context["form"].initial["intent_text"] = created.intent_text
         return context

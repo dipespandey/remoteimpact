@@ -93,7 +93,13 @@ class NewsletterPreferencesView(LoginRequiredMixin, View):
         """Toggle newsletter subscription."""
         from django.core.exceptions import ValidationError
         from jobs.services.newsletter_audience import subscribe_account, unsubscribe_newsletters
+        from django.utils.http import url_has_allowed_host_and_scheme
+        from jobs.services.roundup import safe_label
         subscribe = request.POST.get("subscribe") == "true"
+        source = safe_label(request.POST.get("source"), "account_preferences")
+        next_url = request.POST.get("next", "")
+        if not url_has_allowed_host_and_scheme(next_url, {request.get_host()}, require_https=request.is_secure()):
+            next_url = ""
         try:
             if subscribe:
                 from allauth.account.models import EmailAddress
@@ -102,10 +108,10 @@ class NewsletterPreferencesView(LoginRequiredMixin, View):
                     # does not establish control of an unverified address.
                     from .roundup import RoundupView
                     payload = request.POST.copy()
-                    payload.update({"email":request.user.email, "consent":"yes", "source":"account_preferences", "topic":"all"})
+                    payload.update({"email":request.user.email, "consent":"yes", "source":source, "topic":"all"})
                     request.POST = payload
                     return RoundupView().post(request)
-                subscribe_account(request.user)
+                subscribe_account(request.user, source)
                 messages.success(request, "You're subscribed to the weekly job roundup. No completed profile is needed.")
             else:
                 unsubscribe_newsletters(request.user.email)
@@ -113,7 +119,7 @@ class NewsletterPreferencesView(LoginRequiredMixin, View):
         except ValidationError:
             messages.error(request, "Add a valid email address to your account before subscribing.")
 
-        return redirect("jobs:account")
+        return redirect(next_url or "jobs:account")
 
 
 class NewsletterSubscribeView(View):

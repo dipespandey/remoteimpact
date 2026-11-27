@@ -97,6 +97,32 @@ class WeeklyApplyPromptTests(EmployerTestBase):
         self.assertNotContains(page, 'id="weekly-apply-prompt"')
         self.assertNotContains(page, "data-weekly-inline")
 
+    def test_signed_in_members_with_a_verified_email_join_without_a_confirmation_email(self):
+        self.client.force_login(self.make_user())
+        response = self.signup(email="Member@Example.org")
+        self.assertEqual(response.json(), {"requested": True, "confirmed": True})
+        sub = RoundupSubscriber.objects.get(email="member@example.org")
+        self.assertIn(sub, active_subscribers())
+        self.assertEqual((sub.source, sub.topic), ("apply_prompt", "climate"))
+        self.assertEqual(self.confirmations(), 0)
+
+    def test_a_signed_in_member_typing_another_address_still_confirms_it_by_email(self):
+        self.client.force_login(self.make_user())
+        self.assertEqual(self.signup(email="other@example.org").json(), {"requested": True})
+        self.assertNotIn(RoundupSubscriber.objects.get(email="other@example.org"), active_subscribers())
+        self.assertEqual(self.confirmations(), 1)
+
+    def test_unverified_account_emails_still_confirm_by_email(self):
+        user = self.make_user()
+        EmailAddress.objects.filter(user=user).update(verified=False)
+        self.client.force_login(user)
+        self.assertEqual(self.signup(email="member@example.org").json(), {"requested": True})
+        self.assertFalse(active_subscribers().exists())
+        self.assertEqual(self.confirmations(), 1)
+
+    def confirmations(self):
+        return sum("weekly roundup" in str(call) for call in self.send.call_args_list)
+
     def make_user(self):
         from django.contrib.auth import get_user_model
         user = get_user_model().objects.create_user("member", "member@example.org", "pw")

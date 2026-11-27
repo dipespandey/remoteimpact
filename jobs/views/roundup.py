@@ -63,8 +63,14 @@ class RoundupQuickView(View):
         if request.POST.get("consent") != "yes":
             return JsonResponse({"error": ERRORS["no_consent"]}, status=400)
         topic = request.POST.get("topic", "all")
-        outcome = request_weekly(request, request.POST.get("email", ""), topic if topic in TOPICS else "all",
-                                 safe_label(request.POST.get("source"), "prompt"), safe_label(request.POST.get("campaign")), "")
+        topic = topic if topic in TOPICS else "all"
+        source = safe_label(request.POST.get("source"), "prompt")
+        if account_owns(request, request.POST.get("email", "")):
+            from jobs.services.newsletter_audience import subscribe_account
+            subscribe_account(request.user, source, topic)
+            return JsonResponse({"requested": True, "confirmed": True})
+        outcome = request_weekly(request, request.POST.get("email", ""), topic,
+                                 source, safe_label(request.POST.get("campaign")), "")
         if outcome == "requested":
             return JsonResponse({"requested": True})
         return JsonResponse({"error": ERRORS[outcome]}, status=STATUS[outcome])
@@ -75,6 +81,15 @@ ERRORS = {"invalid": "Enter a valid email address.",
           "rate_limited": "Please wait before requesting another confirmation email.",
           "send_failed": "We couldn't send the confirmation. Please try again in 10 minutes."}
 STATUS = {"invalid": 400, "no_consent": 400, "rate_limited": 429, "send_failed": 503}
+
+
+def account_owns(request, email):
+    """A signed-in account whose verified email is the one typed needs no confirmation link."""
+    from jobs.services.newsletter_audience import has_verified_email
+    email = email.strip().lower()
+    user = request.user
+    return (user.is_authenticated and valid_email(email) and email == (user.email or "").lower()
+            and has_verified_email(user, email))
 
 
 def valid_email(email):
